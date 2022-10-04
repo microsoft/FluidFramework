@@ -30,7 +30,8 @@ export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy
  * TODO: could implement more fine grained dependency tracking.
  */
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
-    extends Dependee, SchemaDataAndPolicy<TPolicy> {
+    extends Dependee,
+        SchemaDataAndPolicy<TPolicy> {
     /**
      * Add the provided schema, possibly over-writing preexisting schema.
      */

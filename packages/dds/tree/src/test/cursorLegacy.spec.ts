@@ -44,34 +44,56 @@ export function testJsonableTreeCursor(
         describe("keys", () => {
             it("object", () => {
                 assert.deepEqual([...factory({ type: brand("Foo") }).keys], []);
-                assert.deepEqual([...factory({
-                    type: brand("Foo"),
-                    fields: { x: [{ type: brand("Bar") }] },
-                }).keys], ["x"]);
                 assert.deepEqual(
-                    new Set(factory({
-                        type: brand("Foo"),
-                        fields: { x: [{ type: brand("Bar") }], test: [{ type: brand("Bar"), value: 6 }] },
-                    }).keys),
+                    [
+                        ...factory({
+                            type: brand("Foo"),
+                            fields: { x: [{ type: brand("Bar") }] },
+                        }).keys,
+                    ],
+                    ["x"],
+                );
+                assert.deepEqual(
+                    new Set(
+                        factory({
+                            type: brand("Foo"),
+                            fields: {
+                                x: [{ type: brand("Bar") }],
+                                test: [{ type: brand("Bar"), value: 6 }],
+                            },
+                        }).keys,
+                    ),
                     new Set(["x", "test"]),
                 );
             });
 
             it("array", () => {
                 // TODO: should empty arrays report this key?
-                assert.deepEqual([...factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } }).keys], [EmptyKey]);
                 assert.deepEqual(
-                    [...factory({
-                        type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }] },
-                    }).keys],
+                    [...factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } }).keys],
                     [EmptyKey],
                 );
                 assert.deepEqual(
-                    [...factory({
-                        type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: "test" }, { type: brand("Bar") }] },
-                    }).keys],
+                    [
+                        ...factory({
+                            type: brand("Foo"),
+                            fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }] },
+                        }).keys,
+                    ],
+                    [EmptyKey],
+                );
+                assert.deepEqual(
+                    [
+                        ...factory({
+                            type: brand("Foo"),
+                            fields: {
+                                [EmptyKey]: [
+                                    { type: brand("Bar"), value: "test" },
+                                    { type: brand("Bar") },
+                                ],
+                            },
+                        }).keys,
+                    ],
                     [EmptyKey],
                 );
             });
@@ -130,7 +152,12 @@ export function testJsonableTreeCursor(
                 it(`can seek forward`, () => {
                     const cursor = factory({
                         type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                        fields: {
+                            [EmptyKey]: [
+                                { type: brand("Bar"), value: 0 },
+                                { type: brand("Bar"), value: 1 },
+                            ],
+                        },
                     });
                     assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
@@ -141,7 +168,12 @@ export function testJsonableTreeCursor(
                 it(`can seek backward`, () => {
                     const cursor = factory({
                         type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                        fields: {
+                            [EmptyKey]: [
+                                { type: brand("Bar"), value: 0 },
+                                { type: brand("Bar"), value: 1 },
+                            ],
+                        },
                     });
                     assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 1);
@@ -152,7 +184,12 @@ export function testJsonableTreeCursor(
                 it(`can not seek past end of array`, () => {
                     const cursor = factory({
                         type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                        fields: {
+                            [EmptyKey]: [
+                                { type: brand("Bar"), value: 0 },
+                                { type: brand("Bar"), value: 1 },
+                            ],
+                        },
                     });
                     assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 1);
@@ -163,7 +200,12 @@ export function testJsonableTreeCursor(
                 it(`can not seek before beginning of array`, () => {
                     const cursor = factory({
                         type: brand("Foo"),
-                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                        fields: {
+                            [EmptyKey]: [
+                                { type: brand("Bar"), value: 0 },
+                                { type: brand("Bar"), value: 1 },
+                            ],
+                        },
                     });
                     assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
@@ -178,19 +220,29 @@ export function testJsonableTreeCursor(
             const foundKey: FieldKey = brand("found");
 
             function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
-                assert(0 <= index && index < cursor.length(key),
-                    `.length() must include index of existing child '${String(key)}[${index}]'.`);
+                assert(
+                    0 <= index && index < cursor.length(key),
+                    `.length() must include index of existing child '${String(key)}[${index}]'.`,
+                );
 
-                assert.equal(cursor.down(key, index), TreeNavigationResult.Ok,
-                    `Must navigate to child '${String(key)}[${index}]'.`);
+                assert.equal(
+                    cursor.down(key, index),
+                    TreeNavigationResult.Ok,
+                    `Must navigate to child '${String(key)}[${index}]'.`,
+                );
             }
 
             function expectNotFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
-                assert(!(index >= 0) || index >= cursor.length(key),
-                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`);
+                assert(
+                    !(index >= 0) || index >= cursor.length(key),
+                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
+                );
 
-                assert.equal(cursor.down(key, index), TreeNavigationResult.NotFound,
-                    `Must return 'NotFound' for missing child '${String(key)}[${index}]'`);
+                assert.equal(
+                    cursor.down(key, index),
+                    TreeNavigationResult.NotFound,
+                    `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
+                );
             }
 
             it("Missing key in map returns NotFound", () => {
@@ -225,7 +277,12 @@ export function testJsonableTreeCursor(
             it("Out of bounds array index returns NotFound", () => {
                 const cursor = factory({
                     type: brand("Foo"),
-                    fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                    fields: {
+                        [EmptyKey]: [
+                            { type: brand("Bar"), value: 0 },
+                            { type: brand("Bar"), value: 1 },
+                        ],
+                    },
                 });
                 expectNotFound(cursor, EmptyKey, -1);
                 expectNotFound(cursor, EmptyKey, 2);
@@ -262,13 +319,18 @@ function traverseNode(cursor: ITreeCursor) {
 
         cursor.up();
         assert.equal(cursor.value, originalNodeValue);
-        assert.equal(actualChildNodesTraversed, expectedKeyLength, "Could not traverse expected number of children");
+        assert.equal(
+            actualChildNodesTraversed,
+            expectedKeyLength,
+            "Could not traverse expected number of children",
+        );
     }
 }
 
 export function testCursors(
     suiteName: string,
-    cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
+    cursors: { cursorName: string; cursor: ITreeCursor }[],
+) {
     describe(`${suiteName} cursor functionality`, () => {
         for (const { cursorName, cursor } of cursors) {
             describe(`${cursorName}`, () => {

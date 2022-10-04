@@ -22,8 +22,11 @@ import { FieldKind } from "../modular-schema";
 export function isPrimitive(schema: TreeSchema): boolean {
     // TODO: use a separate `TreeViewSchema` type, with metadata that determines if the type is primitive.
     // Since the above is not done yet, use use a heuristic:
-    return schema.value !== ValueSchema.Nothing &&
-        schema.localFields.size === 0 && schema.globalFields.size === 0;
+    return (
+        schema.value !== ValueSchema.Nothing &&
+        schema.localFields.size === 0 &&
+        schema.globalFields.size === 0
+    );
 }
 
 export type PrimitiveValue = string | boolean | number;
@@ -32,7 +35,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
     return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
-export function getPrimaryField(schema: TreeSchema): { key: LocalFieldKey; schema: FieldSchema; } | undefined {
+export function getPrimaryField(
+    schema: TreeSchema,
+): { key: LocalFieldKey; schema: FieldSchema } | undefined {
     // TODO: have a better mechanism for this. See note on EmptyKey.
     const field = schema.localFields.get(EmptyKey);
     if (field === undefined) {
@@ -60,7 +65,7 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
  * Variant of ProxyHandler covering when the type of the target and implemented interface are different.
  * Only the parts needed so far are included.
  */
- export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
+export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
     // apply?(target: T, thisArg: any, argArray: any[]): any;
     // construct?(target: T, argArray: any[], newTarget: Function): object;
     // defineProperty?(target: T, p: string | symbol, attributes: PropertyDescriptor): boolean;
@@ -77,7 +82,9 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
 }
 
 export function adaptWithProxy<From extends object, To extends object>(
-    target: From, proxyHandler: AdaptingProxyHandler<From, To>): To {
+    target: From,
+    proxyHandler: AdaptingProxyHandler<From, To>,
+): To {
     // Proxy constructor assumes handler emulates target's interface.
     // Ours does not, so this cast is required.
     return new Proxy<From>(target, proxyHandler as ProxyHandler<From>) as unknown as To;

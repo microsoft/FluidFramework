@@ -47,9 +47,7 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
 function clone<T>(value: Jsonable<T>): Jsonable<T> {
     // PERF: Separate clone vs. cloneObject yields an ~11% speedup in 'canada.json',
     //       likely due to inlining short-circuiting recursing at leaves (node 14 x64).
-    return typeof value !== "object" || value === null
-        ? value
-        : cloneObject(value);
+    return typeof value !== "object" || value === null ? value : cloneObject(value);
 }
 
 /**
@@ -72,10 +70,8 @@ function bench(
             title: `Direct: '${name}'`,
             before: () => {
                 const cloned = clone(json);
-                assert.deepEqual(cloned, json,
-                    "clone() must return an equivalent tree.");
-                assert.notEqual(cloned, json,
-                    "clone() must not return the same tree instance.");
+                assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
             },
             benchmarkFn: () => {
                 clone(json);
@@ -85,19 +81,26 @@ function bench(
         const cursorFactories: [string, () => ITreeCursor][] = [
             ["JsonCursor", () => new JsonCursor(json)],
             ["TextCursor", () => singleTextCursor(encodedTree)],
-            ["object-forest Cursor", () => {
-                const forest = buildForest(schema);
-                initializeForest(forest, [singleTextCursorNew(encodedTree)]);
-                const cursor = forest.allocateCursor();
-                assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
-                return cursor;
-            }],
+            [
+                "object-forest Cursor",
+                () => {
+                    const forest = buildForest(schema);
+                    initializeForest(forest, [singleTextCursorNew(encodedTree)]);
+                    const cursor = forest.allocateCursor();
+                    assert.equal(
+                        forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
+                        TreeNavigationResult.Ok,
+                    );
+                    return cursor;
+                },
+            ],
         ];
 
         const consumers: [
             string,
-            (cursor: ITreeCursor,
-                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any
+            (
+                cursor: ITreeCursor,
+                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any,
             ) => void,
         ][] = [
             ["cursorToJsonObject", cursorToJsonObject],
@@ -114,9 +117,16 @@ function bench(
                     title: `${consumerName}(${factoryName}): '${name}'`,
                     before: () => {
                         cursor = factory();
-                        assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
                         assert.deepEqual(
-                            jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                            cursorToJsonObject(cursor),
+                            json,
+                            "data should round trip through json",
+                        );
+                        assert.deepEqual(
+                            jsonableTreeFromCursor(cursor),
+                            encodedTree,
+                            "data should round trip through jsonable",
+                        );
                     },
                     benchmarkFn: () => {
                         consumer(cursor, dataConsumer);
@@ -129,11 +139,13 @@ function bench(
 
 const canada = generateCanada(
     // Use the default (large) data set for benchmarking, otherwise use a small dataset.
-    isInPerformanceTestingMode
-        ? undefined
-        : [2, 10]);
+    isInPerformanceTestingMode ? undefined : [2, 10],
+);
 
-function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+function extractCoordinatesFromCanada(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.down(Canada.FeatureKey, 0);
     cursor.down(EmptyKey, 0);
     cursor.down(Canada.GeometryKey, 0);
@@ -170,7 +182,10 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
     cursor.up();
 }
 
-function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+function extractAvgValsFromTwitter(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.down(TwitterStatus.statusesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);

@@ -28,9 +28,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-    intoDelta: (change, deltaFromChild) => change === 0
-        ? []
-        : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+    intoDelta: (change, deltaFromChild) =>
+        change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -89,10 +88,9 @@ const valueChange1b: ValueChangeset = { old: 0, new: 2 };
 const valueChange2: ValueChangeset = { old: 1, new: 2 };
 
 const nodeChange1a: NodeChangeset = {
-    fieldChanges: new Map([[
-        fieldA,
-        { fieldKind: valueField.identifier, change: brand(valueChange1a) },
-    ]]),
+    fieldChanges: new Map([
+        [fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+    ]),
 };
 
 const nodeChanges1b: NodeChangeset = {
@@ -150,21 +148,25 @@ const rootChange1a: FieldChangeMap = new Map([
     ],
 ]);
 
-const rootChange1b: FieldChangeMap = new Map([[
-    fieldA,
-    {
-        fieldKind: singleNodeField.identifier,
-        change: brand(nodeChanges1b),
-    },
-]]);
+const rootChange1b: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: singleNodeField.identifier,
+            change: brand(nodeChanges1b),
+        },
+    ],
+]);
 
-const rootChange2: FieldChangeMap = new Map([[
-    fieldA,
-    {
-        fieldKind: singleNodeField.identifier,
-        change: brand(nodeChanges2),
-    },
-]]);
+const rootChange2: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: singleNodeField.identifier,
+            change: brand(nodeChanges2),
+        },
+    ],
+]);
 
 describe("ModularChangeFamily", () => {
     it("compose", () => {
@@ -214,24 +216,20 @@ describe("ModularChangeFamily", () => {
         const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
         const nodeInverse: NodeChangeset = {
-            fieldChanges: new Map([[
-                fieldA,
-                {
-                    fieldKind: valueField.identifier,
-                    change: brand(valueInverse1),
-                },
-            ]]),
+            fieldChanges: new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueInverse1),
+                    },
+                ],
+            ]),
         };
 
         const expectedInverse: FieldChangeMap = new Map([
-            [
-                fieldA,
-                { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) },
-            ],
-            [
-                fieldB,
-                { fieldKind: valueField.identifier, change: brand(valueInverse2) },
-            ],
+            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) }],
+            [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
         ]);
 
         assert.deepEqual(family.invert(rootChange1a), expectedInverse);
@@ -242,20 +240,26 @@ describe("ModularChangeFamily", () => {
     });
 
     it("intoDelta", () => {
-        const valueDelta1: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            setValue: 1,
-        }];
+        const valueDelta1: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                setValue: 1,
+            },
+        ];
 
-        const valueDelta2: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            setValue: 2,
-        }];
+        const valueDelta2: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                setValue: 2,
+            },
+        ];
 
-        const nodeDelta: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fieldA, valueDelta1]]),
-        }];
+        const nodeDelta: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fieldA, valueDelta1]]),
+            },
+        ];
 
         const expectedDelta: Delta.Root = new Map([
             [fieldA, nodeDelta],
@@ -284,16 +288,14 @@ describe("ModularChangeFamily", () => {
         editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
         const changes = editor.getChanges();
         const nodeChange: NodeChangeset = {
-            fieldChanges: new Map([[
-                fieldB,
-                { fieldKind: valueField.identifier, change: brand(valueChange1a) },
-            ]]),
+            fieldChanges: new Map([
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+            ]),
         };
 
-        const expectedChange: FieldChangeMap = new Map([[
-            fieldA,
-            { fieldKind: singleNodeField.identifier, change: brand(nodeChange) },
-        ]]);
+        const expectedChange: FieldChangeMap = new Map([
+            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeChange) }],
+        ]);
 
         assert.deepEqual(changes, [expectedChange]);
     });
@@ -309,10 +311,9 @@ describe("ModularChangeFamily", () => {
 
         const value = "Test Value";
         const nodeChange: NodeChangeset = { valueChange: { value } };
-        const expectedChange: FieldChangeMap = new Map([[
-            fieldA,
-            { fieldKind: singleNodeField.identifier, change: brand(nodeChange) },
-        ]]);
+        const expectedChange: FieldChangeMap = new Map([
+            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeChange) }],
+        ]);
 
         editor.setValue(path, value);
         assert.deepEqual(editor.getChanges(), [expectedChange]);

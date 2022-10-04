@@ -7,8 +7,12 @@ export * from "./fieldKind";
 export * from "./fieldChangeHandler";
 export * from "./modularChangeFamily";
 export {
-	isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset, allowsFieldSuperset,
-	allowsTreeSuperset,
+    isNeverField,
+    isNeverTree,
+    allowsRepoSuperset,
+    allowsTreeSchemaIdentifierSuperset,
+    allowsFieldSuperset,
+    allowsTreeSuperset,
 } from "./comparison";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
 export { typedTreeSchema, typedFieldSchema } from "./typedSchema";

@@ -31,16 +31,20 @@ const rootKey: FieldKey = brand("root");
 const detachedKey: FieldKey = brand("detached");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
-const content: ProtoNode[] = [{
-    type,
-    value: 42,
-    fields: { foo: [{ type, value: 43 }] },
-}];
-const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew({
-    type,
-    value: 42,
-    fields: { foo: [{ type, value: 43 }] },
-})];
+const content: ProtoNode[] = [
+    {
+        type,
+        value: 42,
+        fields: { foo: [{ type, value: 43 }] },
+    },
+];
+const contentCursor: ITreeCursorSynchronous[] = [
+    singleTextCursorNew({
+        type,
+        value: 42,
+        fields: { foo: [{ type, value: 43 }] },
+    }),
+];
 
 const opId = 42;
 const moveId = brandOpaque<Delta.MoveId>(opId);
@@ -53,10 +57,12 @@ describe("toDelta", () => {
     });
 
     it("set root value", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            value: { id: 0, value: 1 },
-        }];
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                value: { id: 0, value: 1 },
+            },
+        ];
         const mark: Delta.Modify = {
             type: Delta.MarkType.Modify,
             setValue: 1,
@@ -67,34 +73,36 @@ describe("toDelta", () => {
     });
 
     it("set child value", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    42,
-                    {
-                        type: "Modify",
-                        value: { id: 0, value: 1 },
-                    },
-                ],
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "Modify",
+                            value: { id: 0, value: 1 },
+                        },
+                    ],
+                },
             },
-        }];
+        ];
         const mark: Delta.Modify = {
             type: Delta.MarkType.Modify,
             setValue: 1,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fooKey, [42, mark]]]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [42, mark]]]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
     it("insert root", () => {
-        const changeset: T.MarkList = [
-            { type: "Insert", id: opId, content },
-        ];
+        const changeset: T.MarkList = [{ type: "Insert", id: opId, content }];
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: contentCursor,
@@ -105,33 +113,36 @@ describe("toDelta", () => {
     });
 
     it("insert child", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    42,
-                    { type: "Insert", id: opId, content },
-                ],
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [42, { type: "Insert", id: opId, content }],
+                },
             },
-        }];
+        ];
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: contentCursor,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fooKey, [42, mark]]]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [42, mark]]]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
     it("delete root", () => {
-        const changeset: T.MarkList = [{
-            type: "Delete",
-            id: opId,
-            count: 10,
-        }];
+        const changeset: T.MarkList = [
+            {
+                type: "Delete",
+                id: opId,
+                count: 10,
+            },
+        ];
         const mark: Delta.Delete = {
             type: Delta.MarkType.Delete,
             count: 10,
@@ -142,51 +153,57 @@ describe("toDelta", () => {
     });
 
     it("delete child", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    42,
-                    {
-                        type: "Delete",
-                        id: opId,
-                        count: 10,
-                    },
-                ],
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "Delete",
+                            id: opId,
+                            count: 10,
+                        },
+                    ],
+                },
             },
-        }];
+        ];
         const mark: Delta.Delete = {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fooKey, [42, mark]]]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [42, mark]]]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
     it("move within trait", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    42,
-                    {
-                        type: "MoveOut",
-                        id: opId,
-                        count: 10,
-                    },
-                    8,
-                    {
-                        type: "MoveIn",
-                        id: opId,
-                        count: 10,
-                    },
-                ],
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "MoveOut",
+                            id: opId,
+                            count: 10,
+                        },
+                        8,
+                        {
+                            type: "MoveIn",
+                            id: opId,
+                            count: 10,
+                        },
+                    ],
+                },
             },
-        }];
+        ];
         const moveOut: Delta.MoveOut = {
             type: Delta.MarkType.MoveOut,
             moveId,
@@ -196,36 +213,40 @@ describe("toDelta", () => {
             type: Delta.MarkType.MoveIn,
             moveId,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fooKey, [42, moveOut, 8, moveIn]]]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [42, moveOut, 8, moveIn]]]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
     it("move across traits", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    42,
-                    {
-                        type: "MoveOut",
-                        id: opId,
-                        count: 10,
-                    },
-                ],
-                bar: [
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "MoveOut",
+                            id: opId,
+                            count: 10,
+                        },
+                    ],
+                    bar: [
                         8,
-                    {
-                        type: "MoveIn",
-                        id: opId,
-                        count: 10,
-                    },
-                ],
+                        {
+                            type: "MoveIn",
+                            id: opId,
+                            count: 10,
+                        },
+                    ],
+                },
             },
-        }];
+        ];
         const moveOut: Delta.MoveOut = {
             type: Delta.MarkType.MoveOut,
             moveId,
@@ -235,13 +256,15 @@ describe("toDelta", () => {
             type: Delta.MarkType.MoveIn,
             moveId,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([
-                [fooKey, [42, moveOut]],
-                [barKey, [8, moveIn]],
-            ]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([
+                    [fooKey, [42, moveOut]],
+                    [barKey, [8, moveIn]],
+                ]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
@@ -249,19 +272,21 @@ describe("toDelta", () => {
     it("move across trees", () => {
         const changeset: T.LocalChangeset = {
             marks: {
-                root: [{
-                    type: "Modify",
-                    fields: {
-                        foo: [
-                            42,
-                            {
-                                type: "MoveOut",
-                                id: opId,
-                                count: 10,
-                            },
-                        ],
+                root: [
+                    {
+                        type: "Modify",
+                        fields: {
+                            foo: [
+                                42,
+                                {
+                                    type: "MoveOut",
+                                    id: opId,
+                                    count: 10,
+                                },
+                            ],
+                        },
                     },
-                }],
+                ],
                 detached: [
                     8,
                     {
@@ -284,46 +309,45 @@ describe("toDelta", () => {
         const expected: Delta.Root = new Map([
             [
                 rootKey,
-                [{
-                    type: Delta.MarkType.Modify,
-                    fields: new Map([
-                        [fooKey, [42, moveOut]],
-                    ]),
-                }],
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([[fooKey, [42, moveOut]]]),
+                    },
+                ],
             ],
-            [
-                detachedKey,
-                [8, moveIn],
-            ],
+            [detachedKey, [8, moveIn]],
         ]);
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
     it("the lot on a field", () => {
-        const changeset: T.MarkList = [{
-            type: "Modify",
-            fields: {
-                foo: [
-                    {
-                        type: "Delete",
-                        id: opId,
-                        count: 10,
-                    },
-                    3,
-                    {
-                        type: "Insert",
-                        id: opId,
-                        content,
-                    },
-                    1,
-                    {
-                        type: "Modify",
-                        value: { id: opId, value: 1 },
-                    },
-                ],
+        const changeset: T.MarkList = [
+            {
+                type: "Modify",
+                fields: {
+                    foo: [
+                        {
+                            type: "Delete",
+                            id: opId,
+                            count: 10,
+                        },
+                        3,
+                        {
+                            type: "Insert",
+                            id: opId,
+                            content,
+                        },
+                        1,
+                        {
+                            type: "Modify",
+                            value: { id: opId, value: 1 },
+                        },
+                    ],
+                },
             },
-        }];
+        ];
         const del: Delta.Delete = {
             type: Delta.MarkType.Delete,
             count: 10,
@@ -336,13 +360,12 @@ describe("toDelta", () => {
             type: Delta.MarkType.Modify,
             setValue: 1,
         };
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[
-                fooKey,
-                [del, 3, ins, 1, set],
-            ]]),
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
+            },
+        ];
         const actual = toTreeDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
@@ -356,22 +379,26 @@ describe("toDelta", () => {
                     content: content[0],
                     value: { id: opId, value: 4242 },
                     fields: {
-                        foo: [{
-                            type: "Modify",
-                            value: { id: opId, value: 4343 },
-                        }],
+                        foo: [
+                            {
+                                type: "Modify",
+                                value: { id: opId, value: 4343 },
+                            },
+                        ],
                     },
                 },
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew({
-                    type,
-                    value: 4242,
-                    fields: {
-                        foo: [{ type, value: 4343 }],
-                    },
-                })],
+                content: [
+                    singleTextCursorNew({
+                        type,
+                        value: 4242,
+                        fields: {
+                            foo: [{ type, value: 4343 }],
+                        },
+                    }),
+                ],
             };
             const expected: Delta.MarkList = [mark];
             const actual = toTreeDelta(changeset);
@@ -393,9 +420,9 @@ describe("toDelta", () => {
                             },
                             1,
                             {
-                                    type: "Insert",
-                                    id: opId,
-                                    content: [{ type, value: 45 }],
+                                type: "Insert",
+                                id: opId,
+                                content: [{ type, value: 45 }],
                             },
                         ],
                     },
@@ -403,17 +430,19 @@ describe("toDelta", () => {
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew({
-                    type,
-                    value: 42,
-                    fields: {
-                        foo: [
-                            { type, value: 44 },
-                            { type, value: 43 },
-                            { type, value: 45 },
-                        ],
-                    },
-                })],
+                content: [
+                    singleTextCursorNew({
+                        type,
+                        value: 42,
+                        fields: {
+                            foo: [
+                                { type, value: 44 },
+                                { type, value: 43 },
+                                { type, value: 45 },
+                            ],
+                        },
+                    }),
+                ],
             };
             const expected: Delta.MarkList = [mark];
             const actual = toTreeDelta(changeset);
@@ -441,13 +470,18 @@ describe("toDelta", () => {
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew({
-                    type,
-                    value: 42,
-                    fields: {
-                        foo: [{ type, value: 43 }, { type, value: 4545 }],
-                    },
-                })],
+                content: [
+                    singleTextCursorNew({
+                        type,
+                        value: 42,
+                        fields: {
+                            foo: [
+                                { type, value: 43 },
+                                { type, value: 4545 },
+                            ],
+                        },
+                    }),
+                ],
             };
             const expected: Delta.MarkList = [mark];
             const actual = toTreeDelta(changeset);
@@ -473,10 +507,12 @@ describe("toDelta", () => {
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew({
-                    type,
-                    value: 42,
-                })],
+                content: [
+                    singleTextCursorNew({
+                        type,
+                        value: 42,
+                    }),
+                ],
             };
             const expected: Delta.MarkList = [mark];
             const actual = toTreeDelta(changeset);

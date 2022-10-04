@@ -1,5 +1,5 @@
 {
-    "tags": [ "sequence-field" ],
-    "exports": [ "index" ],
-    "imports": ["forest", "tree", "util", "feature-libraries" ]
+  "tags": ["sequence-field"],
+  "exports": ["index"],
+  "imports": ["forest", "tree", "util", "feature-libraries"]
 }
