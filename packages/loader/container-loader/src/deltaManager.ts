@@ -817,11 +817,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
-        // All non-system messages are coming from some client, and should have clientId
-        // System messages may have no clientId (but some do, like propose, noop, summarize)
-        // Note: we can see such message.type as "attach" or "chunkedOp" for legacy files before RTM
-        // But these types are no longer supported as they are rolled into "op" by container runtime.
-        if ((message.clientId === null) === isClientMessage(message)) {
+        const isString = typeof message.clientId === "string";
+        assert(message.clientId === null || isString, "undefined or string");
+        // All client messages are coming from some client, and should have clientId,
+        // and non-client message should not have clientId. But, there are two exceptions:
+        // 1. (Legacy) We can see message.type === "attach" or "chunkedOp" for legacy files before RTM
+        // 2. Non-immediate noops (contents: null) can be sent by service without clientId
+        if (!isString && isClientMessage(message) && message.type !== MessageType.NoOp) {
             throw new DataCorruptionError("Mismatch in clientId",
                 { ...extractSafePropertiesFromMessage(message), messageType: message.type });
         }
