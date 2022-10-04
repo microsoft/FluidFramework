@@ -415,7 +415,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/pnpm-lock.yaml|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
