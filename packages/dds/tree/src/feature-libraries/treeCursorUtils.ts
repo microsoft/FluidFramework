@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { TreeSchemaIdentifier } from "../schema-stored";
 import {
     FieldKey,
     TreeType,
     UpPath,
-    Value,
     CursorLocationType,
     ITreeCursorSynchronous,
     NodeData,
@@ -21,7 +21,7 @@ import { fail } from "../util";
 export function singleStackTreeCursor<TNode extends NodeData>(
         root: TNode,
         adapter: CursorAdapter<TNode>): ITreeCursorSynchronous {
-    return new StackCursor(root, adapter);
+    return new NodeStackCursor(root, adapter);
 }
 
 /**
@@ -49,7 +49,7 @@ abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  */
-class StackCursor<TNode extends NodeData> extends SynchronousCursor implements ITreeCursorSynchronous {
+export abstract class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchronous {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -231,12 +231,12 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
     }
 
-    private getNode(): TNode {
+    protected getNode(): TNode {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
         return (this.siblings as TNode[])[this.index];
     }
 
-    private getField(): readonly TNode[] {
+    protected getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
         const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
@@ -244,13 +244,9 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
         return field;
     }
 
-    public get value(): Value {
-        return this.getNode().value;
-    }
+    public abstract get value(): any;
 
-    public get type(): TreeType {
-        return this.getNode().type;
-    }
+    public abstract get type(): TreeType;
 
     public get fieldIndex(): number {
         // assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
@@ -263,5 +259,15 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
 
     public get chunkLength(): number {
         return 1;
+    }
+}
+
+class NodeStackCursor<TNode extends NodeData> extends StackCursor<TNode> {
+    public get value(): any {
+        return this.getNode().value;
+    }
+
+    public get type(): TreeSchemaIdentifier {
+        return this.getNode().type;
     }
 }
