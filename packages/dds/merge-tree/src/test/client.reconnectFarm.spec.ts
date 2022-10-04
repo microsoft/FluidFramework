@@ -119,7 +119,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
     });
 }
 
-describeFuzz.only("MergeTree.Client", ({ testCount }) => {
+describeFuzz("MergeTree.Client", ({ testCount }) => {
     const opts = defaultOptions;
 
     if (testCount > 1) {

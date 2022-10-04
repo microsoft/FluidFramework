@@ -416,7 +416,7 @@ function getPath(seed: number): string {
 // const describeFuzz = createFuzzDescribe({ defaultTestCount: 1000 });
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 100 });
 
-describeFuzz.only("IntervalCollection fuzz testing", ({ testCount }) => {
+describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
