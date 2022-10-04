@@ -207,8 +207,16 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             try {
                 isAssigned = await this.currentModel.migrationTool.volunteerForMigration();
             } catch (error) {
-                // If we error here it's likely that the container was already closed by another client.
-                await onDisconnect();
+                // If we error here either the container was closed by another client (during the migration process),
+                // or our web socket lost connection. If the this.migrationState is still migrating then we should wait
+                // for the container to reconnect or the migration to be finalized by another client. Otherwise we can
+                // exit the migration process and re-enter the state machine.
+                if (this.migrationState === "migrating") {
+                    await onDisconnect();
+                } else {
+                    this._migrationP = undefined;
+                    this.takeAppropriateActionForCurrentMigratable();
+                }
                 return;
             }
 
