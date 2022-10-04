@@ -114,13 +114,6 @@ steps:
 
           echo "checkVersion AFTER : " $checkVersion
 
-          npm view $checkVersion
-          if grep -q "npm ERR!"
-          then
-            echo $"NPM View Error"
-            npm view @fluidframework/tinylicious-client@0.0.0-96564-test
-          fi
-
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
