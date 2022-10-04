@@ -16,7 +16,7 @@ import {
 import {
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
 } from "./jsonDomainSchema";
-import { mapCursorField } from "../../tree/cursor";
+import { mapCursorField, mapCursorFields } from "../../tree/cursor";
 import { CursorAdapter, StackCursor } from "../../feature-libraries/treeCursorUtils";
 
 const adapter: CursorAdapter<JsonCompatible> = {
@@ -103,11 +103,11 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         }
         case jsonObject.name: {
             const result: JsonCompatible = {};
-            for (const key of reader.keys) {
-                assert(reader.down(key, 0) === true, 0x360 /* expected navigation ok */);
-                result[key as LocalFieldKey] = cursorToJsonObject(reader);
-                assert(reader.up() === true, 0x361 /* expected navigation ok */);
-            }
+            mapCursorFields(reader, (cursor) => {
+                assert(cursor.firstNode() === true, 0x360 /* expected navigation ok */);
+                result[cursor.getFieldKey() as LocalFieldKey] = cursorToJsonObject(reader);
+                cursor.exitNode();
+            });
             return result;
         }
         default: {

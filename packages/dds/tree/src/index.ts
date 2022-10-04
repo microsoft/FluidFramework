@@ -78,6 +78,8 @@ export {
 export {
     cursorToJsonObject,
     JsonCursor,
+    cursorToJsonObjectNew,
+    JsonCursorNew,
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
     jsonSchemaData,
 } from "./domains";
