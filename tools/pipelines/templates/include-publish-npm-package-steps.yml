@@ -88,7 +88,6 @@ steps:
         packages=*.tgz
         sorted=false
       fi
-      echo "Before For"
       for packageName in $packages
       do
         if [[ $sorted == true ]]; then
@@ -96,9 +95,25 @@ steps:
         else
           f=$packageName
         fi
-        echo "After For"
         if [[ $f != "" ]]; then
-          echo "File Exists : " $f
+          checkVersion=${f##*/}
+          echo "Extract File Name I: " $checkVersion
+
+          checkVersion=${checkVersion:0:-4}
+          checkVersion=$(echo $checkVersion | sed -r 's/\*\*\*/fluid/g')
+
+          echo "Extract File Name II: " $checkVersion
+
+          if [[ $checkVersion == *"fluidframework"* ]]; then
+            checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
+          else
+            checkVersion=$(echo $checkVersion | sed 's/-/\/''/2')
+          fi
+
+          echo "Extract File Name III: " $checkVersion
+
+          npm view $checkVersion
+
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
