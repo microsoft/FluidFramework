@@ -28,8 +28,15 @@ interface ISnapshotSection {
     sequenceNumber: number;
 }
 
+/**
+ * The parsing is significantly faster if the position of props is well known instead of dynamic. So
+ * fast variables represent how many times faster parsing path is executed and slow variables represents
+ * how many times slower path is executed.
+ */
 let fastBlobPath = 0;
 let slowBlobPath = 0;
+let fastTreePath = 0;
+let slowTreePath = 0;
 
 /**
  * Recreates blobs section of the tree.
@@ -83,9 +90,6 @@ function readOpsSection(node: NodeTypes) {
         0x280 /* "Validate first op seq number" */);
     return ops;
 }
-
-let fastTreePath = 0;
-let slowTreePath = 0;
 
 /**
  * Recreates snapshot tree out of tree representation.
