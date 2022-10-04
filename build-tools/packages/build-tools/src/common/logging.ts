@@ -13,11 +13,11 @@ export type LoggingFunction = (message?: string, ...args: any[]) => void;
 
 export interface Logger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    log: LoggingFunction,
-    info: ErrorLoggingFunction,
-    warning: ErrorLoggingFunction,
-    errorLog: ErrorLoggingFunction,
-    verbose: ErrorLoggingFunction,
+    log: LoggingFunction;
+    info: ErrorLoggingFunction;
+    warning: ErrorLoggingFunction;
+    errorLog: ErrorLoggingFunction;
+    verbose: ErrorLoggingFunction;
 }
 
 export const defaultLogger: Logger = {
