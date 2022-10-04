@@ -9,7 +9,6 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
