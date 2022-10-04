@@ -116,6 +116,7 @@ steps:
 
           npm view $checkVersion
           if grep -q "npm ERR!"
+          then
             echo $"NPM View Error"
             npm view @fluidframework/tinylicious-client@0.0.0-96564-test
           fi
