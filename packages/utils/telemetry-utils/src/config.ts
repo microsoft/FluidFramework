@@ -4,6 +4,7 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
+import { pkgVersion } from "./packageVersion";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -176,41 +177,55 @@ export class CachedConfigProvider implements IConfigProvider {
         }
     }
     getBoolean(name: string): boolean | undefined {
-        return this.getCacheEntry(name)?.boolean;
+        return this.getCacheEntry(name).boolean;
     }
     getNumber(name: string): number | undefined {
-        return this.getCacheEntry(name)?.number;
+        return this.getCacheEntry(name).number;
     }
     getString(name: string): string | undefined {
-        return this.getCacheEntry(name)?.string;
+        return this.getCacheEntry(name).string;
     }
     getBooleanArray(name: string): boolean[] | undefined {
-        return this.getCacheEntry(name)?.["boolean[]"];
+        return this.getCacheEntry(name)["boolean[]"];
     }
     getNumberArray(name: string): number[] | undefined {
-        return this.getCacheEntry(name)?.["number[]"];
+        return this.getCacheEntry(name)["number[]"];
     }
     getStringArray(name: string): string[] | undefined {
-        return this.getCacheEntry(name)?.["string[]"];
+        return this.getCacheEntry(name)["string[]"];
     }
 
     getRawConfig(name: string): ConfigTypes {
-        return this.getCacheEntry(name)?.raw;
+        return this.getCacheEntry(name).raw;
     }
 
-    private getCacheEntry(name: string): StronglyTypedValue | undefined {
-        if (!this.configCache.has(name)) {
-            for (const provider of this.orderedBaseProviders) {
-                const parsed = stronglyTypedParse(provider?.getRawConfig(name));
-                if (parsed !== undefined) {
-                    this.configCache.set(name, parsed);
-                    return parsed;
-                }
+    private getCacheEntryCore(name: string): StronglyTypedValue | undefined {
+        for (const provider of this.orderedBaseProviders) {
+            const parsed = stronglyTypedParse(provider?.getRawConfig(name));
+            if (parsed !== undefined) {
+                this.configCache.set(name, parsed);
+                return parsed;
+            }
+        }
+        return undefined;
+    }
+
+    private getCacheEntry(name: string): StronglyTypedValue {
+        let parsed = this.configCache.get(name);
+        if (parsed === undefined) {
+            // Try first versioned key
+            parsed = this.getCacheEntryCore(`${name}_${pkgVersion}`);
+            if (parsed === undefined) {
+                // If no hit, try non-versioned key
+                parsed = this.getCacheEntryCore(name);
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
-            this.configCache.set(name, { raw: undefined });
+            if (parsed === undefined) {
+                parsed = { raw: undefined };
+            }
+            this.configCache.set(name, parsed);
         }
-        return this.configCache.get(name);
+        return parsed;
     }
 }
 
