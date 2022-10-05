@@ -12,6 +12,6 @@
     "modular-schema",
     "domains",
     "checkout",
-    "shared-tree",
+    "shared-tree"
   ]
 }

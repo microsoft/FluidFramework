@@ -208,7 +208,7 @@ export class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+    constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
         if (cursor) {
             assert(cursor.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
             this.lazyCursor = cursor.fork();
@@ -454,7 +454,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     set: (
         target: ProxyTarget,
-        key: string | symbol,
+        key: string,
         value: unknown,
         receiver: unknown,
     ): boolean => {
