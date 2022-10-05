@@ -120,7 +120,6 @@ export interface IConnect {
     supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
-    // @deprecated
     versions: string[];
 }
 

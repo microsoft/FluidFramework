@@ -36,8 +36,6 @@ export interface IConnect {
 
     /**
      * Semver list of protocol versions supported by the client ordered in priority of use
-     * @deprecated This is not used on server or client, so it will be removed in future. Server
-     * will be using the driver version to block/allow features.
      */
     versions: string[];
 
