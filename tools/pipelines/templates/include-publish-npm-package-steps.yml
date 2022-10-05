@@ -133,6 +133,10 @@ steps:
           npm view $checkVersion
 
           echo "3----------------------------------"
+          checkVersion=${checkVersion:3}
+          npm view "@fluid"$checkVersoin
+
+          echo "4----------------------------------"
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
