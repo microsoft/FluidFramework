@@ -18,7 +18,7 @@ export function singleStackTreeCursor<TNode>(
 }
 
 /**
- * Provides functionality to allow a {@link singleStackTreeCursor} to be implemented.
+ * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
  */
 export interface CursorAdapter<TNode> {
     value(node: TNode): any;
