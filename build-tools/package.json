@@ -33,7 +33,7 @@
     "format": "lerna run format --no-sort --stream -- -- -- --color",
     "postinstall": "npm run postinstall:lerna && npm run build:compile",
     "install:build-tools": "cd packages/build-tools && npm run build:compile && npm link && cd ../..",
-    "install:fast": "npm install --ignore-scripts",
+    "install:root": "npm install --ignore-scripts",
     "layer-check": "node packages/build-tools/dist/layerCheck/layerCheck.js --root ..",
     "layer-check:doc": "node packages/build-tools/dist/layerCheck/layerCheck.js --root .. --md",
     "lerna": "lerna",
