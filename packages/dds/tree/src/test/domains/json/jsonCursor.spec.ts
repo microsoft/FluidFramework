@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EmptyKey, ITreeCursorNew, JsonCursorNew, cursorToJsonObjectNew } from "../../..";
+import { EmptyKey, ITreeCursorNew, singleJsonCursor, cursorToJsonObjectNew } from "../../..";
 import { CursorLocationType, FieldKey, mapCursorFields } from "../../../tree";
 import { brand } from "../../../util";
 import { testCursors } from "../../cursor.spec";
@@ -31,7 +31,7 @@ describe("JsonCursor", () => {
         for (const [name, testValues] of testCases) {
             for (const expected of testValues) {
                 it(`${name}: ${JSON.stringify(expected)}`, () => {
-                    const cursor = new JsonCursorNew(expected);
+                    const cursor = singleJsonCursor(expected);
 
                     assert.deepEqual(cursorToJsonObjectNew(cursor), expected,
                         "JsonCursor results must match source.");
@@ -50,31 +50,31 @@ describe("JsonCursor", () => {
         const getKeysAsSet = (cursor: ITreeCursorNew) => new Set(mapCursorFields(cursor, getFieldKey));
 
         it("object", () => {
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew({})), new Set());
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew({ x: {} })), new Set(["x"]));
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew({ x: {}, test: 6 })), new Set(["x", "test"]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor({})), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor({ x: {} })), new Set(["x"]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor({ x: {}, test: 6 })), new Set(["x", "test"]));
         });
 
         it("array", () => {
             // TODO: should empty arrays report this key?
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew([])), new Set([EmptyKey]));
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew([0])), new Set([EmptyKey]));
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew(["test", {}])), new Set([EmptyKey]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor([])), new Set([EmptyKey]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor([0])), new Set([EmptyKey]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(["test", {}])), new Set([EmptyKey]));
         });
 
         it("string", () => {
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew("")), new Set());
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew("test")), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor("")), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor("test")), new Set());
         });
 
         it("number", () => {
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew(0)), new Set());
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew(6.5)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(0)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(6.5)), new Set());
         });
 
         it("boolean", () => {
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew(false)), new Set());
-            assert.deepEqual(getKeysAsSet(new JsonCursorNew(true)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(false)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(true)), new Set());
         });
     });
 
@@ -87,7 +87,7 @@ describe("JsonCursor", () => {
 
             tests.forEach(([name, key]) => {
                 it(`permits offset of zero with ${name} map key`, () => {
-                    const cursor = new JsonCursorNew({ [key as string]: 0 });
+                    const cursor = singleJsonCursor({ [key as string]: 0 });
                     cursor.enterField(key);
                     assert.equal(cursor.firstNode(), true);
                     assert.equal(cursor.value, 0);
@@ -96,7 +96,7 @@ describe("JsonCursor", () => {
                 });
 
                 it(`disallows non-zero offset with ${name} map key`, () => {
-                    const cursor = new JsonCursorNew({ [key as string]: 0 });
+                    const cursor = singleJsonCursor({ [key as string]: 0 });
                     cursor.enterField(key);
                     assert.equal(cursor.firstNode(), true);
                     assert.equal(cursor.value, 0);
@@ -111,7 +111,7 @@ describe("JsonCursor", () => {
 
         describe("with array-like node", () => {
             it(`can seek forward`, () => {
-                const cursor = new JsonCursorNew([0, 1]);
+                const cursor = singleJsonCursor([0, 1]);
                 cursor.enterField(EmptyKey);
                 assert.equal(cursor.firstNode(), true);
                 assert.equal(cursor.value, 0);
@@ -120,7 +120,7 @@ describe("JsonCursor", () => {
             });
 
             it(`can seek backward`, () => {
-                const cursor = new JsonCursorNew([0, 1]);
+                const cursor = singleJsonCursor([0, 1]);
                 cursor.enterField(EmptyKey);
                 cursor.enterNode(1);
                 assert.equal(cursor.value, 1);
@@ -129,7 +129,7 @@ describe("JsonCursor", () => {
             });
 
             it(`can not seek past end of array`, () => {
-                const cursor = new JsonCursorNew([0, 1]);
+                const cursor = singleJsonCursor([0, 1]);
                 cursor.enterField(EmptyKey);
                 cursor.enterNode(1);
                 assert.equal(cursor.value, 1);
@@ -138,7 +138,7 @@ describe("JsonCursor", () => {
             });
 
             it(`can not seek before beginning of array`, () => {
-                const cursor = new JsonCursorNew([0, 1]);
+                const cursor = singleJsonCursor([0, 1]);
                 cursor.enterField(EmptyKey);
                 assert.equal(cursor.firstNode(), true);
                 assert.equal(cursor.value, 0);
@@ -180,7 +180,7 @@ describe("JsonCursor", () => {
         }
 
         it("Missing key in map returns NotFound", () => {
-            const cursor = new JsonCursorNew({ [foundKey as string]: true });
+            const cursor = singleJsonCursor({ [foundKey as string]: true });
             expectError(cursor, notFoundKey);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -189,7 +189,7 @@ describe("JsonCursor", () => {
         });
 
         it("Out of bounds map index returns NotFound", () => {
-            const cursor = new JsonCursorNew({ [foundKey as string]: true });
+            const cursor = singleJsonCursor({ [foundKey as string]: true });
             expectError(cursor, foundKey, 1);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -198,12 +198,12 @@ describe("JsonCursor", () => {
         });
 
         it("Empty array must not contain 0th item", () => {
-            const cursor = new JsonCursorNew([]);
+            const cursor = singleJsonCursor([]);
             expectError(cursor, EmptyKey, 0);
         });
 
         it("Out of bounds array index returns NotFound", () => {
-            const cursor = new JsonCursorNew([0, 1]);
+            const cursor = singleJsonCursor([0, 1]);
             expectError(cursor, EmptyKey, -1);
             expectError(cursor, EmptyKey, 2);
 
@@ -220,7 +220,7 @@ for (const [name, testValues] of testCases) {
     for (const data of testValues) {
         cursors.push({
             cursorName: `${name}: ${JSON.stringify(data)}`,
-            cursor: new JsonCursorNew(data),
+            cursor: singleJsonCursor(data),
         });
     }
 }

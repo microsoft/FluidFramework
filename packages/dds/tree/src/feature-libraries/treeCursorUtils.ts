@@ -4,30 +4,30 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { TreeSchemaIdentifier } from "../schema-stored";
 import {
     FieldKey,
     TreeType,
     UpPath,
     CursorLocationType,
     ITreeCursorSynchronous,
-    NodeData,
 } from "../tree";
 import { fail } from "../util";
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  */
-export function singleStackTreeCursor<TNode extends NodeData>(
+export function singleStackTreeCursor<TNode>(
         root: TNode,
         adapter: CursorAdapter<TNode>): ITreeCursorSynchronous {
-    return new NodeStackCursor(root, adapter);
+    return new StackCursor(root, adapter);
 }
 
 /**
- * Provides functionality to allow a {@link StackCursor} to be implemented.
+ * Provides functionality to allow a {@link singleStackTreeCursor} to be implemented.
  */
 export interface CursorAdapter<TNode> {
+    value(node: TNode): any;
+    type(node: TNode): TreeType;
     keysFromNode(node: TNode): readonly FieldKey[];
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
 }
@@ -37,7 +37,7 @@ type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
 /**
  * A class that satisfies part of the ITreeCursorSynchronous implementation.
  */
-export abstract class SynchronousCursor {
+abstract class SynchronousCursor {
     public get pending(): false {
         return false;
     }
@@ -52,7 +52,7 @@ export abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  */
-export abstract class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchronous {
+class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchronous {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -250,12 +250,17 @@ export abstract class StackCursor<TNode> extends SynchronousCursor implements IT
     /**
      * @returns the value of the current node
      */
-    public abstract get value(): any;
+    public get value(): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.adapter.value(this.getNode());
+    }
 
     /**
      * @returns the type of the current node
      */
-    public abstract get type(): TreeType;
+    public get type(): TreeType {
+        return this.adapter.type(this.getNode());
+    }
 
     public get fieldIndex(): number {
         // assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
@@ -268,15 +273,5 @@ export abstract class StackCursor<TNode> extends SynchronousCursor implements IT
 
     public get chunkLength(): number {
         return 1;
-    }
-}
-
-class NodeStackCursor<TNode extends NodeData> extends StackCursor<TNode> {
-    public get value(): any {
-        return this.getNode().value;
-    }
-
-    public get type(): TreeSchemaIdentifier {
-        return this.getNode().type;
     }
 }

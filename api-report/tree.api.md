@@ -596,15 +596,6 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     get value(): Value;
 }
 
-// @public @sealed
-export class JsonCursorNew<T> extends StackCursor<JsonCompatible> {
-    constructor(root: Jsonable<T>);
-    // (undocumented)
-    get type(): TreeSchemaIdentifier;
-    // (undocumented)
-    get value(): any;
-}
-
 // @public (undocumented)
 export const jsonNull: NamedTreeSchema;
 
@@ -984,6 +975,9 @@ export class SimpleDependee implements Dependee {
     removeDependent(dependent: Dependent): void;
 }
 
+// @public
+export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
+
 // @public (undocumented)
 export function singleTextCursor(root: JsonableTree): TextCursor;
 
@@ -997,73 +991,12 @@ export type Skip = number;
 type Skip_2 = number;
 
 // @public
-export abstract class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchronous {
-    constructor(root: TNode, adapter: StackCursorAdapter<TNode>);
-    // (undocumented)
-    get chunkLength(): number;
-    // (undocumented)
-    get chunkStart(): number;
-    // (undocumented)
-    enterField(key: FieldKey): void;
-    // (undocumented)
-    enterNode(index: number): void;
-    // (undocumented)
-    exitField(): void;
-    // (undocumented)
-    exitNode(): void;
-    // (undocumented)
-    get fieldIndex(): number;
-    // (undocumented)
-    firstField(): boolean;
-    // (undocumented)
-    firstNode(): boolean;
-    // (undocumented)
-    protected getField(): readonly TNode[];
-    // (undocumented)
-    getFieldKey(): FieldKey;
-    // (undocumented)
-    getFieldLength(): number;
-    // (undocumented)
-    protected getNode(): TNode;
-    // (undocumented)
-    getPath(): UpPath | undefined;
-    // (undocumented)
-    get mode(): CursorLocationType;
-    // (undocumented)
-    nextField(): boolean;
-    // (undocumented)
-    nextNode(): boolean;
-    // (undocumented)
-    seekNodes(offset: number): boolean;
-    // (undocumented)
-    abstract get type(): TreeType;
-    // (undocumented)
-    abstract get value(): any;
-}
-
-// @public
-export interface StackCursorAdapter<TNode> {
-    // (undocumented)
-    getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
-    // (undocumented)
-    keysFromNode(node: TNode): readonly FieldKey[];
-}
-
-// @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
     update(newSchema: SchemaData): void;
 }
 
 // @public (undocumented)
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
-
-// @public
-export abstract class SynchronousCursor {
-    // (undocumented)
-    get pending(): false;
-    // (undocumented)
-    skipPendingFields(): boolean;
-}
 
 // @public
 export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;

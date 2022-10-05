@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { LocalFieldKey, TreeSchemaIdentifier } from "../../schema-stored";
+import { LocalFieldKey } from "../../schema-stored";
 import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
     ITreeCursorNew as ITreeCursor,
@@ -13,13 +13,39 @@ import {
     FieldKey,
     mapCursorFieldNew,
     mapCursorFields,
+    ITreeCursorSynchronous,
 } from "../../tree";
-import { StackCursor, CursorAdapter } from "../../feature-libraries";
+import { CursorAdapter, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
 } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {
+    value: (node: JsonCompatible) =>
+        typeof (node) === "object"
+            ? undefined     // null, arrays, and objects have no defined value
+            : node         // boolean, numbers, and strings are their own value
+    ,
+    type: (node: JsonCompatible) => {
+        const type = typeof node;
+
+        switch (type) {
+            case "number":
+                return jsonNumber.name;
+            case "string":
+                return jsonString.name;
+            case "boolean":
+                return jsonBoolean.name;
+            default:
+                if (node === null) {
+                    return jsonNull.name;
+                } else if (Array.isArray(node)) {
+                    return jsonArray.name;
+                } else {
+                    return jsonObject.name;
+                }
+        }
+    },
     keysFromNode: (node: JsonCompatible): readonly FieldKey[] => {
         switch (typeof node) {
             case "object":
@@ -45,46 +71,19 @@ const adapter: CursorAdapter<JsonCompatible> = {
 }
 
 /**
+ * Used to read a Jsonable tree for testing and benchmarking.
+ *
+ * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
+ */
+ export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
+    return singleStackTreeCursor(root as JsonCompatible, adapter);
+}
+
+/**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
  *
  * @sealed
  */
-export class JsonCursor<T> extends StackCursor<JsonCompatible> {
-    constructor(root: Jsonable<T>) {
-        super(root as JsonCompatible, adapter);
-    }
-
-    public get value(): any {
-        const node = this.getNode();
-
-        return typeof (node) === "object"
-            ? undefined     // null, arrays, and objects have no defined value
-            : node;         // boolean, numbers, and strings are their own value
-    }
-
-    public get type(): TreeSchemaIdentifier {
-        const node = this.getNode();
-        const type = typeof node;
-
-        switch (type) {
-            case "number":
-                return jsonNumber.name;
-            case "string":
-                return jsonString.name;
-            case "boolean":
-                return jsonBoolean.name;
-            default:
-                if (node === null) {
-                    return jsonNull.name;
-                } else if (Array.isArray(node)) {
-                    return jsonArray.name;
-                } else {
-                    return jsonObject.name;
-                }
-        }
-    }
-
-}
 
 /**
  * Extract a JS object tree from the contents of the given ITreeCursor.

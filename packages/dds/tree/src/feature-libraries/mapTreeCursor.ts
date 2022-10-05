@@ -18,12 +18,14 @@ import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 * @returns an ITreeCursorSynchronous for a single MapTree.
 */
 export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
-   return singleStackTreeCursor(root, adapter);
+    return singleStackTreeCursor(root, adapter);
 }
 
 const adapter: CursorAdapter<MapTree> = {
-   keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
-   getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
+    value: (node) => node.value,
+    type: (node) => node.type,
+    keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
+    getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
 };
 
 /**

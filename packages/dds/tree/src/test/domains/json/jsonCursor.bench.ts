@@ -8,7 +8,7 @@ import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-too
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     ITreeCursorNew,
-    JsonCursorNew as JsonCursor,
+    singleJsonCursor,
     jsonableTreeFromCursorNew,
     EmptyKey,
     cursorToJsonObjectNew,
@@ -58,7 +58,7 @@ function bench(
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursorNew(new JsonCursor(json));
+        const encodedTree = jsonableTreeFromCursorNew(singleJsonCursor(json));
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -76,7 +76,7 @@ function bench(
         });
 
         const cursorFactories: [string, () => ITreeCursorNew][] = [
-            ["JsonCursor", () => new JsonCursor(json)],
+            ["JsonCursor", () => singleJsonCursor(json)],
             ["TextCursor", () => singleTextCursorNew(encodedTree)],
             ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
         ];

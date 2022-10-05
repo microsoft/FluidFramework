@@ -79,7 +79,7 @@ export {
     cursorToJsonObject,
     JsonCursor,
     cursorToJsonObjectNew,
-    JsonCursorNew,
+    singleJsonCursor,
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
     jsonSchemaData,
 } from "./domains";
@@ -127,9 +127,6 @@ export {
     defaultSchemaPolicy,
     singleTextCursorNew,
     jsonableTreeFromCursorNew,
-    SynchronousCursor,
-    StackCursorAdapter,
-    StackCursor,
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,
