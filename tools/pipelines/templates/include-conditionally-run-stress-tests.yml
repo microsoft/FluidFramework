@@ -31,6 +31,7 @@ stages:
               Write-Host "Found the following files changed in ${{ package.affectedPaths }}:"
               Write-Host $changedfiles
               If ($changedfiles -ne $null)  {
+                Write-Host "Setting output variable"
                 echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
               }
           displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
