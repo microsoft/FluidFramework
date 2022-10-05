@@ -196,11 +196,11 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Not implemented.
      *
      * @internal
      */
-    protected applyStashedOp() {
-        throw new Error("Not implemented");
+    protected applyStashedOp(content: unknown) {
+        const counterContent = content as IIncrementOperation;
+        this.incrementCore(counterContent.incrementAmount);
     }
 }
