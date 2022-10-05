@@ -32,6 +32,9 @@ import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
     const loaderContainerTracker = new LoaderContainerTracker();
+    beforeEach(function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
+    });
     let filename: string;
     const contentFolder = "content/serializedContainerTestContent";
 

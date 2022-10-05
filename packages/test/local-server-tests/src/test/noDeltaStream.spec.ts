@@ -83,9 +83,10 @@ describe("No Delta Stream", () => {
         return container;
     }
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         loaderContainerTracker = new LoaderContainerTracker();
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
 
         // Create a Container for the first client.
         const container = await createContainer();

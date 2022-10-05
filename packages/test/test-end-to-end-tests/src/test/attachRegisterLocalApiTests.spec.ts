@@ -34,6 +34,9 @@ describeNoCompat(`Attach/Reference Api Tests For Attached Container`, (getTestOb
     let request: IRequest;
     let loader: Loader;
     const loaderContainerTracker = new LoaderContainerTracker();
+    beforeEach(function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
+    });
 
     const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
         `${name} should be ${attached ? "Attached" : "Detached"}`;

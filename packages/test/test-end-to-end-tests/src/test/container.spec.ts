@@ -74,6 +74,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container = await loader.createDetachedContainer(codeDetails);
         await container.attach(provider.driver.createCreateNewRequest("containerTest"));
     });
+    beforeEach(function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
+    });
     afterEach(() => {
         loaderContainerTracker.reset();
     });

@@ -166,6 +166,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     let loader: Loader;
     let request: IRequest;
     const loaderContainerTracker = new LoaderContainerTracker();
+    beforeEach(function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
+    });
 
     async function createDetachedContainerAndGetRootDataStore() {
         const container: IContainer = await loader.createDetachedContainer(codeDetails);
@@ -608,7 +611,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            await provider.ensureSynchronized(this.timeout() / 3);
+            await provider.ensureSynchronized();
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");

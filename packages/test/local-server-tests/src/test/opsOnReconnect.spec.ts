@@ -147,16 +147,16 @@ describe("Ops on Reconnect", () => {
         return container2Object1;
     }
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         urlResolver = new LocalResolver();
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         loaderContainerTracker = new LoaderContainerTracker();
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
 
         // Wait for the attach ops to get processed.
         await loaderContainerTracker.ensureSynchronized();
     });
-
     afterEach(() => {
         loaderContainerTracker.reset();
     });

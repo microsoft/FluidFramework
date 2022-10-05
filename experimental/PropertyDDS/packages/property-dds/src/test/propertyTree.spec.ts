@@ -84,8 +84,10 @@ function executePerPropertyTreeType(codeDetails: IFluidCodeDetails,
     describe("Local state", () => {
         let propertyTree;
 
-        beforeEach(async () => {
+        beforeEach(async function() {
             opProcessingController = new LoaderContainerTracker();
+            opProcessingController.setScaledDefaultWaitTimeout(this.timeout());
+
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             urlResolver = new LocalResolver();
 

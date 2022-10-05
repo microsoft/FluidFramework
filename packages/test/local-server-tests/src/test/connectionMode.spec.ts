@@ -91,10 +91,11 @@ describe("Logging Last Connection Mode ", () => {
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         loaderContainerTracker = new LoaderContainerTracker();
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
 
         // Create the first container, component and DDSes.
         container = await createContainer() as Container;

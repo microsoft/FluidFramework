@@ -95,16 +95,19 @@ const testDataObjectFactory = new DataObjectFactory(
 
 // REVIEW: enable compat testing?
 describeNoCompat("LocalLoader", (getTestObjectProvider) => {
-    let provider: ITestObjectProvider;
-    before(() => {
-        provider = getTestObjectProvider();
-    });
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
-
     const loaderContainerTracker = new LoaderContainerTracker();
+    beforeEach(function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
+    });
+
+    let provider: ITestObjectProvider;
+    before(() => {
+        provider = getTestObjectProvider();
+    });
 
     afterEach(() => {
         loaderContainerTracker.reset();

@@ -28,8 +28,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
     before(() => {
         provider = getTestObjectProvider();
     });
-
-    beforeEach(async () => {
+    beforeEach(async function() {
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
         const loader = new Loader({
             logger: provider.logger,
             urlResolver: provider.urlResolver,

@@ -214,6 +214,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
     processOutgoing(...containers: IContainer[]): Promise<void>;
     reset(): void;
     resumeProcessing(...containers: IContainer[]): IContainer[];
+    // (undocumented)
+    setDefaultWaitTimeout(timeoutMs: number): void;
+    // (undocumented)
+    setScaledDefaultWaitTimeout(testTimeout: number): void;
 }
 
 // @public
@@ -321,6 +325,8 @@ export class TestObjectProvider implements ITestObjectProvider {
     reset(): void;
     // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
+    setScaledDefaultWaitTimeout(timeout: number): void;
     // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     // (undocumented)

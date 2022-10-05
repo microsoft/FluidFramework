@@ -43,6 +43,11 @@ function createCompatSuite(
 
                     Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
+
+                beforeEach(function() {
+                    provider.setScaledDefaultWaitTimeout(this.timeout());
+                });
+
                 tests.bind(this)((options?: ITestObjectProviderOptions) => {
                     resetAfterEach = options?.resetAfterEach ?? true;
                     if (options?.syncSummarizer === true) {

@@ -74,10 +74,11 @@ describe("LocalTestServer", () => {
         return loader.resolve({ url: documentLoadUrl });
     }
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         urlResolver = new LocalResolver();
         loaderContainerTracker = new LoaderContainerTracker();
+        loaderContainerTracker.setScaledDefaultWaitTimeout(this.timeout());
 
         // Create a Container for the first client.
         container1 = await createContainer();
