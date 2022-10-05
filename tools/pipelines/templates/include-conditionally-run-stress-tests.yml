@@ -33,7 +33,7 @@ stages:
                 echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
               }
           displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
-          name: 'Check${{ package.testFileTarName }}'
+          name: 'Check${{ replace(replace(parameters.testFileTarName, '@', '' ), '/', '') }}'
 
   - ${{ each package in parameters.packages }}:
     - stage:
@@ -42,7 +42,7 @@ stages:
       jobs:
         - template: include-test-real-service.yml
           parameters:
-            condition: eq(dependencies.CheckAffectedPaths.Job.outputs['Check${{ package.testFileTarName }}.AffectedFilesModified'],'true')
+            condition: eq(dependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(replace(parameters.testFileTarName, '@', '' ), '/', '') }}.AffectedFilesModified'],'true')
             poolBuild: ${{ parameters.pool }}
             extraDependencies: mocha @fluid-internal/stochastic-test-utils
             testPackage: ${{ package.name }}
