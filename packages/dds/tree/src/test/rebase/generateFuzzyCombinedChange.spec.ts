@@ -40,6 +40,22 @@ describe("generateFuzzyCombinedChange", () => {
         assert.deepStrictEqual(change1, change2);
     });
 
+    it("consistent given the same seed 2", () => {
+        const change1 = generateFuzzyCombinedChange(
+            testRebaser,
+            generateRandomChange,
+            testSeed,
+            10,
+        );
+        const change2 = generateFuzzyCombinedChange(
+            testRebaser,
+            generateRandomChange,
+            testSeed,
+            10,
+        );
+        assert.deepStrictEqual(change1, change2);
+    });
+
     it("generates random combination of changes", () => {
         const change1 = generateFuzzyCombinedChange(
             testRebaser,
