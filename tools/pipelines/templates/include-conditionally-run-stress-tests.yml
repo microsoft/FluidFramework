@@ -13,7 +13,7 @@ parameters:
 
 - name: testCommand
   type: string
-  defualt: test:stress
+  default: test:stress
 
 - name: fuzzTestCount
   type: number
