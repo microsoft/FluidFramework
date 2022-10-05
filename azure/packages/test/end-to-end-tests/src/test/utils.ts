@@ -2,15 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IMember } from "fluid-framework";
+
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
-export const waitForMyself = async (audience: IAzureAudience): Promise<AzureMember> => {
+export const waitForMyself = async (
+    audience: IAzureAudience,
+    userId: string,
+): Promise<AzureMember> => {
     return new Promise((resolve) => {
-        const handler = (): void => {
-            const value = audience.getMyself();
-            if (value) {
-                resolve(value);
+        const handler = (clientId: string, member: IMember): void => {
+            if (member.userId === userId) {
+                resolve(member as AzureMember);
             }
         };
         audience.on("memberAdded", handler);

@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
+
+import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureClient } from "@fluidframework/azure-client";
+
 import { createAzureClient } from "./AzureClientFactory";
 import { waitForMyself } from "./utils";
 
@@ -17,7 +19,7 @@ describe("Fluid audience", () => {
     let schema: ContainerSchema;
 
     beforeEach(() => {
-        client = createAzureClient();
+        client = createAzureClient("test-user-id-1", "test-user-name-1");
         schema = {
             initialObjects: {
                 map1: SharedMap,
@@ -47,7 +49,7 @@ describe("Fluid audience", () => {
         );
 
         /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-        const myself = await waitForMyself(services.audience);
+        const myself = await waitForMyself(services.audience, "test-user-id-1");
         assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
 
         const members = services.audience.getMembers();
@@ -77,17 +79,17 @@ describe("Fluid audience", () => {
         );
 
         /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-        const originalSelf = await waitForMyself(services.audience);
+        const originalSelf = await waitForMyself(services.audience, "test-user-id-1");
         assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
-        const client2 = createAzureClient("test-id-2", "test-user-name-2");
+        const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
         const { services: servicesGet } = await client2.getContainer(containerId, schema);
+
+        const partner = await waitForMyself(servicesGet.audience, "test-user-id-2");
+        assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
         const members = servicesGet.audience.getMembers();
         assert.strictEqual(members.size, 2, "We should have two members at this point.");
-
-        const partner = servicesGet.audience.getMyself();
-        assert.notStrictEqual(partner, undefined, "We should have other-self at this point.");
 
         assert.notStrictEqual(
             partner?.userId,
@@ -111,8 +113,11 @@ describe("Fluid audience", () => {
             errorMsg: "container connect() timeout",
         });
 
-        const client2 = createAzureClient("test-id-2", "test-user-name-2");
+        const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
         const { services: servicesGet } = await client2.getContainer(containerId, schema);
+
+        const partner = await waitForMyself(servicesGet.audience, "test-user-id-2");
+        assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
         let members = servicesGet.audience.getMembers();
         assert.strictEqual(members.size, 2, "We should have two members at this point.");
