@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -15,9 +13,6 @@ import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
-
-// set the maximum timeout value as 5 mins
-const defaultMaxTimeout = 5 * 6000;
 
 interface ContainerRecord {
     // A short number for debug output
@@ -187,7 +182,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * - Trailing NoOp is tracked and don't count as pending ops.
      */
     private async processSynchronized(timeoutDuration: number | undefined, ...containers: IContainer[]) {
-        const start = Date.now();
         const resumed = this.resumeProcessing(...containers);
 
         let waitingSequenceNumberSynchronized = false;
@@ -214,14 +208,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
                         await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                             errorMsg: "Timeout on waiting for sequence number synchronized",
                         });
                     }
                 } else {
                     waitingSequenceNumberSynchronized = false;
                     await timeoutAwait(this.waitForPendingClients(pendingClients), {
-                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                         errorMsg: "Timeout on waiting for pending join or leave op",
                     });
                 }
@@ -230,12 +222,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout;
                 await Promise.all(dirtyContainers.map(async (c) => Promise.race(
                     [timeoutPromise(
                         (resolve) => c.once("saved", () => resolve()),
                         {
-                            durationMs: remainedDuration,
                             errorMsg: "Timeout on waiting a container to be saved",
                         },
                     ),
@@ -252,7 +242,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
             await timeoutAwait(this.pauseProcessing(...resumed), {
-                durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                 errorMsg: "Timeout on waiting for pausing all resumed containers",
             });
         }
