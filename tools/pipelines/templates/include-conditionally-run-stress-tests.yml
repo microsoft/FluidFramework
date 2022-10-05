@@ -30,7 +30,7 @@ parameters:
   default: Small
 
 jobs:
-  - template: templates/include-test-real-service.yml
+  - template: include-test-real-service.yml
     parameters:
       poolBuild: ${{ parameters.pool }}
       extraDependencies: mocha @fluid-internal/stochastic-test-utils
