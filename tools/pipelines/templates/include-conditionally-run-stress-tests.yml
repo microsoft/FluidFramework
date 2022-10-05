@@ -5,22 +5,8 @@
 # Checks if
 
 parameters:
-- name: testPackage
-  type: string
-
-- name: testFileTarName
-  type: string
-
-- name: testCommand
-  type: string
-  default: test:stress
-
-- name: fuzzTestCount
-  type: number
-  default: 1 # The test command may auto-inject how many fuzz tests to run.
-
-- name: affectedPaths
-  type: string
+- name: packages
+  type: object # { name, affectedPaths, testFileTarName, testCommand } all strings
 
 - name: testWorkspace
   type: string
@@ -29,33 +15,41 @@ parameters:
   type: object
   default: Small
 
-jobs:
+stages:
+  - stage: CheckAffectedPaths
+    displayName: Determine changed packages
+    jobs:
+    - job: Job
+      steps:
+      - ${{ each package in parameters.packages }}:
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: |
+              $changedfiles = git diff --name-only ${{ package.affectedPaths }}
+              Write-Host "Found the following files changed in ${{ package.affectedPaths }}:"
+              Write-Host $changedfiles
+              If ($changedfiles -ne $null)  {
+                echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
+              }
+          displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
+          name: 'Check${{ package.testFileTarName }}'
 
-  - job: CheckAffectedPaths
-    steps:
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: |
-          $changedfiles = git diff --name-only ${{ parameters.affectedPaths }}
-          Write-Host $changedfiles
-          If ($changedfiles -ne $null)  {
-            echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
-          }
-      name: 'DetermineIfRunNextJob'
-
-  - template: include-test-real-service.yml
-    parameters:
-      condition: eq(dependencies.CheckAffectedPaths.outputs['DetermineIfRunNextJob.AffectedFilesModified'],'true')
+  ${{ each package in parameters.packages }}:
+    - stage:
       dependsOn: CheckAffectedPaths
-      poolBuild: ${{ parameters.pool }}
-      extraDependencies: mocha @fluid-internal/stochastic-test-utils
-      testPackage: ${{ parameters.testPackage }}
-      testWorkspace: ${{ parameters.testWorkspace }}
-      timeoutInMinutes: 120
-      testFileTarName: ${{ parameters.testFileTarName }}
-      testCommand: ${{ parameters.testCommand }}
-      env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-        FUZZ_TEST_COUNT: ${{ parameters.fuzzTestCount }}
-        FUZZ_STRESS_RUN: true
+      displayName: Run stress tests - ${{ package.name }}
+      jobs:
+        - template: include-test-real-service.yml
+          parameters:
+            condition: eq(dependencies.CheckAffectedPaths.Job.outputs['Check${{ package.testFileTarName }}.AffectedFilesModified'],'true')
+            poolBuild: ${{ parameters.pool }}
+            extraDependencies: mocha @fluid-internal/stochastic-test-utils
+            testPackage: ${{ package.name }}
+            testWorkspace: ${{ parameters.testWorkspace }}
+            timeoutInMinutes: 120
+            testFileTarName: ${{ package.testFileTarName }}
+            testCommand: ${{ package.testCommand }}
+            env:
+              FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+              FUZZ_STRESS_RUN: true

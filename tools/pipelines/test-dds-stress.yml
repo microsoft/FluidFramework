@@ -23,24 +23,15 @@ variables:
   value: $(Pipeline.Workspace)/test
 
 stages:
-  - stage:
-    displayName:  Stress tests - SharedString
-    dependsOn: []
-    jobs:
-    - template: templates/include-conditionally-run-stress-tests.yml
-      parameters:
+  - template: templates/include-conditionally-run-stress-tests.yml
+    parameters:
+      packages:
+      - name: "@fluidframework/sequence"
         affectedPaths: packages/dds/sequence/*
-        testPackage: "@fluidframework/sequence"
-        testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: sequence
-
-  - stage:
-    displayName:  Stress tests - Legacy SharedTree
-    dependsOn: []
-    jobs:
-    - template: templates/include-conditionally-run-stress-tests.yml
-      parameters:
+        testCommand: test:stress
+      - name: "@fluid-experimental/tree"
         affectedPaths: experimental/dds/tree/*
-        testPackage: "@fluid-experimental/tree"
-        testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: experimental-tree
+        testCommand: test:stress
+      testWorkspace: ${{ variables.testWorkspace }}
