@@ -39,7 +39,7 @@ jobs:
         script: |
           $changedfiles = git diff --name-only ${{ parameters.affectedPaths }}
           Write-Host $changedfiles
-          If ($changedfiles -ne $null))  {
+          If ($changedfiles -ne $null)  {
             echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
           }
       name: 'DetermineIfRunNextJob'
