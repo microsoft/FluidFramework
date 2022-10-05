@@ -7,14 +7,19 @@ import { IMember } from "fluid-framework";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
-export const waitForMyself = async (
+export const waitForMember = async (
     audience: IAzureAudience,
     userId: string,
 ): Promise<AzureMember> => {
+    const allMembers = audience.getMembers();
+    const member = allMembers.get(userId);
+    if (member !== undefined) {
+        return member;
+    }
     return new Promise((resolve) => {
-        const handler = (clientId: string, member: IMember): void => {
-            if (member.userId === userId) {
-                resolve(member as AzureMember);
+        const handler = (clientId: string, newMember: IMember): void => {
+            if (newMember.userId === userId) {
+                resolve(newMember as AzureMember);
             }
         };
         audience.on("memberAdded", handler);

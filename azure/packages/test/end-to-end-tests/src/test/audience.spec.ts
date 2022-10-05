@@ -11,7 +11,7 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { createAzureClient } from "./AzureClientFactory";
-import { waitForMyself } from "./utils";
+import { waitForMember } from "./utils";
 
 describe("Fluid audience", () => {
     const connectTimeoutMs = 1000;
@@ -49,7 +49,7 @@ describe("Fluid audience", () => {
         );
 
         /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-        const myself = await waitForMyself(services.audience, "test-user-id-1");
+        const myself = await waitForMember(services.audience, "test-user-id-1");
         assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
 
         const members = services.audience.getMembers();
@@ -79,13 +79,14 @@ describe("Fluid audience", () => {
         );
 
         /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-        const originalSelf = await waitForMyself(services.audience, "test-user-id-1");
+        const originalSelf = await waitForMember(services.audience, "test-user-id-1");
         assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
         const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
         const { services: servicesGet } = await client2.getContainer(containerId, schema);
 
-        const partner = await waitForMyself(servicesGet.audience, "test-user-id-2");
+        /* This is a workaround for a known bug, we should have one member (self) upon container connection */
+        const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
         assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
         const members = servicesGet.audience.getMembers();
@@ -116,7 +117,8 @@ describe("Fluid audience", () => {
         const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
         const { services: servicesGet } = await client2.getContainer(containerId, schema);
 
-        const partner = await waitForMyself(servicesGet.audience, "test-user-id-2");
+        /* This is a workaround for a known bug, we should have one member (self) upon container connection */
+        const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
         assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
         let members = servicesGet.audience.getMembers();
