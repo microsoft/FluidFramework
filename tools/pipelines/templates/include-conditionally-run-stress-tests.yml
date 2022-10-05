@@ -35,21 +35,21 @@ stages:
           displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
           name: "Check${{ replace(replace(package.testFileTarName, '@', '' ), '/', '') }}"
 
-  - ${{ each package in parameters.packages }}:
-    - stage:
-      dependsOn: CheckAffectedPaths
-      displayName: Run stress tests - ${{ package.name }}
-      jobs:
-        - template: include-test-real-service.yml
-          parameters:
-            condition: eq(dependencies.CheckAffectedPaths.Job.outputs["Check${{ replace(replace(package.testFileTarName, '@', '' ), '/', '') }}.AffectedFilesModified"],'true')
-            poolBuild: ${{ parameters.pool }}
-            extraDependencies: mocha @fluid-internal/stochastic-test-utils
-            testPackage: ${{ package.name }}
-            testWorkspace: ${{ parameters.testWorkspace }}
-            timeoutInMinutes: 120
-            testFileTarName: ${{ package.testFileTarName }}
-            testCommand: ${{ package.testCommand }}
-            env:
-              FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-              FUZZ_STRESS_RUN: true
+  # - ${{ each package in parameters.packages }}:
+  #   - stage:
+  #     dependsOn: CheckAffectedPaths
+  #     displayName: Run stress tests - ${{ package.name }}
+  #     jobs:
+  #       - template: include-test-real-service.yml
+  #         parameters:
+  #           condition: eq(dependencies.CheckAffectedPaths.Job.outputs["Check${{ replace(replace(package.testFileTarName, '@', '' ), '/', '') }}.AffectedFilesModified"],'true')
+  #           poolBuild: ${{ parameters.pool }}
+  #           extraDependencies: mocha @fluid-internal/stochastic-test-utils
+  #           testPackage: ${{ package.name }}
+  #           testWorkspace: ${{ parameters.testWorkspace }}
+  #           timeoutInMinutes: 120
+  #           testFileTarName: ${{ package.testFileTarName }}
+  #           testCommand: ${{ package.testCommand }}
+  #           env:
+  #             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  #             FUZZ_STRESS_RUN: true
