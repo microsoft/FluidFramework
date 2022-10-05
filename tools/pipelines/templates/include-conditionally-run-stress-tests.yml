@@ -40,7 +40,7 @@ stages:
     - stage:
       dependsOn: CheckAffectedPaths
       condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
-      displayName: Run stress tests - ${{ package.name }}
+      displayName: Run ${{ package.name }} stress tests
       jobs:
         - template: include-test-real-service.yml
           parameters:
