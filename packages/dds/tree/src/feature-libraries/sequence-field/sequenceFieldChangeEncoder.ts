@@ -50,7 +50,8 @@ export function encodeForJson<TNodeChange>(
                 case "Tomb":
                     jsonMarks.push(mark as unknown as JsonCompatible);
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
@@ -91,7 +92,8 @@ export function decodeJson<TNodeChange>(
                 case "Tomb":
                     marks.push(mark);
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }

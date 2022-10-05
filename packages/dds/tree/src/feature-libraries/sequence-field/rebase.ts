@@ -41,7 +41,7 @@ export function rebase<TNodeChange>(
 
 export type NodeChangeRebaser<TNodeChange> = (
     change: TNodeChange,
-    baseChange: TNodeChange
+    baseChange: TNodeChange,
 ) => TNodeChange;
 
 function rebaseMarkList<TNodeChange>(
@@ -144,6 +144,7 @@ function rebaseMark<TNodeChange>(
             }
             return clone(currMark);
         }
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }

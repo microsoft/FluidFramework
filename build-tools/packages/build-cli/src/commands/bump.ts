@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { strict as assert } from "assert";
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
-import { bumpVersionScheme, ReleaseVersion } from "@fluid-tools/version-tools";
-// eslint-disable-next-line import/no-internal-modules
 import type { ArgInput } from "@oclif/core/lib/interfaces";
+import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, bumpVersionScheme } from "@fluid-tools/version-tools";
+
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
@@ -52,7 +53,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         },
     ];
 
-    /** An array of messages that will be shown after the command runs. */
+    /**
+     * An array of messages that will be shown after the command runs.
+     */
     private readonly finalMessages: string[] = [];
 
     public async run(): Promise<void> {
@@ -60,6 +63,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const flags = this.processedFlags;
 
         const context = await this.getContext();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const bumpType = flags.bumpType!;
         const scheme = flags.scheme;
         const shouldInstall = flags.install && !flags.skipChecks;
@@ -109,7 +113,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         this.logHr();
         this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
-        this.log(`Bump type: ${chalk.blue(flags.bumpType!)}`);
+        this.log(`Bump type: ${chalk.blue(bumpType)}`);
         this.log(`Versions: ${newVersion} <== ${repoVersion}`);
         this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
         this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);

@@ -5,17 +5,32 @@
 import { assert } from "@fluidframework/common-utils";
 import { Value, Anchor, rootFieldKey } from "../../tree";
 import {
-    IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
+    IEditableForest,
+    TreeNavigationResult,
+    mapCursorField,
+    ITreeSubscriptionCursor,
+    ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+    FieldSchema,
+    LocalFieldKey,
+    TreeSchemaIdentifier,
+    TreeSchema,
+    ValueSchema,
+    lookupGlobalFieldSchema,
+    lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,
     adaptWithProxy,
-    getFieldKind, getFieldSchema, getPrimaryField, isPrimitive, isPrimitiveValue, PrimitiveValue,
+    getFieldKind,
+    getFieldSchema,
+    getPrimaryField,
+    isPrimitive,
+    isPrimitiveValue,
+    PrimitiveValue,
 } from "./utilities";
 
 /**
@@ -60,7 +75,10 @@ export interface EditableTree {
      * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
      * @param nameOnly - if true, returns only the type identifier
      */
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [getTypeSymbol]: (
+        key?: string,
+        nameOnly?: boolean,
+    ) => TreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
      * Value stored on this node.
@@ -130,7 +148,10 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
  * Sequence multiplicities are handled with arrays.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField =
+    | UnwrappedEditableTree
+    | undefined
+    | readonly UnwrappedEditableTree[];
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -205,7 +226,7 @@ class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        const rootSchema = this.forest.schema.lookupGlobalFieldSchema(rootFieldKey);
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         return proxifyField(getFieldKind(rootSchema), targets);
     }
 }
@@ -214,10 +235,7 @@ class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(
-        public readonly context: ProxyContext,
-        cursor: ITreeSubscriptionCursor,
-    ) {
+    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
         context.withCursors.add(this);
     }
@@ -248,17 +266,24 @@ class ProxyTarget {
 
     public get cursor(): ITreeSubscriptionCursor {
         if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
-            assert(this.anchor !== undefined,
-                0x3c3 /* EditableTree should have an anchor if it does not have a cursor */);
+            assert(
+                this.anchor !== undefined,
+                0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
+            );
             const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
-            assert(result === TreeNavigationResult.Ok,
-                0x3c4 /* It is invalid to access an EditableTree node which no longer exists */);
+            assert(
+                result === TreeNavigationResult.Ok,
+                0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
+            );
             this.context.withCursors.add(this);
         }
         return this.lazyCursor;
     }
 
-    public getType(key?: string, nameOnly?: boolean): TreeSchemaIdentifier | TreeSchema | undefined {
+    public getType(
+        key?: string,
+        nameOnly?: boolean,
+    ): TreeSchemaIdentifier | TreeSchema | undefined {
         let typeName = this.cursor.type;
         if (key !== undefined) {
             const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
@@ -269,7 +294,7 @@ class ProxyTarget {
             return typeName;
         }
         if (typeName) {
-            return this.context.forest.schema.lookupTreeSchema(typeName);
+            return lookupTreeSchema(this.context.forest.schema, typeName);
         }
         return undefined;
     }
@@ -321,7 +346,11 @@ class ProxyTarget {
         // Lookup the schema:
         const fieldKind = this.lookupFieldKind(key);
         // Make the childTargets:
-        const childTargets = mapCursorField(this.cursor, brand(key), (c) => new ProxyTarget(this.context, c));
+        const childTargets = mapCursorField(
+            this.cursor,
+            brand(key),
+            (c) => new ProxyTarget(this.context, c),
+        );
         return proxifyField(fieldKind, childTargets);
     }
 
@@ -357,13 +386,18 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
                 return target;
             }
             case anchorSymbol: {
-                return target.getAnchor()
+                return target.getAnchor();
             }
             default:
                 return undefined;
         }
     },
-    set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
+    set: (
+        target: ProxyTarget,
+        key: string | symbol,
+        setValue: unknown,
+        receiver: ProxyTarget,
+    ): boolean => {
         throw new Error("Not implemented.");
     },
     deleteProperty: (target: ProxyTarget, key: string | symbol): boolean => {
@@ -375,8 +409,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             switch (key) {
                 case proxyTargetSymbol:
                 case getTypeSymbol:
-                // Currently not supporting iteration over fields.
-                // case Symbol.iterator:
+                    // Currently not supporting iteration over fields.
+                    // case Symbol.iterator:
                     return true;
                 case valueSymbol:
                     // Could do `target.value !== ValueSchema.Nothing`
@@ -408,7 +442,10 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     ownKeys: (target: ProxyTarget): string[] => {
         return target.getKeys();
     },
-    getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
+    getOwnPropertyDescriptor: (
+        target: ProxyTarget,
+        key: string | symbol,
+    ): PropertyDescriptor | undefined => {
         // We generally don't want to allow users of the proxy to reconfigure all the properties,
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
@@ -417,7 +454,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             if (key === proxyTargetSymbol) {
                 return { configurable: true, enumerable: false, value: target, writable: false };
             } else if (key === getTypeSymbol) {
-                return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.getType.bind(target),
+                    writable: false,
+                };
             }
         } else if (target.has(key)) {
             return {
@@ -441,12 +483,18 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
         if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
         }
-        assert(fieldSchema.value === ValueSchema.Serializable,
-            0x3c7 /* `undefined` values not allowed for primitive fields */);
+        assert(
+            fieldSchema.value === ValueSchema.Serializable,
+            0x3c7 /* `undefined` values not allowed for primitive fields */,
+        );
     }
     const primary = target.getPrimaryArrayKey();
     if (primary !== undefined) {
-        const childTargets = mapCursorField(target.cursor, primary, (c) => new ProxyTarget(target.context, c));
+        const childTargets = mapCursorField(
+            target.cursor,
+            primary,
+            (c) => new ProxyTarget(target.context, c),
+        );
         return childTargets.map(inProxyOrUnwrap);
     }
     return adaptWithProxy(target, handler);
