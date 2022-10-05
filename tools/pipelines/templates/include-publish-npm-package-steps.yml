@@ -100,7 +100,7 @@ steps:
           echo "Extract File Name I: " $checkVersion
 
           checkVersion=${checkVersion:0:-4}
-          checkVersion=$(echo $checkVersion | sed -r "s/[*]{3}/fluid/g")
+          checkVersion=$(echo ${checkVersion//"***"/fluid})
 
           echo "Extract File Name II: " $checkVersion
 
@@ -124,7 +124,7 @@ steps:
           echo "1----------------------------------"
 
           npm view @fluidframework/tinylicious-client@1.0.0-96564-test 2>&1 | tee publishError_log
-          if grep -q "npm ERR!" "publishError_log"
+          if grep -q "npm ERR! code E404" "publishError_log"
           then
             echo "Error Raised"
           fi
