@@ -17,28 +17,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 # 2.0.0-internal.1.3.0
 
-## 2.0.0-internal.1.3.0 Upcoming changes
-- [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
-
-### Add fluidInvalidSchema errorType to DriverErrorType enum
-Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
-was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
-This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
-
-# 2.0.0-internal.1.1.0
-
-## 2.0.0-internal.1.1.0 Upcoming changes
+## 3.0.0 Upcoming changes
+- [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
+- [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
+- [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+- [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
+- [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
+- [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
-- [Remove type field from ShareLinkInfoType](#Remove-type-field-from-ShareLinkInfoType)
-- [Remove ShareLinkTypes interface](#Remove-ShareLinkTypes-interface)
-- [Remove enableShareLinkWithCreate from HostStoragePolicy](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
-- [Various return types in @fluidframework/sequence have been widened to include undefined](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 
-
-### Add assertion that prevents sending op while processing another op
-`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
-
-### Remove type field from ShareLinkInfoType
+### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
 ### Remove ShareLinkTypes interface
@@ -53,19 +41,150 @@ This field has been deprecated and will be removed in a future breaking change. 
 +       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
     ):
 ```
-### Remove enableShareLinkWithCreate from HostStoragePolicy
+
+### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 
-# 2.0.0-internal.1.0.0
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
 
-## 2.0.0-internal.1.0.0 Upcoming changes
+# 2.0.0
+
+### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
+`ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
+```diff
+    async refreshLatestSummaryAck(
+-       proposalHandle: string | undefined,
+-       ackHandle: string,
+-       summaryRefSeq: number,
+-       summaryLogger: ITelemetryLogger,
++       options: IRefreshSummaryAckOptions,
+    ):
+```
+
+### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
+The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
+
+### IFluidContainerEvents event naming correction
+Renamed **dispose** to **disposed** to better communicate the state and align with currently emitted event.
+It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
+
+## 3.0.0 Breaking changes
+- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
+- [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
+- [Remove `ScheduleManager` and `DeltaScheduler`](#remove-schedulemanager-and-deltascheduler)
+
+### Remove ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Remove `IContainerRuntime.flush`
+`IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### Remove `ScheduleManager` and `DeltaScheduler`
+`ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+# 2.0.0
+
+## 2.0.0 Upcoming changes
+- [Remove `ConnectionState.Connecting`](#remove-connectionstateconnecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
-- [IContainerRuntime.flush is deprecated](#icontainerruntimeflush-is-deprecated)
-- [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
-- [Remove documentId field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
-- [getTextAndMarkers changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
+- [Remove IFluidDataStoreChannel.
+bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+- [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
+- [Marker.toString simplified](#markertostring-simplified)
+- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+- [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [waitIntervalCollection removed](#waitintervalcollection-removed)
+- [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
+- [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
+- [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
+- [Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager](renamed-lockTask-to-volunteerForTask-from-@fluid-experimental/task-manager)
+- [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)
+
+###  Update to React 17
+The following packages use React and thus were impacted:
+- @fluidframework/view-adapters
+- @fluid-tools/webpack-fluid-loader
+- @fluid-experimental/react-inputs
+- @fluid-experimental/property-inspector-table
+
+Users of these packages may need to update to React 17, and/or take other action to ensure compatibility.
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
+
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
+`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+### IntervalCollection event semantics changed
+
+The semantics of events emitted by IntervalCollection were changed to be more consistent:
+
+- propertyChanged events receive the same "isLocal" and op information that other events received
+- changeInterval events will no longer take place for changes that impact an interval's properties only. Clients that need to perform work on such changes should listen to "propertyChanged" events instead.
+- For local changes, changeInterval events will only be emitted on initial application of the change (as opposed to the
+  previous behavior, which fired an event on the local application of a change as well as on server ack of that change))
+- changeInterval events now receive information about the interval's previous position.
+- addInterval and deleteInterval event handler now properly reflects that the `op` argument can be undefined. This was true
+  before, but not reflected in the type system.
+
+More details can be found on `IIntervalCollectionEvent`'s doc comment.
+
+### Remove TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove ConnectionState.Connecting
+`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+
+### Remove ISummaryAuthor and ISummaryCommitter
+`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
+
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+
+### Remove `aliasing` return value from `AliasResult`
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -120,55 +239,43 @@ The functions affected are:
  - `SubSequence.createSplitSegmentAt`
  - `SubSequence.fromJSONObject`
 
+### MergeTree class no longer exported
+    The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
-## 2.0.0-internal.1.0.0 Breaking changes
-- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
-- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
-- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
-- [Narrow type of clientId field on MockFluidDataStoreRuntime](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-- [REVERTED: ~~Remove IFluidDataStoreChannel.bindToContext and related types~~](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
-- [Remove aliasing return value from AliasResult](#remove-aliasing-return-value-from-aliasresult)
-- [Creating root datastores using IContainerRuntime.CreateRootDataStore and IContainerRuntimeBase._createDataStoreWithProps is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
+### Marker.toString simplified
 
+In merge-tree, Marker's string representation returned by `toString` was simplified.
+This new representation is used in the return value of `SharedString.getTextRangeWithMarkers`.
+The previous logic was moved to the public export `debugMarkerToString`.
 
-### LocalReference class and method deprecations removed
-In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
-The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
-The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
- - createPositionReference to createLocalReferencePosition
- - addLocalReference to createLocalReferencePosition
- - localRefToPos to localReferencePositionToPosition
- - removeLocalReference to removeLocalReferencePosition
+### `getTextAndMarkers` changed to be a free function
 
-### Remove TelemetryDataTag.PackageData
-`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
 
-### Remove ConnectionState.Connecting
-`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+### `waitIntervalCollection` removed
 
-### Remove ICodeLoader from @fluidframework/container-definitions
-`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
+`SharedSegmentSequence.waitIntervalCollection` has been removed.
+Use `getIntervalCollection` instead, which has the same semantics but is synchronous.
 
-### Remove ISummaryAuthor and ISummaryCommitter
-`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
-
-### Narrow type of clientId field on MockFluidDataStoreRuntime
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
-
-### Remove IFluidDataStoreChannel.bindToContext and related types
-**THIS BREAKING CHANGE IS REVERTED AS OF 2.0.0-internal.1.1.3**
-
-~~`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
-See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.~~
-
-### Remove aliasing return value from AliasResult
-The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
+The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
 
 ### Creating root datastores using IContainerRuntime.CreateRootDataStore and IContainerRuntimeBase._createDataStoreWithProps is no longer supported
 The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
+
+### Remove deprecated data structures from `@fluidframework/sequence`
+`SharedNumberSequence`, `SharedObjectSequence`, and `SharedMatrix` have been removed from `@fluidframework/sequence`. They are currently still available in `@fluid-experimental/sequence-deprecated.
+
+### Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager
+`TaskManager.lockTask()` has been renamed `volunteerForTask()` and now returns a `Promise<boolean>` instead of a `Promise<void>`. Please update all usages accordingly.
+
+### Renamed haveTaskLock to assigned from @fluid-experimental/task-manager
+`TaskManager.haveTaskLock()` has been renamed `assigned()`. Please update all usages accordingly.
 
 # 1.2.0
 
