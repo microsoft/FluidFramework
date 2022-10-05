@@ -49,11 +49,11 @@ stages:
             condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
             poolBuild: ${{ parameters.pool }}
             extraDependencies: mocha cross-env @fluid-internal/stochastic-test-utils @fluidframework/mocha-test-setup
+            loggerPackage: ''
             testPackage: ${{ package.name }}
             testWorkspace: ${{ parameters.testWorkspace }}
             timeoutInMinutes: 120
             testFileTarName: ${{ package.testFileTarName }}
             testCommand: ${{ package.testCommand }}
             env:
-              FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
               FUZZ_STRESS_RUN: true

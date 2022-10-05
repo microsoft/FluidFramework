@@ -9,7 +9,6 @@ import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree, Payl
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
 import { assert, fail, Mutable } from './Common';
 
-// Mock change to force stress tests to run
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.
  */

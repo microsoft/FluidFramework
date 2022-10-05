@@ -14,7 +14,6 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - test/absander/*
       - release/*
       - main
       - next
