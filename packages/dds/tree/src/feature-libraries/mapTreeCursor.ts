@@ -15,8 +15,8 @@ import {
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
-* @returns an ITreeCursorSynchronous for a single MapTree.
-*/
+ * @returns an ITreeCursorSynchronous for a single MapTree.
+ */
 export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
     return singleStackTreeCursor(root, adapter);
 }

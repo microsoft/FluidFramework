@@ -53,7 +53,10 @@ enum Operation {
  * @param pathGenerator - Generator of random path.
  * @returns Randomly generated change.
  */
-export function generateRandomChange(seed: number, pathGenerator: (seed: number) => UpPath): T.LocalChangeset {
+export function generateRandomChange(
+    seed: number,
+    pathGenerator: (seed: number) => UpPath,
+): T.LocalChangeset {
     const random = makeRandom(seed);
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const operation = random.integer(Operation.SetValue, Operation.Insert) as Operation;
@@ -67,7 +70,10 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
         case Operation.Insert:
             builder.insert(
                 pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
-                singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
+                singleTextCursor({
+                    type: jsonNumber.name,
+                    value: random.integer(0, Number.MAX_SAFE_INTEGER),
+                }),
             );
             break;
         case Operation.Delete:
@@ -76,7 +82,8 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
                 random.integer(1, 10),
             );
             break;
-        default: unreachableCase(operation);
+        default:
+            unreachableCase(operation);
     }
 
     return builder.getChanges()[0];

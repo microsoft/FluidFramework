@@ -528,6 +528,10 @@ DESCRIPTION
   Using the --all flag, you can list all the releases for a given release group or package.
 
 EXAMPLES
+  Output all release report files to the current directory.
+
+    $ flub release report -o .
+
   Generate a minimal release report and display it in the terminal.
 
     $ flub release report
@@ -535,14 +539,6 @@ EXAMPLES
   Generate a minimal release report and output it to stdout as JSON.
 
     $ flub release report --json
-
-  Output a release report to 'report.json'.
-
-    $ flub release report -o report.json
-
-  Output a full release report to 'report.json'.
-
-    $ flub release report -f -o report.json
 
   List all the releases of the azure release group.
 

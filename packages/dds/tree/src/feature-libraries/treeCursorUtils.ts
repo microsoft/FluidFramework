@@ -4,21 +4,16 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    FieldKey,
-    TreeType,
-    UpPath,
-    CursorLocationType,
-    ITreeCursorSynchronous,
-} from "../tree";
+import { FieldKey, TreeType, UpPath, CursorLocationType, ITreeCursorSynchronous } from "../tree";
 import { fail } from "../util";
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  */
 export function singleStackTreeCursor<TNode>(
-        root: TNode,
-        adapter: CursorAdapter<TNode>): ITreeCursorSynchronous {
+    root: TNode,
+    adapter: CursorAdapter<TNode>,
+): ITreeCursorSynchronous {
     return new StackCursor(root, adapter);
 }
 
@@ -165,7 +160,9 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
     }
 
     public get mode(): CursorLocationType {
-        return this.siblingStack.length % 2 === 0 ? CursorLocationType.Nodes : CursorLocationType.Fields;
+        return this.siblingStack.length % 2 === 0
+            ? CursorLocationType.Nodes
+            : CursorLocationType.Fields;
     }
 
     public nextField(): boolean {
@@ -196,8 +193,8 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
         if (this.index in this.siblings) {
             return true;
         }
-            this.exitNode();
-            return false;
+        this.exitNode();
+        return false;
     }
 
     public firstNode(): boolean {

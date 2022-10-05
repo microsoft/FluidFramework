@@ -5,10 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    IAnyDriverError,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError, IAnyDriverError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClientConfiguration,

@@ -17,15 +17,19 @@ import {
 } from "../../tree";
 import { CursorAdapter, singleStackTreeCursor } from "../../feature-libraries";
 import {
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonString,
 } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {
     value: (node: JsonCompatible) =>
-        typeof (node) === "object"
-            ? undefined     // null, arrays, and objects have no defined value
-            : node         // boolean, numbers, and strings are their own value
-    ,
+        typeof node === "object"
+            ? undefined // null, arrays, and objects have no defined value
+            : node, // boolean, numbers, and strings are their own value
     type: (node: JsonCompatible) => {
         const type = typeof node;
 
@@ -57,7 +61,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
                     return Object.keys(node as object) as FieldKey[];
                 }
             default:
-               return [];
+                return [];
         }
     },
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
@@ -68,14 +72,14 @@ const adapter: CursorAdapter<JsonCompatible> = {
         const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
         return field === undefined ? [] : [field];
     },
-}
+};
 
 /**
  * Used to read a Jsonable tree for testing and benchmarking.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */
- export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
+export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
     return singleStackTreeCursor(root as JsonCompatible, adapter);
 }
 

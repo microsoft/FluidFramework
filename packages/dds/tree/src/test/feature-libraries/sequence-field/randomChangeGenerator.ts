@@ -36,13 +36,14 @@ export function generateRandomChange(
         case Operation.Insert:
             return builder.insert(
                 random.integer(0, maxIndex),
-                singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
+                singleTextCursor({
+                    type: jsonNumber.name,
+                    value: random.integer(0, Number.MAX_SAFE_INTEGER),
+                }),
             );
         case Operation.Delete:
-            return builder.delete(
-                random.integer(0, maxIndex),
-                random.integer(1, 10),
-            );
-        default: unreachableCase(operation);
+            return builder.delete(random.integer(0, maxIndex), random.integer(1, 10));
+        default:
+            unreachableCase(operation);
     }
 }

@@ -11,133 +11,129 @@ export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 
-export type Mark<TNodeChange = NodeChangeType> =
-	| SizedMark<TNodeChange>
-	| Attach<TNodeChange>;
+export type Mark<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
 
 export type ObjectMark<TNodeChange = NodeChangeType> =
-	| SizedObjectMark<TNodeChange>
-	| Attach<TNodeChange>;
+    | SizedObjectMark<TNodeChange>
+    | Attach<TNodeChange>;
 
-export type SizedMark<TNodeChange = NodeChangeType> =
-	| Skip
-	| SizedObjectMark<TNodeChange>;
+export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
-	| Tomb
-	| Modify<TNodeChange>
-	| Detach
-	| Reattach
-	| ModifyReattach<TNodeChange>
-	| ModifyDetach<TNodeChange>;
+    | Tomb
+    | Modify<TNodeChange>
+    | Detach
+    | Reattach
+    | ModifyReattach<TNodeChange>
+    | ModifyDetach<TNodeChange>;
 
 export interface Tomb {
-	type: "Tomb";
-	change: ChangesetTag;
-	count: number;
+    type: "Tomb";
+    change: ChangesetTag;
+    count: number;
 }
 
 export interface Modify<TNodeChange = NodeChangeType> {
-	type: "Modify";
-	tomb?: ChangesetTag;
-	changes: TNodeChange;
+    type: "Modify";
+    tomb?: ChangesetTag;
+    changes: TNodeChange;
 }
 
 export interface HasPlaceFields {
-	/**
-	 * Describes which kinds of concurrent slice operations should affect the target place.
-	 *
-	 * The tuple allows this choice to be different for concurrent slices that are sequenced
-	 * either before (`heed[0]`) or after (`heed[1]`). For example, multiple concurrent updates
-	 * of a sequence with last-write-wins semantics would use a slice-delete over the whole
-	 * sequence, and an insert with the `heed` value `[Effects.None, Effects.All]`.
-	 *
-	 * When the value for prior and ulterior concurrent slices is the same, that value can be
-	 * used directly instead of the corresponding tuple.
-	 *
-	 * Omit if `Effects.All` for terseness.
-	 */
-	heed?: Effects | [Effects, Effects];
+    /**
+     * Describes which kinds of concurrent slice operations should affect the target place.
+     *
+     * The tuple allows this choice to be different for concurrent slices that are sequenced
+     * either before (`heed[0]`) or after (`heed[1]`). For example, multiple concurrent updates
+     * of a sequence with last-write-wins semantics would use a slice-delete over the whole
+     * sequence, and an insert with the `heed` value `[Effects.None, Effects.All]`.
+     *
+     * When the value for prior and ulterior concurrent slices is the same, that value can be
+     * used directly instead of the corresponding tuple.
+     *
+     * Omit if `Effects.All` for terseness.
+     */
+    heed?: Effects | [Effects, Effects];
 
-	/**
-	 * Omit if `Tiebreak.Right` for terseness.
-	 */
-	tiebreak?: Tiebreak;
+    /**
+     * Omit if `Tiebreak.Right` for terseness.
+     */
+    tiebreak?: Tiebreak;
 }
 
 export interface GapEffectPolicy {
-	/**
-	 * When `true`, if a concurrent insertion that is sequenced before the range operation falls
-	 * within the bounds of the range, then the inserted content will *not* be included in the
-	 * range and therefore will *not* be affected by the operation performed on the range.
-	 *
-	 * Defaults to false.
-	 */
-	excludePriorInsertions?: true;
-	/**
-	 * When `true`, if a concurrent insertion that is sequenced after the range operation falls
-	 * within the bounds of the range, then the inserted content will be included in the range and
-	 * therefore will be affected by the operation performed on the range, unless that insertion
-	 * stipulates that it is not commutative with respect to the range operation.
-	 *
-	 * Defaults to false.
-	 */
-	includePosteriorInsertions?: true;
+    /**
+     * When `true`, if a concurrent insertion that is sequenced before the range operation falls
+     * within the bounds of the range, then the inserted content will *not* be included in the
+     * range and therefore will *not* be affected by the operation performed on the range.
+     *
+     * Defaults to false.
+     */
+    excludePriorInsertions?: true;
+    /**
+     * When `true`, if a concurrent insertion that is sequenced after the range operation falls
+     * within the bounds of the range, then the inserted content will be included in the range and
+     * therefore will be affected by the operation performed on the range, unless that insertion
+     * stipulates that it is not commutative with respect to the range operation.
+     *
+     * Defaults to false.
+     */
+    includePosteriorInsertions?: true;
 }
 
 export interface Insert extends HasOpId, HasPlaceFields {
-	type: "Insert";
-	content: ProtoNode[];
+    type: "Insert";
+    content: ProtoNode[];
 }
 
 export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
-	type: "MInsert";
-	content: ProtoNode;
-	changes: TNodeChange;
+    type: "MInsert";
+    content: ProtoNode;
+    changes: TNodeChange;
 }
 
 export interface MoveIn extends HasOpId, HasPlaceFields {
-	type: "MoveIn";
-	/**
-	 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
-	 */
-	count: NodeCount;
+    type: "MoveIn";
+    /**
+     * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
+     */
+    count: NodeCount;
 }
 
 export interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
-	type: "MMoveIn";
-	changes: TNodeChange;
+    type: "MMoveIn";
+    changes: TNodeChange;
 }
 
 export type Attach<TNodeChange = NodeChangeType> =
-	| Insert
-	| ModifyInsert<TNodeChange>
-	| MoveIn
-	| ModifyMoveIn<TNodeChange>;
+    | Insert
+    | ModifyInsert<TNodeChange>
+    | MoveIn
+    | ModifyMoveIn<TNodeChange>;
 
 export type NodeMark = Detach | Reattach;
 
 export interface Detach extends HasOpId {
-	tomb?: ChangesetTag;
-	type: "Delete" | "MoveOut";
-	count: NodeCount;
+    tomb?: ChangesetTag;
+    type: "Delete" | "MoveOut";
+    count: NodeCount;
 }
 
 export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
-	type: "MDelete" | "MMoveOut";
-	tomb?: ChangesetTag;
-	changes: TNodeChange;
+    type: "MDelete" | "MMoveOut";
+    tomb?: ChangesetTag;
+    changes: TNodeChange;
 }
 
 export interface Reattach extends HasOpId {
-	type: "Revive" | "Return";
-	tomb: ChangesetTag;
-	count: NodeCount;
+    type: "Revive" | "Return";
+    tomb: ChangesetTag;
+    count: NodeCount;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
-	type: "MRevive" | "MReturn";
-	tomb: ChangesetTag;
-	changes: TNodeChange;
+    type: "MRevive" | "MReturn";
+    tomb: ChangesetTag;
+    changes: TNodeChange;
 }
 
 /**
@@ -150,31 +146,31 @@ export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
  * field.
  */
 export interface Tombstones {
-	count: NodeCount;
-	change: ChangesetTag;
+    count: NodeCount;
+    change: ChangesetTag;
 }
 
 export interface PriorOp {
-	change: ChangesetTag;
-	id: OpId;
+    change: ChangesetTag;
+    id: OpId;
 }
 
 export interface HasLength {
-	/**
-	 * Omit if 1.
-	 */
-	length?: number;
+    /**
+     * Omit if 1.
+     */
+    length?: number;
 }
 
 export interface TreeForestPath {
-	[label: string]: TreeRootPath;
+    [label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeForestPath; };
+export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
-	Set = "Set",
-	Slice = "Slice",
+    Set = "Set",
+    Slice = "Slice",
 }
 
 /**
@@ -187,10 +183,10 @@ export enum RangeType {
 export type OpId = number;
 
 export interface HasOpId {
-	/**
-	 * The sequential ID assigned to a change within a transaction.
-	 */
-	id: OpId;
+    /**
+     * The sequential ID assigned to a change within a transaction.
+     */
+    id: OpId;
 }
 
 /**
@@ -203,10 +199,13 @@ export type GapCount = number;
 export type Skip = number;
 export type ChangesetTag = number | string;
 export type ClientId = number;
-export enum Tiebreak { Left, Right }
+export enum Tiebreak {
+    Left,
+    Right,
+}
 export enum Effects {
-	All = "All",
-	Move = "Move",
-	Delete = "Delete",
-	None = "None",
+    All = "All",
+    Move = "Move",
+    Delete = "Delete",
+    None = "None",
 }
