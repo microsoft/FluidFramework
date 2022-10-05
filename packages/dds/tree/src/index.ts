@@ -17,6 +17,7 @@ export {
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
+    AnchorLocator
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -33,7 +34,7 @@ export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataAndPolicy,
 } from "./schema-stored";
 
 export {
@@ -77,8 +78,8 @@ export {
 export {
     cursorToJsonObject,
     JsonCursor,
-    jsonTypeSchema,
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonSchemaData,
 } from "./domains";
 
 export {
@@ -116,7 +117,6 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
-    getEditableTree,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,

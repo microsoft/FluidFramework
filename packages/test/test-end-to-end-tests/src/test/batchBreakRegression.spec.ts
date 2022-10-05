@@ -12,6 +12,7 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -254,7 +255,10 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
 
         itExpects.skip("force nack",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -284,14 +288,17 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });
     describe("server sends invalid batch", () => {
         itExpects("interleave system message",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -345,7 +352,7 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });

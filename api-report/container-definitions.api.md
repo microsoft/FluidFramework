@@ -78,8 +78,7 @@ export interface IAudience extends EventEmitter {
 
 // @public
 export interface IAudienceOwner extends IAudience {
-    addMember(clientId: string, details: IClient): any;
-    clear(): any;
+    addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
 }
 

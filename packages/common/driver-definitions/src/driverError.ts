@@ -85,9 +85,15 @@ export enum DriverErrorType {
     locationRedirection = "locationRedirection",
 
     /**
+     * When a file is not a Fluid file, but has Fluid extension such as ".note",
+     * server won't be able to open it and will return this error. The innerMostErrorCode will be
+     * "fluidInvalidSchema"
+     */
+    fluidInvalidSchema = "fluidInvalidSchema",
+    /**
      * Error indicating an API is being used improperly resulting in an invalid operation.
      * ! Should match the value of ContainerErrorType.usageError
-     */
+    */
     usageError = "usageError",
 }
 
@@ -143,6 +149,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
     | DriverErrorType.fileOverwrittenInStorage
+    | DriverErrorType.fluidInvalidSchema
     | DriverErrorType.usageError;
     readonly statusCode?: number;
 }

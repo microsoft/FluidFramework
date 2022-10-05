@@ -61,6 +61,21 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
+/**
+ * FluidInvalidSchema error class.
+ */
+ export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
+    }
+}
+
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     readonly errorType = DeltaStreamConnectionForbiddenError.errorType;

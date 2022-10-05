@@ -622,16 +622,37 @@ export class IdCompressor {
 						// Example with cluster size of 3:
 						// Ids generated so far:   -1  1  2 -4 -5  <-- note positive numbers are eager finals
 						//         Cluster:      [  0  1  2 ]
-						// ~ finalizing happens, causing expansion ~
-						//        Cluster:       [  0  1  2  3  4  5 ]
-						// corresponding locals:   -1       -4
-						//      lastFinalizedLocalId^              ^newLastFinalizedLocalId = -6
+						// ~ finalizing happens, causing expansion of 2 (overflow) + 3 (cluster capacity) ~
+						//        Cluster:       [  0  1  2  3  4  _  _  _ ]
+						// corresponding locals:   -1       -4 -5
+						//      lastFinalizedLocalId^           ^newLastFinalizedLocalId = -5
 						//                  overflow = 2:    ----
 						//                       localIdPivot^
 						//                    lastFinalizedFinal^
-						const lastFinalizedFinal = (currentBaseFinalId + currentCluster.count - 1) as FinalCompressedId;
-						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
-						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
+						const newLastFinalizedFinal = (currentBaseFinalId +
+							currentCluster.count -
+							1) as FinalCompressedId;
+						assert(
+							session.lastFinalizedLocalId !== undefined,
+							'Cluster already exists for session but there is no finalized local ID'
+						);
+						const newLastFinalizedLocal = session.lastFinalizedLocalId - finalizeCount;
+						const lastLocal = -this.localIdCount;
+						// Calculate the last final in the cluster that aligns with an existing local. If there are more unfinalized locals
+						// than fit in the expanded cluster, this will be the last final in the cluster
+						const newLastFinal = (newLastFinalizedFinal +
+							Math.min(newLastFinalizedLocal - lastLocal, this.newClusterCapacity)) as FinalCompressedId;
+						assert(
+							newLastFinal >= newLastFinalizedFinal,
+							'The number of unfinalized locals should only be positive'
+						);
+						const finalPivot = (newLastFinalizedFinal - overflow + 1) as FinalCompressedId;
+						// Inform the normalizer of all IDs that we now know will end up being finalized into this cluster, including the ones
+						// that were given out as locals (non-eager) because they exceeded the bounds of the current cluster before it was expanded.
+						// It is safe to associate the unfinalized locals with their future final IDs even before the ranges for those locals are
+						// actually finalized, because total order broadcast guarantees that any usage of those final IDs will be observed after
+						// the finalization of the ranges.
+						this.sessionIdNormalizer.addFinalIds(finalPivot, newLastFinal, currentCluster);
 						this.logger?.sendTelemetryEvent({
 							eventName: 'IdCompressor:ClusterExpansion',
 							sessionId: this.localSessionId,

@@ -638,8 +638,6 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
     return outputSentences;
 }
 
-/* eslint-disable max-len, quote-props */
-
 // Returns a MarkovChain for prediciting the text field of TwitterJson. The Chain is compatible with the SpaceEfficientWordMarkovChain Class
 export function getTwitterJsonTextFieldWordMarkovChain(): Record<string, [string, number][]> {
     return {
@@ -26402,5 +26400,3 @@ export function getTwitterJsonUserDescFieldWordMarkovChain(): Record<string, [st
         ],
     };
 }
-
-/* eslint-enable */
