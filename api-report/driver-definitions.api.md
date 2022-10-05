@@ -69,6 +69,9 @@ export enum FetchSource {
 }
 
 // @public (undocumented)
+export type FiveDaysMs = 432000000;
+
+// @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -174,7 +177,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: TwoDaysMs;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 
@@ -294,9 +297,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
-// @public (undocumented)
-export type TwoDaysMs = 172800000;
 
 // (No @packageDocumentation comment for this package)
 

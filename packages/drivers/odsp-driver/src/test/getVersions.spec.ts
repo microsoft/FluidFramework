@@ -9,7 +9,7 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { EpochTracker, maximumCacheDurationMs } from "../epochTracker";
+import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
     IOdspSnapshot,
     HostStoragePolicyInternal,
@@ -213,7 +213,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
             const version = await mockFetchSingle(
                 async () => service.getVersions(null, 1),
@@ -232,7 +232,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
             await assert.rejects(async () => {
                 await mockFetchSingle(

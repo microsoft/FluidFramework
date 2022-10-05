@@ -23,7 +23,7 @@ import {
     IOdspErrorAugmentations,
     IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     PerformanceEvent,
     isFluidError,
@@ -48,8 +48,8 @@ export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
 
-export const maximumCacheDurationMs: Exclude<IDocumentStorageServicePolicies["maximumCacheDurationMs"], undefined>
-    = 172800000; // 2 * 24 * 60 * 60 * 1000 = 2 days in ms;
+// Must be less than policy of 5 days
+export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -74,11 +74,11 @@ export class EpochTracker implements IPersistedFileCache {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
 
-        // Matches the logic for the policy defined in odspDocumentStorageServiceBase.ts
+        // Matches the TestOverride logic for the policy defined in odspDocumentStorageServiceBase.ts
         this.snapshotCacheExpiryTimeoutMs =
             loggerToMonitoringContext(logger).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
                 ? 0
-                : maximumCacheDurationMs;
+                : defaultCacheExpiryTimeoutMs;
     }
 
     // public for UT purposes only!

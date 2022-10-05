@@ -11,7 +11,7 @@ import { IDocumentStorageServicePolicies } from "../../storage";
  * If you find this code doesn't compile, PLEASE STOP AND READ THIS!
  *
  * The maximumCacheDurationMs policy represents an important interop mechanism between the driver layer
- * and the runtime layer.  The driver layer (for now) owns using the snapshot cache. Meanwhile the runtime layer
+ * and the runtime layer.  The driver layer owns using the snapshot cache. Meanwhile the runtime layer
  * runs Garbage Collection, which requires that the max age of snapshots is constrained in order to reliably
  * compute when an object cannot possibly be referenced anymore and should be deleted.
  * To protect against data loss, the runtime will close the container if it finds the value of
@@ -27,7 +27,7 @@ declare const maximumCacheDurationMs: IDocumentStorageServicePolicies["maximumCa
 switch (maximumCacheDurationMs) {
     // These are the only two valid values
     case undefined:
-    case 172800000:
+    case 432000000:
         break;
     default:
         assertNever(maximumCacheDurationMs);
