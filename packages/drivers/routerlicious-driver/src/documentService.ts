@@ -1,9 +1,8 @@
-/* eslint-disable import/namespace */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable import/namespace */
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";

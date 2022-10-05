@@ -1,9 +1,8 @@
-/* eslint-disable import/namespace */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable import/namespace */
 import * as api from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
