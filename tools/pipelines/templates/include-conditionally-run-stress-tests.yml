@@ -27,7 +27,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              $changedfiles = git diff --name-only ${{ package.affectedPaths }}
+              $changedfiles = git diff --name-only HEAD~1 ${{ package.affectedPaths }}
               Write-Host "Found the following files changed in ${{ package.affectedPaths }}:"
               Write-Host $changedfiles
               If ($changedfiles -ne $null)  {
