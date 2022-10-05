@@ -25,7 +25,7 @@ export function singleStackTreeCursor<TNode extends NodeData>(
 }
 
 /**
- * Provides functionality to allow `singleStackTreeCursor` to implement a cursor.
+ * Provides functionality to allow a {@link StackCursor} to be implemented.
  */
 export interface CursorAdapter<TNode> {
     keysFromNode(node: TNode): readonly FieldKey[];
@@ -34,7 +34,10 @@ export interface CursorAdapter<TNode> {
 
 type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
 
-abstract class SynchronousCursor {
+/**
+ * A class that satisfies part of the ITreeCursorSynchronous implementation.
+ */
+export abstract class SynchronousCursor {
     public get pending(): false {
         return false;
     }
@@ -244,8 +247,14 @@ export abstract class StackCursor<TNode> extends SynchronousCursor implements IT
         return field;
     }
 
+    /**
+     * @returns the value of the current node
+     */
     public abstract get value(): any;
 
+    /**
+     * @returns the type of the current node
+     */
     public abstract get type(): TreeType;
 
     public get fieldIndex(): number {

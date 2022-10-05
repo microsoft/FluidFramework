@@ -15,7 +15,7 @@ export {
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
-export { StackCursor } from "./treeCursorUtils";
+export { SynchronousCursor, CursorAdapter, StackCursor } from "./treeCursorUtils";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";

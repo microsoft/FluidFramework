@@ -13,11 +13,10 @@ import {
     singleTextCursor,
     EmptyKey,
     jsonSchemaData,
+    JsonCursor,
+    cursorToJsonObject,
 } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
 import { InMemoryStoredSchemaRepository } from "../../../schema-stored";
 import { Canada, generateCanada } from "./canada";

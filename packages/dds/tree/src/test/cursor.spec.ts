@@ -251,7 +251,7 @@ export function testJsonableTreeCursor(
             function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
                 cursor.enterField(key);
                 assert(0 <= index && index < cursor.getFieldLength(),
-                    `.length() must include index of existing child '${String(key)}[${index}]'.`);
+                    `.getFieldLength() must include index of existing child '${String(key)}[${index}]'.`);
 
                 assert.doesNotThrow(
                     () => cursor.enterNode(index),
@@ -265,7 +265,7 @@ export function testJsonableTreeCursor(
             function expectError(cursor: ITreeCursor, key: FieldKey, index = 0) {
                 cursor.enterField(key);
                 assert(!(index >= 0) || index >= cursor.getFieldLength(),
-                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`);
+                    `.getFieldLength() must exclude index of missing child '${String(key)}[${index}]'.`);
 
                 assert.throws(
                     () => cursor.enterNode(index),
@@ -390,6 +390,7 @@ function traverseNode(cursor: ITreeCursor) {
 
         const firstNodeResult = cursor.firstNode();
         if (!firstNodeResult) {
+            cursor.exitField();
             break;
         }
 

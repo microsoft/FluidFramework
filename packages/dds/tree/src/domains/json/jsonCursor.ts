@@ -11,13 +11,13 @@ import {
     ITreeCursorNew as ITreeCursor,
     EmptyKey,
     FieldKey,
+    mapCursorFieldNew,
+    mapCursorFields,
 } from "../../tree";
-
+import { StackCursor, CursorAdapter } from "../../feature-libraries";
 import {
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
 } from "./jsonDomainSchema";
-import { mapCursorField, mapCursorFields } from "../../tree/cursor";
-import { CursorAdapter, StackCursor } from "../../feature-libraries/treeCursorUtils";
 
 const adapter: CursorAdapter<JsonCompatible> = {
     keysFromNode: (node: JsonCompatible): readonly FieldKey[] => {
@@ -37,9 +37,10 @@ const adapter: CursorAdapter<JsonCompatible> = {
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
         if (key === EmptyKey && Array.isArray(node)) {
             return node;
-        } else {
-            return [(node as JsonCompatibleObject)[key as LocalFieldKey]];
         }
+
+        const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
+        return field === undefined ? [] : [field];
     },
 }
 
@@ -98,14 +99,17 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         case jsonString.name:
             return reader.value as number | boolean | string;
         case jsonArray.name: {
-            const result = mapCursorField(reader, cursorToJsonObject);
+            reader.enterField(EmptyKey);
+            const result = mapCursorFieldNew(reader, cursorToJsonObject);
+            reader.exitField();
             return result;
         }
         case jsonObject.name: {
             const result: JsonCompatible = {};
             mapCursorFields(reader, (cursor) => {
+                const key = cursor.getFieldKey() as LocalFieldKey;
                 assert(cursor.firstNode() === true, 0x360 /* expected navigation ok */);
-                result[cursor.getFieldKey() as LocalFieldKey] = cursorToJsonObject(reader);
+                result[key] = cursorToJsonObject(reader);
                 cursor.exitNode();
             });
             return result;

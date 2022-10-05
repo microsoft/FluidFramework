@@ -7,12 +7,13 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey,
+    ITreeCursorNew,
+    JsonCursorNew as JsonCursor,
+    jsonableTreeFromCursorNew,
+    EmptyKey,
+    cursorToJsonObjectNew,
 } from "../../..";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
+import { mapTreeFromCursor, singleMapTreeCursor, singleTextCursorNew } from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
@@ -57,7 +58,7 @@ function bench(
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+        const encodedTree = jsonableTreeFromCursorNew(new JsonCursor(json));
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -75,6 +76,7 @@ function bench(
         });
 
         const cursorFactories: [string, () => ITreeCursorNew][] = [
+            ["JsonCursor", () => new JsonCursor(json)],
             ["TextCursor", () => singleTextCursorNew(encodedTree)],
             ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
         ];
@@ -85,8 +87,7 @@ function bench(
                 dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
             ) => void,
         ][] = [
-                // TODO: finish porting other cursor code and enable this.
-                // ["cursorToJsonObject", cursorToJsonObjectNew],
+                ["cursorToJsonObject", cursorToJsonObjectNew],
                 ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
                 ["mapTreeFromCursor", mapTreeFromCursor],
                 ["sum", sum],
