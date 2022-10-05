@@ -33,8 +33,6 @@ stages:
         testPackage: "@fluidframework/sequence"
         testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: sequence
-        testCommand: test:mocha
-        fuzzTestCount: 10
 
   - stage:
     displayName:  Stress tests - Legacy SharedTree
@@ -46,5 +44,3 @@ stages:
         testPackage: "@fluid-experimental/tree"
         testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: experimental-tree
-        testCommand: test:mocha
-        fuzzTestCount: 5

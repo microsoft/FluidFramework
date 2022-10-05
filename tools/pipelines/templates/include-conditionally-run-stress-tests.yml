@@ -11,8 +11,13 @@ parameters:
 - name: testFileTarName
   type: string
 
+- name: testCommand
+  type: string
+  defualt: test:stress
+
 - name: fuzzTestCount
   type: number
+  default: 1 # The test command may auto-inject how many fuzz tests to run.
 
 - name: affectedPaths
   type: string
@@ -33,7 +38,7 @@ jobs:
       testWorkspace: ${{ parameters.testWorkspace }}
       timeoutInMinutes: 120
       testFileTarName: ${{ parameters.testFileTarName }}
-      testCommand: test:mocha
+      testCommand: ${{ parameters.testCommand }}
       env:
         FUZZ_TEST_COUNT: ${{ parameters.fuzzTestCount }}
         FUZZ_STRESS_RUN: true
