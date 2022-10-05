@@ -16,7 +16,12 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { ISharedCell, ISharedCellEvents } from "./interfaces";
+import {
+    ISharedCell,
+    ISharedCellEvents,
+    ICellValue,
+    ICellLocalOpMetadata,
+} from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -32,12 +37,20 @@ interface IDeleteCellOperation {
     type: "deleteCell";
 }
 
-interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
-    value: any;
+const snapshotFileName = "header";
+
+function isCellLocalOpMetadata(metadata: any): metadata is ICellLocalOpMetadata {
+    return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
+        metadata.type === "edit";
 }
 
-const snapshotFileName = "header";
+function createLocalOpMetadata(op: ICellOperation,
+    pendingMessageId: number, previousValue?: any): ICellLocalOpMetadata {
+    const localMetadata: ICellLocalOpMetadata = {
+        type: "edit", pendingMessageId, previousValue,
+    };
+    return localMetadata;
+}
 
 /**
  * The SharedCell distributed data structure can be used to store a single serializable value.
@@ -124,6 +137,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     private messageIdObserved: number = -1;
 
+    private readonly pendingMessageIds: number[] = [];
+
     /**
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
@@ -152,7 +167,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         };
 
         // Set the value locally.
-        this.setCore(value);
+        const previousValue = this.setCore(value);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -163,7 +178,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
             type: "setCell",
             value: operationValue,
         };
-        this.submitLocalMessage(op, ++this.messageId);
+        this.submitCellMessage(op, previousValue);
     }
 
     /**
@@ -171,17 +186,17 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     public delete() {
         // Delete the value locally.
-        this.deleteCore();
+        const previousValue = this.deleteCore();
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
-            return;
+            return previousValue !== undefined;
         }
 
         const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
-        this.submitLocalMessage(op, ++this.messageId);
+        this.submitCellMessage(op, previousValue);
     }
 
     /**
@@ -250,15 +265,18 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        if (!isCellLocalOpMetadata(localOpMetadata)) {
+            throw new Error("Invalid localOpMetadata");
+        }
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
-                const messageIdReceived = localOpMetadata as number;
+                const messageIdReceived = localOpMetadata.pendingMessageId;
                 assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
                     0x00c /* "messageId is incorrect from from the local client's ACK" */);
 
                 // We got an ACK. Update messageIdObserved.
-                this.messageIdObserved = localOpMetadata as number;
+                this.messageIdObserved = localOpMetadata.pendingMessageId;
             }
             return;
         }
@@ -270,13 +288,17 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     private setCore(value: Serializable<T>) {
+        const previousLocalValue = this.get();
         this.data = value;
-        this.emit("valueChanged", value);
+        this.emit("valueChanged", { value, previousLocalValue });
+        return previousLocalValue;
     }
 
     private deleteCore() {
+        const previousLocalValue = this.get();
         this.data = undefined;
-        this.emit("delete");
+        this.emit("delete", previousLocalValue);
+        return previousLocalValue;
     }
 
     private decode(cellValue: ICellValue) {
@@ -294,5 +316,46 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         this.applyInnerOp(cellContent);
         ++this.messageId;
         return this.messageId;
+    }
+
+    /**
+     * Rollback a local op
+     * @param op - The operation to rollback
+     * @param localOpMetadata - The local metadata associated with the op.
+     */
+    public rollback(op: any, localOpMetadata: unknown) {
+        if (!isCellLocalOpMetadata(localOpMetadata)) {
+            throw new Error("Invalid localOpMetadata");
+        }
+        if (op.type === "set" || op.type === "delete") {
+            if (localOpMetadata.previousValue === undefined) {
+                this.deleteCore();
+            } else {
+                this.setCore(localOpMetadata.previousValue);
+            }
+
+            const lastPendingMessageId = this.pendingMessageIds.pop();
+            if (lastPendingMessageId !== localOpMetadata.pendingMessageId) {
+                throw new Error("Rollback op does not match last pending");
+            }
+        } else {
+            throw new Error("Unsupported op for rollback");
+        }
+    }
+
+     private getMessageId(): number {
+        const pendingMessageId = ++this.messageId;
+        this.pendingMessageIds.push(pendingMessageId);
+        return pendingMessageId;
+     }
+
+     /**
+     * Submit a cell message to remote clients.
+     * @param op - The cell message
+     * @param previousValue - The value of the cell before this op
+     */
+    private submitCellMessage(op: ICellOperation, previousValue?: any): void {
+        const localMetadata = createLocalOpMetadata(op, this.getMessageId(), previousValue);
+        this.submitLocalMessage(op, localMetadata);
     }
 }

@@ -16,6 +16,22 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
+// @public (undocumented)
+export interface ICellLocalOpMetadata {
+    // (undocumented)
+    pendingMessageId: number;
+    // (undocumented)
+    previousValue?: any;
+    // (undocumented)
+    type: "edit";
+}
+
+// @public (undocumented)
+export interface ICellValue {
+    // (undocumented)
+    value: any;
+}
+
 // @public
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     delete(): void;
@@ -27,9 +43,15 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 // @public (undocumented)
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (value: Serializable<T>) => void): any;
+    (event: "valueChanged", listener: (value: IValueChanged) => void): any;
     // (undocumented)
-    (event: "delete", listener: () => void): any;
+    (event: "delete", listener: (value: Serializable<T>) => void): any;
+}
+
+// @public
+export interface IValueChanged {
+    previousValue: any;
+    value: any;
 }
 
 // @public
@@ -38,7 +60,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell<any>;
-    delete(): void;
+    delete(): boolean | undefined;
     empty(): boolean;
     get(): Serializable<T> | undefined;
     static getFactory(): IChannelFactory;
@@ -47,6 +69,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    rollback(op: any, localOpMetadata: unknown): void;
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }

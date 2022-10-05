@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_SharedCell():
 declare function use_current_ClassDeclaration_SharedCell(
     use: TypeOnly<current.SharedCell>);
 use_current_ClassDeclaration_SharedCell(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedCell());
 
 /*
