@@ -5,6 +5,7 @@
 
 export {
     DriverErrorType,
+    IAnyDriverError,
     IDriverErrorBase,
     IThrottlingWarning,
     IGenericNetworkError,
