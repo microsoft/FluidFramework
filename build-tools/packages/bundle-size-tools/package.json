@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/bundle-size-tools",
-  "version": "0.4.7000",
+  "version": "0.4.7001",
   "description": "Utility for analyzing bundle size regressions",
   "homepage": "https://fluidframework.com",
   "repository": {
