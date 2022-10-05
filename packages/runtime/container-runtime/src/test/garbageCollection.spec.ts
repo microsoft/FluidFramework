@@ -30,7 +30,7 @@ import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
-import { GarbageCollector } from "../gc/garbageCollection";
+import { GarbageCollector } from "../gc/garbageCollector";
 import {
     defaultSessionExpiryDurationMs,
     gcBlobPrefix,

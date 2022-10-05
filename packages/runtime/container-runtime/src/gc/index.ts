@@ -11,4 +11,4 @@ export {
     IGarbageCollector,
     IGCStats,
 } from "./gcDefinitions";
-export { GarbageCollector } from "./garbageCollection";
+export { GarbageCollector } from "./garbageCollector";

@@ -22,7 +22,7 @@ import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-
 import { IGCRuntimeOptions } from "../containerRuntime";
 import { IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 
-/** This is the current version of garbage collection. */
+/** This is the latest version of garbage collection. */
 export const latestGCVersion = 1;
 
 // The key for the GC tree in summary.
