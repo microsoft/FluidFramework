@@ -134,7 +134,7 @@ steps:
 
           echo "3----------------------------------"
           checkVersion=${checkVersion:3}
-          npm view "@fluid"$checkVersoin
+          npm view "@fluid"$checkVersion
 
           echo "4----------------------------------"
 
