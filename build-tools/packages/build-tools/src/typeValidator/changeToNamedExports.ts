@@ -43,6 +43,8 @@ async function convert_package_dir(packageDir: string) {
     const sourceFiles = project.addSourceFilesAtPaths([
         `${program.monoRepoDir}/${packageDir}/src/**.ts`,
         `${program.monoRepoDir}/${packageDir}/src/**/**.ts`,
+        `${program.monoRepoDir}/${packageDir}/src/**.tsx`,
+        `${program.monoRepoDir}/${packageDir}/src/**/**.tsx`,
     ]);
     console.log(sourceFiles.length);
     sourceFiles.forEach((sourceFile) => {
