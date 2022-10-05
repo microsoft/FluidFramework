@@ -4,3 +4,4 @@
  */
 
 export * from "./containerViewRuntimeFactory";
+export * from "./modelLoader";

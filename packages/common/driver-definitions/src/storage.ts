@@ -20,6 +20,7 @@ import {
     ITokenClaims,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
@@ -176,7 +177,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
-    (event: "disconnect", listener: (reason: any) => void);
+    (event: "disconnect", listener: (reason: IAnyDriverError) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);

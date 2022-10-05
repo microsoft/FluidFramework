@@ -14,6 +14,7 @@ function main() {
     try {
         lernaOutput = JSON.parse(child_process.execSync("npx lerna list --all --json").toString());
         if (!Array.isArray(lernaOutput)) {
+            // eslint-disable-next-line unicorn/prefer-type-error
             throw new Error("stdin input was not package array");
         }
     } catch (e) {
@@ -22,9 +23,9 @@ function main() {
     }
 
     // Assign a unique port to each package
-    const portMap: { [pkgName: string]: number } = {};
+    const portMap: { [pkgName: string]: number; } = {};
     let port = 8081;
-    lernaOutput.forEach((pkg: {name: string}) => {
+    lernaOutput.forEach((pkg: { name: string; }) => {
         if (pkg.name === undefined) {
             console.error("missing name in lerna package entry");
             process.exit(-1);

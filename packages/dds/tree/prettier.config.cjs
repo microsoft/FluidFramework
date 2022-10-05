@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./modelLoader";
+module.exports = {
+    ...require("@fluidframework/build-common/prettier.config.cjs"),
+};

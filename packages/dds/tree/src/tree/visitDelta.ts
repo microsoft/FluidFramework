@@ -55,7 +55,7 @@ import * as Delta from "./delta";
  * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
  *
  * - Leverage move table when it gets added to Delta
-*/
+ */
 
 /**
  * Crawls the given `delta`, calling `visitor`'s callback for each change encountered.
@@ -174,13 +174,15 @@ function firstPass(delta: Delta.MarkList, props: PassProps): void {
                 case Delta.MarkType.MoveInAndModify:
                     // Handled in the second pass
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
 }
 
-const NO_MATCHING_MOVE_OUT_ERR = "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
+const NO_MATCHING_MOVE_OUT_ERR =
+    "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
 
 function secondPass(delta: Delta.MarkList, props: PassProps): void {
     const { startIndex, visitor, moveInfo } = props;
@@ -225,7 +227,8 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
                     visitModify(mark, { ...props, startIndex: index }, secondPass);
                     index += 1;
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }

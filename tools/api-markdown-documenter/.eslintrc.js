@@ -21,5 +21,8 @@ module.exports = {
                 allow: ["@microsoft/api-documenter/**"],
             },
         ],
+
+        "unicorn/prefer-module": "off",
+        "unicorn/prefer-negative-index": "off",
     },
 };
