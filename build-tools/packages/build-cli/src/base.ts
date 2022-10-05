@@ -46,7 +46,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         }),
     };
 
-    protected parsedOutput?: ParserOutput;
+    protected parsedOutput?: ParserOutput<any, any>;
 
     /**
      * The processed arguments that were passed to the CLI.
