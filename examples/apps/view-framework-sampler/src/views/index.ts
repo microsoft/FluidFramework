@@ -4,5 +4,5 @@
  */
 
 export { jsRenderDiceRoller } from "./jsView";
-export * from "./reactView";
-export * from "./vueView";
+export { reactRenderDiceRoller, DiceRollerView } from "./reactView";
+export { vueRenderDiceRoller } from "./vueView";

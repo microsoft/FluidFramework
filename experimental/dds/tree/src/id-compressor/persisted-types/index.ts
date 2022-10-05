@@ -3,4 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export * from './0.0.1';
+export {
+	SerializedSessionData,
+	SerializedClusterOverrides,
+	SerializedCluster,
+	SerializedLocalOverrides,
+	SerializedLocalState,
+	SerializedSessionIdNormalizer,
+	VersionedSerializedIdCompressor,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	IdCreationRange,
+	UnackedLocalId,
+} from './0.0.1';

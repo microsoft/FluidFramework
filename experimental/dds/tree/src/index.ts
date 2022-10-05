@@ -44,9 +44,13 @@ export { Revision } from './RevisionValueCache';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
 export { EagerCheckout } from './EagerCheckout';
-export * from './ReconciliationPath';
-export * from './MergeHealth';
-export * from './TreeViewUtilities';
+export { ReconciliationPath, ReconciliationEdit, ReconciliationChange } from './ReconciliationPath';
+export {
+	useFailedSequencedEditTelemetry,
+	MergeHealthStats,
+	SharedTreeMergeHealthTelemetryHeartbeat,
+} from './MergeHealth';
+export { rangeFromStableRange, placeFromStablePlace, getTraitLocationOfRange } from './TreeViewUtilities';
 export { StringInterner } from './StringInterner';
 export {
 	Side,
@@ -105,7 +109,7 @@ export {
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree';
-export * from './EventTypes';
+export { SharedTreeEvent, SharedTreeDiagnosticEvent } from './EventTypes';
 export {
 	setTrait,
 	areRevisionViewsSemanticallyEqual,
@@ -153,4 +157,17 @@ export {
 	getSerializedUploadedEditChunkContents,
 } from './SummaryTestUtilities';
 
-export * from './ChangeTypes';
+export {
+	HasVariadicTraits,
+	ChangeType,
+	Change,
+	BuildNode,
+	BuildTreeNode,
+	Build,
+	Insert,
+	Detach,
+	SetValue,
+	Constraint,
+	StablePlace,
+	StableRange,
+} from './ChangeTypes';
