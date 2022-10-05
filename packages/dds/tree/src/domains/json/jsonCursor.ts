@@ -84,12 +84,6 @@ export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
 }
 
 /**
- * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
- *
- * @sealed
- */
-
-/**
  * Extract a JS object tree from the contents of the given ITreeCursor.
  * Assumes that ITreeCursor contains only unaugmented JsonTypes.
  */
