@@ -1,10 +1,10 @@
-/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 /* eslint-disable max-len */
+/* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
