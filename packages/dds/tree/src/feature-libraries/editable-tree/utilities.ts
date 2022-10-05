@@ -104,3 +104,8 @@ export function pathToString(path: UpPath): ETreeNodePath {
     }
     return upPath;
 }
+
+export function isArrayKey(key: string | number, length: number): boolean {
+    const index = typeof key === "string" ? Number(key) : key;
+    return Number.isInteger(index) && index >= 0 && index < length;
+}

@@ -112,25 +112,23 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public get root(): UnwrappedEditableField {
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
+        const fieldKind = getFieldKind(rootSchema);
+        if (fieldKind.multiplicity === Multiplicity.Sequence) {
+            return proxifyField(this, new ProxyTargetSequence(this));
+        }
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
+            assert(cursor.seek(1) === TreeNavigationResult.NotFound, "invalid non sequence")
             this.emptyNode?.free();
             this.emptyNode = undefined;
-            do {
-                targets.push(this.createTarget(cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
         }
+        const target = cursorResult === TreeNavigationResult.Ok ? this.createTarget(cursor) : this.createEmptyTarget();
         cursor.free();
         this.forest.anchors.forget(destination);
-        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
-        const fieldKind = getFieldKind(rootSchema);
-        if (targets.length === 0 && fieldKind.multiplicity !== Multiplicity.Sequence) {
-            targets.push(this.createEmptyTarget());
-        }
-        return proxifyField(this, getFieldKind(rootSchema), targets);
+        return proxifyField(this, target);
     }
 
     public createEmptyTarget(): ProxyTarget {
@@ -171,7 +169,13 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public insertNode(path: NodePath, newNodeCursor: ITreeCursor): boolean {
-        return this.runTransaction((editor) => editor.insert(path, newNodeCursor));
+        return this.runTransaction((editor) => {
+            let nextPath = path;
+            do {
+                editor.insert(nextPath, newNodeCursor);
+                nextPath = { ...path, parentIndex: path.parentIndex + 1 };
+            } while (newNodeCursor.seek(1) === TreeNavigationResult.Ok)
+        });
     }
 
     public deleteNode(path: NodePath, count: number): boolean {

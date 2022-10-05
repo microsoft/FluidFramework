@@ -17,7 +17,7 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 /**
  * A singleton which represents a permanently invalid location (i.e. there is never a node there)
  */
-export const NeverAnchor: Anchor = brand(0);
+const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.

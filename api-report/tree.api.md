@@ -191,7 +191,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree extends FieldlessEditableTree {
-    [key: string]: UnwrappedEditableField;
+    [key: string | number]: UnwrappedEditableField;
 }
 
 // @public
@@ -341,7 +341,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 // @public
 export interface FieldlessEditableTree {
     readonly [deleteNodeSymbol]: (key: string) => boolean;
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
     readonly [proxyTargetSymbol]: object;
     readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
@@ -522,7 +522,7 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
     // (undocumented)
     keys: Iterable<FieldKey>;
     // (undocumented)
-    length(key: FieldKey): number;
+    length(key?: FieldKey): number;
     seek(offset: number): TResult;
     readonly type: TreeType;
     up(): TResult;
@@ -798,9 +798,6 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @public
-export const NeverAnchor: Anchor;
-
-// @public
 export const neverTree: TreeSchema;
 
 // @public
@@ -1057,7 +1054,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     // (undocumented)
     protected readonly keyStack: FieldKey[];
     // (undocumented)
-    length(key: FieldKey): number;
+    length(key?: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
@@ -1367,8 +1364,10 @@ class UnitEncoder extends ChangeEncoder<0> {
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
 
 // @public
-export type UnwrappedEditableSequence = FieldlessEditableTree & readonly UnwrappedEditableTree[] & {
-    readonly [appendNodeSymbol]: (node: ITreeCursor) => void;
+export type UnwrappedEditableSequence = readonly EditableTreeOrPrimitive[] & {
+    readonly [getTypeSymbol]: (index?: number, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [proxyTargetSymbol]: object;
+    readonly [appendNodeSymbol]: (newNodeCursor: ITreeCursor) => void;
 };
 
 // @public

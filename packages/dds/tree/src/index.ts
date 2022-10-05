@@ -9,7 +9,7 @@ export {
 } from "./dependency-tracking";
 
 export {
-    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField, NeverAnchor,
+    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
     ChildLocation, FieldMapObject, NodeData, GenericTreeNode, JsonableTree,
     Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { fieldSchema, InMemoryStoredSchemaRepository, SchemaData } from "../../../schema-stored";
+import { strict as assert } from "assert";
+import { fieldSchema, SchemaData } from "../../../schema-stored";
 import { JsonableTree, EmptyKey, rootFieldKey } from "../../../tree";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
 import {
     singleTextCursor, getTypeSymbol, isEmptyTree, insertRootSymbol, insertNodeSymbol, appendNodeSymbol,
-    isEditableFieldSequence, isUnwrappedNode, FieldKinds,
+    isEditableFieldSequence, isUnwrappedNode, FieldKinds, TextCursor,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -23,18 +23,13 @@ async function createSharedTrees(schemaData: SchemaData, data?: JsonableTree, no
     const provider = await TestTreeProvider.create(nofTrees);
     for (const tree of provider.trees) {
         assert(tree.isAttached());
-        const forest = tree.forest;
-        const schema = forest.schema as InMemoryStoredSchemaRepository;
-        schema.updateFieldSchema(rootFieldKey, schemaData.globalFieldSchema.get(rootFieldKey) ?? fail("oops"));
-        for (const [key, value] of schemaData.treeSchema) {
-            schema.updateTreeSchema(key, value);
-        }
     }
+    provider.trees[0].storedSchema.update(schemaData);
     assert(isEmptyTree(provider.trees[0].root));
     if (data) {
         provider.trees[0].root[insertRootSymbol](singleTextCursor(data));
-        await provider.ensureSynchronized();
     }
+    await provider.ensureSynchronized();
     return [provider, provider.trees];
 }
 
@@ -135,23 +130,35 @@ describe("editing with editable-tree", () => {
             const tree = trees[0].root;
             assert(isEmptyTree(tree));
             expectTreeSequence(tree, []); 
-            const roots = tree[insertRootSymbol](singleTextCursor(emptyNode));
+            const roots = tree[insertRootSymbol](new TextCursor([emptyNode, emptyNode], 0));
             assert(isEditableFieldSequence(roots));
-            expectTreeSequence(roots, [emptyNode]);
+            expectTreeSequence(roots, [emptyNode, emptyNode]);
+            assert(isUnwrappedNode(roots[0]));
+            roots[0][insertNodeSymbol]("child", singleTextCursor({ type: brand("String"), value: "Foo" }));
+            assert.equal(roots[0].child, "Foo");
+            assert(isUnwrappedNode(roots[1]));
+            roots[1][insertNodeSymbol]("child", singleTextCursor({ type: brand("Int32"), value: 42 }));
+            assert.equal(roots[1].child, 42);
+            roots[appendNodeSymbol](singleTextCursor({
+                type: optionalChildSchema.name, fields: { child: [{ type: brand("Float32"), value: 42.42 }] }
+            }));
+            assert(isUnwrappedNode(roots[2]));
+            assert.equal(roots[2].child, 42.42);
             trees[0].context.free();
         });
 
         it("Implicit sequence", async () => {
-            const expectedPhones = ["113", "114"];
+            const expectedPhones = ["113", "114", "115"];
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             assert(isEditableFieldSequence(person.address.sequencePhones));
+            person.address.sequencePhones.push("115");
             for (let i = 0; i < person.address.sequencePhones.length; i++) {
                 assert.equal(person.address.sequencePhones[i], expectedPhones[i]);
             }
         });
 
-        it("update property", async () => {
+        it("update array element", async () => {
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 2);
             const person1 = trees[0].root as PersonType;
             const person2 = trees[1].root as PersonType;
@@ -168,15 +175,18 @@ describe("editing with editable-tree", () => {
             trees[1].context.free();
         });
     
-        it("add property", async () => {
+        it("append to array", async () => {
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             assert(isEditableFieldSequence(person.address.simplePhones));
             assert.equal(person.address.simplePhones[getTypeSymbol](undefined, true), "Test:SimplePhones-1.0.0")
             person.address.simplePhones.push("999");
             assert.equal(person.address.simplePhones[person.address.simplePhones.length - 1], "999");
-            const morePhones = ["1", "2"];
-            person.address.simplePhones.push(...morePhones);
+            person.address.simplePhones.push(...["1", "2"]);
+            assert.throws(() => {
+                assert(isEditableFieldSequence(person.address.simplePhones));
+                person.address.simplePhones[1.5] = "5";
+            });
             const expectedSimplePhones = ["112", "999", "1", "2"];
             for (let i = 0; i < person.address.simplePhones.length; i++) {
                 assert.equal(person.address.simplePhones[i], expectedSimplePhones[i]);
@@ -187,7 +197,7 @@ describe("editing with editable-tree", () => {
             trees[0].context.free();
         });
     
-        it("delete property", async () => {
+        it("delete array field does not crash", async () => {
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             delete person.address.phones;

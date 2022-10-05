@@ -226,8 +226,8 @@ export function expectTreeEquals(inputField: UnwrappedEditableField, expected: J
     // Confirm we have an EditableTree object.
     assert(node[proxyTargetSymbol] !== undefined);
     assert.equal(node[valueSymbol], expected.value);
-    const type = node[getTypeSymbol]();
-    assert.equal(type, expectedType);
+    const type = node[getTypeSymbol](undefined, false);
+    assert.deepEqual(type, expectedType);
     for (const key of Object.keys(node)) {
         const subNode: UnwrappedEditableField = node[key];
         assert(subNode !== undefined, key);

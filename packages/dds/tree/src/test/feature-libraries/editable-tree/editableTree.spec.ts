@@ -50,14 +50,14 @@ describe("editable-tree", () => {
         const proxy = buildTestPerson();
         assert.ok(proxy);
         assert.equal(Object.keys(proxy).length, 5);
-        assert.equal(proxy[getTypeSymbol](), personSchema);
-        assert.equal(proxy.address[getTypeSymbol](), addressSchema);
+        assert.deepEqual(proxy[getTypeSymbol](undefined, false), personSchema);
+        assert.deepEqual(proxy.address[getTypeSymbol](undefined, false), addressSchema);
         assert(isEditableFieldSequence(proxy.address.phones));
-        assert.equal((proxy.address.phones[2] as ComplexPhoneType)[getTypeSymbol](), complexPhoneSchema);
+        assert.deepEqual((proxy.address.phones[2] as ComplexPhoneType)[getTypeSymbol](undefined, false), complexPhoneSchema);
         assert(isUnwrappedNode(proxy.address.phones[2]));
-        assert.equal(proxy.address.phones[2][getTypeSymbol](), complexPhoneSchema);
-        assert.equal(proxy[getTypeSymbol]("name", true), stringSchema.name);
-        assert.equal(proxy.address[getTypeSymbol]("phones", true), phonesSchema.name);
+        assert.deepEqual(proxy.address.phones[2][getTypeSymbol](undefined, false), complexPhoneSchema);
+        assert.equal(proxy[getTypeSymbol]("name"), stringSchema.name);
+        assert.equal(proxy.address[getTypeSymbol]("phones"), phonesSchema.name);
     });
 
     it("traverse a complete tree", () => {
@@ -269,10 +269,10 @@ describe("editable-tree", () => {
         const proxy = buildTestPerson();
         assert(isEditableFieldSequence(proxy.address.phones));
         assert.equal(proxy.address.phones.length, 3);
-        assert.equal(proxy.address.phones[getTypeSymbol](undefined, true), phonesSchema.name);
-        assert.equal(proxy.address.phones[getTypeSymbol]("0", true), stringSchema.name);
-        assert.equal(proxy.address.phones[getTypeSymbol]("1", true), int32Schema.name);
-        assert.equal(proxy.address.phones[getTypeSymbol]("2", true), complexPhoneSchema.name);
+        assert.equal(proxy.address.phones[getTypeSymbol](), phonesSchema.name);
+        assert.equal(proxy.address.phones[getTypeSymbol](0), stringSchema.name);
+        assert.equal(proxy.address.phones[getTypeSymbol](1), int32Schema.name);
+        assert.equal(proxy.address.phones[getTypeSymbol](2), complexPhoneSchema.name);
         assert.equal(proxy.address.phones[1], 123456879);
         const expectedPhones: Value[] = [
             "+49123456778",
@@ -283,7 +283,7 @@ describe("editable-tree", () => {
             },
         ];
         let i = 0;
-        for (const phone of proxy.address!.phones!) {
+        for (const phone of proxy.address.phones) {
             const expectedPhone: Value = expectedPhones[i++];
             if (isPrimitiveValue(phone)) {
                 assert.equal(phone, expectedPhone);
@@ -292,10 +292,10 @@ describe("editable-tree", () => {
                 assert.deepEqual(cloned, expectedPhone);
             }
         }
-        assert.equal(proxy.address!.phones![0], "+49123456778");
-        assert.deepEqual(Object.keys(proxy.address!.phones!), ["0", "1", "2"]);
-        assert.deepEqual(Object.getOwnPropertyNames(proxy.address!.phones), ["0", "1", "2", "length", "context", "target"]);
-        const act = proxy.address!.phones!.map((phone: EditableTreeOrPrimitive): Value | UnwrappedEditableField => {
+        assert.equal(proxy.address.phones[0], "+49123456778");
+        assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1", "2"]);
+        assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "2", "length", "primaryKey", "target"]);
+        const act = proxy.address.phones.map((phone: EditableTreeOrPrimitive): Value | UnwrappedEditableField => {
             if (isPrimitiveValue(phone)) {
                 return phone;
             } else {

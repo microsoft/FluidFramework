@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, NeverAnchor, detachedFieldAsKey, UpPath } from "../../tree";
+import { Value, Anchor, detachedFieldAsKey, UpPath } from "../../tree";
 import {
     TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState, ITreeCursor,
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema, NamedTreeSchema, lookupTreeSchema,
+    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, ValueSchema, NamedTreeSchema, lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { TypedJsonCursor } from "../../domains";
@@ -70,7 +70,7 @@ export interface FieldlessEditableTree {
      * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
      * @param nameOnly - if true, returns only the type identifier
      */
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
      * Value stored on this node.
@@ -139,7 +139,7 @@ export interface EditableTree extends FieldlessEditableTree {
      * A mechanism for disambiguating this should be added,
      * likely involving an alternative mechanism for looking up global fields via symbols.
      */
-    [key: string]: UnwrappedEditableField;
+    [key: string | number]: UnwrappedEditableField;
 }
 
 /**
@@ -173,6 +173,11 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
+
+/**
+ * A singleton which represents a permanently invalid location (i.e. there is never a node there)
+ */
+ const NeverAnchor: Anchor = brand(0);
 
 /**
  * A Proxy target, which together with a {@link handler} implements a basic read/write access to the Forest
@@ -241,18 +246,21 @@ export class ProxyTarget {
         return this.lazyCursor;
     }
 
-    public getType(key?: string, nameOnly?: boolean): TreeSchemaIdentifier | TreeSchema | undefined {
+    public getType(key?: string, nameOnly = true): TreeSchemaIdentifier | NamedTreeSchema | undefined {
         let typeName = this.cursor.type;
         if (key !== undefined) {
-            const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
-            assert(childTypes.length <= 1, 0x3c5 /* invalid non sequence */);
-            typeName = childTypes[0];
+            const fieldLength = this.cursor.length(brand(key));
+            assert(fieldLength <= 1, 0x3c5 /* invalid non sequence */);
+            typeName = mapCursorField(this.cursor, brand(key), (c) => c.type)[0];
         }
         if (nameOnly) {
             return typeName;
         }
         if (typeName) {
-            return lookupTreeSchema(this.context.forest.schema, typeName);
+            return {
+                name: typeName,
+                ...lookupTreeSchema(this.context.forest.schema, typeName),
+            };
         }
         return undefined;
     }
@@ -262,7 +270,7 @@ export class ProxyTarget {
     }
 
     public lookupFieldKind(key: string): FieldKind {
-        return getFieldKind(getFieldSchema(this.getType() as TreeSchema, key));
+        return getFieldKind(getFieldSchema(this.getType(undefined, false) as NamedTreeSchema, key));
     }
 
     public getKeys(): string[] {
@@ -286,7 +294,7 @@ export class ProxyTarget {
      * @returns the key, if any, of the primary array field.
      */
     public getPrimaryArrayKey(): LocalFieldKey | undefined {
-        const nodeType = this.getType() as TreeSchema;
+        const nodeType = this.getType(undefined, false) as NamedTreeSchema;
         const primary = getPrimaryField(nodeType);
         if (primary === undefined) {
             return undefined;
@@ -303,9 +311,14 @@ export class ProxyTarget {
     public proxifyField(key: string): UnwrappedEditableField {
         // Lookup the schema:
         const fieldKind = this.lookupFieldKind(key);
-        // Make the childTargets:
-        const childTargets = mapCursorField(this.cursor, brand(key), (c) => this.context.createTarget(c));
-        return proxifyField(this.context, fieldKind, childTargets);
+        if (fieldKind.multiplicity === Multiplicity.Sequence) {
+            return proxifyField(this.context, new ProxyTargetSequence(this.context, this.cursor, brand(key)));
+        }
+        // Avoid wrapping non-sequence fields in arrays
+        assert(this.cursor.length(brand(key)) <= 1, 0x3c8 /* invalid non sequence */);
+        // Make the childTarget:
+        const childTarget = mapCursorField(this.cursor, brand(key), (c) => this.context.createTarget(c))[0];
+        return proxifyField(this.context, childTarget);
     }
 
     /**
@@ -327,11 +340,13 @@ export class ProxyTarget {
      * TODO: think about having a replace logic instead/in addition.
      */
     public insertNode(key: string, newNodeCursor: ITreeCursor): boolean {
-        const fieldSchema = getFieldSchema(this.getType() as TreeSchema, key);
+        const fieldSchema = getFieldSchema(this.getType(undefined, false) as NamedTreeSchema, key);
         const fieldKind = getFieldKind(fieldSchema);
         assert(fieldKind.multiplicity !== Multiplicity.Forbidden, "Insertion into a forbidden field");
-        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-        assert(fieldSchema.types !== undefined && fieldSchema.types?.has(newNodeCursor.type), "Unknown type");
+        assert(fieldSchema.types !== undefined
+            ? fieldSchema.types.has(newNodeCursor.type)
+            : fieldKind.multiplicity === Multiplicity.Optional
+            , "Unknown type");
         assert(!this.has(key),
             "Insertion into a non-empty non-sequence field. Consider to use 'setValueSymbol' or delete the node first.");
         const path = this.getPath();
@@ -410,10 +425,10 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     set: (target: ProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
         if (target.has(key)) {
-            const typeName = target.getType(key, true) as TreeSchemaIdentifier;
+            const typeName = target.getType(key) as TreeSchemaIdentifier;
             return target.setValue(key, value, typeName);
         }
-        const fieldSchema = getFieldSchema(target.getType() as TreeSchema, key);
+        const fieldSchema = getFieldSchema(target.getType(undefined, false) as NamedTreeSchema, key);
         assert(fieldSchema.types !== undefined && fieldSchema.types.size === 1,
             "Cannot resolve a field type, use 'insertNodeSymbol' instead");
         const name = [...fieldSchema.types][0];
@@ -502,12 +517,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 /**
  * See {@link UnwrappedEditableField} for documentation on what unwrapping this perform.
  */
-export function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | ProxyTargetSequence):
+function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | ProxyTargetSequence):
     UnwrappedEditableTree | UnwrappedEditableSequence {
     if (Array.isArray(target)) {
         return adaptWithProxy(target, sequenceHandler);
     } else if (!target.isEmpty()) {
-        const fieldSchema = target.getType() as TreeSchema;
+        const fieldSchema = target.getType(undefined, false) as NamedTreeSchema;
         if (fieldSchema !== undefined && isPrimitive(fieldSchema)) {
             const nodeValue = target.value;
             if (isPrimitiveValue(nodeValue)) {
@@ -518,9 +533,7 @@ export function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | Pro
         }
         const primaryKey = target.getPrimaryArrayKey();
         if (primaryKey !== undefined) {
-            const sequenceTarget = new ProxyTargetSequence(context, [], target.cursor);
-            mapCursorField(target.cursor, primaryKey, (c) => sequenceTarget.push(context.createTarget(c)));
-            return adaptWithProxy(sequenceTarget, sequenceHandler);
+            return adaptWithProxy(new ProxyTargetSequence(context, target.cursor, primaryKey), sequenceHandler);
         }
     }
     return adaptWithProxy(target, handler);
@@ -531,14 +544,9 @@ export function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | Pro
  * @param fieldKind - determines how return value should be typed. See {@link UnwrappedEditableField}.
  * @param childTargets - targets for the children of the field.
  */
-export function proxifyField(context: ProxyContext, fieldKind: FieldKind, childTargets: ProxyTarget[]):
+export function proxifyField(context: ProxyContext, target: ProxyTarget | ProxyTargetSequence | undefined):
     UnwrappedEditableField {
-    if (fieldKind.multiplicity === Multiplicity.Sequence) {
-        return inProxyOrUnwrap(context, new ProxyTargetSequence(context, childTargets));
-    }
-    // Avoid wrapping non-sequence fields in arrays
-    assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
-    return childTargets.length === 1 ? inProxyOrUnwrap(context, childTargets[0]) : undefined;
+    return target !== undefined ? inProxyOrUnwrap(context, target) : undefined;
 }
 
 /**
