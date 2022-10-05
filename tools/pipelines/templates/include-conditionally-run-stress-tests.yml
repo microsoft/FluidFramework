@@ -39,11 +39,14 @@ stages:
   - ${{ each package in parameters.packages }}:
     - stage:
       dependsOn: CheckAffectedPaths
-      condition: eq(dependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
       displayName: Run ${{ package.name }} stress tests
       jobs:
         - template: include-test-real-service.yml
           parameters:
+            # Ideally this would be a condition on the stage rather than the job, but it doesn't seem like that is supported (and ADO UI gives very little debug information
+            # as to what might be going wrong). This only impacts the "stage" view of the pipeline, in that packages with skipped tests will show up as successful stages
+            # rather than skipped stages. Clicking on a skipped stage still shows that the corresponding test job wasn't run.
+            condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
             poolBuild: ${{ parameters.pool }}
             extraDependencies: mocha cross-env @fluid-internal/stochastic-test-utils
             testPackage: ${{ package.name }}
