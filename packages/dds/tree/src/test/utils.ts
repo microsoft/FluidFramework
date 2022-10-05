@@ -113,9 +113,9 @@ export class TestTreeProvider {
      * @param index - the container that will spawn the summarizer client
      * @returns a function which will cause a summary to happen when awaited. May be called multiple times.
      */
-    public async enableManualSummarization(index = 0): Promise<() => Promise<void>> {
-        assert(index < this.trees.length, "Index out of bounds: not enough trees");
-        const summarizer = await createSummarizer(this.provider, this.containers[index]);
+    public async enableManualSummarization(): Promise<() => Promise<void>> {
+        assert(this.trees.length === 1, "Manual summarization cannot be enabled for multiple trees.")
+        const summarizer = await createSummarizer(this.provider, this.containers[0]);
         return async () => {
             await summarizeNow(summarizer, "TestTreeProvider");
         };
