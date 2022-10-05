@@ -40,7 +40,7 @@ import {
     getFieldKind,
     getFieldSchema,
     getPrimaryField,
-// eslint-disable-next-line import/no-internal-modules
+    // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
