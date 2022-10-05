@@ -5,6 +5,7 @@
 
 module.exports = {
     extends: ["@fluidframework/eslint-config-fluid/minimal"],
+
     parserOptions: {
         project: ["./tsconfig.json"],
     },

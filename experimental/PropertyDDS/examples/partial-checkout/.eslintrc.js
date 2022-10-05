@@ -5,6 +5,7 @@
 
 module.exports = {
     extends: ["@fluidframework/eslint-config-fluid/minimal"],
+
     parserOptions: {
         project: ["./tsconfig.json"],
     },
@@ -14,7 +15,6 @@ module.exports = {
         "unicorn/filename-case": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/unbound-method": "off",
-        "@typescript-eslint/prefer-nullish-coalescing": "off",
 
         // This library is used in the browser, so we don't want dependencies on most node libraries.
         "import/no-nodejs-modules": ["error", { allow: ["events"] }],
@@ -26,6 +26,7 @@ module.exports = {
             rules: {
                 // This library is used in the browser, so we don't want dependencies on most node libraries.
                 "import/no-nodejs-modules": ["error", { allow: ["assert", "events"] }],
+
             },
         },
     ],

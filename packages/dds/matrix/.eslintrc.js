@@ -5,6 +5,7 @@
 
 module.exports = {
     extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+
     parserOptions: {
         project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
@@ -22,6 +23,7 @@ module.exports = {
             rules: {
                 // Test files are run in node only so additional node libraries can be used.
                 "import/no-nodejs-modules": ["error", { allow: ["assert", "events"] }],
+
             },
         },
     ],

@@ -7,6 +7,7 @@ module.exports = {
     extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
     rules: {
         "@typescript-eslint/strict-boolean-expressions": "off",
+
     },
     overrides: [
         {
@@ -15,6 +16,7 @@ module.exports = {
             rules: {
                 // This library is used in the browser, so we don't want dependencies on most node libraries.
                 "import/no-nodejs-modules": ["error", { allow: ["assert", "events"] }],
+
             },
         },
     ],
