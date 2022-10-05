@@ -162,7 +162,8 @@ function composeMarks<TNodeChange>(
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         case "MInsert": {
             switch (newType) {
@@ -175,7 +176,8 @@ function composeMarks<TNodeChange>(
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Modify": {
@@ -189,7 +191,8 @@ function composeMarks<TNodeChange>(
                     // In the long run we want to preserve them.
                     return clone(newMark);
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Revive": {
@@ -207,10 +210,12 @@ function composeMarks<TNodeChange>(
                     // The deletion undoes the revival
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }
 

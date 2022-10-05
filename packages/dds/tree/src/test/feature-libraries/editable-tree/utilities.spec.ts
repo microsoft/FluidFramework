@@ -6,10 +6,21 @@
 import { strict as assert } from "assert";
 import { emptyField, FieldKinds, Multiplicity } from "../../../feature-libraries";
 import {
-    isPrimitiveValue, isPrimitive, getPrimaryField, getArrayOwnKeys, getFieldKind, getFieldSchema,
-// eslint-disable-next-line import/no-internal-modules
+    isPrimitiveValue,
+    isPrimitive,
+    getPrimaryField,
+    getArrayOwnKeys,
+    getFieldKind,
+    getFieldSchema,
+    // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-import { namedTreeSchema, ValueSchema, fieldSchema, LocalFieldKey, FieldSchema } from "../../../schema-stored";
+import {
+    namedTreeSchema,
+    ValueSchema,
+    fieldSchema,
+    LocalFieldKey,
+    FieldSchema,
+} from "../../../schema-stored";
 import { EmptyKey } from "../../../tree";
 import { brand } from "../../../util";
 
@@ -71,11 +82,17 @@ describe("editable-tree utilities", () => {
 
     it("field utils", () => {
         const schema = fieldSchema(FieldKinds.sequence, [stringSchema.name, int32Schema.name]);
-        const expectedPrimary: { key: LocalFieldKey; schema: FieldSchema; } = { key: EmptyKey, schema };
+        const expectedPrimary: { key: LocalFieldKey; schema: FieldSchema } = {
+            key: EmptyKey,
+            schema,
+        };
         const primary = getPrimaryField(arraySchema);
         assert(primary !== undefined);
         assert.deepEqual(getFieldSchema(arraySchema, primary.key), schema);
-        assert.equal(getFieldKind(getFieldSchema(arraySchema, primary.key)).multiplicity, Multiplicity.Sequence);
+        assert.equal(
+            getFieldKind(getFieldSchema(arraySchema, primary.key)).multiplicity,
+            Multiplicity.Sequence,
+        );
         assert.deepEqual(primary, expectedPrimary);
         assert(getPrimaryField(optionalChildSchema) === undefined);
         assert(getPrimaryField(mapStringSchema) === undefined);

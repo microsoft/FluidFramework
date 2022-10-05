@@ -69,6 +69,12 @@ export enum FetchSource {
     noCache = "noCache"
 }
 
+// @public
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
+}
+
 // @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
@@ -119,7 +125,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
-    (event: "disconnect", listener: (reason: any) => void): any;
+    (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
     // (undocumented)

@@ -38,8 +38,11 @@ export function isOnline(): OnlineStatus {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- */
- export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+ *
+ * @deprecated - In favour of {@link @fluidframework/driver-definitions#IAnyDriverError} so that
+ * it can used from the base to upper layers.
+*/
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
 }
 
