@@ -8,7 +8,6 @@ import {
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject, IFluidLoadable, IProvideFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode, IDataStore } from "@fluidframework/runtime-definitions";
