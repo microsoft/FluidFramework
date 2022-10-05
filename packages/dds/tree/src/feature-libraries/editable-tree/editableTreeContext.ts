@@ -9,15 +9,14 @@ import { TransactionResult } from "../../checkout";
 import { Dependent, SimpleObservingDependent, InvalidationToken } from "../../dependency-tracking";
 import { IEditableForest, ITreeSubscriptionCursor, ITreeCursor, IForestSubscription, TreeNavigationResult } from "../../forest";
 import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { ISharedTree } from "../../shared-tree";
-import { Delta, rootFieldKey, UpPath, Value } from "../../tree";
-import { Brand } from "../../util";
+import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../../transaction";
+import { Delta, detachedFieldAsKey, rootFieldKey, UpPath, Value } from "../../tree";
 import { Multiplicity } from "../modular-schema";
-import { NodePath, SequenceEditBuilder } from "../sequence-change-family";
+import { NodePath, SequenceChangeset, SequenceEditBuilder } from "../sequence-change-family";
 import { RootedTextCursor } from "../treeTextCursorLegacy";
-import { proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
+import { isEmptyTree, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 import { ProxyTargetSequence } from "./editableTreeSequence";
-import { getFieldKind, pathToString } from "./utilities";
+import { EditiableTreePath, getFieldKind, pathToString } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -54,29 +53,44 @@ export interface EditableTreeContext {
     free(): void;
 
     /**
-     * Register a handler function to be called after changes applied to the forest.
+     * Register `afterHandler` to be called whenever a change is applied to the EditiableTree.
+     * A change is a result of a successful transaction initiated by either this context or
+     * any other context or client using this document.
      */
     registerAfterHandler(afterHandler: EditableTreeContextHandler): void;
+
+    /**
+     * Call to upload initial data to the document.
+     * This method may be called only when the document is empty (see {@link isEmptyTree}).
+     * @param rootCursor - a cursor providing access to the root data.
+     */
+    createRoot(rootCursor: ITreeCursor): UnwrappedEditableField;
 }
 
 export type EditableTreeContextHandler = (this: EditableTreeContext) => void;
 
-export type ETreeNodePath = Brand<string, "editable-tree.NodePath">;
-
 /**
  * An implementation of a common context of a "forest" of EditableTrees.
  */
+// TODO: document
 export class ProxyContext implements EditableTreeContext {
-    public readonly withCursors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
-    public readonly withAnchors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
+    public readonly withCursors: Set<ProxyTarget> = new Set();
+    public readonly withAnchors: Set<ProxyTarget> = new Set();
+    /**
+     * Observers which are part of this context.
+     * Collected here so they can be removed when this is freed.
+     */
     private readonly observers: Dependent[] = [];
     private readonly afterHandlers: Set<EditableTreeContextHandler> = new Set();
-    private readonly nodes: Map<ETreeNodePath, ProxyTarget | ProxyTargetSequence> = new Map();
+    private readonly nodes: Map<EditiableTreePath, ProxyTarget> = new Map();
     private emptyNode?: ProxyTarget;
 
     constructor(
         public readonly forest: IEditableForest,
-        public readonly tree?: ISharedTree,
+        private readonly transactionCheckout?: TransactionCheckout<
+            SequenceEditBuilder,
+            SequenceChangeset
+        >,
     ) {
         const observer = new SimpleObservingDependent((token?: InvalidationToken, delta?: Delta.Root): void => {
             if (token?.isSecondaryInvalidation) {
@@ -88,6 +102,16 @@ export class ProxyContext implements EditableTreeContext {
         });
         this.observers.push(observer);
         forest.registerDependent(observer);
+    }
+
+    public createRoot(rootCursor: ITreeCursor): UnwrappedEditableField {
+        assert(isEmptyTree(this.root), "The document already contains data.");
+        this.insertNode({
+            parent: undefined,
+            parentField: detachedFieldAsKey(this.forest.rootField),
+            parentIndex: 0,
+        }, rootCursor);
+        return this.root;
     }
 
     public prepareForEdit(): void {
@@ -139,12 +163,13 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public createTarget(cursor: ITreeSubscriptionCursor): ProxyTarget {
+        // TODO: remove this assumption about the underlying cursor type once migrated to the new cursor API
         const path = (cursor as unknown as RootedTextCursor).getPath();
         const nodePath = pathToString(path);
         if (!this.nodes.has(nodePath)) {
             this.nodes.set(nodePath, new ProxyTarget(this, cursor));
         }
-        return this.nodes.get(nodePath)! as ProxyTarget;
+        return this.nodes.get(nodePath)!;
     }
 
     private handleAfterChange(): void {
@@ -182,15 +207,15 @@ export class ProxyContext implements EditableTreeContext {
         return this.runTransaction((editor) => editor.delete(path, count));
     }
 
-    private runTransaction(f: (editor: SequenceEditBuilder) => void): boolean {
-        assert(this.tree !== undefined, "Transaction-based editing requires `SharedTree` instance");
+    private runTransaction(transaction: (editor: SequenceEditBuilder) => void): boolean {
         // TODO: currently we can't rely on `invalidateDependents`, since it happens only in forest's `beforeChange`,
         // and before that delta is applied in `AnchorSet`, so all nodes should already have their anchors allocated.
         this.prepareForEdit();
-        const result = this.tree.runTransaction((forest: IForestSubscription, editor: SequenceEditBuilder) => {
-            f(editor);
-            return TransactionResult.Apply;
-        });
+        const result = runSynchronousTransaction(this.transactionCheckout!,
+            (forest: IForestSubscription, editor: SequenceEditBuilder) => {
+                transaction(editor);
+                return TransactionResult.Apply;
+            });
         if (result === TransactionResult.Apply) {
             // TODO: remove as soon as "after change" notification will be implemented in SharedTree
             this.handleAfterChange();
@@ -217,10 +242,16 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - a Forest to interact with.
- * @param tree - a SharedTree to handle transactional editing, not required in read-only usecases.
+ * @param transactionCheckout - a Checkout applied to a transaction, not required in read-only usecases.
  * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
-export function getEditableTreeContext(forest: IEditableForest, tree?: ISharedTree): EditableTreeContext {
-    return new ProxyContext(forest, tree);
+export function getEditableTreeContext(
+    forest: IEditableForest,
+    transactionCheckout?: TransactionCheckout<
+        SequenceEditBuilder,
+        SequenceChangeset
+    >,
+): EditableTreeContext {
+    return new ProxyContext(forest, transactionCheckout);
 }

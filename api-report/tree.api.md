@@ -190,12 +190,23 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export interface EditableTree extends FieldlessEditableTree {
+export interface EditableNodeData {
+    readonly [deleteNodeSymbol]: (key: string) => void;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [proxyTargetSymbol]: object;
+    readonly [setValueSymbol]: (key: string, value: Value, typeName: TreeSchemaIdentifier) => void;
+    readonly [valueSymbol]: Value;
+}
+
+// @public
+export interface EditableTree extends EditableNodeData {
+    readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => void;
     [key: string | number]: UnwrappedEditableField;
 }
 
 // @public
 export interface EditableTreeContext {
+    createRoot(rootCursor: ITreeCursor): UnwrappedEditableField;
     free(): void;
     prepareForEdit(): void;
     registerAfterHandler(afterHandler: EditableTreeContextHandler): void;
@@ -222,13 +233,6 @@ export enum Effects {
 
 // @public (undocumented)
 const empty: Root<any>;
-
-// @public
-export interface EmptyEditableTree {
-    // (undocumented)
-    readonly [insertRootSymbol]: (root: ITreeCursor) => EditableTree | UnwrappedEditableSequence;
-    readonly [proxyTargetSymbol]: object;
-}
 
 // @public
 export const emptyField: FieldSchema;
@@ -337,16 +341,6 @@ export { FieldKinds }
 
 // @public
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-
-// @public
-export interface FieldlessEditableTree {
-    readonly [deleteNodeSymbol]: (key: string) => boolean;
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
-    readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
-    readonly [proxyTargetSymbol]: object;
-    readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
-    readonly [valueSymbol]: Value;
-}
 
 // @public
 export interface FieldLocation {
@@ -471,9 +465,6 @@ interface InsertAndModify<TTree = ProtoNode_2> {
 export const insertNodeSymbol: unique symbol;
 
 // @public
-export const insertRootSymbol: unique symbol;
-
-// @public
 export class InvalidationToken {
     constructor(description: string, isSecondaryInvalidation?: boolean);
     // (undocumented)
@@ -495,7 +486,7 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
 export function isEditableFieldSequence(field: UnwrappedEditableField): field is UnwrappedEditableSequence;
 
 // @public
-export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditableTree;
+export function isEmptyTree(field: UnwrappedEditableField): boolean;
 
 // @public
 export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
@@ -1361,7 +1352,7 @@ class UnitEncoder extends ChangeEncoder<0> {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | UnwrappedEditableSequence;
 
 // @public
 export type UnwrappedEditableSequence = readonly EditableTreeOrPrimitive[] & {
@@ -1371,7 +1362,7 @@ export type UnwrappedEditableSequence = readonly EditableTreeOrPrimitive[] & {
 };
 
 // @public
-export type UnwrappedEditableTree = EmptyEditableTree | EditableTreeOrPrimitive | UnwrappedEditableSequence;
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | UnwrappedEditableSequence;
 
 // @public
 export interface UpPath {

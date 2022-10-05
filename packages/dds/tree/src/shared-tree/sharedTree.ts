@@ -134,7 +134,7 @@ class SharedTree
             submitEdit: (edit) => this.submitEdit(edit),
         };
 
-        this.context = getEditableTreeContext(forest, this);
+        this.context = getEditableTreeContext(forest, this.transactionCheckout);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -250,17 +248,17 @@ describe("editable-tree", () => {
         assert.equal(proxy.salary, 10420.2);
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones", "simplePhones", "sequencePhones"]);
-        assert.equal(proxy.address?.street, "treeStreet");
-        assert.equal(proxy.address?.phones![1], 123456879);
-        assert.equal(proxy.address?.zip, undefined);
+        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "simplePhones", "sequencePhones"]);
+        assert.equal(proxy.address.street, "treeStreet");
+        assert.equal(proxy.address.phones?.[1], 123456879);
+        assert.equal(proxy.address.zip, undefined);
     });
 
     it("read upwards", () => {
         const proxy = buildTestPerson();
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones", "simplePhones", "sequencePhones"]);
-        assert.equal(proxy.address?.phones![1], 123456879);
-        assert.equal(proxy.address?.street, "treeStreet");
+        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "simplePhones", "sequencePhones"]);
+        assert.equal(proxy.address.phones?.[1], 123456879);
+        assert.equal(proxy.address.street, "treeStreet");
         assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
         assert.equal(proxy.name, "Adam");
     });
@@ -294,7 +292,7 @@ describe("editable-tree", () => {
         }
         assert.equal(proxy.address.phones[0], "+49123456778");
         assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1", "2"]);
-        assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "2", "length", "primaryKey", "target"]);
+        assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "2", "length", "target", "primaryKey"]);
         const act = proxy.address.phones.map((phone: EditableTreeOrPrimitive): Value | UnwrappedEditableField => {
             if (isPrimitiveValue(phone)) {
                 return phone;

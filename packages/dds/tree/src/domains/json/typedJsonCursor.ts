@@ -6,7 +6,7 @@
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { SynchronousNavigationResult, TreeNavigationResult } from "../../forest";
 import { lookupGlobalFieldSchema, lookupTreeSchema, NamedTreeSchema, StoredSchemaRepository, ValueSchema } from "../../schema-stored";
-import { FieldKey, keyFromSymbol, TreeType } from "../../tree";
+import { EmptyKey, FieldKey, keyFromSymbol, TreeType } from "../../tree";
 import { brand } from "../../util";
 import { isPrimitive } from "../../feature-libraries";
 import { JsonCursor } from "./jsonCursor";
@@ -24,7 +24,6 @@ export class TypedJsonCursor<T> extends JsonCursor<T> {
         private readonly schema: StoredSchemaRepository,
         type: NamedTreeSchema,
         root: Jsonable<T>,
-        parentKey?: FieldKey,
     ) {
         super(root);
         this.currentType = type;
@@ -38,6 +37,15 @@ export class TypedJsonCursor<T> extends JsonCursor<T> {
             this.currentType = this.tryFindTypeForJsonable(this.currentType, key, this.value as Jsonable<T>);
         }
 
+        return result;
+    }
+
+    public seek(offset: number): SynchronousNavigationResult {
+        const result = super.seek(offset);
+        if (result === TreeNavigationResult.Ok) {
+            const parentType = this.typeStack[this.typeStack.length - 1];
+            this.currentType = this.tryFindTypeForJsonable(parentType, EmptyKey, this.value as Jsonable<T>);
+        }
         return result;
     }
 
@@ -80,6 +88,7 @@ export class TypedJsonCursor<T> extends JsonCursor<T> {
                     };
                 }
             } else {
+                // TODO: implement support for resolving non-primitive types
                 return {
                     name: type,
                     ...treeSchema,

@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { fieldSchema, SchemaData } from "../../../schema-stored";
 import { JsonableTree, EmptyKey, rootFieldKey } from "../../../tree";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
 import {
-    singleTextCursor, getTypeSymbol, isEmptyTree, insertRootSymbol, insertNodeSymbol, appendNodeSymbol,
+    singleTextCursor, getTypeSymbol, isEmptyTree, insertNodeSymbol, appendNodeSymbol,
     isEditableFieldSequence, isUnwrappedNode, FieldKinds, TextCursor,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
@@ -18,16 +19,16 @@ import {
     int32Schema, optionalChildSchema, personData, PersonType, phonesSchema, PhonesType, schemaMap, stringSchema,
 } from "./mocks";
 
-async function createSharedTrees(schemaData: SchemaData, data?: JsonableTree, nofTrees = 1):
+async function createSharedTrees(schemaData: SchemaData, data?: JsonableTree, numberOfTrees = 1):
     Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
-    const provider = await TestTreeProvider.create(nofTrees);
+    const provider = await TestTreeProvider.create(numberOfTrees);
     for (const tree of provider.trees) {
         assert(tree.isAttached());
     }
     provider.trees[0].storedSchema.update(schemaData);
     assert(isEmptyTree(provider.trees[0].root));
     if (data) {
-        provider.trees[0].root[insertRootSymbol](singleTextCursor(data));
+        provider.trees[0].context.createRoot(singleTextCursor(data));
     }
     await provider.ensureSynchronized();
     return [provider, provider.trees];
@@ -35,6 +36,13 @@ async function createSharedTrees(schemaData: SchemaData, data?: JsonableTree, no
 
 describe("editing with editable-tree", () => {
     describe("Non-sequence fields", () => {
+        it ("create root only once", async () => {
+            const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
+            assert.throws(() => trees[0].context.createRoot(new TextCursor([], 0)),
+                (e) => validateAssertionError(e, "The document already contains data."),
+                "Expected exception was not thrown");
+        });
+
         it("update property", async () => {
             const newAge: Int32 = brand(55);
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 2);
@@ -130,7 +138,7 @@ describe("editing with editable-tree", () => {
             const tree = trees[0].root;
             assert(isEmptyTree(tree));
             expectTreeSequence(tree, []); 
-            const roots = tree[insertRootSymbol](new TextCursor([emptyNode, emptyNode], 0));
+            const roots = trees[0].context.createRoot(new TextCursor([emptyNode, emptyNode], 0));
             assert(isEditableFieldSequence(roots));
             expectTreeSequence(roots, [emptyNode, emptyNode]);
             assert(isUnwrappedNode(roots[0]));
@@ -148,14 +156,19 @@ describe("editing with editable-tree", () => {
         });
 
         it("Implicit sequence", async () => {
-            const expectedPhones = ["113", "114", "115"];
+            const expectedPhones = ["113", "114", "115", "116"];
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             assert(isEditableFieldSequence(person.address.sequencePhones));
             person.address.sequencePhones.push("115");
+            const length = person.address.sequencePhones.push(...["116", "117"]);
+            assert.equal(length, person.address.sequencePhones.length);
+            const last = person.address.sequencePhones.pop();
+            assert.equal(last, "117");
             for (let i = 0; i < person.address.sequencePhones.length; i++) {
                 assert.equal(person.address.sequencePhones[i], expectedPhones[i]);
             }
+            trees[0].context.free();
         });
 
         it("update array element", async () => {

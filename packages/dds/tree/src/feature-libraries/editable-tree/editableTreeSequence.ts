@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -6,11 +7,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { TypedJsonCursor } from "../../domains";
 import { ITreeCursor, ITreeSubscriptionCursor, TreeNavigationResult } from "../../forest";
-import { LocalFieldKey, NamedTreeSchema, TreeSchemaIdentifier, lookupTreeSchema, lookupGlobalFieldSchema } from "../../schema-stored";
-import { Anchor, detachedFieldAsKey, rootFieldKey, UpPath, Value } from "../../tree";
+import { LocalFieldKey, NamedTreeSchema, TreeSchemaIdentifier, lookupTreeSchema, lookupGlobalFieldSchema, namedTreeSchema } from "../../schema-stored";
+import { Anchor, detachedFieldAsKey, EmptyKey, rootFieldKey, UpPath, Value } from "../../tree";
+import { brand } from "../../util";
+import { emptyField } from "../defaultSchema";
 import {
-    EditableTreeOrPrimitive, UnwrappedEditableField, UnwrappedEditableTree,
-    getTypeSymbol, insertRootSymbol, proxifyField, ProxyTarget, proxyTargetSymbol,
+    EditableTreeOrPrimitive, UnwrappedEditableTree,
+    getTypeSymbol, proxifyField, ProxyTarget, proxyTargetSymbol,
 } from "./editableTree";
 import { ProxyContext } from "./editableTreeContext";
 import { AdaptingProxyHandler, getFieldSchema, isArrayKey, isPrimitive, isPrimitiveValue } from "./utilities";
@@ -55,7 +58,9 @@ export type UnwrappedEditableSequence = readonly EditableTreeOrPrimitive[] & {
  * A Proxy target, which together with a {@link sequenceHandler} implements a basic read/write access to
  * the sequence fields by means of the cursors.
  */
-export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence> {
+// TODO: how far this should go with Array? Do we really need this? tbd.
+// > We shouldn't need to both use a proxy, and extend array. Either one should be enough to handle intercepting indexed access.
+export class ProxyTargetSequence implements Array<EditableTreeOrPrimitive> {
     private readonly target: ProxyTarget;
     
     constructor(
@@ -63,7 +68,6 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         fieldCursor?: ITreeSubscriptionCursor,
         public readonly primaryKey?: LocalFieldKey,
     ) {
-        super();
         if (fieldCursor === undefined) {
             const rootCursor = context.forest.allocateCursor();
             const result = context.forest.tryMoveCursorTo(context.forest.root(context.forest.rootField), rootCursor);
@@ -78,6 +82,8 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
                 { enumerable: false, writable: false, configurable: false, value: Reflect.get(this, propertyKey) });
         }
     }
+
+    [index: number]: EditableTreeOrPrimitive;
 
     public get context(): ProxyContext {
         return this.target.context;
@@ -103,7 +109,10 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         return this.target.isEmpty();
     }
 
-    public getLength(): number {
+    public get length(): number {
+        if (this.isEmpty()) {
+            return 0;
+        }
         const primaryKey = this.primaryKey;
         if (primaryKey !== undefined) {
             return this.cursor.length(primaryKey);
@@ -155,12 +164,11 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         return undefined;
     }
 
-    public proxifyField(index: number): UnwrappedEditableField {
+    public proxifyField(index: number): EditableTreeOrPrimitive {
+        assert(isArrayKey(index, this.length), "Index is out of range.");
         const primaryKey = this.primaryKey;
         const result = primaryKey !== undefined ? this.cursor.down(primaryKey, index) : this.cursor.seek(index);
-        if (result !== TreeNavigationResult.Ok) {
-            return undefined;
-        }
+        assert(result === TreeNavigationResult.Ok, "Cannot navigate to the given index.");
         const newTarget = this.context.createTarget(this.cursor);
         const newProxifiedField = proxifyField(this.context, newTarget);
         if (primaryKey !== undefined) {
@@ -168,7 +176,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         } else {
             this.cursor.seek(-index);
         }
-        return newProxifiedField;
+        return newProxifiedField as EditableTreeOrPrimitive;
     }
 
     /**
@@ -196,7 +204,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
      */
     public appendNode(cursor: ITreeCursor): boolean {
         const primaryKey = this.primaryKey ?? detachedFieldAsKey(this.context.forest.rootField);
-        const length = this.getLength();
+        const length = this.length;
         assert(primaryKey !== undefined, "Not supported");
         const path = this.primaryKey === undefined ? undefined : this.getPath();
         return this.context.insertNode({
@@ -207,110 +215,189 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
     }
 
     public getIndicesAsStrings(): string[] {
-        return Array.from({ length: this.getLength() }, (_: undefined, i: number) => String(i));
+        return Array.from({ length: this.length }, (_: undefined, i: number) => String(i));
     }
 
-    public getInsertRoot() {
-        return this.target.insertRoot.bind(this.target);
+    public get list(): EditableTreeOrPrimitive[] {
+        const list: EditableTreeOrPrimitive[] = [];
+        for (let i = 0; i < this.length; i++) {
+            list.push(this.proxifyField(i));
+        }
+        return list;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    // TODO: (?) return deleted nodes as a detached array sequence
-    splice(start: number, deleteCount?: number, ...items: ProxyTarget[]): ProxyTarget[] {
-        throw new Error("Not implemented");
+    *[Symbol.iterator](): IterableIterator<EditableTreeOrPrimitive> {
+        const list = this.list;
+        for (const node of list) {
+            yield node;
+        }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    // TODO: (?) create a copy of a sequence slice as a detached array sequence
-    slice(start?: number, end?: number): ProxyTarget[] {
-        throw new Error("Not implemented");
+    pop(): EditableTreeOrPrimitive | undefined {
+        const length = this.length;
+        if (length === 0) {
+            return undefined;
+        }
+        const node = this.proxifyField(length - 1);
+        const primaryKey = this.primaryKey ?? detachedFieldAsKey(this.context.forest.rootField);
+        assert(primaryKey !== undefined, "Not supported");
+        const path = this.primaryKey === undefined ? undefined : this.getPath();
+        this.context.deleteNode({
+            parent: path,
+            parentField: primaryKey,
+            parentIndex: length - 1,
+        }, 1);
+        return node;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    pop(): ProxyTarget | undefined {
-        throw new Error("Not implemented");
+    push(...items: EditableTreeOrPrimitive[]): number {
+        const fieldSchema = this.primaryKey !== undefined
+            ? getFieldSchema(this.getType(undefined, false) as NamedTreeSchema, this.primaryKey)
+            : lookupGlobalFieldSchema(this.context.forest.schema, rootFieldKey);
+        const newType = namedTreeSchema({
+            name: brand(""),
+            localFields: {
+                [EmptyKey]: fieldSchema,
+            },
+            extraLocalFields: emptyField,
+        });
+        const schemaCursor = new TypedJsonCursor(this.context.forest.schema, newType, items as object);
+        schemaCursor.down(EmptyKey, 0);
+        this.appendNode(schemaCursor);
+        return this.length;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    shift(): ProxyTarget | undefined {
-        throw new Error("Not implemented");
+    shift(): EditableTreeOrPrimitive | undefined {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    reverse(): ProxyTarget[] {
-        throw new Error("Not implemented");
+    unshift(...items: EditableTreeOrPrimitive[]): number {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    // TODO: returns a detached sequence of copied existing sequence elements and new elements
-    concat(): ProxyTarget[] {
-        throw new Error("Not implemented");
+    forEach(callbackfn: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => void, thisArg?: any): void {
+        const list = this.list;
+        for (let i = 0; i < list.length; i++) {
+            const node = list[i];
+            callbackfn.apply(thisArg, [node, i, list]);
+        }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    join(separator?: string): string {
-        throw new Error("Not implemented");
+    map<U>(callbackfn: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => U, thisArg?: any): U[] {
+        const res: U[] = [];
+        const list = this.list;
+        for (let i = 0; i < list.length; i++) {
+            const node = list[i];
+            res.push(callbackfn.apply(thisArg, [node, i, list]));
+        }
+        return res;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    sort(compareFn?: (a: ProxyTarget, b: ProxyTarget) => number): this {
-        throw new Error("Not implemented");
+    toString(): string {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    indexOf(searchElement: ProxyTarget, index?: number): number {
-        throw new Error("Not implemented");
+    toLocaleString(): string {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    lastIndexOf(searchElement: ProxyTarget, index?: number): number {
-        throw new Error("Not implemented");
+    concat(...items: ConcatArray<EditableTreeOrPrimitive>[]): EditableTreeOrPrimitive[];
+    concat(...items: (EditableTreeOrPrimitive | ConcatArray<EditableTreeOrPrimitive>)[]): EditableTreeOrPrimitive[] {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    reduce<U>(
-        callbackfn: (previousValue: U, currentValue: ProxyTarget, currentIndex: number, array: ProxyTarget[]) => U,
-        initialValue?: U): U {
-        throw new Error("Not implemented");
+    join(separator?: string | undefined): string {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    reduceRight<U>(
-        callbackfn: (previousValue: U, currentValue: ProxyTarget, currentIndex: number, array: ProxyTarget[]) => U,
-        initialValue?: U): U {
-        throw new Error("Not implemented");
+    reverse(): EditableTreeOrPrimitive[] {
+        throw new Error("Method not implemented.");
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    filter(predicate: (value: ProxyTarget, index: number, array: ProxyTarget[]) => unknown, thisArg?: any):
-        ProxyTarget[] {
-        throw new Error("Not implemented");
+    slice(start?: number | undefined, end?: number | undefined): EditableTreeOrPrimitive[] {
+        throw new Error("Method not implemented.");
+    }
+
+    sort(compareFn?: ((a: EditableTreeOrPrimitive, b: EditableTreeOrPrimitive) => number) | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+
+    splice(start: number, deleteCount?: number | undefined): EditableTreeOrPrimitive[];
+    splice(start: number, deleteCount: number, ...items: EditableTreeOrPrimitive[]): EditableTreeOrPrimitive[] {
+        throw new Error("Method not implemented.");
+    }
+
+    indexOf(searchElement: EditableTreeOrPrimitive, fromIndex?: number | undefined): number {
+        throw new Error("Method not implemented.");
+    }
+
+    lastIndexOf(searchElement: EditableTreeOrPrimitive, fromIndex?: number | undefined): number {
+        throw new Error("Method not implemented.");
+    }
+
+    every<S extends EditableTreeOrPrimitive>(predicate: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => value is S, thisArg?: any): this is S[];
+    every(predicate: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => unknown, thisArg?: any): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    some(predicate: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => unknown, thisArg?: any): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    filter<S extends EditableTreeOrPrimitive>(predicate: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => value is S, thisArg?: any): S[];
+    filter(predicate: (value: EditableTreeOrPrimitive, index: number, array: EditableTreeOrPrimitive[]) => unknown, thisArg?: any): EditableTreeOrPrimitive[];
+    filter(predicate: unknown, thisArg?: unknown): EditableTreeOrPrimitive[] {
+        throw new Error("Method not implemented.");
+    }
+
+    reduce(callbackfn: (previousValue: EditableTreeOrPrimitive, currentValue: EditableTreeOrPrimitive, currentIndex: number, array: EditableTreeOrPrimitive[]) => EditableTreeOrPrimitive, initialValue?: EditableTreeOrPrimitive): EditableTreeOrPrimitive;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: EditableTreeOrPrimitive, currentIndex: number, array: EditableTreeOrPrimitive[]) => U, initialValue: U): U;
+    reduce(callbackfn: unknown, initialValue?: unknown): EditableTreeOrPrimitive {
+        throw new Error("Method not implemented.");
+    }
+
+    reduceRight(callbackfn: (previousValue: EditableTreeOrPrimitive, currentValue: EditableTreeOrPrimitive, currentIndex: number, array: EditableTreeOrPrimitive[]) => EditableTreeOrPrimitive, initialValue?: EditableTreeOrPrimitive): EditableTreeOrPrimitive;
+    reduceRight<U>(callbackfn: (previousValue: U, currentValue: EditableTreeOrPrimitive, currentIndex: number, array: EditableTreeOrPrimitive[]) => U, initialValue: U): U;
+    reduceRight(callbackfn: unknown, initialValue?: unknown): EditableTreeOrPrimitive {
+        throw new Error("Method not implemented.");
+    }
+
+    find<S extends EditableTreeOrPrimitive>(predicate: (this: void, value: EditableTreeOrPrimitive, index: number, obj: EditableTreeOrPrimitive[]) => value is S, thisArg?: any): S | undefined;
+    find(predicate: (value: EditableTreeOrPrimitive, index: number, obj: EditableTreeOrPrimitive[]) => unknown, thisArg?: any): EditableTreeOrPrimitive | undefined;
+    find(predicate: unknown, thisArg?: unknown): EditableTreeOrPrimitive | undefined {
+        throw new Error("Method not implemented.");
+    }
+
+    findIndex(predicate: (value: EditableTreeOrPrimitive, index: number, obj: EditableTreeOrPrimitive[]) => unknown, thisArg?: any): number {
+        throw new Error("Method not implemented.");
+    }
+
+    fill(value: EditableTreeOrPrimitive, start?: number | undefined, end?: number | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+
+    copyWithin(target: number, start: number, end?: number | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+
+    entries(): IterableIterator<[number, EditableTreeOrPrimitive]> {
+        throw new Error("Method not implemented.");
+    }
+
+    keys(): IterableIterator<number> {
+        throw new Error("Method not implemented.");
+    }
+
+    values(): IterableIterator<EditableTreeOrPrimitive> {
+        throw new Error("Method not implemented.");
+    }
+
+    includes(searchElement: EditableTreeOrPrimitive, fromIndex?: number | undefined): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    [Symbol.unscopables](): { copyWithin: boolean; entries: boolean; fill: boolean; find: boolean; findIndex: boolean; keys: boolean; values: boolean; } {
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -322,8 +409,6 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
     get: (target: ProxyTargetSequence, key: string | symbol, receiver: object): unknown => {
         if (target.isEmpty()) {
             switch (key) {
-                case insertRootSymbol:
-                    return target.getInsertRoot();
                 case proxyTargetSymbol:
                     return target;
                 case "length":
@@ -339,11 +424,11 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
                     return [][key];
                 }
                 return function(...args: unknown[]): unknown {
-                    return Reflect.apply(reflected, receiver, args);
+                    return Reflect.apply(reflected, target, args);
                 };
             }
             const index = Number(key);
-            const length = target.getLength();
+            const length = target.length;
             if (key === "length") {
                 return length;
             } else if (isArrayKey(key, length)) {
@@ -358,12 +443,14 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
                 return target;
             case appendNodeSymbol:
                 return target.appendNode.bind(target);
+            case Symbol.iterator:
+                return target[Symbol.iterator].bind(target);
             default:
-                return Reflect.get(target, key);
         }
+        return undefined;
     },
     set: (target: ProxyTargetSequence, key: string, value: unknown, receiver: unknown): boolean => {
-        const length = target.getLength();
+        const length = target.length;
         if (key === "length") {
             return length === value;
         }
@@ -393,24 +480,26 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
+                case Symbol.iterator:
                     return true;
                 case getTypeSymbol:
                 case appendNodeSymbol:
                     return !target.isEmpty();
-                case insertRootSymbol:
-                    return target.isEmpty();
                 default:
             }
         } else {
-            if (isArrayKey(key, target.getLength())) {
+            if (isArrayKey(key, target.length)) {
                 return true;
             }
         }
-        return Reflect.has(target, key);
+        return false;
     },
     ownKeys: (target: ProxyTargetSequence): ArrayLike<keyof readonly UnwrappedEditableTree[]> => {
         const keys: (string | symbol)[] = target.getIndicesAsStrings();
-        keys.push(...Reflect.ownKeys(target));
+        keys.push("length", Symbol.iterator, proxyTargetSymbol, "target", "primaryKey");
+        if (!target.isEmpty()) {
+            keys.push(getTypeSymbol, appendNodeSymbol);
+        }
         return keys as ArrayLike<keyof readonly UnwrappedEditableTree[]>;
     },
     getOwnPropertyDescriptor: (target: ProxyTargetSequence, key: string | symbol): PropertyDescriptor | undefined => {
@@ -419,9 +508,7 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
         // so they must return true.
         if (typeof key === "symbol") {
             if (target.isEmpty()) {
-                return key === insertRootSymbol
-                    ? { configurable: true, enumerable: false, value: target.getInsertRoot(), writable: false }
-                    : key === proxyTargetSymbol
+                return key === proxyTargetSymbol
                         ? { configurable: true, enumerable: false, value: target, writable: false }
                         : undefined;
             } else {
@@ -437,9 +524,9 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
             }
         } else {
             const index = Number(key);
-            const length = target.getLength();
+            const length = target.length;
             if (key === "length") {
-                return { configurable: false, enumerable: false, value: length, writable: true }
+                return { configurable: true, enumerable: false, value: length, writable: false };
             } else if (isArrayKey(index, length)) {
                 return {
                     configurable: true,

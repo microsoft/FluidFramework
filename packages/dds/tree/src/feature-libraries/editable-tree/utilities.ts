@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EmptyKey, keyFromSymbol, UpPath, Value } from "../../tree";
-import { brand, fail } from "../../util";
+import { EmptyKey, isGlobalFieldKey, keyFromSymbol, UpPath, Value } from "../../tree";
+import { Brand, brand, fail } from "../../util";
 import { TreeSchema, ValueSchema, FieldSchema, LocalFieldKey } from "../../schema-stored";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "../defaultFieldKinds";
 import { FieldKind } from "../modular-schema";
-import { ETreeNodePath } from "./editableTreeContext";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -97,17 +96,24 @@ export function getArrayOwnKeys(length: number): string[] {
 
 const pathDelimiter = "/";
 
-function stringifyPath(path: UpPath, childPath: ETreeNodePath): ETreeNodePath {
-    const fieldName = typeof path.parentField === "string" ? path.parentField : keyFromSymbol(path.parentField);
+// TODO: document or get rid of all these
+// > Can you document this? What Seperators does it use? How does it handle global vs local field keys?
+// > Does it use escaping? How are indexes handled? Why does it exist?
+export type EditiableTreePath = Brand<string, "editable-tree.NodePath">;
+
+function stringifyPathSegment(path: UpPath, childPath: EditiableTreePath): EditiableTreePath {
+    // TODO: if kept, fix & test
+    // > This does not handle global and local fields with the same name correctly.
+    const fieldName = !isGlobalFieldKey(path.parentField) ? path.parentField : keyFromSymbol(path.parentField);
     return brand(`${fieldName}[${path.parentIndex}]${childPath}`);
 }
 
-export function pathToString(path: UpPath): ETreeNodePath {
+export function pathToString(path: UpPath): EditiableTreePath {
     let current = path;
-    let upPath = stringifyPath(current, brand(""));
+    let upPath = stringifyPathSegment(current, brand(""));
     while (current.parent !== undefined) {
         current = current.parent;
-        upPath = stringifyPath(current, brand(`${pathDelimiter}${upPath}`));
+        upPath = stringifyPathSegment(current, brand(`${pathDelimiter}${upPath}`));
     }
     return upPath;
 }

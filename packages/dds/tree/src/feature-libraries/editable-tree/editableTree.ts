@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, detachedFieldAsKey, UpPath } from "../../tree";
+import { Value, Anchor, UpPath } from "../../tree";
 import {
     TreeNavigationResult,
     mapCursorField,
@@ -69,15 +69,10 @@ export const setValueSymbol: unique symbol = Symbol("editable-tree:setValue()");
 export const deleteNodeSymbol: unique symbol = Symbol("editable-tree:deleteNode()");
 
 /**
- * A symbol to initialize a root node in contexts where string keys are already in use for fields.
- */
-export const insertRootSymbol: unique symbol = Symbol("editable-tree:insertRoot()");
-
-/**
  * {@link EditableTree}, but without fields i.e. having only utility symbols.
  *
  */
-export interface FieldlessEditableTree {
+export interface EditableNodeData {
     /**
      * A function to get the type of a node.
      * If this node is well-formed, it must follow this schema.
@@ -102,33 +97,14 @@ export interface FieldlessEditableTree {
     readonly [proxyTargetSymbol]: object;
 
     /**
-     * Creates a child of this node.
-     */
-    readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
-
-    /**
      * Sets value of a child of this node.
      */
-    readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
+    readonly [setValueSymbol]: (key: string, value: Value, typeName: TreeSchemaIdentifier) => void;
 
     /**
      * Deletes a child of this node.
      */
-    readonly [deleteNodeSymbol]: (key: string) => boolean;
-}
-
-/**
- * A tree where the forest has no data neither an initialized root node.
- * By calling a function associated with `insertRootSymbol` is converted into EditableTree.
- */
-export interface EmptyEditableTree {
-    readonly [insertRootSymbol]: (root: ITreeCursor) => EditableTree | UnwrappedEditableSequence;
-    /**
-     * Stores the target for the proxy which implements reading and writing for this node.
-     * The details of this object are implementation details,
-     * but the presence of this symbol can be used to separate EditableTrees from other types.
-     */
-    readonly [proxyTargetSymbol]: object;
+    readonly [deleteNodeSymbol]: (key: string) => void;
 }
 
 /**
@@ -142,7 +118,12 @@ export interface EmptyEditableTree {
  * (useful for generic code, and when references to these actual fields and nodes are required,
  * for example creating anchors and editing).
  */
-export interface EditableTree extends FieldlessEditableTree {
+export interface EditableTree extends EditableNodeData {
+    /**
+     * Creates a child of this node.
+     */
+    readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => void;
+
     /**
      * Fields of this node, indexed by their field keys (as strings).
      *
@@ -176,7 +157,7 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
  * not to do this unwrapping for cases which need to refer to the actual nodes.
  * This may include cases like creating anchors and/or editing.
  */
-export type UnwrappedEditableTree = EmptyEditableTree | EditableTreeOrPrimitive | UnwrappedEditableSequence;
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | UnwrappedEditableSequence;
 
 /**
  * A field of an {@link EditableTree}.
@@ -192,13 +173,7 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
 export type UnwrappedEditableField =
     | UnwrappedEditableTree
     | undefined
-    | EmptyEditableTree
     | UnwrappedEditableSequence;
-
-/**
- * A singleton which represents a permanently invalid location (i.e. there is never a node there)
- */
- const NeverAnchor: Anchor = brand(0);
 
 /**
  * A Proxy target, which together with a {@link handler} implements a basic read/write access to the Forest
@@ -216,7 +191,7 @@ export class ProxyTarget {
         } else {
             this.lazyCursor = context.forest.allocateCursor();
             this.lazyCursor.clear();
-            this.anchor = NeverAnchor;
+            this.anchor = context.forest.anchors.track(null);
         }
     }
 
@@ -398,17 +373,7 @@ export class ProxyTarget {
     }
 
     public isEmpty(): boolean {
-        return this.anchor === NeverAnchor;
-    }
-
-    public insertRoot(rootCursor: ITreeCursor): EditableTree | UnwrappedEditableSequence {
-        const forest = this.context.forest;
-        this.context.insertNode({
-            parent: undefined,
-            parentField: detachedFieldAsKey(forest.rootField),
-            parentIndex: 0,
-        }, rootCursor);
-        return this.context.root as EditableTree | UnwrappedEditableSequence;
+        return this.anchor === this.context.forest.anchors.track(null);
     }
 }
 
@@ -419,11 +384,7 @@ export class ProxyTarget {
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     get: (target: ProxyTarget, key: string | symbol, receiver: unknown): unknown => {
         if (target.isEmpty()) {
-            return key === insertRootSymbol
-                ? target.insertRoot.bind(target)
-                : key === proxyTargetSymbol
-                    ? target
-                    : undefined;
+            return key === proxyTargetSymbol ? target : undefined;
         }
         if (typeof key === "string") {
             // All string keys are fields
@@ -480,20 +441,20 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     // Include documented symbols (except value when value is undefined) and all non-empty fields.
     has: (target: ProxyTarget, key: string | symbol): boolean => {
         if (typeof key === "symbol") {
+            if (target.isEmpty()) {
+                return key === proxyTargetSymbol;
+            }
             switch (key) {
                 case proxyTargetSymbol:
-                    return true;
-                case insertRootSymbol:
-                    return target.isEmpty();
-                case valueSymbol:
-                    // Could do `target.value !== ValueSchema.Nothing`
-                    // instead if values which could be modified should report as existing.
-                    return !target.isEmpty() && target.value !== undefined;
                 case getTypeSymbol:
                 case insertNodeSymbol:
                 case deleteNodeSymbol:
                 case setValueSymbol:
-                    return !target.isEmpty();
+                    return true;
+                case valueSymbol:
+                    // Could do `target.value !== ValueSchema.Nothing`
+                    // instead if values which could be modified should report as existing.
+                    return target.value !== undefined;
                 default:
                     return false;
             }
@@ -514,9 +475,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         // so they must return true.
         if (typeof key === "symbol") {
             if (target.isEmpty()) {
-                return key === insertRootSymbol
-                    ? { configurable: true, enumerable: false, value: target.insertRoot.bind(target), writable: false }
-                    : key === proxyTargetSymbol
+                return key === proxyTargetSymbol
                         ? { configurable: true, enumerable: false, value: target, writable: false }
                         : undefined;
             } else {
@@ -554,13 +513,13 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 /**
  * See {@link UnwrappedEditableField} for documentation on what unwrapping this perform.
  */
-function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | ProxyTargetSequence):
+function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | ProxyTargetSequence, unwrap = true):
     UnwrappedEditableTree | UnwrappedEditableSequence {
-    if (Array.isArray(target)) {
+    if (isProxyTargetSequence(target)) {
         return adaptWithProxy(target, sequenceHandler);
     } else if (!target.isEmpty()) {
         const fieldSchema = target.getType(undefined, false) as NamedTreeSchema;
-        if (fieldSchema !== undefined && isPrimitive(fieldSchema)) {
+        if (unwrap && fieldSchema !== undefined && isPrimitive(fieldSchema)) {
             const nodeValue = target.value;
             if (isPrimitiveValue(nodeValue)) {
                 return nodeValue;
@@ -590,7 +549,11 @@ export function proxifyField(context: ProxyContext, target: ProxyTarget | ProxyT
  * Checks the type of an UnwrappedEditableField.
  */
 export function isEditableFieldSequence(field: UnwrappedEditableField): field is UnwrappedEditableSequence {
-    return Array.isArray(field);
+    return typeof field === "object" && isProxyTargetSequence(field[proxyTargetSymbol] as ProxyTarget | ProxyTargetSequence);
+}
+
+function isProxyTargetSequence(target: ProxyTarget | ProxyTargetSequence): target is ProxyTargetSequence {
+    return Symbol.iterator in target;
 }
 
 /**
@@ -603,10 +566,10 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
 /**
  * Checks if the root node exists.
  */
-export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditableTree {
+export function isEmptyTree(field: UnwrappedEditableField): boolean {
     return typeof field === "object" && (
-        Array.isArray(field)
-        ? field[proxyTargetSymbol] as ProxyTargetSequence
-        : field[proxyTargetSymbol] as ProxyTarget
+        isEditableFieldSequence(field)
+            ? field[proxyTargetSymbol] as ProxyTargetSequence
+            : field[proxyTargetSymbol] as ProxyTarget
     ).isEmpty();
 }
