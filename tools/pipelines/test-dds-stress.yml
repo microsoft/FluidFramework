@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-sharedstring-stress pipeline
+# "Test - DDS Stress" pipeline
 
 name: $(Build.BuildId)
 
@@ -17,6 +17,10 @@ resources:
       - release/*
       - main
       - next
+      paths: # Only bother running the pipeline at all if any of the relevant packages have changed.
+      - packages/dds/sequence/*
+      - packages/dds/merge-tree/*
+      - experimental/dds/tree/*
 
 variables:
 - name: testWorkspace
