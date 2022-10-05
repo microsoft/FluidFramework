@@ -231,12 +231,12 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
     }
 
-    protected getNode(): TNode {
+    private getNode(): TNode {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
         return (this.siblings as TNode[])[this.index];
     }
 
-    protected getField(): readonly TNode[] {
+    private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
         const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
