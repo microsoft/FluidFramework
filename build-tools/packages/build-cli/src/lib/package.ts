@@ -2,17 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import path from "path";
-import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import path from "path";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+
+import { Context, Logger, MonoRepo, Package, readJsonAsync } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
+
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 import { indentString } from "./text";
 

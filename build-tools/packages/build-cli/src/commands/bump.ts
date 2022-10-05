@@ -2,14 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { strict as assert } from "assert";
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
-import { bumpVersionScheme, ReleaseVersion } from "@fluid-tools/version-tools";
 import type { ArgInput } from "@oclif/core/lib/interfaces";
+import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, bumpVersionScheme } from "@fluid-tools/version-tools";
+
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";

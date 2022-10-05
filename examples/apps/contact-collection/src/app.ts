@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import { ContactCollectionContainerRuntimeFactory } from "./containerCode";
-import { IContact, IContactCollection } from "./dataObject";
+import { ContactCollectionContainerRuntimeFactory, IContactCollectionAppModel } from "./containerCode";
 import { renderContact, renderContactCollection } from "./view";
 
 const searchParams = new URLSearchParams(location.search);
@@ -34,37 +33,31 @@ const getContactUrl = (contactId: string): string => {
 // ID to load from, so the URL for a document load will look something like http://localhost:8080/#1596520748752.
 // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
 async function start(): Promise<void> {
-    // when the document ID is not provided, create a new one.
-    const shouldCreateNew = location.hash.length === 0;
-    const documentId = !shouldCreateNew ? window.location.hash.substring(1) : "";
-
-    // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
-    // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
-    // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
-    // function takes the ID of the document we're creating or loading, the container code to load into it, and a
-    // flag to specify whether we're creating a new document or loading an existing one.
-    const [container, containerId] = await getTinyliciousContainer(
-        documentId, ContactCollectionContainerRuntimeFactory, shouldCreateNew,
+    const tinyliciousModelLoader = new TinyliciousModelLoader<IContactCollectionAppModel>(
+        new StaticCodeLoader(new ContactCollectionContainerRuntimeFactory()),
     );
 
-    // update the browser URL and the window title with the actual container ID
-    location.hash = containerId;
-    document.title = containerId;
+    let id: string;
+    let model: IContactCollectionAppModel;
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our contact collection is available
-    // at the URL "/".  Since it's using the collection pattern, it will interpret subrequests as requests for a
-    // single contact.
-    const url = `/${specifiedContact ?? ""}`;
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
+    if (location.hash.length === 0) {
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
+        const createResponse = await tinyliciousModelLoader.createDetached("1.0");
+        model = createResponse.model;
+        id = await createResponse.attach();
+    } else {
+        id = location.hash.substring(1);
+        model = await tinyliciousModelLoader.loadExisting(id);
     }
 
-    const div = document.getElementById("content") as HTMLDivElement;
+    // update the browser URL and the window title with the actual container ID
+    location.hash = id;
+    document.title = id;
+
+    // Render it
+    const contentDiv = document.getElementById("content") as HTMLDivElement;
 
     // Our app has two rendering modes, contact list and single contact details view.  The app owns the url format,
     // and here we've chosen to use the query params to pass the single contact id if that's the view we want (notice
@@ -72,12 +65,15 @@ async function start(): Promise<void> {
     // routing strategies to specify the view to use -- it's all up to the app.
     if (specifiedContact === undefined) {
         // If a contact was not specified, we'll render the full collection.
-        const contactCollection: IContactCollection = response.value;
-        renderContactCollection(contactCollection, getContactUrl, div);
+        const contactCollection = model.contactCollection;
+        renderContactCollection(contactCollection, getContactUrl, contentDiv);
     } else {
         // If a contact was specified, we'll render just that contact.
-        const contact: IContact = response.value;
-        renderContact(contact, div);
+        const contact = model.contactCollection.getContact(specifiedContact);
+        if (contact === undefined) {
+            throw new Error("Contact not found");
+        }
+        renderContact(contact, contentDiv);
     }
 }
 

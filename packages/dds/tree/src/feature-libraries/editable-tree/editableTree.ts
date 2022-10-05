@@ -6,18 +6,32 @@
 import { assert } from "@fluidframework/common-utils";
 import { Value, Anchor, detachedFieldAsKey, UpPath } from "../../tree";
 import {
-    TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState, ITreeCursor,
+    TreeNavigationResult,
+    mapCursorField,
+    ITreeSubscriptionCursor,
+    ITreeSubscriptionCursorState,
+    ITreeCursor,
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, ValueSchema, NamedTreeSchema, lookupTreeSchema,
+    FieldSchema,
+    LocalFieldKey,
+    TreeSchemaIdentifier,
+    ValueSchema,
+    NamedTreeSchema,
+    lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { TypedJsonCursor } from "../../domains";
 import {
     AdaptingProxyHandler,
     adaptWithProxy,
-    getFieldKind, getFieldSchema, getPrimaryField, isPrimitive, isPrimitiveValue, PrimitiveValue,
+    getFieldKind,
+    getFieldSchema,
+    getPrimaryField,
+    isPrimitive,
+    isPrimitiveValue,
+    PrimitiveValue,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import { ProxyTargetSequence, sequenceHandler, UnwrappedEditableSequence } from "./editableTreeSequence";
@@ -70,7 +84,10 @@ export interface FieldlessEditableTree {
      * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
      * @param nameOnly - if true, returns only the type identifier
      */
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [getTypeSymbol]: (
+        key?: string,
+        nameOnly?: boolean,
+    ) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
      * Value stored on this node.
@@ -172,7 +189,11 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
  * Sequence multiplicities are handled with {@link UnwrappedEditableSequence}.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
+export type UnwrappedEditableField =
+    | UnwrappedEditableTree
+    | undefined
+    | EmptyEditableTree
+    | UnwrappedEditableSequence;
 
 /**
  * A singleton which represents a permanently invalid location (i.e. there is never a node there)
@@ -187,10 +208,7 @@ export class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(
-        public readonly context: ProxyContext,
-        cursor?: ITreeSubscriptionCursor,
-    ) {
+    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         if (cursor) {
             assert(cursor.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
             this.lazyCursor = cursor.fork();
@@ -236,17 +254,24 @@ export class ProxyTarget {
 
     public get cursor(): ITreeSubscriptionCursor {
         if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
-            assert(this.anchor !== undefined,
-                0x3c3 /* EditableTree should have an anchor if it does not have a cursor */);
+            assert(
+                this.anchor !== undefined,
+                0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
+            );
             const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
-            assert(result === TreeNavigationResult.Ok,
-                0x3c4 /* It is invalid to access an EditableTree node which no longer exists */);
+            assert(
+                result === TreeNavigationResult.Ok,
+                0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
+            );
             this.context.withCursors.add(this);
         }
         return this.lazyCursor;
     }
 
-    public getType(key?: string, nameOnly = true): TreeSchemaIdentifier | NamedTreeSchema | undefined {
+    public getType(
+        key?: string,
+        nameOnly = true,
+    ): TreeSchemaIdentifier | NamedTreeSchema | undefined {
         let typeName = this.cursor.type;
         if (key !== undefined) {
             const fieldLength = this.cursor.length(brand(key));
@@ -317,7 +342,11 @@ export class ProxyTarget {
         // Avoid wrapping non-sequence fields in arrays
         assert(this.cursor.length(brand(key)) <= 1, 0x3c8 /* invalid non sequence */);
         // Make the childTarget:
-        const childTarget = mapCursorField(this.cursor, brand(key), (c) => this.context.createTarget(c))[0];
+        const childTarget = mapCursorField(
+            this.cursor,
+            brand(key),
+            (c) => this.context.createTarget(c),
+        )[0];
         return proxifyField(this.context, childTarget);
     }
 
@@ -423,7 +452,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
                 return undefined;
         }
     },
-    set: (target: ProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
+    set: (
+        target: ProxyTarget,
+        key: string | symbol,
+        value: unknown,
+        receiver: unknown,
+    ): boolean => {
         if (target.has(key)) {
             const typeName = target.getType(key) as TreeSchemaIdentifier;
             return target.setValue(key, value, typeName);
@@ -471,7 +505,10 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     ownKeys: (target: ProxyTarget): string[] => {
         return target.getKeys();
     },
-    getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
+    getOwnPropertyDescriptor: (
+        target: ProxyTarget,
+        key: string | symbol,
+    ): PropertyDescriptor | undefined => {
         // We generally don't want to allow users of the proxy to reconfigure all the properties,
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.

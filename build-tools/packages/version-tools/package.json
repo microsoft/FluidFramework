@@ -68,7 +68,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "~1.9.5",
+    "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
@@ -82,6 +82,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/chai": "^4",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",

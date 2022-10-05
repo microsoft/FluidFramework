@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import path from "path";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { exec, MonoRepoKind } from "@fluidframework/build-tools";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
+import path from "path";
+
+import { MonoRepoKind, exec } from "@fluidframework/build-tools";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+
 import {
     generateBumpDepsBranchName,
     generateBumpVersionBranchName,
@@ -21,7 +23,7 @@ import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { StateHandlerFunction, BaseStateHandler } from "./stateHandlers";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
 /**
  * Checks that the current branch matches the expected branch for a release.

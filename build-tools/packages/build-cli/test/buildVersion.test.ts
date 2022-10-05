@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { expect, test } from "@oclif/test";
 import { assert } from "chai";
 import * as semver from "semver";
-import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "@fluidframework/build-tools";
+
+import { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "@fluidframework/build-tools";
+
 import { getVersionRange } from "@fluid-tools/version-tools";
 
 // Deliberately not sorted here; highest version is 0.59.3000

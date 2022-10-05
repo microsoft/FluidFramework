@@ -5,7 +5,10 @@
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import {
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import {
     ITelemetryContext,
     ISummaryTreeWithStats,
@@ -13,12 +16,32 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { cachedValue, Dependee, Dependent, ICachedValue, recordDependency } from "../dependency-tracking";
+import {
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../shared-tree-core";
+import {
+    cachedValue,
+    Dependee,
+    Dependent,
+    ICachedValue,
+    recordDependency,
+} from "../dependency-tracking";
 import { Delta } from "../tree";
 import {
-    FieldKindIdentifier, FieldSchema, GlobalFieldKey, LocalFieldKey, Named,
-    SchemaData, SchemaPolicy, StoredSchemaRepository, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldKindIdentifier,
+    FieldSchema,
+    GlobalFieldKey,
+    LocalFieldKey,
+    Named,
+    SchemaData,
+    SchemaPolicy,
+    StoredSchemaRepository,
+    TreeSchema,
+    TreeSchemaIdentifier,
+    ValueSchema,
     schemaDataIsEmpty,
 } from "../schema-stored";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
@@ -83,10 +106,10 @@ function encodeRepo(repo: SchemaData): Format {
 
 function compareNamed(a: Named<string>, b: Named<string>) {
     if (a.name < b.name) {
-      return -1;
+        return -1;
     }
     if (a.name > b.name) {
-      return 1;
+        return 1;
     }
     return 0;
 }
@@ -97,7 +120,9 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaF
         extraGlobalFields: schema.extraGlobalFields,
         extraLocalFields: encodeField(schema.extraLocalFields),
         globalFields: [...schema.globalFields].sort(),
-        localFields: [...schema.localFields].map(([k, v]) => encodeNamedField(k, v)).sort(compareNamed),
+        localFields: [...schema.localFields]
+            .map(([k, v]) => encodeNamedField(k, v))
+            .sort(compareNamed),
         value: schema.value,
     };
     return out;
@@ -149,7 +174,10 @@ function decodeTree(schema: TreeSchemaFormat): TreeSchema {
         extraLocalFields: decodeField(schema.extraLocalFields),
         globalFields: new Set(schema.globalFields),
         localFields: new Map(
-            schema.localFields.map((field): [LocalFieldKey, FieldSchema] => [brand(field.name), decodeField(field)]),
+            schema.localFields.map((field): [LocalFieldKey, FieldSchema] => [
+                brand(field.name),
+                decodeField(field),
+            ]),
         ),
         value: schema.value,
     };
@@ -195,7 +223,8 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        private readonly schema: StoredSchemaRepository) {
+        private readonly schema: StoredSchemaRepository,
+    ) {
         this.schemaBlob = cachedValue(async (observer) => {
             recordDependency(observer, this.schema);
             const schemaText = getSchemaString(this.schema);
@@ -244,9 +273,14 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
         };
     }
 
-    public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
-        const [hasString, hasBlob] = await Promise.all(
-            [services.contains(schemaStringKey), services.contains(schemaBlobKey)]);
+    public async load(
+        services: IChannelStorageService,
+        parse: SummaryElementParser,
+    ): Promise<void> {
+        const [hasString, hasBlob] = await Promise.all([
+            services.contains(schemaStringKey),
+            services.contains(schemaBlobKey),
+        ]);
         assert(hasString || hasBlob, 0x3d8 /* Schema is required in summary */);
         let schemaBuffer: ArrayBufferLike;
         if (hasBlob) {
@@ -261,7 +295,10 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
         // After the awaits, validate that the schema is in a clean state.
         // This detects any schema that could have been accidentally added through
         // invalid means and are about to be overwritten.
-        assert(schemaDataIsEmpty(this.schema), 0x3da /* there should not already be stored schema when loading stored schema */);
+        assert(
+            schemaDataIsEmpty(this.schema),
+            0x3da /* there should not already be stored schema when loading stored schema */,
+        );
 
         const schemaString = bufferToString(schemaBuffer, "utf-8");
         const decoded = parseSchemaString(schemaString);
@@ -270,8 +307,8 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
 }
 
 interface SchemaOp {
-    readonly type: "SchemaOp",
-    readonly data: string,
+    readonly type: "SchemaOp";
+    readonly data: string;
 }
 
 /**
@@ -280,8 +317,10 @@ interface SchemaOp {
  * TODO: this should be more integrated with both SchemaIndex and transactions.
  */
 export class SchemaEditor implements StoredSchemaRepository {
-    public constructor(public readonly inner: StoredSchemaRepository, private readonly submit: (op: SchemaOp) => void) {
-    }
+    public constructor(
+        public readonly inner: StoredSchemaRepository,
+        private readonly submit: (op: SchemaOp) => void,
+    ) {}
 
     /**
      * @returns true if this is a schema op and was handled.
@@ -292,7 +331,7 @@ export class SchemaEditor implements StoredSchemaRepository {
     tryHandleOp(message: ISequencedDocumentMessage): boolean {
         const op: JsonCompatibleReadOnly = message.contents;
         if (isJsonObject(op) && op.type === "SchemaOp") {
-            const data  = parseSchemaString(op.data as string);
+            const data = parseSchemaString(op.data as string);
             // TODO: This does not correctly handle concurrency of schema edits.
             this.inner.update(data);
             return true;
@@ -301,7 +340,7 @@ export class SchemaEditor implements StoredSchemaRepository {
     }
 
     update(newSchema: SchemaData): void {
-        const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema)}
+        const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema) };
         this.submit(op);
         this.inner.update(newSchema);
     }
