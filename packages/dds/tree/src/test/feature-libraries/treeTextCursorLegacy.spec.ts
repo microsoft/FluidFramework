@@ -11,7 +11,7 @@ import { defaultSchemaPolicy, ObjectForest, singleTextCursorNew } from "../../fe
 import {
     jsonableTreeFromCursor,
     singleTextCursor,
-// eslint-disable-next-line import/no-internal-modules
+    // eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/treeTextCursorLegacy";
 import { initializeForest, ITreeCursor, TreeNavigationResult } from "../../forest";
 import { InMemoryStoredSchemaRepository } from "../../schema-stored";
