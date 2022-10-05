@@ -35,7 +35,7 @@ stages:
           displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
           name: 'Check${{ package.testFileTarName }}'
 
-  ${{ each package in parameters.packages }}:
+  - ${{ each package in parameters.packages }}:
     - stage:
       dependsOn: CheckAffectedPaths
       displayName: Run stress tests - ${{ package.name }}
