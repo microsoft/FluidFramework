@@ -800,8 +800,11 @@ describe("Data Store Context Tests", () => {
                     clientSequenceNumber: 0,
                     referenceSequenceNumber: 0,
                     type: "",
-                    contents: undefined,
                     timestamp: 0,
+                    contents: {
+                        content: "any content",
+                        type: "some type",
+                    },
                 };
                 remoteDataStoreContext.process(message, false, undefined);
                 await assert.rejects(remoteDataStoreContext.tombstone(), `Cannot tombstone datastores with pending ops`);
