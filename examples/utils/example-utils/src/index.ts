@@ -3,5 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerViewRuntimeFactory";
-export * from "./modelLoader";
+export { ViewCallback, ContainerViewRuntimeFactory } from "./containerViewRuntimeFactory";
+export {
+	IDetachedModel,
+	IModelLoader,
+	ModelMakerCallback,
+	ModelContainerRuntimeFactory,
+	makeModelRequestHandler,
+	ModelLoader,
+	SessionStorageModelLoader,
+	StaticCodeLoader,
+	TinyliciousModelLoader,
+} from "./modelLoader";

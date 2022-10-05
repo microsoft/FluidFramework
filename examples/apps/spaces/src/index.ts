@@ -6,6 +6,7 @@
 export {
 	ISpacesItem,
 	Spaces,
+	SpacesView,
 	ISpacesItemEntry,
 	spacesItemMap,
 	spacesRegistryEntries,
