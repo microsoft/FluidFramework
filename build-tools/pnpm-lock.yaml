@@ -38,7 +38,7 @@ importers:
       '@fluidframework/bundle-size-tools': ^0.4.7000
       '@fluidframework/eslint-config-fluid': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
-      '@oclif/core': ^1.16.4
+      '@oclif/core': ^1.9.5
       '@oclif/plugin-commands': ^2.2.0
       '@oclif/plugin-help': ^5
       '@oclif/plugin-not-found': ^2.3.3
@@ -312,7 +312,7 @@ importers:
       '@fluidframework/build-common': ^1.0.0
       '@fluidframework/eslint-config-fluid': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
-      '@oclif/core': ^1.16.4
+      '@oclif/core': ^1.9.5
       '@oclif/plugin-commands': ^2.2.0
       '@oclif/plugin-help': ^5
       '@oclif/plugin-not-found': ^2.3.3
