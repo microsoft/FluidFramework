@@ -1042,8 +1042,8 @@ export class LocalDetachedFluidDataStoreContext
 
         // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
         // FluidDataStoreRuntime, which exposes its handle.
-        // const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = dataStoreChannel;
-        // await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+        const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = dataStoreChannel;
+        await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();
