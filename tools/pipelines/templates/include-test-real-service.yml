@@ -74,6 +74,12 @@ jobs:
       - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
         - name: feed
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+        - name: devFeed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+        - name: devFeed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
       - ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
         - name: artifactPipeline
           value: Build - azure
@@ -154,7 +160,7 @@ jobs:
 
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-            echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
             echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
