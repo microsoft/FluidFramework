@@ -73,18 +73,18 @@ jobs:
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
-      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-        - name: feed
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-        - name: feed
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-        - name: devFeed
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-        - name: devFeed
-          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+      # - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+      #   - name: feed
+      #     value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+      # - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+      - name: feed
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      # - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+      #   - name: devFeed
+      #     value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+      # - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+      - name: devFeed
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
       - ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
         - name: artifactPipeline
           value: Build - azure
