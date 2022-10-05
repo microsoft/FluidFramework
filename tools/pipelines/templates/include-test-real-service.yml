@@ -48,11 +48,21 @@ parameters:
   type: boolean
   default: false
 
+- name: condition
+  type: string
+  default: true
+
+- name: dependsOn
+  type: string
+  default: []
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
       displayName: Run ${{ variant.name }}
       pool: ${{ parameters.poolBuild }}
+      condition: ${{ parameters.condition }}
+      dependsOn: ${{ parameters.dependsOn }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
       # We use 'chalk' to colorize output, which auto-detects color support in the
