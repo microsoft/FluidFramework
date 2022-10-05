@@ -319,15 +319,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return;
         }
 
-        await this.getInitialSnapshotDetails();
-        const path = `${JSON.stringify(this.packagePath)}`;
-        assert(!(await this.isRoot()), `Tombstone should not be called on root datastores! ${path}`);
-        assert(!this.isLocalDataStore, `Local data for ${path} should have been wiped before tombstone is called!`);
+        assert(!(await this.isRoot()), "Tombstone should not be called on root datastores!");
+        assert(!this.isLocalDataStore, "Local data should have been wiped before tombstone is called!");
 
         // Note loaded and channel !== undefined are the same thing as you are only loaded if the channel is defined
-        assert(!this.loaded || this.channel === undefined, `Cannot tombstone a loaded datastore. ${path}`);
+        assert(!this.loaded || this.channel === undefined, "Cannot tombstone a loaded datastore.");
         assert(this.pending === undefined || this.pending.length === 0,
-            `Cannot tombstone a datastore with pending ops! ${path}`);
+            "Cannot tombstone a datastore with pending ops!");
 
         this._tombstoned = true;
     }
