@@ -69,14 +69,14 @@ export enum FetchSource {
     noCache = "noCache"
 }
 
+// @public (undocumented)
+export type FiveDaysMs = 432000000;
+
 // @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
 }
-
-// @public (undocumented)
-export type FiveDaysMs = 432000000;
 
 // @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
