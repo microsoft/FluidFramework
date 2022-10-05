@@ -17,13 +17,12 @@ parameters:
 - name: affectedPaths
   type: string
 
+- name: testWorkspace
+  type: string
+
 - name: pool
   type: object
   default: Small
-
-variables:
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 
 jobs:
   - template: templates/include-test-real-service.yml
@@ -31,7 +30,7 @@ jobs:
       poolBuild: ${{ parameters.pool }}
       extraDependencies: mocha @fluid-internal/stochastic-test-utils
       testPackage: ${{ parameters.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      testWorkspace: ${{ parameters.testWorkspace }}
       timeoutInMinutes: 120
       testFileTarName: ${{ parameters.testFileTarName }}
       testCommand: test:mocha
