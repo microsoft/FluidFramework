@@ -39,11 +39,11 @@ stages:
   - ${{ each package in parameters.packages }}:
     - stage:
       dependsOn: CheckAffectedPaths
+      condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
       displayName: Run stress tests - ${{ package.name }}
       jobs:
         - template: include-test-real-service.yml
           parameters:
-            condition: eq(stageDependencies.CheckAffectedPaths.Job.outputs['Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
             poolBuild: ${{ parameters.pool }}
             extraDependencies: mocha @fluid-internal/stochastic-test-utils
             testPackage: ${{ package.name }}
