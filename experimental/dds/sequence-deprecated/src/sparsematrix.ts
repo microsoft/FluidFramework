@@ -8,6 +8,7 @@ import {
     BaseSegment,
     createGroupOp,
     IJSONSegment,
+    IMergeTreeDeltaOp,
     ISegment,
     LocalReferenceCollection,
     PropertySet,
@@ -20,9 +21,9 @@ import {
     Serializable,
     Jsonable,
 } from "@fluidframework/datastore-definitions";
+import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
-import { SharedSegmentSequence, SubSequence } from "./";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
@@ -288,12 +289,12 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getItem(row: number, col: number):
         // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-        Jsonable<string | number | boolean | IFluidHandle> {
+        Jsonable<string | number | boolean | IFluidHandle> | undefined {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.getContainingSegment(pos);
         if (segment && RunSegment.is(segment)) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return segment.items[offset];
+            return segment.items[offset ?? 0];
         } else if (segment && PaddingSegment.is(segment)) {
             return undefined;
         }
@@ -303,19 +304,19 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getTag(row: number, col: number) {
         const { segment, offset } = this.getSegment(row, col);
-        if (RunSegment.is(segment)) {
+        if (segment && RunSegment.is(segment)) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return segment.getTag(offset);
+            return segment.getTag(offset ?? 0);
         }
         return undefined;
     }
 
     public setTag(row: number, col: number, tag: any) {
         const { segment, offset } = this.getSegment(row, col);
-        if (RunSegment.is(segment)) {
-            segment.setTag(offset, tag);
+        if (segment && RunSegment.is(segment)) {
+            segment.setTag(offset ?? 0, tag);
         } else if (tag !== undefined) {
-            throw new Error(`Must not attempt to set tags on '${segment.constructor.name}'.`);
+            throw new Error(`Must not attempt to set tags on '${segment?.constructor.name}'.`);
         }
     }
 
@@ -359,13 +360,19 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
         const removeColStart = srcCol;
         const removeColEnd = srcCol + numCols;
-        const ops = [];
+        const ops: IMergeTreeDeltaOp[] = [];
 
         for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
-            ops.push(this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd));
+            const removeMsg = this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd);
+            if (removeMsg) {
+                ops.push(removeMsg);
+            }
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols);
-            ops.push(this.client.insertSegmentLocal(insertPos, segment));
+            const insertMsg = this.client.insertSegmentLocal(insertPos, segment);
+            if (insertMsg) {
+                ops.push(insertMsg);
+            }
         }
 
         this.submitSequenceMessage(createGroupOp(...ops));

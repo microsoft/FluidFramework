@@ -16,98 +16,50 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObservable": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObservable": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IOldestClientObservable():
-    TypeOnly<old.IOldestClientObservable>;
-declare function use_current_InterfaceDeclaration_IOldestClientObservable(
-    use: TypeOnly<current.IOldestClientObservable>);
-use_current_InterfaceDeclaration_IOldestClientObservable(
-    get_old_InterfaceDeclaration_IOldestClientObservable());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObservable": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObservable": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IOldestClientObservable():
-    TypeOnly<current.IOldestClientObservable>;
-declare function use_old_InterfaceDeclaration_IOldestClientObservable(
-    use: TypeOnly<old.IOldestClientObservable>);
-use_old_InterfaceDeclaration_IOldestClientObservable(
-    get_current_InterfaceDeclaration_IOldestClientObservable());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObservableEvents": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObservableEvents": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IOldestClientObservableEvents():
-    TypeOnly<old.IOldestClientObservableEvents>;
-declare function use_current_InterfaceDeclaration_IOldestClientObservableEvents(
-    use: TypeOnly<current.IOldestClientObservableEvents>);
-use_current_InterfaceDeclaration_IOldestClientObservableEvents(
-    get_old_InterfaceDeclaration_IOldestClientObservableEvents());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObservableEvents": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObservableEvents": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IOldestClientObservableEvents():
-    TypeOnly<current.IOldestClientObservableEvents>;
-declare function use_old_InterfaceDeclaration_IOldestClientObservableEvents(
-    use: TypeOnly<old.IOldestClientObservableEvents>);
-use_old_InterfaceDeclaration_IOldestClientObservableEvents(
-    get_current_InterfaceDeclaration_IOldestClientObservableEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObserver": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObserver": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IOldestClientObserver():
-    TypeOnly<old.IOldestClientObserver>;
-declare function use_current_InterfaceDeclaration_IOldestClientObserver(
-    use: TypeOnly<current.IOldestClientObserver>);
-use_current_InterfaceDeclaration_IOldestClientObserver(
-    get_old_InterfaceDeclaration_IOldestClientObserver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObserver": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObserver": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IOldestClientObserver():
-    TypeOnly<current.IOldestClientObserver>;
-declare function use_old_InterfaceDeclaration_IOldestClientObserver(
-    use: TypeOnly<old.IOldestClientObserver>);
-use_old_InterfaceDeclaration_IOldestClientObserver(
-    get_current_InterfaceDeclaration_IOldestClientObserver());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObserverEvents": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObserverEvents": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IOldestClientObserverEvents():
-    TypeOnly<old.IOldestClientObserverEvents>;
-declare function use_current_InterfaceDeclaration_IOldestClientObserverEvents(
-    use: TypeOnly<current.IOldestClientObserverEvents>);
-use_current_InterfaceDeclaration_IOldestClientObserverEvents(
-    get_old_InterfaceDeclaration_IOldestClientObserverEvents());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IOldestClientObserverEvents():
-    TypeOnly<current.IOldestClientObserverEvents>;
-declare function use_old_InterfaceDeclaration_IOldestClientObserverEvents(
-    use: TypeOnly<old.IOldestClientObserverEvents>);
-use_old_InterfaceDeclaration_IOldestClientObserverEvents(
-    get_current_InterfaceDeclaration_IOldestClientObserverEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -119,6 +71,7 @@ declare function get_old_InterfaceDeclaration_ITaskManager():
 declare function use_current_InterfaceDeclaration_ITaskManager(
     use: TypeOnly<current.ITaskManager>);
 use_current_InterfaceDeclaration_ITaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITaskManager());
 
 /*
@@ -131,6 +84,7 @@ declare function get_current_InterfaceDeclaration_ITaskManager():
 declare function use_old_InterfaceDeclaration_ITaskManager(
     use: TypeOnly<old.ITaskManager>);
 use_old_InterfaceDeclaration_ITaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITaskManager());
 
 /*
@@ -160,26 +114,14 @@ use_old_InterfaceDeclaration_ITaskManagerEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OldestClientObserver": {"forwardCompat": false}
+* "RemovedClassDeclaration_OldestClientObserver": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_OldestClientObserver():
-    TypeOnly<old.OldestClientObserver>;
-declare function use_current_ClassDeclaration_OldestClientObserver(
-    use: TypeOnly<current.OldestClientObserver>);
-use_current_ClassDeclaration_OldestClientObserver(
-    get_old_ClassDeclaration_OldestClientObserver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OldestClientObserver": {"backCompat": false}
+* "RemovedClassDeclaration_OldestClientObserver": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_OldestClientObserver():
-    TypeOnly<current.OldestClientObserver>;
-declare function use_old_ClassDeclaration_OldestClientObserver(
-    use: TypeOnly<old.OldestClientObserver>);
-use_old_ClassDeclaration_OldestClientObserver(
-    get_current_ClassDeclaration_OldestClientObserver());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -191,6 +133,7 @@ declare function get_old_ClassDeclaration_TaskManager():
 declare function use_current_ClassDeclaration_TaskManager(
     use: TypeOnly<current.TaskManager>);
 use_current_ClassDeclaration_TaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TaskManager());
 
 /*
@@ -203,4 +146,5 @@ declare function get_current_ClassDeclaration_TaskManager():
 declare function use_old_ClassDeclaration_TaskManager(
     use: TypeOnly<old.TaskManager>);
 use_old_ClassDeclaration_TaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TaskManager());

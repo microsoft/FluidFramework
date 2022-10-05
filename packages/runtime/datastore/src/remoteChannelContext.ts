@@ -303,7 +303,7 @@ export class RemoteChannelContext implements IChannelContext {
         return channel.getGCData(fullGC);
     }
 
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         /**
          * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
          * used routes to contain a route to this channel context.
