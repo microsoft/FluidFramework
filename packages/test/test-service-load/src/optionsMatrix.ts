@@ -57,12 +57,8 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableSummaries: [false],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
-    maxOpsSinceLastSummary: numberCases,
-    summarizerClientElection: booleanCases,
-    summarizerOptions: [undefined],
 };
 
 export function generateRuntimeOptions(

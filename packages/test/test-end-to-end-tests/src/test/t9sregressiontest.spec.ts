@@ -23,7 +23,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             // currently these tests will break if we load from a summary that was too recent
-            disableSummaries: true,
+            summaryConfigOverrides: { state: "disabled" },
         },
     },
 };
