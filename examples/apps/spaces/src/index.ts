@@ -3,4 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluid-object";
+export {
+	ISpacesItem,
+	Spaces,
+	ISpacesItemEntry,
+	spacesItemMap,
+	spacesRegistryEntries,
+	templateDefinitions,
+	ISpacesStorage,
+	ISpacesStoredItem,
+	SpacesStorage,
+} from "./fluid-object";

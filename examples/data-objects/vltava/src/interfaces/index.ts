@@ -3,4 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluidObjectInternalRegistry";
+export {
+	IFluidObjectInternalRegistry,
+	DefaultRegistryTypes,
+	IProvideFluidObjectInternalRegistry,
+	IInternalRegistryEntry,
+} from "./fluidObjectInternalRegistry";

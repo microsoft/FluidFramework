@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./anchor";
+export { Anchor } from "./anchor";
 export * from "./tabs";
 export * from "./vltava";

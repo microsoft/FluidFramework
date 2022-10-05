@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./Todo";
+export { TodoName, Todo, TodoFactory } from "./Todo";
 export * from "./TodoView";

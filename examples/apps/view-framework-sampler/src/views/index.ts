@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./jsView";
+export { jsRenderDiceRoller } from "./jsView";
 export * from "./reactView";
 export * from "./vueView";
