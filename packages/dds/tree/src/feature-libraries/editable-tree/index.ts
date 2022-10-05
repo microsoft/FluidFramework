@@ -18,8 +18,4 @@ export {
     isArrayField,
     isUnwrappedNode,
 } from "./editableTree";
-export {
-    PrimitiveValue,
-    isPrimitiveValue,
-    isPrimitive,
-} from "./utilities";
+export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";

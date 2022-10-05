@@ -73,7 +73,7 @@
     "@fluid-tools/version-tools": "^0.4.7000",
     "@fluidframework/build-tools": "^0.4.7000",
     "@fluidframework/bundle-size-tools": "^0.4.7000",
-    "@oclif/core": "^1.16.4",
+    "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.3",
