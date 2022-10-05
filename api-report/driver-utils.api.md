@@ -135,14 +135,14 @@ export function createGenericNetworkError(message: string, retryInfo: {
 export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    static readonly errorType: string;
+    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
-    readonly errorType: string;
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 }
 
 // @public (undocumented)
@@ -450,10 +450,12 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 // @public
-export class UsageError extends LoggingError implements IFluidErrorBase {
+export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string);
     // (undocumented)
-    readonly errorType = "usageError";
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.usageError;
 }
 
 // @public

@@ -24,6 +24,11 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
+export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -293,6 +298,18 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
         category: TelemetryEventCategory;
     }, error?: any): void;
+}
+
+// @public
+export class TelemetryNullLogger implements ITelemetryLogger {
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+    // (undocumented)
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    // (undocumented)
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
 // @public
