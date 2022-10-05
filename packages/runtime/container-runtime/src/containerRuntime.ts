@@ -157,7 +157,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-} from "./garbageCollection";
+} from "./gc";
 import {
     channelToDataStore,
     IDataStoreAliasMessage,

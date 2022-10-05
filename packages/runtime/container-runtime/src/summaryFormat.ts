@@ -8,7 +8,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { gcTreeKey } from "./garbageCollection";
+import { gcTreeKey } from "./gc";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {

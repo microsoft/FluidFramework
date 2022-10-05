@@ -31,7 +31,7 @@ export {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGCStats,
-} from "./garbageCollection";
+} from "./gc";
 export {
     IPendingFlush,
     IPendingFlushMode,

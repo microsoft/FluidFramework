@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -27,9 +28,11 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
+import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
+import { IGCRuntimeOptions } from "../containerRuntime";
+import { GarbageCollector } from "../gc/garbageCollection";
 import {
     defaultSessionExpiryDurationMs,
-    GarbageCollector,
     gcBlobPrefix,
     GCNodeType,
     gcTreeKey,
@@ -44,9 +47,7 @@ import {
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
-} from "../garbageCollection";
-import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
-import { IGCRuntimeOptions } from "../containerRuntime";
+} from "../gc/gcDefinitions";
 
 /** @see - sweepReadyUsageDetectionSetting */
 const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";

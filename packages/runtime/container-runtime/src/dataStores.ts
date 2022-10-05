@@ -52,7 +52,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType } from "./garbageCollection";
+import { GCNodeType } from "./gc";
 
 type PendingAliasResolve = (success: boolean) => void;
 

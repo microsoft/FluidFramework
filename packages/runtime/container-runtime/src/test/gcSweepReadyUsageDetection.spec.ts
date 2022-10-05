@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -13,8 +14,8 @@ import {
     skipClosureForXDaysKey,
     closuresMapLocalStorageKey,
     SweepReadyUsageDetectionHandler,
-} from "../gcSweepReadyUsageDetection";
-import { oneDayMs } from "../garbageCollection";
+} from "../gc/gcSweepReadyUsageDetection";
+import { oneDayMs } from "../gc/gcDefinitions";
 
 describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;

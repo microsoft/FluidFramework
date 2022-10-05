@@ -11,7 +11,7 @@ import {
     LoggingError,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { oneDayMs } from "./garbageCollection";
+import { oneDayMs } from "./gcDefinitions";
 
 /**
  * Feature Gate Key -
