@@ -6,7 +6,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "azure/client/packages/azure-local-service"
+    "directory": "azure/packages/azure-local-service"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
