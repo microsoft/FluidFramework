@@ -1,0 +1,40 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-conditionally-run-stress-tests
+# Checks if
+
+parameters:
+- name: testPackage
+  type: string
+
+- name: testFileTarName
+  type: string
+
+- name: fuzzTestCount
+  type: number
+
+- name: affectedPaths
+  type: string
+
+- name: pool
+  type: object
+  default: Small
+
+variables:
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+jobs:
+  - template: templates/include-test-real-service.yml
+    parameters:
+      poolBuild: ${{ parameters.pool }}
+      extraDependencies: mocha @fluid-internal/stochastic-test-utils
+      testPackage: ${{ parameters.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      timeoutInMinutes: 120
+      testFileTarName: ${{ parameters.testFileTarName }}
+      testCommand: test:mocha
+      env:
+        FUZZ_TEST_COUNT: ${{ parameters.fuzzTestCount }}
+        FUZZ_STRESS_RUN: true

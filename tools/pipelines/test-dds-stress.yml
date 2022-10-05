@@ -14,14 +14,9 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - test/absander/*
       - release/*
       - main
       - next
-      paths: # Only bother running the pipeline at all if any of the relevant packages have changed.
-      - packages/dds/sequence/*
-      - packages/dds/merge-tree/*
-      - experimental/dds/tree/*
 
 variables:
 - name: testWorkspace
@@ -32,32 +27,24 @@ stages:
     displayName:  Stress tests - SharedString
     dependsOn: []
     jobs:
-    - template: templates/include-test-real-service.yml
+    - template: templates/include-conditionally-run-stress-tests.yml
       parameters:
-        poolBuild: Small
-        extraDependencies: mocha @fluid-internal/stochastic-test-utils
+        affectedPaths: packages/dds/sequence/*
         testPackage: "@fluidframework/sequence"
         testWorkspace: ${{ variables.testWorkspace }}
-        timeoutInMinutes: 120
         testFileTarName: sequence
         testCommand: test:mocha
-        env:
-          FUZZ_TEST_COUNT: 10
-          FUZZ_STRESS_RUN: true
+        fuzzTestCount: 10
 
   - stage:
     displayName:  Stress tests - Legacy SharedTree
     dependsOn: []
     jobs:
-    - template: templates/include-test-real-service.yml
+    - template: templates/include-conditionally-run-stress-tests.yml
       parameters:
-        poolBuild: Small
-        extraDependencies: mocha @fluid-internal/stochastic-test-utils
+        affectedPaths: experimental/dds/tree/*
         testPackage: "@fluid-experimental/tree"
         testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: experimental-tree
-        timeoutInMinutes: 120
         testCommand: test:mocha
-        env:
-          FUZZ_TEST_COUNT: 5
-          FUZZ_STRESS_RUN: true
+        fuzzTestCount: 5
