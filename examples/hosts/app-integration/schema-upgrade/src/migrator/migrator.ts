@@ -4,8 +4,7 @@
  */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import type { IModelLoader } from "@fluid-example/example-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { IModelLoader, IDetachedModel } from "@fluid-example/example-utils";
 import type {
     DataTransformationCallback,
     IMigratableModel,
