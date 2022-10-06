@@ -4,9 +4,5 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "rules": {
-    }
-}
+    extends: ['@commitlint/config-conventional']
+};

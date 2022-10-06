@@ -19,11 +19,15 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
+- [iframe-driver removed](#iframe-driver-removed)
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
 was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
 This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
+
+### iframe-driver removed
+The iframe-driver is now deprecated and should not be used, it will be removed in an upcoming release.
 
 # 2.0.0-internal.1.1.0
 

@@ -110,7 +110,11 @@
       },
       "ClassDeclaration_AuthorizationError": {"backCompat": false},
       "ClassDeclaration_GenericNetworkError": {"backCompat": false},
-      "ClassDeclaration_ThrottlingError": {"backCompat": false}
+      "ClassDeclaration_ThrottlingError": {"backCompat": false},
+      "RemovedFunctionDeclaration_isClientMessage": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
     }
   }
 }
