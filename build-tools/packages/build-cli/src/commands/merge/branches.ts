@@ -6,7 +6,6 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base";
 import { github } from "../../lib";
-import { CommandLogger } from "../../logging";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
