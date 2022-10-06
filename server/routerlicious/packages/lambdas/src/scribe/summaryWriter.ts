@@ -515,7 +515,7 @@ export class SummaryWriter implements ISummaryWriter {
             logTail;
 
         // Check the missing operations in the fullLogTail
-        const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
+        const fullLogTailSequenceNumbers = fullLogTail?.map((ms) => ms.sequenceNumber);
         const isSameSNInterval = fullLogTailSequenceNumbers &&
             fullLogTailSequenceNumbers.length > 0 &&
             fullLogTailSequenceNumbers.length === (to - from - 1) &&
@@ -565,7 +565,7 @@ export class SummaryWriter implements ISummaryWriter {
         missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
         if (missingOpsSN.length > 0) {
             Lumberjack.info(`The missing ops from summary log tail: ${JSON.stringify(missingOpsSN)}`
-            , this.lumberProperties);
+                , this.lumberProperties);
         }
         return missingOps;
     }
