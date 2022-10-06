@@ -119,6 +119,16 @@ export function getSimpleVersion(
         }
     }
 
+    if(isInternalVersionScheme(fileVersion, /* allowPrereleases */ true)) {
+        if(patch) {
+            throw new Error(`Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`);
+        }
+
+        if(!argRelease) {
+            fileVersion = changePreReleaseIdentifier(fileVersion, "dev");
+        }
+    }
+
     const { releaseVersion, prereleaseVersion } = parseFileVersion(fileVersion, buildId);
     const build_suffix = buildId ? "" : getBuildSuffix(argRelease, argBuildNum);
     const fullVersion = generateSimpleVersion(releaseVersion, prereleaseVersion, build_suffix);
