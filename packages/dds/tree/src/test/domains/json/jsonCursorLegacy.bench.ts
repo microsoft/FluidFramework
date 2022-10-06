@@ -209,7 +209,10 @@ function extractAvgValsFromTwitter(
     cursor.up();
 }
 
-function extractAvgValsFromCitm(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+function extractAvgValsFromCitm(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.down(CitmCatalog.SharedTreeFieldKey.performances, 0);
 
     // iterate over each performance
@@ -237,7 +240,9 @@ function extractAvgValsFromCitm(cursor: ITreeCursor, calculate: (x: number, y: n
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
-const citm = isInPerformanceTestingMode ? generateCitmJson(2, 2500000) : generateCitmJson(1, 500299);
+const citm = isInPerformanceTestingMode
+    ? generateCitmJson(2, 2500000)
+    : generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);

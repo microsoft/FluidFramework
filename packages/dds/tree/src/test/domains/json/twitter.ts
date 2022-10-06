@@ -18,10 +18,10 @@ import {
 } from "./jsonGeneratorUtils";
 
 /**
-* This file contains logic to generate a JSON file that is statistically similar to the well-known
-* json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
-*/
-    // Shared tree keys that map to the type used by the Twitter type/dataset
+ * This file contains logic to generate a JSON file that is statistically similar to the well-known
+ * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
+ */
+// Shared tree keys that map to the type used by the Twitter type/dataset
 export namespace Twitter {
     export namespace SharedTreeFieldKey {
         export const statuses: FieldKey = brand("statuses");
@@ -193,15 +193,19 @@ export interface TwitterUser {
 /* eslint-enable */
 
 /**
-* Generates a TwitterJson object as closely as possible to a specified byte size.
-* The generated json will as close to the specified size but will almost always be slightly less.
-* @param sizeInBytes - size to generate json object
-* @param includeUnicode - true to include unicode in any strings within the json
-* @param allowOversize - Allows the json to go over the sizeInBytes limit. If enabled, the
-* generated json may be closer to the desired byte size but there is a risk of exceeding the inputted byte limit
-* @returns TwitterJson
-*/
-export function generateTwitterJsonByByteSize(sizeInBytes: number, allowOversize = false, seed = 1) {
+ * Generates a TwitterJson object as closely as possible to a specified byte size.
+ * The generated json will as close to the specified size but will almost always be slightly less.
+ * @param sizeInBytes - size to generate json object
+ * @param includeUnicode - true to include unicode in any strings within the json
+ * @param allowOversize - Allows the json to go over the sizeInBytes limit. If enabled, the
+ * generated json may be closer to the desired byte size but there is a risk of exceeding the inputted byte limit
+ * @returns TwitterJson
+ */
+export function generateTwitterJsonByByteSize(
+    sizeInBytes: number,
+    allowOversize = false,
+    seed = 1,
+) {
     const random = makeRandom(seed);
     const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(
         random,

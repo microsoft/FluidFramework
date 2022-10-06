@@ -9,9 +9,9 @@ import { brand } from "../../../util";
 import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils";
 
 /**
-* This file contains logic to generate a JSON file that is statistically similar to the well-known
-* json benchmarks twitter.json - https://github.com/serde-rs/json-benchmark/blob/master/data/citm_catalog.json
-*/
+ * This file contains logic to generate a JSON file that is statistically similar to the well-known
+ * json benchmarks twitter.json - https://github.com/serde-rs/json-benchmark/blob/master/data/citm_catalog.json
+ */
 
 export interface CitmCatalog {
     // A map of constants where the keys are referenced within the CitmCatalog.Perfomance object
@@ -39,7 +39,6 @@ export interface CitmCatalog {
 }
 
 export namespace CitmCatalog {
-
     // Shared tree keys that map to the type used by the CitmCatalog type/dataset
     export namespace SharedTreeFieldKey {
         export const performances: FieldKey = brand("performances");
@@ -121,7 +120,12 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     let areaNameValues = ORIGINAL_AREA_NAME_VALUES;
     if (keyspaceMultiplier > 1) {
         // 20 is the average key length of the original json seat category names
-        areaNameValues = increaseKeyspace(ORIGINAL_AREA_NAME_VALUES, keyspaceMultiplier, 20, random);
+        areaNameValues = increaseKeyspace(
+            ORIGINAL_AREA_NAME_VALUES,
+            keyspaceMultiplier,
+            20,
+            random,
+        );
     } else if (keyspaceMultiplier < 1) {
         areaNameValues = decreaseKeyspace(ORIGINAL_AREA_NAME_VALUES, keyspaceMultiplier);
     }
@@ -141,9 +145,17 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     let seatCategoryNameValues = ORIGINAL_SEAT_CATEGORY_NAME_VALUES;
     if (keyspaceMultiplier > 1) {
         // 13 is the average key length of the original json seat category names
-        seatCategoryNameValues = increaseKeyspace(ORIGINAL_SEAT_CATEGORY_NAME_VALUES, keyspaceMultiplier, 13, random);
+        seatCategoryNameValues = increaseKeyspace(
+            ORIGINAL_SEAT_CATEGORY_NAME_VALUES,
+            keyspaceMultiplier,
+            13,
+            random,
+        );
     } else if (keyspaceMultiplier < 1) {
-        seatCategoryNameValues = decreaseKeyspace(ORIGINAL_SEAT_CATEGORY_NAME_VALUES, keyspaceMultiplier);
+        seatCategoryNameValues = decreaseKeyspace(
+            ORIGINAL_SEAT_CATEGORY_NAME_VALUES,
+            keyspaceMultiplier,
+        );
     }
     idNumberCounter += 1; // incremented once to avoid using the last key value.
     for (const value of seatCategoryNameValues) {
@@ -156,7 +168,12 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     let subTopicNameValues = ORIGINAL_SUB_TOPIC_NAME_VALUES;
     if (keyspaceMultiplier > 1) {
         // 13 is the average key length of the original json sub topic names
-        subTopicNameValues = increaseKeyspace(ORIGINAL_SUB_TOPIC_NAME_VALUES, keyspaceMultiplier, 13, random);
+        subTopicNameValues = increaseKeyspace(
+            ORIGINAL_SUB_TOPIC_NAME_VALUES,
+            keyspaceMultiplier,
+            13,
+            random,
+        );
     } else if (keyspaceMultiplier < 1) {
         subTopicNameValues = decreaseKeyspace(ORIGINAL_SUB_TOPIC_NAME_VALUES, keyspaceMultiplier);
     }
@@ -171,7 +188,12 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     let topicNameValues = ORIGINAL_TOPIC_NAME_VALUES;
     if (keyspaceMultiplier > 1) {
         // 12 is the average key length of the original json sub topic names
-        topicNameValues = increaseKeyspace(ORIGINAL_TOPIC_NAME_VALUES, keyspaceMultiplier, 12, random);
+        topicNameValues = increaseKeyspace(
+            ORIGINAL_TOPIC_NAME_VALUES,
+            keyspaceMultiplier,
+            12,
+            random,
+        );
     } else if (keyspaceMultiplier < 1) {
         topicNameValues = decreaseKeyspace(ORIGINAL_TOPIC_NAME_VALUES, keyspaceMultiplier);
     }
@@ -222,36 +244,50 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     const performances: CitmCatalog.Performance[] = [];
 
     // 12. Create (atleast 1) event and performance(s)
-    const eventAndPerformance = generateEventAndPerformance(random, idNumberCounter, Object.keys(topicNames),
-        topicSubTopics, seatCategoryNames, audienceSubCategoryNames, areaNames);
+    const eventAndPerformance = generateEventAndPerformance(
+        random,
+        idNumberCounter,
+        Object.keys(topicNames),
+        topicSubTopics,
+        seatCategoryNames,
+        audienceSubCategoryNames,
+        areaNames,
+    );
     performances.push(eventAndPerformance.performance);
     events[`${eventAndPerformance.event.id}`] = eventAndPerformance.event;
-    let objectCurrentSizeBytes = getSizeInBytes(
-        {
-            areaNames,
-            audienceSubCategoryNames,
-            blockNames,
-            events,
-            performances,
-            seatCategoryNames,
-            subTopicNames,
-            subjectNames,
-            topicNames,
-            topicSubTopics,
-            venueNames,
-        },
-    );
+    let objectCurrentSizeBytes = getSizeInBytes({
+        areaNames,
+        audienceSubCategoryNames,
+        blockNames,
+        events,
+        performances,
+        seatCategoryNames,
+        subTopicNames,
+        subjectNames,
+        topicNames,
+        topicSubTopics,
+        venueNames,
+    });
 
     while (objectCurrentSizeBytes < maxSizeInBytes) {
-        const nextEventAndPerformance = generateEventAndPerformance(random, idNumberCounter, Object.keys(topicNames),
-            topicSubTopics, seatCategoryNames, audienceSubCategoryNames, areaNames);
+        const nextEventAndPerformance = generateEventAndPerformance(
+            random,
+            idNumberCounter,
+            Object.keys(topicNames),
+            topicSubTopics,
+            seatCategoryNames,
+            audienceSubCategoryNames,
+            areaNames,
+        );
         performances.push(nextEventAndPerformance.performance);
         events[`${nextEventAndPerformance.event.id}`] = nextEventAndPerformance.event;
         idNumberCounter = nextEventAndPerformance.idNumberCounter;
 
         objectCurrentSizeBytes += getSizeInBytes(nextEventAndPerformance.performance);
         // This will be very slighlty more than the actual size addition because of two brackets for the object.
-        objectCurrentSizeBytes += getSizeInBytes({ [nextEventAndPerformance.event.id]: nextEventAndPerformance.event });
+        objectCurrentSizeBytes += getSizeInBytes({
+            [nextEventAndPerformance.event.id]: nextEventAndPerformance.event,
+        });
     }
     idNumberCounter = eventAndPerformance.idNumberCounter;
 
@@ -270,9 +306,15 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     };
 }
 
-function generateEventAndPerformance(random: IRandom, idNumberCounter: number, topicIds: string[],
-    topicSubTopics: Record<string, number[]>, seatCategoryNames: Record<string, string>,
-    audienceSubCategoryNames: Record<string, string>, areaNames: Record<string, string>) {
+function generateEventAndPerformance(
+    random: IRandom,
+    idNumberCounter: number,
+    topicIds: string[],
+    topicSubTopics: Record<string, number[]>,
+    seatCategoryNames: Record<string, string>,
+    audienceSubCategoryNames: Record<string, string>,
+    areaNames: Record<string, string>,
+) {
     // Semi-Randomly select topic Id's
     const eventTopicIdSet = new Set<number>();
     const numTopicsToInclude = random.integer(0, Math.min(4, topicIds.length));
@@ -299,7 +341,10 @@ function generateEventAndPerformance(random: IRandom, idNumberCounter: number, t
             const topicSubTopicIds = topicSubTopics[`${topicId}`];
             // This reserves atleast 1 subtopicId to be added for each topic id.
             const unprocessedTopicIds = eventTopicIdSet.size - processedTopicIdCount;
-            const numSubTopicsToInclude = random.integer(1, Math.min(topicSubTopicIds.length, unprocessedTopicIds));
+            const numSubTopicsToInclude = random.integer(
+                1,
+                Math.min(topicSubTopicIds.length, unprocessedTopicIds),
+            );
             for (let x = 0; x < numSubTopicsToInclude; x++) {
                 let subTopicIndex = random.integer(0, topicSubTopicIds.length - 1);
                 let subTopicIdToAdd = topicSubTopicIds[subTopicIndex];
@@ -319,7 +364,7 @@ function generateEventAndPerformance(random: IRandom, idNumberCounter: number, t
     }
 
     // All logo strings in the original follow this pattern. and have a 48.913% chance of being null
-    const logo = random.bool(.48913)
+    const logo = random.bool(0.48913)
         ? `/images/UE0AAAAACEK${getRandomEnglishString(random, true, 2, 2)}QAAAAVDSVRN`
         : null;
 
@@ -359,10 +404,16 @@ function generateEventAndPerformance(random: IRandom, idNumberCounter: number, t
         });
     }
     // 11b. create seatCategories object
-    const seatCategories: { areas: { areaId: number; blockIds: never[]; }[]; seatCategoryId: number; }[] = [];
+    const seatCategories: {
+        areas: { areaId: number; blockIds: never[] }[];
+        seatCategoryId: number;
+    }[] = [];
     const availableAreaIds = Object.keys(areaNames);
     prices.forEach((priceObject) => {
-        const numAreaIdsToAdd = random.integer(1, availableAreaIds.length > 16 ? 16 : availableAreaIds.length);
+        const numAreaIdsToAdd = random.integer(
+            1,
+            availableAreaIds.length > 16 ? 16 : availableAreaIds.length,
+        );
         const areas = [];
         for (let i = 0; i < numAreaIdsToAdd; i++) {
             areas.push({
@@ -502,12 +553,7 @@ const ORIGINAL_SUB_TOPIC_NAME_VALUES = [
     "famille",
 ];
 
-const ORIGINAL_TOPIC_NAME_VALUES = [
-    "Activité",
-    "Type de public",
-    "Genre",
-    "Formations musicales",
-];
+const ORIGINAL_TOPIC_NAME_VALUES = ["Activité", "Type de public", "Genre", "Formations musicales"];
 
 const ORIGINAL_EVENT_NAMES = [
     "30th Anniversary Tour",
@@ -563,7 +609,7 @@ const ORIGINAL_EVENT_NAMES = [
     "Bryn Terfel - Héros légendaires",
     "Les Siècles",
     "Gautier Capuçon - Frank Braley",
-    "Festival Présences 2014 \"Paris Berlin\"",
+    'Festival Présences 2014 "Paris Berlin"',
     "Autour de Tristan",
     "Etienne Daho et invités",
     "Fantasia in concert",
