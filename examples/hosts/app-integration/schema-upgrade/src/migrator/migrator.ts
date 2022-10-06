@@ -4,6 +4,8 @@
  */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import type { IModelLoader } from "@fluid-example/example-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import type {
     DataTransformationCallback,
     IMigratableModel,
@@ -11,7 +13,6 @@ import type {
     IMigratorEvents,
     MigrationState,
 } from "../migrationInterfaces";
-import type { IDetachedModel, IModelLoader } from "../modelLoader";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentModel: IMigratableModel;

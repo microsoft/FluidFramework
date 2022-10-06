@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-routerlicious-base";
-export const pkgVersion = "0.1037.3000";
+export const pkgVersion = "0.1038.2000";

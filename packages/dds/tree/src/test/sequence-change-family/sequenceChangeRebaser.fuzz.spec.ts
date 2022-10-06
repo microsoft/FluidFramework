@@ -37,17 +37,10 @@ describe.skip("SequenceChangeRebaser - Fuzz", () => {
                 const innerRandom = makeRandom(seed);
                 const changes = new Set<T.LocalChangeset>();
                 for (let j = 0; j < batchSize; j++) {
-                    const change = generateRandomChange(
-                        innerRandom.integer(1, 1000000),
-                        pathGen,
-                    );
+                    const change = generateRandomChange(innerRandom.integer(1, 1000000), pathGen);
                     changes.add(change);
                 }
-                const output = verifyChangeRebaser(
-                    sequenceChangeRebaser,
-                    changes,
-                    isEquivalent,
-                );
+                const output = verifyChangeRebaser(sequenceChangeRebaser, changes, isEquivalent);
                 expectKnownFailures(output);
             });
         }
@@ -72,11 +65,7 @@ describe.skip("SequenceChangeRebaser - Fuzz", () => {
                         assert(error instanceof Error && error.message === "Not implemented");
                     }
                 }
-                const output = verifyChangeRebaser(
-                    sequenceChangeRebaser,
-                    changes,
-                    isEquivalent,
-                );
+                const output = verifyChangeRebaser(sequenceChangeRebaser, changes, isEquivalent);
                 expectKnownFailures(output);
             });
         }
@@ -86,18 +75,18 @@ describe.skip("SequenceChangeRebaser - Fuzz", () => {
         const type: TreeSchemaIdentifier = brand("Node");
         const insertChange = asForest([
             2,
-            { type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] },
+            {
+                type: "Insert",
+                id: 0,
+                content: [
+                    { type, value: 42 },
+                    { type, value: 43 },
+                ],
+            },
         ]);
-        const deleteChange = asForest([
-            1,
-            { type: "Delete", id: 0, count: 2 },
-        ]);
+        const deleteChange = asForest([1, { type: "Delete", id: 0, count: 2 }]);
         const changes = new Set<T.LocalChangeset>([insertChange, deleteChange]);
-        const output = verifyChangeRebaser(
-            sequenceChangeRebaser,
-            changes,
-            isEquivalent,
-        );
+        const output = verifyChangeRebaser(sequenceChangeRebaser, changes, isEquivalent);
         assert.deepEqual(output, noFailure);
     });
 });
@@ -117,5 +106,8 @@ function isEquivalent(a: T.LocalChangeset, b: T.LocalChangeset): boolean {
 }
 
 const deltaToJSON = (delta: Delta.Root): string =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    JSON.stringify(delta, (key, value): Jsonable => value instanceof Map ? Array.from(value.entries()) : value);
+    JSON.stringify(
+        delta,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        (key, value): Jsonable => (value instanceof Map ? Array.from(value.entries()) : value),
+    );

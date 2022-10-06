@@ -7,9 +7,9 @@
 import fs from "fs";
 import { strict as assert } from "assert";
 import { performance } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
-import { ReadBuffer } from "../ReadBufferUtils";
 
 describe("Binary WireFormat perf", () => {
     it("Conversion test json", async () => {
@@ -33,7 +33,7 @@ describe("Binary WireFormat perf", () => {
 
         const start = performance.now();
         for (let i = 0; i < 100; i++) {
-            const result = parseCompactSnapshotResponse(new ReadBuffer(binarySnapshot as Uint8Array));
+            const result = parseCompactSnapshotResponse(binarySnapshot as Uint8Array, new TelemetryUTLogger());
             assert(result.snapshotTree !== undefined, "snapshot tree should exist");
             assert(result.blobs !== undefined, "snapshot blobs should exist");
         }
