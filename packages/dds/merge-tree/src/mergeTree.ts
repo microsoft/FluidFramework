@@ -88,6 +88,7 @@ import {
  } from "./referencePositions";
 import { PropertiesRollback } from "./segmentPropertiesManager";
 
+// Mock
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
     compare: (a, b) => a.minRequired - b.minRequired,

@@ -2,11 +2,18 @@
 # Licensed under the MIT License.
 
 # include-conditionally-run-stress-tests
-# Checks if
+# Runs DDS stress tests in a set of packages as defined by the parameter object. For each package,
+# tests will only be executed if the commit associated with this pipeline touched some of the files
+# in the 'affectedPaths' subparameter.
 
 parameters:
+# Expected form:
+# name: string
+# affectedPaths: string[]
+# testFileTarName: string
+# testCommand: string
 - name: packages
-  type: object # { name, affectedPaths, testFileTarName, testCommand } all strings
+  type: object
 
 - name: testWorkspace
   type: string
@@ -27,13 +34,18 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              $changedfiles = git diff --name-only HEAD~1 ${{ package.affectedPaths }}
-              Write-Host "Found the following files changed in ${{ package.affectedPaths }}:"
-              Write-Host $changedfiles
-              If ($changedfiles -ne $null)  {
+              $filesWereChanged = 0
+              Write-Host "Found the following files changed:"
+              ${{ each path in package.affectedPaths }}:
+                $pathChanged = git diff --name-only HEAD~1 ${{ package.affectedPaths }}
+                Write-Host $pathChanged
+                If ($pathChanged -ne $null) {
+                  $filesWereChanged = 1
+                }
+              If ($filesWereChanged)  {
                 echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
               }
-          displayName: 'Check if files affecting ${{ package.affectedPaths }} were modified'
+          displayName: 'Check if files affecting ${{ package.name }} tests were modified'
           name: Check${{ replace(package.testFileTarName, '-', '' ) }}
 
   - ${{ each package in parameters.packages }}:

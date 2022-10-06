@@ -27,11 +27,14 @@ stages:
     parameters:
       packages:
       - name: "@fluidframework/sequence"
-        affectedPaths: packages/dds/sequence/*
+        affectedPaths:
+        - packages/dds/sequence
+        - packages/dds/merge-tree
         testFileTarName: sequence
         testCommand: test:stress
       - name: "@fluid-experimental/tree"
-        affectedPaths: experimental/dds/tree/*
+        affectedPaths:
+        - experimental/dds/tree
         testFileTarName: experimental-tree
         testCommand: test:stress
       testWorkspace: ${{ variables.testWorkspace }}
