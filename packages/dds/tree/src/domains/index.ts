@@ -3,4 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export * from "./json";
+export {
+	JsonCursor,
+	cursorToJsonObject,
+	jsonSchemaData,
+	jsonObject,
+	jsonArray,
+	jsonNumber,
+	jsonString,
+	jsonNull,
+	jsonBoolean,
+	jsonRoot,
+} from "./json";

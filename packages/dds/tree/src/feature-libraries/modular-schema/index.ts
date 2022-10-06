@@ -3,9 +3,25 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fieldKind";
-export * from "./fieldChangeHandler";
-export * from "./modularChangeFamily";
+export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
+export {
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	FieldChangeEncoder,
+	FieldEditor,
+	ToDelta,
+	NodeChangeInverter,
+	NodeChangeRebaser,
+	NodeChangeComposer,
+	NodeChangeEncoder,
+	NodeChangeDecoder,
+	NodeChangeset,
+	ValueChange,
+	FieldChangeMap,
+	FieldChange,
+	FieldChangeset,
+} from "./fieldChangeHandler";
+export { ModularChangeFamily, ModularEditBuilder, UpPathWithFieldKinds } from "./modularChangeFamily";
 export {
     isNeverField,
     isNeverTree,

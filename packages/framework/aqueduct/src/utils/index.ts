@@ -3,5 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./attachUtils";
-export * from "./containerInteractions";
+export { waitForAttach } from "./attachUtils";
+export {
+	getDefaultObjectFromContainer,
+	getObjectWithIdFromContainer,
+	getObjectFromContainer,
+} from "./containerInteractions";

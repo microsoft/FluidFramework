@@ -10,8 +10,15 @@
 * @packageDocumentation
 */
 
-export * from "./channel";
-export * from "./dataStoreRuntime";
-export * from "./jsonable";
-export * from "./serializable";
-export * from "./storage";
+export {
+	IChannel,
+	IDeltaHandler,
+	IDeltaConnection,
+	IChannelStorageService,
+	IChannelServices,
+	IChannelFactory,
+} from "./channel";
+export { IFluidDataStoreRuntimeEvents, IFluidDataStoreRuntime } from "./dataStoreRuntime";
+export { Jsonable } from "./jsonable";
+export { Serializable } from "./serializable";
+export { IChannelAttributes } from "./storage";

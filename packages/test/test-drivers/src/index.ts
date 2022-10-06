@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export * from "./localServerTestDriver";
-export * from "./odspTestDriver";
-export * from "./tinyliciousTestDriver";
-export * from "./routerliciousTestDriver";
-export * from "./factory";
+export { LocalServerTestDriver } from "./localServerTestDriver";
+export { assertOdspEndpoint, OdspTestDriver } from "./odspTestDriver";
+export { TinyliciousTestDriver } from "./tinyliciousTestDriver";
+export { assertRouterliciousEndpoint, RouterliciousTestDriver } from "./routerliciousTestDriver";
+export {
+	createFluidTestDriver,
+	DriverApiType,
+	DriverApi,
+	CreateFromEnvConfigParam,
+	FluidTestDriverConfig,
+} from "./factory";
 
-export * from "./localDriverApi";
-export * from "./odspDriverApi";
-export * from "./routerliciousDriverApi";
+export { LocalDriverApi, LocalDriverApiType } from "./localDriverApi";
+export { OdspDriverApi, OdspDriverApiType, generateOdspHostStoragePolicy } from "./odspDriverApi";
+export { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi";

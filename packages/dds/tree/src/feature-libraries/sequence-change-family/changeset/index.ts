@@ -7,7 +7,40 @@
  * This module contains the changeset format and related operations.
  */
 
-export * from "./format";
-export * from "./toDelta";
-export * from "./utils";
-export * from "./markListFactory";
+export {
+	Transposed,
+	HasLength,
+	TreeForestPath,
+	TreeRootPath,
+	RangeType,
+	OpId,
+	HasOpId,
+	ProtoNode,
+	NodeCount,
+	GapCount,
+	Skip,
+	ChangesetTag,
+	ClientId,
+	Tiebreak,
+	Effects,
+} from "./format";
+export { toDelta } from "./toDelta";
+export {
+	isAttach,
+	isReattach,
+	isTomb,
+	isGapEffectMark,
+	getAttachLength,
+	isEqualGaps,
+	isEqualPlace,
+	isEqualGapEffect,
+	getOutputLength,
+	getInputLength,
+	isSkipMark,
+	splitMarkOnInput,
+	splitMarkOnOutput,
+	isDetachMark,
+	isObjMark,
+	tryExtendMark,
+} from "./utils";
+export { MarkListFactory } from "./markListFactory";

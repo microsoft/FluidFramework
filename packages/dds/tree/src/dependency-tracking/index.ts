@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./cleanable";
-export * from "./dependencies";
-export * from "./disposingDependee";
-export * from "./simpleDependee";
-export * from "./simpleObservingDependent";
-export * from "./incrementalObservation";
-export * from "./cachedValue";
+export { cleanable, cleaningFailed, Cleanable } from "./cleanable";
+export { NamedComputation, Dependent, InvalidationToken, Dependee } from "./dependencies";
+export { DisposingDependee } from "./disposingDependee";
+export { SimpleDependee } from "./simpleDependee";
+export { SimpleObservingDependent } from "./simpleObservingDependent";
+export { recordDependency, ObservingContext, ObservingDependent } from "./incrementalObservation";
+export { cachedValue, ICachedValue } from "./cachedValue";

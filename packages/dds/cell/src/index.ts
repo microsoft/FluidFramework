@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./cell";
-export * from "./interfaces";
+export { SharedCell } from "./cell";
+export { ISharedCellEvents, ISharedCell } from "./interfaces";

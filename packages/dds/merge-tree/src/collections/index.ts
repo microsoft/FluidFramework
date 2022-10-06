@@ -3,9 +3,30 @@
  * Licensed under the MIT License.
  */
 
-export * from "./heap";
-export * from "./intervalTree";
-export * from "./list";
-export * from "./rbTree";
-export * from "./stack";
-export * from "./tst";
+export { Comparer, Heap } from "./heap";
+export {
+	AugmentedIntervalNode,
+	integerRangeToString,
+	IInterval,
+	IntervalNode,
+	IntervalConflictResolver,
+	IntervalTree,
+} from "./intervalTree";
+export { ListRemoveEntry, ListMakeHead, List } from "./list";
+export {
+	RBColor,
+	RBNode,
+	IRBAugmentation,
+	IRBMatcher,
+	RBNodeActions,
+	KeyComparer,
+	Property,
+	PropertyAction,
+	QProperty,
+	ConflictAction,
+	SortedDictionary,
+	Dictionary,
+	RedBlackTree,
+} from "./rbTree";
+export { Stack } from "./stack";
+export { TSTResult, TSTNode, ProxString, TST } from "./tst";

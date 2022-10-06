@@ -3,7 +3,25 @@
  * Licensed under the MIT License.
  */
 export { mochaGlobalSetup } from "./compatConfig";
-export * from "./compatUtils";
-export * from "./testApi";
-export * from "./itExpects";
-export * from "./describeCompat";
+export {
+	getVersionedTestObjectProvider,
+	TestDataObjectType,
+	ITestDataObject,
+	getDataStoreFactory,
+} from "./compatUtils";
+export {
+	getLoaderApi,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	ensurePackageInstalled,
+} from "./testApi";
+export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
+export {
+	ITestObjectProviderOptions,
+	DescribeCompatSuite,
+	DescribeCompat,
+	describeNoCompat,
+	describeLoaderCompat,
+	describeFullCompat,
+} from "./describeCompat";

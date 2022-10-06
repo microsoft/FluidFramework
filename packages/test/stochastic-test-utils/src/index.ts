@@ -3,10 +3,45 @@
  * Licensed under the MIT License.
  */
 
-export * from "./describeFuzz";
-export * from "./generators";
-export * from "./types";
-export * from "./performActions";
+export {
+	createFuzzDescribe,
+	DescribeFuzzSuite,
+	FuzzSuiteArguments,
+	DescribeFuzz,
+	FuzzDescribeOptions,
+	defaultOptions,
+	describeFuzz,
+} from "./describeFuzz";
+export {
+	createWeightedGenerator,
+	take,
+	generatorFromArray,
+	chain,
+	chainIterables,
+	interleave,
+	repeat,
+	createWeightedAsyncGenerator,
+	takeAsync,
+	asyncGeneratorFromArray,
+	chainAsync,
+	chainAsyncIterables,
+	interleaveAsync,
+	repeatAsync,
+} from "./generators";
+export {
+	BaseFuzzTestState,
+	done,
+	Generator,
+	AsyncGenerator,
+	Reducer,
+	AsyncReducer,
+	AcceptanceCondition,
+	Weights,
+	AsyncWeights,
+	SaveInfo,
+	IRandom,
+} from "./types";
+export { performFuzzActionsAsync, performFuzzActions } from "./performActions";
 export { makeRandom } from "./random";
 export { XSadd } from "./xsadd";
 export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";

@@ -3,8 +3,26 @@
  * Licensed under the MIT License.
  */
 
-export * from "./resolvedUrl";
-export * from "./tokenFetch";
-export * from "./odspCache";
-export * from "./factory";
-export * from "./errors";
+export {
+	IOdspUrlParts,
+	ShareLinkTypes,
+	SharingLinkScope,
+	SharingLinkRole,
+	ISharingLinkKind,
+	ISharingLink,
+	ShareLinkInfoType,
+	IOdspResolvedUrl,
+} from "./resolvedUrl";
+export {
+	TokenResponse,
+	TokenFetchOptions,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	tokenFromResponse,
+	isTokenFromCache,
+	IdentityType,
+	InstrumentedStorageTokenFetcher,
+} from "./tokenFetch";
+export { snapshotKey, CacheContentType, IFileEntry, IEntry, ICacheEntry, IPersistedCache } from "./odspCache";
+export { ISnapshotOptions, IOpsCachingPolicy, ICollabSessionOptions, HostStoragePolicy } from "./factory";
+export { OdspErrorType, IOdspErrorAugmentations, IOdspError, OdspError } from "./errors";

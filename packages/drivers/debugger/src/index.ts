@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluidDebuggerController";
-export * from "./fluidDebuggerUi";
-export * from "./fluidDebugger";
+export { debuggerUIFactory, DebugReplayController } from "./fluidDebuggerController";
+export { IDebuggerUI, IDebuggerController, DebuggerUI } from "./fluidDebuggerUi";
+export { FluidDebugger } from "./fluidDebugger";

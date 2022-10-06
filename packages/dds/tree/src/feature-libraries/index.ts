@@ -3,24 +3,93 @@
  * Licensed under the MIT License.
  */
 
-export * from "./object-forest";
-export * from "./editable-tree";
-export * from "./defaultRebaser";
-export * from "./forestIndex";
+export { buildForest, ObjectForest } from "./object-forest";
+export {
+	getEditableTreeContext,
+	EditableTree,
+	EditableField,
+	EditableTreeOrPrimitive,
+	UnwrappedEditableTree,
+	UnwrappedEditableField,
+	getTypeSymbol,
+	valueSymbol,
+	anchorSymbol,
+	proxyTargetSymbol,
+	EditableTreeContext,
+	isArrayField,
+	isUnwrappedNode,
+	PrimitiveValue,
+	isPrimitiveValue,
+	isPrimitive,
+} from "./editable-tree";
+export {
+	DefaultChangeFamily,
+	DefaultRebaser,
+	DefaultEditor,
+	DefaultChangeset,
+	Change,
+	SetValue,
+} from "./defaultRebaser";
+export { ForestIndex } from "./forestIndex";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
-export * from "./treeTextCursorLegacy";
+export { singleTextCursor, jsonableTreeFromCursor, TextCursor, RootedTextCursor } from "./treeTextCursorLegacy";
 export {
     singleTextCursor as singleTextCursorNew,
     jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
-export * from "./sequence-change-family";
+export {
+	DUMMY_INVERSE_VALUE,
+	DUMMY_INVERT_TAG,
+	SequenceChangeFamily,
+	sequenceChangeFamily,
+	SequenceChangeRebaser,
+	sequenceChangeRebaser,
+	SequenceChangeset,
+	sequenceChangeEncoder,
+	SequenceEditBuilder,
+	NodePath,
+	PlacePath,
+	Transposed,
+	HasLength,
+	TreeForestPath,
+	TreeRootPath,
+	RangeType,
+	OpId,
+	HasOpId,
+	ProtoNode,
+	NodeCount,
+	GapCount,
+	Skip,
+	ChangesetTag,
+	ClientId,
+	Tiebreak,
+	Effects,
+	toDelta,
+	isAttach,
+	isReattach,
+	isTomb,
+	isGapEffectMark,
+	getAttachLength,
+	isEqualGaps,
+	isEqualPlace,
+	isEqualGapEffect,
+	getOutputLength,
+	getInputLength,
+	isSkipMark,
+	splitMarkOnInput,
+	splitMarkOnOutput,
+	isDetachMark,
+	isObjMark,
+	tryExtendMark,
+	MarkListFactory,
+} from "./sequence-change-family";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export * from "./defaultSchema";
+export     { neverField,     emptyField,     neverTree,     defaultSchemaPolicy } from "./defaultSchema";
 export {
     isNeverField,
     ModularChangeFamily,
@@ -51,4 +120,4 @@ export {
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export * from "./deltaUtils";
+export     { mapFieldMarks,     mapMarkList,     mapMark,     applyModifyToTree } from "./deltaUtils";

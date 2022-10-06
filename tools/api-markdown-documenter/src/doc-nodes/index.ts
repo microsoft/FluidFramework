@@ -12,17 +12,17 @@
  * implementation, but is not the desired long-term solution of this library.
  */
 
-export * from "./DocAlert";
-export * from "./DocHeading";
-export * from "./DocList";
-export * from "./CustomDocNodeKind";
+export { DocAlertType, IDocAlertParameters, DocAlert } from "./DocAlert";
+export { IDocHeadingParameters, DocHeading } from "./DocHeading";
+export { ListKind, IDocListParameters, DocList } from "./DocList";
+export { CustomDocNodeKind, CustomDocNodes } from "./CustomDocNodeKind";
 
 // #region Convenience re-exports of Doc builder types from api-documenter
 
-export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
-export * from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
-export * from "@microsoft/api-documenter/lib/nodes/DocTable";
-export * from "@microsoft/api-documenter/lib/nodes/DocTableCell";
-export * from "@microsoft/api-documenter/lib/nodes/DocTableRow";
+export { IDocEmphasisSpanParameters, DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
+export { IDocNoteBoxParameters, DocNoteBox } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
+export { IDocTableParameters, DocTable } from "@microsoft/api-documenter/lib/nodes/DocTable";
+export { IDocTableCellParameters, DocTableCell } from "@microsoft/api-documenter/lib/nodes/DocTableCell";
+export { IDocTableRowParameters, DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 
 // #endregion

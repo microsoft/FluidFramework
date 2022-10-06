@@ -10,7 +10,7 @@ export {
     SynchronousNavigationResult,
     reduceField,
 } from "./cursorLegacy";
-export * from "./forest";
+export { IForestSubscription, ITreeSubscriptionCursor, ITreeSubscriptionCursorState } from "./forest";
 export {
     IEditableForest,
     FieldLocation,

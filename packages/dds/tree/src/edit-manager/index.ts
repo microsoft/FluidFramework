@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./editManager";
+export { Commit, SeqNumber, SessionId, EditManager } from "./editManager";

@@ -19,12 +19,24 @@ export {
     NodeData,
 } from "./types";
 
-export * from "./pathTree";
-export * from "./anchorSet";
-export * from "./treeTextFormat";
-export * from "./visitDelta";
-export * from "./globalFieldKeySymbol";
-export * from "./mapTree";
+export { getDepth, clonePath, UpPath } from "./pathTree";
+export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
+export {
+	scopeFromKey,
+	isGlobalFieldKey,
+	getGenericTreeField,
+	setGenericTreeField,
+	genericTreeKeys,
+	genericTreeDeleteIfEmpty,
+	FieldMapObject,
+	GenericTreeNode,
+	GenericFieldsNode,
+	JsonableTree,
+	FieldScope,
+} from "./treeTextFormat";
+export { visitDelta, DeltaVisitor } from "./visitDelta";
+export { symbolFromKey, keyFromSymbol, GlobalFieldKeySymbol } from "./globalFieldKeySymbol";
+export { getMapTreeField, MapTree } from "./mapTree";
 
 export {
     ITreeCursor as ITreeCursorNew,

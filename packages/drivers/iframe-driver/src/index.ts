@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export * from "./innerDocumentDeltaConnection";
-export * from "./innerDocumentService";
-export * from "./innerDocumentServiceFactory";
-export * from "./outerDocumentServiceFactory";
-export * from "./innerUrlResolver";
-export * from "./outerUrlResolver";
+export { IOuterDocumentDeltaConnectionProxy, InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
+export { InnerDocumentService } from "./innerDocumentService";
+export { InnerDocumentServiceFactory } from "./innerDocumentServiceFactory";
+export {
+	ICombinedDriver,
+	IDocumentServiceFactoryProxy,
+	IDocumentServiceFactoryProxyKey,
+	DocumentServiceFactoryProxy,
+} from "./outerDocumentServiceFactory";
+export { InnerUrlResolver } from "./innerUrlResolver";
+export { IUrlResolverProxy, IUrlResolverProxyKey, OuterUrlResolver } from "./outerUrlResolver";
