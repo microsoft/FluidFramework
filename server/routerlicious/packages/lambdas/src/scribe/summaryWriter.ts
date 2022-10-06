@@ -280,11 +280,11 @@ export class SummaryWriter implements ISummaryWriter {
                 uploadHandle = commit.sha;
 
                 await (existingRef ? requestWithRetry(
-                        async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
-                        "writeClientSummary_upsertRef",
-                        this.lumberProperties,
-                        shouldRetryNetworkError,
-                        this.maxRetriesOnError) : requestWithRetry(
+                    async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
+                    "writeClientSummary_upsertRef",
+                    this.lumberProperties,
+                    shouldRetryNetworkError,
+                    this.maxRetriesOnError) : requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
                         "writeClientSummary_createRef",
                         this.lumberProperties,
@@ -515,16 +515,20 @@ export class SummaryWriter implements ISummaryWriter {
             logTail;
 
         // Check the missing operations in the fullLogTail
-        if (fullLogTail.length !== (to - from - 1)) {
+        const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
+        const isSameSNInterval = fullLogTailSequenceNumbers &&
+            fullLogTailSequenceNumbers.length > 0 &&
+            fullLogTailSequenceNumbers.length === (to - from - 1) &&
+            from === fullLogTailSequenceNumbers[0] - 1 &&
+            to === fullLogTailSequenceNumbers[fullLogTailSequenceNumbers.length - 1] + 1;
+        if (!isSameSNInterval) {
             const missingOpsSequenceNumbers: number[] = [];
-            const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
-            let j = 0;
+            const fullLogTailSequenceNumbersSet = new Set();
+            fullLogTailSequenceNumbers.forEach((op) => fullLogTailSequenceNumbersSet.add(op));
             for (let i = from + 1; i < to; i++) {
-                if (i === fullLogTailSequenceNumbers[j]) {
-                    j++;
-                    continue;
+                if (!fullLogTailSequenceNumbersSet.has(i)) {
+                    missingOpsSequenceNumbers.push(i);
                 }
-                missingOpsSequenceNumbers.push(i);
             }
             Lumberjack.error(`Missing ops in the fullLogTail: ${JSON.stringify(missingOpsSequenceNumbers)}`
                 , this.lumberProperties);
@@ -557,6 +561,12 @@ export class SummaryWriter implements ISummaryWriter {
         logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
         const missingOps = lastSummaryMessages?.filter((ms) =>
             !(logtailSequenceNumbers.has(ms.sequenceNumber)));
+        const missingOpsSN: number[] = [];
+        missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
+        if (missingOpsSN.length > 0) {
+            Lumberjack.info(`The missing ops from summary log tail: ${JSON.stringify(missingOpsSN)}`
+            , this.lumberProperties);
+        }
         return missingOps;
     }
 
