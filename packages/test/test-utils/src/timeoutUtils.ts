@@ -24,7 +24,8 @@ function getCurrentTestTimeout() {
     return Math.max(currentTestEndTime - Date.now(), 1);
 }
 
-function setTestEndTime(timeout: number) {
+function setTestEndTime(this: Mocha.Context) {
+    const timeout = this.timeout();
     const now = Date.now();
     // Either the test timed out (so the test end time is less then now, or the promise resolved)
     assert(currentTestEndTime < now && currentTestEndTime !== -1, "Unexpected nested tests detected");
@@ -33,66 +34,16 @@ function setTestEndTime(timeout: number) {
     return ++currentTestEndTimeId;
 }
 
-function clearTestEndTime(id) {
-    if (id === currentTestEndTimeId) {
+function clearTestEndTime(this: Mocha.Context, value: number) {
+    if (value === currentTestEndTimeId) {
         currentTestEndTime = 0;
     }
 }
 
-function getWrappedFunction(fn: Mocha.Func | Mocha.AsyncFunc) {
-    if (fn.length > 0) {
-        return function(this: Mocha.Context, done) {
-            const id = setTestEndTime(this.timeout());
-            try {
-                (fn as Mocha.Func).call(this, done);
-            } finally {
-                clearTestEndTime(id);
-            }
-        };
-    }
-    return function(this: Mocha.Context) {
-        const id = setTestEndTime(this.timeout());
-
-        let ret: PromiseLike<any> | void;
-        try {
-            ret = (fn as Mocha.AsyncFunc).call(this);
-        } finally {
-            clearTestEndTime(id);
-        }
-
-        if (typeof ret?.then === "function") {
-            // Start the timer again to wait for async
-            const asyncId = setTestEndTime(this.timeout());
-            // Clear the timer if the promise resolves.
-            // use the id to avoid clearing the end time if it resolves after timing out
-            const clearFunc = () => { clearTestEndTime(asyncId); };
-            ret?.then(clearFunc, clearFunc);
-        }
-        return ret;
-    };
+// only register if we are running with mocha-test-setup loaded
+if (globalThis.registerMochaTestWrapperFuncs !== undefined) {
+    globalThis.registerMochaTestWrapperFuncs(setTestEndTime, clearTestEndTime);
 }
-
-let newTestFunction: Mocha.TestFunction | undefined;
-function setupMocha() {
-    const currentTestFunction = globalThis.it;
-    // the function `it` is reassign per test files. Trap it.
-    Object.defineProperty(globalThis, "it", {
-        get: () => { return newTestFunction; },
-        set: (oldTestFunction: Mocha.TestFunction | undefined) => {
-            if (oldTestFunction === undefined) { newTestFunction = undefined; return; }
-            newTestFunction = ((title: string, fn?: Mocha.Func | Mocha.AsyncFunc) => {
-                return oldTestFunction(title, fn && typeof fn.call === "function" ?
-                    getWrappedFunction(fn)
-                    : fn);
-            }) as Mocha.TestFunction;
-            newTestFunction.skip = oldTestFunction.skip;
-            newTestFunction.only = oldTestFunction.only;
-        },
-    });
-    globalThis.it = currentTestFunction;
-}
-
-setupMocha();
 
 export interface TimeoutWithError {
     // Timeout duration in milliseconds.

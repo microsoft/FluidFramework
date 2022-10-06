@@ -96,3 +96,78 @@ export const mochaHooks = {
         currentTestName = undefined;
     },
 };
+
+let newTestFunction: Mocha.TestFunction | undefined;
+
+type BeforeTestFunc<T = any> = (this: Mocha.Context) => T;
+type AfterTestFunc<T = any> = (this: Mocha.Context, beforeTestResult: T) => void;
+
+const testFuncs: { beforeTestFunc: BeforeTestFunc; afterTestFunc: AfterTestFunc; }[] = [];
+function runBeforeTestFuncs(context: Mocha.Context): any[] {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return testFuncs.map((v) => v.beforeTestFunc.call(context));
+}
+
+function runAfterTestFuncs(context: Mocha.Context, values: any[]) {
+    for (let index = testFuncs.length - 1; index >= 0; index--) {
+        testFuncs[index].afterTestFunc.call(context, values[index]);
+    }
+}
+function getWrappedFunction(fn: Mocha.Func | Mocha.AsyncFunc) {
+    if (fn.length > 0) {
+        return function(this: Mocha.Context, done) {
+            const values = runBeforeTestFuncs(this);
+            try {
+                (fn as Mocha.Func).call(this, done);
+            } finally {
+                runAfterTestFuncs(this, values);
+            }
+        };
+    }
+    return function(this: Mocha.Context) {
+        const values = runBeforeTestFuncs(this);
+
+        let ret: PromiseLike<any> | void;
+        try {
+            ret = (fn as Mocha.AsyncFunc).call(this);
+        } finally {
+            runAfterTestFuncs(this, values);
+        }
+
+        if (typeof ret?.then === "function") {
+            // Start the timer again to wait for async
+            const asyncValues = runBeforeTestFuncs(this);
+            // Clear the timer if the promise resolves.
+            // use the id to avoid clearing the end time if it resolves after timing out
+            const clearFunc = () => { runAfterTestFuncs(this, asyncValues); };
+            ret?.then(clearFunc, clearFunc);
+        }
+        return ret;
+    };
+}
+
+function setupCustomTestHooks() {
+    const currentTestFunction = globalThis.it;
+    // the function `it` is reassign per test files. Trap it.
+    Object.defineProperty(globalThis, "it", {
+        get: () => { return newTestFunction; },
+        set: (oldTestFunction: Mocha.TestFunction | undefined) => {
+            if (oldTestFunction === undefined) { newTestFunction = undefined; return; }
+            newTestFunction = ((title: string, fn?: Mocha.Func | Mocha.AsyncFunc) => {
+                return oldTestFunction(title, fn && typeof fn.call === "function" ?
+                    getWrappedFunction(fn)
+                    : fn);
+            }) as Mocha.TestFunction;
+            newTestFunction.skip = oldTestFunction.skip;
+            newTestFunction.only = oldTestFunction.only;
+        },
+    });
+    globalThis.it = currentTestFunction;
+}
+
+setupCustomTestHooks();
+
+globalThis.registerMochaTestWrapperFuncs =
+    function <T>(beforeTestFunc: BeforeTestFunc<T>, afterTestFunc: AfterTestFunc<T>) {
+        testFuncs.push({ beforeTestFunc, afterTestFunc });
+    };
