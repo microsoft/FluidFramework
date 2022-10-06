@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
@@ -196,11 +197,12 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     *
+     * {@inheritdoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: unknown) {
-        const counterContent = content as IIncrementOperation;
-        this.incrementCore(counterContent.incrementAmount);
+    protected applyStashedOp(op: unknown) {
+        const counterOp = op as IIncrementOperation;
+        assert(counterOp.type === "increment", "Op type is not increment");
+        this.incrementCore(counterOp.incrementAmount);
     }
 }

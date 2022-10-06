@@ -72,8 +72,10 @@ describe("SharedCounter", () => {
                 assert.ok(fired1, "The event for first increment was not fired");
                 assert.ok(fired2, "The event for second increment was not fired");
             });
+        });
 
-            it("Applies a stashed op", () => {
+        describe("applyStashedOp", () => {
+            it("Immediately applies the op's increment locally", () => {
                 const amt = 7;
                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
                 const op = { type: "increment", incrementAmount: amt };

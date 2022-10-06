@@ -281,7 +281,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("doesn't resend successful counter op", async function() {
         const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
             const counter = await d.getSharedObject<SharedCounter>(counterId);
-            counter.increment(0);
+            counter.increment(3);
         });
 
         counter1.increment(testIncrementValue);
@@ -293,8 +293,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         await provider.ensureSynchronized();
-        assert.strictEqual(counter1.value, testIncrementValue);
-        assert.strictEqual(counter2.value, testIncrementValue);
+        assert.strictEqual(counter1.value, 8);
+        assert.strictEqual(counter2.value, 8);
     });
 
     it("resends delete op and can set after", async function() {

@@ -31,7 +31,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: unknown): void;
+    protected applyStashedOp(op: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
     static getFactory(): IChannelFactory;
     increment(incrementAmount: number): void;
