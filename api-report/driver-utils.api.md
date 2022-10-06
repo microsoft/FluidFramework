@@ -239,9 +239,6 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-// @public
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
-
 // @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
