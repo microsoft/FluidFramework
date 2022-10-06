@@ -99,6 +99,8 @@ steps:
           checkVersion=${f##/*}
           checkVersion=${checkVersion:0:-4}
 
+          echo "CheckVersion 0 :" $checkVersion
+
           if [[ $checkVersion == *"fluidframework"* ]]; then
             checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
           else
