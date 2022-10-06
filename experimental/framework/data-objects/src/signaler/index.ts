@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./signaler";
+export { SignalListener, ISignaler, IRuntimeSignaler, Signaler } from "./signaler";

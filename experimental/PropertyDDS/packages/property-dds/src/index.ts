@@ -3,7 +3,22 @@
  * Licensed under the MIT License.
  */
 
-export * from "./propertyTree";
-export * from "./propertyTreeFactory";
-export * from "./propertyTreeExt";
-export * from "./propertyTreeExtFactories";
+export {
+	SerializedChangeSet,
+	Metadata,
+	OpKind,
+	IPropertyTreeMessage,
+	IRemotePropertyTreeMessage,
+	ISnapshotSummary,
+	SharedPropertyTreeOptions,
+	ISharedPropertyTreeEncDec,
+	IPropertyTreeConfig,
+	SharedPropertyTree,
+} from "./propertyTree";
+export { PropertyTreeFactory } from "./propertyTreeFactory";
+export { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+export {
+	CompressedPropertyTreeFactory,
+	DeflatedPropertyTreeFactory,
+	LZ4PropertyTreeFactory,
+} from "./propertyTreeExtFactories";
