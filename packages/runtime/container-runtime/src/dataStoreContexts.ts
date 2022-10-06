@@ -10,6 +10,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
 
  export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
+    private readonly tombstonedContexts = new Set<string>();
 
     /** Attached and loaded context proxies */
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
@@ -168,4 +169,17 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         this.ensureDeferred(id);
         this.resolveDeferred(id);
     }
+
+    public tombstone(id: string) {
+        assert(!this.tombstonedContexts.has(id), "Tombstoned dataStore already tombstoned");
+        this.delete(id);
+        this.tombstonedContexts.add(id);
+    }
+
+    // private validateNotTombstoned(id: string) {
+    //     if (this.tombstonedContexts.has(id)) {
+    //         const request = { url: id, message: "This datastore has been tombstoned!" };
+    //         throw responseToException(create404Response(request), request);
+    //     }
+    // }
 }

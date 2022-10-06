@@ -119,6 +119,7 @@ export interface IFluidDataStoreContextProps {
     readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     readonly writeGCDataAtRoot: boolean;
     readonly pkg?: Readonly<string[]>;
+    readonly tombstoned?: boolean;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */

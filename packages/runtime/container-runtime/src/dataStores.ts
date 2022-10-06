@@ -67,6 +67,7 @@ export class DataStores implements IDisposable {
     public readonly attachOpFiredForDataStore = new Set<string>();
 
     private readonly logger: ITelemetryLogger;
+    private readonly contexts: DataStoreContexts;
 
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
@@ -98,8 +99,8 @@ export class DataStores implements IDisposable {
             nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
-        private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
+        this.contexts = new DataStoreContexts(baseLogger);
         this.logger = ChildLogger.create(baseLogger);
         this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
 
@@ -129,6 +130,12 @@ export class DataStores implements IDisposable {
             if (value.unreferenced) {
                 unreferencedDataStoreCount++;
             }
+
+            if (value.tombstoned) {
+                this.contexts.tombstone(key);
+                continue;
+            }
+
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemoteFluidDataStoreContext({
@@ -629,7 +636,7 @@ export class DataStores implements IDisposable {
             const dataStoreId = pathParts[1];
             assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
             // Delete the contexts of unused data stores.
-            this.contexts.delete(dataStoreId);
+            this.contexts.tombstone(dataStoreId);
             // Delete the summarizer node of the unused data stores.
             this.deleteChildSummarizerNodeFn(dataStoreId);
         }
