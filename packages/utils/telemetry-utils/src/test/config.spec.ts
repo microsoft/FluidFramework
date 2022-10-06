@@ -124,13 +124,14 @@ describe("Config", () => {
     });
 
     it("Typing - custom provider - With version", () => {
-        const settings = {};
-        settings[`number-${pkgVersion}`] = 1;
-        settings[`string-${pkgVersion}`] = "string";
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        settings[`string`] = "string1";
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        settings["boolean"] = true;
+        const settings = {
+            [`number-${pkgVersion}`]: 1,
+            [`string-${pkgVersion}`]: "string",
+            string: "string1",
+            boolean: true,
+            badString: [],
+            badBoolean: "truthy",
+        };
 
         const mockStore = untypedProvider(settings);
         const config = new CachedConfigProvider(mockStore);
@@ -279,13 +280,14 @@ describe("Config", () => {
     });
 
     it("Typing - SettingsProvider - With version", () => {
-        const settings = {};
-        settings[`number-${pkgVersion}`] = 1;
-        settings[`string-${pkgVersion}`] = "string";
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        settings[`string`] = "string1";
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        settings["boolean"] = true;
+        const settings = {
+            [`number-${pkgVersion}`]: 1,
+            [`string-${pkgVersion}`]: "string",
+            string: "string1",
+            boolean: true,
+            badString: [],
+            badBoolean: "truthy",
+        };
 
         const config = new CachedConfigProvider(new HybridSettingsProvider(settings));
 
