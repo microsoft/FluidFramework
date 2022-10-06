@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IOdspResolvedUrl,
     ICacheEntry,
     IEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
+import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
