@@ -200,8 +200,9 @@ export class CachedConfigProvider implements IConfigProvider {
     }
 
     private getCacheEntry(name: string): StronglyTypedValue | undefined {
-        // Generate version specific name by appending package version.
-        const versionSpecificConfigName = `${name}-${pkgVersion}`;
+        // Generate version specific name by appending package version. Version specific setting always take
+        // precedence over general setting for a feature gate.
+        const versionSpecificConfigName = `${name}_${pkgVersion}`;
         if (!this.configCache.has(versionSpecificConfigName)) {
             for (const provider of this.orderedBaseProviders) {
                 const parsed = stronglyTypedParse(provider?.getRawConfig(versionSpecificConfigName) ??

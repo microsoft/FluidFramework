@@ -125,8 +125,8 @@ describe("Config", () => {
 
     it("Typing - custom provider - With version", () => {
         const settings = {
-            [`number-${pkgVersion}`]: 1,
-            [`string-${pkgVersion}`]: "string",
+            [`number_${pkgVersion}`]: 1,
+            [`string_${pkgVersion}`]: "string",
             string: "string1",
             boolean: true,
             badString: [],
@@ -281,8 +281,8 @@ describe("Config", () => {
 
     it("Typing - SettingsProvider - With version", () => {
         const settings = {
-            [`number-${pkgVersion}`]: 1,
-            [`string-${pkgVersion}`]: "string",
+            [`number_${pkgVersion}`]: 1,
+            [`string_${pkgVersion}`]: "string",
             string: "string1",
             boolean: true,
             badString: [],
