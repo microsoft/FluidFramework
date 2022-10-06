@@ -417,7 +417,7 @@ const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
         if (!existsSync(directory)) {
-            mkdirSync(directory);
+            mkdirSync(directory, { recursive: true });
         }
     });
 

@@ -107,6 +107,7 @@ import { convertEditIds } from './IdConversion';
 import { MutableStringInterner } from './StringInterner';
 import { nilUuid } from './UuidUtilities';
 
+// Mock change
 /**
  * The write format and associated options used to construct a `SharedTree`
  * @public
