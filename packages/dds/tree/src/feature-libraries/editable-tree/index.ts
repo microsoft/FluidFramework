@@ -14,8 +14,10 @@ export {
     valueSymbol,
     anchorSymbol,
     proxyTargetSymbol,
-    EditableTreeContext,
     isArrayField,
     isUnwrappedNode,
 } from "./editableTree";
+
+export { EditableTreeContext } from "./editableTreeContext";
+
 export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";

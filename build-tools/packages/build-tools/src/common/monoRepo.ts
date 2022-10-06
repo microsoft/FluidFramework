@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { readFileSync } from "fs-extra";
 import * as path from "path";
+import YAML from "yaml";
 
 import { fatal } from "../bumpVersion/utils";
 import { Logger, defaultLogger } from "./logging";
@@ -82,6 +84,7 @@ export class MonoRepo {
         private readonly logger: Logger = defaultLogger,
     ) {
         this.version = "";
+        const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
         const lernaPath = path.join(repoPath, "lerna.json");
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
@@ -94,24 +97,25 @@ export class MonoRepo {
                 versionFromLerna = true;
             }
 
-            if (lerna.packages !== undefined) {
-                logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
+            let pkgs: string[] = [];
 
-                for (const dir of lerna.packages as string[]) {
-                    // TODO: other glob pattern?
-                    const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-                    this.packages.push(
-                        ...Packages.loadDir(
-                            path.join(this.repoPath, loadDir),
-                            kind,
-                            ignoredDirs,
-                            this,
-                        ),
-                    );
-                }
-                this.workspaceGlobs = lerna.packages;
-                return;
+            if (existsSync(pnpmWorkspace)) {
+                logger.verbose(`${kind}: Loading packages from ${pnpmWorkspace}`);
+                const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
+                pkgs = YAML.parse(workspaceString).packages;
+            } else if (lerna.packages !== undefined) {
+                logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
+                pkgs = lerna.packages;
             }
+            for (const dir of pkgs as string[]) {
+                // TODO: other glob pattern?
+                const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
+                this.packages.push(
+                    ...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this),
+                );
+            }
+            this.workspaceGlobs = lerna.packages;
+            return;
         }
 
         if (!existsSync(packagePath)) {
