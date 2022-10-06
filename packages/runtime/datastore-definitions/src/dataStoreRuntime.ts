@@ -72,6 +72,11 @@ export interface IFluidDataStoreRuntime extends
     getChannel(id: string): Promise<IChannel>;
 
     /**
+     * Executes the callback and ensures there are no ops generated from within
+     */
+    executeWithoutOps(callback: () => void): void;
+
+    /**
      * Creates a new channel of the given type.
      * @param id - ID of the channel to be created.  A unique ID will be generated if left undefined.
      * @param type - Type of the channel.

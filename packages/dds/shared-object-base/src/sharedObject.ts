@@ -523,7 +523,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * @returns `true` if the event had listeners, `false` otherwise.
      */
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-        return this.callbacksHelper.measure(() => super.emit(event, ...args));
+        let result = false;
+        this.runtime.executeWithoutOps(() => {
+            result = this.callbacksHelper.measure(() => super.emit(event, ...args));
+        });
+        return result;
     }
 
     /**

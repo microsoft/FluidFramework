@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ContainerRuntimeMessage } from "./containerRuntime";
 
@@ -19,7 +20,7 @@ export type BatchMessage = IBatchMessage & {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-    private pendingBatch: BatchMessage [] = [];
+    private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
 
     // The actual limit is 1Mb (socket.io and Kafka limits)
@@ -32,9 +33,14 @@ export class BatchManager {
     public get limit() { return BatchManager.hardLimit; }
     public static get limit() { return BatchManager.hardLimit; }
 
-    constructor(public readonly softLimit?: number) {}
+    constructor(public readonly softLimit?: number) { }
 
     public push(message: BatchMessage): boolean {
+        assert(
+            this.pendingBatch.length === 0
+            || message.referenceSequenceNumber === this.pendingBatch[0].referenceSequenceNumber,
+            "Out of order message detected");
+
         const contentSize = this.batchContentSize + message.contents.length;
         const opCount = this.pendingBatch.length;
 
@@ -73,7 +79,7 @@ export class BatchManager {
     /**
      * Capture the pending state at this point
      */
-     public checkpoint() {
+    public checkpoint() {
         const startPoint = this.pendingBatch.length;
         return {
             rollback: (process: (message: BatchMessage) => void) => {

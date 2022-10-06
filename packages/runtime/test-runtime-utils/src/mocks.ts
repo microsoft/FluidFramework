@@ -398,6 +398,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorumClients();
 
+    public executeWithoutOps(callback: () => void) {
+        callback();
+    }
+
     public get absolutePath() {
         return `/${this.id}`;
     }
@@ -507,7 +511,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null as any as IResponse;
     }
 
-    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void { }
 
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
@@ -527,7 +531,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         };
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {}
+    public updateUsedRoutes(usedRoutes: string[]) { }
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];

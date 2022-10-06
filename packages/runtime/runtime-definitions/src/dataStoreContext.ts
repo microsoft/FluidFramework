@@ -85,7 +85,7 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
+export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
     /**
      * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
@@ -367,6 +367,11 @@ export interface IFluidDataStoreContext extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
+
+    /**
+    * Executes the callback and ensures there are no ops generated from within
+    */
+    executeWithoutOps(callback: () => void): void;
 
     /**
      * Submits the message to be sent to other clients.

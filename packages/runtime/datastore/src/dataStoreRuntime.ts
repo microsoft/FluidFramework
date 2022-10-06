@@ -96,8 +96,8 @@ export interface ISharedObjectRegistry {
  * Base data store class
  */
 export class FluidDataStoreRuntime extends
-TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+    TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
+    IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context
@@ -175,6 +175,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
+
+    /**
+    * Executes the callback and ensures there are no ops generated from within
+    */
+    public executeWithoutOps(callback: () => void): void {
+        // back-compat
+        if (this.dataStoreContext.executeWithoutOps === undefined) {
+            callback();
+        } else {
+            this.dataStoreContext.executeWithoutOps(callback);
+        }
+    }
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -397,7 +409,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public bindChannel(channel: IChannel): void {
         assert(this.notBoundedChannelContextSet.has(channel.id),
-        0x17b /* "Channel to be binded should be in not bounded set" */);
+            0x17b /* "Channel to be binded should be in not bounded set" */);
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
@@ -518,7 +530,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.pendingAttach.delete(id);
                     } else {
                         assert(!this.contexts.has(id),
-                        0x17d, /* `Unexpected attach channel OP,
+                            0x17d, /* `Unexpected attach channel OP,
                             is in pendingAttach set: ${this.pendingAttach.has(id)},
                             is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */);
 
@@ -985,14 +997,14 @@ export const mixinRequestHandler = (
     requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithRequestHandler extends Base {
-        public async request(request: IRequest) {
-            const response = await super.request(request);
-            if (response.status === 404) {
-                return requestHandler(request, this);
-            }
-            return response;
+    public async request(request: IRequest) {
+        const response = await super.request(request);
+        if (response.status === 404) {
+            return requestHandler(request, this);
         }
-    } as typeof FluidDataStoreRuntime;
+        return response;
+    }
+} as typeof FluidDataStoreRuntime;
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
@@ -1001,38 +1013,38 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
-        private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
-            const firstName = path.shift();
-            if (firstName === undefined) {
-                throw new LoggingError("Path can't be empty");
-            }
+    private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
+        const firstName = path.shift();
+        if (firstName === undefined) {
+            throw new LoggingError("Path can't be empty");
+        }
 
-            let blob: ISummaryTree | ISummaryBlob = {
-                type: SummaryType.Blob,
-                content,
+        let blob: ISummaryTree | ISummaryBlob = {
+            type: SummaryType.Blob,
+            content,
+        };
+        summary.stats.blobNodeCount++;
+        summary.stats.totalBlobSize += content.length;
+
+        for (const name of path.reverse()) {
+            blob = {
+                type: SummaryType.Tree,
+                tree: { [name]: blob },
             };
-            summary.stats.blobNodeCount++;
-            summary.stats.totalBlobSize += content.length;
-
-            for (const name of path.reverse()) {
-                blob = {
-                    type: SummaryType.Tree,
-                    tree: { [name]: blob },
-                };
-                summary.stats.treeNodeCount++;
-            }
-            summary.summary.tree[firstName] = blob;
+            summary.stats.treeNodeCount++;
         }
+        summary.summary.tree[firstName] = blob;
+    }
 
-        async summarize(...args: any[]) {
-            const summary = await super.summarize(...args);
-            const content = await handler(this);
-            if (content !== undefined) {
-                this.addBlob(summary, content.path, content.content);
-            }
-            return summary;
+    async summarize(...args: any[]) {
+        const summary = await super.summarize(...args);
+        const content = await handler(this);
+        if (content !== undefined) {
+            this.addBlob(summary, content.path, content.content);
         }
-    } as typeof FluidDataStoreRuntime;
+        return summary;
+    }
+} as typeof FluidDataStoreRuntime;

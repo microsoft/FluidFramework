@@ -136,12 +136,7 @@
         "backCompat": false
       },
       "ClassDeclaration_ContainerRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IConnectableRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummarizerRuntime": {
+        "forwardCompat": false,
         "backCompat": false
       },
       "RemovedInterfaceDeclaration_IPendingFlushMode": {
