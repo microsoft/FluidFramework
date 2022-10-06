@@ -57,6 +57,13 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "RemovedInterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_IContainerRuntime": {
         "backCompat": false
       },

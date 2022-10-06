@@ -96,6 +96,15 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IRootSummarizerNode": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IRootSummarizerNodeWithGC": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }

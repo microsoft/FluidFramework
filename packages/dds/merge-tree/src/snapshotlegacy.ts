@@ -37,7 +37,6 @@ interface SnapshotHeader {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
  * @internal
  */
 export class SnapshotLegacy {
@@ -176,7 +175,7 @@ export class SnapshotLegacy {
                 return true;
             };
 
-        this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient, undefined);
+        this.mergeTree.mapRange(extractSegment, this.seq, NonCollabClient, undefined);
         if (prev) {
             segs.push(prev);
         }
