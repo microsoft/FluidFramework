@@ -40,16 +40,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      */
     private _migratedLoadP: Promise<void> | undefined;
 
-    /**
-     * Detached model object that we are trying to migrate to. We store for retry scenarios.
-     */
-    private _detachedModel: IDetachedModel<IMigratableModel> | undefined;
-
-    /**
-     * containerId of the new container we are trying to migrate to. We store for retry scenarios.
-     */
-    private _containerId: string | undefined;
-
     public constructor(
         private readonly modelLoader: IModelLoader<IMigratableModel>,
         initialMigratable: IMigratableModel,
@@ -80,6 +70,16 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     };
 
     private readonly ensureMigrating = () => {
+        /**
+         * Detached model that is ready to attach. This is stored for retry scenarios.
+         */
+        let preparedDetachedModel: IDetachedModel<IMigratableModel> | undefined;
+
+        /**
+         * containerId of the new container we are trying to migrate to. This is stored for retry scenarios.
+         */
+        let containerId: string | undefined;
+
         if (this._migrationP !== undefined) {
             return;
         }
@@ -143,14 +143,14 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 await migratedModel.importData(transformedData);
 
                 // Store the detached model for later use and retry scenarios
-                this._detachedModel = detachedModel;
+                preparedDetachedModel = detachedModel;
             };
 
             const completeTheMigration = async () => {
-                assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+                assert(preparedDetachedModel !== undefined, "this._detachedModel should be defined");
 
-                if (this._containerId === undefined) {
-                    this._containerId = await this._detachedModel.attach();
+                if (containerId === undefined) {
+                    containerId = await preparedDetachedModel.attach();
                 }
 
                 if (!this.currentModel.migrationTool.haveMigrationTask()) {
@@ -159,7 +159,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                     return;
                 }
 
-                await migratable.migrationTool.finalizeMigration(this._containerId);
+                await migratable.migrationTool.finalizeMigration(containerId);
 
                 this.currentModel.migrationTool.completeMigrationTask();
 
@@ -191,7 +191,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             };
 
             // Prepare the detached model if not already done
-            if (this._detachedModel === undefined) {
+            if (preparedDetachedModel === undefined) {
                 await prepareTheMigration();
             }
 
@@ -235,7 +235,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Retry if we get an unexpected error.
             this._migrationP = undefined;
-            this.ensureMigrating();
+            this.takeAppropriateActionForCurrentMigratable();
         });
 
         this.emit("migrating");
@@ -277,10 +277,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             this._currentModelId = migratedId;
             this.emit("migrated", migrated, migratedId);
             this._migratedLoadP = undefined;
-
-            // Clear retry values
-            this._detachedModel = undefined;
-            this._containerId = undefined;
 
             // Only once we've completely finished with the old migratable, start on the new one.
             this.takeAppropriateActionForCurrentMigratable();
