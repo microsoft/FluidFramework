@@ -234,11 +234,13 @@ describe("TaskManager", () => {
                 containerRuntimeFactory.processAllMessages();
                 await volunteerTaskP;
 
+                taskManager2.subscribeToTask(taskId);
                 taskManager1.complete(taskId);
                 const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
                 containerRuntimeFactory.processAllMessages();
                 await volunteerTaskP2;
-                assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+                assert.ok(taskManager1.assigned(taskId), "taskManager1 should be assigned");
+                assert.ok(!taskManager2.queued(taskId), "taskManager 2 should not be assigned");
             });
         });
 
