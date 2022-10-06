@@ -155,7 +155,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
                 if (!this.currentModel.migrationTool.haveMigrationTask()) {
                     // Exit early if we lost the task assignment, we are most likely disconnected.
-                    await onDisconnect();
+                    onDisconnect();
                     return;
                 }
 
@@ -167,7 +167,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 this.takeAppropriateActionForCurrentMigratable();
             };
 
-            const onDisconnect = async () => {
+            const onDisconnect = () => {
                 // If we disconnect from the container then either the container was closed by another client or our
                 // web socket lost connection. In either case we should stop trying to migrate and wait until we
                 // reconnect or the migration is finalized by another client.
@@ -212,7 +212,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 // for the container to reconnect or the migration to be finalized by another client. Otherwise we can
                 // exit the migration process and re-enter the state machine.
                 if (this.migrationState === "migrating") {
-                    await onDisconnect();
+                    onDisconnect();
                 } else {
                     this._migrationP = undefined;
                     this.takeAppropriateActionForCurrentMigratable();
