@@ -216,7 +216,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @public
+// @public @deprecated
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
@@ -238,9 +238,6 @@ export interface IProgress {
     cancel?: AbortSignal;
     onRetry?(delayInMs: number, error: any): void;
 }
-
-// @public
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;

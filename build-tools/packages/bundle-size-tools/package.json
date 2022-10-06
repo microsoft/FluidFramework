@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/bundle-size-tools",
-  "version": "0.4.7000",
+  "version": "0.4.8000",
   "description": "Utility for analyzing bundle size regressions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -26,8 +26,11 @@
     "clean": "rimraf dist *.tsbuildinfo",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc -b"
   },
@@ -41,10 +44,12 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/jszip": "^3.4.1",
     "@types/msgpack-lite": "^0.1.8",
     "@types/node": "^14.18.0",
     "@types/pako": "^2.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2"
   }
 }

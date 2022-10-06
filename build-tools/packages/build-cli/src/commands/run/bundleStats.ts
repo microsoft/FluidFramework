@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { execSync } from "child_process";
 import { Flags } from "@oclif/core";
+import { execSync } from "child_process";
+
 import { BaseCommand } from "../../base";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats.flags> {
@@ -12,6 +13,7 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats.fl
     static flags = {
         dirname: Flags.string({
             description: "Directory",
+            // eslint-disable-next-line unicorn/prefer-module
             default: __dirname,
             required: false,
         }),

@@ -5,7 +5,8 @@
 
 /* eslint-disable camelcase */
 import { Octokit } from "@octokit/core";
-import { Logger, defaultLogger } from "@fluidframework/build-tools";
+
+import { CommandLogger } from "../logging";
 
 const OWNER = "microsoft";
 const REPO_NAME = "FluidFramework";
@@ -24,15 +25,14 @@ const DESCRIPTION = `
         > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
         For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
 const TITLE = "Automate: Main Next Integrate";
-const log: Logger = defaultLogger;
 
 /**
  *
  * @param token - GitHub authentication token
  * @returns Returns true if pull request exists
  */
-export async function pullRequestExists(token: string): Promise<boolean> {
-    log.verbose("CHECKING IF PULL REQUEST EXISTS");
+export async function pullRequestExists(token: string, log: CommandLogger): Promise<boolean> {
+    log.verbose("Checking if pull request exists----------------");
     const octokit = new Octokit({ auth: token });
     const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
 
@@ -44,8 +44,11 @@ export async function pullRequestExists(token: string): Promise<boolean> {
  * @param token - GitHub authentication token
  * @param commit_sha - Commit id for which we need pull request information
  */
-export async function pullRequestInfo(token: string, commit_sha: string): Promise<any> {
-    log.verbose("PULL REQUEST INFO");
+export async function pullRequestInfo(
+    token: string,
+    commit_sha: string,
+    log: CommandLogger,
+): Promise<any> {
     const octokit = new Octokit({ auth: token });
     const prInfo = await octokit.request(PULL_REQUEST_INFO, {
         owner: OWNER,
@@ -53,6 +56,7 @@ export async function pullRequestInfo(token: string, commit_sha: string): Promis
         commit_sha,
     });
 
+    log.verbose(`Get pull request info for ${commit_sha}: ${prInfo}`);
     return prInfo;
 }
 
@@ -61,7 +65,7 @@ export async function pullRequestInfo(token: string, commit_sha: string): Promis
  * @param token - GitHub authentication token
  * @returns Lists the user who have push access to this branch
  */
-export async function getUserAccess(token: string): Promise<any> {
+export async function getUserAccess(token: string, log: CommandLogger): Promise<any> {
     const octokit = new Octokit({ auth: token });
 
     const user = await octokit.request(GET_USER, {
@@ -70,6 +74,7 @@ export async function getUserAccess(token: string): Promise<any> {
         branch: "main",
     });
 
+    log.verbose(`Get list of users with push access ${user}`);
     return user;
 }
 
@@ -86,8 +91,9 @@ export async function createPullRequest(
     source: string,
     target: string,
     assignee: string,
+    log: CommandLogger,
 ): Promise<any> {
-    log.verbose(`CREATING A PULL REQUEST`);
+    log.verbose(`Creating a pull request---------------`);
     const octokit = new Octokit({ auth: token });
     const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
     const newPr = await octokit.request(PULL_REQUEST, {
@@ -99,7 +105,7 @@ export async function createPullRequest(
         base: target,
     });
 
-    log.verbose(`ASSIGNING A PULL REQUEST`);
+    log.verbose(`Assigning ${author} to pull request ${newPr.data.number}`);
     await octokit.request(ASSIGNEE, {
         owner: OWNER,
         repo: REPO_NAME,
@@ -107,7 +113,7 @@ export async function createPullRequest(
         assignees: [author],
     });
 
-    log.verbose(`ADDING REVIEWER TO A PULL REQUEST`);
+    log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);
     await octokit.request(REVIEWER, {
         owner: OWNER,
         repo: REPO_NAME,
@@ -115,7 +121,7 @@ export async function createPullRequest(
         reviewer: [],
     });
 
-    log.verbose(`ADDING LABELS TO A PULL REQUEST`);
+    log.verbose(`Adding label to pull request ${newPr.data.number}`);
     await octokit.request(LABEL, {
         owner: OWNER,
         repo: REPO_NAME,

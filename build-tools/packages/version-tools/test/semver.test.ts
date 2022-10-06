@@ -4,12 +4,12 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
+
 import {
-    detectConstraintType,
     bumpRange,
     detectBumpType,
+    detectConstraintType,
     isPrereleaseVersion,
 } from "../src/semver";
 

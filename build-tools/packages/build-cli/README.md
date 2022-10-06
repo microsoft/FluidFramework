@@ -130,7 +130,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.4.7000
+@fluid-tools/build-cli/0.4.8000
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -139,34 +139,21 @@ USAGE
 <!-- usagestop -->
 # Command reference
 <!-- commands -->
-- [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
-- [Commands](#commands)
-  - [bump](#bump)
-    - [Bumping a release group to the next minor version](#bumping-a-release-group-to-the-next-minor-version)
-    - [Skipping install and commit](#skipping-install-and-commit)
-  - [bump deps](#bump-deps)
-    - [Bumping based on current dependency range](#bumping-based-on-current-dependency-range)
-    - [Bumping standalone dependencies](#bumping-standalone-dependencies)
-  - [release](#release)
-    - [Testing](#testing)
-- [Usage](#usage)
-- [Command reference](#command-reference)
-  - [`flub bump PACKAGE_OR_RELEASE_GROUP`](#flub-bump-package_or_release_group)
-  - [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
-  - [`flub check layers`](#flub-check-layers)
-  - [`flub check policy`](#flub-check-policy)
-  - [`flub commands`](#flub-commands)
-  - [`flub generate buildVersion`](#flub-generate-buildversion)
-  - [`flub generate bundleStats`](#flub-generate-bundlestats)
-  - [`flub generate packageJson`](#flub-generate-packagejson)
-  - [`flub generate readme`](#flub-generate-readme)
-  - [`flub help [COMMAND]`](#flub-help-command)
-  - [`flub info`](#flub-info)
-  - [`flub release`](#flub-release)
-  - [`flub release report`](#flub-release-report)
-  - [`flub run bundleStats`](#flub-run-bundlestats)
-  - [Developer notes](#developer-notes)
-  - [Trademark](#trademark)
+* [`flub bump PACKAGE_OR_RELEASE_GROUP`](#flub-bump-package_or_release_group)
+* [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
+* [`flub check layers`](#flub-check-layers)
+* [`flub check policy`](#flub-check-policy)
+* [`flub commands`](#flub-commands)
+* [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleStats`](#flub-generate-bundlestats)
+* [`flub generate packageJson`](#flub-generate-packagejson)
+* [`flub generate readme`](#flub-generate-readme)
+* [`flub help [COMMAND]`](#flub-help-command)
+* [`flub info`](#flub-info)
+* [`flub merge branches`](#flub-merge-branches)
+* [`flub release`](#flub-release)
+* [`flub release report`](#flub-release-report)
+* [`flub run bundleStats`](#flub-run-bundlestats)
 
 ## `flub bump PACKAGE_OR_RELEASE_GROUP`
 
@@ -464,6 +451,26 @@ DESCRIPTION
 
 _See code: [src/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/info.ts)_
 
+## `flub merge branches`
+
+Sync branches depending on the batch size passed
+
+```
+USAGE
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
+
+FLAGS
+  -a, --auth=<value>                (required) GitHub authentication token
+  -b, --batchSize=<value>           (required) Maximum number of commits to include in the pull request
+  -p, --pullRequestInfo=<value>...  Pull request data
+  -s, --source=<value>              (required) Source branch name
+  -t, --target=<value>              (required) Target branch name
+  -v, --verbose                     Verbose logging.
+
+DESCRIPTION
+  Sync branches depending on the batch size passed
+```
+
 ## `flub release`
 
 Releases a package or release group.
@@ -542,6 +549,10 @@ DESCRIPTION
   Using the --all flag, you can list all the releases for a given release group or package.
 
 EXAMPLES
+  Output all release report files to the current directory.
+
+    $ flub release report -o .
+
   Generate a minimal release report and display it in the terminal.
 
     $ flub release report
@@ -549,14 +560,6 @@ EXAMPLES
   Generate a minimal release report and output it to stdout as JSON.
 
     $ flub release report --json
-
-  Output a release report to 'report.json'.
-
-    $ flub release report -o report.json
-
-  Output a full release report to 'report.json'.
-
-    $ flub release report -f -o report.json
 
   List all the releases of the azure release group.
 
@@ -577,7 +580,8 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/lib/commands/run]
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\lib\commands\run]
                      Directory
 
 DESCRIPTION

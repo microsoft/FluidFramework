@@ -10,7 +10,7 @@ If these assumption changes, this tool will break and needs to be fixed up.
 More work can be done to the tool to do it more formally and correctly.
 But it should work for our current repo.
 
-`fluid-layer-check` is a tool to make sure the dependencies between Fluid Framework packages are properly layered.  It also can be used to generate .dot file to generate a visual graph using GraphViz.
+`fluid-layer-check` is a tool to make sure the dependencies between Fluid Framework packages are properly layered. It also can be used to generate .dot file to generate a visual graph using GraphViz.
 
 ## Setup
 
@@ -27,13 +27,15 @@ This package produces several binaries, see `bin` in package.json.
 
 This repo is normally build using the version of this package referenced by the root package.json file.
 To run that version, just do one of:
-- `npm i` in the root, and use the npm scripts that call it (ex: `build:fast`)
-- globally install that specific version of `@fluidframework/build-tools` and call its binaries directly (ex `fluid-build`)
+
+-   `npm i` in the root, and use the npm scripts that call it (ex: `build:fast`)
+-   globally install that specific version of `@fluidframework/build-tools` and call its binaries directly (ex `fluid-build`)
 
 There are several also ways to use the local version of `@fluidframework/build-tools` from within the repo.
 Just build it (as in "Setup") then do one of:
-* Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
-* use `node bin/tool-name` in this directory or `node build-tools/packages/build-tools/bin/fluid-build tool-name` from the root.
+
+-   Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
+-   use `node bin/tool-name` in this directory or `node build-tools/packages/build-tools/bin/fluid-build tool-name` from the root.
 
 You can also use `npx --package "@fluidframework/build-tools" tool-name`, but exactly how versioning on this works and how it can be specified depends on the npm version and isn't super clear.
 
@@ -42,6 +44,7 @@ Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build
 <!-- this list of arguments is duplicated in `src/common/commonOptions.ts` and they should be updated together -->
 
 All the tools take some common options:
+
 ```
      --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
@@ -61,6 +64,7 @@ One of these is tools is `fluid-build`:
 
 <!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
   and they should be updated together -->
+
 ```txt
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
@@ -124,7 +128,7 @@ fluid-build --symlink         # switch to isolate link mode (within monorepo)
 fluid-build                   # build
 ```
 
-Note that --symlink* changes any symlink, the tool will run the clean script for all the packages to make sure everything rebuilt every the next time.
+Note that --symlink\* changes any symlink, the tool will run the clean script for all the packages to make sure everything rebuilt every the next time.
 
 ## Running `fluid-build` (Fluid directory workspace in VSCode)
 
@@ -156,7 +160,7 @@ With --dot &lt;path&gt; argument, it will generate the dependency graph in the [
 
 ### Concurrency
 
-It make use of the dependencies in the package.json to build the dependency graph.  It recognizes (crudely) the break apart of the tasks with in the build script, and make certain assumption to create dependency between those individual task. These task are then queued and schedule based on this dependency to increase the level of concurrent tasks it can run.
+It make use of the dependencies in the package.json to build the dependency graph. It recognizes (crudely) the break apart of the tasks with in the build script, and make certain assumption to create dependency between those individual task. These task are then queued and schedule based on this dependency to increase the level of concurrent tasks it can run.
 
 Lerna will also automatically parallelize based on package dependencies (unless (--no-sort)[https://github.com/lerna/lerna/tree/main/core/global-options#--no-sort] is provided). This functionality of lerna is not used and instead `fluid-build` implements its own parallelization scheme.
 
@@ -172,7 +176,7 @@ The actual build tasks do check package.json for changes, but will not initiate 
 For TypeScript compiler (TSC), it makes use of the incremental build info to tell us all the files it depends on and the file hash to check if the input files are changed.
 While tsc make use of this information to avoid recompilation, tsc still takes a while for unknown reason.
 
-Currently, this task recognize whether it is the default tsc build to commonjs modules, or for esnext modules for webpacking.  Since the type definition should be the same for both, both will only wait for only the default tsc build from it's package dependencies, and not wait fo esnext one, so that we can get more concurrency.
+Currently, this task recognize whether it is the default tsc build to commonjs modules, or for esnext modules for webpacking. Since the type definition should be the same for both, both will only wait for only the default tsc build from it's package dependencies, and not wait fo esnext one, so that we can get more concurrency.
 
 #### Tslint/Eslint Task
 

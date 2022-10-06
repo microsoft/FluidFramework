@@ -216,7 +216,7 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
  */
-export interface SchemaDataReader {
+export interface SchemaData {
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }

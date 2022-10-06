@@ -2,15 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Flags } from "@oclif/core";
+import * as semver from "semver";
+
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 
 import {
     isVersionBumpType,
     isVersionBumpTypeExtended,
     isVersionScheme,
 } from "@fluid-tools/version-tools";
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
-import * as semver from "semver";
+
 import { DependencyUpdateType } from "./lib";
 import { isReleaseGroup } from "./releaseGroups";
 
@@ -115,7 +117,8 @@ export const versionSchemeFlag = Flags.build({
     },
 });
 
-/** Reusable flags for cases where a command typically checks something before taking action. They default to true, but
+/**
+ * Reusable flags for cases where a command typically checks something before taking action. They default to true, but
  * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
  *
  * @remarks

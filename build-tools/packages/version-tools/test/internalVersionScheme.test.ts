@@ -4,15 +4,15 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
 import * as semver from "semver";
+
 import {
     fromInternalScheme,
-    toInternalScheme,
     getVersionRange,
-    isInternalVersionScheme,
     isInternalVersionRange,
+    isInternalVersionScheme,
+    toInternalScheme,
 } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {

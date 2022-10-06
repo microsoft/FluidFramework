@@ -2,22 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 
 import { Context, MonoRepoKind } from "@fluidframework/build-tools";
+
 import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionBumpTypeExtended,
+    VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
-    ReleaseVersion,
     toVirtualPatchScheme,
-    VersionBumpType,
-    VersionBumpTypeExtended,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage, ReleaseSource } from "../releaseGroups";
+
+import { ReleaseGroup, ReleasePackage, ReleaseSource, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 
 /**
@@ -148,6 +150,8 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 }
 
 /**
+ * Returns the default bump type for a branch.
+ *
  * @param branchName - The branch name to check.
  * @returns The default {@link VersionBumpType} for the branch, or `undefined` if no default is set for the branch.
  *
@@ -167,11 +171,9 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     }
 }
 
-const releaseGroupReleaseTypeMap = new Map<string, ReleaseSource>([
-    [MonoRepoKind.BuildTools, "interactive"],
-]);
-
 /**
+ * Returns the default {@link ReleaseSource} for a given release group or package.
+ *
  * @internal
  */
 export function getReleaseSourceForReleaseGroup(
