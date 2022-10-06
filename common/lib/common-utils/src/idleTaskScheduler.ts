@@ -4,49 +4,45 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { Deferred } from "./promises";
 
 /**
- * Helper class that is used to schedule non-essential tasks
+ * API used to schedule non-essential tasks
  * Time measurements are in milliseconds as a floating point with a decimal
  */
 export default class IdleTaskScheduler {
-    //List of tasks waiting to be run
-    private idleTaskList = [];
-    // A reference to the task currently being processed.
-    // private taskHandle: ReturnType | undefined = undefined;
-
-    /*
-    Add tasks to FIFO queue of tasks that are run during idle callback period.
-    Creates idle callback if it doesn't exist with a timeout of 1s.
-    */
-    public enqueueTask<T>(task: () => T){
-        const deferred = new Deferred();
-        this.idleTaskList.push(() => {
-            deferred.resolve(task());
-        });
-        return deferred.promise;
-    }
-
-    // Called and runs enqueued tasks when enough idle time avail or 1s timeout expires.
-    public runTaskQueue(deadline){
-        while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && this.idleTaskList.length) {
-
-
+  /*
+  Takes in and runs a callback during idle time. Fallback to setTimeout if window doesn't
+  support requestIdleCallback.
+  @returns A promise pertaining to the callback that was passed in.
+  */
+  public scheduleIdleTask<T>(callback: () => T, timeout: number, props: ITelemetryProperties = {}): Promise<T> {
+    let promise;
+    //Check for the availability in window.
+    if (typeof window?.requestIdleCallback === "function") {
+      promise = new Promise((resolve, reject) => {
+        requestIdleCallback(doLowPriorityTask, { timeout: timeout });
+        function doLowPriorityTask(deadline) {
+          try {
+            resolve(callback());
+          } catch (err: any) {
+            props.responseMessage = err.message;
+            reject(err);
+          }
         }
+      });
     }
-    /*
-    Takes in and runs a callback function during idle time. Fallback to setTimeout if window doesn't
-    support requestIdleCallback
-    */
-    public scheduleIdleTask<T> (callback: () => T, timeout: number, props: ITelemetryProperties) {
-        if (this.taskHandle !== undefined) {
-            if (typeof window === "object" && typeof window?.requestIdleCallback === "function")
-            this.taskHandle = window.requestIdleCallback(this.runTaskQueue, { timeout: 1000 });
-        } else{
-            return Promise.resolve(setTimeout(() => {
-                callback;
-            }, 0)
-        }
+    else {
+      promise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          try {
+            resolve(callback())
+          } catch (e) {
+            reject(e);
+          }
+        }, timeout);
+      });
     }
+    return promise;
+  }
+
 }
