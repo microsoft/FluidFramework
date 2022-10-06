@@ -18,12 +18,12 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
-- [Signature from  ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
+- [Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
 
-### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
+### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
 ```diff
     async refreshLatestSummaryAck(
