@@ -30,158 +30,177 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
+    // @deprecated
     constructor(documentServiceFactory: IDocumentServiceFactory, options: any);
-    // (undocumented)
+    // @deprecated (undocumented)
     get clients(): {
         [clientId: string]: ICombinedDriver;
     } & Comlink.ProxyMarked;
-    // (undocumented)
+    // @deprecated (undocumented)
     connected(): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createContainer(createNewSummaryFn: () => Promise<ISummaryTree>, resolvedUrlFn: () => Promise<IResolvedUrl>): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDocumentService(resolvedUrlFn: () => Promise<IResolvedUrl>): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createProxy(): IDocumentServiceFactoryProxy;
-    }
+}
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ICombinedDriver {
-    // (undocumented)
+    // @deprecated (undocumented)
     clientId: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     deltaStorage: IDocumentDeltaStorageService;
-    // (undocumented)
+    // @deprecated (undocumented)
     logger: ITelemetryBaseLogger;
-    // (undocumented)
+    // @deprecated (undocumented)
     storage: IDocumentStorageService;
-    // (undocumented)
+    // @deprecated (undocumented)
     stream: IOuterDocumentDeltaConnectionProxy;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IDocumentServiceFactoryProxy {
-    // (undocumented)
+    // @deprecated (undocumented)
     clients: {
         [clientId: string]: ICombinedDriver;
     };
-    // (undocumented)
+    // @deprecated (undocumented)
     connected(): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createContainer(createNewSummaryFn: () => Promise<ISummaryTree>, resolvedUrlFn: () => Promise<IResolvedUrl>): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDocumentService(resolvedUrlFn: () => Promise<IResolvedUrl>): Promise<string>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
 
-// @public
+// @public @deprecated
 export class InnerDocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+    // @deprecated
     get claims(): ITokenClaims;
+    // @deprecated
     get clientId(): string;
+    // @deprecated
     static create(connection: IConnected, outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection>;
-    // (undocumented)
+    // @deprecated (undocumented)
     details: IConnected;
-    // (undocumented)
+    // @deprecated (undocumented)
     dispose(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     get disposed(): boolean;
+    // @deprecated
     get existing(): boolean;
+    // @deprecated
     get initialClients(): ISignalClient[];
+    // @deprecated
     get initialMessages(): ISequencedDocumentMessage[];
+    // @deprecated
     get initialSignals(): ISignalMessage[];
-    // (undocumented)
+    // @deprecated (undocumented)
     get lastKnownOpNumber(): any;
+    // @deprecated
     get maxMessageSize(): number;
+    // @deprecated
     get mode(): ConnectionMode;
-    // (undocumented)
+    // @deprecated (undocumented)
     outerProxy: IOuterDocumentDeltaConnectionProxy;
+    // @deprecated
     get serviceConfiguration(): IClientConfiguration;
+    // @deprecated
     submit(messages: IDocumentMessage[]): void;
+    // @deprecated
     submitSignal(message: IDocumentMessage): void;
+    // @deprecated
     get version(): string;
 }
 
-// @public
+// @public @deprecated
 export class InnerDocumentService implements IDocumentService {
-    // (undocumented)
+    // @deprecated (undocumented)
     clientId: string;
+    // @deprecated
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
+    // @deprecated
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    // @deprecated
     connectToStorage(): Promise<IDocumentStorageService>;
+    // @deprecated
     static create(proxyObject: ICombinedDriver, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<InnerDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     dispose(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly resolvedUrl: IResolvedUrl;
 }
 
-// @public
+// @public @deprecated
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(outerPort: MessagePort): Promise<InnerDocumentServiceFactory>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     static readonly protocolName = "fluid:";
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly protocolName = "fluid:";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class InnerUrlResolver implements IUrlResolver {
+    // @deprecated
     constructor(outerProxy: IUrlResolverProxy);
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(outerPort: MessagePort): Promise<InnerUrlResolver>;
-    // (undocumented)
+    // @deprecated (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IOuterDocumentDeltaConnectionProxy {
-    // (undocumented)
+    // @deprecated (undocumented)
     getDetails(): Promise<IConnected>;
-    // (undocumented)
+    // @deprecated (undocumented)
     handshake: Deferred<any>;
-    // (undocumented)
+    // @deprecated (undocumented)
     submit(messages: IDocumentMessage[]): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     submitSignal(message: IDocumentMessage): Promise<void>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IUrlResolverProxy {
-    // (undocumented)
+    // @deprecated (undocumented)
     connected(): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, packageInfoFn: () => Promise<IContainerPackageInfo | undefined>): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     resolve(request: IRequest): Promise<() => Promise<IResolvedUrl | undefined>>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IUrlResolverProxyKey = "IUrlResolverProxy";
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class OuterUrlResolver {
+    // @deprecated
     constructor(urlResolver: IUrlResolver);
-    // (undocumented)
+    // @deprecated (undocumented)
     connected(): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createProxy(): IUrlResolverProxy;
-    // (undocumented)
+    // @deprecated (undocumented)
     getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, packageInfoFn: () => Promise<IContainerPackageInfo | undefined>): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     resolve(request: IRequest): Promise<() => Promise<IResolvedUrl | undefined>>;
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 
