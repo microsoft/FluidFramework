@@ -35,13 +35,14 @@ stages:
             targetType: 'inline'
             script: |
               $filesWereChanged = 0
-              Write-Host $env:AFFECTED_PATHS
-              Write-Host "Found the following files changed:"
               foreach ($path in $env:AFFECTED_PATHS.Split(";")) {
                 $pathsChanged = git diff --name-only HEAD~1 $path
-                If ($pathsChanged -ne $null) {
+                if ($pathsChanged -ne $null) {
+                  Write-Host "Found the following files changed in $path:"
                   Write-Host $pathsChanged
                   $filesWereChanged = 1
+                } else {
+                  Write-Host "No files changed in $path"
                 }
               }
               If ($filesWereChanged)  {
