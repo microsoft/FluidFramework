@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
-import { JsonableTree } from "../../../tree";
+import { FieldKey, JsonableTree } from "../../../tree";
 import { fail, brand } from "../../../util";
 import {
     UnwrappedEditableField,
@@ -57,7 +57,7 @@ export function expectTreeEquals(
     const type = node[getTypeSymbol](undefined, false);
     assert.deepEqual(type, expectedType);
     for (const key of Object.keys(node)) {
-        const subNode: UnwrappedEditableField = node[key];
+        const subNode: UnwrappedEditableField = node[key as FieldKey];
         assert(subNode !== undefined, key);
         const fields = expected.fields ?? {};
         assert.equal(key in fields, true);

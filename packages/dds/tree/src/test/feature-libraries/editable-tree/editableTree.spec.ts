@@ -12,9 +12,20 @@ import {
     SchemaData,
     InMemoryStoredSchemaRepository,
     SchemaDataAndPolicy,
+    GlobalFieldKey,
+    namedTreeSchema,
+    ValueSchema,
+    LocalFieldKey,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
-import { JsonableTree, EmptyKey, Value, rootFieldKey } from "../../../tree";
+import {
+    JsonableTree,
+    EmptyKey,
+    Value,
+    rootFieldKey,
+    symbolFromKey,
+    FieldKey,
+} from "../../../tree";
 import { brand, clone } from "../../../util";
 import {
     defaultSchemaPolicy,
@@ -30,6 +41,7 @@ import {
     isPrimitiveValue,
     singleTextCursorNew,
     isUnwrappedNode,
+    emptyField,
 } from "../../../feature-libraries";
 
 import {
@@ -75,7 +87,7 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
     return [schema, proxy as PersonType];
 }
 
-describe("editable-tree", () => {
+describe.only("editable-tree", () => {
     it("proxified forest", () => {
         const [, proxy] = buildTestPerson();
         assert.ok(proxy);
@@ -198,6 +210,47 @@ describe("editable-tree", () => {
         }
     });
 
+    it("global fields are unwrapped", () => {
+        const globalFieldKeyAsLocalField: LocalFieldKey = brand("globalFieldKey");
+        const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+        const globalFieldSchema = fieldSchema(FieldKinds.value, [stringSchema.name]);
+        const globalFieldSymbol = symbolFromKey(globalFieldKey);
+        const childWithGlobalFieldSchema = namedTreeSchema({
+            name: brand("Test:ChildWithGlobalField-1.0.0"),
+            localFields: {
+                [globalFieldKeyAsLocalField]: fieldSchema(FieldKinds.optional),
+            },
+            globalFields: [globalFieldKey],
+            value: ValueSchema.Serializable,
+            extraLocalFields: emptyField,
+        });
+        const rootSchema = fieldSchema(FieldKinds.optional, [childWithGlobalFieldSchema.name]);
+        const schemaData: SchemaData = {
+            treeSchema: schemaMap,
+            globalFieldSchema: new Map([
+                [rootFieldKey, rootSchema],
+                [globalFieldKey, globalFieldSchema],
+            ]),
+        };
+        const forest = setupForest(schemaData, [
+            {
+                type: childWithGlobalFieldSchema.name,
+                fields: {
+                    [globalFieldKeyAsLocalField]: [{ type: stringSchema.name, value: "foo" }],
+                },
+                globalFields: {
+                    [globalFieldKey]: [{ type: stringSchema.name, value: "global foo" }],
+                },
+            },
+        ]);
+        const context = getEditableTreeContext(forest);
+        assert(isUnwrappedNode(context.root));
+        assert.deepEqual(context.root[getTypeSymbol](globalFieldSymbol, false), stringSchema);
+        assert.equal(context.root[globalFieldSymbol], "global foo");
+        assert.equal(context.root[globalFieldKeyAsLocalField], "foo");
+        context.free();
+    });
+
     it("primitives are unwrapped at root", () => {
         const rootSchema = fieldSchema(FieldKinds.value, [int32Schema.name]);
         const schemaData: SchemaData = {
@@ -223,7 +276,7 @@ describe("editable-tree", () => {
             },
         ]);
         const context = getEditableTreeContext(forest);
-        assert.equal((context.root as EditableTree).child, 1);
+        assert.equal((context.root as EditableTree)["child" as FieldKey], 1);
         context.free();
     });
 
@@ -241,7 +294,7 @@ describe("editable-tree", () => {
         ]);
         const context = getEditableTreeContext(forest);
         assert.throws(
-            () => (context.root as EditableTree).child,
+            () => (context.root as EditableTree)["child" as FieldKey],
             (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
             "Expected exception was not thrown",
         );

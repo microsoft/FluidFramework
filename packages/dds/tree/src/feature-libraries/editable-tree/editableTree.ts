@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, FieldKey, isGlobalFieldKey, keyFromSymbol } from "../../tree";
+import { Value, Anchor, FieldKey, symbolFromKey, keyFromSymbol } from "../../tree";
 import {
     IEditableForest,
     TreeNavigationResult,
@@ -116,7 +116,7 @@ export interface EditableTree {
      * A mechanism for disambiguating this should be added,
      * likely involving an alternative mechanism for looking up global fields via symbols.
      */
-    readonly [key: string]: UnwrappedEditableField;
+    readonly [key: FieldKey]: UnwrappedEditableField;
 }
 
 /**
@@ -297,6 +297,10 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             // All string keys are fields
             return target.proxifyField(brand(key));
         }
+        try {
+            const globalFieldKey = symbolFromKey(keyFromSymbol(brand(key)));
+            return target.proxifyField(globalFieldKey);
+        } catch (e) {}
         switch (key) {
             case getTypeSymbol: {
                 return target.getType.bind(target);
@@ -361,9 +365,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         return target.has(brand(key));
     },
     // Includes all non-empty fields, which are the enumerable fields.
-    ownKeys: (target: ProxyTarget): string[] => {
-        const fieldKeys = target.getFieldKeys();
-        return fieldKeys.map((key) => (isGlobalFieldKey(key) ? keyFromSymbol(key) : key));
+    ownKeys: (target: ProxyTarget): FieldKey[] => {
+        return target.getFieldKeys();
     },
     getOwnPropertyDescriptor: (
         target: ProxyTarget,
