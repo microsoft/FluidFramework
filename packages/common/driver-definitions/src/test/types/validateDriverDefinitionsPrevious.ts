@@ -387,7 +387,6 @@ declare function get_old_InterfaceDeclaration_IDocumentStorageServicePolicies():
 declare function use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
     use: TypeOnly<current.IDocumentStorageServicePolicies>);
 use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentStorageServicePolicies());
 
 /*
