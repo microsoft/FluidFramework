@@ -33,16 +33,6 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @public @deprecated (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
-
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
 
@@ -164,8 +154,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

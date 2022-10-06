@@ -40,7 +40,6 @@ import {
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
-    BindState,
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
@@ -155,7 +154,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
-    private bindState: BindState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
@@ -266,7 +264,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.attachListener();
         // If exists on storage or loaded from a snapshot, it should already be bound.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         /**
@@ -460,12 +457,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * 2. Attaching the graph if the data store becomes attached.
      */
     public bindToContext() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
-        this.dataStoreContext.bindToContext();
-        this.bindState = BindState.Bound;
+        this.dataStoreContext.makeLocallyVisible();
     }
 
     public bind(handle: IFluidHandle): void {
