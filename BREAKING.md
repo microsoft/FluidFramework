@@ -25,7 +25,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
+- [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
+### Remove Deprecated Fields from ISummaryRuntimeOptions
+The following fields are being removed from `ISummaryRuntimeOptions` as they became properties from `ISummaryConfiguration`:
 
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 

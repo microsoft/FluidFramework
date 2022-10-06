@@ -22,7 +22,6 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
     runtimeOptions: {
         summaryOptions: {
-            // currently these tests will break if we load from a summary that was too recent
             summaryConfigOverrides: { state: "disabled" },
         },
     },
