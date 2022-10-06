@@ -36,17 +36,20 @@ stages:
             script: |
               $filesWereChanged = 0
               Write-Host "Found the following files changed:"
-              ${{ each path in package.affectedPaths }}:
-                $pathChanged = git diff --name-only HEAD~1 ${{ package.affectedPaths }}
-                Write-Host $pathChanged
-                If ($pathChanged -ne $null) {
+              foreach ($path in $env:AFFECTED_PATHS.Split(";")) {
+                $pathsChanged = git diff --name-only HEAD~1 $path
+                If ($pathsChanged -ne $null) {
+                  Write-Host $pathsChanged
                   $filesWereChanged = 1
                 }
+              }
               If ($filesWereChanged)  {
                 echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
               }
           displayName: 'Check if files affecting ${{ package.name }} tests were modified'
           name: Check${{ replace(package.testFileTarName, '-', '' ) }}
+          env:
+            AFFECTED_PATHS: ${{ join(package.affectedPaths, ';') }}
 
   - ${{ each package in parameters.packages }}:
     - stage:
