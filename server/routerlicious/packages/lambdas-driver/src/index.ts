@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./document-router";
-export * from "./kafka-service";
+export { DocumentLambdaFactory, DocumentContext } from "./document-router";
+export { PartitionManager, KafkaRunner, IKafkaResources, KafkaRunnerFactory } from "./kafka-service";

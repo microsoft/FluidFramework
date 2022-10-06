@@ -3,5 +3,26 @@
  * Licensed under the MIT License.
  */
 
-export * from "./resources";
-export * from "./services";
+export {
+	IAuthor,
+	ICommitter,
+	ICommitHash,
+	ICreateCommitParams,
+	ICommit,
+	ICommitDetails,
+	IBlob,
+	ICreateBlobParams,
+	ICreateBlobResponse,
+	IRef,
+	ICreateRefParams,
+	IPatchRefParams,
+	ICreateRepoParams,
+	ICreateTreeEntry,
+	ICreateTreeParams,
+	ITreeEntry,
+	ITree,
+	ITagger,
+	ICreateTagParams,
+	ITag,
+} from "./resources";
+export { IHeader } from "./services";

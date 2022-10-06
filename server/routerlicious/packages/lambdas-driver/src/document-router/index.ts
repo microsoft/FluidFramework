@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./lambdaFactory";
-export * from "./documentContext";
+export { DocumentLambdaFactory } from "./lambdaFactory";
+export { DocumentContext } from "./documentContext";
