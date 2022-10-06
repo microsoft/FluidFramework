@@ -2757,14 +2757,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // The call to fetch the snapshot is very expensive and not always needed.
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
+            // When fetching from storage we will always get the latest version and do not use the ackHandle.
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
+             null,
              summaryLogger,
              {
                  eventName: "RefreshLatestSummaryGetSnapshot",
                  ackHandle,
                  summaryRefSeq,
-                 fetchLatest: false,
+                 fetchLatest: true,
              });
              return fetchResult.snapshotTree;
          };
@@ -2775,6 +2776,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
              readAndParseBlob,
              summaryLogger,
          );
+
+         // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
+         // wait for the delta manager to catch up.
+         if (result.latestSummaryUpdated === true && result.wasSummaryTracked === false) {
+            assert(result.snapshot !== undefined, "should have tree result");
+            const latestSnapshotRefSeq = await seqFromTree(result.snapshot, readAndParseBlob);
+            if (latestSnapshotRefSeq !== summaryRefSeq) {
+                summaryLogger.sendTelemetryEvent(
+                {
+                    eventName: "LatestSummaryRetrieved",
+                    lastSequenceNumber: latestSnapshotRefSeq,
+                    targetSequenceNumber: summaryRefSeq,
+                });
+                if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
+                    // We need to catch up to the latest summary's reference sequence number before pausing.
+                    await PerformanceEvent.timedExecAsync(
+                        summaryLogger,
+                        {
+                            eventName: "WaitingForSeq",
+                            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+                            targetSequenceNumber: latestSnapshotRefSeq,
+                            lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
+                        },
+                        async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
+                        { start: true, end: true, cancel: "error" }, // definitely want start event
+                    );
+                }
+            }
+        }
 
          // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
