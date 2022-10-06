@@ -10,6 +10,7 @@ import {
     delay,
 } from "@fluidframework/common-utils";
 import {
+    loggerToMonitoringContext,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -95,7 +96,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly relayServiceTenantAndSessionId: () => string,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super();
+        super(loggerToMonitoringContext(logger).config);
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;

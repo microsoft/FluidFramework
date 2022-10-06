@@ -64,7 +64,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ISummaryContent,
@@ -412,7 +411,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -639,7 +637,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                     this.logConnectionStateChangeTelemetry(value, oldState, reason);
                     if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState(false /* initial transition */);
+                        this.propagateConnectionState(
+                            false /* initial transition */,
+                            value === ConnectionState.Disconnected ? reason : undefined /* disconnectedReason */,
+                        );
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -1383,10 +1384,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
-            this._initialClients ?? [],
         );
-
-        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1512,20 +1510,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
-            if (this._protocolHandler === undefined) {
-                // Store the initial clients so that they can be submitted to the
-                // protocol handler when it is created.
-                this._initialClients = details.initialClients;
-            } else {
-                // When reconnecting, the protocol handler is already created,
-                // so we can update the audience right now.
-                this._protocolHandler.audience.clear();
-
-                for (const priorClient of details.initialClients ?? []) {
-                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
-                }
-            }
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
@@ -1629,7 +1613,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState(initialTransition: boolean) {
+    private propagateConnectionState(initialTransition: boolean, disconnectedReason?: string) {
         // When container loaded, we want to propagate initial connection state.
         // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
         // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -1652,7 +1636,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         this.protocolHandler.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
         if (logOpsOnReconnect) {
             this.mc.logger.sendTelemetryEvent(

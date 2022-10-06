@@ -2,27 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { parentPort } from "worker_threads";
-import { compile } from "./tscWorker";
+
 import { lint } from "./eslintWorker";
+import { compile } from "./tscWorker";
 
 export interface WorkerMessage {
-    workerName: string,
-    command: string,
-    cwd: string,
+    workerName: string;
+    command: string;
+    cwd: string;
 }
 
 export interface WorkerExecResult {
-    code: number,
-    error?: Error,  // unhandled exception, main thread should rerun it.
-    memoryUsage?: NodeJS.MemoryUsage,
+    code: number;
+    error?: Error; // unhandled exception, main thread should rerun it.
+    memoryUsage?: NodeJS.MemoryUsage;
 }
 
 const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecResult> } = {
-    "tsc": compile,
-    "eslint": lint,
-}
+    tsc: compile,
+    eslint: lint,
+};
 
 let collectMemoryUsage = false;
 
@@ -56,7 +56,7 @@ if (parentPort) {
     });
 } else if (process.send) {
     collectMemoryUsage = process.argv.includes("--memoryUsage");
-    process.on('message', (message: WorkerMessage) => {
+    process.on("message", (message: WorkerMessage) => {
         messageHandler(message).then(process.send!.bind(process));
     });
     process.on("uncaughtException", (error) => {

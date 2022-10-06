@@ -2,24 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
     /**
      * The decomposed type with external types replaced with strings
      */
-    typeAsString: string,
+    typeAsString: string;
     /**
      * External types that have been replaced
      */
-    replacedTypes: Set<string>,
+    replacedTypes: Set<string>;
     /**
      * Generic classes that are required for the class because
      * they can't be replaced without disrupting type structure
      * Mapping is name to number of type params
      */
-    requiredGenerics: GenericsInfo,
+    requiredGenerics: GenericsInfo;
 }
 
 /**
@@ -95,10 +94,7 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * @param node - The type node to decompose
  * @returns - DecompositionResult for the type
  */
-export function decomposeType(
-    checker: TypeChecker,
-    node: Type,
-): DecompositionResult {
+export function decomposeType(checker: TypeChecker, node: Type): DecompositionResult {
     const result = {
         typeAsString: typeToString(checker, node),
         replacedTypes: new Set<string>(),
@@ -135,7 +131,9 @@ export function decomposeType(
         if (typeArgs.length > 0) {
             // Array shorthand (type[]) is handled by type arguments
             const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
-            const symbolName = checker.compilerObject.symbolToString(node.compilerType.getSymbol()!);
+            const symbolName = checker.compilerObject.symbolToString(
+                node.compilerType.getSymbol()!,
+            );
             typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
             typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
             return typeArgsResult;
@@ -160,9 +158,9 @@ export function decomposeTypes(
     separator: string,
 ): DecompositionResult {
     const result = {} as DecompositionResult;
-        nodes.map((t) => {
-            const subResult = decomposeType(checker, t);
-            mergeResults(result, subResult, separator);
-        });
+    nodes.map((t) => {
+        const subResult = decomposeType(checker, t);
+        mergeResults(result, subResult, separator);
+    });
     return result;
 }
