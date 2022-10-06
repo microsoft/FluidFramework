@@ -46,7 +46,6 @@ import {
     IValueTypeOperationValue,
 } from "./defaultMapInterfaces";
 
-// Mock
 const reservedIntervalIdKey = "intervalId";
 
 export enum IntervalType {
