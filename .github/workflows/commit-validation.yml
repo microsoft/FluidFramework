@@ -1,0 +1,37 @@
+name: "Commit message validation"
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['./build-tools', './.github/workflows/']
+    types: [opened, synchronize, edited, ready_for_review]
+
+jobs:
+  placeholder-content:
+    name: Check that the PR template placeholder content is removed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: sitezen/pr-comment-checker@v1.0.0
+        with:
+          pr_description_should_not_contain: |
+            Feel free to remove or alter parts of this template that do not offer value for your specific change
+          wrong_pr_description_message: |
+            Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
+            content.
+
+  conventional-pr-title:
+    name: Check that the PR title matches commitlint settings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      # - uses: beemojs/conventional-pr-action@v2.1.2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+
+      - name: Install dependencies
+        run: cd build-tools && npm run install:root
+        working-directory: ./build-tools
+      - uses: JulienKode/pull-request-name-linter-action@v0.5.0
