@@ -60,7 +60,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/gitresources": "^0.1038.2000",
-    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
