@@ -105,9 +105,18 @@ steps:
             checkVersion=$(echo $checkVersion | sed 's/-/\/''/2')
           fi
 
+          echo "CheckVersion Value I :" $checkVersion
           checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
 
+          echo "CheckVersion Value II : " $checkVersion
+
           npm view $checkVersion
+
+          echo "-----------------------------------1"
+
+          npm view @fluidframework/tinylicious-client@0.0.0-96564-test
+
+          echo "-----------------------------------2"
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
