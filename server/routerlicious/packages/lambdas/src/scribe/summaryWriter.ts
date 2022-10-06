@@ -564,7 +564,7 @@ export class SummaryWriter implements ISummaryWriter {
         const missingOpsSN: number[] = [];
         missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
         if (missingOpsSN.length > 0) {
-            Lumberjack.info(`Fetched ops from last summary log tail: ${JSON.stringify(missingOpsSN)}`
+            Lumberjack.info(`Fetched ops from last summary logtail: ${JSON.stringify(missingOpsSN)}`
                 , this.lumberProperties);
         }
         return missingOps;
