@@ -96,47 +96,7 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          checkVersion=${f##*/}
-          echo "Extract File Name I: " $checkVersion
-
-          checkVersion=${checkVersion:0:-4}
-          checkVersion=$(echo ${checkVersion//"***"/fluid})
-
-          echo "Extract File Name II: " $checkVersion
-
-          if [[ $checkVersion == *"fluidframework"* ]]; then
-            echo "FluidFramework Appeared:" $checkVersion
-            checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
-          else
-            echo "FluidFramework Not Appeared:" $checkVersion
-            checkVersion=$(echo $checkVersion | sed 's/-/\/''/2')
-          fi
-
-          checkVersion=$(echo $checkVersion | sed -r "s/[*]{3}/fluid/g")
-          echo "Extract File Name III: " $checkVersion
-
-          checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
-
-          echo "Extract File Name IV:" $checkVersion
-
-          npm view @fluidframework/tinylicious-client@0.0.0-96564-test
-
-          echo "1----------------------------------"
-
-          npm view @fluidframework/tinylicious-client@1.0.0-96564-test 2>&1 | tee publishError_log
-          if grep -q "npm ERR! code E404" "publishError_log"
-          then
-            echo "Error Raised"
-          fi
-
-          echo "2----------------------------------"
-          npm view $checkVersion
-
-          echo "3----------------------------------"
-          checkVersion=${checkVersion:3}
-          npm view "@fluid"$checkVersion
-
-          echo "4----------------------------------"
+          echo "packageName :" $packageName
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
