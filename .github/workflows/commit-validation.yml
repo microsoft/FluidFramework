@@ -3,7 +3,7 @@ name: "Commit message validation"
 on:
   pull_request:
     branches: [main]
-    paths: ['./build-tools', './.github/workflows/']
+    paths: ['./build-tools/**', './.github/workflows/commit-validation.yml']
     types: [opened, synchronize, edited, ready_for_review]
 
 jobs:
