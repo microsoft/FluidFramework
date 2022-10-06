@@ -58,9 +58,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "InterfaceDeclaration_IDocumentDeltaConnection": {
-        "backCompat": false
-      },
       "TypeAliasDeclaration_DriverError": {
         "backCompat": false
       },
@@ -82,8 +79,17 @@
       "InterfaceDeclaration_IAuthorizationError": {
         "backCompat": false
       },
+      "InterfaceDeclaration_IDocumentDeltaConnection": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_ILocationRedirectionError": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageServicePolicies": {
+        "forwardCompat": false
       }
     }
   }

@@ -114,6 +114,24 @@
       "RemovedFunctionDeclaration_isClientMessage": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_UsageError": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_BlobAggregationStorage": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_BlobCacheStorageService": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_DocumentStorageServiceProxy": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_PrefetchDocumentStorageService": {
+        "forwardCompat": false
       }
     }
   }

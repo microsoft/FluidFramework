@@ -8,6 +8,7 @@ import {
     IGenericError,
     IErrorBase,
     IThrottlingWarning,
+    IUsageError,
 } from "@fluidframework/container-definitions";
 import {
     LoggingError,
@@ -73,9 +74,8 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 /** Error indicating an API is being used improperly resulting in an invalid operation. */
-export class UsageError extends LoggingError implements IFluidErrorBase {
-    // TODO: implement IUsageError once available
-    readonly errorType = "usageError";
+export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
+    readonly errorType = ContainerErrorType.usageError;
 
     constructor(
         message: string,
