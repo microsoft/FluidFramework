@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureLocalConnectionConfig } from "../interfaces";
+
 import { AzureClient } from "../AzureClient";
+import { AzureLocalConnectionConfig } from "../interfaces";
 
 function createAzureClient(): AzureClient {
     const connectionProps: AzureLocalConnectionConfig = {

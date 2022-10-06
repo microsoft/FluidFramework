@@ -1,27 +1,19 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "composite": true,
-        "noImplicitAny": false,
-        "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "strictBindCallApply": true,
-        "strictFunctionTypes": true,
-        "strictNullChecks": true,
-        "strictPropertyInitialization": true,
-        "target": "es2018",
-        "types": [
-            "node"
-        ],
-    },
-    "include": [
-        "src/**/*.ts"
-    ],
-    "exclude": [
-        "src/test/**/*",
-        "dist",
-        "node_modules",
-    ],
+  "extends": "@fluidframework/build-common/ts-common-config.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "target": "es2018",
+    "types": ["node"],
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/test/**/*", "dist", "node_modules"],
 }

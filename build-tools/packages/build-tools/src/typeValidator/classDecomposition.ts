@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ClassDeclaration, DiagnosticCategory, Node, Project, Scope, TypeChecker } from "ts-morph";
+
 import {
     getConstructorReplacements,
     getGetterReplacement,
@@ -11,7 +11,7 @@ import {
     getPropertyReplacement,
     getSetterReplacement,
 } from "./memberDecomposition";
-import { decomposeType, GenericsInfo, typeToString } from "./typeDecomposition";
+import { GenericsInfo, decomposeType, typeToString } from "./typeDecomposition";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 /**
@@ -68,7 +68,7 @@ export class ClassValidator implements IValidator {
 
         node.getTypeParameters().forEach((tp) => {
             typeParameters.push(typeToString(typeChecker, tp.getType()));
-        })
+        });
 
         // Convert extensions and implementations to properties for comparison because they
         // can't be replaced as string literal types
@@ -79,7 +79,10 @@ export class ClassValidator implements IValidator {
             requiredGenerics.merge(result.requiredGenerics);
             // replace characters that can't be used in a method name e.g. brackets from type params
             // any types affected are handled earlier in the decomposeType call
-            const typeName = typeToString(typeChecker, extendsExpr.getType()).replace(/[^\w]/g, "_");
+            const typeName = typeToString(typeChecker, extendsExpr.getType()).replace(
+                /[^\w]/g,
+                "_",
+            );
             replacedMembers.push(`__extends__${typeName}: ${result.typeAsString};`);
         }
         node.getImplements().forEach((ex) => {
@@ -149,7 +152,7 @@ export class ClassValidator implements IValidator {
         };
     }
 
-    public validate(project: Project, pkgDir: string) : BreakingIncrement {
+    public validate(project: Project, pkgDir: string): BreakingIncrement {
         // Check for major increment.  This may also tell us a minor increment is required
         // in some situations
         const typeIncrement = this.checkMajorIncrement(project, pkgDir);
@@ -172,12 +175,12 @@ export class ClassValidator implements IValidator {
         // Type decomposition will have converted the class into a form where this is
         // valid for finding major breaking changes
         const testFile = this.buildClassTestFileMajor(
-                `old${this.oldTypeData.name}`,
-                this.oldTypeData,
-                `new${this.newTypeData.name}`,
-                this.newTypeData,
-            );
-            log(testFile);
+            `old${this.oldTypeData.name}`,
+            this.oldTypeData,
+            `new${this.newTypeData.name}`,
+            this.newTypeData,
+        );
+        log(testFile);
 
         // Create a source file in the project and check for diagnostics
         const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;

@@ -11,10 +11,12 @@ import { Value } from "../../tree";
 export function setRootValueTo(value: Value): SequenceChangeset {
     return {
         marks: {
-            root: [{
-                type: "Modify",
-                value: { id: 0, value },
-            }],
+            root: [
+                {
+                    type: "Modify",
+                    value: { id: 0, value },
+                },
+            ],
         },
     };
 }
@@ -22,18 +24,20 @@ export function setRootValueTo(value: Value): SequenceChangeset {
 export function setChildValueTo(value: Value): SequenceChangeset {
     return {
         marks: {
-            root: [{
-                type: "Modify",
-                fields: {
-                    foo: [
-                        42,
-                        {
-                            type: "Modify",
-                            value: { id: 0, value },
-                        },
-                    ],
+            root: [
+                {
+                    type: "Modify",
+                    fields: {
+                        foo: [
+                            42,
+                            {
+                                type: "Modify",
+                                value: { id: 0, value },
+                            },
+                        ],
+                    },
                 },
-            }],
+            ],
         },
     };
 }
@@ -66,20 +70,27 @@ export const cases: {
         marks: {
             root: [
                 1,
-                { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
+                {
+                    type: "Insert",
+                    id: 1,
+                    content: [
+                        { type, value: 1 },
+                        { type, value: 2 },
+                    ],
+                },
             ],
         },
     },
     modify: {
         marks: {
-            root: [{
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-                    ],
+            root: [
+                {
+                    type: "Modify",
+                    fields: {
+                        foo: [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    },
                 },
-            }],
+            ],
         },
     },
     modify_insert: {
@@ -91,9 +102,7 @@ export const cases: {
                     id: 1,
                     content: { type, value: 1 },
                     fields: {
-                        foo: [
-                            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-                        ],
+                        foo: [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
                     },
                 },
             ],
@@ -101,18 +110,12 @@ export const cases: {
     },
     delete: {
         marks: {
-            root: [
-                1,
-                { type: "Delete", id: 1, count: 3 },
-            ],
+            root: [1, { type: "Delete", id: 1, count: 3 }],
         },
     },
     revive: {
         marks: {
-            root: [
-                2,
-                { type: "Revive", id: 1, count: 2, tomb },
-            ],
+            root: [2, { type: "Revive", id: 1, count: 2, tomb }],
         },
     },
 };

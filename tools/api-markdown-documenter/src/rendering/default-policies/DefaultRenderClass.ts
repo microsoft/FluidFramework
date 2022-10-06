@@ -23,40 +23,11 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
  *
  * @remarks Format:
  *
- * - Tables
+ * - Tables: constructors, (static) event properties, (static) properties, (static) methods,
+ * (non-static) event properties, (non-static) properties, (non-static) methods, call-signatures, index-signatures
  *
- *   - constructors
- *
- *   - (static) event properties
- *
- *   - (static) properties
- *
- *   - (static) methods
- *
- *   - (non-static) event properties
- *
- *   - (non-static) properties
- *
- *   - (non-static) methods
- *
- *   - call-signatures
- *
- *   - index-signatures
- *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
- *
- *   - constructors
- *
- *   - event properties
- *
- *   - properties
- *
- *   - methods
- *
- *   - call-signatures
- *
- *   - index-signatures
+ * - Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries}):
+ * constructors, event properties, properties, methods, call-signatures, index-signatures
  */
 export function renderClassSection(
     apiClass: ApiClass,
@@ -65,7 +36,7 @@ export function renderClassSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiClass.members.length !== 0;
+    const hasAnyChildren = apiClass.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

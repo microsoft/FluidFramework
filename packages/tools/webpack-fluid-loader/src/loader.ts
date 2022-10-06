@@ -35,7 +35,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { getUrlResolver } from "./getUrlResolver";
-import { deltaConns, getDocumentServiceFactory } from "./getDocumentServiceFactory";
+import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -171,7 +171,7 @@ async function createWebLoader(
         odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
     }
     let documentServiceFactory: IDocumentServiceFactory =
-        getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);
+        getDocumentServiceFactory(options, odspPersistantCache, odspHostStoragePolicy);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
@@ -183,12 +183,8 @@ async function createWebLoader(
             false, // clientIsSummarizer
         );
 
-        const localDeltaConnectionServer = deltaConns.get(documentId);
-        assert(
-            localDeltaConnectionServer !== undefined,
-            0x319 /* No delta connection server associated with specified document ID */);
         documentServiceFactory = new LocalDocumentServiceFactory(
-            localDeltaConnectionServer,
+            deltaConnectionServer,
             undefined,
             innerDocumentService);
     }

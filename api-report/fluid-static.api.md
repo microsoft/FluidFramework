@@ -74,8 +74,16 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
 // @public
 export interface IFluidContainerEvents extends IEvent {
-    // (undocumented)
-    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
+    // @eventProperty
+    (event: "connected", listener: () => void): void;
+    // @eventProperty
+    (event: "dispose", listener: () => void): void;
+    // @eventProperty
+    (event: "disconnected", listener: () => void): void;
+    // @eventProperty
+    (event: "saved", listener: () => void): void;
+    // @eventProperty
+    (event: "dirty", listener: () => void): void;
 }
 
 // @public
@@ -92,10 +100,12 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
 
 // @public
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: "membersChanged", listener: () => void): void;
-    // (undocumented)
-    (event: "memberAdded" | "memberRemoved", listener: (clientId: string, member: M) => void): void;
+    // @eventProperty
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+    // @eventProperty
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
 // @public
@@ -109,6 +119,9 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 
 // @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
+
+// @public
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
 export class RootDataObject extends DataObject<{

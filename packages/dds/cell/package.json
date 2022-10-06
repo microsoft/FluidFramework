@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/cell",
-  "version": "2.0.0-internal.1.2.0",
+  "version": "2.0.0-internal.1.3.0",
   "description": "Distributed data structure for a single value",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,21 +61,21 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
-    "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.4.4000",
+    "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/cell-previous": "npm:@fluidframework/cell@^1.1.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

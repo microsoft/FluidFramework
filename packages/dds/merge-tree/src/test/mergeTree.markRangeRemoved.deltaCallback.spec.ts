@@ -10,7 +10,7 @@ import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
-import { countOperations } from "./testUtils";
+import { countOperations, insertSegments, markRangeRemoved } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -18,13 +18,15 @@ describe("MergeTree", () => {
     let currentSequenceNumber: number;
     beforeEach(() => {
         mergeTree = new MergeTree();
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make("hello world!")],
-            UniversalSequenceNumber,
-            LocalClientId,
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("hello world!")],
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         currentSequenceNumber = 0;
         mergeTree.startCollaboration(
             localClientId,
@@ -36,14 +38,16 @@ describe("MergeTree", () => {
         it("Event on Removal", () => {
             const count = countOperations(mergeTree);
 
-            mergeTree.markRangeRemoved(
-                4,
-                6,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 6,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -58,14 +62,16 @@ describe("MergeTree", () => {
             const start = 4;
             const end = 6;
 
-            mergeTree.markRangeRemoved(
+            markRangeRemoved({
+                mergeTree,
                 start,
                 end,
-                /* refSeq: */ currentSequenceNumber,
-                /* clientId: */ localClientId,
-                /* seq: */ UnassignedSequenceNumber,
-                /* overwrite: */ false,
-                /* opArgs */ undefined as any);
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             // In order for the removed segment to unlinked by zamboni, we need to ACK the segment
             // and advance the collaboration window's minSeq past the removedSeq.
@@ -97,25 +103,29 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                4,
-                6,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 6,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 
-            mergeTree.markRangeRemoved(
-                3,
-                5,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 3,
+                end: 5,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -127,25 +137,29 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                4,
-                6,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 6,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 
-            mergeTree.markRangeRemoved(
-                3,
-                5,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 3,
+                end: 5,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -157,25 +171,29 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                3,
-                6,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 3,
+                end: 6,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 
-            mergeTree.markRangeRemoved(
-                4,
-                5,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 5,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             assert.deepStrictEqual(count, {
                 /* MergeTreeDeltaType.REMOVE is absent as it should not be fired. */
