@@ -97,7 +97,7 @@ steps:
         fi
         if [[ $f != "" ]]; then
           checkVersion=${f##/*}
-          checkVersion=${checkVersion:0:-4}
+          checkVersion=${checkVersion:2:-4}
 
           echo "CheckVersion 0 :" $checkVersion
 
