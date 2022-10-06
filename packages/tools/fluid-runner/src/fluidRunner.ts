@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
 import * as yargs from "yargs";
-import { exportFile, IExportFileResponse } from "./exportFile";
+import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
+// eslint-disable-next-line import/no-internal-modules
+import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
+import { validateCommandLineArgs } from "./utils";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
@@ -23,7 +27,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
             (yargs) =>
                 yargs
                     .option("codeLoader", {
-                        // eslint-disable-next-line max-len
                         describe: "Path to code loader bundle. Required if this application is being called without modification.\nSee \"README.md\" for more details.",
                         type: "string",
                         demandOption: false,
@@ -47,33 +50,47 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         describe: "Additional options passed to container on execution",
                         type: "string",
                         demandOption: false,
+                    })
+                    .option("telemetryFormat", {
+                        describe: "Output format for telemetry. Current options are: [\"JSON\", \"CSV\"]",
+                        type: "string",
+                        demandOption: false,
+                        default: "JSON",
+                    })
+                    .option("telemetryProp", {
+                        describe: "Property to add to every telemetry entry. Formatted like \"--telemetryProp prop1 value1 --telemetryProp prop2 \\\"value 2\\\"\".",
+                        type: "array",
+                        demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
-                const argsError = validateProvidedArgs(argv.codeLoader, fluidFileConverter);
+                const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
                 if (argsError) {
                     console.error(argsError);
                     process.exit(1);
                 }
+                const telemetryOptionsResult = validateAndParseTelemetryOptions(argv.telemetryFormat, argv.telemetryProp);
+                if (!telemetryOptionsResult.success) {
+                    console.error(telemetryOptionsResult.error);
+                    process.exit(1);
+                }
 
-                let result: IExportFileResponse;
-                if (argv.codeLoader) {
-                    result = await parseBundleAndExportFile(
+                const result = await (argv.codeLoader
+                    ? parseBundleAndExportFile(
                         argv.codeLoader,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
-                    );
-                } else {
-                    result = await exportFile(
+                        telemetryOptionsResult.telemetryOptions,
+                    ) : exportFile(
                         fluidFileConverter!,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
-                    );
-                }
+                        telemetryOptionsResult.telemetryOptions,
+                    ));
 
                 if (!result.success) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
@@ -85,18 +102,5 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
         .demandCommand().argv;
 }
 
-function validateProvidedArgs(
-    codeLoader?: string,
-    fluidFileConverter?: IFluidFileConverter,
-): string | undefined {
-    if (codeLoader !== undefined && fluidFileConverter !== undefined) {
-        return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See \"fluidRunner.ts\" for details.";
-    }
-    if (codeLoader === undefined && fluidFileConverter === undefined) {
-        // eslint-disable-next-line max-len
-        return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See \"fluidRunner.ts\" for details.";
-    }
-    return undefined;
-}
-
 fluidRunner();
+/* eslint-enable max-len */

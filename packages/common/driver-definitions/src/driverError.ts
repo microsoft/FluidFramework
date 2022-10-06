@@ -83,6 +83,26 @@ export enum DriverErrorType {
      * location, then this error is thrown to let the client know about the new location info.
      */
     locationRedirection = "locationRedirection",
+
+    /**
+     * When a file is not a Fluid file, but has Fluid extension such as ".note",
+     * server won't be able to open it and will return this error. The innerMostErrorCode will be
+     * "fluidInvalidSchema"
+     */
+    fluidInvalidSchema = "fluidInvalidSchema",
+}
+
+/**
+ * Interface describing errors and warnings raised by any driver code.
+ * Not expected to be implemented by a class or an object literal, but rather used in place of
+ * any or unknown in various function signatures that pass errors around.
+ *
+ * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
+ * It will be either DriverErrorType or the specific driver's specialized error type enum,
+ * but we can't reference a specific driver's error type enum in this code.
+ */
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    readonly errorType: string;
 }
 
 /**
@@ -136,7 +156,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
-    | DriverErrorType.fileOverwrittenInStorage;
+    | DriverErrorType.fileOverwrittenInStorage
+    | DriverErrorType.fluidInvalidSchema;
     readonly statusCode?: number;
 }
 

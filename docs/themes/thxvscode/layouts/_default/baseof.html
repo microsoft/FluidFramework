@@ -10,16 +10,16 @@
 
     <div id="main">
         {{- partial "header.html" . -}}
-        <div {{ if .IsHome}}class="home" {{ end}}>
+        <div {{ if .IsHome}}class="home main-wrapper" {{ else }} class="main-wrapper" {{ end}}>
             {{- block "main" . }}{{- end }}
         </div>
     </div>
     {{- partial "footer.html" . -}}
 </body>
 
-{{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" .  | minify |fingerprint -}}
-<script src="{{ $script.Permalink | relURL }}"
-    {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr -}}>
+{{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" . | minify |fingerprint -}}
+<script src="{{ $script.Permalink | relURL }}" {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr -}}>
 </script>
 {{- partial "cookies.html" . -}}
+
 </html>

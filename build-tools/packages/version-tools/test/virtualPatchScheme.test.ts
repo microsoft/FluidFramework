@@ -4,13 +4,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
+
 import { isVersionBumpType } from "../src/bumpTypes";
 import {
+    bumpVirtualPatchVersion,
     fromVirtualPatchScheme,
     toVirtualPatchScheme,
-    bumpVirtualPatchVersion,
 } from "../src/virtualPatchScheme";
 
 describe("virtualPatch scheme", () => {

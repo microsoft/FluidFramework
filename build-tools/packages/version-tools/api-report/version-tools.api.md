@@ -13,6 +13,9 @@ export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prer
 // @public
 export function bumpVersionScheme(version: string | semver.SemVer | undefined, bumpType: VersionBumpTypeExtended, scheme?: VersionScheme): semver.SemVer;
 
+// @public (undocumented)
+export function changePreReleaseIdentifier(version: semver.SemVer | string, newIdentifier: string): string;
+
 // @public
 export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
 
@@ -45,6 +48,9 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 
 // @public
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
+
+// @public
+export type ReleaseVersion = string;
 
 // @public (undocumented)
 export function sortVersions(versionList: string[], allowPrereleases?: boolean): string[];

@@ -13,7 +13,7 @@ import { ITokenClaims } from "./tokens";
  */
 export interface IConnect {
     /**
-     *  The tenant ID for the document
+     * The tenant ID for the document.
      */
     tenantId: string;
 
@@ -40,6 +40,12 @@ export interface IConnect {
     versions: string[];
 
     /**
+     * Version of the driver which is connecting. It can be used at server to record in telemetry or
+     * to block/allow specific driver version for specific features.
+     */
+    driverVersion?: string;
+
+    /**
      * Connection mode of client.
      */
     mode: ConnectionMode;
@@ -60,6 +66,8 @@ export interface IConnect {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**
@@ -153,6 +161,8 @@ export interface IConnected {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**

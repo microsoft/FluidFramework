@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import os from "os";
-import { Project, SourceFile } from "ts-morph"
-import { createSpecificValidator } from "./../../typeValidator/packageValidator";
+import { Project, SourceFile } from "ts-morph";
+
 import { TypeData } from "../../typeValidator/typeData";
-import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils"
+import { createSpecificValidator } from "./../../typeValidator/packageValidator";
+import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils";
 
 describe("Enum validator", () => {
     enableLogging(true);
@@ -30,13 +30,14 @@ describe("Enum validator", () => {
         return typeData!;
     }
 
-    function checkIncrement(
-        oldSource: string,
-        newSource: string,
-    ): BreakingIncrement {
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, oldSource, { overwrite: true });
+    function checkIncrement(oldSource: string, newSource: string): BreakingIncrement {
+        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, oldSource, {
+            overwrite: true,
+        });
         const oldTypeData = getTypeDataForSource(oldSourceFile);
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, newSource, { overwrite: true });
+        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, newSource, {
+            overwrite: true,
+        });
         const newTypeData = getTypeDataForSource(newSourceFile);
 
         const validator = createSpecificValidator(
@@ -51,15 +52,13 @@ describe("Enum validator", () => {
 
     // Adding a new enum member at the end (existing members are unchanged) is an incremental change
     it("added a new enum member at end", () => {
-        const sourceOld =
-        `
+        const sourceOld = `
         export enum Enumclaw {
             Enumclaw = "thunder",
         }
         `;
 
-        const sourceNew =
-        `
+        const sourceNew = `
         export enum Enumclaw {
             Enumclaw = "thunder",
             Kapoonis = "lightning",
@@ -68,21 +67,18 @@ describe("Enum validator", () => {
 
         const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.minor);
-
     }).timeout(10000);
 
     // Reordering a numeric enum changes the members values and is breaking
     // TODO: Should this and the next test be exempted? The scenario is very narrow
     it("reordered a numeric enum", () => {
-        const sourceOld =
-        `
+        const sourceOld = `
         export enum Enumclaw {
             E, Num, Claw,
         }
         `;
 
-        const sourceNew =
-        `
+        const sourceNew = `
         export enum Enumclaw {
             E, Claw, Num,
         }
@@ -90,13 +86,11 @@ describe("Enum validator", () => {
 
         const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
-
     }).timeout(10000);
 
     // Changing the types of enum members is breaking
     it("changed the enum member types", () => {
-        const sourceOld =
-        `
+        const sourceOld = `
         export enum Enumclaw {
             E = 69,
             Num = 78,
@@ -104,8 +98,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        const sourceNew =
-        `
+        const sourceNew = `
         export enum Enumclaw {
             E = "E",
             Num = "N",
@@ -115,22 +108,19 @@ describe("Enum validator", () => {
 
         const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
-
     }).timeout(10000);
 
     // Changing member values of a computed enum is not breaking (unlike a constant enum)
     // because computed members cannot be used as types (ts2535).  Adding/removing members
     // or changing members' types functions the same
     it("changed the member values of a computed enum", () => {
-        const sourceOld =
-        `
+        const sourceOld = `
         export enum Enumclaw {
             Meaning = "place of evil spirits".length,
         }
         `;
 
-        const sourceNew =
-        `
+        const sourceNew = `
         export enum Enumclaw {
             Meaning = "thundering noise".length,
         }
@@ -138,21 +128,18 @@ describe("Enum validator", () => {
 
         const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.none);
-
     }).timeout(10000);
 
     // Changing values of string enum members is breaking
     // TODO: Very narrow scenario, should it be exempted?
     it("changed the value of a string enum member", () => {
-        const sourceOld =
-        `
+        const sourceOld = `
         export enum Enumclaw {
             Meaning = "place of evil spirits",
         }
         `;
 
-        const sourceNew =
-        `
+        const sourceNew = `
         export enum Enumclaw {
             Meaning = "thundering noise",
         }
@@ -160,7 +147,5 @@ describe("Enum validator", () => {
 
         const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
-
     }).timeout(10000);
-
 });

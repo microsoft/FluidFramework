@@ -19,22 +19,22 @@ export interface Checkout<TEditor, TChange> {
 /**
  * Keeps a forest in sync with a ProgressiveEditBuilder.
  */
-class Transaction<
-    TEditor extends ProgressiveEditBuilder<TChange>,
-    TChange,
-> {
+class Transaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange> {
     public readonly editor: TEditor;
-    constructor(private readonly forest: IEditableForest, changeFamily: ChangeFamily<TEditor, TChange>) {
-        this.editor = changeFamily.buildEditor((delta) => this.forest.applyDelta(delta), forest.anchors);
+    constructor(
+        private readonly forest: IEditableForest,
+        changeFamily: ChangeFamily<TEditor, TChange>,
+    ) {
+        this.editor = changeFamily.buildEditor(
+            (delta) => this.forest.applyDelta(delta),
+            forest.anchors,
+        );
     }
 }
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
     checkout: Checkout<TEditor, TChange>,
-    command: (
-        forest: IForestSubscription,
-        editor: TEditor
-    ) => TransactionResult,
+    command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);

@@ -110,6 +110,7 @@ describe("Container Runtime", () => {
             scheduleManager = new ScheduleManager(
                 deltaManager,
                 emitter,
+                () => "test-client", // clientId,
                 DebugLogger.create("fluid:testScheduleManager"),
             );
 

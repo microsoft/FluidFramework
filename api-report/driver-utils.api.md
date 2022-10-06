@@ -187,6 +187,15 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
+export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    constructor(message: string, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+}
+
+// @public
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -207,7 +216,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @public
+// @public @deprecated
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
@@ -231,9 +240,6 @@ export interface IProgress {
 }
 
 // @public (undocumented)
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
-
-// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
@@ -249,7 +255,7 @@ export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)

@@ -2,18 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
-import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
+import {
+    FlagInput,
+    OutputFlags,
+    ParserOutput,
+    PrettyPrintableError,
+} from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
+
+import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+
 import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
-// This is needed to get type safety working in derived classes.
-// https://github.com/oclif/oclif.github.io/pull/142
+/**
+ * @remarks This is needed to get type safety working in derived classes.
+ * See {@link https://github.com/oclif/oclif.github.io/pull/142}.
+ */
 export type InferredFlagsType<T> = T extends FlagInput<infer F>
     ? F & { json: boolean | undefined }
     : any;
@@ -41,19 +48,25 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
     protected parsedOutput?: ParserOutput<any, any>;
 
-    /** The processed arguments that were passed to the CLI. */
+    /**
+     * The processed arguments that were passed to the CLI.
+     */
     get processedArgs(): { [name: string]: any } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.args ?? {};
     }
 
-    /** The processed flags that were passed to the CLI. */
+    /**
+     * The processed flags that were passed to the CLI.
+     */
     get processedFlags(): InferredFlagsType<T> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.flags ?? {};
     }
 
-    /** The flags defined on the base class. */
+    /**
+     * The flags defined on the base class.
+     */
     private get baseFlags() {
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
@@ -78,20 +91,16 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
-     * system */
+     * system
+     */
     protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
-                info: (msg: string | Error) => {
-                    this.log(msg.toString());
-                },
-                warning: this.warn.bind(this),
-                errorLog: (msg: string | Error) => {
-                    this.errorLog(msg);
-                },
-                verbose: (msg: string | Error) => {
-                    this.verbose(msg);
-                },
+                log: this.log.bind(this),
+                info: this.info.bind(this),
+                warning: this.warning.bind(this),
+                errorLog: this.errorLog.bind(this),
+                verbose: this.verbose.bind(this),
                 logHr: this.logHr.bind(this),
                 logIndent: this.logIndent.bind(this),
             };
@@ -126,39 +135,113 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         return this._context;
     }
 
-    /** Output a horizontal rule. */
+    /**
+     * Outputs a horizontal rule.
+     */
     public logHr() {
         this.log("=".repeat(72));
     }
 
-    /** Log a message with an indent. */
+    /**
+     * Logs a message with an indent.
+     */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
-        this.info(message);
+        this.log(message);
     }
 
-    public info(message: string | Error) {
+    /**
+     * Logs an informational message.
+     */
+    public info(message: string | Error | undefined) {
         this.log(`INFO: ${message}`);
     }
 
-    /** Logs an error without exiting. */
-    public errorLog(message: string | Error) {
+    /**
+     * Logs an error without exiting.
+     */
+    public errorLog(message: string | Error | undefined) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
-    /** Logs a warning. */
-    public warning(message: string | Error): string | Error {
-        super.warn(chalk.yellow(`WARNING: ${message}`));
-        return message;
+    /**
+     * Logs a warning.
+     */
+    public warning(message: string | Error | undefined): void {
+        this.log(chalk.yellow(`WARNING: ${message}`));
     }
 
-    /** @deprecated Use {@link BaseCommand.warning} instead. */
+    /**
+     * Logs a warning with a stack trace in debug mode.
+     */
+    public warningWithDebugTrace(message: string | Error): string | Error {
+        return super.warn(message);
+    }
+
+    /**
+     * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
+     */
     public warn(input: string | Error): string | Error {
         return super.warn(input);
     }
 
-    /** Logs a verbose log statement. */
-    public verbose(message: string | Error): string | Error {
+    /**
+     * Logs an error and exits the process. If you don't want to exit the process use {@link BaseCommand.errorLog}
+     * instead.
+     *
+     * @param input - an Error or a error message string,
+     * @param options - options for the error handler.
+     *
+     * @remarks
+     *
+     * This method overrides the oclif Command error method so we can do some formatting on the strings.
+     */
+    public error(
+        input: string | Error,
+        options: { code?: string | undefined; exit: false } & PrettyPrintableError,
+    ): void;
+
+    /**
+     * Logs an error and exits the process. If you don't want to exit the process use {@link BaseCommand.errorLog}
+     * instead.
+     *
+     * @param input - an Error or a error message string,
+     * @param options - options for the error handler.
+     *
+     * @remarks
+     *
+     * This method overrides the oclif Command error method so we can do some formatting on the strings.
+     */
+    public error(
+        input: string | Error,
+        options?:
+            | ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
+            | undefined,
+    ): never;
+
+    /**
+     * Logs an error and exits the process. If you don't want to exit the process use {@link BaseCommand.errorLog}
+     * instead.
+     *
+     * @param input - an Error or a error message string,
+     * @param options - options for the error handler.
+     *
+     * @remarks
+     *
+     * This method overrides the oclif Command error method so we can do some formatting on the strings.
+     */
+    public error(input: unknown, options?: unknown): void {
+        if (typeof input === "string") {
+            return super.error(chalk.red(input), options as any);
+        }
+
+        return super.error(input as Error, options as any);
+    }
+
+    /**
+     * Logs a verbose log statement.
+     */
+    public verbose(message: string | Error | undefined): void {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
@@ -166,7 +249,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
                 this.log(chalk.red(`VERBOSE: ${message}`));
             }
         }
-
-        return message;
     }
 }

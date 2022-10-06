@@ -390,7 +390,7 @@ export interface IHierBlock extends IMergeBlock {
 
 // Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal @deprecated (undocumented)
+// @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
     end: number;
@@ -999,6 +999,7 @@ export class MergeTree {
     clone(): void;
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
+    computeLocalPartials(refSeq: number): void;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos?: boolean): {
@@ -1018,6 +1019,7 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number): number;
+    // (undocumented)
     _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
     // @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
