@@ -241,7 +241,12 @@ jobs:
             script: |
               testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
               pkgJsonPath=${{ parameters.testWorkspace }}/package.json
-              node -e "const { devDependencies }=require('$testPkgJsonPath'); const pkg=require('$pkgJsonPath'); pkg.devDependencies=devDependencies; require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));"
+              node -e "
+                const { devDependencies } = require('$testPkgJsonPath');
+                const pkg = require('$pkgJsonPath');
+                pkg.devDependencies=devDependencies;
+                require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
+              "
 
         - task: Npm@1
           displayName: 'npm install - extra dependencies for test files'
