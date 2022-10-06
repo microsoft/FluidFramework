@@ -48,7 +48,6 @@ declare function get_old_ClassDeclaration_BlobAggregationStorage():
 declare function use_current_ClassDeclaration_BlobAggregationStorage(
     use: TypeOnly<current.BlobAggregationStorage>);
 use_current_ClassDeclaration_BlobAggregationStorage(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BlobAggregationStorage());
 
 /*

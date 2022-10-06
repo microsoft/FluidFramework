@@ -57,10 +57,6 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {
-      "InterfaceDeclaration_ISnapshotWriterStorage": {
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }

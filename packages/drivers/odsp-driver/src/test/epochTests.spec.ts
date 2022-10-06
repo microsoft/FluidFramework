@@ -48,14 +48,6 @@ describe("Tests for Epoch Tracker", () => {
         await epochTracker.removeEntries().catch(() => {});
     });
 
-    it("defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs policy", () => {
-        // This is the maximum allowed value per the policy - 5 days
-        const maximumCacheDurationMs: Exclude<IDocumentStorageServicePolicies["maximumCacheDurationMs"], undefined> =
-            432000000;
-
-        assert(defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs, "Actual cache expiry used must meet the policy");
-    });
-
     it("Cache, old versions", async () => {
         const cacheEntry1: ICacheEntry = {
             key: "key1",
