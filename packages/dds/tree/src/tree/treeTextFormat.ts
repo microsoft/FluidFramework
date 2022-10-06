@@ -4,7 +4,12 @@
  */
 
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
-import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
+import {
+    GlobalFieldKeySymbol,
+    keyFromSymbol,
+    symbolFromKey,
+    symbolIsFieldKey,
+} from "./globalFieldKeySymbol";
 import { FieldKey, NodeData } from "./types";
 
 /**
@@ -86,7 +91,7 @@ export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | Global
  * Derives the scope using the type of `key`.
  */
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol {
-    return typeof key === "symbol";
+    return typeof key === "symbol" && symbolIsFieldKey(key);
 }
 
 /**

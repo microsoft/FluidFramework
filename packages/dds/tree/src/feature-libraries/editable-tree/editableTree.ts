@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, FieldKey, symbolFromKey, keyFromSymbol } from "../../tree";
+import { Value, Anchor, FieldKey, symbolIsFieldKey } from "../../tree";
 import {
     IEditableForest,
     TreeNavigationResult,
@@ -293,14 +293,10 @@ export class ProxyTarget {
  */
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     get: (target: ProxyTarget, key: string | symbol): unknown => {
-        if (typeof key === "string") {
+        if (typeof key === "string" || symbolIsFieldKey(key)) {
             // All string keys are fields
             return target.proxifyField(brand(key));
         }
-        try {
-            const globalFieldKey = symbolFromKey(keyFromSymbol(brand(key)));
-            return target.proxifyField(globalFieldKey);
-        } catch (e) {}
         switch (key) {
             case getTypeSymbol: {
                 return target.getType.bind(target);
