@@ -14,11 +14,11 @@ import {
     ModularChangeFamily,
     FieldKinds,
     FieldEditor,
-    UpPathWithFieldKinds,
     NodeChangeset,
+    genericFieldKind,
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import { AnchorSet, Delta, FieldKey } from "../../../tree";
+import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
@@ -278,10 +278,9 @@ describe("ModularChangeFamily", () => {
 
     it("build child change", () => {
         const editor = family.buildEditor((delta) => {}, new AnchorSet());
-        const path: UpPathWithFieldKinds = {
+        const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
-            parentFieldKind: singleNodeField.identifier,
             parentIndex: 0,
         };
 
@@ -293,8 +292,9 @@ describe("ModularChangeFamily", () => {
             ]),
         };
 
+        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
         const expectedChange: FieldChangeMap = new Map([
-            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeChange) }],
+            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
         ]);
 
         assert.deepEqual(changes, [expectedChange]);
@@ -302,17 +302,16 @@ describe("ModularChangeFamily", () => {
 
     it("build value change", () => {
         const editor = family.buildEditor((delta) => {}, new AnchorSet());
-        const path: UpPathWithFieldKinds = {
+        const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
-            parentFieldKind: singleNodeField.identifier,
             parentIndex: 0,
         };
 
         const value = "Test Value";
         const nodeChange: NodeChangeset = { valueChange: { value } };
         const expectedChange: FieldChangeMap = new Map([
-            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeChange) }],
+            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(nodeChange) }],
         ]);
 
         editor.setValue(path, value);
