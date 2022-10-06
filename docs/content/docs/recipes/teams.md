@@ -18,6 +18,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 {{< /callout >}}
 
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
+
 ## Create the project
 
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `/My Microsoft Teams Projects`.
@@ -267,12 +273,6 @@ Now follow the [instructions to upload the application to a Teams Tab](https://d
 {{< callout warning >}}
 
 Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureclient-with-azure-fluid-relay)
-
-{{< /callout >}}
-
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
 
 {{< /callout >}}
 

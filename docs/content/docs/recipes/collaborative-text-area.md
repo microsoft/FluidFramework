@@ -22,6 +22,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 {{< /callout >}}
 
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
+
 ## Create the project
 
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `C:\My Fluid Projects`.
@@ -327,12 +333,6 @@ npm run start
 ```
 
 Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Edit the text on any client and see the text change and synchronize on all the clients.
-
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
 
 ## Next steps
 
