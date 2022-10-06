@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
+- [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
 
 ### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -40,6 +41,10 @@ The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are depr
 ### IFluidContainerEvents event naming correction
 Renamed **dispose** to **disposed** to better communicate the state and align with currently emitted event.
 It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
+
+### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined
+Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
+So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
 
 ## 3.0.0 Breaking changes
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)

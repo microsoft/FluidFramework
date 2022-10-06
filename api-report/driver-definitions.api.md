@@ -69,6 +69,9 @@ export enum FetchSource {
     noCache = "noCache"
 }
 
+// @public (undocumented)
+export type FiveDaysMs = 432000000;
+
 // @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
@@ -181,7 +184,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 
