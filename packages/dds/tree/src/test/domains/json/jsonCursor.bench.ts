@@ -131,13 +131,13 @@ function extractCoordinatesFromCanada(
     cursor: ITreeCursorNew,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(Canada.SharedTreeFields.FeatureKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.features);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
     cursor.enterNode(0);
-    cursor.enterField(Canada.SharedTreeFields.GeometryKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.geometry);
     cursor.enterNode(0);
-    cursor.enterField(Canada.SharedTreeFields.CoordinatesKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.coordinates);
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
@@ -178,18 +178,18 @@ function extractAvgValsFromTwitter(
     cursor: ITreeCursorNew,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(Twitter.SharedTreeFields.statusesKey); // move from root to field
+    cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(Twitter.SharedTreeFields.retweetCountKey);
+        cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
         cursor.enterNode(0);
         const retweetCount = cursor.value as number;
         cursor.exitNode();
         cursor.exitField();
 
-        cursor.enterField(Twitter.SharedTreeFields.favoriteCountKey);
+        cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
         cursor.enterNode(0);
         const favoriteCount = cursor.value;
         cursor.exitNode();
@@ -204,17 +204,17 @@ function extractAvgValsFromTwitter(
 }
 
 function extractAvgValsFromCitm(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(CitmCatalog.SharedTreeFields.performancesKey);
+    cursor.enterField(CitmCatalog.SharedTreeFieldKey.performances);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
 
     // iterate over each performance
     for (let performanceIterator = cursor.firstNode(); performanceIterator; performanceIterator = cursor.nextNode()) {
-        cursor.enterField(CitmCatalog.SharedTreeFields.seatCategories);
+        cursor.enterField(CitmCatalog.SharedTreeFieldKey.seatCategories);
         const numSeatCategories = cursor.getFieldLength();
         cursor.exitField();
 
-        cursor.enterField(CitmCatalog.SharedTreeFields.startKey);
+        cursor.enterField(CitmCatalog.SharedTreeFieldKey.start);
         cursor.enterNode(0);
         const startTimeEpoch = cursor.value as number;
         cursor.exitNode();

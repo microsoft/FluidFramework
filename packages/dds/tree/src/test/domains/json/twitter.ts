@@ -23,10 +23,10 @@ import {
 */
     // Shared tree keys that map to the type used by the Twitter type/dataset
 export namespace Twitter {
-    export namespace SharedTreeFields {
-        export const statusesKey: FieldKey = brand("statuses");
-        export const retweetCountKey: FieldKey = brand("retweet_count");
-        export const favoriteCountKey: FieldKey = brand("favorite_count");
+    export namespace SharedTreeFieldKey {
+        export const statuses: FieldKey = brand("statuses");
+        export const retweetCount: FieldKey = brand("retweet_count");
+        export const favoriteCount: FieldKey = brand("favorite_count");
     }
 }
 

@@ -147,10 +147,10 @@ function extractCoordinatesFromCanada(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.down(Canada.SharedTreeFields.FeatureKey, 0);
+    cursor.down(Canada.SharedTreeFieldKey.features, 0);
     cursor.down(EmptyKey, 0);
-    cursor.down(Canada.SharedTreeFields.GeometryKey, 0);
-    cursor.down(Canada.SharedTreeFields.CoordinatesKey, 0);
+    cursor.down(Canada.SharedTreeFieldKey.geometry, 0);
+    cursor.down(Canada.SharedTreeFieldKey.coordinates, 0);
 
     let result = cursor.down(EmptyKey, 0);
     assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
@@ -187,15 +187,15 @@ function extractAvgValsFromTwitter(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.down(Twitter.SharedTreeFields.statusesKey, 0);
+    cursor.down(Twitter.SharedTreeFieldKey.statuses, 0);
 
     let result = cursor.down(EmptyKey, 0);
     while (result === TreeNavigationResult.Ok) {
-        cursor.down(Twitter.SharedTreeFields.retweetCountKey, 0);
+        cursor.down(Twitter.SharedTreeFieldKey.retweetCount, 0);
         const retweetCount = cursor.value as number;
         cursor.up();
 
-        cursor.down(Twitter.SharedTreeFields.favoriteCountKey, 0);
+        cursor.down(Twitter.SharedTreeFieldKey.favoriteCount, 0);
         const favoriteCount = cursor.value as number;
         cursor.up();
         calculate(retweetCount, favoriteCount);
@@ -210,16 +210,16 @@ function extractAvgValsFromTwitter(
 }
 
 function extractAvgValsFromCitm(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(CitmCatalog.SharedTreeFields.performancesKey, 0);
+    cursor.down(CitmCatalog.SharedTreeFieldKey.performances, 0);
 
     // iterate over each performance
     let result = cursor.down(EmptyKey, 0);
     while (result === TreeNavigationResult.Ok) {
-        cursor.down(CitmCatalog.SharedTreeFields.seatCategories, 0);
+        cursor.down(CitmCatalog.SharedTreeFieldKey.seatCategories, 0);
         const numSeatCategories = cursor.length(EmptyKey);
         cursor.up();
 
-        cursor.down(CitmCatalog.SharedTreeFields.startKey, 0);
+        cursor.down(CitmCatalog.SharedTreeFieldKey.start, 0);
         const startTimeEpoch = cursor.value as number;
         cursor.up();
 
