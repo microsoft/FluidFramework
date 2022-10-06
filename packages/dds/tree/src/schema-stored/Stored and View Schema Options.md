@@ -67,6 +67,12 @@ Requirements for this initial version should include:
 
 -   Provide at least one way to customize the stored schema (schema-on-write), which can at least do type based constraints.
 -   Have at least one good design pattern that apps can use to handle schema migrations for each method they use to enforce/specify schema (make sure this supports a roll out process where clients have mixed code versions and old documents will be supportable forever).
+-   Provide a way to define the following on stored schemas:
+    - Annotations - arbitrary string 
+    - Length constraints for arrays and strings
+    - Constants 
+    - Values for enums types
+    - Default values
 
 # Expected Usage Patterns
 
