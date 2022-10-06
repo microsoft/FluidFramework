@@ -50,7 +50,7 @@ stages:
           displayName: 'Check if files affecting ${{ package.name }} tests were modified'
           name: Check${{ replace(package.testFileTarName, '-', '' ) }}
           env:
-            AFFECTED_PATHS: ${{ join(package.affectedPaths, ';') }}
+            AFFECTED_PATHS: ${{ join(';', package.affectedPaths) }}
 
   - ${{ each package in parameters.packages }}:
     - stage:
