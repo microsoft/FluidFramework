@@ -25,6 +25,7 @@ export interface IDetachedModel<ModelType> {
 export interface IModelLoader<ModelType> {
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
+     * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
      * model is available.
      * @param version - the container code version to check
      */
