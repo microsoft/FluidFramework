@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { parseISO } from "date-fns";
+
+import { Logger } from "../common/logging";
 import { exec, execNoError } from "./utils";
 
 export class GitRepo {
-    constructor(public readonly resolvedRoot: string) {
-    }
+    constructor(public readonly resolvedRoot: string, protected readonly log?: Logger) {}
 
     private async getRemotes() {
         const result = await this.exec(`remote -v`, `getting remotes`);
         const remoteLines = result.split(/\r?\n/);
-        return remoteLines.map(line => line.split(/\s+/));
+        return remoteLines.map((line) => line.split(/\s+/));
     }
 
     /**
@@ -53,7 +53,7 @@ export class GitRepo {
         await this.fetchBranch(remote, branch);
         const currentSha = await this.getShaForBranch(branch);
         const remoteSha = await this.getShaForBranch(branch, remote);
-        return (remoteSha === currentSha);
+        return remoteSha === currentSha;
     }
 
     public async getStatus() {
@@ -120,7 +120,10 @@ export class GitRepo {
      * @param branchName
      */
     public async pushBranch(remote: string, fromBranchName: string, toBranchName: string) {
-        await this.exec(`push ${remote} ${fromBranchName}:${toBranchName}`, `push branch ${fromBranchName}->${toBranchName} to ${remote}`);
+        await this.exec(
+            `push ${remote} ${fromBranchName}:${toBranchName}`,
+            `push branch ${fromBranchName}->${toBranchName} to ${remote}`,
+        );
     }
 
     /**
@@ -155,7 +158,10 @@ export class GitRepo {
      * Fetch branch
      */
     public async fetchBranch(remote: string, branchName: string) {
-        return await this.exec(`fetch ${remote} ${branchName}`, `fetch branch ${branchName} from remote ${remote}`);
+        return await this.exec(
+            `fetch ${remote} ${branchName}`,
+            `fetch branch ${branchName} from remote ${remote}`,
+        );
     }
 
     /**
@@ -180,8 +186,30 @@ export class GitRepo {
      * @param pattern - Pattern of tags to get.
      */
     public async getAllTags(pattern?: string): Promise<string[]> {
-        const results = pattern === undefined ? await this.exec(`tag -l`, `get all tags`) : await this.exec(`tag -l "${pattern}"`, `get tags ${pattern}`);
-        return results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
+        if (pattern === undefined || pattern.length === 0) {
+            this.log?.verbose(`Reading git tags from repo.`);
+        } else {
+            this.log?.verbose(`Reading git tags from repo using pattern: '${pattern}'`);
+        }
+        const results =
+            pattern === undefined || pattern.length === 0
+                ? await this.exec(`tag -l --sort=-committerdate`, `get all tags`)
+                : await this.exec(
+                      `tag -l "${pattern}" --sort=-committerdate`,
+                      `get tags ${pattern}`,
+                  );
+        const tags = results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
+
+        this.log?.verbose(`Found ${tags.length} tags.`);
+        return tags;
+    }
+
+    /**
+     * Returns an array containing all the modified files in the repo.
+     */
+    public async getModifiedFiles(): Promise<string[]> {
+        const results = await this.exec(`ls-files -m --deduplicate`, `get modified files`);
+        return results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
     }
 
     /**
@@ -189,7 +217,9 @@ export class GitRepo {
      * @returns The commit date of the ref.
      */
     public async getCommitDate(gitRef: string) {
-        const result = (await this.exec(`show -s --format=%cI "${gitRef}"`, `get commit date ${gitRef}`)).trim();
+        const result = (
+            await this.exec(`show -s --format=%cI "${gitRef}"`, `get commit date ${gitRef}`)
+        ).trim();
         const date = parseISO(result);
         return date;
     }

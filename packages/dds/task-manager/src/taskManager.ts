@@ -326,6 +326,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.volunteerForTask}
+     */
     public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
         if (this.assigned(taskId)) {
@@ -400,6 +403,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return lockAcquireP;
     }
 
+    /**
+     * {@inheritDoc ITaskManager.subscribeToTask}
+     */
     public subscribeToTask(taskId: string) {
         if (this.subscribed(taskId)) {
             return;
@@ -453,6 +459,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.subscribedTasks.add(taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.abandon}
+     */
     public abandon(taskId: string) {
         // Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
         // Otherwise, we should check to make sure the client is both connected queued for the task before sending an
@@ -474,6 +483,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.abandonWatcher.emit("abandon", taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.assigned}
+     */
     public assigned(taskId: string) {
         if (!this.connected) {
             return false;
@@ -485,6 +497,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             && !this.latestPendingOps.has(taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.queued}
+     */
     public queued(taskId: string) {
         if (!this.connected) {
             return false;
@@ -502,10 +517,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
     }
 
+    /**
+     * {@inheritDoc ITaskManager.subscribed}
+     */
     public subscribed(taskId: string): boolean {
         return this.subscribedTasks.has(taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.complete}
+     */
     public complete(taskId: string): void {
         if (!this.assigned(taskId)) {
             throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
@@ -551,16 +572,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected initializeLocalCore() { }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
      */
     protected onDisconnect() {
         this.connectionWatcher.emit("disconnect");
     }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     * @internal
      */
     protected onConnect() {
         this.connectionWatcher.emit("connect");

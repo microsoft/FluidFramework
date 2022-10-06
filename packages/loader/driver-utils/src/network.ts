@@ -38,8 +38,11 @@ export function isOnline(): OnlineStatus {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- */
- export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+ *
+ * @deprecated - In favour of {@link @fluidframework/driver-definitions#IAnyDriverError} so that
+ * it can used from the base to upper layers.
+*/
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
 }
 
@@ -55,6 +58,21 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(
         message: string,
         readonly canRetry: boolean,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
+    }
+}
+
+/**
+ * FluidInvalidSchema error class.
+ */
+ export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
         props: DriverErrorTelemetryProps,
     ) {
         super(message, props);
@@ -95,7 +113,8 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
         readonly redirectUrl: IResolvedUrl,
         props: DriverErrorTelemetryProps,
     ) {
-        super(message, props);
+        // do not log redirectURL
+        super(message, props, new Set(["redirectUrl"]));
     }
 }
 

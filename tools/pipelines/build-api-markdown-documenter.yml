@@ -60,9 +60,10 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/api-markdown-documenter
-    tagName:
+    tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true
     taskLint: true
-    taskTest: test
+    taskTest:
+    - test
     buildNumberInPatch: false # Publish as is, do override patch with build number

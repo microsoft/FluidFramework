@@ -11,10 +11,13 @@ export abstract class ProgressiveEditBuilder<TChange> {
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,
         private readonly deltaReceiver: (delta: Delta.Root) => void,
-        private readonly anchorSet: AnchorSet) {}
+        private readonly anchorSet: AnchorSet,
+    ) {}
 
     /**
      * Subclasses add editing methods which call this with their generated edits.
+     *
+     * @sealed
      */
     protected applyChange(change: TChange): void {
         this.changes.push(change);
@@ -25,6 +28,7 @@ export abstract class ProgressiveEditBuilder<TChange> {
 
     /**
      * @returns a copy of the internal change list so far.
+     * @sealed
      */
     public getChanges(): TChange[] {
         return [...this.changes];

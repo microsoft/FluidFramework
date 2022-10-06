@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import type { SemVer } from "semver";
+
+/**
+ * A type alias for strings that represent package versions.
+ */
+export type ReleaseVersion = string;
 
 /**
  * A type defining the three basic version bump types:

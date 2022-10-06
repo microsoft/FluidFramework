@@ -49,8 +49,8 @@ export interface IInterval {
      */
     compareEnd(b: IInterval): number;
     /**
-     * @internal
      * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+     * @internal
      */
     modify(
         label: string,
@@ -65,10 +65,10 @@ export interface IInterval {
      */
     overlaps(b: IInterval): boolean;
     /**
-     * @internal
      * Unions this interval with `b`, returning a new interval.
      * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
      * intermediate values between the two intervals.
+     * @internal
      */
     union(b: IInterval): IInterval;
 }

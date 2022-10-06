@@ -4,18 +4,49 @@
  */
 
 export {
-    Dependee, Dependent, NamedComputation, ObservingDependent, InvalidationToken, recordDependency,
+    Dependee,
+    Dependent,
+    NamedComputation,
+    ObservingDependent,
+    InvalidationToken,
+    recordDependency,
     SimpleDependee,
 } from "./dependency-tracking";
 
 export {
-    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
-    UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    EmptyKey,
+    FieldKey,
+    TreeType,
+    Value,
+    TreeValue,
+    AnchorSet,
+    DetachedField,
+    UpPath,
+    Anchor,
+    RootField,
+    ChildCollection,
+    ChildLocation,
+    FieldMapObject,
+    NodeData,
+    GenericTreeNode,
+    JsonableTree,
     Delta,
+    rootFieldKey,
+    FieldScope,
+    GlobalFieldKeySymbol,
+    symbolFromKey,
+    keyFromSymbol,
+    ITreeCursorNew,
+    CursorLocationType,
+    ITreeCursorSynchronous,
+    GenericFieldsNode,
+    AnchorLocator,
 } from "./tree";
 
-export { ITreeCursor, TreeNavigationResult, IEditableForest,
+export {
+    ITreeCursor,
+    TreeNavigationResult,
+    IEditableForest,
     IForestSubscription,
     TreeLocation,
     FieldLocation,
@@ -26,10 +57,20 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
 } from "./forest";
 
 export {
-    LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema,
-    StoredSchemaRepository, FieldKindIdentifier,
-    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    LocalFieldKey,
+    GlobalFieldKey,
+    TreeSchemaIdentifier,
+    NamedTreeSchema,
+    Named,
+    FieldSchema,
+    ValueSchema,
+    TreeSchema,
+    StoredSchemaRepository,
+    FieldKindIdentifier,
+    TreeTypeSet,
+    SchemaData,
+    SchemaPolicy,
+    SchemaDataAndPolicy,
 } from "./schema-stored";
 
 export {
@@ -47,28 +88,27 @@ export {
     brandOpaque,
     ValueFromBranded,
     NameFromBranded,
-} from "./util";
-
-export {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
     JsonCompatibleReadOnly,
     JsonCompatible,
-} from "./change-family";
+    JsonCompatibleObject,
+} from "./util";
 
-export {
-    Rebaser,
-    ChangeRebaser,
-    RevisionTag,
-    ChangesetFromChangeRebaser,
-} from "./rebase";
+export { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "./change-family";
+
+export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
+
+export { ICheckout, TransactionResult } from "./checkout";
 
 export {
     cursorToJsonObject,
     JsonCursor,
-    jsonTypeSchema,
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonString,
+    jsonSchemaData,
 } from "./domains";
 
 export {
@@ -82,12 +122,16 @@ export {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
+    FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -97,5 +141,36 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    jsonableTreeFromCursorNew,
+    PrimitiveValue,
+    SequenceEditBuilder,
+    SequenceChangeset,
+    NodePath,
+    PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
+
+export { ISharedTree, SharedTreeFactory } from "./shared-tree";

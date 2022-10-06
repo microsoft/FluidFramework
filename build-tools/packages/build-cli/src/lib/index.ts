@@ -8,14 +8,18 @@ export {
     generateBumpDepsBranchName,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
+    getReleaseSourceForReleaseGroup,
     generateReleaseBranchName,
 } from "./branches";
 export {
     bumpPackageDependencies,
-    bumpVersion as bumpReleaseGroup,
+    bumpReleaseGroup,
+    DependencyUpdateType,
+    isDependencyUpdateType,
     PackageWithRangeSpec,
 } from "./bump";
 export {
+    filterVersionsOlderThan,
     getAllVersions,
     getPreReleaseDependencies,
     generateReleaseGitTagName,
@@ -23,8 +27,10 @@ export {
     getVersionFromTag,
     isReleased,
     npmCheckUpdates,
+    PackageVersionMap,
     PreReleaseDependencies,
     sortVersions,
     VersionDetails,
 } from "./package";
 export { difference } from "./sets";
+export { getIndent, indentString } from "./text";

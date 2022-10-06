@@ -5,191 +5,24 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
+import { ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
-import { AnchorSet, Delta, FieldKey } from "../../tree";
+import { Delta, FieldKey } from "../../tree";
 import { brand, makeArray, RecursiveReadonly } from "../../util";
+import {
+    AnchorRebaseData,
+    TestAnchorSet,
+    TestChangeEncoder,
+    TestChangeFamily,
+    TestChangeRebaser,
+    TestChange,
+    UnrebasableTestChangeRebaser,
+} from "../testChange";
 
-interface NonEmptyTestChangeset {
-    /**
-     * Identifies the document state that the changeset should apply to.
-     * Represented as the concatenation of all previous intentions.
-     */
-    inputContext: number[];
-    /**
-     * Identifies the document state brought about by applying the changeset to the document.
-     * Represented as the concatenation of all previous intentions and the intentions in this change.
-     */
-    outputContext: number[];
-    /**
-     * Identifies the editing intentions included in the changeset.
-     * Editing intentions can be thought of as user actions, where each user action is unique.
-     * Editing intentions can be inverted (represented negative number of the same magnitude) but are
-     * otherwise unchanged by rebasing.
-     */
-    intentions: number[];
-}
-
-interface EmptyTestChangeset {
-    intentions: [];
-}
-
-const emptyChange: EmptyTestChangeset = { intentions: [] };
 const rootKey: FieldKey = brand("root");
 
-export type TestChangeset = NonEmptyTestChangeset | EmptyTestChangeset;
-
-function isNonEmptyChange(
-    change: RecursiveReadonly<TestChangeset>,
-): change is RecursiveReadonly<NonEmptyTestChangeset> {
-    return "inputContext" in change;
-}
-
-interface AnchorRebaseData {
-    rebases: RecursiveReadonly<NonEmptyTestChangeset>[];
-    intentions: number[];
-}
-
-class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
-    public static mintChangeset(inputContext: readonly number[], intention: number): NonEmptyTestChangeset {
-        return {
-            inputContext: [...inputContext],
-            intentions: [intention],
-            outputContext: TestChangeRebaser.composeIntentions(inputContext, [intention]),
-        };
-    }
-
-    public static composeIntentions(base: readonly number[], extras: readonly number[]): number[] {
-        const composed = [...base];
-        let last: number | undefined = composed[composed.length - 1];
-        for (const extra of extras) {
-            // Check wether we are composing intentions that cancel each other out.
-            // This helps us ensure that we always represent sequences of intentions
-            // in the same canonical form.
-            if (last === -extra) {
-                composed.pop();
-                last = composed[composed.length - 1];
-            } else {
-                composed.push(extra);
-                last = extra;
-            }
-        }
-        return composed;
-    }
-
-    public compose(changes: TestChangeset[]): TestChangeset {
-        let inputContext: number[] | undefined;
-        let outputContext: number[] | undefined;
-        let intentions: number[] = [];
-        for (const change of changes) {
-            if (isNonEmptyChange(change)) {
-                inputContext ??= change.inputContext;
-                if (outputContext !== undefined) {
-                    // The input context should match the output context of the previous change.
-                    assert.deepEqual(change.inputContext, outputContext);
-                }
-                outputContext = TestChangeRebaser.composeIntentions(
-                    outputContext ?? inputContext,
-                    change.intentions,
-                );
-                intentions = TestChangeRebaser.composeIntentions(
-                    intentions,
-                    change.intentions,
-                );
-            }
-        }
-        if (inputContext !== undefined) {
-            return {
-                inputContext,
-                intentions,
-                outputContext: outputContext ?? fail(),
-            };
-        }
-        return emptyChange;
-    }
-
-    public invert(change: TestChangeset): TestChangeset {
-        if (isNonEmptyChange(change)) {
-            return {
-                inputContext: change.outputContext,
-                outputContext: change.inputContext,
-                intentions: change.intentions.map((i) => -i).reverse(),
-            };
-        }
-        return emptyChange;
-    }
-
-    public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
-        if (isNonEmptyChange(change)) {
-            if (isNonEmptyChange(over)) {
-                // Rebasing should only occur between two changes with the same input context
-                assert.deepEqual(change.inputContext, over.inputContext);
-                return {
-                    inputContext: over.outputContext,
-                    outputContext: TestChangeRebaser.composeIntentions(over.outputContext, change.intentions),
-                    intentions: change.intentions,
-                };
-            }
-            return change;
-        }
-        return emptyChange;
-    }
-
-    public rebaseAnchors(anchors: AnchorSet, over: TestChangeset): void {
-        if (isNonEmptyChange(over) && anchors instanceof TestAnchorSet) {
-            let lastChange: RecursiveReadonly<NonEmptyTestChangeset> | undefined;
-            const { rebases } = anchors;
-            for (let iChange = rebases.length - 1; iChange >= 0; --iChange) {
-                const change = rebases[iChange];
-                if (isNonEmptyChange(change)) {
-                    lastChange = change;
-                    break;
-                }
-            }
-            if (lastChange !== undefined) {
-                // The new change should apply to the context brought about by the previous change
-                assert.deepEqual(over.inputContext, lastChange.outputContext);
-            }
-            anchors.intentions = TestChangeRebaser.composeIntentions(anchors.intentions, over.intentions);
-            rebases.push(over);
-        }
-    }
-
-    public static checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions: number[]): void {
-        const filtered = changes.filter(isNonEmptyChange);
-        let intentionsSeen: number[] = [];
-        let index = 0;
-        for (const change of filtered) {
-            intentionsSeen = TestChangeRebaser.composeIntentions(intentionsSeen, change.intentions);
-            if (index > 0) {
-                const prev = filtered[index - 1];
-                // The current change should apply to the context brought about by the previous change
-                assert.deepEqual(change.inputContext, prev.outputContext);
-            }
-            ++index;
-        }
-        // All expected intentions were present
-        assert.deepEqual(intentionsSeen, intentions);
-    }
-}
-
-class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
-    public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
-        throw new Error("Method not implemented.");
-    }
-    public decodeJson(formatVersion: number, change: JsonCompatible): TestChangeset {
-        throw new Error("Method not implemented.");
-    }
-}
-
-class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
-    public rebases: RecursiveReadonly<NonEmptyTestChangeset>[] = [];
-    public intentions: number[] = [];
-}
-
-type TestChangeFamily = ChangeFamily<unknown, TestChangeset>;
-type TestEditManager = EditManager<TestChangeset, TestChangeFamily>;
+type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
@@ -201,28 +34,29 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
-    const rebaser = new TestChangeRebaser();
+function changeFamilyFactory(
+    rebaser?: ChangeRebaser<TestChange>,
+): ChangeFamily<unknown, TestChange> {
     const family = {
-        rebaser,
+        rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
-        intoDelta: (change: TestChangeset): Delta.Root => asDelta(change.intentions),
+        intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
     };
     return family;
 }
 
-function editManagerFactory(): {
+function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
 } {
-    const family = changeFamilyFactory();
+    const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
+    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+        localSessionId,
         family,
         anchors,
     );
-    manager.setLocalSessionId(localSessionId);
     return { manager, anchors };
 }
 
@@ -234,9 +68,11 @@ const NUM_STEPS = 5;
 const NUM_PEERS = 2;
 const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
-type TestCommit = Commit<TestChangeset>;
+type TestCommit = Commit<TestChange>;
 
-/** Represents the minting and sending of a new local change. */
+/**
+ * Represents the minting and sending of a new local change.
+ */
 interface UnitTestPushStep {
     type: "Push";
     /**
@@ -247,7 +83,9 @@ interface UnitTestPushStep {
     seq?: number;
 }
 
-/** Represents the sequencing of a local change. */
+/**
+ * Represents the sequencing of a local change.
+ */
 interface UnitTestAckStep {
     type: "Ack";
     /**
@@ -258,17 +96,23 @@ interface UnitTestAckStep {
     seq: number;
 }
 
-/** Represents the reception of a (sequenced) peer change */
+/**
+ * Represents the reception of a (sequenced) peer change
+ */
 interface UnitTestPullStep {
     type: "Pull";
-    /** The sequence number for this change. */
+    /**
+     * The sequence number for this change.
+     */
     seq: number;
     /**
      * The sequence number of the latest change that the issuer of this change knew about
      * at the time they issued this change.
      */
     ref: number;
-    /** The ID of the peer that issued the change. */
+    /**
+     * The ID of the peer that issued the change.
+     */
     from: SessionId;
     /**
      * The delta which should be produced by the `EditManager` when it receives this change.
@@ -337,6 +181,13 @@ describe("EditManager", () => {
             { seq: 6, type: "Pull", ref: 0, from: peer2 },
         ]);
 
+        runUnitTestScenario("Can rebase peer changes over a local change", [
+            { seq: 1, type: "Push" },
+            { seq: 1, type: "Ack" },
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 3, type: "Pull", ref: 0, from: peer1 },
+        ]);
+
         runUnitTestScenario("Can rebase multiple local changes", [
             { seq: 3, type: "Push" },
             { seq: 4, type: "Push" },
@@ -363,14 +214,41 @@ describe("EditManager", () => {
             { seq: 8, type: "Ack" },
             { seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
         ]);
+
+        runUnitTestScenario("Can handle ref numbers to operations that are not commits", [
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 4, type: "Pull", ref: 1, from: peer2 },
+            { seq: 6, type: "Pull", ref: 3, from: peer1 },
+            { seq: 8, type: "Pull", ref: 3, from: peer1 },
+            { seq: 10, type: "Pull", ref: 0, from: peer2 },
+            { seq: 12, type: "Pull", ref: 1, from: peer2 },
+        ]);
+    });
+
+    describe("Avoids unnecessary rebases", () => {
+        runUnitTestScenario(
+            "Sequenced changes that are based on the trunk should not be rebased",
+            [
+                { seq: 1, type: "Pull", ref: 0, from: peer1 },
+                { seq: 2, type: "Pull", ref: 0, from: peer1 },
+                { seq: 3, type: "Pull", ref: 0, from: peer1 },
+                { seq: 4, type: "Pull", ref: 3, from: peer2 },
+                { seq: 5, type: "Pull", ref: 4, from: peer2 },
+                { seq: 6, type: "Pull", ref: 5, from: peer1 },
+                { seq: 7, type: "Pull", ref: 5, from: peer1 },
+            ],
+            new UnrebasableTestChangeRebaser(),
+        );
     });
 
     /**
      * This test case effectively tests most of the scenarios covered by the other test cases.
      * Despite that, it's good to keep the other tests cases for the following reasons:
+     *
      * - They are easier to read and debug.
+     *
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
-     *   but this one doesn't, then there might be something wrong with this test).
+     * but this one doesn't, then there might be something wrong with this test).
      */
     it("Combinatorial test", () => {
         const meta = {
@@ -399,11 +277,17 @@ describe("EditManager", () => {
  * State needed by the scenario builder.
  */
 interface ScenarioBuilderState {
-    /** The ref number of the last commit made by each peer (0 for peers that have made no commits). */
+    /**
+     * The ref number of the last commit made by each peer (0 for peers that have made no commits).
+     */
     peerRefs: number[];
-    /** The sequence number of the last sequenced commit. */
+    /**
+     * The ref number of the last commit made by each peer (0 for peers that have made no commits).
+     */
     seq: number;
-    /** The number of local changes that have yet to be acked. */
+    /**
+     * The number of local changes that have yet to be acked.
+     */
     inFlight: number;
 }
 
@@ -454,22 +338,40 @@ function* buildScenario(
     }
 }
 
-function runUnitTestScenario(title: string | undefined, steps: readonly UnitTestScenarioStep[]): void {
+function runUnitTestScenario(
+    title: string | undefined,
+    steps: readonly UnitTestScenarioStep[],
+    rebaser?: ChangeRebaser<TestChange>,
+): void {
     const run = () => {
-        const { manager, anchors } = editManagerFactory();
-        /** Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`) */
+        const { manager, anchors } = editManagerFactory(rebaser);
+        /**
+         * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
+         */
         const localCommits: TestCommit[] = [];
-        /** Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`). */
+        /**
+         * Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`).
+         */
         let knownToLocal: number[] = [];
-        /** Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`) */
+        /**
+         * Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`)
+         */
         const trunk: number[] = [];
-        /** The sequence number of the most recent sequenced commit that the manager is aware of */
+        /**
+         * The sequence number of the most recent sequenced commit that the manager is aware of
+         */
         let localRef: number = 0;
-        /** The sequence number of the last sequenced in the scenario. */
+        /**
+         * The sequence number of the last sequenced in the scenario.
+         */
         const finalSequencedEdit = [...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
-        /** The Ack steps of the scenario */
+        /**
+         * The Ack steps of the scenario
+         */
         const acks = steps.filter((s) => s.type === "Ack") as readonly UnitTestAckStep[];
-        /** Index of the "Ack" step in `acks` that matches the next encountered "Push" step */
+        /**
+         * Index of the "Ack" step in `acks` that matches the next encountered "Push" step
+         */
         let iNextAck = 0;
         for (const step of steps) {
             const type = step.type;
@@ -477,15 +379,14 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        if (iNextAck < acks.length) {
-                            seq = acks[iNextAck].seq;
-                        } else {
-                            // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            seq = finalSequencedEdit + 1 + iNextAck - acks.length;
-                        }
+                        seq =
+                            iNextAck < acks.length
+                                ? acks[iNextAck].seq
+                                : // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+                                  finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
-                    const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);
+                    const changeset = TestChange.mint(knownToLocal, seq);
                     localCommits.push({
                         sessionId: localSessionId,
                         seqNumber: brand(seq),
@@ -504,7 +405,9 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                         fail("Invalid test scenario: no local commit to acknowledge");
                     }
                     if (commit.seqNumber !== seq) {
-                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
+                        fail(
+                            "Invalid test scenario: acknowledged commit does not mach oldest local change",
+                        );
                     }
                     // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
                     assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
@@ -514,13 +417,22 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                 }
                 case "Pull": {
                     const seq = step.seq;
-                    /** Filter that includes changes that were on the trunk of the issuer of this commit. */
+                    /**
+                     * Filter that includes changes that were on the trunk of the issuer of this commit.
+                     */
                     const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
                         s.type !== "Push" && s.seq <= step.ref;
-                    /** Filter that includes changes that were local to the issuer of this commit. */
+                    /**
+                     * Filter that includes changes that were local to the issuer of this commit.
+                     */
                     const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-                        s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
-                    /** Changes that were known to the peer at the time it authored this commit. */
+                        s.type === "Pull" &&
+                        s.seq > step.ref &&
+                        s.seq < step.seq &&
+                        s.from === step.from;
+                    /**
+                     * Changes that were known to the peer at the time it authored this commit.
+                     */
                     const knownToPeer: number[] = [
                         ...steps.filter(peerTrunkChangesFilter),
                         ...steps.filter(peerLocalChangesFilter),
@@ -529,9 +441,11 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                         sessionId: step.from,
                         seqNumber: brand(seq),
                         refNumber: brand(step.ref),
-                        changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
+                        changeset: TestChange.mint(knownToPeer, seq),
                     };
-                    /** Ordered list of intentions for local changes */
+                    /**
+                     * Ordered list of intentions for local changes
+                     */
                     const localIntentions = localCommits.map((c) => c.seqNumber);
                     // When a peer commit is received we expect the update to be equivalent to the
                     // retraction of any local changes, followed by the peer changes, followed by the
@@ -547,14 +461,12 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                         assert.deepEqual(step.expectedDelta, expected);
                     }
                     trunk.push(seq);
-                    knownToLocal = [
-                        ...trunk,
-                        ...localCommits.map((c) => c.seqNumber),
-                    ];
+                    knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
                     localRef = seq;
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
             // Anchors should be kept up to date with the known intentions
             assert.deepEqual(anchors.intentions, knownToLocal);
@@ -570,9 +482,12 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
 }
 
 function checkChangeList(manager: TestEditManager, intentions: number[]): void {
-    TestChangeRebaser.checkChangeList(getAllChanges(manager), intentions);
+    TestChange.checkChangeList(getAllChanges(manager), intentions);
 }
 
-function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
-    return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
+function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
+    return manager
+        .getTrunk()
+        .map((c) => c.changeset)
+        .concat(manager.getLocalChanges());
 }

@@ -17,7 +17,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocCodeSpan, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import {
     ApiFunctionLike,
@@ -193,11 +193,11 @@ export function renderDefaultSummaryTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some(isDeprecated);
+    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
@@ -251,8 +251,7 @@ export function renderParametersSummaryTable(
     if (hasOptionalParameters) {
         headerTitles.push("Modifiers");
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerTitles.push("Type", "Description");
 
     function renderModifierCell(apiParameter: Parameter): DocTableCell {
         return apiParameter.isOptional
@@ -266,8 +265,10 @@ export function renderParametersSummaryTable(
         if (hasOptionalParameters) {
             rowCells.push(renderModifierCell(apiParameter));
         }
-        rowCells.push(renderParameterTypeCell(apiParameter, config));
-        rowCells.push(renderParameterSummaryCell(apiParameter, config));
+        rowCells.push(
+            renderParameterTypeCell(apiParameter, config),
+            renderParameterSummaryCell(apiParameter, config),
+        );
 
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
     }
@@ -301,11 +302,11 @@ export function renderFunctionLikeSummaryTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some(isDeprecated);
+    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
     const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
@@ -365,14 +366,14 @@ export function renderPropertiesTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiProperties.some(isDeprecated);
+    const hasDeprecated = apiProperties.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
     const hasDefaultValues = apiProperties.some(
-        (apiItem) => getDefaultValueBlock(apiItem) !== undefined,
+        (apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
     );
 
     const headerTitles: string[] = ["Property"];
@@ -385,8 +386,7 @@ export function renderPropertiesTable(
     if (hasDefaultValues) {
         headerTitles.push("Default Value");
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerTitles.push("Type", "Description");
 
     const tableRows: DocTableRow[] = [];
     for (const apiProperty of apiProperties) {
@@ -400,8 +400,10 @@ export function renderPropertiesTable(
         if (hasDefaultValues) {
             rowCells.push(renderDefaultValueCell(apiProperty, config));
         }
-        rowCells.push(renderPropertyTypeCell(apiProperty, config));
-        rowCells.push(renderApiSummaryCell(apiProperty, config));
+        rowCells.push(
+            renderPropertyTypeCell(apiProperty, config),
+            renderApiSummaryCell(apiProperty, config),
+        );
 
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
     }
@@ -432,7 +434,7 @@ export function renderPackagesTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiPackages.some(isDeprecated);
+    const hasDeprecated = apiPackages.some((apiItem) => isDeprecated(apiItem));
 
     const headerTitles: string[] = ["Package"];
     if (hasDeprecated) {
@@ -473,30 +475,26 @@ export function renderApiSummaryCell(
 ): DocTableCell {
     const docNodes: DocNode[] = [];
 
-    if (ApiReleaseTagMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.releaseTag === ReleaseTag.Beta) {
-            docNodes.push(
-                new DocEmphasisSpan(
-                    {
+    if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
+        docNodes.push(
+            new DocEmphasisSpan(
+                {
+                    configuration: config.tsdocConfiguration,
+                    bold: true,
+                    italic: true,
+                },
+                [
+                    new DocPlainText({
                         configuration: config.tsdocConfiguration,
-                        bold: true,
-                        italic: true,
-                    },
-                    [
-                        new DocPlainText({
-                            configuration: config.tsdocConfiguration,
-                            text: "(BETA) ",
-                        }),
-                    ],
-                ),
-            );
-        }
+                        text: "(BETA) ",
+                    }),
+                ],
+            ),
+        );
     }
 
-    if (apiItem instanceof ApiDocumentedItem) {
-        if (apiItem.tsdocComment !== undefined) {
-            docNodes.push(apiItem.tsdocComment.summarySection);
-        }
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        docNodes.push(apiItem.tsdocComment.summarySection);
     }
 
     return docNodes.length === 0
@@ -575,6 +573,7 @@ export function renderModifiersCell(
                 code: modifier,
             }),
         );
+        needsComma = true;
     }
 
     return modifiers.length === 0
@@ -583,7 +582,7 @@ export function renderModifiersCell(
               {
                   configuration: config.tsdocConfiguration,
               },
-              docNodes,
+              [new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes)],
           );
 }
 
@@ -597,7 +596,7 @@ export function renderDefaultValueCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const defaultValueSection = getDefaultValueBlock(apiItem);
+    const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
     if (defaultValueSection === undefined) {
         return renderEmptyTableCell(config);

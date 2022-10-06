@@ -37,17 +37,14 @@ const defaultThrottleMiddlewareOptions: IThrottleMiddlewareOptions = {
 };
 
 const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions) => {
-    let prefix: string | undefined;
-    if (typeof throttleOptions.throttleIdPrefix === "function") {
-        prefix = throttleOptions.throttleIdPrefix(req);
-    } else {
-        prefix = throttleOptions.throttleIdPrefix;
-    }
+    const prefix = typeof throttleOptions.throttleIdPrefix === "function"
+        ? throttleOptions.throttleIdPrefix(req)
+        : throttleOptions.throttleIdPrefix;
 
     if (prefix && throttleOptions.throttleIdSuffix) {
         return `${prefix}_${throttleOptions.throttleIdSuffix}`;
     }
-    return prefix || throttleOptions.throttleIdSuffix || "-";
+    return prefix ?? throttleOptions.throttleIdSuffix ?? "-";
 };
 
 function noopMiddleware(req: Request, res: Response, next: NextFunction) {

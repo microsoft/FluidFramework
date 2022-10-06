@@ -128,7 +128,7 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    /** @deprecated - please use submitBatchFn & submitSummaryFn */
+    /** @deprecated Please use submitBatchFn & submitSummaryFn */
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     /** @returns clientSequenceNumber of last message in a batch */
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;

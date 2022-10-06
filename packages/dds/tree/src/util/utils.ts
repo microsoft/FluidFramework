@@ -8,7 +8,7 @@ import structuredClone from "@ungap/structured-clone";
 /**
  * Make all transitive properties in T readonly
  */
- export type RecursiveReadonly<T> = {
+export type RecursiveReadonly<T> = {
     readonly [P in keyof T]: RecursiveReadonly<T[P]>;
 };
 
@@ -65,7 +65,13 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * @param same - Called for items in `a` and `b`.
  * @returns false iff any of the call backs returned false.
  */
-export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
+export function compareSets<T>({
+    a,
+    b,
+    aExtra,
+    bExtra,
+    same,
+}: {
     a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
     b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
     aExtra?: (t: T) => boolean;
@@ -98,11 +104,59 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
  * Gets the list associated with the provided key, if it exists.
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
- export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
-	let collection = map.get(key);
-	if (collection === undefined) {
-		collection = [];
-		map.set(key, collection);
-	}
-	return collection;
+export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+    let collection = map.get(key);
+    if (collection === undefined) {
+        collection = [];
+        map.set(key, collection);
+    }
+    return collection;
+}
+
+/**
+ * Use for Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatible =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | JsonCompatible[]
+    | JsonCompatibleObject;
+
+/**
+ * Use for Json object compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleObject = { [P in string]: JsonCompatible };
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnly =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | readonly JsonCompatibleReadOnly[]
+    | { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+
+/**
+ * Returns if a particular json compatible value is an object.
+ * Does not include `null` or arrays.
+ */
+export function isJsonObject(
+    value: JsonCompatibleReadOnly,
+): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined } {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }

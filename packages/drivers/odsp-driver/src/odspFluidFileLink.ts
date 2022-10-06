@@ -52,7 +52,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 /**
  * Decodes given encoded value representing Fluid data store locator extracted from ODSP Fluid file link
  * @param encodedLocatorValue - encoded Fluid data store locator value which was produced by
- *  encodeOdspFluidDataStoreLocator method
+ * {@link encodeOdspFluidDataStoreLocator} function
  * @param siteOriginUrl - site origin that will be appended to encoded relative path to form absolute file url
  * @returns object representing Fluid data store location in ODSP terms
  */

@@ -48,6 +48,7 @@ const reservedIntervalIdKey = "intervalId";
 export enum IntervalType {
     Simple = 0x0,
     Nest = 0x1,
+
     /**
      * SlideOnRemove indicates that the ends of the interval will slide if the segment
      * they reference is removed and acked.
@@ -55,17 +56,18 @@ export enum IntervalType {
      * SlideOnRemove is the default interval behavior and does not need to be specified.
      */
     SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
+
     /**
-     * @internal
      * A temporary interval, used internally
+     * @internal
      */
     Transient = 0x4,
 }
 
 /**
- * @internal
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @internal
  */
 export interface ISerializedInterval {
     /**
@@ -87,9 +89,9 @@ export interface ISerializedInterval {
 }
 
 /**
- * @internal
  * Represents a change that should be applied to an existing interval.
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
+ * @internal
  */
 export type SerializedIntervalDelta =
     Omit<ISerializedInterval, "start" | "end" | "properties">
@@ -251,8 +253,8 @@ export class Interval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const serializedInterval: ISerializedInterval = {
@@ -418,8 +420,8 @@ export class SequenceInterval implements ISerializableInterval {
     private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
 
     /**
-     * @internal
      * Subscribes to position change events on this interval if there are no current listeners.
+     * @internal
      */
     public addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void {
         if (this.callbacks === undefined) {
@@ -436,8 +438,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * Removes the currently subscribed position change listeners.
+     * @internal
      */
     public removePositionChangeListeners(): void {
         if (this.callbacks) {
@@ -448,8 +450,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const startPosition = this.client.localReferencePositionToPosition(this.start);
@@ -655,7 +657,7 @@ function createPositionReference(
     return createPositionReferenceFromSegoff(client, segoff, refType, op);
 }
 
-function createSequenceInterval(
+export function createSequenceInterval(
     label: string,
     start: number,
     end: number,
@@ -1011,7 +1013,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
     public serialize(): ISerializedIntervalCollectionV2 {
         const intervals = this.intervalTree.intervals.keys();
-
         return {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize())),
@@ -1063,7 +1064,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
+export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
     compareReferencePositions(a.end, b.end);
 
 class SequenceIntervalCollectionFactory
@@ -1079,7 +1080,7 @@ class SequenceIntervalCollectionFactory
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -1159,7 +1160,7 @@ export class IntervalCollectionValueType
     private static readonly _ops = makeOpsMap<Interval>();
 }
 
-function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
+export function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
     const rebase = (
         collection: IntervalCollection<T>,
         op: IValueTypeOperationValue,
@@ -1327,12 +1328,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     ) {
         super();
 
-        if (Array.isArray(serializedIntervals)) {
-            this.savedSerializedIntervals = serializedIntervals;
-        } else {
-            this.savedSerializedIntervals =
-                serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
-        }
+        this.savedSerializedIntervals = Array.isArray(serializedIntervals)
+            ? serializedIntervals
+            : serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
     }
 
     /** @internal */
@@ -1728,11 +1726,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * @internal
-     *
      * Returns new interval after rebasing. If undefined, the interval was
      * deleted as a result of rebasing. This can occur if the interval applies
      * to a range that no longer exists, and the interval was unable to slide.
+     *
+     * @internal
      */
     public rebaseLocalInterval(
         opName: string,

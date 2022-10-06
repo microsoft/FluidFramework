@@ -2,27 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import path from "path";
-import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isPrereleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { compareDesc } from "date-fns";
+import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
-// eslint-disable-next-line import/no-internal-modules
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-// eslint-disable-next-line import/no-internal-modules
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import path from "path";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+
+import { Context, Logger, MonoRepo, Package, readJsonAsync } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
+
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
+import { DependencyUpdateType } from "./bump";
+import { indentString } from "./text";
+
+/**
+ * An object that maps package names to version strings or range strings.
+ *
+ * @internal
+ */
+export interface PackageVersionMap {
+    [packageName: ReleasePackage]: ReleaseVersion;
+}
 
 /**
  * Checks the npm registry for updates for a release group's dependencies.
  *
  * @param context - The {@link Context}.
- * @param releaseGroup - The release group to check.
+ * @param releaseGroup - The release group to check. If it is `undefined`, the whole repo is checked.
  * @param depsToUpdate - An array of packages on which dependencies should be checked.
- * @param bumpType - The bump type.
+ * @param releaseGroupFilter - If provided, this release group won't be checked for dependencies. Set this when you are
+ * updating the dependencies on a release group across the repo. For example, if you have just released the 1.2.3 client
+ * release group, you want to bump everything in the repo to 1.2.3 except the client release group itself.
+ * @param depUpdateType - The constraint to use when deciding if updates are available.
  * @param prerelease - If true, include prerelease versions as eligible to update.
  * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
@@ -33,9 +47,10 @@ import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 // eslint-disable-next-line max-params
 export async function npmCheckUpdates(
     context: Context,
-    releaseGroup: ReleaseGroup | ReleasePackage,
+    releaseGroup: ReleaseGroup | ReleasePackage | undefined,
     depsToUpdate: ReleasePackage[] | RegExp[],
-    bumpType: "patch" | "minor" | "current",
+    releaseGroupFilter: ReleaseGroup | undefined,
+    depUpdateType: DependencyUpdateType,
     // eslint-disable-next-line default-param-last
     prerelease = false,
     // eslint-disable-next-line default-param-last
@@ -43,43 +58,78 @@ export async function npmCheckUpdates(
     log?: Logger,
 ): Promise<{
     updatedPackages: Package[];
-    updatedDependencies: Package[];
+    updatedDependencies: PackageVersionMap;
 }> {
     const updatedPackages: Package[] = [];
-    const deps = new Set<string>();
+
+    /**
+     * A set of all the packageName, versionString pairs of updated dependencies.
+     */
+    const updatedDependencies: PackageVersionMap = {};
+
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
     const upgradeLogLines = new Set<string>();
     const searchGlobs: string[] = [];
     let repoPath: string;
 
     log?.info(`Checking npm for package updates...`);
-    if (isReleaseGroup(releaseGroup)) {
+    if (releaseGroup === undefined) {
+        // Apply to all packages in repo
+        repoPath = context.repo.resolvedRoot;
+
+        for (const releaseGroupRoot of context.repo.releaseGroups.values()) {
+            if (releaseGroupRoot.kind === releaseGroupFilter) {
+                log?.verbose(
+                    `Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
+                );
+                continue;
+            }
+
+            log?.verbose(
+                `Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.kind}.`,
+            );
+            searchGlobs.push(
+                ...releaseGroupRoot.workspaceGlobs.map((g) =>
+                    path.join(
+                        path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
+                        g,
+                    ),
+                ),
+                // Includes the root package.json, in case there are deps there that also need upgrade.
+                ".",
+            );
+        }
+
+        for (const pkg of context.independentPackages) {
+            searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
+        }
+    } else if (isReleaseGroup(releaseGroup)) {
         const monorepo = context.repo.releaseGroups.get(releaseGroup);
         if (monorepo === undefined) {
             throw new Error(`Can't find release group: ${releaseGroup}`);
         }
 
-        searchGlobs.push(...monorepo.workspaceGlobs);
         repoPath = monorepo.repoPath;
+        searchGlobs.push(...monorepo.workspaceGlobs, ".");
     } else {
         const pkg = context.fullPackageMap.get(releaseGroup);
         if (pkg === undefined) {
             throw new Error(`Package not found in context: ${releaseGroup}`);
         }
 
-        searchGlobs.push(pkg.directory);
         repoPath = pkg.directory;
+        searchGlobs.push(pkg.directory);
     }
 
     for (const glob of searchGlobs) {
-        log?.verbose(`Checking packages in ${glob}...`);
+        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}...`);
 
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
             filter: depsToUpdate,
             cwd: repoPath,
             packageFile: `${glob}/package.json`,
-            target: bumpType === "current" ? "latest" : bumpType,
+            target: depUpdateType,
             pre: prerelease,
             upgrade: writeChanges,
             jsonUpgraded: true,
@@ -90,8 +140,30 @@ export async function npmCheckUpdates(
             throw new TypeError(`Expected an object: ${typeof result}`);
         }
 
-        for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
-            const jsonPath = path.join(repoPath, pkgJsonPath);
+        // npm-check-updates returns different data depending on how many packages were updated. This code detects the
+        // two main cases: a single package or multiple packages.
+        if (glob.endsWith("*")) {
+            for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
+                const jsonPath = path.join(repoPath, pkgJsonPath);
+                // eslint-disable-next-line no-await-in-loop
+                const { name } = await readJsonAsync(jsonPath);
+                const pkg = context.fullPackageMap.get(name);
+                if (pkg === undefined) {
+                    log?.warning(`Package not found in context: ${name}`);
+                    continue;
+                }
+
+                for (const [dep, newRange] of Object.entries(upgradedDeps)) {
+                    upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
+                    updatedDependencies[dep] = newRange;
+                }
+
+                if (Object.keys(upgradedDeps).length > 0) {
+                    updatedPackages.push(pkg);
+                }
+            }
+        } else {
+            const jsonPath = path.join(repoPath, glob, "package.json");
             // eslint-disable-next-line no-await-in-loop
             const { name } = await readJsonAsync(jsonPath);
             const pkg = context.fullPackageMap.get(name);
@@ -100,12 +172,12 @@ export async function npmCheckUpdates(
                 continue;
             }
 
-            for (const [dep, newRange] of Object.entries(upgradedDeps)) {
-                upgradeLogLines.add(`    ${dep}: '${newRange}'`);
-                deps.add(dep);
+            for (const [dep, newRange] of Object.entries(result)) {
+                upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
+                updatedDependencies[dep] = newRange;
             }
 
-            if (Object.keys(upgradedDeps).length > 0) {
+            if (Object.keys(result).length > 0) {
                 updatedPackages.push(pkg);
             }
         }
@@ -116,8 +188,6 @@ export async function npmCheckUpdates(
         log?.info(line);
     }
 
-    const updatedDependencies: Package[] = getPackagesFromReleasePackages(context, [...deps]);
-
     return { updatedPackages, updatedDependencies };
 }
 
@@ -127,11 +197,17 @@ export async function npmCheckUpdates(
  * @internal
  */
 export interface PreReleaseDependencies {
-    /** A map of release groups to a version string. */
+    /**
+     * A map of release groups to a version string.
+     */
     releaseGroups: Map<ReleaseGroup, string>;
-    /** A map of release packages to a version string. Only includes independent packages. */
+    /**
+     * A map of release packages to a version string. Only includes independent packages.
+     */
     packages: Map<ReleasePackage, string>;
-    /** True if there are no pre-release dependencies. False otherwise. */
+    /**
+     * True if there are no pre-release dependencies. False otherwise.
+     */
     isEmpty: boolean;
 }
 
@@ -192,10 +268,6 @@ export async function getPreReleaseDependencies(
                     throw new Error(`Can't find package in context: ${depName}`);
                 }
 
-                const nameToUse =
-                    depPkg.monoRepo === undefined ? depPkg.name : depPkg.monoRepo.kind;
-                prereleasePackages.set(nameToUse, depVersion);
-
                 if (depPkg.monoRepo === undefined) {
                     prereleasePackages.set(depPkg.name, depVersion);
                 } else {
@@ -211,25 +283,6 @@ export async function getPreReleaseDependencies(
         packages: prereleasePackages,
         isEmpty,
     };
-}
-
-/** Convenience function to hydrate an array of {@link Package} objects from {@link ReleasePackage}s. */
-function getPackagesFromReleasePackages(
-    context: Context,
-    relPackages: ReleasePackage[],
-): Package[] {
-    const packages: Package[] = [];
-
-    for (const rp of relPackages) {
-        const pkg = context.fullPackageMap.get(rp);
-        if (pkg === undefined) {
-            throw new Error(`Can't find package in context: ${rp}`);
-        }
-
-        packages.push(pkg);
-    }
-
-    return packages;
 }
 
 /**
@@ -255,7 +308,7 @@ export async function isReleased(
 
     const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
     if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
-        // eslint-disable-next-line no-param-reassign
+        // eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
         releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
     }
 
@@ -294,7 +347,7 @@ export function generateReleaseGitTagName(
 }
 
 /**
- *  Returns an array of all the git tags associated with a release group.
+ * Returns an array of all the git tags associated with a release group.
  *
  * @param context - The {@link Context}.
  * @param releaseGroupOrPackage - The release group or independent package to get tags for.
@@ -306,16 +359,12 @@ export async function getTagsForReleaseGroup(
     context: Context,
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): Promise<string[]> {
-    let prefix = "";
-    try {
-        prefix = isReleaseGroup(releaseGroupOrPackage)
-            ? releaseGroupOrPackage.toLowerCase()
-            : PackageName.getUnscopedName(releaseGroupOrPackage);
-    } catch {
-        console.log(releaseGroupOrPackage);
-    }
+    const prefix = isReleaseGroup(releaseGroupOrPackage)
+        ? releaseGroupOrPackage.toLowerCase()
+        : PackageName.getUnscopedName(releaseGroupOrPackage);
+    const tagList = await context.gitRepo.getAllTags(`${prefix}_v*`);
 
-    const allTags = await context.gitRepo.getAllTags(`${prefix}*`);
+    const allTags = tagList;
     return allTags;
 }
 
@@ -328,7 +377,8 @@ export async function getTagsForReleaseGroup(
  * @internal
  */
 export function getVersionFromTag(tag: string): string | undefined {
-    // TODO: Consider a stronger check here using a regex.
+    // This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
+    // name.
     const tagSplit = tag.split("_v");
     if (tagSplit.length !== 2) {
         return undefined;
@@ -348,9 +398,14 @@ export function getVersionFromTag(tag: string): string | undefined {
  * @internal
  */
 export interface VersionDetails {
-    /** The version. */
-    version: string;
-    /** The date the version was released, if applicable. */
+    /**
+     * The version of the release.
+     */
+    version: ReleaseVersion;
+
+    /**
+     * The date the version was released, if applicable.
+     */
     date?: Date;
 }
 
@@ -360,8 +415,6 @@ export interface VersionDetails {
  *
  * @param context - The {@link Context}.
  * @param releaseGroupOrPackage - The release group or independent package to get versions for.
- * @param allowPrereleases - If true, allow pre-release versions to be returned. Otherwise all pre-release versions will
- * be filtered out of the returned array.
  * @returns An array of {@link VersionDetails} containing the version and date for each version.
  *
  * @internal
@@ -369,7 +422,6 @@ export interface VersionDetails {
 export async function getAllVersions(
     context: Context,
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-    allowPrereleases = false,
 ): Promise<VersionDetails[] | undefined> {
     const versions = new Map<string, Date>();
     const tags = await getTagsForReleaseGroup(context, releaseGroupOrPackage);
@@ -404,10 +456,10 @@ export async function getAllVersions(
  *
  * @internal
  */
-export async function sortVersions(
+export function sortVersions(
     versions: VersionDetails[],
     sortKey: "version" | "date",
-): Promise<VersionDetails[]> {
+): VersionDetails[] {
     const sortedVersions: VersionDetails[] = [];
 
     // Clone the array
@@ -424,4 +476,21 @@ export async function sortVersions(
     }
 
     return sortedVersions;
+}
+
+/**
+ * Filters an array of {@link VersionDetails}, removing versions older than a specified number of business days.
+ *
+ * @param versions - The array of versions to filter.
+ * @param numBusinessDays - The number of business days to consider recent.
+ * @returns An array of versions that are more recent than numBusinessDays.
+ */
+export function filterVersionsOlderThan(
+    versions: VersionDetails[],
+    numBusinessDays: number,
+): VersionDetails[] {
+    return versions.filter((v) => {
+        const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
+        return diff <= numBusinessDays;
+    });
 }

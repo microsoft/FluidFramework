@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MarkListFactory, Transposed as T } from "../../changeset";
+import { MarkListFactory, Transposed as T } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 
@@ -52,7 +52,10 @@ describe("MarkListFactory", () => {
             {
                 type: "Insert",
                 id: 0,
-                content: [{ type, value: 1 }, { type, value: 2 }],
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                ],
             },
         ]);
     });

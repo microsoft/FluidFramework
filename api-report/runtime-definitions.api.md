@@ -33,6 +33,16 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
+// @public @deprecated (undocumented)
+export enum BindState {
+    // (undocumented)
+    Binding = "Binding",
+    // (undocumented)
+    Bound = "Bound",
+    // (undocumented)
+    NotBound = "NotBound"
+}
+
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
 
@@ -105,7 +115,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @public (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
@@ -127,7 +139,7 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // @deprecated (undocumented)
+    // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -152,6 +164,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

@@ -74,17 +74,24 @@ export const VisibilityState = {
 
     /**
      * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     *
      * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
-     *    not visible to globally visible.
+     * not visible to globally visible.
+     *
      * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
-     *    visible.
+     * visible.
      */
     GloballyVisible: "GloballyVisible",
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent {
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+export interface IContainerRuntimeBaseEvents extends IEvent{
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+    /**
+     * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+     * represent internal container runtime type / content.
+     */
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
@@ -188,6 +195,13 @@ export interface IContainerRuntimeBase extends
     getAudience(): IAudience;
 }
 
+/** @deprecated - Used only in deprecated API bindToContext */
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
+}
+
 /**
  * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
  *
@@ -208,8 +222,8 @@ export interface IFluidDataStoreChannel extends
     readonly visibilityState?: VisibilityState;
 
     /**
-     * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
+     * @deprecated This will be removed in favor of {@link IFluidDataStoreChannel.makeVisibleAndAttachGraph}.
      */
     attachGraph(): void;
 
@@ -370,6 +384,12 @@ export interface IFluidDataStoreContext extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+
+    /**
+     * @deprecated - To be removed in favor of makeVisible.
+     * Register the runtime to the container
+     */
+    bindToContext(): void;
 
     /**
      * Called to make the data store locally visible in the container. This happens automatically for root data stores

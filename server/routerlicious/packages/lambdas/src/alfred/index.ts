@@ -89,7 +89,9 @@ function sanitizeMessage(message: any): IDocumentMessage {
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
-    };
+        compression: message.compression,
+    // back-compat ADO #1932: Remove cast when protocol change propagates
+    } as any;
 
     return sanitizedMessage;
 }
@@ -227,11 +229,7 @@ export function configureWebSocketServices(
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], mode: ConnectionMode): boolean {
-            if (hasWriteAccess(scopes)) {
-                return mode === "write";
-            } else {
-                return false;
-            }
+            return hasWriteAccess(scopes) ? mode === "write" : false;
         }
 
         function clearExpirationTimer() {

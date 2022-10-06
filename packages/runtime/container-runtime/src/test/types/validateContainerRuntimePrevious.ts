@@ -139,26 +139,14 @@ use_old_VariableDeclaration_DefaultSummaryConfiguration(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaScheduler": {"forwardCompat": false}
+* "RemovedClassDeclaration_DeltaScheduler": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DeltaScheduler():
-    TypeOnly<old.DeltaScheduler>;
-declare function use_current_ClassDeclaration_DeltaScheduler(
-    use: TypeOnly<current.DeltaScheduler>);
-use_current_ClassDeclaration_DeltaScheduler(
-    get_old_ClassDeclaration_DeltaScheduler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaScheduler": {"backCompat": false}
+* "RemovedClassDeclaration_DeltaScheduler": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DeltaScheduler():
-    TypeOnly<current.DeltaScheduler>;
-declare function use_old_ClassDeclaration_DeltaScheduler(
-    use: TypeOnly<old.DeltaScheduler>);
-use_old_ClassDeclaration_DeltaScheduler(
-    get_current_ClassDeclaration_DeltaScheduler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1567,26 +1555,14 @@ use_old_EnumDeclaration_RuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ScheduleManager": {"forwardCompat": false}
+* "RemovedClassDeclaration_ScheduleManager": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ScheduleManager():
-    TypeOnly<old.ScheduleManager>;
-declare function use_current_ClassDeclaration_ScheduleManager(
-    use: TypeOnly<current.ScheduleManager>);
-use_current_ClassDeclaration_ScheduleManager(
-    get_old_ClassDeclaration_ScheduleManager());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ScheduleManager": {"backCompat": false}
+* "RemovedClassDeclaration_ScheduleManager": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ScheduleManager():
-    TypeOnly<current.ScheduleManager>;
-declare function use_old_ClassDeclaration_ScheduleManager(
-    use: TypeOnly<old.ScheduleManager>);
-use_old_ClassDeclaration_ScheduleManager(
-    get_current_ClassDeclaration_ScheduleManager());
 
 /*
 * Validate forward compat by using old type in place of current type

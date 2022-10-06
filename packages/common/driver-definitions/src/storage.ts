@@ -20,6 +20,7 @@ import {
     ITokenClaims,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
@@ -48,8 +49,8 @@ export interface IDeltaStorageService {
      * @param from - first op to retrieve (inclusive)
      * @param to - first op not to retrieve (exclusive end)
      * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
-     *  spo which could help in debugging sessions if any issue occurs.
+     * of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     * spo which could help in debugging sessions if any issue occurs.
      */
     get(
         tenantId: string,
@@ -80,8 +81,8 @@ export interface IDocumentDeltaStorageService {
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
-     *  spo which could help in debugging sessions if any issue occurs.
+     * of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     * spo which could help in debugging sessions if any issue occurs.
      */
     fetchMessages(from: number,
         to: number | undefined,
@@ -91,17 +92,25 @@ export interface IDocumentDeltaStorageService {
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
+// DO NOT INCREASE THIS TYPE'S VALUE - If a driver started using a larger value, GC would likely start closing sessions
+export type FiveDaysMs = 432000000; /* 5 days in milliseconds */
+
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
 
-    // If this policy is provided, it tells runtime on ideal size for blobs
-    // Blobs that are smaller than that size should be aggregated into bigger blobs
+    /**
+     * If this policy is provided, it tells runtime on ideal size for blobs.
+     * Blobs that are smaller than that size should be aggregated into bigger blobs.
+     */
     readonly minBlobSize?: number;
 
     /**
-     * This policy tells the runtime that the driver will not use cached snapshots older than this value.
+     * If undefined, the driver makes no guarantees about the age of snapshots used for loading.
+     * Otherwise, the driver will not use snapshots that were added to the cache more than 5 days ago (per client clock)
+     * The value MUST be 5 days if defined. This fixed upper bound is necessary for the Garbage Collection feature
+     * in the Runtime layer to reliably compute when an object will never be referenced again and can be deleted.
      */
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
 }
 
 /**
@@ -119,7 +128,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * Returns the snapshot tree.
      * @param version - Version of the snapshot to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
-     *  in debugging purposes to see why this call was made.
+     * in debugging purposes to see why this call was made.
      */
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
@@ -128,11 +137,11 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param versionId - Version id of the requested version.
      * @param count - Number of the versions to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
-     *  in debugging purposes to see why this call was made.
+     * in debugging purposes to see why this call was made.
      * @param fetchSource - Callers can specify the source of the response. For ex. Driver may choose to cache
-     *  requests and serve data from cache. That will result in stale info returned. Callers can disable this
-     *  functionality by passing fetchSource = noCache and ensuring that driver will return latest information
-     *  from storage.
+     * requests and serve data from cache. That will result in stale info returned. Callers can disable this
+     * functionality by passing fetchSource = noCache and ensuring that driver will return latest information
+     * from storage.
      */
     getVersions(
         versionId: string | null,
@@ -168,7 +177,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
-    (event: "disconnect", listener: (reason: any) => void);
+    (event: "disconnect", listener: (reason: IAnyDriverError) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);

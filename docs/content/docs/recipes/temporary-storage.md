@@ -29,7 +29,7 @@ When the data saving logic runs client-side, it makes sense to have this logic r
 
 Fluid Framework does not contain built-in functionality to limit a client's ability to edit a container. However,
 developers can add this functionality to their containers and manage the editable/non-editable state within the
-container themselves. A consensus-based distributed data structure (DDS) like TaskManager can be used to coordinate
+container themselves. A [consensus-based distributed data structure (DDS)]({{< relref "/docs/data-structures/overview.md" >}})  can be used to coordinate
 between clients. When saving needs to occur, one client can change the container to a non-editable state, and once all
 clients confirm, the save operation can continue.
 

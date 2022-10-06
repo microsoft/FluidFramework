@@ -15,12 +15,12 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
-import { logError, logWarning } from "./LoggingUtilities";
-import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfiguration";
+} from "./Configuration";
+import { Logger } from "./Logging";
+import { MarkdownDocument } from "./MarkdownDocument";
 import {
     CustomDocNodeKind,
     DocAlert,
@@ -48,7 +48,7 @@ export interface EmitterOptions extends BaseEmitterOptions {
     /**
      * The root item of the documentation node tree being emitted.
      */
-    contextApiItem: ApiItem | undefined;
+    contextApiItem: ApiItem;
 
     /**
      * Callback to get the link URL for the specified API item.
@@ -68,6 +68,11 @@ export interface EmitterOptions extends BaseEmitterOptions {
      * @defaultValue 0
      */
     headingLevel?: number;
+
+    /**
+     * An optional logger for reporting system events while emitting Markdown contents.
+     */
+    logger?: Logger;
 }
 
 /**
@@ -87,9 +92,29 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      */
     protected readonly apiModel: ApiModel;
 
-    public constructor(apiModel: ApiModel) {
+    /**
+     * Optional hook for generating front-matter that will be inserted at the top of the emitted Markdown string.
+     *
+     * @param contextApiItem - The API item for which the Markdown document is being generated.
+     *
+     * @returns The string of front-matter contents, or `undefined` if no front-matter is required.
+     *
+     * @defaultValue Does not insert any front-matter.
+     *
+     * @virtual
+     */
+    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
+
+    /**
+     * Constructor.
+     *
+     * @param apiModel - See {@link MarkdownEmitter.apiModel}.
+     * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
+     */
+    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string) {
         super();
         this.apiModel = apiModel;
+        this.generateFrontMatter = generateFrontMatter;
     }
 
     /**
@@ -99,6 +124,14 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
+        if (this.generateFrontMatter !== undefined) {
+            const frontMatter = this.generateFrontMatter(options.contextApiItem).trim();
+
+            const writer = new IndentedWriter(stringBuilder);
+            writer.write(frontMatter);
+            writer.ensureSkippedLine();
+        }
+
         return super.emit(stringBuilder, docNode, options).trim();
     }
 
@@ -171,6 +204,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         }
 
         const options: EmitterOptions = context.options;
+        const logger = options.logger;
 
         const result: IResolveDeclarationReferenceResult =
             this.apiModel.resolveDeclarationReference(
@@ -187,19 +221,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
                     rawLinkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
-                if (rawLinkText.length > 0) {
-                    this.writeLink(
-                        this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
-                        linkUrl,
-                        context,
-                    );
-                } else {
-                    logWarning("Unable to determine link text");
-                }
+                this.writeLink(
+                    this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
+                    linkUrl,
+                    context,
+                );
             }
-        } else if (result.errorMessage) {
+        } else if (result.errorMessage !== undefined) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
+            logger?.warning(`Unable to resolve reference "${elementText}": ${result.errorMessage}`);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -269,12 +299,13 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         docNodeSiblings: boolean,
     ): void {
         const writer: IndentedWriter = context.writer;
+        const logger = context.options.logger;
 
         writer.ensureSkippedLine();
 
         let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
         if (headingLevel <= 0) {
-            logError(
+            logger?.error(
                 `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
             );
             headingLevel = 1;
@@ -283,11 +314,11 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         if (headingLevel <= maxHeadingLevel) {
             const prefix = "#".repeat(headingLevel);
             let suffix: string = "";
-            if (docHeading.id) {
+            if (docHeading.id !== undefined) {
                 suffix = ` {#${docHeading.id}}`;
             }
 
-            writer.writeLine(prefix + " " + this.getEscapedText(docHeading.title) + suffix);
+            writer.writeLine(`${prefix} ${this.getEscapedText(docHeading.title)}${suffix}`);
             writer.writeLine();
         } else {
             // If the heading level is beyond the max, we will simply render the title as bolded text
@@ -368,7 +399,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
 
         writer.increaseIndent("> ");
 
-        let headerText: string[] = [];
+        const headerText: string[] = [];
         if (docAlert.type !== undefined) {
             headerText.push(`[${docAlert.type}]`);
         }
@@ -414,7 +445,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
 
         // Markdown table rows can have inconsistent cell counts.  Size the table based on the longest row.
         let columnCount: number = 0;
-        if (docTable.header) {
+        if (docTable.header !== undefined) {
             columnCount = docTable.header.cells.length;
         }
         for (const row of docTable.rows) {
@@ -427,9 +458,9 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         writer.write("| ");
         for (let i: number = 0; i < columnCount; ++i) {
             writer.write(" ");
-            if (docTable.header) {
+            if (docTable.header !== undefined) {
                 const cell: DocTableCell | undefined = docTable.header.cells[i];
-                if (cell) {
+                if (cell !== undefined) {
                     this.writeNode(cell.content, childContext, false);
                 }
             }
@@ -487,9 +518,9 @@ export function emitMarkdown(
 ): string {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
-    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
+    const resolvedMarkdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
-    return markdownEmitter.emit(new StringBuilder(), document.contents, {
+    return resolvedMarkdownEmitter.emit(new StringBuilder(), document.contents, {
         contextApiItem: document.apiItem,
         getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
     });

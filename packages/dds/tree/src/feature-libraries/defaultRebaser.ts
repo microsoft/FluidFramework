@@ -5,8 +5,8 @@
 
 import { AnchorSet, Delta, UpPath, Value } from "../tree";
 import { ChangeRebaser } from "../rebase";
-import { Contravariant, Covariant, Invariant } from "../util";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
+import { Contravariant, Covariant, Invariant, JsonCompatible } from "../util";
+import { ChangeEncoder, ChangeFamily } from "../change-family";
 
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeset> {
     readonly encoder = defaultChangeEncoder;
@@ -33,7 +33,9 @@ export class DefaultRebaser implements ChangeRebaser<DefaultChangeset> {
     rebaseAnchors(anchor: AnchorSet, over: DefaultChangeset): void {
         throw new Error("Method not implemented.");
     }
-    _typeCheck?: Covariant<DefaultChangeset> & Contravariant<DefaultChangeset> & Invariant<DefaultChangeset>;
+    _typeCheck?: Covariant<DefaultChangeset> &
+        Contravariant<DefaultChangeset> &
+        Invariant<DefaultChangeset>;
     compose(changes: DefaultChangeset[]): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
@@ -75,5 +77,7 @@ export abstract class Change {
 }
 
 export class SetValue extends Change {
-    public constructor(path: UpPath, public readonly value: Value) { super(path); }
+    public constructor(path: UpPath, public readonly value: Value) {
+        super(path);
+    }
 }

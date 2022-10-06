@@ -43,3 +43,5 @@ export function getDeltaY(direction: Direction) {
 export function getTabDirection(direction: Direction): TabDirection {
     return getDeltaX(direction) || getDeltaY(direction);
 }
+
+/* eslint-enable no-bitwise */

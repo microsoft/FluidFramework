@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiCallSignature,
@@ -23,12 +25,10 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import * as Path from "path";
 
+import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { logError } from "../LoggingUtilities";
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
 /**
@@ -139,7 +139,8 @@ export function getFirstAncestorWithOwnDocument(
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
             throw new Error(
-                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered to its own document.`,
+                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered ` +
+                    `to its own document.`,
             );
         }
         hierarchyItem = parent;
@@ -350,9 +351,10 @@ export function getHeadingForApiItem(
  * Notes:
  *
  * - If the item is one that will be rendered to its own document, this will return `undefined`.
- *   Any links pointing to this item may simply link to the document; no heading ID is needed.
+ * Any links pointing to this item may simply link to the document; no heading ID is needed.
+ *
  * - The resulting ID is context-dependent. In order to guarantee uniqueness, it will need to express
- *   hierarchical information up to the ancester item whose document the specified item will ultimately be rendered to.
+ * hierarchical information up to the ancester item whose document the specified item will ultimately be rendered to.
  *
  * @param apiItem - The API item for which the heading ID is being generated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
@@ -389,11 +391,12 @@ export function getHeadingIdForApiItem(
 
 /**
  * Gets the "filted" parent of the provided API item.
- * This logic specifically skips items of the following kinds:
  *
- * - EntryPoint
- *   - Skipped because any given Package item will have exactly 1 EntryPoint child, making this
- *     redundant in the hierarchy.
+ * @remarks This logic specifically skips items of the following kinds:
+ *
+ * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
+ * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
+ * API-Extractor adds support for multiple entrypoints.
  *
  * @param apiItem - The API item whose filtered parent will be returned.
  */
@@ -446,14 +449,15 @@ export function getAncestralHierarchy(
 /**
  * Determines whether or not the specified API item kind is one that should be rendered to its own document.
  *
- * @remarks
- * This is essentially a wrapper around {@link PolicyOptions.documentBoundaries}, but also enforces system-wide invariants.
+ * @remarks This is essentially a wrapper around {@link PolicyOptions.documentBoundaries}, but also enforces
+ * system-wide invariants.
  *
  * Namely...
  *
  * - `Model` and `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ *
  * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- *   regardless of the specified policy.
+ * regardless of the specified policy.
  *
  * @param kind - The kind of API item.
  * @param documentBoundaries - See {@link DocumentBoundaries}
@@ -493,14 +497,15 @@ export function doesItemRequireOwnDocument(
  * in the resulting documentation suite.
  * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
  *
- * @remarks
- * This is essentially a wrapper around {@link PolicyOptions.hierarchyBoundaries}, but also enforces system-wide invariants.
+ * @remarks This is essentially a wrapper around {@link PolicyOptions.hierarchyBoundaries}, but also enforces
+ * system-wide invariants.
  *
  * Namely...
  *
  * - `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ *
  * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- *   regardless of the specified policy.
+ * regardless of the specified policy.
  *
  * @param kind - The kind of API item.
  * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
@@ -556,7 +561,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  *
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
- * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
@@ -586,13 +591,15 @@ function getCustomBlockSectionsForMultiInstanceTags(
  *
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
- * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionForSingleInstanceTag(
     apiItem: ApiItem,
     tagName: string,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
     if (blocks === undefined) {
@@ -600,7 +607,7 @@ function getCustomBlockSectionForSingleInstanceTag(
     }
 
     if (blocks.length > 1) {
-        logError(
+        config.logger.error(
             `API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
         );
     }
@@ -650,11 +657,19 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
-export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
-    return getCustomBlockSectionForSingleInstanceTag(apiItem, StandardTags.defaultValue.tagName);
+export function getDefaultValueBlock(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    return getCustomBlockSectionForSingleInstanceTag(
+        apiItem,
+        StandardTags.defaultValue.tagName,
+        config,
+    );
 }
 
 /**
@@ -738,28 +753,28 @@ export function isStatic(apiItem: ApiItem): boolean {
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
     const modifiers: ApiModifier[] = [];
 
-    if (isOptional(apiItem) && !modifiersToOmit?.includes(ApiModifier.Optional)) {
+    if (isOptional(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Optional) ?? false)) {
         modifiers.push(ApiModifier.Optional);
     }
 
-    if (isReadonly(apiItem) && !modifiersToOmit?.includes(ApiModifier.Readonly)) {
+    if (isReadonly(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Readonly) ?? false)) {
         modifiers.push(ApiModifier.Readonly);
     }
 
-    if (isStatic(apiItem) && !modifiersToOmit?.includes(ApiModifier.Static)) {
+    if (isStatic(apiItem) && !(modifiersToOmit?.includes(ApiModifier.Static) ?? false)) {
         modifiers.push(ApiModifier.Static);
     }
 
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
         if (
             apiItem.tsdocComment.modifierTagSet.isVirtual() &&
-            !modifiersToOmit?.includes(ApiModifier.Virtual)
+            !(modifiersToOmit?.includes(ApiModifier.Virtual) ?? false)
         ) {
             modifiers.push(ApiModifier.Virtual);
         }
         if (
             apiItem.tsdocComment.modifierTagSet.isSealed() &&
-            !modifiersToOmit?.includes(ApiModifier.Sealed)
+            !(modifiersToOmit?.includes(ApiModifier.Sealed) ?? false)
         ) {
             modifiers.push(ApiModifier.Sealed);
         }

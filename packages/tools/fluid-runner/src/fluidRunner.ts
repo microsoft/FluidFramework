@@ -3,76 +3,98 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+/* eslint-disable max-len */
 import * as yargs from "yargs";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { exportFile } from "./exportFile";
+import { IFluidFileConverter } from "./codeLoaderBundle";
+import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 // eslint-disable-next-line import/no-internal-modules
-import { FileLogger } from "./logger/FileLogger";
+import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
+import { validateCommandLineArgs } from "./utils";
 
-function fluidRunner() {
+/**
+ * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
+ */
+export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     yargs
         .strict()
         .version(false)
         .command(
             "exportFile",
-            "Generate an output for a local snapshot",
+            "Generate an output for a local ODSP snapshot",
             // eslint-disable-next-line @typescript-eslint/no-shadow
             (yargs) =>
                 yargs
                     .option("codeLoader", {
-                        describe: "Name of the code loader bundle",
+                        describe: "Path to code loader bundle. Required if this application is being called without modification.\nSee \"README.md\" for more details.",
                         type: "string",
-                        demandOption: true,
+                        demandOption: false,
                     })
                     .option("inputFile", {
-                        describe: "Name of the file containing local ODSP snapshot",
+                        describe: "Path to local ODSP snapshot",
                         type: "string",
                         demandOption: true,
                     })
-                    .option("outputFolder", {
-                        describe: "Name of the output file",
-                        type: "string",
-                        demandOption: true,
-                    })
-                    .option("scenario", {
-                        describe: "Name of scenario to invoke",
+                    .option("outputFile", {
+                        describe: "Path of output file (cannot already exist).\nExecution result will be written here",
                         type: "string",
                         demandOption: true,
                     })
                     .option("telemetryFile", {
-                        describe: "Config and session data for telemetry",
+                        describe: "Path of telemetry file for config and session data (cannot already exist)",
                         type: "string",
                         demandOption: true,
+                    })
+                    .option("options", {
+                        describe: "Additional options passed to container on execution",
+                        type: "string",
+                        demandOption: false,
+                    })
+                    .option("telemetryFormat", {
+                        describe: "Output format for telemetry. Current options are: [\"JSON\", \"CSV\"]",
+                        type: "string",
+                        demandOption: false,
+                        default: "JSON",
+                    })
+                    .option("telemetryProp", {
+                        describe: "Property to add to every telemetry entry. Formatted like \"--telemetryProp prop1 value1 --telemetryProp prop2 \\\"value 2\\\"\".",
+                        type: "array",
+                        demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
-                if (fs.existsSync(argv.telemetryFile)) {
-                    console.error(`Telemetry file already exists [${argv.telemetryFile}]`);
+                const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
+                if (argsError) {
+                    console.error(argsError);
+                    process.exit(1);
+                }
+                const telemetryOptionsResult = validateAndParseTelemetryOptions(argv.telemetryFormat, argv.telemetryProp);
+                if (!telemetryOptionsResult.success) {
+                    console.error(telemetryOptionsResult.error);
                     process.exit(1);
                 }
 
-                const fileLogger = new FileLogger(argv.telemetryFile);
-
-                const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
-                    { all: { Event_Time: () => Date.now() } });
-
-                const result = await exportFile(
-                    argv.codeLoader,
-                    argv.inputFile,
-                    argv.outputFolder,
-                    argv.scenario,
-                    logger,
-                );
+                const result = await (argv.codeLoader
+                    ? parseBundleAndExportFile(
+                        argv.codeLoader,
+                        argv.inputFile,
+                        argv.outputFile,
+                        argv.telemetryFile,
+                        argv.options,
+                        telemetryOptionsResult.telemetryOptions,
+                    ) : exportFile(
+                        fluidFileConverter!,
+                        argv.inputFile,
+                        argv.outputFile,
+                        argv.telemetryFile,
+                        argv.options,
+                        telemetryOptionsResult.telemetryOptions,
+                    ));
 
                 if (!result.success) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
-                    logger.sendErrorEvent({ eventName: result.eventName, message: result.errorMessage }, result.error);
-                    await fileLogger.flush();
                     process.exit(1);
-                } else {
-                    await fileLogger.flush();
                 }
             },
         )
@@ -81,3 +103,4 @@ function fluidRunner() {
 }
 
 fluidRunner();
+/* eslint-enable max-len */

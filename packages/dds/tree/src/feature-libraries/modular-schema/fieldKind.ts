@@ -4,7 +4,12 @@
  */
 
 import {
-    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, fieldSchema, SchemaData,
+    FieldSchema,
+    FieldKindIdentifier,
+    TreeSchemaIdentifier,
+    SchemaPolicy,
+    fieldSchema,
+    SchemaData,
 } from "../../schema-stored";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler } from "./fieldChangeHandler";
@@ -20,6 +25,8 @@ import { FieldChangeHandler } from "./fieldChangeHandler";
  * All behavior must be deterministic, and not change across versions of the app/library.
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
+ *
+ * @sealed
  */
 export class FieldKind {
     /**
@@ -41,10 +48,12 @@ export class FieldKind {
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
         public readonly changeHandler: FieldChangeHandler<any>,
-        private readonly allowsTreeSupersetOf:
-            (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
+        private readonly allowsTreeSupersetOf: (
+            originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+            superset: FieldSchema,
+        ) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-        ) {}
+    ) {}
 
     /**
      * @returns true iff `superset` permits a (non-strict) superset of the subtrees
@@ -70,7 +79,7 @@ export class FieldKind {
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
  */
- export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
     /**
      * Policy information about FieldKinds:
      * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
