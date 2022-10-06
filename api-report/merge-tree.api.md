@@ -307,7 +307,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 
 // Warning: (ae-internal-missing-underscore) The name "IClientEvents" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal (undocumented)
+// @internal
 export type IClientEvents = (event: "normalize", listener: () => void) => void;
 
 // @public (undocumented)
