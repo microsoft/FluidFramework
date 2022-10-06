@@ -10,7 +10,12 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 
-import { ReleaseVersion, bumpVersionScheme } from "@fluid-tools/version-tools";
+import {
+    ReleaseVersion,
+    VersionScheme,
+    bumpVersionScheme,
+    detectVersionScheme,
+} from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
@@ -65,7 +70,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const context = await this.getContext();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const bumpType = flags.bumpType!;
-        const scheme = flags.scheme;
         const shouldInstall = flags.install && !flags.skipChecks;
         const shouldCommit = flags.commit && !flags.skipChecks;
 
@@ -75,6 +79,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         let repoVersion: ReleaseVersion;
         let packageOrReleaseGroup: Package | MonoRepo;
+        let scheme: VersionScheme | undefined;
         const updatedPackages: Package[] = [];
 
         if (isReleaseGroup(args.package_or_release_group)) {
@@ -85,6 +90,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             );
 
             repoVersion = releaseRepo.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(...releaseRepo.packages);
             packageOrReleaseGroup = releaseRepo;
         } else {
@@ -105,6 +111,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             }
 
             repoVersion = releasePackage.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(releasePackage);
             packageOrReleaseGroup = releasePackage;
         }
