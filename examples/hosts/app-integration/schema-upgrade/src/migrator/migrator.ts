@@ -70,6 +70,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     };
 
     private readonly ensureMigrating = () => {
+        // We assume ensureMigrating() is only called once and resolves after the migration is complete.
+
         /**
          * Detached model that is ready to attach. This is stored for retry scenarios.
          */
@@ -95,6 +97,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const doTheMigration = async () => {
+            // doTheMigration() is called at the start of migration but may be called again if the migration is
+            // interrupted or fails. In that case, we will need to retry the migration. In this case,
+            // preparedDetachedModel and/or containerId may be set and used to retry.
+
             const prepareTheMigration = async () => {
                 // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
                 // Currently this fails the migration gracefully and emits an event so the app developer can know
@@ -207,13 +213,18 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             try {
                 isAssigned = await this.currentModel.migrationTool.volunteerForMigration();
             } catch (error) {
-                // If we error here either the container was closed by another client (during the migration process),
-                // or our web socket lost connection. If the this.migrationState is still migrating then we should wait
-                // for the container to reconnect or the migration to be finalized by another client. Otherwise we can
-                // exit the migration process and re-enter the state machine.
+                // If we error here we have disconnected. This can be a normal web socket disconnection, or the
+                // container was closed by another client (during the migration process). If the this.migrationState
+                // is "migrating" then we should wait for the container to reconnect or the migration to be finalized
+                // by another client. Otherwise we can exit the migration process and re-enter the state machine.
+                // The following assert validates our assumption that we are disconnected.
+                assert(!this.currentModel.migrationTool.connected(), "We should be disconnected");
+
                 if (this.migrationState === "migrating") {
                     onDisconnect();
                 } else {
+                    assert(this.currentModel.migrationTool.newContainerId !== undefined,
+                        "newContainerId should be defined");
                     this._migrationP = undefined;
                     this.takeAppropriateActionForCurrentMigratable();
                 }
@@ -223,11 +234,16 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // If we are assigned we can go ahead and complete the migration. If false, then it was completed by
             // another client and we can re-enter the state machine to handle the migrated state.
             if (isAssigned) {
+                // If we are assigned we can attempt to complete the migration.
                 await completeTheMigration();
+                assert(containerId !== undefined, "containerId should be defined");
             } else {
                 this._migrationP = undefined;
                 this.takeAppropriateActionForCurrentMigratable();
             }
+
+            // At the end of migration the newContainerId should be set, therefore this.migrationState is "migrated".
+            assert(this.currentModel.migrationTool.newContainerId !== undefined, "newContainerId should be defined");
         };
 
         this._migrationP = doTheMigration().catch((error) => {

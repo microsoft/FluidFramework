@@ -64,4 +64,9 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
      * Completes the migration task to indicate to other clients the migration is complete.
      */
     completeMigrationTask(): void;
+
+    /**
+     * Whether the runtime is currently connected.
+     */
+    connected(): boolean;
 }
