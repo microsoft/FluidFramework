@@ -3,9 +3,45 @@
  * Licensed under the MIT License.
  */
 
-export * from "./definitions";
-export * from "./gitWholeSummaryManager";
-export * from "./helpers";
-export * from "./isomorphicgitManager";
-export * from "./nodeFsManagerFactory";
-export * from "./nodegitManager";
+export {
+    Constants,
+    IStorageDirectoryConfig,
+    IExternalWriterConfig,
+    IRepositoryManager,
+    IFileSystemPromises,
+    IFileSystemManager,
+    IFileSystemManagerParams,
+    IFileSystemManagerFactory,
+    IStorageRoutingId,
+    IRepoManagerParams,
+    IRepositoryManagerFactory,
+    GitObjectType,
+    BaseGitRestTelemetryProperties,
+} from "./definitions";
+export {
+    latestSummarySha,
+    isContainerSummary,
+    isChannelSummary,
+    GitWholeSummaryManager,
+} from "./gitWholeSummaryManager";
+export {
+    validateBlobEncoding,
+    validateBlobContent,
+    getExternalWriterParams,
+    getRepoManagerParamsFromRequest,
+    exists,
+    persistLatestFullSummaryInStorage,
+    retrieveLatestFullSummaryFromStorage,
+    getRepoPath,
+    getGitDirectory,
+    parseStorageRoutingId,
+    getLumberjackBasePropertiesFromRepoManagerParams,
+    getRequestPathCategory,
+    logAndThrowApiError,
+    getRepoManagerFromWriteAPI,
+    getSoftDeletedMarkerPath,
+    checkSoftDeleted,
+} from "./helpers";
+export { IsomorphicGitRepositoryManager, IsomorphicGitManagerFactory } from "./isomorphicgitManager";
+export { NodeFsManagerFactory } from "./nodeFsManagerFactory";
+export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";

@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export * from "./CollaborativeCheckbox";
-export * from "./CollaborativeInput";
-export * from "./CollaborativeTextArea";
-export * from "./SharedStringHelper";
+export {
+    ICollaborativeCheckboxProps,
+    ICollaborativeCheckboxState,
+    CollaborativeCheckbox,
+} from "./CollaborativeCheckbox";
+export { ICollaborativeInputProps, ICollaborativeInputState, CollaborativeInput } from "./CollaborativeInput";
+export { ICollaborativeTextAreaProps, CollaborativeTextArea } from "./CollaborativeTextArea";
+export {
+    ISharedStringHelperTextChangedEventArgs,
+    ISharedStringHelperEvents,
+    SharedStringHelper,
+} from "./SharedStringHelper";

@@ -26,7 +26,7 @@ import {
 /**
  * Validates that the input encoding is valid
  */
- export function validateBlobEncoding(encoding: BufferEncoding): boolean {
+export function validateBlobEncoding(encoding: BufferEncoding): boolean {
     return encoding === "utf-8" || encoding === "base64";
 }
 

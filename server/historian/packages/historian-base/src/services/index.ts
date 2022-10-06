@@ -3,8 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export * from "./definitions";
-export * from "./redisCache";
-export * from "./redisTenantCache";
-export * from "./restGitService";
-export * from "./riddlerService";
+export {
+    ICache,
+    ITenantService,
+    ICredentials,
+    IStorage,
+    ITenant,
+    ITenantCustomDataExternal,
+    IExternalStorage,
+    IConnectionString,
+    IOauthAccessInfo,
+} from "./definitions";
+export { RedisCache } from "./redisCache";
+export { RedisTenantCache } from "./redisTenantCache";
+export { IDocument, RestGitService } from "./restGitService";
+export { RiddlerService } from "./riddlerService";
