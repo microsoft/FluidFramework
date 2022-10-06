@@ -4,4 +4,4 @@
  */
 
 export { CollaborativeText } from "./fluid-object";
-export * from "./view";
+export { CollaborativeTextView } from "./view";

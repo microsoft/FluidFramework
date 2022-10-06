@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerCode";
-export * from "./inventoryList";
+export { inventoryListId, migrationToolId, InventoryListContainerRuntimeFactory } from "./containerCode";
+export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList";

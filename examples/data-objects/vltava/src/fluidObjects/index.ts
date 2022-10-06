@@ -4,5 +4,5 @@
  */
 
 export { Anchor } from "./anchor";
-export * from "./tabs";
-export * from "./vltava";
+export { TabsName, TabsFluidObject } from "./tabs";
+export { Vltava } from "./vltava";

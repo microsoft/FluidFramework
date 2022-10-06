@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./tabs";
+export { TabsName, TabsFluidObject } from "./tabs";

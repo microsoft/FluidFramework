@@ -4,4 +4,4 @@
  */
 
 export { TodoName, Todo, TodoFactory } from "./Todo";
-export * from "./TodoView";
+export { TodoView } from "./TodoView";
