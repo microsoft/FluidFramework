@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo } from "@fluidframework/build-tools";
+
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
 import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
@@ -17,7 +18,7 @@ import {
     isDependencyUpdateType,
     npmCheckUpdates,
 } from "../../lib";
-import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
+import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

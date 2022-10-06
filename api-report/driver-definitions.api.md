@@ -70,6 +70,15 @@ export enum FetchSource {
 }
 
 // @public (undocumented)
+export type FiveDaysMs = 432000000;
+
+// @public
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
+}
+
+// @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -119,7 +128,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
-    (event: "disconnect", listener: (reason: any) => void): any;
+    (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
     // (undocumented)
@@ -175,7 +184,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 

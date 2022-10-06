@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as path from "path";
+
 import { fatal } from "../bumpVersion/utils";
-import { defaultLogger, Logger } from "./logging";
+import { Logger, defaultLogger } from "./logging";
 import { Package, Packages } from "./npmPackage";
 import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
 
@@ -24,7 +24,9 @@ export enum MonoRepoKind {
  * A type guard used to determine if a string is a MonoRepoKind.
  */
 export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
-    if(str === undefined) { return false; }
+    if (str === undefined) {
+        return false;
+    }
 
     const list = Object.values<string>(MonoRepoKind);
     const isMonoRepoValue = list.includes(str);
@@ -77,7 +79,8 @@ export class MonoRepo {
         public readonly kind: MonoRepoKind,
         public readonly repoPath: string,
         ignoredDirs?: string[],
-        private readonly logger: Logger = defaultLogger,) {
+        private readonly logger: Logger = defaultLogger,
+    ) {
         this.version = "";
         const lernaPath = path.join(repoPath, "lerna.json");
         const packagePath = path.join(repoPath, "package.json");
@@ -86,18 +89,25 @@ export class MonoRepo {
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
-                    logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+                logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
                 this.version = lerna.version;
                 versionFromLerna = true;
             }
 
             if (lerna.packages !== undefined) {
-                    logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
+                logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
 
                 for (const dir of lerna.packages as string[]) {
                     // TODO: other glob pattern?
                     const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this));
+                    this.packages.push(
+                        ...Packages.loadDir(
+                            path.join(this.repoPath, loadDir),
+                            kind,
+                            ignoredDirs,
+                            this,
+                        ),
+                    );
                 }
                 this.workspaceGlobs = lerna.packages;
                 return;
@@ -121,7 +131,9 @@ export class MonoRepo {
             this.workspaceGlobs = pkgJson.workspaces;
             return;
         }
-        fatal(`Couldn't find lerna.json or package.json, or they were missing expected properties.`);
+        fatal(
+            `Couldn't find lerna.json or package.json, or they were missing expected properties.`,
+        );
     }
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {

@@ -657,7 +657,7 @@ function createPositionReference(
     return createPositionReferenceFromSegoff(client, segoff, refType, op);
 }
 
-function createSequenceInterval(
+export function createSequenceInterval(
     label: string,
     start: number,
     end: number,
@@ -1013,7 +1013,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
     public serialize(): ISerializedIntervalCollectionV2 {
         const intervals = this.intervalTree.intervals.keys();
-
         return {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize())),
@@ -1065,7 +1064,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
+export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
     compareReferencePositions(a.end, b.end);
 
 class SequenceIntervalCollectionFactory
@@ -1081,7 +1080,7 @@ class SequenceIntervalCollectionFactory
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -1161,7 +1160,7 @@ export class IntervalCollectionValueType
     private static readonly _ops = makeOpsMap<Interval>();
 }
 
-function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
+export function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
     const rebase = (
         collection: IntervalCollection<T>,
         op: IValueTypeOperationValue,

@@ -90,11 +90,17 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
 export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
-    cursor: TCursor, key: FieldKey, f: (cursor: TCursor) => T): T[] {
+    cursor: TCursor,
+    key: FieldKey,
+    f: (cursor: TCursor) => T,
+): T[] {
     const output: T[] = [];
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, 0x34e /* pending not supported in mapCursorField */);
+        assert(
+            result === TreeNavigationResult.NotFound,
+            0x34e /* pending not supported in mapCursorField */,
+        );
         // This has to be special cased (and not fall through the code below)
         // since the call to `up` needs to be skipped.
         return [];
@@ -103,26 +109,39 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
         output.push(f(cursor));
         result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
+    assert(
+        result === TreeNavigationResult.NotFound,
+        0x34f /* expected enumeration to end at end of field */,
+    );
     cursor.up();
     return output;
 }
 
 export function reduceField<T>(
-    cursor: ITreeCursor, key: FieldKey, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
+    cursor: ITreeCursor,
+    key: FieldKey,
+    initial: T,
+    f: (cursor: ITreeCursor, initial: T) => T,
+): T {
     let output: T = initial;
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, 0x3bb /* pending not supported in reduceField */);
+        assert(
+            result === TreeNavigationResult.NotFound,
+            0x3bb /* pending not supported in reduceField */,
+        );
         // This has to be special cased (and not fall through the code below)
         // since the call to `up` needs to be skipped.
         return output;
     }
     while (result === TreeNavigationResult.Ok) {
-        output = (f(cursor, output));
+        output = f(cursor, output);
         result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, 0x3bc /* expected enumeration to end at end of field */);
+    assert(
+        result === TreeNavigationResult.NotFound,
+        0x3bc /* expected enumeration to end at end of field */,
+    );
     cursor.up();
     return output;
 }

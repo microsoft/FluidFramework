@@ -637,7 +637,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                     this.logConnectionStateChangeTelemetry(value, oldState, reason);
                     if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState(false /* initial transition */);
+                        this.propagateConnectionState(
+                            false /* initial transition */,
+                            value === ConnectionState.Disconnected ? reason : undefined /* disconnectedReason */,
+                        );
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -1610,7 +1613,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState(initialTransition: boolean) {
+    private propagateConnectionState(initialTransition: boolean, disconnectedReason?: string) {
         // When container loaded, we want to propagate initial connection state.
         // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
         // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -1633,7 +1636,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         this.protocolHandler.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
         if (logOpsOnReconnect) {
             this.mc.logger.sendTelemetryEvent(

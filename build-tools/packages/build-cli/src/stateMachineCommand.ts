@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
+
 import { BaseCommand } from "./base";
 import { StateHandler } from "./handlers";
 

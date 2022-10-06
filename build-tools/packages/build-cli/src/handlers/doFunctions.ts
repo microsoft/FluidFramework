@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import chalk from "chalk";
 import { Machine } from "jssm";
+
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
+
+import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
+
 import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
