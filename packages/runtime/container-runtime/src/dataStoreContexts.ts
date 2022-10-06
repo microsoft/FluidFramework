@@ -6,14 +6,50 @@
 import { IDisposable, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
+
+export class TombStonableDataStoreContexts extends Map<string, FluidDataStoreContext> {
+    private readonly contexts = new Map<string, FluidDataStoreContext>();
+    private readonly tombstonedContexts = new Set<string>();
+    public tombstone(id: string) {
+        this.tombstonedContexts.add(id);
+    }
+
+    private isTombstoned(id: string) {
+        return this.tombstonedContexts.has(id);
+    }
+
+    private validateNotTombstoned(id: string) {
+        if (this.isTombstoned(id)) {
+            throw DataProcessingError.wrapIfUnrecognized(
+                new Error(`Datastore: ${id} has been tombstoned!`), "tombstonedGarbageCollectionDatastoreAccessed");
+        }
+    }
+
+    delete(key: string): boolean {
+        return this.contexts.delete(key);
+    }
+
+    get(key: string): FluidDataStoreContext | undefined {
+        this.validateNotTombstoned(key);
+        return super.get(key);
+    }
+    has(key: string): boolean {
+        this.validateNotTombstoned(key);
+        return super.has(key);
+    }
+    set(key: string, value: FluidDataStoreContext): this {
+        this.validateNotTombstoned(key);
+        return super.set(key, value);
+    }
+}
 
  export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
-    private readonly tombstonedContexts = new Set<string>();
 
     /** Attached and loaded context proxies */
-    private readonly _contexts = new Map<string, FluidDataStoreContext>();
+    private readonly _contexts = new TombStonableDataStoreContexts();
 
     /**
      * List of pending context waiting either to be bound or to arrive from another client.
@@ -171,15 +207,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     public tombstone(id: string) {
-        assert(!this.tombstonedContexts.has(id), "Tombstoned dataStore already tombstoned");
         this.delete(id);
-        this.tombstonedContexts.add(id);
+        this._contexts.tombstone(id);
     }
-
-    // private validateNotTombstoned(id: string) {
-    //     if (this.tombstonedContexts.has(id)) {
-    //         const request = { url: id, message: "This datastore has been tombstoned!" };
-    //         throw responseToException(create404Response(request), request);
-    //     }
-    // }
 }

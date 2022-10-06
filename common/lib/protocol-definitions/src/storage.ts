@@ -114,6 +114,11 @@ export interface ISnapshotTree {
      * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
      */
     unreferenced?: true;
+
+    /**
+     * Indicates that this tree is tombstoned. If this is not present, the tree is considered not tombstoned.
+     */
+    tombstoned?: true;
 }
 
 export interface ISnapshotTreeEx extends ISnapshotTree {

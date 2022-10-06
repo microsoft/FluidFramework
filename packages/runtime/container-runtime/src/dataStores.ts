@@ -131,10 +131,11 @@ export class DataStores implements IDisposable {
                 unreferencedDataStoreCount++;
             }
 
-            if (value.tombstoned) {
-                this.contexts.tombstone(key);
-                continue;
-            }
+            // Potentially one way of tombstoning on load
+            // if (value.tombstoned) {
+            //     this.contexts.tombstone(key);
+            //     continue;
+            // }
 
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
