@@ -53,6 +53,7 @@ export async function createBumpBranch(
  * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
  * @param bumpType - The bump type.
  * @param version - The current version of the release group or package.
+ * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
  * @returns The generated branch name.
  *
  * @remarks
@@ -147,6 +148,35 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 
     const releaseBranch = branchPath.join("/");
     return releaseBranch;
+}
+
+/**
+ * Generates an appropriate commit message when bumping a release group or package.
+ *
+ * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
+ * @param bumpType - The bump type.
+ * @param version - The current version of the release group or package.
+ * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
+ * @returns The generated branch name.
+ *
+ * @remarks
+ *
+ * Generated branch names are of the form `bump_deps_<RELEASEGROUP>_<BUMPTYPE>`.
+ *
+ * @internal
+ */
+export function generateCommitMessage(
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+    bumpType: VersionBumpTypeExtended,
+    version: ReleaseVersion,
+    scheme?: VersionScheme,
+): string {
+    const newVersion = bumpVersionScheme(version, bumpType, scheme);
+    const name = isReleaseGroup(releaseGroupOrPackage)
+        ? releaseGroupOrPackage
+        : PackageName.getUnscopedName(releaseGroupOrPackage);
+    const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpType})\n\nBumped ${name} from ${version} to ${newVersion}.`;
+    return message;
 }
 
 /**
