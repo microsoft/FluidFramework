@@ -97,6 +97,12 @@ export const mochaHooks = {
     },
 };
 
+// Add ability to register code to run before and after the test code. This is different
+// than beforeEach/AfterEach in that the injected code is counted as part of the test.
+// It would be good for code that needs to run closer to the test (e.g. tracking timeout).
+// Also, error in this code count as error of the test, instead of part of the hook, which
+// would avoid rest of tests in the suite being skipped because of the hook error.
+
 let newTestFunction: Mocha.TestFunction | undefined;
 
 type BeforeTestFunc<T = any> = (this: Mocha.Context) => T;
