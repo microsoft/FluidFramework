@@ -12,7 +12,7 @@ const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = typeof ClientIds[number];
 
 class ReconnectTestHelper {
-    clients = createClientsAtInitialState("", ...ClientIds);
+    clients = createClientsAtInitialState({ initialState: "" }, ...ClientIds);
 
     idxFromName(name: ClientName): number {
         return name.charCodeAt(0) - "A".charCodeAt(0);

@@ -58,8 +58,8 @@
     "version": "2.0.0",
     "broken": {
       "TypeAliasDeclaration_OdspError": {
-        "forwardCompat": false,
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "InterfaceDeclaration_IOdspError": {
         "forwardCompat": false
