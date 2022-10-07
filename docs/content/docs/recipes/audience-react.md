@@ -4,15 +4,15 @@ menuPosition: 6
 draft: true
 ---
 
-In this tutorial, you'll learn about using the Fluid Framework [Audience]({{< relref "audience.md" >}}) with [React](https://reactjs.org/) to create a visual demonstration of users connecting to a container. The audience is a service-specific object created in correspondence to a container. The audience object holds information related to all users connected to the container. In this example, the Azure Client library will be utilized to create the container and audience.
+In this tutorial, you'll learn about using the Fluid Framework [Audience]({{< relref "audience.md" >}}) with [React](https://reactjs.org/) to create a visual demonstration of users connecting to a container. The audience object holds information related to all users connected to the container. In this example, the Azure Client library will be used to create the container and audience.
 
 To jump ahead into the finished demo, check out the [Audience demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/audience-demo).
 
-The following image shows user id buttons and a container id input field. Leaving the container id field blank and clicking a user id button will create a new container and join as the selected user. Alternatively, you can input a container id and choose a user id to join an existing container as the selected user.
+The following image shows use ID buttons and a container ID input field. Leaving the container ID field blank and clicking a user ID button will create a new container and join as the selected user. Alternatively, the end-user can input a container ID and choose a user ID to join an existing container as the selected user.
 
 [IMAGE]
 
-The next image shows multiple users connected to a container represented by boxes. The box outlined in blue represents the user who is viewing the client while the boxes outlined in black represents the other connected users. As you enter the session with new users, the number of boxes will increase. Similarly, as you join the session on new tabs with existing user id's the corresponding user's connections list will increase.
+The next image shows multiple users connected to a container represented by boxes. The box outlined in blue represents the user who is viewing the client while the boxes outlined in black represents the other connected users. As new users attach to the container with unique ID's, the number of boxes will increase.
 
 [IMAGE]
 
@@ -37,7 +37,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    | `fluid-framework`    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    | `fluid-framework`    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients.|
     | `@fluidframework/azure-client`   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
     | `@fluidframework/test-client-utils`   |Defines the `InsecureTokenProvider` needed to create the connection to a Fluid Service.|
     {.table}
@@ -52,7 +52,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Set up state variables and component view
 
-1. Open the file `\src\App.js` in your code editor. Delete all the default `import` statements. Then delete all the markup from the `return` statement. Then add import statements for components and react hooks. Note that we will be implementing the components in the later steps. The file should look like the following:
+1. Open the file `\src\App.js` in the code editor. Delete all the default `import` statements. Then delete all the markup from the `return` statement. Then add import statements for components and React hooks. Note that we will be implementing the components in the later steps. The file should look like the following:
 
 ```js
   import { useState, useCallback } from "react";
@@ -95,7 +95,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Set up AudienceDisplay component
 
-1. Create and open a file `\src\AudienceDisplay.js` in your code editor. Add the following `import` statements:
+1. Create and open a file `\src\AudienceDisplay.js` in the code editor. Add the following `import` statements:
 
 ```js
   import { useEffect, useState } from "react";
@@ -115,7 +115,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
   }
 
   export const AudienceDisplay = (props) => {
-    //TODO 5: Configure user id, user name, and state variables
+    //TODO 5: Configure user ID, user name, and state variables
     //TODO 6: Set state variables and set event listener on component mount
     //TODO 7: Return list view
   }
@@ -128,9 +128,9 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Getting container and audience
 
-The Fluid runtime will bring changes made to the audience through the container services, but Fluid is agnostic about the UI framework. You can use a helper function to get the Fluid data, from the Audience object into the view layer (the React state). The tryGetAudienceObject method is called when the view component loads after a user id is selected. The returned value is assigned to a React state property.
+You can use a helper function to get the Fluid data, from the Audience object, into the view layer (the React state). The tryGetAudienceObject method is called when the view component loads after a user ID is selected. The returned value is assigned to a React state property.
 
-1. Replace `TODO 1` with the following code. Note that the values for `userId` `userName` `containerId` will be passed in from the `App` component. If there is no `containerId`, a new container is created. Before the client can be used, it needs an `AzureClientProps` that will define the type of connection the client will be using. Think of the `serviceConfig` as the properties required to connect to the service. Note that local mode of Azure Client is used here. To enable collaboration across all client, please replace it with Fluid Relay Service credentials. See how to [set up the Azure Fluid Relay service](https://docs.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) for more information.
+1. Replace `TODO 1` with the following code. Note that the values for `userId` `userName` `containerId` will be passed in from the `App` component. If there is no `containerId`, a new container is created. Before the client can be used, it needs an `AzureClientProps` that will define the type of connection the client will be using. Think of the `serviceConfig` as the properties required to connect to the service. Note that the local mode of Azure Client is used here.
 
 ```js
   const userConfig = {
@@ -161,7 +161,7 @@ The Fluid runtime will bring changes made to the audience through the container 
   };
 ```
 
-1. Replace `TODO 3` with the following code. Note, although the `containerId` is stored on the URL hash, we are getting the value from a parent component since we want the user to manually specify whether they want to join an existing container or create a new one. With this method, we want to wrap the getContainer call in a try catch in the case that the user inputs a container id which does not exist.
+1. Replace `TODO 3` with the following code. Note, although the `containerId` is stored on the URL hash, we are getting the value from a parent component since we want the user to manually specify whether they want to join an existing container or create a new one. With this method, we want to wrap the getContainer call in a try catch in the case that the user inputs a container ID which does not exist.
 
 ```js
   let container;
@@ -189,7 +189,7 @@ The Fluid runtime will bring changes made to the audience through the container 
 
 Now that we've defined how to get the Fluid audience, we need to tell React to call `tryGetAudienceObject` when the Audience Display component is mounted.
 
-1. Replace `TODO 5` with the following code. Note that the user id will come from the parent component as either `user1` `user2` or `random`. If the id is `random` we use `Math.random()` to generate a random number as the id. Additionally, a name will be mapped to the user based on their id as specified in `userNameList`. Lastly, we define the state variables which will store the connected members as well as the current user.
+1. Replace `TODO 5` with the following code. Note that the user ID will come from the parent component as either `user1` `user2` or `random`. If the ID is `random` we use `Math.random()` to generate a random number as the ID. Additionally, a name will be mapped to the user based on their ID as specified in `userNameList`. Lastly, we define the state variables which will store the connected members as well as the current user.
 
 ```js
   const userId = props.userId == "random" ? Math.random() : props.userId;
@@ -303,7 +303,7 @@ Connection transitions can result in short timing windows where `getMyself` retu
 
 ### Setup SelectUser component
 
-1. Create and open a file `\src\SelectUser.js` in your code editor. Add the following `import` statements and functional components:
+1. Create and open a file `\src\SelectUser.js` in the code editor. Add the following `import` statements and functional components:
 
 ```js
 import { useState } from 'react';
@@ -366,13 +366,13 @@ In the Command Prompt, run the following command to start the Fluid service.
 npx @fluidframework/azure-local-service@latest
 ```
 
-Open a new Command Prompt and navigate to the root of the project; for example, `C:/My Fluid Projects/fluid-audience-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
+Open a new Command Prompt and navigate to the root of the project; for example, `C:/My Fluid Projects/fluid-audience-tutorial`. Start the application server with the following command. The application opens in the browser. This may take a few minutes.
 
 ```dotnetcli
 npm run start
 ```
 
-Navigate to `localhost:3000` on a browser tab to view the running application. To create a new container, select a user id button while leaving the container id input blank. To simulate a new user joining the container session, open a new browser tab and navigate to `localhost:3000`. This time, input the container id value which can be found from first browser tab's url proceeding `http://localhost:3000/#`.
+Navigate to `localhost:3000` on a browser tab to view the running application. To create a new container, select a user ID button while leaving the container ID input blank. To simulate a new user joining the container session, open a new browser tab and navigate to `localhost:3000`. This time, input the container ID value which can be found from first browser tab's url proceeding `http://localhost:3000/#`.
 
 {{< callout note >}}
 
