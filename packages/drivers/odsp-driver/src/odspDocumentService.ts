@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,

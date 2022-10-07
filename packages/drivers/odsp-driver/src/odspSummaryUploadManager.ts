@@ -39,7 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
         private readonly forceAccessTokenViaAuthorizationHeader: boolean,
-        private readonly relayServiceTenantAndSessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string | undefined,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
