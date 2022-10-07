@@ -108,8 +108,9 @@ steps:
           checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
 
           checkError=$(npm view $checkVersion)
+          echo $checkError
 
-          if [[ grep -q "npm ERR!" ] || [ $checkError == "" ]]; then
+          if [[ grep -q "npm ERR!" ]]; then
             echo "Passed"
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
