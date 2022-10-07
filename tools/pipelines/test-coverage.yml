@@ -9,7 +9,7 @@ trigger: none
 pr: none
 
 schedules:
-  - cron: "0 0 * * *"
+  - cron: "20 20 * * *"
     displayName: Test Schedule build
     branches:
       include:
