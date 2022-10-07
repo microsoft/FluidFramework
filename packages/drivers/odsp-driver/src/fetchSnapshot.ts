@@ -275,6 +275,15 @@ async function fetchLatestSnapshotCore(
                                         propsToLog,
                                     );
                                 }
+                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                            if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+                                logger.sendErrorEvent({
+                                    eventName: "SlowSnapshotParseCodePaths",
+                                    slowTreeStructureCount: slowTreeParseCodePaths,
+                                    slowBlobStructureCount: slowBlobParseCodePaths,
+                                });
+                            }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
