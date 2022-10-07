@@ -15,8 +15,7 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/lib/commands/run]
-                     Directory
+  --dirname=<value>  [default: current directory] Directory containing bundle stats input
 
 DESCRIPTION
   Generate a report from input bundle stats collected through the collect bundleStats command.
