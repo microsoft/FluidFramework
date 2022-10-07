@@ -20,10 +20,10 @@
             }
         },
         "gc_ci": {
-            "opRatePerMin": 240,
+            "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 72000,
+            "totalSendCount": 10800,
             "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
