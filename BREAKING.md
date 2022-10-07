@@ -61,7 +61,8 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)/
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
-- [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [Remove ScheduleManager and DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [Remove iframe-driver](#remove-iframe-driver)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -134,6 +135,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+### Remove iframe-driver
+The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
 
 # 2.0.0-internal.1.3.0
 
