@@ -8,6 +8,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
+    PureDataObject,
 } from "@fluidframework/aqueduct";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import {
@@ -19,7 +20,7 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -37,20 +38,6 @@ import { ISequencedDocumentMessage, ISummaryTree, MessageType } from "@fluidfram
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { SharedCounter } from "@fluidframework/counter";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type ProviderPropertyKeys<T extends Object, TProp extends keyof T = keyof T> = string extends TProp
-  ? never
-  : number extends TProp
-  ? never // exclude indexers [key:string |number]: any
-  : TProp extends keyof T[TProp] // TProp is a property of T, T[TProp] and, T[TProp][TProp]
-  ? TProp extends keyof T[TProp][TProp] // ex; IProvideFoo.IFoo.IFoo.IFoo
-    ? TProp
-    : never
-  : never;
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-type Provider<T extends Object = Object> = Partial<Pick<T, ProviderPropertyKeys<T>>>;
-
 interface ProvideSearchContent {
     SearchContent: SearchContent;
   }
@@ -60,11 +47,12 @@ interface SearchContent extends ProvideSearchContent {
 
 function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
     return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-        const obj: Provider<SearchContent> = (await DataObject.getDataObject(runtime)) as Provider<SearchContent>;
+        const obj: PureDataObject & FluidObject<SearchContent> = await DataObject.getDataObject(runtime);
         const searchObj = obj.SearchContent;
         if (searchObj === undefined) {
             return undefined;
         }
+
         // ODSP parser requires every search blob end with a line-feed character.
         const searchContent = await searchObj.getSearchContent();
         if (searchContent === undefined) {
