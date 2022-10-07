@@ -514,7 +514,10 @@ export class SummaryWriter implements ISummaryWriter {
             (missingOps.concat(logTail)).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber) :
             logTail;
 
-        // Check the missing operations in the fullLogTail
+        // Check the missing operations in the fullLogTail. We would treat
+        // isMatchLogtailEntries as true when the fullLogTail's length is extact same as the requested range.
+        // As well as the first SN of fullLogTail - 1 is equal to from,
+        // and the last SN of fullLogTail + 1 is equal to to.
         const isMatchLogtailEntries = fullLogTail &&
             fullLogTail.length > 0 &&
             fullLogTail.length === (to - from - 1) &&
