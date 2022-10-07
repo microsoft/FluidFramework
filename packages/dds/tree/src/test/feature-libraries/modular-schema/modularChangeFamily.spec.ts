@@ -294,7 +294,12 @@ describe("ModularChangeFamily", () => {
                     fieldA,
                     {
                         fieldKind: genericFieldKind.identifier,
-                        change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, composedNodeChange)),
+                        change: brand(
+                            genericFieldKind.changeHandler.editor.buildChildChange(
+                                0,
+                                composedNodeChange,
+                            ),
+                        ),
                     },
                 ],
                 [
@@ -305,7 +310,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2Generic]), expectedCompose);
+            assert.deepEqual(
+                family.compose([rootChange1aGeneric, rootChange2Generic]),
+                expectedCompose,
+            );
         });
     });
 
@@ -335,7 +343,10 @@ describe("ModularChangeFamily", () => {
         });
 
         it("generic", () => {
-            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeInverse);
+            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+                0,
+                nodeInverse,
+            );
             const expectedInverse: FieldChangeMap = new Map([
                 [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
                 [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
@@ -359,7 +370,10 @@ describe("ModularChangeFamily", () => {
         });
 
         it("rebase generic ↷ generic", () => {
-            assert.deepEqual(family.rebase(rootChange1bGeneric, rootChange1aGeneric), rootChange2Generic);
+            assert.deepEqual(
+                family.rebase(rootChange1bGeneric, rootChange1aGeneric),
+                rootChange2Generic,
+            );
         });
     });
 

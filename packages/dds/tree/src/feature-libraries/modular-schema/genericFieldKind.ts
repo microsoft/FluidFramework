@@ -27,12 +27,15 @@ export interface EncodedGenericChange {
     nodeChange: JsonCompatibleReadOnly;
 }
 
-export type GenericChangeset = GenericChange[]
-export type EncodedGenericChangeset = EncodedGenericChange[]
+export type GenericChangeset = GenericChange[];
+export type EncodedGenericChangeset = EncodedGenericChange[];
 
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     rebaser: {
-        compose: (changes: GenericChangeset[], composeChildren: NodeChangeComposer): GenericChangeset => {
+        compose: (
+            changes: GenericChangeset[],
+            composeChildren: NodeChangeComposer,
+        ): GenericChangeset => {
             if (changes.length === 0) {
                 return [];
             }
@@ -48,21 +51,32 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                     if (match === undefined) {
                         composed.push({ index, nodeChange });
                     } else if (match.index > index) {
-                        composed.splice(listIndex, 0, { index, nodeChange })
+                        composed.splice(listIndex, 0, { index, nodeChange });
                     } else {
-                        composed.splice(listIndex, 1, { index, nodeChange: composeChildren([match.nodeChange, nodeChange]) })
+                        composed.splice(listIndex, 1, {
+                            index,
+                            nodeChange: composeChildren([match.nodeChange, nodeChange]),
+                        });
                     }
                 }
             }
             return composed;
         },
-    
+
         invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
-            return change.map(({ index, nodeChange }: GenericChange): GenericChange => ({ index, nodeChange: invertChild(nodeChange)}));
+            return change.map(
+                ({ index, nodeChange }: GenericChange): GenericChange => ({
+                    index,
+                    nodeChange: invertChild(nodeChange),
+                }),
+            );
         },
-    
+
         rebase: (
-            change: GenericChangeset, over: GenericChangeset, rebaseChild: NodeChangeRebaser): GenericChangeset => {
+            change: GenericChangeset,
+            over: GenericChangeset,
+            rebaseChild: NodeChangeRebaser,
+        ): GenericChangeset => {
             const rebased: GenericChangeset = [];
             let iChange = 0;
             let iOver = 0;
@@ -70,14 +84,17 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 const a = change[iChange];
                 const b = over[iOver];
                 if (a.index === b.index) {
-                    rebased.push({ index: a.index, nodeChange: rebaseChild(a.nodeChange, b.nodeChange) });
+                    rebased.push({
+                        index: a.index,
+                        nodeChange: rebaseChild(a.nodeChange, b.nodeChange),
+                    });
                     iChange += 1;
                     iOver += 1;
                 } else if (a.index < b.index) {
-                    rebased.push({ index: a.index, nodeChange: a.nodeChange })
+                    rebased.push({ index: a.index, nodeChange: a.nodeChange });
                     iChange += 1;
                 } else {
-                    rebased.push({ index: b.index, nodeChange: b.nodeChange })
+                    rebased.push({ index: b.index, nodeChange: b.nodeChange });
                     iOver += 1;
                 }
             }
@@ -95,7 +112,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             // Would use `change.map(...)` but the type system doesn't accept it
             const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = [];
             for (const { index, nodeChange } of change) {
-                encoded.push({ index, nodeChange: encodeChild(nodeChange)});
+                encoded.push({ index, nodeChange: encodeChild(nodeChange) });
             }
             return encoded;
         },
@@ -105,7 +122,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             decodeChild: NodeChangeDecoder,
         ): GenericChangeset => {
             const encoded = change as JsonCompatibleReadOnly[] & EncodedGenericChangeset;
-            return encoded.map(({ index, nodeChange }: EncodedGenericChange): GenericChange => ({ index, nodeChange: decodeChild(nodeChange)}));
+            return encoded.map(
+                ({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
+                    index,
+                    nodeChange: decodeChild(nodeChange),
+                }),
+            );
         },
     },
     editor: {
@@ -143,8 +165,10 @@ export const genericFieldKind: FieldKind = new FieldKind(
 export function convertGenericChange<TChange>(
     changeset: GenericChangeset,
     target: FieldChangeHandler<TChange>,
-    composeChild: NodeChangeComposer
+    composeChild: NodeChangeComposer,
 ): TChange {
-    const perIndex: TChange[] = changeset.map(({ index, nodeChange }) => target.editor.buildChildChange(index, nodeChange));
+    const perIndex: TChange[] = changeset.map(({ index, nodeChange }) =>
+        target.editor.buildChildChange(index, nodeChange),
+    );
     return target.rebaser.compose(perIndex, composeChild);
 }

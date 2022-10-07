@@ -30,7 +30,8 @@ export class ModularChangeFamily
     implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
 {
     readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: NodeChangeset[]) => this.composeNodeChanges(childChanges);
+    private readonly childComposer = (childChanges: NodeChangeset[]) =>
+        this.composeNodeChanges(childChanges);
 
     constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
         this.encoder = new ModularChangeEncoder(this.fieldKinds);
@@ -40,11 +41,14 @@ export class ModularChangeFamily
         return this;
     }
 
-    private normalizeFieldChanges(
-        changes: readonly FieldChange[],
-    ): { fieldKind: FieldKind ; changesets: FieldChangeset[] } {
+    private normalizeFieldChanges(changes: readonly FieldChange[]): {
+        fieldKind: FieldKind;
+        changesets: FieldChangeset[];
+    } {
         // TODO: Handle the case where changes have conflicting field kinds
-        const nonGenericChange = changes.find((change) => change.fieldKind !== genericFieldKind.identifier);
+        const nonGenericChange = changes.find(
+            (change) => change.fieldKind !== genericFieldKind.identifier,
+        );
         if (nonGenericChange === undefined) {
             // All the changes are generic
             return { fieldKind: genericFieldKind, changesets: changes.map((c) => c.change) };
@@ -56,7 +60,11 @@ export class ModularChangeFamily
             if (change.fieldKind === genericFieldKind.identifier) {
                 // The cast is based on the `fieldKind` check above
                 const genericChange = change.change as unknown as GenericChangeset;
-                return convertGenericChange(genericChange, handler, this.childComposer) as FieldChangeset;
+                return convertGenericChange(
+                    genericChange,
+                    handler,
+                    this.childComposer,
+                ) as FieldChangeset;
             }
             return change.change;
         });
@@ -85,9 +93,12 @@ export class ModularChangeFamily
                 changesets,
                 this.childComposer,
             );
-    
+
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields.set(field, { fieldKind: fieldKind.identifier, change: brand(composedField) });
+            composedFields.set(field, {
+                fieldKind: fieldKind.identifier,
+                change: brand(composedField),
+            });
         }
         return composedFields;
     }
@@ -154,9 +165,14 @@ export class ModularChangeFamily
             if (baseChanges === undefined) {
                 rebasedFields.set(field, fieldChange);
             } else {
-                const { fieldKind, changesets: [fieldChangeset, baseChangeset] } = this.normalizeFieldChanges([fieldChange, baseChanges]);
-                const rebasedField = fieldKind.changeHandler.rebaser.rebase(fieldChangeset, baseChangeset, (child, baseChild) =>
-                    this.rebaseNodeChange(child, baseChild),
+                const {
+                    fieldKind,
+                    changesets: [fieldChangeset, baseChangeset],
+                } = this.normalizeFieldChanges([fieldChange, baseChanges]);
+                const rebasedField = fieldKind.changeHandler.rebaser.rebase(
+                    fieldChangeset,
+                    baseChangeset,
+                    (child, baseChild) => this.rebaseNodeChange(child, baseChild),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -363,7 +379,10 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
         let remainingPath = path;
         while (remainingPath !== undefined) {
             const nodeChange: NodeChangeset = { fieldChanges: fieldChangeMap };
-            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(remainingPath.parentIndex, nodeChange);
+            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+                remainingPath.parentIndex,
+                nodeChange,
+            );
             fieldChangeMap = new Map([
                 [
                     remainingPath.parentField,
@@ -379,7 +398,15 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     setValue(path: UpPath, value: Value): void {
         const valueChange: ValueChange = value === undefined ? {} : { value };
         const nodeChange: NodeChangeset = { valueChange };
-        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(path.parentIndex, nodeChange);
-        this.submitChange(path.parent, path.parentField, genericFieldKind.identifier, brand(fieldChange));
+        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+            path.parentIndex,
+            nodeChange,
+        );
+        this.submitChange(
+            path.parent,
+            path.parentField,
+            genericFieldKind.identifier,
+            brand(fieldChange),
+        );
     }
 }
