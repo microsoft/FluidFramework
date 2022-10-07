@@ -10,11 +10,11 @@ To jump ahead into the finished demo, check out the [Audience demo in our FluidE
 
 The following image shows use ID buttons and a container ID input field. Leaving the container ID field blank and clicking a user ID button will create a new container and join as the selected user. Alternatively, the end-user can input a container ID and choose a user ID to join an existing container as the selected user.
 
-[IMAGE]
+![Browser with user ID buttons and container ID text field](https://fluidframework.blob.core.windows.net/static/images/audience_example_1.png)
 
 The next image shows multiple users connected to a container represented by boxes. The box outlined in blue represents the user who is viewing the client while the boxes outlined in black represents the other connected users. As new users attach to the container with unique ID's, the number of boxes will increase.
 
-[IMAGE]
+![Four browsers with audience member boxes](https://fluidframework.blob.core.windows.net/static/images/audience_example_2.png)
 
 {{< callout note >}}
 
