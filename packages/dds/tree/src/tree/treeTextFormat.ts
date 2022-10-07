@@ -91,7 +91,7 @@ export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | Global
  * Derives the scope using the type of `key`.
  */
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol {
-    return typeof key === "symbol" && symbolIsFieldKey(key);
+    return typeof key === "symbol";
 }
 
 /**

@@ -297,6 +297,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             // All string keys are fields
             return target.proxifyField(brand(key));
         }
+        // utility symbols
         switch (key) {
             case getTypeSymbol: {
                 return target.getType.bind(target);
@@ -327,20 +328,23 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     // Include documented symbols (except value when value is undefined) and all non-empty fields.
     has: (target: ProxyTarget, key: string | symbol): boolean => {
-        if (typeof key === "symbol") {
-            switch (key) {
-                case proxyTargetSymbol:
-                case getTypeSymbol:
-                    // Currently not supporting iteration over fields.
-                    // case Symbol.iterator:
-                    return true;
-                case valueSymbol:
-                    // Could do `target.value !== ValueSchema.Nothing`
-                    // instead if values which could be modified should report as existing.
-                    return target.value !== undefined;
-                default:
-                    return false;
-            }
+        if (typeof key === "string" || symbolIsFieldKey(key)) {
+            return target.has(brand(key));
+        }
+        // utility symbols
+        switch (key) {
+            case proxyTargetSymbol:
+            case getTypeSymbol:
+            case anchorSymbol:
+                // Currently not supporting iteration over fields.
+                // case Symbol.iterator:
+                return true;
+            case valueSymbol:
+                // Could do `target.value !== ValueSchema.Nothing`
+                // instead if values which could be modified should report as existing.
+                return target.value !== undefined;
+            default:
+                return false;
         }
 
         // For now primary array fields are handled by just returning the array, so we don't need this:
@@ -357,8 +361,6 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         //         return true;
         //     }
         // }
-
-        return target.has(brand(key));
     },
     // Includes all non-empty fields, which are the enumerable fields.
     ownKeys: (target: ProxyTarget): FieldKey[] => {
@@ -372,18 +374,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
 
-        if (typeof key === "symbol") {
-            if (key === proxyTargetSymbol) {
-                return { configurable: true, enumerable: false, value: target, writable: false };
-            } else if (key === getTypeSymbol) {
-                return {
-                    configurable: true,
-                    enumerable: false,
-                    value: target.getType.bind(target),
-                    writable: false,
-                };
-            }
-        } else if (target.has(brand(key))) {
+        if ((typeof key === "string" || symbolIsFieldKey(key)) && target.has(brand(key))) {
             return {
                 configurable: true,
                 enumerable: true,
@@ -391,7 +382,19 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
                 writable: false,
             };
         }
-        return undefined;
+        // utility symbols
+        switch (key) {
+            case proxyTargetSymbol:
+                return { configurable: true, enumerable: false, value: target, writable: false };
+            case getTypeSymbol:
+                return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
+            case valueSymbol:
+                return { configurable: true, enumerable: false, value: target.value, writable: false };
+            case anchorSymbol:
+                return { configurable: true, enumerable: false, value: target.getAnchor(), writable: false };
+            default:
+                return undefined;
+        }
     },
 };
 
