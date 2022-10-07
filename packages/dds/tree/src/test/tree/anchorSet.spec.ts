@@ -66,10 +66,22 @@ describe("AnchorSet", () => {
         anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
         assert.equal(anchors.locate(anchor4), undefined);
         assert.equal(anchors.locate(anchor1), undefined);
-        checkEquality(anchors.locate(anchor2), path2);
-        checkEquality(anchors.locate(anchor3), path3);
         assert.doesNotThrow(() => anchors.forget(anchor4));
+        assert.doesNotThrow(() => anchors.forget(anchor1));
         assert.throws(() => anchors.locate(anchor4));
+        assert.throws(() => anchors.locate(anchor1));
+
+        checkEquality(anchors.locate(anchor2), path2);
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+        checkEquality(anchors.locate(anchor2), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor2));
+        assert.throws(() => anchors.locate(anchor2));
+
+        checkEquality(anchors.locate(anchor3), path3);
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])));
+        checkEquality(anchors.locate(anchor3), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor3));
+        assert.throws(() => anchors.locate(anchor3));
     });
 
     it("can rebase over move", () => {
