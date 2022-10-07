@@ -518,6 +518,7 @@ export class SummaryWriter implements ISummaryWriter {
         // isMatchLogtailEntries as true when the fullLogTail's length is extact same as the requested range.
         // As well as the first SN of fullLogTail - 1 is equal to from,
         // and the last SN of fullLogTail + 1 is equal to to.
+        // For example, to: 2, from: 5, fullLogTail with SN [3, 4] is the true scenario
         const isMatchLogtailEntries = fullLogTail &&
             fullLogTail.length > 0 &&
             fullLogTail.length === (to - from - 1) &&
