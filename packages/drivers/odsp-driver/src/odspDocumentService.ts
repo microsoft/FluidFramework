@@ -187,8 +187,6 @@ export class OdspDocumentService implements IDocumentService {
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
                 () => {
-                    assert(this.relayServiceTenantAndSessionId !== undefined,
-                        0x37b /* relayServiceTenantAndSessionId should be present */);
                     return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
