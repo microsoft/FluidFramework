@@ -36,4 +36,16 @@ jobs:
         working-directory: build-tools
       - uses: JulienKode/pull-request-name-linter-action@v0.5.0
         with:
-          configuration-path: commitlint.config.cjs
+          configuration-path: build-tools/commitlint.config.cjs
+
+  conventional-pr-title-option-2:
+    name: Check that the PR title matches commitlint settings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - uses: beemojs/conventional-pr-action@v2.1.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-preset: '@commitlint/config-conventional'
