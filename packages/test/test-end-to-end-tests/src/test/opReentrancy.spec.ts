@@ -63,7 +63,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
     itExpects("Should close container when submitting an op while processing a batch",
         [{
             eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "Op was sent from within an `runWithoutOps` callback",
+            error: "Op was submitted from within a `runWithoutOps` callback",
         }], async () => {
             await setupContainers(testContainerConfig);
 

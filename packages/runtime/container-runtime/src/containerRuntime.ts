@@ -884,12 +884,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
 
-    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth usage,
-    // but at the same time we want to send these ops sooner, to reduce overall latency of processing a batch.
-    // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-    // payloads. That number represents final (compressed) bits (once compression is implemented).
-    private readonly pendingAttachBatch = new BatchManager(64 * 1024);
-    private readonly pendingBatch = new BatchManager();
+    private readonly pendingAttachBatch: BatchManager;
+    private readonly pendingBatch: BatchManager;
 
     private readonly garbageCollector: IGarbageCollector;
 
@@ -1006,6 +1002,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        // Provide lower soft limit - we want to have some number of ops to get efficiency
+        // in compression & bandwidth usage, but at the same time we want to send these ops sooner,
+        // to reduce overall latency of processing a batch.
+        // So there is some balance here, that depends on compression algorithm and its efficiency working with smaller
+        // payloads. That number represents final (compressed) bits (once compression is implemented).
+        this.pendingAttachBatch = new BatchManager(this.mc, 64 * 1024);
+        this.pendingBatch = new BatchManager(this.mc);
 
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
@@ -2777,8 +2781,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private verifyCanSubmitOps() {
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") === true) {
+            return;
+        }
+
         if (this.runWithoutOpsCalls > 0) {
-            throw new UsageError("Op was sent from within an `runWithoutOps` callback");
+            throw new UsageError("Op was submitted from within a `runWithoutOps` callback");
         }
     }
 

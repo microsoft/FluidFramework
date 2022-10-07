@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
+import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage } from "./containerRuntime";
 
 /**
@@ -33,13 +34,13 @@ export class BatchManager {
     public get limit() { return BatchManager.hardLimit; }
     public static get limit() { return BatchManager.hardLimit; }
 
-    constructor(public readonly softLimit?: number) { }
+    constructor(
+        private readonly mc: MonitoringContext,
+        public readonly softLimit?: number,
+    ) { }
 
     public push(message: BatchMessage): boolean {
-        assert(
-            this.pendingBatch.length === 0
-            || message.referenceSequenceNumber === this.pendingBatch[0].referenceSequenceNumber,
-            "Out of order message detected");
+        this.checkReferenceSequenceNumber(message);
 
         const contentSize = this.batchContentSize + message.contents.length;
         const opCount = this.pendingBatch.length;
@@ -93,5 +94,22 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") === true) {
+            return;
+        }
+
+        if (this.pendingBatch.length > 0
+            && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
+            throw new GenericError(
+                "Submission of an out of order message",
+                /* error */ undefined,
+                {
+                    referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+                });
+        }
     }
 }

@@ -29,6 +29,10 @@ import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+            getRawConfig: (name: string): ConfigTypes => settings[name],
+        }));
+
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
@@ -209,33 +213,84 @@ describe("Runtime", () => {
                 });
             }));
 
+        describe("Run callback without ops", () => {
+            let containerRuntime: ContainerRuntime;
+            const getMockContext = ((settings: Record<string, ConfigTypes>): Partial<IContainerContext> => ({
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger:
+                    mixinMonitoringContext(new MockLogger(), configProvider(settings)) as unknown as MockLogger,
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { },
+            }));
+
+            it("By default, enforce no ops from `runWithoutOps` callback", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                assert.throws(() => containerRuntime.runWithoutOps(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                ));
+
+                assert.throws(() => containerRuntime.runWithoutOps(() =>
+                    containerRuntime.runWithoutOps(() =>
+                        containerRuntime.runWithoutOps(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ),
+                ));
+            });
+
+            it("If feature disabled, don't enforce no ops from `runWithoutOps` callback", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({
+                        // "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+                    }) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                containerRuntime.runWithoutOps(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                );
+
+                containerRuntime.runWithoutOps(() =>
+                    containerRuntime.runWithoutOps(() =>
+                        containerRuntime.runWithoutOps(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ));
+            });
+        });
+
         describe("orderSequentially with rollback", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
 
-                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    const getMockContext = ((): Partial<IContainerContext> => ({
+                        attachState: AttachState.Attached,
+                        deltaManager: new MockDeltaManager(),
+                        quorum: new MockQuorumClients(),
+                        taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                            "Fluid.ContainerRuntime.EnableRollback": true,
+                        })) as unknown as MockLogger,
+                        clientDetails: { capabilities: { interactive: true } },
+                        closeFn: (error?: ICriticalContainerError): void => {
+                            if (error !== undefined) {
+                                containerErrors.push(error);
+                            }
+                        },
+                        updateDirtyContainerState: (dirty: boolean) => { },
                     }));
-
-                    const getMockContext = ((): Partial<IContainerContext> => {
-                        return {
-                            attachState: AttachState.Attached,
-                            deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorumClients(),
-                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
-                                "Fluid.ContainerRuntime.EnableRollback": true,
-                            })) as unknown as MockLogger,
-                            clientDetails: { capabilities: { interactive: true } },
-                            closeFn: (error?: ICriticalContainerError): void => {
-                                if (error !== undefined) {
-                                    containerErrors.push(error);
-                                }
-                            },
-                            updateDirtyContainerState: (dirty: boolean) => { },
-                        };
-                    });
 
                     beforeEach(async () => {
                         containerRuntime = await ContainerRuntime.load(
