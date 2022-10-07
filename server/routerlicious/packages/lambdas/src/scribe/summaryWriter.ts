@@ -515,22 +515,23 @@ export class SummaryWriter implements ISummaryWriter {
             logTail;
 
         // Check the missing operations in the fullLogTail
-        const fullLogTailSequenceNumbers = fullLogTail?.map((ms) => ms.sequenceNumber);
-        const isSameSNInterval = fullLogTailSequenceNumbers &&
-            fullLogTailSequenceNumbers.length > 0 &&
-            fullLogTailSequenceNumbers.length === (to - from - 1) &&
-            from === fullLogTailSequenceNumbers[0] - 1 &&
-            to === fullLogTailSequenceNumbers[fullLogTailSequenceNumbers.length - 1] + 1;
-        if (!isSameSNInterval) {
+        const isMatchLogtailEntries = fullLogTail &&
+            fullLogTail.length > 0 &&
+            fullLogTail.length === (to - from - 1) &&
+            from === fullLogTail[0].sequenceNumber - 1 &&
+            to === fullLogTail[fullLogTail.length - 1].sequenceNumber + 1;
+        if (!isMatchLogtailEntries) {
             const missingOpsSequenceNumbers: number[] = [];
             const fullLogTailSequenceNumbersSet = new Set();
+            const fullLogTailSequenceNumbers = fullLogTail?.map((ms) => ms.sequenceNumber);
             fullLogTailSequenceNumbers.forEach((op) => fullLogTailSequenceNumbersSet.add(op));
             for (let i = from + 1; i < to; i++) {
                 if (!fullLogTailSequenceNumbersSet.has(i)) {
                     missingOpsSequenceNumbers.push(i);
                 }
             }
-            Lumberjack.error(`Missing ops in the fullLogTail: ${JSON.stringify(missingOpsSequenceNumbers)}`
+            Lumberjack.info(
+                `FullLogTail missing ops from: ${from} to: ${to} with op: ${JSON.stringify(missingOpsSequenceNumbers)}`
                 , this.lumberProperties);
         }
 
