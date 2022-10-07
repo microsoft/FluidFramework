@@ -248,9 +248,16 @@ describe("editable-tree", () => {
         assert.deepEqual(context.root[getTypeSymbol](globalFieldSymbol, false), stringSchema);
         assert.equal(context.root[globalFieldSymbol], "global foo");
         assert.equal(context.root[globalFieldKeyAsLocalField], "foo");
-        assert.deepEqual(Object.getOwnPropertyDescriptor(context.root, globalFieldSymbol),
-            { configurable: true, enumerable: true, value: "global foo", writable: false });
-        assert.equal(Object.getOwnPropertyDescriptor(context.root, Symbol.for("whatever")), undefined);
+        assert.deepEqual(Object.getOwnPropertyDescriptor(context.root, globalFieldSymbol), {
+            configurable: true,
+            enumerable: true,
+            value: "global foo",
+            writable: false,
+        });
+        assert.equal(
+            Object.getOwnPropertyDescriptor(context.root, Symbol.for("whatever")),
+            undefined,
+        );
         assert(globalFieldKey in context.root);
         assert(!(Symbol.for("whatever") in context.root));
         context.free();

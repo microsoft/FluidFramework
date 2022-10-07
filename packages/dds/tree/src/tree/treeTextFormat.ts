@@ -4,11 +4,7 @@
  */
 
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
-import {
-    GlobalFieldKeySymbol,
-    keyFromSymbol,
-    symbolFromKey,
-} from "./globalFieldKeySymbol";
+import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
 import { FieldKey, NodeData } from "./types";
 
 /**

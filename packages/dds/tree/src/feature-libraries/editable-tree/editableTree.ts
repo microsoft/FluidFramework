@@ -387,11 +387,26 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             case proxyTargetSymbol:
                 return { configurable: true, enumerable: false, value: target, writable: false };
             case getTypeSymbol:
-                return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.getType.bind(target),
+                    writable: false,
+                };
             case valueSymbol:
-                return { configurable: true, enumerable: false, value: target.value, writable: false };
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.value,
+                    writable: false,
+                };
             case anchorSymbol:
-                return { configurable: true, enumerable: false, value: target.getAnchor(), writable: false };
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.getAnchor(),
+                    writable: false,
+                };
             default:
                 return undefined;
         }
