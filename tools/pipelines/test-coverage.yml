@@ -8,15 +8,24 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
-resources:
-  pipelines:
-  - pipeline: client   # Name of the pipeline resource
-    source: Build - client packages
-    trigger:
-      branches:
-      - release/*
+schedules:
+  - cron: "0 0 * * *"
+    displayName: Test Schedule build
+    branches:
+      include:
       - main
       - next
+      - release/*
+
+#resources:
+#  pipelines:
+#  - pipeline: client   # Name of the pipeline resource
+#    source: Build - client packages
+#    trigger:
+#      branches:
+#      - release/*
+#      - main
+#      - next
 
 variables:
 - group: prague-key-vault
