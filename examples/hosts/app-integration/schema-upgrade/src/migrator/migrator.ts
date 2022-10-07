@@ -59,6 +59,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      * that a freshly-loaded migrated container is in collaborating state.
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
+        if (!this.currentModel.migrationTool.connected()) {
+            // If we are not connected we should wait until we reconnect and try again.
+            this.currentModel.migrationTool.once("connected", this.takeAppropriateActionForCurrentMigratable);
+            return;
+        }
+
         const migrationState = this._currentModel.migrationTool.migrationState;
         if (migrationState === "migrating") {
             this.ensureMigrating();
@@ -70,8 +76,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     };
 
     private readonly ensureMigrating = () => {
-        // We assume ensureMigrating() is only called once and resolves after the migration is complete.
-
         /**
          * Detached model that is ready to attach. This is stored for retry scenarios.
          */
@@ -161,7 +165,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
                 if (!this.currentModel.migrationTool.haveMigrationTask()) {
                     // Exit early if we lost the task assignment, we are most likely disconnected.
-                    onDisconnect();
+                    this._migrationP = undefined;
+                    this.takeAppropriateActionForCurrentMigratable();
                     return;
                 }
 
@@ -171,29 +176,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
                 this._migrationP = undefined;
                 this.takeAppropriateActionForCurrentMigratable();
-            };
-
-            const onDisconnect = () => {
-                // If we disconnect from the container then either the container was closed by another client or our
-                // web socket lost connection. In either case we should stop trying to migrate and wait until we
-                // reconnect or the migration is finalized by another client.
-
-                const onReconnect = () => {
-                    // Re-enter the migration process on reconnect
-                    this.currentModel.migrationTool.off("migrated", onMigrationFinalized);
-                    this._migrationP = undefined;
-                    this.ensureMigrating();
-                };
-
-                const onMigrationFinalized = () => {
-                    // We can stop trying to migrate and re-enter the state machine tp handle the migrated state.
-                    this.currentModel.migrationTool.off("connected", onReconnect);
-                    this._migrationP = undefined;
-                    this.takeAppropriateActionForCurrentMigratable();
-                };
-
-                this.currentModel.migrationTool.once("connected", onReconnect);
-                this.currentModel.migrationTool.once("migrated", onMigrationFinalized);
             };
 
             // Prepare the detached model if not already done
@@ -213,21 +195,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             try {
                 isAssigned = await this.currentModel.migrationTool.volunteerForMigration();
             } catch (error) {
-                // If we error here we have disconnected. This can be a normal web socket disconnection, or the
-                // container was closed by another client (during the migration process). If the this.migrationState
-                // is "migrating" then we should wait for the container to reconnect or the migration to be finalized
-                // by another client. Otherwise we can exit the migration process and re-enter the state machine.
-                // The following assert validates our assumption that we are disconnected.
+                // volunteerForMigration() will throw an error on disconnection. In this case, we should wait until we
+                // reconnect. It also possible that another client will have already completed the migration by the
+                // time we reconnect. This logic is handled by takeAppropriateActionForCurrentMigratable().
                 assert(!this.currentModel.migrationTool.connected(), "We should be disconnected");
-
-                if (this.migrationState === "migrating") {
-                    onDisconnect();
-                } else {
-                    assert(this.currentModel.migrationTool.newContainerId !== undefined,
-                        "newContainerId should be defined");
-                    this._migrationP = undefined;
-                    this.takeAppropriateActionForCurrentMigratable();
-                }
+                this._migrationP = undefined;
+                this.takeAppropriateActionForCurrentMigratable();
                 return;
             }
 
