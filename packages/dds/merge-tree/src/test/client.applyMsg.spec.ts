@@ -12,7 +12,7 @@ import { SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 describe("client.applyMsg", () => {
     const localUserLongId = "localUser";
@@ -25,8 +25,9 @@ describe("client.applyMsg", () => {
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
-        const changes = new Map<number, { msg: ISequencedDocumentMessage; segmentGroup: SegmentGroup; }>();
-        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
+        const changes =
+            new Map<number, { msg: ISequencedDocumentMessage; segmentGroup?: SegmentGroup | SegmentGroup[]; }>();
+        assert.equal(client.mergeTree.pendingSegments?.length, 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();
             const pos1 = Math.floor(len / 2);
@@ -38,7 +39,7 @@ describe("client.applyMsg", () => {
                     const msg = client.makeOpMessage(
                         client.removeRangeLocal(pos1, pos2),
                         i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
 
@@ -46,7 +47,7 @@ describe("client.applyMsg", () => {
                 case 4: {
                     const str = `${i}`.repeat(imod6 + 5);
                     const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
 
@@ -61,7 +62,7 @@ describe("client.applyMsg", () => {
                         },
                         undefined);
                     const msg = client.makeOpMessage(op, i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
                 default:
@@ -71,8 +72,10 @@ describe("client.applyMsg", () => {
         for (let i = 0; i < 100; i++) {
             const msg = changes.get(i)!.msg;
             client.applyMsg(msg);
-            const segments = changes.get(i)!.segmentGroup.segments;
-            for (const seg of segments) {
+            const segmentGroup = changes.get(i)?.segmentGroup;
+            assert(!Array.isArray(segmentGroup) && segmentGroup !== undefined,
+                "segment group should be defined and not an array");
+            for (const seg of segmentGroup.segments) {
                 switch (i % 6) {
                     case 0:
                     case 5:
@@ -88,7 +91,7 @@ describe("client.applyMsg", () => {
                 }
             }
         }
-        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.length, 0);
         for (let i = 0; i < client.getText().length; i++) {
             const segmentInfo = client.getContainingSegment(i);
 
@@ -131,11 +134,11 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
         client.applyMsg(client.makeOpMessage(op, 17));
 
-        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.length, 0);
     });
 
     it("annotateSegmentLocal then removeRangeLocal", () => {
@@ -154,22 +157,22 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
         const removeOp = client.removeRangeLocal(start, end);
 
         assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
-        assert.equal(client.mergeTree.pendingSegments?.count(), 2);
+        assert.equal(client.mergeTree.pendingSegments?.length, 2);
 
         client.applyMsg(client.makeOpMessage(annotateOp, 17));
 
         assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
-        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
         client.applyMsg(client.makeOpMessage(removeOp, 18));
 
         assert.equal(segmentInfo.segment?.removedSeq, 18);
-        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.length, 0);
     });
 
     it("multiple interleaved annotateSegmentLocal", () => {
@@ -194,12 +197,12 @@ describe("client.applyMsg", () => {
 
             annotateEnd = Math.floor(annotateEnd / 2);
         }
-        assert.equal(client.mergeTree.pendingSegments?.count(), messages.length);
+        assert.equal(client.mergeTree.pendingSegments?.length, messages.length);
 
         for (const msg of messages) {
             client.applyMsg(msg);
         }
-        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.length, 0);
     });
 
     it("overlapping deletes", () => {
@@ -207,8 +210,8 @@ describe("client.applyMsg", () => {
 
         const start = 0;
         const end = 5;
-        const intialText = client.getText();
-        const initialLength = intialText.length;
+        const initialText = client.getText();
+        const initialLength = initialText.length;
 
         assert.equal(segmentInfo.segment?.removedSeq, undefined);
         assert(segmentInfo.segment?.segmentGroups.empty);
@@ -231,7 +234,7 @@ describe("client.applyMsg", () => {
         assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
         assert(segmentInfo.segment?.segmentGroups.empty);
         assert.equal(client.getLength(), initialLength - (end - start));
-        assert.equal(client.getText(), intialText.substring(0, start) + intialText.substring(end));
+        assert.equal(client.getText(), initialText.substring(0, start) + initialText.substring(end));
     });
 
     it("overlapping insert and delete", () => {
@@ -262,147 +265,218 @@ describe("client.applyMsg", () => {
     });
 
     it("intersecting insert after local delete", () => {
-        const clientA = new TestClient();
-        clientA.startOrUpdateCollaboration("A");
-        const clientB = new TestClient();
-        clientB.startOrUpdateCollaboration("B");
-        const clientC = new TestClient();
-        clientC.startOrUpdateCollaboration("C");
-
-        const clients = [clientA, clientB, clientC];
-
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
         let seq = 0;
-
+        const logger = new TestClientLogger(clients.all);
         const messages = [
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
-            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
-            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "c"), ++seq),
+            clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq),
+            clients.B.makeOpMessage(clients.B.insertTextLocal(0, "b"), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "c"), ++seq),
         ];
 
-        const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
     });
 
     it("conflicting insert after shared delete", () => {
-        const clientA = new TestClient();
-        clientA.insertTextLocal(0, "a");
-        clientA.startOrUpdateCollaboration("A");
-        const clientB = new TestClient();
-        clientB.insertTextLocal(0, clientA.getText());
-        clientB.startOrUpdateCollaboration("B");
-        const clientC = new TestClient();
-        clientC.insertTextLocal(0, clientA.getText());
-        clientC.startOrUpdateCollaboration("C");
-
-        const clients = [clientA, clientB, clientC];
+        const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
         let seq = 0;
 
+        const logger = new TestClientLogger(clients.all);
         const messages = [
-            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
-            clientC.makeOpMessage(clientC.removeRangeLocal(0, clientC.getLength()), ++seq),
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+            clients.B.makeOpMessage(clients.B.insertTextLocal(0, "B"), ++seq),
+            clients.C.makeOpMessage(clients.C.removeRangeLocal(0, clients.C.getLength()), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq),
         ];
 
-        const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
     });
 
     it("local remove followed by conflicting insert", () => {
-        const clientA = new TestClient();
-        clientA.startOrUpdateCollaboration("A");
-        const clientB = new TestClient();
-        clientB.startOrUpdateCollaboration("B");
-        const clientC = new TestClient();
-        clientC.startOrUpdateCollaboration("C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
-        const clients = [clientA, clientB, clientC];
         let seq = 0;
 
         const messages = [
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
-            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
-            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "c"), ++seq),
+            clients.B.makeOpMessage(clients.B.insertTextLocal(0, "b"), ++seq),
+            clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "c"), ++seq),
         ];
 
-        const logger = new TestClientLogger(clients);
+        const logger = new TestClientLogger(clients.all);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
     });
 
     it("intersecting insert with un-acked insert and delete", () => {
-        const clientA = new TestClient();
-        clientA.startOrUpdateCollaboration("A");
-        const clientB = new TestClient();
-        clientB.startOrUpdateCollaboration("B");
-        const clientC = new TestClient();
-        clientC.startOrUpdateCollaboration("C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
-        const clients = [clientA, clientB, clientC];
         let seq = 0;
         const messages = [
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
-            clientB.makeOpMessage(clientB.insertTextLocal(0, "bb"), ++seq),
-            clientB.makeOpMessage(clientB.removeRangeLocal(0, 1), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "c"), ++seq),
+            clients.B.makeOpMessage(clients.B.insertTextLocal(0, "bb"), ++seq),
+            clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq),
         ];
 
-        const logger = new TestClientLogger(clients);
+        const logger = new TestClientLogger(clients.all);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
     });
 
     it("conflicting insert over local delete", () => {
-        const clientA = new TestClient();
-        clientA.startOrUpdateCollaboration("A");
-        const clientB = new TestClient();
-        clientB.startOrUpdateCollaboration("B");
-        const clientC = new TestClient();
-        clientC.startOrUpdateCollaboration("C");
-
-        const clients = [clientA, clientB, clientC];
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
         let seq = 0;
         const messages = [
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "CCC"), ++seq),
-            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "CCC"), ++seq),
+            clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq),
 
         ];
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => {
+            clients.all.forEach((c) => {
                 c.applyMsg(msg);
             });
         }
-        const logger = new TestClientLogger(clients);
+        const logger = new TestClientLogger(clients.all);
         logger.validate();
 
         messages.push(
-            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "CC"), ++seq),
-            clientB.makeOpMessage(clientB.insertTextLocal(1, "BBB"), ++seq),
+            clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq),
+            clients.C.makeOpMessage(clients.C.insertTextLocal(0, "CC"), ++seq),
+            clients.B.makeOpMessage(clients.B.insertTextLocal(1, "BBB"), ++seq),
         );
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c) => c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
+        }
+        logger.validate();
+    });
+
+    it("Local insert after acked local delete", () => {
+        const clients = createClientsAtInitialState(
+            { initialState: "ZZ", options: { mergeTreeUseNewLengthCalculations: true } },
+            "A", "B", "C");
+
+        const logger = new TestClientLogger(clients.all);
+
+        let seq = 0;
+
+        const op1 = clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq);
+        clients.C.applyMsg(op1);
+
+        const op2 = clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq);
+
+        const op3 = clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq);
+
+        const op4 = clients.B.makeOpMessage(clients.B.insertTextLocal(1, "B"), ++seq);
+
+        clients.A.applyMsg(op1);
+        clients.B.applyMsg(op1);
+
+        const messages = [op2, op3, op4];
+        while (messages.length > 0) {
+            const msg = messages.shift()!;
+            clients.all.forEach((c) => c.applyMsg(msg));
+        }
+
+        logger.validate();
+    });
+
+    it("Remote Remove before conflicting insert", () => {
+        const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
+
+        const logger = new TestClientLogger(clients.all);
+
+        let seq = 0;
+
+        const op1 = clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq);
+        const op2 = clients.B.makeOpMessage(clients.B.insertTextLocal(0, "B"), ++seq);
+
+        clients.C.applyMsg(op1);
+
+        const op3 = clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq);
+        clients.A.applyMsg(op1);
+        clients.B.applyMsg(op1);
+
+        const messages = [op2, op3];
+        while (messages.length > 0) {
+            const msg = messages.shift()!;
+            clients.all.forEach((c) => c.applyMsg(msg));
+        }
+
+        logger.validate();
+    });
+
+    it("Conflicting inserts at deleted segment position", () => {
+        const clients = createClientsAtInitialState({ initialState: "a----bcd-ef" }, "A", "B", "C");
+
+        const logger = new TestClientLogger(clients.all);
+
+        let seq = 0;
+        const ops: ISequencedDocumentMessage[] = [];
+        ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(4, "B"), ++seq));
+        ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(4, "CC"), ++seq));
+        ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(2, 8), ++seq));
+        clients.B.applyMsg(ops[0]);
+        clients.B.applyMsg(ops[1]);
+        ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(5, 8), ++seq));
+
+        for (const op of ops) {
+            clients.all.forEach(
+                (c) => {
+                    if (c.getCollabWindow().currentSeq < op.sequenceNumber) {
+                        c.applyMsg(op);
+                    }
+                });
+        }
+        logger.validate();
+    });
+
+    it("Inconsistent shared string after pausing connection #9703", () => {
+        const clients = createClientsAtInitialState(
+            { initialState: "abcd", options: { mergeTreeUseNewLengthCalculations: true } },
+             "A", "B", "C");
+
+        const logger = new TestClientLogger(clients.all);
+
+        let seq = 0;
+        const ops: ISequencedDocumentMessage[] = [];
+        ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 3), ++seq));
+        clients.B.applyMsg(ops[0]);
+        ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq));
+        clients.B.applyMsg(ops[1]);
+
+        // it's like this connection is paused, as it doesn't see the other clients' ops
+        // which its own ops will be sequenced after
+        ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(2, "X"), ++seq));
+
+        for (const op of ops) {
+            clients.all.forEach(
+                (c) => {
+                    if (c.getCollabWindow().currentSeq < op.sequenceNumber) {
+                        c.applyMsg(op);
+                    }
+                });
         }
         logger.validate();
     });
@@ -454,5 +528,114 @@ describe("client.applyMsg", () => {
         const insertMessage3 = clientB.makeOpMessage(insertOp2, seq, removeSequence);
         seg = clientA.getContainingSegment(2, insertMessage3);
         assert.strictEqual(seg.segment, undefined);
+    });
+
+    /* eslint-disable max-len */
+    /**
+     * ```
+     * _: Local State
+     * -: Deleted
+     * *: Unacked Insert and Delete
+     * 0: msn/offset
+     * Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
+     * sequence number represented as offset from msn. L means local.
+     * op types: 0) insert 1) remove 2) annotate
+     *
+     * op         | client A      | op         | client B      | op         | client C      | op         | client D
+     *            |               |            |               |            |               | L:0:D0@0   | __
+     *            |               |            |               |            |               |            | DD
+     *            |               |            |               | L:0:C0@0   | _             |            | __
+     *            |               |            |               |            | C             |            | DD
+     * 1:0:D0@0   | DD            | 1:0:D0@0   | DD            | 1:0:D0@0   | _DD           | 1:0:D0@0   | DD
+     *            |               |            |               |            | C             |            |
+     * 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
+     *            | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ___CDD
+     *            |               |            |               |            |               |            | DDD
+     *            | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ____CDD
+     *            |               |            |               |            |               |            | DDDD
+     * 3:2:D0@0   | DDDCDD        |            | CDD           | 3:2:D0@0   | DDDCDD        | 3:2:D0@0   | _DDDCDD
+     *            |               |            |               |            |               |            | D
+     * 4:2:D0@0   | DDDDCDD       |            | CDD           | 4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
+     *            | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D0@0   |   * ___DDDDCDD
+     *            |               |            |               |            |               |            | DDD
+     *            | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D1@6,9 |   * ___DDD___D
+     *            |               |            |               |            |               |            | DDD   ---
+     * 5:4:D0@0   | DDDDDDDCDD    |            | CDD           |            | DDDDCDD       | 5:4:D0@0   |   * DDDDDD___D
+     *            |               |            |               |            |               |            |       ---
+     * 6:4:D1@6,9 | DDDDDD---D    |            | CDD           |            | DDDDCDD       | 6:4:D1@6,9 |   * DDDDDD---D
+     *            | DDDDDD---D    | L:2:B0@1   | C_DD          |            | DDDDCDD       |            |   * DDDDDD---D
+     *            |               |            |  b            |            |               |            |
+     *            | DDDDDD---D    |            | C_DD          | L:4:C0@5   | DDDDC_DD      |            |   * DDDDDD---D
+     *            |               |            |  b            |            |      c        |            |
+     *            | DDDDDD---D    | 3:2:D0@0   | DDDC_DD       |            | DDDDC_DD      |            |   * DDDDDD---D
+     *            |               |            |     b         |            |      c        |            |
+     *            | DDDDDD---D    | 4:2:D0@0   | DDDDC_DD      |            | DDDDC_DD      |            |   * DDDDDD---D
+     *            |               |            |      b        |            |      c        |            |
+     *            | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD   |            | DDDDC_DD      |            |   * DDDDDD---D
+     *            |               |            |         b     |            |      c        |            |
+     *            | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D  |            | DDDDC_DD      |            |   * DDDDDD---D
+     *            |               |            |          b    |            |      c        |            |
+     *            | DDDDDD---D    |            | DDDDDD- -_-D  | 5:4:D0@0   | DDDDDDDC_DD   |            |   * DDDDDD---D
+     *            |               |            |          b    |            |         c     |            |
+     *            | DDDDDD---D    |            | DDDDDD- -_-D  | 6:4:D1@6,9 | DDDDDD- -_-D  |            |   * DDDDDD---D
+     *            |               |            |          b    |            |          c    |            |
+     * 7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDD- -b-D  | 7:6:B0@6   | DDDDDDb- -_-D | 7:6:B0@6   | DDDDDDb   * ---D
+     *            |               |            |               |            |           c   |            |
+     * 8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDc- -b-D | 8:6:C0@6   | DDDDDDb- -c-D | 8:6:C0@6   | DDDDDDcb      * ---D
+     *
+     * Client C does not match client A
+     * ```
+     */
+    /* eslint-enable max-len */
+    it.skip("Concurrent insert into removed segment across block boundary", () => {
+        const clients = createClientsAtInitialState(
+            { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
+             "A", "B", "C", "D");
+
+        const logger = new TestClientLogger(clients.all);
+        let seq = 0;
+        const ops: ISequencedDocumentMessage[] = [];
+        const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(() => []);
+
+        ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DD"), ++seq));
+        ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq));
+        ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+
+        ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq));
+        ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "D"), ++seq));
+
+        // disconnect B(1)
+        ops.splice(0).forEach((op) => clients.all.forEach(
+            (c, i) => i === 1
+                ? perClientOps[i].push(op)
+                : c.applyMsg(op)));
+
+        ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq));
+        ops.push(clients.D.makeOpMessage(clients.D.removeRangeLocal(6, 9), ++seq));
+
+        // disconnect B(1) and C(2)
+        ops.splice(0).forEach((op) => clients.all.forEach(
+            (c, i) => i === 1 || i === 2
+                ? perClientOps[i].push(op)
+                : c.applyMsg(op)));
+
+        // apply changes to disconnected clients
+        const bOp = { op: clients.B.insertTextLocal(1, "b")!, sg: clients.B.peekPendingSegmentGroups()! };
+        const cOp = { op: clients.C.insertTextLocal(5, "c")!, sg: clients.C.peekPendingSegmentGroups()! };
+
+        // catch up disconnected clients
+        perClientOps.forEach(
+            (clientOps, i) => clientOps.splice(0).forEach((op) => clients.all[i].applyMsg(op)));
+
+        // rebase and resubmit disconnected client ops
+        ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
+        ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
+
+        // process the resubmitted ops
+        ops.splice(0).forEach((op) => clients.all.forEach((c) => {
+            c.applyMsg(op);
+        }));
+
+        logger.validate();
     });
 });

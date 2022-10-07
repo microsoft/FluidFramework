@@ -20,11 +20,12 @@ import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 // ContainerRuntime and Data Runtime API
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion";

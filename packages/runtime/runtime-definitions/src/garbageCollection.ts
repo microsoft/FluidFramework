@@ -26,8 +26,3 @@ export interface IGarbageCollectionDetailsBase {
     /** If this node is unreferenced, the time when it was marked as such. */
     unrefTimestamp?: number;
 }
-
-/**
- * @deprecated Kept for backwards-compatabiliy. This has been renamed to {@link IGarbageCollectionDetailsBase}.
- */
-export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
