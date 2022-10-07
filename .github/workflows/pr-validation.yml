@@ -1,7 +1,7 @@
 name: "Fluid PR Validation"
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, synchronize, edited, ready_for_review, reopened ]
     branches:
       - main
       - release/*
