@@ -398,7 +398,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorumClients();
 
-    public executeWithoutOps(callback: () => void) {
+    public runWithoutOps(callback: () => void) {
         callback();
     }
 

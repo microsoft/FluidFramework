@@ -842,12 +842,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
-    private executeWithoutOpsCalls = 0;
+    private runWithoutOpsCalls = 0;
 
-    public executeWithoutOps(callback: () => void) {
-        this.executeWithoutOpsCalls++;
+    public runWithoutOps(callback: () => void) {
+        this.runWithoutOpsCalls++;
         callback();
-        this.executeWithoutOpsCalls--;
+        this.runWithoutOpsCalls--;
     }
 
     public get connected(): boolean {
@@ -2777,8 +2777,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private verifyCanSubmitOps() {
-        if (this.executeWithoutOpsCalls > 0) {
-            throw new UsageError("Op was sent from within an `executeWithoutOps` callback");
+        if (this.runWithoutOpsCalls > 0) {
+            throw new UsageError("Op was sent from within an `runWithoutOps` callback");
         }
     }
 

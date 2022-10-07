@@ -74,7 +74,7 @@ export interface IFluidDataStoreRuntime extends
     /**
      * Executes the callback and ensures there are no ops generated from within
      */
-    executeWithoutOps(callback: () => void): void;
+    runWithoutOps(callback: () => void): void;
 
     /**
      * Creates a new channel of the given type.

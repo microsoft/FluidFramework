@@ -179,12 +179,12 @@ export class FluidDataStoreRuntime extends
     /**
     * Executes the callback and ensures there are no ops generated from within
     */
-    public executeWithoutOps(callback: () => void): void {
+    public runWithoutOps(callback: () => void): void {
         // back-compat
-        if (this.dataStoreContext.executeWithoutOps === undefined) {
+        if (this.dataStoreContext.runWithoutOps === undefined) {
             callback();
         } else {
-            this.dataStoreContext.executeWithoutOps(callback);
+            this.dataStoreContext.runWithoutOps(callback);
         }
     }
 
