@@ -525,6 +525,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
         return this.callbacksHelper.measure(() => {
             let result = false;
+
+            // Creating ops while handling a DDS event can lead
+            // to undefined behavior. The runtime must enforce op
+            // coherence by not allowing any ops to be created at
+            // this time.
             this.runtime.runWithoutOps(() => {
                 result = super.emit(event, ...args);
             });

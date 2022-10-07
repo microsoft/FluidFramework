@@ -70,7 +70,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    executeWithoutOps(callback: () => void): void;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
@@ -110,6 +109,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get rootRoutingContext(): this;
     // (undocumented)
     get routeContext(): IFluidHandleContext;
+    runWithoutOps(callback: () => void): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)

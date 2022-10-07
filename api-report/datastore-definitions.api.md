@@ -101,7 +101,6 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    executeWithoutOps(callback: () => void): void;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
     getQuorum(): IQuorumClients;
@@ -117,6 +116,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly options: ILoaderOptions;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
+    runWithoutOps(callback: () => void): void;
     submitSignal(type: string, content: any): void;
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
