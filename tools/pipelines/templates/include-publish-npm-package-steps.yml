@@ -141,6 +141,14 @@ steps:
             fi
           fi
           rm publish_log
+
+          checkIfPublished=$(npm view $checkVersion)
+          if [[ $checkIfPublished != "" ]]; then
+            echo "Published"
+          else
+            echo "Not Published"
+          fi
+
         fi
       done
       rm ~/.npmrc
