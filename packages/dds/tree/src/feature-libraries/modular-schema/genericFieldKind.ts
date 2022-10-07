@@ -17,19 +17,35 @@ import {
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
+/**
+ * A field-agnostic change to a single element of a field.
+ */
 export interface GenericChange {
     index: number;
     nodeChange: NodeChangeset;
 }
 
+/**
+ * Encoded version of {@link GenericChange}
+ */
 export interface EncodedGenericChange {
     index: number;
     nodeChange: JsonCompatibleReadOnly;
 }
 
+/**
+ * A field-agnostic set of changes to the elements of a field.
+ */
 export type GenericChangeset = GenericChange[];
+
+/**
+ * Encoded version of {@link GenericChangeset}
+ */
 export type EncodedGenericChangeset = EncodedGenericChange[];
 
+/**
+ * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
+ */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     rebaser: {
         compose: (
@@ -43,7 +59,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             for (const change of changes) {
                 let listIndex = 0;
                 for (const { index, nodeChange } of change) {
-                    // TODO: use binary search instead
                     while (listIndex < composed.length && composed[listIndex].index < index) {
                         listIndex += 1;
                     }
@@ -62,7 +77,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             return composed;
         },
-
         invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
             return change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
@@ -71,7 +85,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 }),
             );
         },
-
         rebase: (
             change: GenericChangeset,
             over: GenericChangeset,
@@ -152,7 +165,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 };
 
 /**
- * FieldKind used to represent changes that are field-kind-agnostic.
+ * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
 export const genericFieldKind: FieldKind = new FieldKind(
     brand("ModularEditBuilder.Generic"),
@@ -162,6 +175,13 @@ export const genericFieldKind: FieldKind = new FieldKind(
     new Set(),
 );
 
+/**
+ * Converts a {@link GenericChangeset} into a field-kind-specific `TChange`.
+ * @param changeset - The generic changeset to convert.
+ * @param target - The {@link FieldChangeHandler} for the `FieldKind` that the returned change should target.
+ * @param composeChild - A delegate to compose {@link NodeChangeset}s.
+ * @returns An equivalent changeset as represented by the `target` field-kind.
+ */
 export function convertGenericChange<TChange>(
     changeset: GenericChangeset,
     target: FieldChangeHandler<TChange>,

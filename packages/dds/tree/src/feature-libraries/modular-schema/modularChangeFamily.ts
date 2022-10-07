@@ -41,6 +41,13 @@ export class ModularChangeFamily
         return this;
     }
 
+    /**
+     * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FieldKind}.
+     * @param changes - The list of `FieldChange`s whose `FieldChangeset`s needs to be normalized.
+     * @returns An object that contains both the equivalent list of `FieldChangeset`s that all
+     * target the same {@link FieldKind}, and the `FieldKind` that they target.
+     * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
+     */
     private normalizeFieldChanges(changes: readonly FieldChange[]): {
         fieldKind: FieldKind;
         changesets: FieldChangeset[];
