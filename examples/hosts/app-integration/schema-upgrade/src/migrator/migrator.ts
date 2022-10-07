@@ -204,13 +204,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            // If we are assigned we can go ahead and complete the migration. If false, then it was completed by
-            // another client and we can re-enter the state machine to handle the migrated state.
             if (isAssigned) {
                 // If we are assigned we can attempt to complete the migration.
                 await completeTheMigration();
                 assert(containerId !== undefined, "containerId should be defined");
             } else {
+                // If we are not assigned, then the migration was completed by another client and we can re-enter the
+                // state machine to handle the migrated state.
                 this._migrationP = undefined;
                 this.takeAppropriateActionForCurrentMigratable();
             }
