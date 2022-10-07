@@ -103,55 +103,71 @@ export const mochaHooks = {
 // Also, error in this code count as error of the test, instead of part of the hook, which
 // would avoid rest of tests in the suite being skipped because of the hook error.
 
-let newTestFunction: Mocha.TestFunction | undefined;
+type AfterTestFunc = (context: Mocha.Context) => void;
+type BeforeTestFunc = (context: Mocha.Context) => AfterTestFunc | undefined;
 
-type BeforeTestFunc<T = any> = (this: Mocha.Context) => T;
-type AfterTestFunc<T = any> = (this: Mocha.Context, beforeTestResult: T) => void;
+const testFuncs: BeforeTestFunc[] = [];
+function patchAndRunBeforeTestFuncs(context: Mocha.Context, done: Mocha.Done) {
+    const afterTestFuncs: (AfterTestFunc | undefined)[] = [];
+    // Run after test funcs when done is call
+    const newDone = function(err?: any) {
+        runAfterTestFuncs(context, afterTestFuncs);
+        done(err);
+    };
 
-const testFuncs: { beforeTestFunc: BeforeTestFunc; afterTestFunc: AfterTestFunc; }[] = [];
-function runBeforeTestFuncs(context: Mocha.Context): any[] {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return testFuncs.map((v) => v.beforeTestFunc.call(context));
+    // patch the timeout callback;
+    context.runnable().callback = newDone;
+
+    // Actually run it and capture the variable
+    testFuncs.forEach((v) => afterTestFuncs.unshift(v(context)));
+    return { afterTestFuncs, newDone };
 }
 
-function runAfterTestFuncs(context: Mocha.Context, values: any[]) {
-    for (let index = testFuncs.length - 1; index >= 0; index--) {
-        testFuncs[index].afterTestFunc.call(context, values[index]);
-    }
+function runAfterTestFuncs(context: Mocha.Context, afterTestFuncs: (AfterTestFunc | undefined)[]) {
+    afterTestFuncs.forEach((func) => { if (func) { func(context); } });
 }
+
 function getWrappedFunction(fn: Mocha.Func | Mocha.AsyncFunc) {
     if (fn.length > 0) {
-        return function(this: Mocha.Context, done) {
-            const values = runBeforeTestFuncs(this);
+        return function(this: Mocha.Context, done: Mocha.Done) {
+            // Run before test funcs
+            const { afterTestFuncs, newDone } = patchAndRunBeforeTestFuncs(this, done);
+            let success = false;
             try {
-                (fn as Mocha.Func).call(this, done);
+                // call the actual test function
+                (fn as Mocha.Func).call(this, newDone);
+                success = true;
             } finally {
-                runAfterTestFuncs(this, values);
+                if (!success) {
+                    // run the after test funcs if there is an exception
+                    runAfterTestFuncs(this, afterTestFuncs);
+                }
             }
         };
     }
     return function(this: Mocha.Context) {
-        const values = runBeforeTestFuncs(this);
+        // Run the before test funcs
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const { afterTestFuncs } = patchAndRunBeforeTestFuncs(this, this.runnable().callback!);
 
         let ret: PromiseLike<any> | void;
         try {
+            // Run the test
             ret = (fn as Mocha.AsyncFunc).call(this);
         } finally {
-            runAfterTestFuncs(this, values);
-        }
-
-        if (typeof ret?.then === "function") {
-            // Start the timer again to wait for async
-            const asyncValues = runBeforeTestFuncs(this);
-            // Clear the timer if the promise resolves.
-            // use the id to avoid clearing the end time if it resolves after timing out
-            const clearFunc = () => { runAfterTestFuncs(this, asyncValues); };
-            ret?.then(clearFunc, clearFunc);
+            if (typeof ret?.then === "function") {
+                // Wait for the promise to resolve
+                const clearFunc = () => { runAfterTestFuncs(this, afterTestFuncs); };
+                ret?.then(clearFunc, clearFunc);
+            } else {
+                runAfterTestFuncs(this, afterTestFuncs);
+            }
         }
         return ret;
     };
 }
 
+let newTestFunction: Mocha.TestFunction | undefined;
 function setupCustomTestHooks() {
     const currentTestFunction = globalThis.it;
     // the function `it` is reassign per test files. Trap it.
@@ -173,7 +189,6 @@ function setupCustomTestHooks() {
 
 setupCustomTestHooks();
 
-globalThis.registerMochaTestWrapperFuncs =
-    function <T>(beforeTestFunc: BeforeTestFunc<T>, afterTestFunc: AfterTestFunc<T>) {
-        testFuncs.push({ beforeTestFunc, afterTestFunc });
-    };
+globalThis.registerMochaTestWrapperFunc = (beforeTestFunc: BeforeTestFunc) => {
+    testFuncs.push(beforeTestFunc);
+};
