@@ -111,6 +111,7 @@ export type ICommittedProposal = {
 // @public
 export interface IConnect {
     client: IClient;
+    driverVersion?: string;
     epoch?: string;
     id: string;
     mode: ConnectionMode;
