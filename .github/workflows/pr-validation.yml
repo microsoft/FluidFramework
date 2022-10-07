@@ -5,14 +5,64 @@ on:
     branches:
       - main
       - release/*
+      - commitlint
 
 jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Set job outputs to values from filter step
+    outputs:
+      build-tools: ${{ steps.filter.outputs.build-tools }}
+    steps:
+    # For pull requests it's not necessary to checkout the code
+    - uses: dorny/paths-filter@v2.10.2
+      id: filter
+      with:
+        filters: |
+          build-tools:
+            - 'build-tools/**'
+            - '.github/workflows/commit-validation.yml'
+
   validate-codeowners:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - uses: mszostok/codeowners-validator@2f6e3bb39aa6837d7dcf8eff2de5d6c046d0c9a9 # pin@v0.6.0
         with:
           github_access_token: "${{ secrets.GITHUB_TOKEN }}"
           checks: "files,duppatterns,syntax"
+
+  placeholder-content:
+    name: PR template placeholder content is removed
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.build-tools == 'true' }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: sitezen/pr-comment-checker@v1.0.0
+        with:
+          pr_description_should_not_contain: |
+            Feel free to remove or alter parts of this template that do not offer value for your specific change
+          wrong_pr_description_message: |
+            Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
+            content.
+
+  conventional-pr-title:
+    name: PR conforms to repo commitlint settings
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.build-tools == 'true' }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: Install dependencies
+        run: npm run install:root
+        working-directory: build-tools
+      - uses: JulienKode/pull-request-name-linter-action@v0.5.0
+        name: PR title conforms to repo commitlint settings
+        with:
+          configuration-path: build-tools/commitlint.config.cjs
