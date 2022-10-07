@@ -9,13 +9,15 @@ trigger: none
 pr: none
 
 schedules:
-  - cron: "20 20 * * *"
+  - cron: "0 21 * * *"
     displayName: Test Schedule build
     branches:
       include:
       - main
       - next
       - release/*
+      - test/clarenceli
+    always: true
 
 #resources:
 #  pipelines:
