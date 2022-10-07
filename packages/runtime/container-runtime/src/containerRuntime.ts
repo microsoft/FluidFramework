@@ -104,6 +104,7 @@ import {
     seqFromTree,
     calculateStats,
     TelemetryContext,
+    ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -2811,6 +2812,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private async waitForDeltaManagerToCatchup(snapShot: ISnapshotTree,
+        summaryRefSeq: number,
+        readAndParseBlob: ReadAndParseBlob,
+        summaryLogger: ITelemetryLogger,
+        ): Promise<void> {
+        const latestSnapshotRefSeq = await seqFromTree(snapShot, readAndParseBlob);
+        if (latestSnapshotRefSeq !== summaryRefSeq) {
+            summaryLogger.sendTelemetryEvent(
+            {
+                eventName: "LatestSummaryRetrieved",
+                lastSequenceNumber: latestSnapshotRefSeq,
+                targetSequenceNumber: summaryRefSeq,
+            });
+            if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
+                // We need to catch up to the latest summary's reference sequence number before pausing.
+                await PerformanceEvent.timedExecAsync(
+                    summaryLogger,
+                    {
+                        eventName: "WaitingForSeq",
+                        lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+                        targetSequenceNumber: latestSnapshotRefSeq,
+                        lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
+                    },
+                    async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
+                    { start: true, end: true, cancel: "error" }, // definitely want start event
+                );
+            }
+        }
+    }
+
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
@@ -2832,8 +2863,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                  summaryRefSeq,
                  fetchLatest: true,
              });
-             return fetchResult.snapshotTree;
-         };
+
+            // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
+            // wait for the delta manager to catch up before refreshing the latest Summary.
+            await this.waitForDeltaManagerToCatchup(fetchResult.snapshotTree,
+                    summaryRefSeq,
+                    readAndParseBlob,
+                    summaryLogger);
+
+            return fetchResult.snapshotTree;
+        };
+
          const result = await this.summarizerNode.refreshLatestSummary(
              proposalHandle,
              summaryRefSeq,
@@ -2842,36 +2882,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
              summaryLogger,
          );
 
-         // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
-         // wait for the delta manager to catch up.
-         if (result.latestSummaryUpdated === true && result.wasSummaryTracked === false) {
-            assert(result.snapshot !== undefined, "should have tree result");
-            const latestSnapshotRefSeq = await seqFromTree(result.snapshot, readAndParseBlob);
-            if (latestSnapshotRefSeq !== summaryRefSeq) {
-                summaryLogger.sendTelemetryEvent(
-                {
-                    eventName: "LatestSummaryRetrieved",
-                    lastSequenceNumber: latestSnapshotRefSeq,
-                    targetSequenceNumber: summaryRefSeq,
-                });
-                if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
-                    // We need to catch up to the latest summary's reference sequence number before pausing.
-                    await PerformanceEvent.timedExecAsync(
-                        summaryLogger,
-                        {
-                            eventName: "WaitingForSeq",
-                            lastSequenceNumber: this.deltaManager.lastSequenceNumber,
-                            targetSequenceNumber: latestSnapshotRefSeq,
-                            lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
-                        },
-                        async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
-                        { start: true, end: true, cancel: "error" }, // definitely want start event
-                    );
-                }
-            }
-        }
-
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
