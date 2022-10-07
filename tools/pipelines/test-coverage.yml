@@ -8,15 +8,15 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
-resources:
-  pipelines:
-  - pipeline: client   # Name of the pipeline resource
-    source: Build - client packages
-    trigger:
-      branches:
-      - release/*
+schedules:
+  - cron: "00 03 * * SAT"
+    displayName: Schedlued Tests on Saturday Nights Weekly
+    branches:
+      include:
       - main
       - next
+      - release/*
+    always: true
 
 variables:
 - group: prague-key-vault
@@ -24,72 +24,120 @@ variables:
   value: $(Pipeline.Workspace)/test
 
 stages:
-  - stage:
-    displayName: Run 1
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  - ${{ each stageName in parameters.stageNames }}:
+    - stage:
+      displayName: ${{ stageName }}
+      dependsOn: []
+      jobs:
+      - template: templates/include-test-coverage.yml
+        parameters:
+          testPackage: "@fluidframework/test-end-to-end-tests"
+          testWorkspace: ${{ variables.testWorkspace }}
+          testCommand: test:report
+          env:
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  - stage:
-    displayName: Run 2
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 3
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 4
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 5
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-#schedules:
-#  - cron: "0 0 * * *"
-#    displayName: Daily midnight build
-#    branches:
-#      include:
-#      - main
-#      - next
-#      - lts
-#      - release/*
+parameters:
+  - name: stageNames
+    type: object
+    default:
+    - Run 1
+    - Run 2
+    - Run 3
+    - Run 4
+    - Run 5
+    - Run 6
+    - Run 7
+    - Run 8
+    - Run 9
+    - Run 10
+    - Run 11
+    - Run 12
+    - Run 13
+    - Run 14
+    - Run 15
+    - Run 16
+    - Run 17
+    - Run 18
+    - Run 19
+    - Run 20
+    - Run 21
+    - Run 22
+    - Run 23
+    - Run 24
+    - Run 25
+    - Run 26
+    - Run 27
+    - Run 28
+    - Run 29
+    - Run 30
+    - Run 31
+    - Run 32
+    - Run 33
+    - Run 34
+    - Run 35
+    - Run 36
+    - Run 37
+    - Run 38
+    - Run 39
+    - Run 40
+    - Run 41
+    - Run 42
+    - Run 43
+    - Run 44
+    - Run 45
+    - Run 46
+    - Run 47
+    - Run 48
+    - Run 49
+    - Run 50
+    - Run 51
+    - Run 52
+    - Run 53
+    - Run 54
+    - Run 55
+    - Run 56
+    - Run 57
+    - Run 58
+    - Run 59
+    - Run 60
+    - Run 61
+    - Run 62
+    - Run 63
+    - Run 64
+    - Run 65
+    - Run 66
+    - Run 67
+    - Run 68
+    - Run 69
+    - Run 70
+    - Run 71
+    - Run 72
+    - Run 73
+    - Run 74
+    - Run 75
+    - Run 76
+    - Run 77
+    - Run 78
+    - Run 79
+    - Run 80
+    - Run 81
+    - Run 82
+    - Run 83
+    - Run 84
+    - Run 85
+    - Run 86
+    - Run 87
+    - Run 88
+    - Run 89
+    - Run 90
+    - Run 91
+    - Run 92
+    - Run 93
+    - Run 94
+    - Run 95
+    - Run 96
+    - Run 97
+    - Run 98
+    - Run 99
+    - Run 100

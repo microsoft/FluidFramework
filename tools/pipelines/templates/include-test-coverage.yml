@@ -21,7 +21,6 @@ parameters:
 
 - name: env
   type: object
-  default:
 
 - name: testCommand
   type: string
