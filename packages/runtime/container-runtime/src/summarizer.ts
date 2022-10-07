@@ -334,7 +334,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
 
             coordinatorCreateP.then((runCoordinator) => {
-                // Successully created the cancellation token. Start the summarizer.
+                // Successfully created the cancellation token. Start the summarizer.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const startP = this.start(this.runtime.clientId!, runCoordinator);
                 startP.then(async (runningSummarizer) => {
