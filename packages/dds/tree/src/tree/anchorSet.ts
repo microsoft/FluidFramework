@@ -437,7 +437,7 @@ class PathNode implements UpPath {
          * Starts as `undefined` for the {@link AnchorSet.root}.
          * Starts as defined but is changed to `undefined` when the corresponding document node is
          * deleted from its field.
-         * Is kept in sync with the parent `PathNode`: 
+         * Is kept in sync with the parent `PathNode`:
          *
          * - When `parentPath` is defined, then this `PathNode` is listed as a child of that parent
          * (and that parent only).
