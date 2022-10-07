@@ -50,6 +50,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
 - [Remove `ScheduleManager` and `DeltaScheduler`](#remove-schedulemanager-and-deltascheduler)
+- [Op reentrancy is no longer supported](#op-reentrancy-is-no-longer-supported)
 
 ### Remove ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -60,6 +61,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove `ScheduleManager` and `DeltaScheduler`
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+### Op reentrancy is no longer supported
+Submitting an op while processing an op is no longer supported as it can lead to inconsistencies in the document. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS. If the runtime detects an op which was submitted in this manner, an error will be thrown and current container will close. Other clients will not be affected. The functionality is enabled by default and it can be disabled using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate. The feature gate will also be removed in a future release.
 
 # 2.0.0
 
