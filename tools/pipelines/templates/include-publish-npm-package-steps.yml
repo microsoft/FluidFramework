@@ -108,7 +108,7 @@ steps:
           checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
 
           checkError=$(npm view $checkVersion)
-          echo $checkError
+          echo "Error : " $checkError
 
           if [[ grep -q "npm ERR!" ]]; then
             echo "Passed"
