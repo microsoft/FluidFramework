@@ -17,7 +17,12 @@ import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+import {
+    fieldSchema,
+    GlobalFieldKey,
+    namedTreeSchema,
+    SchemaData,
+} from "../../schema-stored";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
@@ -264,7 +269,6 @@ describe("SharedTree", () => {
         sharedTree.runTransaction((forest, editor) => {
             // Perform an edit
             const path = sharedTree.locate(anchor) ?? fail("anchor should exist");
-            sharedTree.context.prepareForEdit();
             editor.setValue(path, 2);
 
             // Check that the edit is reflected in the EditableTree
@@ -276,6 +280,7 @@ describe("SharedTree", () => {
 
         // Check that the edit is reflected in the EditableTree after the transaction.
         assert.equal(editable[valueSymbol], 2);
+        sharedTree.context.free();
     });
 });
 
@@ -300,21 +305,8 @@ const testSchema: SchemaData = {
  */
 function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
     tree.storedSchema.update(testSchema);
-
-    // Apply an edit to the tree which inserts a node with a value
-    tree.runTransaction((forest, editor) => {
-        const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        editor.insert(
-            {
-                parent: undefined,
-                parentField: detachedFieldAsKey(forest.rootField),
-                parentIndex: 0,
-            },
-            writeCursor,
-        );
-
-        return TransactionResult.Apply;
-    });
+    // Insert a node with a value
+    tree.context.createRoot(singleTextCursor({ type: brand("TestValue"), value }));
 }
 
 /**

@@ -42,6 +42,8 @@ import {
     singleTextCursorNew,
     isUnwrappedNode,
     emptyField,
+    emptyTreeSymbol,
+    EditableTreeContext,
 } from "../../../feature-libraries";
 
 import {
@@ -66,7 +68,7 @@ import {
 } from "./mockData";
 import { expectTreeEquals, expectTreeSequence } from "./utils";
 
-function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
+function setupForest1(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
     const forest = buildForest(schemaRepo);
     initializeForest(forest, data.map(singleTextCursorNew));
@@ -74,17 +76,18 @@ function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest 
 }
 
 function buildTestProxy(
-    data: JsonableTree,
-): readonly [SchemaDataAndPolicy, UnwrappedEditableField] {
-    const forest = setupForest(fullSchemaData, [data]);
+    schema: SchemaData,
+    data: JsonableTree[],
+): readonly [SchemaDataAndPolicy, EditableTreeContext] {
+    const forest = setupForest1(schema, data);
     const context = getEditableTreeContext(forest);
-    const root: UnwrappedEditableField = context.root;
-    return [forest.schema, root];
+    context.unwrapPrimitives = true;
+    return [forest.schema, context];
 }
 
 function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
-    const [schema, proxy] = buildTestProxy(personData);
-    return [schema, proxy as PersonType];
+    const [schema, context] = buildTestProxy(fullSchemaData, [personData]);
+    return [schema, context.root as PersonType];
 }
 
 describe("editable-tree", () => {
@@ -108,42 +111,58 @@ describe("editable-tree", () => {
     });
 
     it('"in" works as expected', () => {
-        const [, personProxy] = buildTestProxy(personData);
-        assert(isUnwrappedNode(personProxy));
-        // Confirm that methods on ProxyTarget are not leaking through.
-        assert.equal("free" in personProxy, false);
-        // Confirm that fields on ProxyTarget are not leaking through.
-        // Note that if typedProxy were non extensible, these would type error
-        assert.equal("lazyCursor" in personProxy, false);
-        assert.equal("context" in personProxy, false);
-        // Check for expected symbols:
-        assert(proxyTargetSymbol in personProxy);
-        assert(getTypeSymbol in personProxy);
-        // Check fields show up:
-        assert("age" in personProxy);
-        assert.equal(EmptyKey in personProxy, false);
-        assert.equal("child" in personProxy, false);
-        assert.equal("zip" in (personProxy as PersonType).address, false);
-        // Value does not show up when empty:
-        assert.equal(valueSymbol in personProxy, false);
+        {
+            const [, context] = buildTestProxy(fullSchemaData, [personData]);
+            const personProxy = context.root;
+            assert(isUnwrappedNode(personProxy));
+            // Confirm that methods on ProxyTarget are not leaking through.
+            assert.equal("free" in personProxy, false);
+            // Confirm that fields on ProxyTarget are not leaking through.
+            // Note that if typedProxy were non extensible, these would type error
+            assert.equal("lazyCursor" in personProxy, false);
+            assert.equal("context" in personProxy, false);
+            // Check for expected symbols:
+            assert(proxyTargetSymbol in personProxy);
+            assert(getTypeSymbol in personProxy);
+            // Check fields show up:
+            assert("age" in personProxy);
+            assert.equal(EmptyKey in personProxy, false);
+            assert.equal("child" in personProxy, false);
+            assert.equal("zip" in (personProxy as PersonType).address, false);
+            // Value does not show up when empty:
+            assert.equal(valueSymbol in personProxy, false);
+        }
 
-        const [, emptyOptional] = buildTestProxy(emptyNode);
-        assert(isUnwrappedNode(emptyOptional));
-        // Check empty field does not show up:
-        assert.equal("child" in emptyOptional, false);
+        {
+            const [, context] = buildTestProxy(fullSchemaData, [emptyNode]);
+            const emptyOptional = context.root;
+            assert(isUnwrappedNode(emptyOptional));
+            // Check empty field does not show up:
+            assert.equal("child" in emptyOptional, false);
+        }
 
-        const [, fullOptional] = buildTestProxy({
-            type: optionalChildSchema.name,
-            fields: { child: [{ type: int32Schema.name, value: 1 }] },
-        });
-        assert(isUnwrappedNode(fullOptional));
-        // Check full field does show up:
-        assert("child" in fullOptional);
+        {
+            const [, context] = buildTestProxy(fullSchemaData, [
+                {
+                    type: optionalChildSchema.name,
+                    fields: { child: [{ type: int32Schema.name, value: 1 }] },
+                },
+            ]);
+            const fullOptional = context.root;
+            assert(isUnwrappedNode(fullOptional));
+            // Check full field does show up:
+            assert("child" in fullOptional);
+        }
 
-        const [, hasValue] = buildTestProxy({ type: optionalChildSchema.name, value: 1 });
-        assert(isUnwrappedNode(hasValue));
-        // Value does show up when not empty:
-        assert(valueSymbol in hasValue);
+        {
+            const [, context] = buildTestProxy(fullSchemaData, [
+                { type: optionalChildSchema.name, value: 1 },
+            ]);
+            const hasValue = context.root;
+            assert(isUnwrappedNode(hasValue));
+            // Value does show up when not empty:
+            assert(valueSymbol in hasValue);
+        }
     });
 
     it("sequence roots are arrays", () => {
@@ -154,23 +173,20 @@ describe("editable-tree", () => {
         };
         // Test empty
         {
-            const forest = setupForest(schemaData, []);
-            const context = getEditableTreeContext(forest);
+            const [, context] = buildTestProxy(schemaData, []);
             assert.deepStrictEqual(context.root, []);
             context.free();
         }
         // Test 1 item
         {
-            const forest = setupForest(schemaData, [emptyNode]);
-            const context = getEditableTreeContext(forest);
-            expectTreeSequence(forest.schema, context.root, [emptyNode]);
+            const [schema, context] = buildTestProxy(schemaData, [emptyNode]);
+            expectTreeSequence(schema, context.root, [emptyNode]);
             context.free();
         }
         // Test 2 items
         {
-            const forest = setupForest(schemaData, [emptyNode, emptyNode]);
-            const context = getEditableTreeContext(forest);
-            expectTreeSequence(forest.schema, context.root, [emptyNode, emptyNode]);
+            const [schema, context] = buildTestProxy(schemaData, [emptyNode, emptyNode]);
+            expectTreeSequence(schema, context.root, [emptyNode, emptyNode]);
             context.free();
         }
     });
@@ -181,10 +197,9 @@ describe("editable-tree", () => {
             treeSchema: schemaMap,
             globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
         };
-        const forest = setupForest(schemaData, [emptyNode]);
-        const context = getEditableTreeContext(forest);
+        const [schema, context] = buildTestProxy(schemaData, [emptyNode]);
         assert(isUnwrappedNode(context.root));
-        expectTreeEquals(forest.schema, context.root, emptyNode);
+        expectTreeEquals(schema, context.root, emptyNode);
         context.free();
     });
 
@@ -196,16 +211,14 @@ describe("editable-tree", () => {
         };
         // Empty
         {
-            const forest = setupForest(schemaData, []);
-            const context = getEditableTreeContext(forest);
-            assert.equal(context.root, undefined);
+            const [, context] = buildTestProxy(schemaData, []);
+            assert.equal((context.root as EditableTree)[emptyTreeSymbol], true);
             context.free();
         }
         // With value
         {
-            const forest = setupForest(schemaData, [emptyNode]);
-            const context = getEditableTreeContext(forest);
-            expectTreeEquals(forest.schema, context.root, emptyNode);
+            const [schema, context] = buildTestProxy(schemaData, [emptyNode]);
+            expectTreeEquals(schema, context.root, emptyNode);
             context.free();
         }
     });
@@ -232,7 +245,7 @@ describe("editable-tree", () => {
                 [globalFieldKey, globalFieldSchema],
             ]),
         };
-        const forest = setupForest(schemaData, [
+        const [, context] = buildTestProxy(schemaData, [
             {
                 type: childWithGlobalFieldSchema.name,
                 fields: {
@@ -243,7 +256,6 @@ describe("editable-tree", () => {
                 },
             },
         ]);
-        const context = getEditableTreeContext(forest);
         assert(isUnwrappedNode(context.root));
         assert.deepEqual(context.root[getTypeSymbol](globalFieldSymbol, false), stringSchema);
         assert.equal(context.root[globalFieldSymbol], "global foo");
@@ -269,9 +281,12 @@ describe("editable-tree", () => {
             treeSchema: schemaMap,
             globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
         };
-        const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
-        const context = getEditableTreeContext(forest);
+        const [, context] = buildTestProxy(schemaData, [{ type: int32Schema.name, value: 1 }]);
+        assert(!isUnwrappedNode(context.root));
         assert.equal(context.root, 1);
+        context.unwrapPrimitives = false;
+        assert(isUnwrappedNode(context.root));
+        assert.equal(context.root[valueSymbol], 1);
         context.free();
     });
 
@@ -281,14 +296,17 @@ describe("editable-tree", () => {
             treeSchema: schemaMap,
             globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
         };
-        const forest = setupForest(schemaData, [
+        const [, context] = buildTestProxy(schemaData, [
             {
                 type: optionalChildSchema.name,
                 fields: { child: [{ type: int32Schema.name, value: 1 }] },
             },
         ]);
-        const context = getEditableTreeContext(forest);
         assert.equal((context.root as EditableTree)["child" as FieldKey], 1);
+        context.unwrapPrimitives = false;
+        const node = (context.root as EditableTree)["child" as FieldKey];
+        assert(isUnwrappedNode(node));
+        assert.equal(node[valueSymbol], 1);
         context.free();
     });
 
@@ -298,13 +316,12 @@ describe("editable-tree", () => {
             treeSchema: schemaMap,
             globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
         };
-        const forest = setupForest(schemaData, [
+        const [, context] = buildTestProxy(schemaData, [
             {
                 type: optionalChildSchema.name,
                 fields: { child: [{ type: int32Schema.name, value: undefined }] },
             },
         ]);
-        const context = getEditableTreeContext(forest);
         assert.throws(
             () => (context.root as EditableTree)["child" as FieldKey],
             (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
@@ -323,21 +340,19 @@ describe("editable-tree", () => {
         // Empty
         {
             const data = { type: phonesSchema.name };
-            const forest = setupForest(schemaData, [data]);
-            const context = getEditableTreeContext(forest);
+            const [schema, context] = buildTestProxy(schemaData, [data]);
             assert.deepStrictEqual(context.root, []);
-            expectTreeEquals(forest.schema, context.root, data);
+            expectTreeEquals(schema, context.root, data);
             context.free();
         }
         // Non-empty
         {
-            const forest = setupForest(schemaData, [
+            const [, context] = buildTestProxy(schemaData, [
                 {
                     type: phonesSchema.name,
                     fields: { [EmptyKey]: [{ type: int32Schema.name, value: 1 }] },
                 },
             ]);
-            const context = getEditableTreeContext(forest);
             assert.deepStrictEqual(context.root, [1]);
             context.free();
         }

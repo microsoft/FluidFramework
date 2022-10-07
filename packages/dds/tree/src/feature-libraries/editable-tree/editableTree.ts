@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/common-utils";
 import { Value, Anchor, FieldKey, symbolIsFieldKey } from "../../tree";
 import {
-    IEditableForest,
     TreeNavigationResult,
     mapCursorField,
     ITreeSubscriptionCursor,
@@ -32,7 +31,7 @@ import {
     isPrimitiveValue,
     PrimitiveValue,
 } from "./utilities";
-import { EditableTreeContext, ProxyContext } from "./editableTreeContext";
+import { ProxyContext } from "./editableTreeContext";
 
 /**
  * A symbol for extracting target from editable-tree proxies.
@@ -55,6 +54,11 @@ export const valueSymbol: unique symbol = Symbol("editable-tree:value");
  * A symbol to get the anchor of a node in contexts where string keys are already in use for fields.
  */
 export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
+
+/**
+ * A symbol to indicate that the whole tree is empty in contexts where string keys are already in use for fields.
+ */
+export const emptyTreeSymbol: unique symbol = Symbol("editable-tree:isEmptyTree");
 
 /**
  * A tree which can be traversed and edited.
@@ -102,6 +106,11 @@ export interface EditableTree {
      * this should become an implementation detail and rbe removed from this API surface.
      */
     readonly [anchorSymbol]: Anchor;
+
+    /**
+     * Indicates that the whole tree is empty.
+     */
+    readonly [emptyTreeSymbol]: boolean;
 
     /**
      * Fields of this node, indexed by their field keys (as strings).
@@ -158,9 +167,15 @@ export class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        this.lazyCursor = cursor.fork();
-        context.withCursors.add(this);
+    constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
+        if (cursor !== undefined) {
+            this.lazyCursor = cursor.fork();
+            context.withCursors.add(this);
+        } else {
+            this.lazyCursor = context.forest.allocateCursor();
+            this.lazyCursor.free();
+            this.anchor = context.forest.anchors.track(null);
+        }
     }
 
     public free(): void {
@@ -285,6 +300,10 @@ export class ProxyTarget {
         );
         return proxifyField(fieldKind, childTargets);
     }
+
+    public isEmpty(): boolean {
+        return this.anchor === this.context.forest.anchors.track(null);
+    }
 }
 
 /**
@@ -293,6 +312,9 @@ export class ProxyTarget {
  */
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     get: (target: ProxyTarget, key: string | symbol): unknown => {
+        if (target.isEmpty()) {
+            return key === proxyTargetSymbol ? target : key === emptyTreeSymbol ? true : undefined;
+        }
         if (typeof key === "string" || symbolIsFieldKey(key)) {
             // All string keys are fields
             return target.proxifyField(brand(key));
@@ -328,6 +350,9 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     // Include documented symbols (except value when value is undefined) and all non-empty fields.
     has: (target: ProxyTarget, key: string | symbol): boolean => {
+        if (target.isEmpty()) {
+            return key === proxyTargetSymbol || key === emptyTreeSymbol;
+        }
         if (typeof key === "string" || symbolIsFieldKey(key)) {
             return target.has(brand(key));
         }
@@ -364,7 +389,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     // Includes all non-empty fields, which are the enumerable fields.
     ownKeys: (target: ProxyTarget): FieldKey[] => {
-        return target.getFieldKeys();
+        return target.isEmpty() ? [] : target.getFieldKeys();
     },
     getOwnPropertyDescriptor: (
         target: ProxyTarget,
@@ -373,6 +398,26 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         // We generally don't want to allow users of the proxy to reconfigure all the properties,
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
+        if (target.isEmpty()) {
+            switch (key) {
+                case proxyTargetSymbol:
+                    return {
+                        configurable: true,
+                        enumerable: false,
+                        value: target,
+                        writable: false,
+                    };
+                case emptyTreeSymbol:
+                    return {
+                        configurable: true,
+                        enumerable: false,
+                        value: true,
+                        writable: false,
+                    };
+                default:
+                    return undefined;
+            }
+        }
 
         if ((typeof key === "string" || symbolIsFieldKey(key)) && target.has(brand(key))) {
             return {
@@ -417,8 +462,11 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
  * See {@link UnwrappedEditableTree} for documentation on what unwrapping this perform.
  */
 function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
+    if (target.isEmpty()) {
+        return adaptWithProxy(target, handler);
+    }
     const fieldSchema = target.getType(undefined, false) as NamedTreeSchema;
-    if (isPrimitive(fieldSchema)) {
+    if (isPrimitive(fieldSchema) && target.context.unwrapPrimitives) {
         const nodeValue = target.cursor.value;
         if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
@@ -456,16 +504,6 @@ export function proxifyField(
         assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
         return childTargets.length === 1 ? inProxyOrUnwrap(childTargets[0]) : undefined;
     }
-}
-
-/**
- * A simple API for a Forest to interact with the tree.
- *
- * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
- */
-export function getEditableTreeContext(forest: IEditableForest): EditableTreeContext {
-    return new ProxyContext(forest);
 }
 
 /**

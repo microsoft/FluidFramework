@@ -254,11 +254,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private beforeChange(): void {
+        this.invalidateDependents();
         assert(
             this.currentCursors.size === 0,
             0x374 /* No cursors can be current when modifying forest */,
         );
-        this.invalidateDependents();
     }
 
     tryMoveCursorTo(

@@ -9,6 +9,8 @@
     "forest",
     "util",
     "feature-libraries",
-    "modular-schema"
+    "modular-schema",
+    "checkout",
+    "transaction"
   ]
 }

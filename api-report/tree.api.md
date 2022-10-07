@@ -186,6 +186,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 // @public
 export interface EditableTree {
     readonly [anchorSymbol]: Anchor;
+    readonly [emptyTreeSymbol]: boolean;
     readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
@@ -194,9 +195,11 @@ export interface EditableTree {
 
 // @public
 export interface EditableTreeContext {
+    createRoot(rootCursor: ITreeCursor): UnwrappedEditableField;
     free(): void;
     prepareForEdit(): void;
-    readonly root: UnwrappedEditableField;
+    get root(): UnwrappedEditableField;
+    unwrapPrimitives: boolean;
 }
 
 // @public
@@ -222,6 +225,9 @@ export const emptyField: FieldSchema;
 
 // @public
 export const EmptyKey: LocalFieldKey;
+
+// @public
+export const emptyTreeSymbol: unique symbol;
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
