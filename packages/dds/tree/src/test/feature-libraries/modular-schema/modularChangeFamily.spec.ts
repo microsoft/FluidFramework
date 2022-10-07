@@ -310,8 +310,9 @@ describe("ModularChangeFamily", () => {
 
         const value = "Test Value";
         const nodeChange: NodeChangeset = { valueChange: { value } };
+        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
         const expectedChange: FieldChangeMap = new Map([
-            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(nodeChange) }],
+            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
         ]);
 
         editor.setValue(path, value);
