@@ -146,7 +146,7 @@ sharedMap.on("valueChanged", (changed) => {
     }
 });
 
-sharedMap.set("key1", "1"); // this statement will throw an exception
+sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
 ```
 
 Other clients will not be affected. The functionality is enabled by default and it can be disabled using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate. The feature gate will also be removed in a future release.
