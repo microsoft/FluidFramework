@@ -189,10 +189,10 @@ export class ConnectionManager implements IConnectionManager {
     public readonly clientDetails: IClientDetails;
 
     /**
-     * The current connection mode, initially write.
+     * The current connection mode, initially read.
      */
     public get connectionMode(): ConnectionMode {
-        return this.connection?.mode ?? "write";
+        return this.connection?.mode ?? "read";
     }
 
     public get connected() { return this.connection !== undefined; }
