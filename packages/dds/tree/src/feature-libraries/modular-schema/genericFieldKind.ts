@@ -68,7 +68,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             let iOver = 0;
             while (iChange < change.length && iOver < over.length) {
                 const a = change[iChange];
-                const b = change[iOver];
+                const b = over[iOver];
                 if (a.index === b.index) {
                     rebased.push({ index: a.index, nodeChange: rebaseChild(a.nodeChange, b.nodeChange) });
                     iChange += 1;

@@ -148,12 +148,39 @@ const rootChange1a: FieldChangeMap = new Map([
     ],
 ]);
 
+const rootChange1aGeneric: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange1a)),
+        },
+    ],
+    [
+        fieldB,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange2),
+        },
+    ],
+]);
+
 const rootChange1b: FieldChangeMap = new Map([
     [
         fieldA,
         {
             fieldKind: singleNodeField.identifier,
             change: brand(nodeChanges1b),
+        },
+    ],
+]);
+
+const rootChange1bGeneric: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges1b)),
         },
     ],
 ]);
@@ -168,8 +195,18 @@ const rootChange2: FieldChangeMap = new Map([
     ],
 ]);
 
+const rootChange2Generic: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2)),
+        },
+    ],
+]);
+
 describe("ModularChangeFamily", () => {
-    it("compose", () => {
+    describe("compose", () => {
         const composedValues: ValueChangeset = { old: 0, new: 2 };
 
         const composedNodeChange: NodeChangeset = {
@@ -191,27 +228,88 @@ describe("ModularChangeFamily", () => {
             ]),
         };
 
-        const expectedCompose: FieldChangeMap = new Map([
-            [
-                fieldA,
-                {
-                    fieldKind: singleNodeField.identifier,
-                    change: brand(composedNodeChange),
-                },
-            ],
-            [
-                fieldB,
-                {
-                    fieldKind: valueField.identifier,
-                    change: brand(valueChange2),
-                },
-            ],
-        ]);
+        it("compose specific ○ specific", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+        });
 
-        assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+        it("compose specific ○ generic", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1a, rootChange2Generic]), expectedCompose);
+        });
+
+        it("compose generic ○ specific", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2]), expectedCompose);
+        });
+
+        it("compose generic ○ generic", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: genericFieldKind.identifier,
+                        change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, composedNodeChange)),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2Generic]), expectedCompose);
+        });
     });
 
-    it("invert", () => {
+    describe("invert", () => {
         const valueInverse1: ValueChangeset = { old: 1, new: 0 };
         const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
@@ -227,16 +325,42 @@ describe("ModularChangeFamily", () => {
             ]),
         };
 
-        const expectedInverse: FieldChangeMap = new Map([
-            [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) }],
-            [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
-        ]);
+        it("specific", () => {
+            const expectedInverse: FieldChangeMap = new Map([
+                [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) }],
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
+            ]);
 
-        assert.deepEqual(family.invert(rootChange1a), expectedInverse);
+            assert.deepEqual(family.invert(rootChange1a), expectedInverse);
+        });
+
+        it("generic", () => {
+            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeInverse);
+            const expectedInverse: FieldChangeMap = new Map([
+                [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
+            ]);
+
+            assert.deepEqual(family.invert(rootChange1aGeneric), expectedInverse);
+        });
     });
 
-    it("rebase", () => {
-        assert.deepEqual(family.rebase(rootChange1b, rootChange1a), rootChange2);
+    describe("rebase", () => {
+        it("rebase specific ↷ specific", () => {
+            assert.deepEqual(family.rebase(rootChange1b, rootChange1a), rootChange2);
+        });
+
+        it("rebase specific ↷ generic", () => {
+            assert.deepEqual(family.rebase(rootChange1b, rootChange1aGeneric), rootChange2);
+        });
+
+        it("rebase generic ↷ specific", () => {
+            assert.deepEqual(family.rebase(rootChange1bGeneric, rootChange1a), rootChange2);
+        });
+
+        it("rebase generic ↷ generic", () => {
+            assert.deepEqual(family.rebase(rootChange1bGeneric, rootChange1aGeneric), rootChange2Generic);
+        });
     });
 
     it("intoDelta", () => {
