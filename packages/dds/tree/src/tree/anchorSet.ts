@@ -212,6 +212,8 @@ export class AnchorSet {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 srcChildren[index].parentIndex < srcStart!.parentIndex + count
             ) {
+                // Sever the child -/> parent connection
+                srcChildren[index].parentPath = undefined;
                 numberToMove++;
                 index++;
             }
@@ -220,6 +222,7 @@ export class AnchorSet {
                 srcChildren[index].parentIndex -= count;
                 index++;
             }
+            // Sever the parent -> child connections
             toMove = srcChildren.splice(numberBeforeMove, numberToMove);
             if (srcChildren.length === 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -430,6 +433,17 @@ class PathNode implements UpPath {
         public readonly anchorSet: AnchorSet,
         public parentField: FieldKey,
         public parentIndex: number,
+        /**
+         * Starts as `undefined` for the {@link AnchorSet.root}.
+         * Starts as defined but is changed to `undefined` when the corresponding document node is
+         * deleted from its field.
+         * Is kept in sync with the parent `PathNode`: 
+         *
+         * - When `parentPath` is defined, then this `PathNode` is listed as a child of that parent
+         * (and that parent only).
+         *
+         * - When `parentPath` is `undefined`, then no `PathNode` lists this `PathNode` as its child.
+         */
         public parentPath: PathNode | undefined,
     ) {}
 
@@ -517,12 +531,14 @@ class PathNode implements UpPath {
      * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
      */
     public removeChild(child: PathNode): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        // It's possible for this node to be `Dead` because we don't remove the children of path nodes
+        // that correspond to deleted content.
+        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
-        const childIndex = field?.indexOf(child);
+        const childIndex = field?.indexOf(child) ?? -1;
         assert(childIndex !== undefined, 0x35c /* child must be parented to be removed */);
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
@@ -536,7 +552,7 @@ class PathNode implements UpPath {
      * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
      */
     public afterEmptyField(key: FieldKey): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
         this.children.delete(key);
         if (this.refCount === 0 && this.children.size === 0) {
             this.disposeThis();

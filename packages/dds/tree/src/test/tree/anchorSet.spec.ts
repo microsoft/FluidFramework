@@ -68,6 +68,8 @@ describe("AnchorSet", () => {
         assert.equal(anchors.locate(anchor1), undefined);
         assert.doesNotThrow(() => anchors.forget(anchor4));
         assert.doesNotThrow(() => anchors.forget(anchor1));
+        checkEquality(anchors.locate(anchor2), path2);
+        checkEquality(anchors.locate(anchor3), path3);
         assert.throws(() => anchors.locate(anchor4));
         assert.throws(() => anchors.locate(anchor1));
 
@@ -77,8 +79,9 @@ describe("AnchorSet", () => {
         assert.doesNotThrow(() => anchors.forget(anchor2));
         assert.throws(() => anchors.locate(anchor2));
 
-        checkEquality(anchors.locate(anchor3), path3);
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])));
+        // The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
+        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
         checkEquality(anchors.locate(anchor3), undefined);
         assert.doesNotThrow(() => anchors.forget(anchor3));
         assert.throws(() => anchors.locate(anchor3));
