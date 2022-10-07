@@ -67,6 +67,8 @@ interface IDirectoryMessageHandler {
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
     submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
+
+    applyStashedOp(op: IDirectoryOperation): DirectoryLocalOpMetadata | undefined;
 }
 
 /**
@@ -712,6 +714,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.resubmitClearMessage(op, localOpMetadata);
                     }
                 },
+                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
+                    throw new Error("Function not implemented.");
+                },
             },
         );
         this.messageHandlers.set(
@@ -729,6 +734,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.resubmitKeyMessage(op, localOpMetadata);
                     }
                 },
+                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
+                    throw new Error("Function not implemented.");
+                },
             },
         );
         this.messageHandlers.set(
@@ -745,6 +753,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
                         subdir.resubmitKeyMessage(op, localOpMetadata);
+                    }
+                },
+                applyStashedOp: (op: IDirectorySetOperation): IKeyEditLocalOpMetadata | undefined => {
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (subdir) {
+                        return subdir.applyStashedSetMessage(op);
                     }
                 },
             },
@@ -766,6 +780,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
+                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
+                    throw new Error("Function not implemented.");
+                },
             },
         );
 
@@ -785,6 +802,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
+                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
+                    throw new Error("Function not implemented.");
+                },
             },
         );
     }
@@ -792,8 +812,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * @internal
      */
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    protected applyStashedOp(op) {
+        const handler = this.messageHandlers.get(op.type);
+        if (handler === undefined) {
+            throw new Error("no apply stashed op handler");
+        }
+        return handler.applyStashedOp(op as IDirectoryOperation);
     }
 
     private serializeDirectory(
@@ -1345,6 +1369,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.setCore(op.key, context!, local);
     }
 
+    public applyStashedSetMessage(op: IDirectorySetOperation): IKeyEditLocalOpMetadata {
+        this.throwIfDisposed();
+
+        const localValue = this.directory.localValueMaker.fromInMemory(op.value);
+
+        // Set the value locally.
+        const previousValue = this.setCore(
+            op.key,
+            localValue,
+            true,
+        );
+
+        // Create metadata
+        const pendingMessageId = this.getKeyMessageId(op);
+        const localMetadata: IKeyEditLocalOpMetadata = { type: "edit", pendingMessageId, previousValue };
+        return localMetadata;
+    }
     /**
      * Process a create subdirectory operation.
      * @param op - The op to process
