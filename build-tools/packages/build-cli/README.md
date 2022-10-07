@@ -130,7 +130,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.4.7000
+@fluid-tools/build-cli/0.4.8000
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -150,6 +150,7 @@ USAGE
 * [`flub generate readme`](#flub-generate-readme)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub merge branches`](#flub-merge-branches)
 * [`flub release`](#flub-release)
 * [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
@@ -450,6 +451,26 @@ DESCRIPTION
 
 _See code: [src/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/info.ts)_
 
+## `flub merge branches`
+
+Sync branches depending on the batch size passed
+
+```
+USAGE
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
+
+FLAGS
+  -a, --auth=<value>                (required) GitHub authentication token
+  -b, --batchSize=<value>           (required) Maximum number of commits to include in the pull request
+  -p, --pullRequestInfo=<value>...  Pull request data
+  -s, --source=<value>              (required) Source branch name
+  -t, --target=<value>              (required) Target branch name
+  -v, --verbose                     Verbose logging.
+
+DESCRIPTION
+  Sync branches depending on the batch size passed
+```
+
 ## `flub release`
 
 Releases a package or release group.
@@ -559,7 +580,8 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/lib/commands/run]
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\lib\commands\run]
                      Directory
 
 DESCRIPTION

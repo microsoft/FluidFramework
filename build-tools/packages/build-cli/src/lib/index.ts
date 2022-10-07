@@ -34,3 +34,4 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
+export * as github from "./github";
