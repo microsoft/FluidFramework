@@ -35,3 +35,5 @@ jobs:
         run: npm run install:root
         working-directory: build-tools
       - uses: JulienKode/pull-request-name-linter-action@v0.5.0
+        with:
+          configuration-path: commitlint.config.cjs
