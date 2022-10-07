@@ -162,7 +162,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
-    // (undocumented)
     runWithoutOps(callback: () => void): void;
     // (undocumented)
     get scope(): FluidObject;
