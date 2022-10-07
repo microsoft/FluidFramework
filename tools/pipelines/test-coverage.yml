@@ -8,6 +8,17 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
+parameters:
+  - name: stageNames
+    type: object
+    default: 
+    - Run 1
+    - Run 2
+    - Run 3
+    - Run 4
+    - Run 5
+
+
 schedules:
   - cron: "53 20 * * FRI"
     displayName: Test Schedule build
@@ -19,81 +30,25 @@ schedules:
       - test/clarenceli
     always: true
 
-#resources:
-#  pipelines:
-#  - pipeline: client   # Name of the pipeline resource
-#    source: Build - client packages
-#    trigger:
-#      branches:
-#      - release/*
-#      - main
-#      - next
-
 variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
 stages:
-  - stage:
-    displayName: Run 1
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  - ${{ each value in parameters.stageNames }}:
+    - stage:
+      displayName: ${{ value }}
+      dependsOn: []
+      jobs:
+      - template: templates/include-test-coverage.yml
+        parameters:
+          testPackage: "@fluidframework/test-end-to-end-tests"
+          testWorkspace: ${{ variables.testWorkspace }}
+          testCommand: test:report
+          env:
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  - stage:
-    displayName: Run 2
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 3
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 4
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  - stage:
-    displayName: Run 5
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-coverage.yml
-      parameters:
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:report
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
 #schedules:
 #  - cron: "0 0 * * *"
