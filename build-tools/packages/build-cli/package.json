@@ -33,7 +33,7 @@
     "build:genver": "gen-version",
     "build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:manifest": "oclif manifest",
-    "build:readme": "node \"./bin/dev\" generate readme",
+    "build:readme": "node \"./bin/dev\" generate readme --multi",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
