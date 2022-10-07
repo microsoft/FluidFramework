@@ -515,16 +515,16 @@ export class SummaryWriter implements ISummaryWriter {
             logTail;
 
         // Check the missing operations in the fullLogTail. We would treat
-        // isMatchLogtailEntries as true when the fullLogTail's length is extact same as the requested range.
+        // isLogtailEntriesMatch as true when the fullLogTail's length is extact same as the requested range.
         // As well as the first SN of fullLogTail - 1 is equal to from,
         // and the last SN of fullLogTail + 1 is equal to to.
-        // For example, to: 2, from: 5, fullLogTail with SN [3, 4] is the true scenario.
-        const isMatchLogtailEntries = fullLogTail &&
+        // For example, from: 2, to: 5, fullLogTail with SN [3, 4] is the true scenario.
+        const isLogtailEntriesMatch = fullLogTail &&
             fullLogTail.length > 0 &&
             fullLogTail.length === (to - from - 1) &&
             from === fullLogTail[0].sequenceNumber - 1 &&
             to === fullLogTail[fullLogTail.length - 1].sequenceNumber + 1;
-        if (!isMatchLogtailEntries) {
+        if (!isLogtailEntriesMatch) {
             const missingOpsSequenceNumbers: number[] = [];
             const fullLogTailSequenceNumbersSet = new Set();
             const fullLogTailSequenceNumbers = fullLogTail?.map((ms) => ms.sequenceNumber);
