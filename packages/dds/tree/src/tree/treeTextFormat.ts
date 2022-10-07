@@ -8,7 +8,6 @@ import {
     GlobalFieldKeySymbol,
     keyFromSymbol,
     symbolFromKey,
-    symbolIsFieldKey,
 } from "./globalFieldKeySymbol";
 import { FieldKey, NodeData } from "./types";
 
