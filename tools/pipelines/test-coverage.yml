@@ -20,7 +20,7 @@ parameters:
 
 
 schedules:
-  - cron: "53 20 * * FRI"
+  - cron: "46 21 * * FRI"
     displayName: Test Schedule build
     branches:
       include:
