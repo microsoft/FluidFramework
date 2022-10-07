@@ -369,8 +369,13 @@ export interface IFluidDataStoreContext extends
     getAudience(): IAudience;
 
     /**
-    * Executes the callback and ensures there are no ops generated from within
-    */
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
     runWithoutOps(callback: () => void): void;
 
     /**
