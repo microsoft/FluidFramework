@@ -1,7 +1,7 @@
 name: "Commit message validation"
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [main, commitlint]
     paths: ['build-tools/**', '.github/workflows/commit-validation.yml']
     types: [opened, synchronize, edited, ready_for_review]
