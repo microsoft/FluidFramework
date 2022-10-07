@@ -92,6 +92,7 @@
     "oclif": "^3",
     "semver": "^7.3.7",
     "semver-utils": "^1.1.4",
+    "simple-git": "^3.14.1",
     "sort-json": "^2.0.1",
     "strip-ansi": "^6.0.0",
     "table": "^6.8.0"
