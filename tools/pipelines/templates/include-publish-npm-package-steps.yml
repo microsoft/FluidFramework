@@ -10,6 +10,9 @@ parameters:
 - name: feedName
   type: string
 
+- name: devFeedName
+  type: string
+
 - name: official
   type: string
 
@@ -36,7 +39,8 @@ steps:
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
@@ -51,6 +55,8 @@ steps:
           cat .npmrc
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
+          echo Deleting @fluid-msinternal packages
+          rm -f fluid-msinternal-*
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
@@ -106,37 +112,34 @@ steps:
           fi
 
           checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
-
           checkError=$(npm view $checkVersion)
-          checkTiny=$(npm view @fluidframework/tinylicious-client@0.0.0-96564-test)
 
-          echo "Error : " $checkError
-          echo "Tinylicious : " $checkTiny
-
-          npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
-          if grep -q "npm ERR!" "publish_log"
-          then
-              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
-              then
-                let t1+=1
-              else
-                echo Package has already been published.
-                local_f="${f}_local"
-                mv "$f" "$local_f"
-                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                npm pack $package_name
-                if cmp -s "$f" "$local_f"
+          if [[ "$checkError" = "" || "$checkError" =~ "npm ERR!" ]]; then
+            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+            if grep -q "npm ERR!" "publish_log"
+            then
+                if ! grep -q "You cannot publish over the previously published versions" "publish_log"
                 then
-                  echo Continuing as published package matches the current one that was attempting to be released.
-                else
-                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
                   let t1+=1
+                else
+                  echo Package has already been published.
+                  local_f="${f}_local"
+                  mv "$f" "$local_f"
+                  package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                  npm pack $package_name
+                  if cmp -s "$f" "$local_f"
+                  then
+                    echo Continuing as published package matches the current one that was attempting to be released.
+                  else
+                    echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                    let t1+=1
+                  fi
+                  rm "$f"
+                  mv "$local_f" "$f"
                 fi
-                rm "$f"
-                mv "$local_f" "$f"
-              fi
+            fi
+            rm publish_log
           fi
-          rm publish_log
         fi
       done
       rm ~/.npmrc
