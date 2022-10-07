@@ -22,7 +22,7 @@ import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
  */
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	/**
-	 * Determines if the producer should be closed and reopened when a fataol error occurs.
+	 * Determines if the producer should be closed and reopened when a fatal error occurs.
 	 * Defaults to false because most errors are recoverable (it won't break the existing producer).
 	 */
 	reconnectOnNonFatalErrors: boolean;
