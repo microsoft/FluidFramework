@@ -225,6 +225,58 @@ export class GitRepo {
     }
 
     /**
+     * @param source - Source branch name
+     * @param target - Target branch name
+     * @return The last merge commit id between source and target branch
+     */
+    public async mergeBase(source: string, target: string) {
+        return await this.exec(
+            `merge-base ${source} ${target}`,
+            `merge base ${source} and ${target} branch`,
+        );
+    }
+
+    /**
+     *
+     * @param commitId - Commit id to merge
+     * @returns Either merge the commit id provided or abort the merge if merge conflicts exists
+     */
+    public async merge(commitId: string) {
+        try {
+            return await this.exec(`merge ${commitId} --no-ff`, `merge a commit id: ${commitId}`);
+        } catch (error: unknown) {
+            this.log?.errorLog(`Merge conflicts exists. Aborting the merge`);
+            await this.exec(`merge --abort`, `Abort merge`);
+            return "Abort";
+        }
+    }
+
+    /**
+     * @param commitId - Last merged commit id between two branches
+     * @param target - Target branch name
+     * @return The list of unmerged commit ids between passed commit id and branch
+     */
+    public async revList(commitId: string, branchName: string) {
+        await this.switchBranch(branchName);
+        return await this.exec(
+            `rev-list ${commitId}..HEAD --reverse`,
+            `lists commit objects in chronological order`,
+        );
+    }
+
+    public async resetBranch(commitId: string) {
+        return await this.exec(`reset --hard ${commitId}`, `reset branch to a commit id`);
+    }
+
+    public async setUpstream(branchName: string) {
+        return await this.exec(`push --set-upstream origin ${branchName}`, `publish branch`);
+    }
+
+    public async addRemote(repoPath: string) {
+        return await this.exec(`remote add upstream ${repoPath}`, `set remote`);
+    }
+
+    /**
      * Execute git command
      *
      * @param command the git command
