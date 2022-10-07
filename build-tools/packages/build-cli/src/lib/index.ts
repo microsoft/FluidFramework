@@ -5,8 +5,9 @@
 
 export {
     generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
     generateBumpDepsBranchName,
-    generateCommitMessage,
+    generateBumpDepsCommitMessage,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
     getReleaseSourceForReleaseGroup,
