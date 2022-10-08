@@ -181,7 +181,7 @@ export function generateBumpVersionCommitMessage(
  * @param bumpedDep - The release group on which dependencies were bumped.
  * @param bumpType - The bump type.
  * @param releaseGroup - If set, changes were made to only this release group.
- * @returns The generated branch name.
+ * @returns The generated commit message.
  *
  * @internal
  */
@@ -192,7 +192,7 @@ export function generateBumpDepsCommitMessage(
 ): string {
     const name =
         bumpedDep === "prerelease"
-            ? "Bump prerelease deps"
+            ? "released prerelease packages"
             : isReleaseGroup(bumpedDep)
             ? `${bumpedDep} release group`
             : PackageName.getUnscopedName(bumpedDep);
