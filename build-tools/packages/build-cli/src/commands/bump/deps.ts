@@ -31,7 +31,7 @@ import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
  */
 export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     static description =
-        "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.";
+        "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
     static args: ArgInput = [packageOrReleaseGroupArg];
 

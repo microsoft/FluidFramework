@@ -15,6 +15,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.0.0
+
+## 2.0.0-internal.3.0.0 Upcoming changes
+
+## 2.0.0-internal.3.0.0 Breaking changes
+- [Remove iframe-driver](#remove-iframe-driver)
+
+### Remove iframe-driver
+The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
+
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
@@ -62,7 +72,6 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
 - [Remove ScheduleManager and DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
-- [Remove iframe-driver](#remove-iframe-driver)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -135,9 +144,6 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
-
-### Remove iframe-driver
-The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
 
 # 2.0.0-internal.1.3.0
 

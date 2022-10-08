@@ -24,8 +24,10 @@ import { bumpReleaseGroup, generateBumpVersionBranchName } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
-    static description =
+    static summary =
         "Bumps the version of a release group or package to the next minor, major, or patch version.";
+
+    static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
 
     static args: ArgInput = [packageOrReleaseGroupArg];
 
@@ -55,6 +57,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             description:
                 "Bump the server release group to the next major version, forcing the semver version scheme.",
             command: "<%= config.bin %> <%= command.id %> server -t major --scheme semver",
+        },
+        {
+            description:
+                "By default, the bump command will run npm install in any affected packages and commit the results to a new branch. You can skip these steps using the --no-commit and --no-install flags.",
+            command: "<%= config.bin %> <%= command.id %> server -t major --no-commit --no-install",
         },
     ];
 
