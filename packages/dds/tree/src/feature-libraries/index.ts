@@ -44,6 +44,7 @@ export {
     Multiplicity,
     FullSchemaPolicy,
     allowsRepoSuperset,
+    GenericChangeset,
     genericFieldKind,
 } from "./modular-schema";
 

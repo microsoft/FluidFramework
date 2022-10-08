@@ -104,15 +104,13 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                     iChange += 1;
                     iOver += 1;
                 } else if (a.index < b.index) {
-                    rebased.push({ index: a.index, nodeChange: a.nodeChange });
+                    rebased.push(a);
                     iChange += 1;
                 } else {
-                    rebased.push({ index: b.index, nodeChange: b.nodeChange });
                     iOver += 1;
                 }
             }
             rebased.push(...change.slice(iChange));
-            rebased.push(...over.slice(iOver));
             return rebased;
         },
     },
