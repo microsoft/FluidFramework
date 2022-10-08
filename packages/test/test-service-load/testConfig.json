@@ -23,7 +23,7 @@
             "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 10800,
+            "totalSendCount": 7200,
             "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
