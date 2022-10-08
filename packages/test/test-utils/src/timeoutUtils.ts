@@ -78,17 +78,17 @@ if (globalThis.registerMochaTestWrapperFunc !== undefined) {
 }
 
 export interface TimeoutWithError {
-    // Timeout duration in milliseconds.
-    // If it is undefined, then the default is 250.
-    // If it is <= 0 or infinity, then there is no timeout
+    // Timeout duration in milliseconds, if it is > 0 and not Infinity
+    // If it is undefined, then it will use test timeout if we are in side the test function
+    // Otherwise, there is no timeout
     durationMs?: number;
     reject?: true;
     errorMsg?: string;
 }
 export interface TimeoutWithValue<T = void> {
-    // Timeout duration in milliseconds.
-    // If it is undefined, then the default is 250.
-    // If it is <= 0 or infinity, then there is no timeout
+    // Timeout duration in milliseconds, if it is > 0 and not Infinity
+    // If it is undefined, then it will use test timeout if we are in side the test function
+    // Otherwise, there is no timeout
     durationMs?: number;
     reject: false;
     value: T;
