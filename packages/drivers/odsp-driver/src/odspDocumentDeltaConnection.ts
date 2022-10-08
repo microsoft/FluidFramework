@@ -239,6 +239,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            driverVersion: pkgVersion,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
             relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),

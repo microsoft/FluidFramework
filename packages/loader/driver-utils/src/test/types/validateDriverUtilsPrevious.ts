@@ -48,6 +48,7 @@ declare function get_old_ClassDeclaration_BlobAggregationStorage():
 declare function use_current_ClassDeclaration_BlobAggregationStorage(
     use: TypeOnly<current.BlobAggregationStorage>);
 use_current_ClassDeclaration_BlobAggregationStorage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BlobAggregationStorage());
 
 /*
@@ -72,6 +73,7 @@ declare function get_old_ClassDeclaration_BlobCacheStorageService():
 declare function use_current_ClassDeclaration_BlobCacheStorageService(
     use: TypeOnly<current.BlobCacheStorageService>);
 use_current_ClassDeclaration_BlobCacheStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BlobCacheStorageService());
 
 /*
@@ -288,6 +290,7 @@ declare function get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError():
 declare function use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     use: TypeOnly<current.DeltaStreamConnectionForbiddenError>);
 use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
 /*
@@ -312,6 +315,7 @@ declare function get_old_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_current_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<current.DocumentStorageServiceProxy>);
 use_current_ClassDeclaration_DocumentStorageServiceProxy(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -925,6 +929,7 @@ declare function get_old_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_current_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<current.PrefetchDocumentStorageService>);
 use_current_ClassDeclaration_PrefetchDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
@@ -1214,6 +1219,7 @@ declare function get_old_ClassDeclaration_UsageError():
 declare function use_current_ClassDeclaration_UsageError(
     use: TypeOnly<current.UsageError>);
 use_current_ClassDeclaration_UsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_UsageError());
 
 /*
