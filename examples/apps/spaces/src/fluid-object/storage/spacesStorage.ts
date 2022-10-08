@@ -11,7 +11,7 @@ import {
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
-import { ISpacesItem } from "../index";
+import { ISpacesItem } from "../spaces";
 
 /**
  * ISpacesStorage describes the public API surface of SpacesStorage.

@@ -16,11 +16,10 @@ import {
 import { Serializable } from "@fluidframework/datastore-definitions";
 
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ISpacesStoredItem, SpacesStorage } from "./storage";
+import { SpacesStorage } from "./storage";
 import {
     spacesItemMap,
     spacesRegistryEntries,
-    templateDefinitions,
 } from "./spacesItemMap";
 
 const SpacesStorageKey = "spaces-storage";
@@ -100,43 +99,11 @@ export class Spaces extends DataObject {
     protected async initializingFirstTime() {
         const storageComponent = await SpacesStorage.getFactory().createChildInstance(this.context);
         this.root.set(SpacesStorageKey, storageComponent.handle);
-        // Set the saved template if there is a template query param
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("template")) {
-            await this.setTemplate();
-        }
     }
 
     protected async hasInitialized() {
         this._storageComponent =
             await this.root.get<IFluidHandle<SpacesStorage>>(SpacesStorageKey)?.get();
-    }
-
-    public readonly applyTemplate = async (template: string) => {
-        const itemPromises: Promise<string>[] = [];
-        const templateDefinition = templateDefinitions[template];
-        for (const [itemType, layouts] of Object.entries(templateDefinition)) {
-            for (const layout of layouts) {
-                itemPromises.push(this.createAndStoreItem(itemType, layout));
-            }
-        }
-        await Promise.all(itemPromises);
-    };
-
-    public saveLayout(): void {
-        localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.itemList.values()]));
-    }
-
-    public async setTemplate(): Promise<void> {
-        const templateString = localStorage.getItem("spacesTemplate");
-        if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesStoredItem<ISpacesItem>[];
-            const promises = templateItems.map(async (templateItem) => {
-                return this.createAndStoreItem(templateItem.serializableItemData.itemType, templateItem.layout);
-            });
-
-            await Promise.all(promises);
-        }
     }
 
     public readonly addItem = (type: string) => {

@@ -20,7 +20,6 @@ import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-e
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
-import { Layout } from "react-grid-layout";
 
 const codeMirrorFactory = new SmdeFactory();
 const proseMirrorFactory = new ProseMirrorFactory();
@@ -139,22 +138,3 @@ export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map
     [proseMirrorFactory.type, Promise.resolve(proseMirrorFactory)],
     Coordinate.getFactory().registryEntry,
 ]);
-
-interface ITemplate {
-    [type: string]: Layout[];
-}
-
-interface ITemplateDictionary {
-    [templateName: string]: ITemplate;
-}
-
-export const templateDefinitions: ITemplateDictionary = {
-    ["Collaborative Coding"]: {
-        ["codemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
-        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
-    },
-    ["Classroom"]: {
-        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
-        ["prosemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
-    },
-};

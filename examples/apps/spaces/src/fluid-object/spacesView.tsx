@@ -5,7 +5,7 @@
 
 import React from "react";
 import "react-grid-layout/css/styles.css";
-import { spacesItemMap, templateDefinitions } from "./spacesItemMap";
+import { spacesItemMap } from "./spacesItemMap";
 import { SpacesStorageView } from "./storage";
 import { Spaces } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
@@ -34,8 +34,6 @@ export const SpacesView: React.FC<ISpacesViewProps> = (props: ISpacesViewProps) 
                 setEditable={setEditable}
                 itemMap={spacesItemMap}
                 addItem={model.addItem}
-                templates={[...Object.keys(templateDefinitions)]}
-                applyTemplate={model.applyTemplate}
             />
             <SpacesStorageView
                 getViewForItem={model.getViewForItem}
