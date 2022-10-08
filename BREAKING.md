@@ -71,7 +71,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)/
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
-- [Remove ScheduleManager and DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
