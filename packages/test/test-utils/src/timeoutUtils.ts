@@ -9,72 +9,101 @@ import { assert } from "@fluidframework/common-utils";
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;
 
-// Patch mocha so we can timeout promises based on how much time is left in the test.
-let timeoutPromiseInstance: Promise<void> | undefined;
-let testTimeout: number;
+// TestTimeout class manage tracking of test timeout. It create a timer when timeout is in effect,
+// and provide a promise that will be reject before the test timeout happen with a `timeBuffer` of 15 ms.
+// Once rejected, a new TestTimeout object will be create for the timeout.
+
+type PromiseRejectFunc = (reason?: any) => void;
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
-function trackTestEndTime(context: Mocha.Context) {
-    assert(timeoutPromiseInstance === undefined, "Unexpected nested tests detected");
-    let timeoutRejection: ((reason?: any) => void) | undefined;
-    let timer: NodeJS.Timeout;
-    timeoutPromiseInstance = new Promise<void>((resolve, reject) => timeoutRejection = reject);
+class TestTimeout {
+    private timeout: number = 0;
+    private timer: NodeJS.Timeout | undefined;
+    private reject: PromiseRejectFunc = () => { };
+    private readonly promise: Promise<void>;
+    private rejected = false;
 
-    // Ignore rejection for timeout promise if no one is waiting for it.
-    timeoutPromiseInstance.catch(() => {});
+    private static instance: TestTimeout;
+    public static initialize() {
+        TestTimeout.instance = new TestTimeout();
+    }
+    public static reset(runnable: Mocha.Runnable) {
+        TestTimeout.clear();
+        TestTimeout.instance.resetTimer(runnable);
+    }
 
-    const runnable = context.runnable();
+    public static clear() {
+        if (TestTimeout.instance.rejected) {
+            TestTimeout.instance = new TestTimeout();
+        } else {
+            TestTimeout.instance.clearTimer();
+        }
+    }
 
-    // function to reset the timer
-    const resetTimer = () => {
-        // clear current timer if there is one
-        clearTimeout(timer);
+    public static getInstance() {
+        return TestTimeout.instance;
+    }
+
+    public async getPromise() {
+        return this.promise;
+    }
+
+    public getTimeout() {
+        return this.timeout;
+    }
+
+    private constructor() {
+        this.promise
+            = new Promise((resolve, reject: PromiseRejectFunc) => { this.reject = reject; });
+        // Ignore rejection for timeout promise if no one is waiting for it.
+        this.promise.catch(() => { });
+    }
+
+    private resetTimer(runnable: Mocha.Runnable) {
+        assert(!this.timer, "clearTimer should have been called before reset");
+        assert(!this.rejected, "can't reset a rejected TestTimeout");
 
         // Check the test timeout setting
-        const timeout = context.timeout();
+        const timeout = runnable.timeout();
         if (!(Number.isFinite(timeout) && timeout > 0)) { return; }
 
         // subtract a buffer
-        testTimeout = Math.max(timeout - timeBuffer, 1);
+        this.timeout = Math.max(timeout - timeBuffer, 1);
 
         // Set up timer to reject near the test timeout.
-        timer = setTimeout(() => {
-            if (timeoutRejection) {
-                timeoutRejection(timeoutPromiseInstance);
-                timeoutRejection = undefined;
-            }
-        }, testTimeout);
-    };
-
-    // patching resetTimeout and clearTimeout on the runnable object
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const oldResetTimeoutFunc = runnable.resetTimeout;
-    runnable.resetTimeout = function(this: Mocha.Runnable) {
-        oldResetTimeoutFunc.call(this);
-        resetTimer();
-    };
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const oldClearTimeoutFunc = runnable.clearTimeout;
-    runnable.clearTimeout = function(this: Mocha.Runnable) {
-        clearTimeout(timer);
-        oldClearTimeoutFunc.call(this);
-    };
-
-    if (runnable.timer !== undefined) {
-        // set up the timer is already started
-        resetTimer();
+        this.timer = setTimeout(() => {
+            this.reject(this);
+            this.rejected = true;
+        }, this.timeout);
     }
-
-    // clean up after the test is done
-    return (c: Mocha.Context) => {
-        timeoutPromiseInstance = undefined;
-        clearTimeout(timer);
-    };
+    private clearTimer() {
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = undefined;
+        }
+    }
 }
 
 // only register if we are running with mocha-test-setup loaded
-if (globalThis.registerMochaTestWrapperFunc !== undefined) {
-    globalThis.registerMochaTestWrapperFunc(trackTestEndTime);
+if (globalThis.getMochaModule !== undefined) {
+    TestTimeout.initialize();
+
+    // patching resetTimeout and clearTimeout on the runnable object
+    // so we can track when test timeout are enforced
+    const mochaModule = globalThis.getMochaModule() as typeof Mocha;
+    const runnablePrototype = mochaModule.Runnable.prototype;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const oldResetTimeoutFunc = runnablePrototype.resetTimeout;
+    runnablePrototype.resetTimeout = function(this: Mocha.Runnable) {
+        oldResetTimeoutFunc.call(this);
+        TestTimeout.reset(this);
+    };
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const oldClearTimeoutFunc = runnablePrototype.clearTimeout;
+    runnablePrototype.clearTimeout = function(this: Mocha.Runnable) {
+        TestTimeout.clear();
+        oldClearTimeoutFunc.call(this);
+    };
 }
 
 export interface TimeoutWithError {
@@ -147,15 +176,20 @@ export async function timeoutPromise<T = void>(
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined
-        : new Error(`${timeoutOptions.errorMsg ?? "Test timed out"} (${testTimeout}ms)`);
+        : new Error(timeoutOptions.errorMsg ?? "Test timed out");
     const executorPromise = getTimeoutPromise(executor, timeoutOptions);
-    if (timeoutPromiseInstance === undefined) { return executorPromise; }
-    return Promise.race([executorPromise, timeoutPromiseInstance]).catch((e) => {
-        if (e === timeoutPromiseInstance) {
+
+    const currentTestTimeout = TestTimeout.getInstance();
+    if (currentTestTimeout === undefined) { return executorPromise; }
+
+    return Promise.race([executorPromise, currentTestTimeout.getPromise()]).catch((e) => {
+        if (e === currentTestTimeout) {
             if (timeoutOptions.reject !== false) {
                 // If the rejection is because of the timeout then
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                throw err!;
+                const errorObject = err!;
+                errorObject.message = `${errorObject.message} (${currentTestTimeout.getTimeout()}ms)`;
+                throw errorObject;
             }
             return timeoutOptions.value;
         }

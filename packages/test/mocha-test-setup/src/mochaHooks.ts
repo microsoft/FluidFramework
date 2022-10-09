@@ -5,7 +5,7 @@
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { Context } from "mocha";
+import * as mochaModule from "mocha";
 import { pkgName } from "./packageVersion";
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
@@ -52,7 +52,7 @@ export const mochaHooks = {
             return currentTestLogger ?? originalLogger;
         };
     },
-    beforeEach() {
+    beforeEach(this: Mocha.Context) {
         // Suppress console.log if not verbose mode
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
@@ -60,8 +60,7 @@ export const mochaHooks = {
             console.warn = () => { };
         }
         // save the test name can and clear the previous logger (if afterEach didn't get ran and it got left behind)
-        const context = this as any as Context;
-        currentTestName = context.currentTest?.fullTitle();
+        currentTestName = this.currentTest?.fullTitle();
         currentTestLogger = undefined;
 
         // send event on test start
@@ -73,16 +72,15 @@ export const mochaHooks = {
             hostName: pkgName,
         });
     },
-    afterEach() {
+    afterEach(this: Mocha.Context) {
         // send event on test end
-        const context = this as any as Context;
         originalLogger.send({
             category: "generic",
             eventName: "fluid:telemetry:Test_end",
             testName: currentTestName,
-            state: context.currentTest?.state,
-            duration: context.currentTest?.duration,
-            timedOut: context.currentTest?.timedOut,
+            state: this.currentTest?.state,
+            duration: this.currentTest?.duration,
+            timedOut: this.currentTest?.timedOut,
             testVariant,
             hostName: pkgName,
         });
@@ -167,28 +165,19 @@ function getWrappedFunction(fn: Mocha.Func | Mocha.AsyncFunc) {
     };
 }
 
-let newTestFunction: Mocha.TestFunction | undefined;
 function setupCustomTestHooks() {
-    const currentTestFunction = globalThis.it;
-    // the function `it` is reassign per test files. Trap it.
-    Object.defineProperty(globalThis, "it", {
-        get: () => { return newTestFunction; },
-        set: (oldTestFunction: Mocha.TestFunction | undefined) => {
-            if (oldTestFunction === undefined) { newTestFunction = undefined; return; }
-            newTestFunction = ((title: string, fn?: Mocha.Func | Mocha.AsyncFunc) => {
-                return oldTestFunction(title, fn && typeof fn.call === "function" ?
-                    getWrappedFunction(fn)
-                    : fn);
-            }) as Mocha.TestFunction;
-            newTestFunction.skip = oldTestFunction.skip;
-            newTestFunction.only = oldTestFunction.only;
-        },
-    });
-    globalThis.it = currentTestFunction;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const oldAddTest = mochaModule.Suite.prototype.addTest;
+    mochaModule.Suite.prototype.addTest = function(test: Mocha.Test) {
+        if (test.fn && typeof test.fn.call === "function") {
+            test.fn = getWrappedFunction(test.fn);
+        }
+        return oldAddTest.call(this, test);
+    };
 }
 
 setupCustomTestHooks();
 
-globalThis.registerMochaTestWrapperFunc = (beforeTestFunc: BeforeTestFunc) => {
-    testFuncs.push(beforeTestFunc);
+globalThis.getMochaModule = () => {
+    return mochaModule;
 };
