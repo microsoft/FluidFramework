@@ -12,7 +12,7 @@ import { policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 
-async function readStdin(): Promise<string | undefined> {
+const readStdin: () => Promise<string | undefined> = async () => {
     return new Promise((resolve) => {
         const stdin = process.openStdin();
         stdin.setEncoding("utf-8");
