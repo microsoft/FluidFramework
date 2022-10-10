@@ -30,6 +30,7 @@ export {
     IDocumentServiceFactory,
     ISummaryContext,
     FetchSource,
+    FiveDaysMs,
 } from "./storage";
 export {
     IResolvedUrl,

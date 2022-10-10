@@ -33,6 +33,8 @@ export {
     IPerformanceEventMarkers,
     PerformanceEvent,
     TelemetryUTLogger,
+    TelemetryNullLogger,
+    BaseTelemetryNullLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
