@@ -29,12 +29,14 @@ import {
 import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
     SharedIntervalCollection,
-    SharedNumberSequence,
-    SharedObjectSequence,
     SharedString,
-    SparseMatrix,
 } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import {
+    SharedNumberSequence,
+    SharedObjectSequence,
+    SparseMatrix,
+} from "@fluid-experimental/sequence-deprecated";
 import { UnknownChannelFactory } from "./unknownChannel";
 
 async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {

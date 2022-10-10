@@ -221,6 +221,7 @@ class ScheduleManagerCore {
                 length: endBatch - startBatch,
             });
         }
+
         this.deltaManager.inbound.resume();
     }
 

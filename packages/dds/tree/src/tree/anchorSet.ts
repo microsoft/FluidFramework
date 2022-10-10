@@ -152,7 +152,7 @@ export class AnchorSet {
         while (stack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const node = stack.pop()!;
-            assert(node.status === Status.Alive, "PathNode must be alive");
+            assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
             node.status = Status.Dead;
             for (const children of node.children.values()) {
                 stack.push(...children);
@@ -457,7 +457,7 @@ class PathNode implements UpPath {
     }
 
     public get parent(): UpPath | undefined {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
         assert(
             this.parentPath !== undefined,
             0x355 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */,
@@ -470,12 +470,12 @@ class PathNode implements UpPath {
     }
 
     public addRef(count = 1): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40a /* PathNode must be alive */);
         this.refCount += count;
     }
 
     public removeRef(count = 1): void {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
         this.refCount -= count;
         if (this.refCount < 1) {
             assert(this.refCount === 0, 0x358 /* PathNode Refcount should not be negative. */);
@@ -491,7 +491,7 @@ class PathNode implements UpPath {
      * Creates child (with 1 ref) if needed.
      */
     public getOrCreateChild(key: FieldKey, index: number): PathNode {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40c /* PathNode must be alive */);
         let field = this.children.get(key);
         if (field === undefined) {
             field = [];
@@ -515,7 +515,7 @@ class PathNode implements UpPath {
      * Does NOT add a ref.
      */
     public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
         const field = this.children.get(key);
         if (field === undefined) {
             return undefined;
@@ -562,7 +562,7 @@ class PathNode implements UpPath {
      * Removes this from parent, and sets this to disposed.
      */
     private disposeThis(): void {
-        assert(this.status !== Status.Disposed, "PathNode must be alive");
+        assert(this.status !== Status.Disposed, 0x410 /* PathNode must be alive */);
         this.parentPath?.removeChild(this);
 
         this.status = Status.Disposed;
