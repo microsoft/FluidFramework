@@ -38,9 +38,9 @@ export interface IDataObjectGridItem {
 }
 
 export interface IDataObjectGrid extends EventEmitter {
-    readonly getItems: () => IDataObjectGridStoredItem<IDataObjectGridItem>[];
-    readonly getItem: (id: string) => IDataObjectGridStoredItem<IDataObjectGridItem> | undefined;
-    readonly addItem: (type: string) => Promise<void>;
+    readonly getItems: () => DataObjectGridItem[];
+    readonly getItem: (id: string) => DataObjectGridItem | undefined;
+    readonly addItem: (type: string) => Promise<string>;
     readonly removeItem: (id: string) => void;
     readonly updateLayout: (id: string, newLayout: Layout) => void;
     readonly getViewForItem: (item: IDataObjectGridItem) => Promise<JSX.Element>;
@@ -53,6 +53,15 @@ export interface IDataObjectGridStoredItem<T> {
     id: string;
     serializableItemData: Serializable<T>;
     layout: Layout;
+}
+
+export class DataObjectGridItem {
+    public constructor(
+        public readonly id: string,
+        public readonly type: string,
+        public readonly serializableData: Serializable,
+        public readonly layout: Layout,
+    ) { }
 }
 
 /**
@@ -73,12 +82,26 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
         return DataObjectGrid.factory;
     }
 
-    public readonly getItems = (): IDataObjectGridStoredItem<IDataObjectGridItem>[] => {
-        return [...this.root.values()] as IDataObjectGridStoredItem<IDataObjectGridItem>[];
+    private readonly convertStoredToClass = (
+        stored: IDataObjectGridStoredItem<IDataObjectGridItem>,
+    ): DataObjectGridItem => {
+        return new DataObjectGridItem(
+            stored.id,
+            stored.serializableItemData.itemType,
+            stored.serializableItemData.serializableObject,
+            stored.layout,
+        );
     };
 
-    public readonly getItem = (id: string): IDataObjectGridStoredItem<IDataObjectGridItem> | undefined => {
-        return this.root.get(id);
+    public readonly getItems = (): DataObjectGridItem[] => {
+        return [...this.root.values()].map(this.convertStoredToClass);
+    };
+
+    public readonly getItem = (id: string): DataObjectGridItem | undefined => {
+        const stored = this.root.get(id);
+        return stored !== undefined
+            ? this.convertStoredToClass(stored)
+            : undefined;
     };
 
     public readonly addItem = async (type: string) => {
@@ -100,6 +123,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
                 layout: { x: 0, y: 0, w: 6, h: 2 },
             },
         );
+        return id;
     };
 
     public readonly removeItem = (id: string) => {

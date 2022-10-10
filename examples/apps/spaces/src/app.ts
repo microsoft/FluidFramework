@@ -43,10 +43,6 @@ async function start() {
             contentDiv,
         );
     }
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((e) => {

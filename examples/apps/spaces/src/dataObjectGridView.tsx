@@ -7,7 +7,7 @@ import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import { ISpacesItemEntry, spacesItemMap } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
-import { IDataObjectGrid, IDataObjectGridItem, IDataObjectGridStoredItem } from "./dataObjectGrid";
+import { DataObjectGridItem, IDataObjectGrid } from "./dataObjectGrid";
 
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
@@ -93,10 +93,10 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
         const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
         const [itemList, setItemList] =
-            React.useState<IDataObjectGridStoredItem<IDataObjectGridItem>[]>(model.getItems());
+            React.useState<DataObjectGridItem[]>(model.getItems());
 
         React.useEffect(() => {
-            const onItemListChanged = (newList: IDataObjectGridStoredItem<IDataObjectGridItem>[]) => {
+            const onItemListChanged = (newList: DataObjectGridItem[]) => {
                 setItemList(newList);
             };
             model.on("itemListChanged", onItemListChanged);
@@ -126,14 +126,14 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
         const layouts: Layout[] = [];
         itemList.forEach((item) => {
             const getItemView = async () => {
-                const registryEntry = registry.get(item.serializableItemData.itemType);
+                const registryEntry = registry.get(item.type);
 
                 if (registryEntry === undefined) {
                     // Probably would be ok to return undefined instead
                     throw new Error("Cannot get view, unknown widget type");
                 }
 
-                return registryEntry.getView(item.serializableItemData.serializableObject);
+                return registryEntry.getView(item.serializableData);
             };
 
             const layout = item.layout;
