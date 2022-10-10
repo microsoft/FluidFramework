@@ -87,6 +87,14 @@ export interface ISpacesItemEntry<T = any> {
     fabricIconName: string;
 }
 
+export interface IToolbarOption {
+    // Unique key for React
+    key: string;
+    create: () => void;
+    friendlyName: string;
+    fabricIconName: string;
+}
+
 const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
     getView: getClickerView,

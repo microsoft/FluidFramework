@@ -10,19 +10,19 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
-    ISpacesItemEntry,
+    IToolbarOption,
 } from "./dataObjectRegistry";
 import "./toolbar.css";
 
 initializeIcons();
 
 interface IDataObjectGridToolbarAddItemPickerProps {
-    itemMap: Map<string, ISpacesItemEntry>;
-    addItem(type: string): void;
+    toolbarOptions: IToolbarOption[];
 }
 
 const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItemPickerProps> =
     (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
+        const { toolbarOptions } = props;
         const [open, setOpen] = React.useState<boolean>(false);
 
         const itemsButton = (
@@ -34,20 +34,18 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
                 {"Add Items"}
             </Button>
         );
-        const itemButtonList = Array.from(
-            props.itemMap.entries(),
-            ([type, itemEntry]) =>
-                <Button
-                    className="spaces-toolbar-option-button"
-                    key={`toolbarButton-${type}`}
-                    iconProps={{ iconName: itemEntry.fabricIconName }}
-                    onClick={() => {
-                        props.addItem(type);
-                        setOpen(false);
-                    }}
-                >
-                    {itemEntry.friendlyName}
-                </Button>,
+        const itemButtonList = toolbarOptions.map((toolbarOption) =>
+            <Button
+                className="spaces-toolbar-option-button"
+                key={`toolbarButton-${toolbarOption.key}`}
+                iconProps={{ iconName: toolbarOption.fabricIconName }}
+                onClick={() => {
+                    toolbarOption.create();
+                    setOpen(false);
+                }}
+            >
+                {toolbarOption.friendlyName}
+            </Button>
         );
 
         return (
@@ -63,14 +61,14 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
     };
 
 interface IDataObjectGridToolbarProps {
-    itemMap: Map<string, ISpacesItemEntry>;
     editable: boolean;
     setEditable: (editable: boolean) => void;
-    addItem(type: string): void;
+    toolbarOptions: IToolbarOption[]
 }
 
 export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
     (props: React.PropsWithChildren<IDataObjectGridToolbarProps>) => {
+        const { editable, setEditable, toolbarOptions } = props;
         const toolbarItems: JSX.Element[] = [];
 
         // Add the edit button
@@ -81,21 +79,20 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
                     className="spaces-toolbar-top-level-button"
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => {
-                        const newEditableState = !props.editable;
-                        props.setEditable(newEditableState);
+                        const newEditableState = !editable;
+                        setEditable(newEditableState);
                     }}
                 >
-                    {`Edit: ${props.editable}`}
+                    {`Edit: ${editable}`}
                 </Button>
             </div>,
         );
 
-        if (props.editable) {
+        if (editable) {
             toolbarItems.push(
                 <DataObjectGridToolbarAddItemPicker
                     key="items"
-                    itemMap={props.itemMap}
-                    addItem={props.addItem}
+                    toolbarOptions={toolbarOptions}
                 />,
             );
         }

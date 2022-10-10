@@ -6,7 +6,7 @@
 import { Serializable } from "@fluidframework/datastore-definitions";
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
-import { spacesItemMap } from "./dataObjectRegistry";
+import { IToolbarOption, spacesItemMap } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
 import { IDataObjectGrid, IDataObjectGridStoredItem } from "./dataObjectGrid";
 
@@ -173,16 +173,26 @@ interface IDataObjectGridViewProps {
 
 export const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (props: IDataObjectGridViewProps) => {
     const { model, getDirectUrl } = props;
+    // TODO: Different editable behavior, not based on size
     const [editable, setEditable] = React.useState<boolean>(model.getItems().size === 0);
+    const toolbarOptions: IToolbarOption[] = [...spacesItemMap].map(([type, spacesItemEntry]) => {
+        return {
+            key: type,
+            create: () => model.addItem(type),
+            friendlyName: spacesItemEntry.friendlyName,
+            fabricIconName: spacesItemEntry.fabricIconName,
+        };
+    });
     return (
         <div className="spaces-view">
             <DataObjectGridToolbar
                 editable={editable}
                 setEditable={setEditable}
-                itemMap={spacesItemMap}
-                addItem={model.addItem}
+                // TODO: Should this be less toolbar-specific?
+                toolbarOptions={toolbarOptions}
             />
             <SpacesStorageView
+                // TODO: Maybe can just pass in the views rather than making it go fetch
                 getViewForItem={model.getViewForItem}
                 getUrlForItem={getDirectUrl}
                 model={model}
