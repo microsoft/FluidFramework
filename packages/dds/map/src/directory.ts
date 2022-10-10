@@ -714,8 +714,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.resubmitClearMessage(op, localOpMetadata);
                     }
                 },
-                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
-                    throw new Error("Function not implemented.");
+                applyStashedOp: (op: IDirectoryClearOperation): IClearLocalOpMetadata | undefined => {
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (subdir) {
+                        return subdir.applyStashedClearMessage(op);
+                    }
                 },
             },
         );
@@ -734,8 +737,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.resubmitKeyMessage(op, localOpMetadata);
                     }
                 },
-                applyStashedOp: (op: IDirectoryOperation): DirectoryLocalOpMetadata => {
-                    throw new Error("Function not implemented.");
+                applyStashedOp: (op: IDirectoryDeleteOperation): IKeyEditLocalOpMetadata | undefined => {
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (subdir) {
+                        return subdir.applyStashedDeleteMessage(op);
+                    }
                 },
             },
         );
@@ -1320,7 +1326,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 0x32a /* pendingMessageId does not match */);
             return;
         }
-        this.clearExceptPendingKeys();
+        this.clearExceptPendingKeys(false);
+    }
+
+    public applyStashedClearMessage(op: IDirectoryClearOperation): IClearLocalOpMetadata {
+        this.throwIfDisposed();
+        const previousValue = new Map<string, ILocalValue>(this._storage);
+        this.clearExceptPendingKeys(true);
+        const pendingMsgId = ++this.pendingMessageId;
+        this.pendingClearMessageIds.push(pendingMsgId);
+        const metadata: IClearLocalOpMetadata = {
+            type: "clear",
+            pendingMessageId: pendingMsgId,
+            previousStorage: previousValue,
+        };
+        return metadata;
     }
 
     /**
@@ -1341,6 +1361,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return;
         }
         this.deleteCore(op.key, local);
+    }
+
+    public applyStashedDeleteMessage(op: IDirectoryDeleteOperation): IKeyEditLocalOpMetadata {
+        this.throwIfDisposed();
+        const previousValue = this.deleteCore(op.key, true);
+        const pendingMessageId = this.getKeyMessageId(op);
+        const localMetadata: IKeyEditLocalOpMetadata = { type: "edit", pendingMessageId, previousValue };
+        return localMetadata;
     }
 
     /**
@@ -1785,7 +1813,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * Clear all keys in memory in response to a remote clear, but retain keys we have modified but not yet been ack'd.
      */
-    private clearExceptPendingKeys() {
+    private clearExceptPendingKeys(local: boolean) {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
