@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 schedules:
-- cron: "20 16 * * *"
+- cron: "45 16 * * *"
   displayName: Daily morning run
   branches:
     include:
