@@ -212,7 +212,7 @@ export class AnchorSet {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 srcChildren[index].parentIndex < srcStart!.parentIndex + count
             ) {
-                // Sever the child -/> parent connection
+                // Sever the child -> parent connection
                 srcChildren[index].parentPath = undefined;
                 numberToMove++;
                 index++;
@@ -434,9 +434,8 @@ class PathNode implements UpPath {
         public parentField: FieldKey,
         public parentIndex: number,
         /**
-         * Starts as `undefined` for the {@link AnchorSet.root}.
-         * Starts as defined but is changed to `undefined` when the corresponding document node is
-         * deleted from its field.
+         * Starts as defined (except on {@link AnchorSet.root}) but is changed to `undefined` when the
+         * corresponding document node is deleted from its field.
          * Is kept in sync with the parent `PathNode`:
          *
          * - When `parentPath` is defined, then this `PathNode` is listed as a child of that parent
@@ -539,7 +538,7 @@ class PathNode implements UpPath {
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child) ?? -1;
-        assert(childIndex !== undefined, 0x35c /* child must be parented to be removed */);
+        assert(childIndex !== -1, 0x35c /* child must be parented to be removed */);
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.afterEmptyField(key);
