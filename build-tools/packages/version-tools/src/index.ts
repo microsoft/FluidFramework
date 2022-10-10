@@ -4,13 +4,13 @@
  */
 
 export {
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
-    ReleaseVersion,
-    VersionBumpType,
-    VersionBumpTypeExtended,
-    VersionChangeType,
-    VersionChangeTypeExtended,
+	isVersionBumpType,
+	isVersionBumpTypeExtended,
+	ReleaseVersion,
+	VersionBumpType,
+	VersionBumpTypeExtended,
+	VersionChangeType,
+	VersionChangeTypeExtended,
 } from "./bumpTypes";
 export {
     changePreReleaseIdentifier,
