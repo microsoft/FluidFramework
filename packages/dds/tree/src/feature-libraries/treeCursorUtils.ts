@@ -4,7 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, UpPath, CursorLocationType, ITreeCursorSynchronous, Value } from "../tree";
+import {
+    FieldKey,
+    TreeType,
+    UpPath,
+    CursorLocationType,
+    ITreeCursorSynchronous,
+    Value,
+} from "../tree";
 import { fail } from "../util";
 
 /**
@@ -248,7 +255,7 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
      * @returns the value of the current node
      */
     public get value(): Value {
-        return this.adapter.value(this.getNode()) as Value;
+        return this.adapter.value(this.getNode());
     }
 
     /**
