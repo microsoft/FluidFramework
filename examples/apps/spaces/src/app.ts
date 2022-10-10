@@ -8,11 +8,9 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { Spaces, SpacesView } from "./fluid-object";
-import { SpacesContainer } from "./container";
-
-// Re-export everything
-export { Spaces as SpacesExample, SpacesContainer };
+import { DataObjectGridContainer } from "./container";
+import { IDataObjectGrid } from "./dataObjectGrid";
+import { DataObjectGridView } from "./dataObjectGridView";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -24,20 +22,24 @@ async function start() {
     const documentId = !shouldCreateNew ? window.location.hash.substring(1) : "";
 
     // Get the Fluid Container associated with the provided id
-    const [container, containerId] = await getTinyliciousContainer(documentId, SpacesContainer, shouldCreateNew);
+    const [container, containerId] = await getTinyliciousContainer(
+        documentId,
+        DataObjectGridContainer,
+        shouldCreateNew,
+    );
 
     // update the browser URL and the window title with the actual container ID
     location.hash = containerId;
     document.title = containerId;
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<Spaces>(container);
+    const defaultObject = await getDefaultObjectFromContainer<IDataObjectGrid>(container);
 
     // For now we will just reach into the FluidObject to render it
     const contentDiv = document.getElementById("content");
     if (contentDiv !== null) {
         ReactDOM.render(
-            React.createElement(SpacesView, { model: defaultObject }),
+            React.createElement(DataObjectGridView, { model: defaultObject, getDirectUrl: () => "" }),
             contentDiv,
         );
     }
