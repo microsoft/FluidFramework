@@ -148,7 +148,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
-    // @deprecated (undocumented)
+    // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
     protected getService<T extends FluidObject>(id: string): Promise<T>;

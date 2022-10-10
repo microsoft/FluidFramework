@@ -19,19 +19,11 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
-- [`PureDataObject.getDataObject()` is now deprecated](#PureDataObjectgetDataObject-is-now-deprecated)
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
 was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
 This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
-
-### `PureDataObject.getDataObject()` is now deprecated
-
-The static `getDataObject()` method on `PureDataObject` to obtain the data object stored in a data store runtime is now deprecated.
-That object is now stored as the entrypoint of the data store runtime, so you should use
-`(runtime as FluidObject<IProvideFluidLoadable>)?.IFluidLoadable?.handle?.get() as PureDataObject` to get it.
-Entrypoints will eventually be exposed more directly and that access pattern will be simplified.
 
 # 2.0.0-internal.1.1.0
 
