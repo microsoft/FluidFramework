@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
+import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../lib";
+import { Repository, parseReleaseBranchName, indentString } from "../../lib";
 
 export default class InfoBranchesCommand extends BaseCommand<typeof InfoBranchesCommand.flags> {
-    static description = "Get info about the branches in the repo.";
-
-    static aliases = ["check:main-next"];
+    static description = "Get info about the official branches in the repo.";
 
     static flags = {
-        branch: Flags.string({
-            char: "b",
-            description: "A branch name.",
-            multiple: true,
-        }),
+        // branch: Flags.string({
+        //     char: "b",
+        //     description: "A branch name. Use this argument multiple times to provide multiple branch names.",
+        //     multiple: true,
+        // }),
         ...BaseCommand.flags,
     };
 
@@ -28,54 +27,45 @@ export default class InfoBranchesCommand extends BaseCommand<typeof InfoBranches
         },
     ];
 
-    /**
-     * Runs the `bump deps` command.
-     */
     public async run(): Promise<void> {
         const args = this.processedArgs;
         const flags = this.processedFlags;
-        const branchFlags = this.processedFlags.branch;
-
-        let branch1: string;
-        let branch2: string;
-
-        let b1 = branchFlags === undefined ? "main" : branchFlags[0];
-
-        let [b1, b2] = branchFlags === undefined ? ["main", "next"] : branchFlags
-
-        if(branchFlags === undefined || branchFlags.length === 0) {
-            [branch1, branch2] = ["main", "next"];
-        } else if (branchFlags.length === 1) {
-            [branch1, branch2] = [branchFlags[0], "next"];
-        } else {
-            [branch1, branch2] = branchFlags;
-        }
+        // const branchFlags = flags.branch;
 
         const context = await this.getContext();
         const repo = new Repository(context.gitRepo.resolvedRoot);
         const remote = await repo.getRemote(context.originRemotePartialUrl);
 
-        this.info(`Remote is: ${remote}`);
-
         if (remote === undefined) {
             this.error(`Can't find a remote with ${context.originRemotePartialUrl}`);
         }
+        this.verbose(`Remote is: ${remote}`);
 
-        // get merge base
-        const base = await repo.gitClient
-            .fetch() // make sure we have the latest remote refs
-            .raw("merge-base", `refs/remotes/${remote}/${b1}`, `refs/remotes/${remote}/${b2}`);
+        const branchLogs: string[] = [];
+        const releaseBranches = await repo.gitClient
+            .fetch()
+            .branch(["--all", "--list", `${remote}/release/*`]);
 
-        const rawRevs = await repo.gitClient.raw(
-            "rev-list",
-            `${base}..refs/remotes/${remote}/${b1}`,
-        );
+        const data = new Map<string, any[]>();
 
-        const revs = rawRevs.split(/\r?\n/);
+        for (const br of Object.values(releaseBranches.branches)) {
+            const [name, rg, ver] = parseReleaseBranchName(br.name);
+            if(!data.has(rg)){
+                data.set(rg, []);
+            }
+            data.get(rg)?.push(`${name}: ${chalk.blue(ver.version)} (${br.commit})`)
+        }
 
         this.logHr();
-        this.log(`${b2} is ${revs.length} commits behind ${b1}`);
+        this.log(`Release branches:`);
+        for(const [rg, branches] of data.entries()) {
+            branchLogs.push(chalk.bold(rg));
+            for(const branch of branches) {
+                branchLogs.push(indentString(branch));
+            }
+            branchLogs.push("");
+        }
+        this.log(branchLogs.join("\n"));
         this.log();
-        this.log(JSON.stringify(revs.slice(0, 10)));
     }
 }

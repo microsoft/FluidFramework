@@ -11,6 +11,7 @@ export {
     getDefaultBumpTypeForBranch,
     getReleaseSourceForReleaseGroup,
     generateReleaseBranchName,
+    parseReleaseBranchName,
 } from "./branches";
 export {
     bumpPackageDependencies,

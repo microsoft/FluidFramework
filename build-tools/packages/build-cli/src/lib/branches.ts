@@ -16,6 +16,7 @@ import {
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
+    toInternalScheme,
     toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
@@ -218,4 +219,58 @@ export function getReleaseSourceForReleaseGroup(
     }
 
     return "releaseBranches";
+}
+
+export function parseReleaseBranchName(branchName: string): [string, ReleaseGroup, semver.SemVer] {
+    const sections = branchName.split("/");
+
+    if (sections.length < 2) {
+        throw new Error(`Error parsing branch name: ${branchName}`);
+    }
+
+    const releaseIndex = sections.indexOf("release");
+    const releaseSections = sections.slice(releaseIndex);
+
+    let ver: ReleaseVersion | undefined;
+    let releaseGroup: string;
+
+    switch (releaseSections.length) {
+        case 3: {
+            [releaseGroup, ver] = [releaseSections[1], releaseSections[2]];
+            break;
+        }
+
+        case 2: {
+            [releaseGroup, ver] = ["client", releaseSections[1]];
+            break;
+        }
+
+        default: {
+            throw new Error(`Error parsing branch name: ${branchName}`);
+        }
+    }
+
+    const parsedVersion =
+        releaseGroup === "v2int"
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? toInternalScheme("2.0.0", semver.coerce(ver)!)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            : semver.coerce(ver)!;
+
+    if (ver === undefined) {
+        throw new Error(`Error parsing branch name: ${branchName}`);
+    }
+
+    releaseGroup = releaseGroup === "v2int" ? "client" : releaseGroup;
+
+    if (!isReleaseGroup(releaseGroup)) {
+        throw new Error(`Unknown release group: ${releaseGroup}`);
+    }
+
+    return [releaseSections.join("/"), releaseGroup, parsedVersion];
+    // remotes/upstream/release/1.0
+
+    // remotes/upstream/release/v2int/1.0
+
+    // remotes/upstream/release/build-tools/1.0
 }
