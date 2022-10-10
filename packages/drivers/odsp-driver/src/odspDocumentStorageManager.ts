@@ -92,7 +92,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
-        private readonly relayServiceTenantAndSessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string | undefined,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
         super();
