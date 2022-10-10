@@ -47,10 +47,9 @@ export class TestContext extends EventEmitter implements IContext {
         this.emit("error", error, errorData);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public waitForOffset(value: number): Promise<void> {
+    public async waitForOffset(value: number): Promise<void> {
         if (value <= this.offset) {
-            return Promise.resolve();
+            return;
         }
 
         const deferred = new Deferred<void>();

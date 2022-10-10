@@ -6,8 +6,8 @@
 import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IAnyDriverError } from "@fluidframework/driver-utils";
 import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IClient,
@@ -36,8 +36,8 @@ export interface FlushResult {
 // This allows reconnection after receiving a nack to be smooth
 const socketReferenceBufferTime = 2000;
 
-export interface ISocketEvents extends IEvent {
-    (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
+interface ISocketEvents extends IEvent {
+    (event: "disconnect", listener: (error: IFluidErrorBase & OdspError, clientId?: string) => void);
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
@@ -76,17 +76,15 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
     /**
      * Removes a reference for the given key
      * Once the ref count hits 0, the socket is disconnected and removed
-     * @param key - socket reference key
-     * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
-    public removeSocketIoReference(isFatalError: boolean) {
+    public removeSocketIoReference() {
         assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
         this.references--;
 
         // see comment in disconnected() getter
         this.isPendingInitialConnection = false;
 
-        if (isFatalError || this.disconnected) {
+        if (this.disconnected) {
             this.closeSocket();
             return;
         }
@@ -114,12 +112,14 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
 
-        // The server always closes the socket after sending this message
-        // fully remove the socket reference now
-        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+        // Server sends this event when it wants to disconnect a particular client in which case the client id would
+        // be present or if it wants to disconnect all the clients. The server always closes the socket in case all
+        // clients needs to be disconnected. So fully remove the socket reference in this case.
+        socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
             const error = errorObjectFromSocketError(socketError, "server_disconnect");
+            error.addTelemetryProperties({ disconnectClientId: clientId });
             error.canRetry = true;
 
             // see comment in disconnected() getter
@@ -127,9 +127,13 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error);
-            this.closeSocket();
+            if (clientId === undefined) {
+                // We could first raise "disconnect" event, but that may result in socket reuse due to
+                // new connection comming in. So, it's better to have more explicit flow to make it impossible.
+                this.closeSocket(error);
+            } else {
+                this.emit("disconnect", error, clientId);
+            }
         });
     }
 
@@ -140,27 +144,33 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         }
     }
 
-    private closeSocket() {
+    public closeSocket(error?: IAnyDriverError) {
         if (!this._socket) { return; }
 
         this.clearTimer();
 
         assert(SocketReference.socketIoSockets.get(this.key) === this,
             0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
+
+        // First, remove socket to ensure no socket reuse is possible.
         SocketReference.socketIoSockets.delete(this.key);
 
+        // Block access to socket. From now on, calls like flush() or requestOps()
+        // Disconnect flow should be synchronous and result in system fully forgetting about this connection / socket.
         const socket = this._socket;
         this._socket = undefined;
 
-        // Delay closing socket, to make sure all users of socket observe the same event that causes
-        // this instance to close, and thus properly record reason for closure.
-        // All event raising is synchronous, so clients will have a chance to react before socket is
-        // closed without any extra data on why it was closed.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        Promise.resolve().then(() => { socket.disconnect(); });
+        // Let all connections know they need to go through disconnect flow
+        this.emit("disconnect", error, undefined /* clientId */);
+
+        // We should not have any users now, assuming synchronous disconnect flow in response to
+        // "disconnect" event
+        assert(this.references === 0, "Nobody should be connected to this socket at this point!");
+
+        socket.disconnect();
     }
 
-    private get disconnected() {
+    public get disconnected() {
         if (this._socket === undefined) { return true; }
         if (this.socket.connected) { return false; }
 
@@ -229,6 +239,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            driverVersion: pkgVersion,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
             relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
@@ -354,6 +365,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @returns ops retrieved
      */
      public requestOps(from: number, to: number) {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         // Given that to is exclusive, we should be asking for at least something!
         assert(to > from, 0x272 /* "empty request" */);
 
@@ -410,6 +423,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public async flush(): Promise<FlushResult> {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_flush_ops] !== true) {
             // Once single-commit summary is enabled end-to-end, flush support is a must!
@@ -437,12 +452,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
-    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
-        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
-        this.disposeCore(true, error);
+    protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
+        if (clientId === undefined || clientId === this.clientId) {
+            this.disconnect(error);
+            this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
+        }
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         if (this.enableMultiplexing) {
             // multiplex compatible early handlers
             this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -458,7 +477,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
-        this.socketReference!.on("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference!.on("disconnect", this.disconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
@@ -577,21 +596,30 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     /**
+     * Critical path where we need to also close the socket for an error.
+     * @param error - Error causing the socket to close.
+     */
+    protected closeSocket(error: IAnyDriverError) {
+        const socket = this.socketReference;
+        assert(socket !== undefined, "reentrancy not supported in close socket");
+        socket.closeSocket(error);
+        assert(this.socketReference === undefined, "disconnect flow did not work correctly");
+    }
+
+    /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
+    protected disconnectCore() {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
-
-        this.socketReference?.off("server_disconnect", this.serverDisconnectHandler);
         this.socketReference = undefined;
 
-        if (!socketProtocolError && this.hasDetails) {
+        socket.off("disconnect", this.disconnectHandler);
+        if (this.hasDetails) {
             // tell the server we are disconnecting this client from the document
             this.socket.emit("disconnect_document", this.clientId, this.documentId);
         }
 
-        socket.removeSocketIoReference(socketProtocolError);
-        this.emit("disconnect", reason);
+        socket.removeSocketIoReference();
     }
 }

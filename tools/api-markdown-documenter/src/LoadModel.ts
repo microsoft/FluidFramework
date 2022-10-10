@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import {
     ApiDocumentedItem,
     ApiItem,
@@ -11,7 +13,6 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import { Logger } from "./Logging";
 
@@ -26,7 +27,7 @@ import { Logger } from "./Logging";
  * @param logger - Optional logger for reporting system events while loading the model.
  */
 export async function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel> {
-    if (!(await FileSystem.exists(reportsDirectoryPath))) {
+    if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {
         throw new Error(`Provided directory does not exist: "${reportsDirectoryPath}".`);
     }
 
@@ -34,7 +35,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
 
     const apiReportFilePaths: string[] = [];
     for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
-        if (filename.match(/\.api\.json$/i)) {
+        if (/\.api\.json$/i.test(filename)) {
             console.log(`Reading ${filename}`);
             const filenamePath: string = Path.join(reportsDirectoryPath, filename);
             apiReportFilePaths.push(filenamePath);
@@ -77,31 +78,28 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger): void {
-    if (apiItem instanceof ApiDocumentedItem) {
-        if (apiItem.tsdocComment) {
-            const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
+        const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
-            if (inheritDocTag && inheritDocTag.declarationReference) {
-                // Attempt to resolve the declaration reference
-                const result: IResolveDeclarationReferenceResult =
-                    apiModel.resolveDeclarationReference(
-                        inheritDocTag.declarationReference,
-                        apiItem,
+        if (inheritDocTag?.declarationReference !== undefined) {
+            // Attempt to resolve the declaration reference
+            const result: IResolveDeclarationReferenceResult = apiModel.resolveDeclarationReference(
+                inheritDocTag.declarationReference,
+                apiItem,
+            );
+
+            if (result.errorMessage !== undefined) {
+                if (logger !== undefined) {
+                    logger.warning(
+                        `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
                     );
-
-                if (result.errorMessage) {
-                    if (logger !== undefined) {
-                        logger.warning(
-                            `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
-                        );
-                    }
-                } else if (
-                    result.resolvedApiItem instanceof ApiDocumentedItem &&
-                    result.resolvedApiItem.tsdocComment &&
-                    result.resolvedApiItem !== apiItem
-                ) {
-                    copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
                 }
+            } else if (
+                result.resolvedApiItem instanceof ApiDocumentedItem &&
+                result.resolvedApiItem.tsdocComment &&
+                result.resolvedApiItem !== apiItem
+            ) {
+                copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
             }
         }
     }

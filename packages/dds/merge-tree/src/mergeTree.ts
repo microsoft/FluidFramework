@@ -898,24 +898,28 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
+    private slideAckedRemovedSegmentReferences(segment: ISegment) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
-        assert(!!segment.localRefs, 0x2f2 /* Ref not in the segment localRefs */);
+        if (segment.localRefs?.empty !== false) {
+            return;
+        }
         const newSegment = this._getSlideToSegment(segment);
         if (newSegment) {
             const localRefs = newSegment.localRefs ??= new LocalReferenceCollection(newSegment);
             if (newSegment.ordinal < segment.ordinal) {
-                localRefs.addAfterTombstones(refsToSlide);
+                localRefs.addAfterTombstones(segment.localRefs);
             } else {
-                localRefs.addBeforeTombstones(refsToSlide);
+                localRefs.addBeforeTombstones(segment.localRefs);
             }
         } else {
-            for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.(ref);
-                segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.(ref);
+            for (const ref of segment.localRefs) {
+                if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
+                    ref.callbacks?.beforeSlide?.(ref);
+                    segment.localRefs?.removeLocalRef(ref);
+                    ref.callbacks?.afterSlide?.(ref);
+                }
             }
         }
         // TODO is it required to update the path lengths?
@@ -925,43 +929,36 @@ export class MergeTree {
         }
     }
 
-    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean):
-        LocalReferencePosition[] | undefined {
-        if (!segment.localRefs || segment.localRefs.empty) {
-            return undefined;
-        }
-        const refsToSlide: LocalReferencePosition[] = [];
-        const removedRefs: LocalReferencePosition[] = [];
-        for (const lref of segment.localRefs) {
-            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                continue;
-            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (!pending) {
-                    refsToSlide.push(lref);
-                }
-            } else {
-                // since we are pending, don't actually remove it,
-                // return the set of refs that will be removed on ack
-                //
-                if (!pending) {
-                    segment.localRefs.removeLocalRef(lref);
-                }
-                removedRefs.push(lref);
-            }
-        }
-        // Rethink implementation of keeping and sliding refs once other reference
-        // changes are complete. This works but is fragile and possibly slow.
-        if (!pending) {
-            this.slideReferences(segment, refsToSlide);
-        }
-        // return only the refs that have been entirely removed
-        return removedRefs.length > 0 ? removedRefs : undefined;
-    }
-
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
         return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)
             ? node.partialLengths!.getPartialLength(refSeq, clientId)
             : node.cachedLength;
+    }
+
+    /**
+     * Compute local partial length information
+     *
+     * Public only for use by internal tests
+     *
+     * @internal
+     */
+    public computeLocalPartials(refSeq: number) {
+        if (this.localPartialsComputed) {
+            return;
+        }
+
+        const rebaseCollabWindow = new CollaborationWindow();
+        rebaseCollabWindow.loadFrom(this.collabWindow);
+        if (refSeq < this.collabWindow.minSeq) {
+            rebaseCollabWindow.minSeq = refSeq;
+        }
+        this.root.partialLengths = PartialSequenceLengths.combine(
+            this.root,
+            rebaseCollabWindow,
+            true,
+            true,
+        );
+        this.localPartialsComputed = true;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
@@ -972,20 +969,7 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                if (!this.localPartialsComputed) {
-                    const rebaseCollabWindow = new CollaborationWindow();
-                    rebaseCollabWindow.loadFrom(this.collabWindow);
-                    if (refSeq < this.collabWindow.minSeq) {
-                        rebaseCollabWindow.minSeq = refSeq;
-                    }
-                    this.root.partialLengths = PartialSequenceLengths.combine(
-                        this.root,
-                        rebaseCollabWindow,
-                        true,
-                        true,
-                    );
-                    this.localPartialsComputed = true;
-                }
+                this.computeLocalPartials(refSeq);
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
@@ -1018,12 +1002,7 @@ export class MergeTree {
                         }
                     }
 
-                    if (seq <= refSeq || segment.clientId === clientId) {
-                        return segment.cachedLength;
-                    } else {
-                        // Segment invisible to client at reference sequence number/branch id/client id of op
-                        return 0;
-                    }
+                    return seq <= refSeq || segment.clientId === clientId ? segment.cachedLength : 0;
                 }
 
                 if (removalInfo !== undefined
@@ -1288,7 +1267,7 @@ export class MergeTree {
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
-                    this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
+                    this.slideAckedRemovedSegmentReferences(pendingSegment);
                 }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
@@ -1954,8 +1933,7 @@ export class MergeTree {
         // these segments are already viewed as being removed locally and are not event-ed
         // so can slide non-StayOnRemove refs immediately
         localOverlapWithRefs.forEach(
-            (s) => this.slideReferences(s, Array.from(s.localRefs!)
-                .filter((localRef) => !refTypeIncludesFlag(localRef, ReferenceType.StayOnRemove))),
+            (s) => this.slideAckedRemovedSegmentReferences(s),
         );
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
@@ -1966,19 +1944,14 @@ export class MergeTree {
                     deltaSegments: removedSegments,
                 });
         }
-        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
         // these events are newly removed
         // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
-        removedSegments.forEach((rSeg) => {
-            const removedRefs = this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending);
-            if (segmentGroup && removedRefs) {
-                if (!segmentGroup.removedReferences) {
-                    segmentGroup.removedReferences = [];
-                }
-                segmentGroup.removedReferences.push(...removedRefs);
-            }
-        });
+        if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
+            removedSegments.forEach((rSeg) => {
+                this.slideAckedRemovedSegmentReferences(rSeg.segment);
+            });
+        }
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
@@ -2019,16 +1992,6 @@ export class MergeTree {
 
                 for (let updateNode = segment.parent; updateNode !== undefined; updateNode = updateNode.parent) {
                     this.blockUpdateLength(updateNode, UnassignedSequenceNumber, this.collabWindow.clientId);
-                }
-            }
-            if (pendingSegmentGroup.removedReferences) {
-                for (const ref of pendingSegmentGroup.removedReferences) {
-                    const seg = ref.getSegment();
-                    if (!seg) {
-                        throw new Error("Cannot rollback reference without segment");
-                    }
-                    const localRefs = seg.localRefs ??= new LocalReferenceCollection(seg);
-                    localRefs.addLocalRef(ref, ref.getOffset());
                 }
             }
         } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {

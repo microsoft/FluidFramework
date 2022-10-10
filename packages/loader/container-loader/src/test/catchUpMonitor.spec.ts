@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { CatchUpMonitor } from "../catchUpMonitor";
 
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
@@ -56,7 +56,7 @@ describe("CatchUpMonitor", () => {
             lastKnownSeqNumber: 15, // Should be impossible in real world
         });
 
-        assert.throws(() => new CatchUpMonitor(mockDeltaManager), "Expect assert when DeltaManager in invalid state");
+        assert.throws(() => new CatchUpMonitor(mockDeltaManager, () => {}), "Expect assert when DeltaManager in invalid state");
     });
 
     it("Emits caughtUp event when caught up to the point it was created", () => {
@@ -67,28 +67,13 @@ describe("CatchUpMonitor", () => {
         let caughtUp = false;
 
         mockDeltaManager.lastKnownSeqNumber = 20;
-        monitor = new CatchUpMonitor(mockDeltaManager);
+        monitor = new CatchUpMonitor(mockDeltaManager, () => { caughtUp = true; });
         mockDeltaManager.lastKnownSeqNumber = 25;  // Shouldn't change anything about the monitor
-        monitor.on("caughtUp", () => { caughtUp = true; });
 
         mockDeltaManager.emitOpWithSequenceNumber(19); // Less than 20
         assert(!caughtUp, "Shouldn't be considered caught up yet");
         mockDeltaManager.emitOpWithSequenceNumber(21); // Greater than 20
         assert(caughtUp, "Should be considered caught up now");
-    });
-
-    it("Adding a listener after already caught up invokes the listener immediately", () => {
-        const mockDeltaManager = MockDeltaManagerForCatchingUp.create({
-            lastSequenceNumber: 10,
-            lastKnownSeqNumber: 15,
-        });
-        let caughtUp = false;
-
-        monitor = new CatchUpMonitor(mockDeltaManager);
-        mockDeltaManager.emitOpToCatchUp();
-
-        monitor.on("caughtUp", () => { caughtUp = true; });
-        assert(caughtUp, "caughtUp should have fired immediately");
     });
 
     it("Emits caught up immediately if last known/processed sequence numbers match", () => {
@@ -98,9 +83,8 @@ describe("CatchUpMonitor", () => {
         });
         let caughtUp = false;
 
-        monitor = new CatchUpMonitor(mockDeltaManager);
+        monitor = new CatchUpMonitor(mockDeltaManager, () => { caughtUp = true; });
 
-        monitor.on("caughtUp", () => { caughtUp = true; });
         assert(caughtUp, "caughtUp should have fired immediately");
     });
 
@@ -111,54 +95,21 @@ describe("CatchUpMonitor", () => {
         });
         let caughtUpCount = 0;
 
-        monitor = new CatchUpMonitor(mockDeltaManager);
-        monitor.on("caughtUp", () => { ++caughtUpCount; });
+        monitor = new CatchUpMonitor(mockDeltaManager, () => { ++caughtUpCount; });
 
         mockDeltaManager.emitOpWithSequenceNumber(15);
         assert.equal(caughtUpCount, 1, "caughtUp should have fired once");
         mockDeltaManager.emitOpWithSequenceNumber(16);
         assert.equal(caughtUpCount, 1, "caughtUp should have fired only once");
-
-        let secondCaughtUpCount = 0;
-        monitor.on("caughtUp", () => { secondCaughtUpCount = 1; });
-        assert.equal(secondCaughtUpCount, 1, "New listener should still get invoked once caught up");
-        mockDeltaManager.emitOpWithSequenceNumber(17);
-        assert.equal(secondCaughtUpCount, 1, "Subsequent ops will not cause caughtUp again on second listener");
     });
 
     it("Dispose removes all listeners", () => {
         const mockDeltaManager = MockDeltaManagerForCatchingUp.create();
-        monitor = new CatchUpMonitor(mockDeltaManager);
+        monitor = new CatchUpMonitor(mockDeltaManager, () => {});
 
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
         monitor.dispose();
 
         assert(monitor.disposed, "dispose() should set disposed");
-        assert.equal(monitor.listenerCount("caughtUp"), 0, "dispose() should clear all listeners");
         assert.equal(mockDeltaManager.listenerCount("op"), 0, "CatchUpMonitor.dispose should remove listener on DeltaManager");
-    });
-});
-
-describe("ImmediateCatchUpMonitor", () => {
-    it("caughtUp event fires immediately upon adding a listener", () => {
-        const monitor = new ImmediateCatchUpMonitor();
-        let caughtUp = false;
-        monitor.on("caughtUp", () => {
-            caughtUp = true;
-        });
-        assert(caughtUp, "callback should be invoked immediately");
-    });
-
-    it("Dispose removes all listeners", () => {
-        const monitor = new ImmediateCatchUpMonitor();
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
-        monitor.dispose();
-
-        assert(monitor.disposed, "dispose() should set disposed");
-        assert.equal(monitor.listenerCount("caughtUp"), 0, "dispose() should clear all listeners");
     });
 });

@@ -52,7 +52,10 @@ describe("MarkListFactory", () => {
             {
                 type: "Insert",
                 id: 0,
-                content: [{ type, value: 1 }, { type, value: 2 }],
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                ],
             },
         ]);
     });

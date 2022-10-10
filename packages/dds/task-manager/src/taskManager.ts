@@ -229,7 +229,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 const pendingIds = this.pendingCompletedTasks.get(taskId);
                 assert(pendingIds !== undefined && pendingIds.length > 0, "pendingIds is empty");
                 const removed = pendingIds.shift();
-                assert(removed === pendingOp.messageId, "Removed complete op id does not match");
+                assert(removed === messageId, "Removed complete op id does not match");
             }
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
@@ -572,16 +572,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected initializeLocalCore() { }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
      */
     protected onDisconnect() {
         this.connectionWatcher.emit("disconnect");
     }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     * @internal
      */
     protected onConnect() {
         this.connectionWatcher.emit("connect");

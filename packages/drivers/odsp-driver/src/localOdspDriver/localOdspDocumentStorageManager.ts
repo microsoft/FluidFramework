@@ -8,12 +8,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase";
 import { ISnapshotContents } from "../odspPublicUtils";
 import { IOdspSnapshot } from "../contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
-import { ReadBuffer } from "../ReadBufferUtils";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.
@@ -26,7 +26,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         private readonly logger: ITelemetryLogger,
         private readonly localSnapshot: Uint8Array | string,
     ) {
-        super();
+        super(loggerToMonitoringContext(logger).config);
     }
 
     private calledGetVersions = false;
@@ -48,7 +48,8 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
             snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         } else {
             snapshotContents = parseCompactSnapshotResponse(
-                new ReadBuffer(this.localSnapshot));
+                this.localSnapshot,
+                this.logger);
         }
 
         this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);

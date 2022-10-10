@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import child_process from "child_process";
+
 import { getFileVersion, getIsLatest, getSimpleVersion } from "./buildVersionLib";
 
 function main() {
@@ -50,7 +50,7 @@ function main() {
             continue;
         }
         console.log(`ERROR: Invalid argument ${process.argv[i]}`);
-        process.exit(1)
+        process.exit(1);
     }
 
     if (!arg_build_num) {
@@ -62,15 +62,15 @@ function main() {
     }
 
     if (!arg_test_build) {
-        arg_test_build = (process.env["TEST_BUILD"] === "true");
+        arg_test_build = process.env["TEST_BUILD"] === "true";
     }
 
     if (!arg_patch) {
-        arg_patch = (process.env["VERSION_PATCH"] === "true");
+        arg_patch = process.env["VERSION_PATCH"] === "true";
     }
 
     if (!arg_release) {
-        arg_release = (process.env["VERSION_RELEASE"] === "release");
+        arg_release = process.env["VERSION_RELEASE"] === "release";
     }
 
     if (!arg_tag) {
@@ -117,8 +117,9 @@ function main() {
     }
 
     if (arg_tag !== undefined) {
-        const includeInternalVersions = process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "true"
-            || process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "True";
+        const includeInternalVersions =
+            process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "true" ||
+            process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "True";
         const isLatest = getIsLatest(arg_tag, version, undefined, includeInternalVersions);
         console.log(`isLatest=${isLatest}`);
         if (arg_release && isLatest) {

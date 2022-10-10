@@ -170,6 +170,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
+    static typeCheck(object: unknown): object is LoggingError;
 }
 
 // @public
@@ -212,6 +213,9 @@ export class MultiSinkLogger extends TelemetryLogger {
 }
 
 // @public
+export const NORMALIZED_ERROR_TYPE = "genericError";
+
+// @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
@@ -234,8 +238,8 @@ export class PerformanceEvent {
     static timedExecAsync<T>(logger: ITelemetryLogger, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers): Promise<T>;
 }
 
-// @public (undocumented)
-export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmitter, connected: boolean, clientId?: string): void;
+// @public
+export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmitter, connected: boolean, clientId?: string, disconnectedReason?: string): void;
 
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
