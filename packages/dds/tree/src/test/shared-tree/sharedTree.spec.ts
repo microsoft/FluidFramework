@@ -243,8 +243,8 @@ describe("SharedTree", () => {
     });
 });
 
-const rootFieldSchema = fieldSchema(FieldKinds.sequence);
-const globalFieldSchema = fieldSchema(FieldKinds.sequence);
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
     extraLocalFields: fieldSchema(FieldKinds.sequence),

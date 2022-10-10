@@ -20,7 +20,6 @@ import {
     ForestIndex,
     ObjectForest,
     SchemaIndex,
-    defaultChangeFamily,
     DefaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
@@ -119,7 +118,7 @@ class SharedTree
         ];
         super(
             indexes,
-            defaultChangeFamily,
+            new DefaultChangeFamily(),
             anchors,
             id,
             runtime,

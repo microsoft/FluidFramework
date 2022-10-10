@@ -49,8 +49,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
     }
 }
 
-export const defaultChangeFamily = new DefaultChangeFamily();
-
 /**
  * @sealed
  */
