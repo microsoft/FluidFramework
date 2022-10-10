@@ -92,7 +92,7 @@ export {
     neverField,
     emptyField,
     neverTree,
-    defaultSchemaPolicy
+    defaultSchemaPolicy,
 } from "./defaultSchema";
 export {
     isNeverField,

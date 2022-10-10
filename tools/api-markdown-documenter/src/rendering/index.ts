@@ -15,7 +15,11 @@ import * as RenderingHelpers from "./helpers";
 export { DefaultRenderingPolicies };
 export { RenderingHelpers };
 
-export     { renderModelDocument,     renderPackageDocument,     renderApiItemDocument } from "./Rendering";
+export {
+    renderModelDocument,
+    renderPackageDocument,
+    renderApiItemDocument,
+} from "./Rendering";
 export {
     RenderApiItemWithChildren,
     RenderApiItemWithoutChildren,
