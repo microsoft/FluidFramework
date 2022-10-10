@@ -35,7 +35,7 @@ export {
 	FieldScope,
 } from "./treeTextFormat";
 export { visitDelta, DeltaVisitor } from "./visitDelta";
-export { symbolFromKey, keyFromSymbol, GlobalFieldKeySymbol } from "./globalFieldKeySymbol";
+export { symbolFromKey, keyFromSymbol, GlobalFieldKeySymbol, symbolIsFieldKey } from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 
 export {
