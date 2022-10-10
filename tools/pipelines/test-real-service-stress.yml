@@ -7,6 +7,13 @@ name: $(Build.BuildId)
 
 trigger: none
 pr: none
+schedules:
+- cron: "20 16 * * *"
+  displayName: Daily morning run
+  branches:
+    include:
+    - test/*
+  always: true
 
 resources:
   pipelines:
@@ -19,12 +26,6 @@ resources:
       - next
       - lts
       - test/*
-    schedules:
-    - cron: "20 16 * * *"
-      displayName: Daily morning run
-      branches:
-        include:
-        - test/*
 
 variables:
 - group: prague-key-vault
