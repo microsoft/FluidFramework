@@ -10,6 +10,7 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
+    ISpacesItemEntry,
     IToolbarOption,
 } from "./dataObjectRegistry";
 import "./toolbar.css";
@@ -34,18 +35,20 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
                 {"Add Items"}
             </Button>
         );
-        const itemButtonList = toolbarOptions.map((toolbarOption) =>
-            <Button
-                className="spaces-toolbar-option-button"
-                key={`toolbarButton-${toolbarOption.key}`}
-                iconProps={{ iconName: toolbarOption.fabricIconName }}
-                onClick={() => {
-                    toolbarOption.create();
-                    setOpen(false);
-                }}
-            >
-                {toolbarOption.friendlyName}
-            </Button>
+        const itemButtonList = toolbarOptions.map(
+            (toolbarOption) => (
+                <Button
+                    className="spaces-toolbar-option-button"
+                    key={`toolbarButton-${toolbarOption.key}`}
+                    iconProps={{ iconName: toolbarOption.fabricIconName }}
+                    onClick={() => {
+                        toolbarOption.create();
+                        setOpen(false);
+                    }}
+                >
+                    {toolbarOption.friendlyName}
+                </Button>
+            ),
         );
 
         return (
@@ -63,13 +66,23 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
 interface IDataObjectGridToolbarProps {
     editable: boolean;
     setEditable: (editable: boolean) => void;
-    toolbarOptions: IToolbarOption[]
+    addItem: (type: string) => void;
+    registry: Map<string, ISpacesItemEntry>;
 }
 
 export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
     (props: React.PropsWithChildren<IDataObjectGridToolbarProps>) => {
-        const { editable, setEditable, toolbarOptions } = props;
+        const { editable, setEditable, addItem, registry } = props;
         const toolbarItems: JSX.Element[] = [];
+
+        const toolbarOptions: IToolbarOption[] = [...registry].map(([type, spacesItemEntry]) => {
+            return {
+                key: type,
+                create: () => addItem(type),
+                friendlyName: spacesItemEntry.friendlyName,
+                fabricIconName: spacesItemEntry.fabricIconName,
+            };
+        });
 
         // Add the edit button
         toolbarItems.push(

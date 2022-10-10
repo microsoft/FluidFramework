@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
-import { IToolbarOption, spacesItemMap } from "./dataObjectRegistry";
+import { ISpacesItemEntry, spacesItemMap } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
 import { IDataObjectGrid, IDataObjectGridStoredItem } from "./dataObjectGrid";
 
@@ -83,30 +82,31 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
 
 // Stronger typing here maybe?
 interface ISpacesStorageViewProps<T = any> {
-    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>;
     getUrlForItem: (itemId: string) => string;
     model: IDataObjectGrid;
+    registry: Map<string, ISpacesItemEntry>;
     editable: boolean;
 }
 
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
+        const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
         const [itemMap, setItemMap] =
-            React.useState<Map<string, IDataObjectGridStoredItem<any>>>(props.model.getItems());
+            React.useState<Map<string, IDataObjectGridStoredItem<any>>>(model.getItems());
 
         React.useEffect(() => {
             const onItemListChanged = (newMap: Map<string, Layout>) => {
                 setItemMap(newMap);
             };
-            props.model.on("itemListChanged", onItemListChanged);
+            model.on("itemListChanged", onItemListChanged);
             return () => {
-                props.model.off("itemListChanged", onItemListChanged);
+                model.off("itemListChanged", onItemListChanged);
             };
         });
 
         // Render nothing if there are no items
-        if (props.model.getItems().size === 0) {
+        if (model.getItems().size === 0) {
             return <></>;
         }
 
@@ -119,13 +119,22 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             element: HTMLElement,
         ) => {
             const key = newItem.i.split("_")[0];
-            props.model.updateLayout(key, newItem);
+            model.updateLayout(key, newItem);
         };
 
         const itemViews: JSX.Element[] = [];
         const layouts: Layout[] = [];
         itemMap.forEach((item, itemId) => {
-            const getItemView = async () => props.getViewForItem(item.serializableItemData);
+            const getItemView = async () => {
+                const registryEntry = registry.get(item.serializableItemData.itemType);
+
+                if (registryEntry === undefined) {
+                    // Probably would be ok to return undefined instead
+                    throw new Error("Cannot get view, unknown widget type");
+                }
+
+                return registryEntry.getView(item.serializableItemData.serializableObject);
+            };
 
             const layout = item.layout;
             // We use separate layout from array because using GridLayout
@@ -135,10 +144,10 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             itemViews.push(
                 <div key={itemId} className="spaces-item-view-wrapper">
                     <SpacesItemView
-                        url={props.getUrlForItem(itemId)}
-                        editable={props.editable}
+                        url={getUrlForItem(itemId)}
+                        editable={editable}
                         getItemView={getItemView}
-                        removeItem={() => props.model.removeItem(itemId)}
+                        removeItem={() => model.removeItem(itemId)}
                     />
                 </div>,
             );
@@ -146,15 +155,15 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
 
         return (
             <ReactGridLayout
-                className={`spaces-storage-view${props.editable ? " editable" : ""}`}
+                className={`spaces-storage-view${editable ? " editable" : ""}`}
                 cols={36}
                 rowHeight={50}
                 width={1800}
                 height={10000}
                 compactType={null} // null is required for the GridLayout
-                isDroppable={props.editable}
-                isDraggable={props.editable}
-                isResizable={props.editable}
+                isDroppable={editable}
+                isDraggable={editable}
+                isResizable={editable}
                 preventCollision={true}
                 isRearrangeable={false}
                 onResizeStop={onGridChangeEvent}
@@ -175,27 +184,19 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (props: ID
     const { model, getDirectUrl } = props;
     // TODO: Different editable behavior, not based on size
     const [editable, setEditable] = React.useState<boolean>(model.getItems().size === 0);
-    const toolbarOptions: IToolbarOption[] = [...spacesItemMap].map(([type, spacesItemEntry]) => {
-        return {
-            key: type,
-            create: () => model.addItem(type),
-            friendlyName: spacesItemEntry.friendlyName,
-            fabricIconName: spacesItemEntry.fabricIconName,
-        };
-    });
     return (
         <div className="spaces-view">
             <DataObjectGridToolbar
                 editable={editable}
                 setEditable={setEditable}
-                // TODO: Should this be less toolbar-specific?
-                toolbarOptions={toolbarOptions}
+                addItem={(type: string) => { model.addItem(type).catch(console.error); }}
+                registry={spacesItemMap}
             />
             <SpacesStorageView
                 // TODO: Maybe can just pass in the views rather than making it go fetch
-                getViewForItem={model.getViewForItem}
                 getUrlForItem={getDirectUrl}
                 model={model}
+                registry={spacesItemMap}
                 editable={editable}
             />
         </div>
