@@ -11,7 +11,11 @@ import { Repository } from "../../lib";
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand.flags> {
     static description = "Get info about the merge status of branches in the repo.";
 
-    static aliases = ["check:main-next"];
+    static aliases = [
+        "check:branches",
+        "check:main-next",
+        "info:main-next",
+    ];
 
     static flags = {
         branch: Flags.string({
@@ -25,13 +29,12 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
     static examples = [
         {
-            description: "Get info about branches in the repo.",
+            description: "Get info about the merge status of branches in the repo.",
             command: "<%= config.bin %> <%= command.id %>",
         },
     ];
 
     public async run(): Promise<void> {
-        const args = this.processedArgs;
         const flags = this.processedFlags;
         const branchFlags = flags.branch;
 
@@ -73,7 +76,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
         const revs = rawRevs.split(/\r?\n/);
 
         this.logHr();
-        this.log(`${branch2} is ${revs.length} commits ${chalk.red("behind")} ${branch1}`);
+        this.log(`${branch2} is ${chalk.bold(revs.length.toString())} commits ${chalk.red("behind")} ${branch1}`);
         this.log();
         this.verbose(JSON.stringify(revs.slice(0, 10)));
     }
