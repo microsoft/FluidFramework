@@ -174,6 +174,11 @@ describe("internalScheme", () => {
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
         });
 
+        /**
+         * Builds that are produced from dev builds or other non-release builds don't have the "internal" prerelease
+         * identifier intentionally to ensure they don't satisfy the caret/tilde-equivalent semver ranges we provide to
+         * partners. These tests check that the dev versions are excluded.
+         */
         it("Prerelease/dev versions do not satisfy ranges", () => {
             assert.isFalse(
                 semver.satisfies(
