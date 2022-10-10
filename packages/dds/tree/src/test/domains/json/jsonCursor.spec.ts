@@ -74,8 +74,7 @@ describe("JsonCursor", () => {
         });
 
         it("array", () => {
-            // TODO: should empty arrays report this key?
-            assert.deepEqual([...new JsonCursor([]).keys], [EmptyKey]);
+            assert.deepEqual([...new JsonCursor([]).keys], []);
             assert.deepEqual([...new JsonCursor([0]).keys], [EmptyKey]);
             assert.deepEqual([...new JsonCursor(["test", {}]).keys], [EmptyKey]);
         });

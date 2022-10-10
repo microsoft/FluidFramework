@@ -160,7 +160,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
                 if (node === null) {
                     return [];
                 } else if (Array.isArray(node)) {
-                    return [EmptyKey];
+                    return node.length === 0 ? [] : [EmptyKey];
                 } else {
                     return Object.keys(node as object) as Iterable<FieldKey>;
                 }

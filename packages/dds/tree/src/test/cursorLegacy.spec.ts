@@ -68,10 +68,9 @@ export function testJsonableTreeCursor(
             });
 
             it("array", () => {
-                // TODO: should empty arrays report this key?
                 assert.deepEqual(
                     [...factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } }).keys],
-                    [EmptyKey],
+                    [],
                 );
                 assert.deepEqual(
                     [

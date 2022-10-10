@@ -5,7 +5,7 @@
 
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
-import { FieldKey, NodeData } from "./types";
+import { EmptyKey, FieldKey, NodeData } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -160,6 +160,7 @@ export function setGenericTreeField<T>(
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
     const local = tree[FieldScope.local];
     const global = tree[FieldScope.global];
+
     // This function is used when iterating through a tree.
     // This means that this is often called on nodes with no keys
     // (most trees are a large portion leaf nodes).
@@ -170,11 +171,18 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
         }
         return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey);
     }
+
+    // If this node contains an empty array, it should return no keys.
+    const localKeys =
+        local[EmptyKey] !== undefined && local[EmptyKey].length === 0
+            ? []
+            : (Object.getOwnPropertyNames(local) as LocalFieldKey[]);
+
     if (global === undefined) {
-        return Object.getOwnPropertyNames(local) as LocalFieldKey[];
+        return localKeys;
     }
     return [
-        ...(Object.getOwnPropertyNames(local) as LocalFieldKey[]),
+        ...localKeys,
         ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey),
     ];
 }
