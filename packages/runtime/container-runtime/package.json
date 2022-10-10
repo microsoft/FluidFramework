@@ -30,6 +30,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "qt": "npm run tsc; npm run build:test; npm run test",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
