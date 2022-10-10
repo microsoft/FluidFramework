@@ -57,7 +57,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 ```js
   import { useState, useCallback } from "react";
   import { AudienceDisplay } from "./AudienceDisplay";
-  import { SelectUser } from "./SelectUser"
+  import { UserIdSelection } from "./UserIdSelection"
 
   export const App = () => {
     // TODO 1: Define state variables to handle view changes and user input
@@ -67,7 +67,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
   }
 ```
 
-1. Replace `TODO 1` with the following code. Note that the values `userId` and `containerId` will come from a `SelectUser` component through the `handleSelectUser` function. The `displayAudience` variable is used to switch between the member list view and the userId selection view. In the case that a user inputs an invalid `audienceId` they will be redirected to the userId selection view by the `handleContainerNotFound` function.
+1. Replace `TODO 1` with the following code. Note that the values `userId` and `containerId` will come from a `UserIdSelection` component through the `handleSelectUser` function. The `displayAudience` variable is used to switch between the member list view and the userId selection view. In the case that a user inputs an invalid `audienceId` they will be redirected to the userId selection view by the `handleContainerNotFound` function.
 
 ```js
   const [displayAudience, setDisplayAudience] = useState(false);
@@ -85,12 +85,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
   }, [setDisplayAudience]);
 ```
 
-1. Replace `TODO 2` with the following code. As stated above, the `displayAudience` variable will switch between the `AudienceDisplay` component and `SelectUser` component. Also, functions to update the state variables are passed into components as properties.
+1. Replace `TODO 2` with the following code. As stated above, the `displayAudience` variable will switch between the `AudienceDisplay` component and `UserIdSelection` component. Also, functions to update the state variables are passed into components as properties.
 
 ```js
   (displayAudience) ?
   <AudienceDisplay userId={userId} containerId={containerId} onContainerNotFound={handleContainerNotFound}/> :
-  <SelectUser onSelectUser={handleSelectUser}/>
+  <UserIdSelection onSelectUser={handleSelectUser}/>
 ```
 
 ### Set up AudienceDisplay component
@@ -301,14 +301,14 @@ Connection transitions can result in short timing windows where `getMyself` retu
   );
 ```
 
-### Setup SelectUser component
+### Setup UserIdSelection component
 
-1. Create and open a file `\src\SelectUser.js` in the code editor. Add the following `import` statements and functional components:
+1. Create and open a file `\src\UserIdSelection.js` in the code editor. Add the following `import` statements and functional components:
 
 ```js
 import { useState } from 'react';
 
-export const SelectUser = (props) => {
+export const UserIdSelection = (props) => {
   // TODO 1: Define styles and handle user inputs
   return (
   // TODO 2: Return view components
@@ -319,7 +319,7 @@ export const SelectUser = (props) => {
 1. Replace `TODO 1` with the following code. Note that the `onSelectUser` function will update the state variables in the parent `App` component and prompt a view change.
 
 ```js
-  const selectStyle = {
+  const selectionStyle = {
     marginTop: '2rem',
     marginRight: '2rem',
     width: '150px',
@@ -351,9 +351,9 @@ export const SelectUser = (props) => {
         : (<div style={{}}>Select a User to create a new container and join as the selected user</div>)
     }
     <nav>
-      <button type="submit" style={selectStyle} onClick={() => handleSubmit("user1")}>User 1</button>
-      <button type="submit" style={selectStyle} onClick={() => handleSubmit("user2")}>User 2</button>
-      <button type="submit" style={selectStyle} onClick={() => handleSubmit("random")}>Random User</button>
+      <button type="submit" style={selectionStyle} onClick={() => handleSubmit("user1")}>User 1</button>
+      <button type="submit" style={selectionStyle} onClick={() => handleSubmit("user2")}>User 2</button>
+      <button type="submit" style={selectionStyle} onClick={() => handleSubmit("random")}>Random User</button>
     </nav>
   </div>
 ```
