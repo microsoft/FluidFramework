@@ -10,7 +10,7 @@ import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils";
 
 /**
  * This file contains logic to generate a JSON file that is statistically similar to the well-known
- * json benchmarks twitter.json - https://github.com/serde-rs/json-benchmark/blob/master/data/citm_catalog.json
+ * json benchmarks citm_catalog.json - https://github.com/serde-rs/json-benchmark/blob/master/data/citm_catalog.json
  */
 
 export interface CitmCatalog {
@@ -157,7 +157,7 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
             keyspaceMultiplier,
         );
     }
-    idNumberCounter += 1; // incremented once to avoid using the last key value.
+
     for (const value of seatCategoryNameValues) {
         idNumberCounter += 1;
         seatCategoryNames[`${idNumberCounter}`] = value;
@@ -177,7 +177,7 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     } else if (keyspaceMultiplier < 1) {
         subTopicNameValues = decreaseKeyspace(ORIGINAL_SUB_TOPIC_NAME_VALUES, keyspaceMultiplier);
     }
-    idNumberCounter += 1; // incremented once to avoid using the last key value.
+
     for (const value of subTopicNameValues) {
         idNumberCounter += 1;
         subTopicNames[`${idNumberCounter}`] = value;
@@ -197,7 +197,7 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
     } else if (keyspaceMultiplier < 1) {
         topicNameValues = decreaseKeyspace(ORIGINAL_TOPIC_NAME_VALUES, keyspaceMultiplier);
     }
-    idNumberCounter += 1; // incremented once to avoid using the last key value.
+
     for (const value of topicNameValues) {
         idNumberCounter += 1;
         topicNames[`${idNumberCounter}`] = value;
@@ -410,10 +410,7 @@ function generateEventAndPerformance(
     }[] = [];
     const availableAreaIds = Object.keys(areaNames);
     prices.forEach((priceObject) => {
-        const numAreaIdsToAdd = random.integer(
-            1,
-            availableAreaIds.length > 16 ? 16 : availableAreaIds.length,
-        );
+        const numAreaIdsToAdd = random.integer(1, Math.min(availableAreaIds.length, 16));
         const areas = [];
         for (let i = 0; i < numAreaIdsToAdd; i++) {
             areas.push({
