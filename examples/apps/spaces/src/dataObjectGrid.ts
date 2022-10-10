@@ -41,8 +41,8 @@ export interface IDataObjectGrid extends EventEmitter {
     readonly getItems: () => IDataObjectGridStoredItem<IDataObjectGridItem>[];
     readonly getItem: (id: string) => IDataObjectGridStoredItem<IDataObjectGridItem> | undefined;
     readonly addItem: (type: string) => Promise<void>;
-    readonly removeItem: (type: string) => void;
-    readonly updateLayout: (key: string, newLayout: Layout) => void;
+    readonly removeItem: (id: string) => void;
+    readonly updateLayout: (id: string, newLayout: Layout) => void;
     readonly getViewForItem: (item: IDataObjectGridItem) => Promise<JSX.Element>;
 }
 
@@ -106,14 +106,16 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
         this.root.delete(id);
     };
 
-    public readonly updateLayout = (key: string, newLayout: Layout): void => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const currentEntry = this.root.get<IDataObjectGridStoredItem<IDataObjectGridItem>>(key)!;
+    public readonly updateLayout = (id: string, newLayout: Layout): void => {
+        const currentEntry = this.root.get<IDataObjectGridStoredItem<IDataObjectGridItem>>(id);
+        if (currentEntry === undefined) {
+            throw new Error("Couldn't find requested item");
+        }
         const model = {
             serializableItemData: currentEntry.serializableItemData,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
         };
-        this.root.set(key, model);
+        this.root.set(id, model);
     };
 
     public readonly getViewForItem = async (item: IDataObjectGridItem) => {
