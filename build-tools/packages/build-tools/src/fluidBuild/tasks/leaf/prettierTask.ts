@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { BuildPackage } from "../../buildGraph";
-import { ScriptDependencies } from "../../../common/npmPackage";
-import { globFn, existsSync, readFileAsync } from "../../../common/utils";
 import ignore from "ignore";
+
+import { ScriptDependencies } from "../../../common/npmPackage";
+import { existsSync, globFn, readFileAsync } from "../../../common/utils";
+import { BuildPackage } from "../../buildGraph";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 export class PrettierTask extends LeafWithDoneFileTask {
     private parsed: boolean = false;
@@ -44,7 +44,9 @@ export class PrettierTask extends LeafWithDoneFileTask {
 
     protected async getDoneFileContent() {
         if (!this.parsed) {
-            this.logVerboseTask(`error generating done file content, unable to understand command line`);
+            this.logVerboseTask(
+                `error generating done file content, unable to understand command line`,
+            );
             return undefined;
         }
 
@@ -58,7 +60,9 @@ export class PrettierTask extends LeafWithDoneFileTask {
                 ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
             }
         } catch (e) {
-            this.logVerboseTask(`error generating done file content, unable to read .prettierignore file`);
+            this.logVerboseTask(
+                `error generating done file content, unable to read .prettierignore file`,
+            );
             return undefined;
         }
         const ignoreObject = ignore().add(ignoreEntries);
@@ -66,7 +70,9 @@ export class PrettierTask extends LeafWithDoneFileTask {
             let files = await globFn(this.glob!, { cwd: this.node.pkg.directory });
             files = ignoreObject.filter(files);
             const hashesP = files.map(async (name) => {
-                const hash = await this.node.buildContext.fileHashCache.getFileHash(this.getPackageFileFullPath(name));
+                const hash = await this.node.buildContext.fileHashCache.getFileHash(
+                    this.getPackageFileFullPath(name),
+                );
                 return { name, hash };
             });
             const hashes = await Promise.all(hashesP);

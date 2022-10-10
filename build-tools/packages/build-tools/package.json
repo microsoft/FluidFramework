@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.4.7000",
+  "version": "0.4.8000",
   "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -27,7 +27,7 @@
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "npm run build:commonjs",
-    "build:full": "npm run build",
+    "build:full": "npm run format && npm run build",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
@@ -36,21 +36,24 @@
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../../..",
     "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../../.. --md",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../../.. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
     "tsc": "tsc -b"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.7000",
-    "@fluidframework/bundle-size-tools": "^0.4.7000",
+    "@fluid-tools/version-tools": "^0.4.8000",
+    "@fluidframework/bundle-size-tools": "^0.4.8000",
     "async": "^3.2.0",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
@@ -70,11 +73,13 @@
     "semver": "^7.3.7",
     "shelljs": "^0.8.4",
     "sort-package-json": "1.54.0",
-    "ts-morph": "^7.1.2"
+    "ts-morph": "^7.1.2",
+    "yaml": "^2.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/async": "^3.2.6",
     "@types/fs-extra": "^8.1.0",
     "@types/glob": "^7.1.1",
@@ -96,6 +101,7 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "eslint-plugin-unused-imports": "~2.0.0",
     "mocha": "^10.0.0",
+    "prettier": "~2.6.2",
     "typescript": "~4.5.5"
   }
 }

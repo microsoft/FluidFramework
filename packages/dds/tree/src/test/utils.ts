@@ -20,30 +20,29 @@ import {
 } from "@fluidframework/test-utils";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
-import { Delta, ITreeCursorSynchronous } from "../tree";
-import { jsonableTreeFromCursorNew } from "../feature-libraries";
-import { fail } from "../util";
+import { Delta } from "../tree";
+import { mapFieldMarks, mapMarkList, mapTreeFromCursor } from "../feature-libraries";
 
 // Testing utilities
 
 export function deepFreeze<T>(object: T): void {
-	// Retrieve the property names defined on object
-	const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-	// Freeze properties before freezing self
-	for (const name of propNames) {
-		const value = object[name];
-		if (typeof value === "object") {
-			deepFreeze(value);
-		}
-	}
-	Object.freeze(object);
+    // Retrieve the property names defined on object
+    const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
+    // Freeze properties before freezing self
+    for (const name of propNames) {
+        const value = object[name];
+        if (typeof value === "object") {
+            deepFreeze(value);
+        }
+    }
+    Object.freeze(object);
 }
 
 export class MockDependent extends SimpleObservingDependent {
-	public readonly tokens: (InvalidationToken | undefined)[] = [];
-	public constructor(name: string = "MockDependent") {
-		super((token) => this.tokens.push(token), name);
-	}
+    public readonly tokens: (InvalidationToken | undefined)[] = [];
+    public constructor(name: string = "MockDependent") {
+        super((token) => this.tokens.push(token), name);
+    }
 }
 
 /**
@@ -98,13 +97,16 @@ export class TestTreeProvider {
      * _i_ is the index of the tree in order of creation.
      */
     public async createTree(): Promise<ISharedTree> {
-        const container = this.trees.length === 0
-        ? await this.provider.makeTestContainer()
-        : await this.provider.loadTestContainer();
+        const container =
+            this.trees.length === 0
+                ? await this.provider.makeTestContainer()
+                : await this.provider.loadTestContainer();
 
         this._containers.push(container);
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-        return this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(TestTreeProvider.treeId);
+        return (this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(
+            TestTreeProvider.treeId,
+        ));
     }
 
     /**
@@ -133,10 +135,11 @@ export class TestTreeProvider {
         this.provider = new TestObjectProvider(
             Loader,
             driver,
-            () => new TestContainerRuntimeFactory(
-                "@fluid-example/test-dataStore",
-                new TestFluidObjectFactory(registry),
-            ),
+            () =>
+                new TestContainerRuntimeFactory(
+                    "@fluid-example/test-dataStore",
+                    new TestFluidObjectFactory(registry),
+                ),
         );
 
         return new Proxy(this, {
@@ -161,13 +164,17 @@ export class TestTreeProvider {
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
  * after the spy is no longer needed.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function spyOnMethod(methodClass: Function, methodName: string, spy: () => void): () => void {
+export function spyOnMethod(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    methodClass: Function,
+    methodName: string,
+    spy: () => void,
+): () => void {
     const { prototype } = methodClass;
     const method = prototype[methodName];
     assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
-    const methodSpy = function(this: unknown, ...args: unknown[]): unknown {
+    const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
         spy();
         return method.call(this, ...args);
     };
@@ -182,41 +189,16 @@ export function spyOnMethod(methodClass: Function, methodName: string, spy: () =
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
-    assert.deepStrictEqual(uncursorContent(a), uncursorContent(b));
+    const aTree = mapMarkList(a, mapTreeFromCursor);
+    const bTree = mapMarkList(b, mapTreeFromCursor);
+    assert.deepStrictEqual(aTree, bTree);
 }
 
 /**
- * This clones objects, assuming "content" fields are cursors and replaces those with JsonableTrees.
- * Works for the types in Delta.MarkList, but is not general.
+ * Assert two Delta are equal, handling cursors.
  */
-function uncursorContent(a: unknown): unknown {
-    if (typeof a !== "object") {
-        return a;
-    }
-    if (Array.isArray(a)) {
-        return a.map(uncursorContent);
-    }
-    if (a instanceof Map) {
-        return new Map([...a].map((k, v) => [k, uncursorContent(v)]));
-    }
-    const copy: Record<string, unknown> = {};
-    // eslint-disable-next-line no-restricted-syntax
-    for (const key in a) {
-        if (Object.prototype.hasOwnProperty.call(a, key)) {
-            const element = (a as Record<string, unknown>)[key];
-            if (key === "content") {
-                const cursor = element as ITreeCursorSynchronous | ITreeCursorSynchronous[];
-                if (Array.isArray(cursor)) {
-                    copy[key] = cursor.map(jsonableTreeFromCursorNew);
-                } else {
-                    copy[key] = jsonableTreeFromCursorNew(cursor);
-                }
-            } else {
-                copy[key] = uncursorContent(element);
-            }
-        } else {
-            fail("unexpected property from prototype");
-        }
-    }
-    return copy;
+export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
+    const aTree = mapFieldMarks(a, mapTreeFromCursor);
+    const bTree = mapFieldMarks(b, mapTreeFromCursor);
+    assert.deepStrictEqual(aTree, bTree);
 }

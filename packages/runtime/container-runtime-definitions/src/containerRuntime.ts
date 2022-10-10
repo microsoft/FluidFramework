@@ -26,9 +26,17 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+
+/**
+ * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
+ */
+export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
+    fluidDataStoreChannel?: { bindToContext?(): void; };
+}
 
 /**
  * @deprecated This will be removed in a later release.

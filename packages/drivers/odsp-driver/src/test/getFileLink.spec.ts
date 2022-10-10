@@ -16,6 +16,7 @@ describe("getFileLink", () => {
     const fileItemResponse = {
         webDavUrl: "fetchDavUrl",
         webUrl: "fetchWebUrl",
+        sharepointIds: { listItemUniqueId: "fetchFileId" },
     };
 
     it("should return share link with existing access", async () => {
