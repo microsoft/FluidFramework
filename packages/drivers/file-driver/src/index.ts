@@ -8,10 +8,10 @@ export { FileDocumentService } from "./fileDocumentService";
 export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory";
 export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
 export {
-	FileStorageDocumentName,
-	FluidFetchReader,
-	ISnapshotWriterStorage,
-	ReaderConstructor,
-	FileSnapshotWriterClassFactory,
-	FluidFetchReaderFileSnapshotWriter,
+    FileStorageDocumentName,
+    FluidFetchReader,
+    ISnapshotWriterStorage,
+    ReaderConstructor,
+    FileSnapshotWriterClassFactory,
+    FluidFetchReaderFileSnapshotWriter,
 } from "./fileDocumentStorageService";

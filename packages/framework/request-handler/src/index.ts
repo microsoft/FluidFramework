@@ -4,9 +4,9 @@
  */
 
 export {
-	handleFromLegacyUri,
-	RuntimeRequestHandler,
-	rootDataStoreRequestHandler,
-	createFluidObjectResponse,
+    handleFromLegacyUri,
+    RuntimeRequestHandler,
+    rootDataStoreRequestHandler,
+    createFluidObjectResponse,
 } from "./requestHandlers";
 export { buildRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";

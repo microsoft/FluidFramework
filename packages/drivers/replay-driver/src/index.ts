@@ -7,10 +7,10 @@ export { ReadDocumentStorageServiceBase, ReplayController } from "./replayContro
 export { ReplayDocumentService } from "./replayDocumentService";
 export { ReplayDocumentServiceFactory } from "./replayDocumentServiceFactory";
 export {
-	IFileSnapshot,
-	FileSnapshotReader,
-	SnapshotStorage,
-	OpStorage,
-	StaticStorageDocumentService,
-	StaticStorageDocumentServiceFactory,
+    IFileSnapshot,
+    FileSnapshotReader,
+    SnapshotStorage,
+    OpStorage,
+    StaticStorageDocumentService,
+    StaticStorageDocumentServiceFactory,
 } from "./storageImplementations";

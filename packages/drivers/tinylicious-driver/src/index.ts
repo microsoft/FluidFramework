@@ -4,9 +4,9 @@
  */
 
 export {
-	defaultTinyliciousPort,
-	defaultTinyliciousEndpoint,
-	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
+    defaultTinyliciousPort,
+    defaultTinyliciousEndpoint,
+    InsecureTinyliciousUrlResolver,
+    createTinyliciousCreateNewRequest,
 } from "./insecureTinyliciousUrlResolver";
 export { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider";

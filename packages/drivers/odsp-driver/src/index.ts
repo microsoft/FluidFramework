@@ -7,11 +7,11 @@
 export { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants";
 
 export {
-	OdspFluidDataStoreLocator,
-	SharingLinkHeader,
-	ISharingLinkHeader,
-	ClpCompliantAppHeader,
-	IClpCompliantAppHeader,
+    OdspFluidDataStoreLocator,
+    SharingLinkHeader,
+    ISharingLinkHeader,
+    ClpCompliantAppHeader,
+    IClpCompliantAppHeader,
 } from "./contractsPublic";
 
 // public utils
@@ -37,10 +37,10 @@ export { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 // It's used by URL resolve code, but also has some public functions
 export {
-	encodeOdspFluidDataStoreLocator,
-	storeLocatorInOdspUrl,
-	getLocatorFromOdspUrl,
-	locatorQueryParamName,
+    encodeOdspFluidDataStoreLocator,
+    storeLocatorInOdspUrl,
+    getLocatorFromOdspUrl,
+    locatorQueryParamName,
 } from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";

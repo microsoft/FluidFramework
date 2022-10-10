@@ -4,15 +4,15 @@
  */
 export { runGarbageCollection } from "./garbageCollector";
 export {
-	trimLeadingAndTrailingSlashes,
-	trimLeadingSlashes,
-	trimTrailingSlashes,
-	cloneGCData,
-	unpackChildNodesGCDetails,
-	unpackChildNodesUsedRoutes,
-	removeRouteFromAllNodes,
-	concatGarbageCollectionStates,
-	concatGarbageCollectionData,
-	GCDataBuilder,
+    trimLeadingAndTrailingSlashes,
+    trimLeadingSlashes,
+    trimTrailingSlashes,
+    cloneGCData,
+    unpackChildNodesGCDetails,
+    unpackChildNodesUsedRoutes,
+    removeRouteFromAllNodes,
+    concatGarbageCollectionStates,
+    concatGarbageCollectionData,
+    GCDataBuilder,
 } from "./utils";
 export { IGCResult } from "./interfaces";

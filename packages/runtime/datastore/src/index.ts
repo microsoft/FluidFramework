@@ -4,10 +4,10 @@
  */
 
 export {
-	DataStoreMessageType,
-	ISharedObjectRegistry,
-	FluidDataStoreRuntime,
-	mixinRequestHandler,
-	mixinSummaryHandler,
+    DataStoreMessageType,
+    ISharedObjectRegistry,
+    FluidDataStoreRuntime,
+    mixinRequestHandler,
+    mixinSummaryHandler,
 } from "./dataStoreRuntime";
 export { FluidObjectHandle } from "./fluidHandle";

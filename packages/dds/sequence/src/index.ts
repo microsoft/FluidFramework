@@ -43,22 +43,22 @@ export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence";
 export { SharedObjectSequence } from "./sharedObjectSequence";
 export { SharedNumberSequence } from "./sharedNumberSequence";
 export {
-	positionToRowCol,
-	PaddingSegment,
-	SparseMatrixItem,
-	RunSegment,
-	MatrixSegment,
-	maxCol,
-	maxCols,
-	maxRow,
-	maxRows,
-	maxCellPosition,
-	rowColToPosition,
-	SparseMatrix,
-	SparseMatrixFactory,
+    positionToRowCol,
+    PaddingSegment,
+    SparseMatrixItem,
+    RunSegment,
+    MatrixSegment,
+    maxCol,
+    maxCols,
+    maxRow,
+    maxRows,
+    maxCellPosition,
+    rowColToPosition,
+    SparseMatrix,
+    SparseMatrixFactory,
 } from "./sparsematrix";
 export {
-	SharedIntervalCollectionFactory,
-	ISharedIntervalCollection,
-	SharedIntervalCollection,
+    SharedIntervalCollectionFactory,
+    ISharedIntervalCollection,
+    SharedIntervalCollection,
 } from "./sharedIntervalCollection";

@@ -13,16 +13,16 @@ export { IFluidContainerEvents, IFluidContainer, FluidContainer } from "./fluidC
 export { RootDataObjectProps, RootDataObject, DOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { ServiceAudience } from "./serviceAudience";
 export {
-	LoadableObjectRecord,
-	LoadableObjectClassRecord,
-	LoadableObjectClass,
-	DataObjectClass,
-	SharedObjectClass,
-	LoadableObjectCtor,
-	ContainerSchema,
-	MemberChangedListener,
-	IServiceAudienceEvents,
-	IServiceAudience,
-	IConnection,
-	IMember,
+    LoadableObjectRecord,
+    LoadableObjectClassRecord,
+    LoadableObjectClass,
+    DataObjectClass,
+    SharedObjectClass,
+    LoadableObjectCtor,
+    ContainerSchema,
+    MemberChangedListener,
+    IServiceAudienceEvents,
+    IServiceAudience,
+    IConnection,
+    IMember,
 } from "./types";

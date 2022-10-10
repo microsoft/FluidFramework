@@ -4,14 +4,14 @@
  */
 
 export {
-	ISpacesItem,
-	Spaces,
-	SpacesView,
-	ISpacesItemEntry,
-	spacesItemMap,
-	spacesRegistryEntries,
-	templateDefinitions,
-	ISpacesStorage,
-	ISpacesStoredItem,
-	SpacesStorage,
+    ISpacesItem,
+    Spaces,
+    SpacesView,
+    ISpacesItemEntry,
+    spacesItemMap,
+    spacesRegistryEntries,
+    templateDefinitions,
+    ISpacesStorage,
+    ISpacesStoredItem,
+    SpacesStorage,
 } from "./fluid-object";

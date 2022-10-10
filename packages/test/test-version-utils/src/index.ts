@@ -4,24 +4,24 @@
  */
 export { mochaGlobalSetup } from "./compatConfig";
 export {
-	getVersionedTestObjectProvider,
-	TestDataObjectType,
-	ITestDataObject,
-	getDataStoreFactory,
+    getVersionedTestObjectProvider,
+    TestDataObjectType,
+    ITestDataObject,
+    getDataStoreFactory,
 } from "./compatUtils";
 export {
-	getLoaderApi,
-	getContainerRuntimeApi,
-	getDataRuntimeApi,
-	getDriverApi,
-	ensurePackageInstalled,
+    getLoaderApi,
+    getContainerRuntimeApi,
+    getDataRuntimeApi,
+    getDriverApi,
+    ensurePackageInstalled,
 } from "./testApi";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {
-	ITestObjectProviderOptions,
-	DescribeCompatSuite,
-	DescribeCompat,
-	describeNoCompat,
-	describeLoaderCompat,
-	describeFullCompat,
+    ITestObjectProviderOptions,
+    DescribeCompatSuite,
+    DescribeCompat,
+    describeNoCompat,
+    describeLoaderCompat,
+    describeFullCompat,
 } from "./describeCompat";

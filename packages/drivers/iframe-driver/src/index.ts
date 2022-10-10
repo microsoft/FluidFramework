@@ -7,10 +7,10 @@ export { IOuterDocumentDeltaConnectionProxy, InnerDocumentDeltaConnection } from
 export { InnerDocumentService } from "./innerDocumentService";
 export { InnerDocumentServiceFactory } from "./innerDocumentServiceFactory";
 export {
-	ICombinedDriver,
-	IDocumentServiceFactoryProxy,
-	IDocumentServiceFactoryProxyKey,
-	DocumentServiceFactoryProxy,
+    ICombinedDriver,
+    IDocumentServiceFactoryProxy,
+    IDocumentServiceFactoryProxyKey,
+    DocumentServiceFactoryProxy,
 } from "./outerDocumentServiceFactory";
 export { InnerUrlResolver } from "./innerUrlResolver";
 export { IUrlResolverProxy, IUrlResolverProxyKey, OuterUrlResolver } from "./outerUrlResolver";

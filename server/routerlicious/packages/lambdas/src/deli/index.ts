@@ -4,10 +4,10 @@
  */
 
 export {
-	createDeliCheckpointManagerFromCollection,
-	DeliCheckpointReason,
-	IDeliCheckpointManager,
-	ICheckpointParams,
+    createDeliCheckpointManagerFromCollection,
+    DeliCheckpointReason,
+    IDeliCheckpointManager,
+    ICheckpointParams,
 } from "./checkpointManager";
 export { OpEventType, IDeliLambdaEvents, DeliLambda } from "./lambda";
 export { DeliLambdaFactory } from "./lambdaFactory";

@@ -4,8 +4,8 @@
  */
 
 export {
-	IFluidObjectInternalRegistry,
-	DefaultRegistryTypes,
-	IProvideFluidObjectInternalRegistry,
-	IInternalRegistryEntry,
+    IFluidObjectInternalRegistry,
+    DefaultRegistryTypes,
+    IProvideFluidObjectInternalRegistry,
+    IInternalRegistryEntry,
 } from "./fluidObjectInternalRegistry";

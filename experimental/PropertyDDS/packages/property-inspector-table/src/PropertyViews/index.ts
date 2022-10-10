@@ -9,10 +9,10 @@ import { NumberView } from "./Number";
 import { StringView } from "./String";
 
 export {
-	BooleanView,
-	StringView,
-	NumberView,
-	EnumView,
+    BooleanView,
+    StringView,
+    NumberView,
+    EnumView,
 };
 
 export const typeToViewMap = {

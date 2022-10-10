@@ -22,17 +22,17 @@ export {
 export { getDepth, clonePath, UpPath } from "./pathTree";
 export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
 export {
-	scopeFromKey,
-	isGlobalFieldKey,
-	getGenericTreeField,
-	setGenericTreeField,
-	genericTreeKeys,
-	genericTreeDeleteIfEmpty,
-	FieldMapObject,
-	GenericTreeNode,
-	GenericFieldsNode,
-	JsonableTree,
-	FieldScope,
+    scopeFromKey,
+    isGlobalFieldKey,
+    getGenericTreeField,
+    setGenericTreeField,
+    genericTreeKeys,
+    genericTreeDeleteIfEmpty,
+    FieldMapObject,
+    GenericTreeNode,
+    GenericFieldsNode,
+    JsonableTree,
+    FieldScope,
 } from "./treeTextFormat";
 export { visitDelta, DeltaVisitor } from "./visitDelta";
 export { symbolFromKey, keyFromSymbol, GlobalFieldKeySymbol, symbolIsFieldKey } from "./globalFieldKeySymbol";

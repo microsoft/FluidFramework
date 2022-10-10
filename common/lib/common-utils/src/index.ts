@@ -11,14 +11,14 @@
 
 export { assert } from "./assert";
 export {
-	Uint8ArrayToString,
-	stringToBuffer,
-	Buffer,
-	IsoBuffer,
-	bufferToString,
-	hashFile,
-	gitHashFile,
-	performance,
+    Uint8ArrayToString,
+    stringToBuffer,
+    Buffer,
+    IsoBuffer,
+    bufferToString,
+    hashFile,
+    gitHashFile,
+    performance,
 } from "./indexNode";
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
 export { doIfNotDisposed } from "./disposal";

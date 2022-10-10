@@ -5,7 +5,7 @@
 
 export { waitForAttach } from "./attachUtils";
 export {
-	getDefaultObjectFromContainer,
-	getObjectWithIdFromContainer,
-	getObjectFromContainer,
+    getDefaultObjectFromContainer,
+    getObjectWithIdFromContainer,
+    getObjectFromContainer,
 } from "./containerInteractions";

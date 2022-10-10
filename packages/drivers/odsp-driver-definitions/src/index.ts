@@ -4,24 +4,24 @@
  */
 
 export {
-	IOdspUrlParts,
-	ShareLinkTypes,
-	SharingLinkScope,
-	SharingLinkRole,
-	ISharingLinkKind,
-	ISharingLink,
-	ShareLinkInfoType,
-	IOdspResolvedUrl,
+    IOdspUrlParts,
+    ShareLinkTypes,
+    SharingLinkScope,
+    SharingLinkRole,
+    ISharingLinkKind,
+    ISharingLink,
+    ShareLinkInfoType,
+    IOdspResolvedUrl,
 } from "./resolvedUrl";
 export {
-	TokenResponse,
-	TokenFetchOptions,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
-	tokenFromResponse,
-	isTokenFromCache,
-	IdentityType,
-	InstrumentedStorageTokenFetcher,
+    TokenResponse,
+    TokenFetchOptions,
+    OdspResourceTokenFetchOptions,
+    TokenFetcher,
+    tokenFromResponse,
+    isTokenFromCache,
+    IdentityType,
+    InstrumentedStorageTokenFetcher,
 } from "./tokenFetch";
 export { snapshotKey, CacheContentType, IFileEntry, IEntry, ICacheEntry, IPersistedCache } from "./odspCache";
 export { ISnapshotOptions, IOpsCachingPolicy, ICollabSessionOptions, HostStoragePolicy } from "./factory";

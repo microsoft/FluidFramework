@@ -4,11 +4,11 @@
  */
 
 export {
-	RevisionTag,
-	Rebaser,
-	ChangesetFromChangeRebaser,
-	ChangeRebaser,
-	FinalChange,
-	FinalChangeStatus,
+    RevisionTag,
+    Rebaser,
+    ChangesetFromChangeRebaser,
+    ChangeRebaser,
+    FinalChange,
+    FinalChangeStatus,
 } from "./rebaser";
 export { verifyChangeRebaser, Failure, Violation, Exception, OutputType, noFailure } from "./verifyChangeRebaser";

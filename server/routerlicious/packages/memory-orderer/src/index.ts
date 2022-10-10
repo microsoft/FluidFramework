@@ -4,15 +4,15 @@
  */
 
 export {
-	IConcreteNode,
-	IReservationManager,
-	IConcreteNodeFactory,
-	IOpMessage,
-	IConnectMessage,
-	IConnectedMessage,
-	INodeMessage,
-	ILocalOrdererSetup,
-	IKafkaSubscriber,
+    IConcreteNode,
+    IReservationManager,
+    IConcreteNodeFactory,
+    IOpMessage,
+    IConnectMessage,
+    IConnectedMessage,
+    INodeMessage,
+    ILocalOrdererSetup,
+    IKafkaSubscriber,
 } from "./interfaces";
 export { LocalContext } from "./localContext";
 export { LocalKafka } from "./localKafka";

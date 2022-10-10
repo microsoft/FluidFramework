@@ -4,28 +4,28 @@
  */
 
 export {
-	getGitMode,
-	getGitType,
-	buildHierarchy,
-	addBlobToTree,
-	BlobTreeEntry,
-	TreeTreeEntry,
-	AttachmentTreeEntry,
+    getGitMode,
+    getGitType,
+    buildHierarchy,
+    addBlobToTree,
+    BlobTreeEntry,
+    TreeTreeEntry,
+    AttachmentTreeEntry,
 } from "./blobs";
 export {
-	isSystemMessage,
-	IScribeProtocolState,
-	ILocalSequencedClient,
-	IProtocolHandler,
-	ProtocolOpHandler,
+    isSystemMessage,
+    IScribeProtocolState,
+    ILocalSequencedClient,
+    IProtocolHandler,
+    ProtocolOpHandler,
 } from "./protocol";
 export {
-	QuorumClientsSnapshot,
-	QuorumProposalsSnapshot,
-	IQuorumSnapshot,
-	QuorumClients,
-	QuorumProposals,
-	Quorum,
+    QuorumClientsSnapshot,
+    QuorumProposalsSnapshot,
+    IQuorumSnapshot,
+    QuorumClients,
+    QuorumProposals,
+    Quorum,
 } from "./quorum";
 export { isServiceMessageType } from "./utils";
 export { getQuorumTreeEntries, mergeAppAndProtocolTree, generateServiceProtocolEntries } from "./scribeHelper";

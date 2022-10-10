@@ -11,12 +11,12 @@
 */
 
 export {
-	IChannel,
-	IDeltaHandler,
-	IDeltaConnection,
-	IChannelStorageService,
-	IChannelServices,
-	IChannelFactory,
+    IChannel,
+    IDeltaHandler,
+    IDeltaConnection,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
 } from "./channel";
 export { IFluidDataStoreRuntimeEvents, IFluidDataStoreRuntime } from "./dataStoreRuntime";
 export { Jsonable } from "./jsonable";

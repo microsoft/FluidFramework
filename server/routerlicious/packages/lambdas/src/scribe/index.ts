@@ -5,12 +5,12 @@
 
 export { CheckpointManager } from "./checkpointManager";
 export {
-	ISummaryWriteResponse,
-	ILatestSummaryState,
-	ISummaryReader,
-	ISummaryWriter,
-	IPendingMessageReader,
-	ICheckpointManager,
+    ISummaryWriteResponse,
+    ILatestSummaryState,
+    ISummaryReader,
+    ISummaryWriter,
+    IPendingMessageReader,
+    ICheckpointManager,
 } from "./interfaces";
 export { ScribeLambda } from "./lambda";
 export { ScribeLambdaFactory } from "./lambdaFactory";

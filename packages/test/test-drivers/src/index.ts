@@ -8,11 +8,11 @@ export { assertOdspEndpoint, OdspTestDriver } from "./odspTestDriver";
 export { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 export { assertRouterliciousEndpoint, RouterliciousTestDriver } from "./routerliciousTestDriver";
 export {
-	createFluidTestDriver,
-	DriverApiType,
-	DriverApi,
-	CreateFromEnvConfigParam,
-	FluidTestDriverConfig,
+    createFluidTestDriver,
+    DriverApiType,
+    DriverApi,
+    CreateFromEnvConfigParam,
+    FluidTestDriverConfig,
 } from "./factory";
 
 export { LocalDriverApi, LocalDriverApiType } from "./localDriverApi";

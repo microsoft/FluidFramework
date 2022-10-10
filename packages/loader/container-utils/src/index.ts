@@ -4,11 +4,11 @@
  */
 
 export {
-	GenericError,
-	ThrottlingWarning,
-	UsageError,
-	ClientSessionExpiredError,
-	DataCorruptionError,
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
+    GenericError,
+    ThrottlingWarning,
+    UsageError,
+    ClientSessionExpiredError,
+    DataCorruptionError,
+    DataProcessingError,
+    extractSafePropertiesFromMessage,
 } from "./error";

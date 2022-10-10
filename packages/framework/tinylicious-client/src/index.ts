@@ -17,14 +17,14 @@
 import { TinyliciousClient } from "./TinyliciousClient";
 
 export {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	TinyliciousClientProps,
-	TinyliciousConnectionConfig,
-	TinyliciousContainerServices,
-	TinyliciousUser,
-	TinyliciousMember,
-	ITinyliciousAudience,
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+    TinyliciousClientProps,
+    TinyliciousConnectionConfig,
+    TinyliciousContainerServices,
+    TinyliciousUser,
+    TinyliciousMember,
+    ITinyliciousAudience,
 } from "./interfaces";
 export { TinyliciousAudience } from "./TinyliciousAudience";
 export { TinyliciousClient } from "./TinyliciousClient";
