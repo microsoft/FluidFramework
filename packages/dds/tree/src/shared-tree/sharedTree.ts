@@ -98,10 +98,7 @@ class SharedTree
      * Rather than implementing TransactionCheckout, have a member that implements it.
      * This allows keeping the `IEditableForest` private.
      */
-    private readonly transactionCheckout: TransactionCheckout<
-        DefaultEditBuilder,
-        DefaultChangeset
-    >;
+    private readonly transactionCheckout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>;
 
     public constructor(
         id: string,
@@ -126,15 +123,15 @@ class SharedTree
             telemetryContextPrefix,
         );
 
-            this.forest = forest;
-            this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-            this.transactionCheckout = {
-                forest,
-                changeFamily: this.changeFamily,
-                submitEdit: (edit) => this.submitEdit(edit),
-            };
+        this.forest = forest;
+        this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+        this.transactionCheckout = {
+            forest,
+            changeFamily: this.changeFamily,
+            submitEdit: (edit) => this.submitEdit(edit),
+        };
 
-            this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
@@ -147,10 +144,7 @@ class SharedTree
     }
 
     public runTransaction(
-        transaction: (
-            forest: IForestSubscription,
-            editor: DefaultEditBuilder,
-        ) => TransactionResult,
+        transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => TransactionResult,
     ): TransactionResult {
         return runSynchronousTransaction(this.transactionCheckout, transaction);
     }

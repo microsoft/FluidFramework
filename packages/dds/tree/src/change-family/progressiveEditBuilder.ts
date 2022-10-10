@@ -13,7 +13,9 @@ export interface ProgressiveEditBuilder<TChange> {
     getChanges(): TChange[];
 }
 
-export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange> {
+export abstract class ProgressiveEditBuilderBase<TChange>
+    implements ProgressiveEditBuilder<TChange>
+{
     private readonly changes: TChange[] = [];
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,

@@ -27,7 +27,7 @@ export type DefaultChangeset = FieldChangeMap;
  */
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
     private readonly modularFamily: ModularChangeFamily;
-    
+
     public constructor() {
         this.modularFamily = new ModularChangeFamily(fieldKinds);
     }
@@ -44,7 +44,10 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
         return this.modularFamily.intoDelta(change);
     }
 
-    buildEditor(deltaReceiver: (delta: Delta.Root<ITreeCursorSynchronous>) => void, anchorSet: AnchorSet): DefaultEditBuilder {
+    buildEditor(
+        deltaReceiver: (delta: Delta.Root<ITreeCursorSynchronous>) => void,
+        anchorSet: AnchorSet,
+    ): DefaultEditBuilder {
         return new DefaultEditBuilder(this, deltaReceiver, anchorSet);
     }
 }
@@ -77,7 +80,9 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
     public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor): void => {
-                const change: FieldChangeset = brand(valueFieldKind.changeHandler.editor.set(newContent));
+                const change: FieldChangeset = brand(
+                    valueFieldKind.changeHandler.editor.set(newContent),
+                );
                 this.modularBuilder.submitChange(parent, field, valueFieldKind.identifier, change);
             },
         };
@@ -93,7 +98,9 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
     public optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
-                const change: FieldChangeset = brand(optional.changeHandler.editor.set(newContent, wasEmpty));
+                const change: FieldChangeset = brand(
+                    optional.changeHandler.editor.set(newContent, wasEmpty),
+                );
                 this.modularBuilder.submitChange(parent, field, optional.identifier, change);
             },
         };
@@ -109,11 +116,15 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
     public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
         return {
             insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
-                const change: FieldChangeset = brand(sequence.changeHandler.editor.insert(index, newContent));
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.insert(index, newContent),
+                );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
             delete: (index: number, count: number): void => {
-                const change: FieldChangeset = brand(sequence.changeHandler.editor.delete(index, count));
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.delete(index, count),
+                );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
         };
@@ -160,9 +171,6 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
 }
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map([
-    valueFieldKind,
-    optional,
-    sequence,
-    forbidden,
-].map((f) => [f.identifier, f]));
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+    [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
+);

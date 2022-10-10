@@ -4,7 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder, ProgressiveEditBuilderBase } from "../../change-family";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+} from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";

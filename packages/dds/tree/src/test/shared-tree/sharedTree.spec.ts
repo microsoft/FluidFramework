@@ -122,13 +122,16 @@ describe("SharedTree", () => {
             // Insert child in global field
             tree1.runTransaction((forest, editor) => {
                 const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
-                const field = editor.sequenceField({
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(forest.rootField),
-                    parentIndex: 0,
-                }, globalFieldKeySymbol);
+                const field = editor.sequenceField(
+                    {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    globalFieldKeySymbol,
+                );
                 field.insert(0, writeCursor);
-        
+
                 return TransactionResult.Apply;
             });
 
@@ -150,11 +153,14 @@ describe("SharedTree", () => {
 
             // Delete node
             tree2.runTransaction((forest, editor) => {
-                const field = editor.sequenceField({
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(forest.rootField),
-                    parentIndex: 0,
-                }, globalFieldKeySymbol);
+                const field = editor.sequenceField(
+                    {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    globalFieldKeySymbol,
+                );
                 field.delete(0, 1);
                 return TransactionResult.Apply;
             });
