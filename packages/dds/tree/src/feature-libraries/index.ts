@@ -108,7 +108,6 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -118,6 +117,8 @@ export {
     Multiplicity,
     FullSchemaPolicy,
     allowsRepoSuperset,
+    GenericChangeset,
+    genericFieldKind,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
