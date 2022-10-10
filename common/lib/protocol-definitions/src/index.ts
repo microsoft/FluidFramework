@@ -19,6 +19,7 @@ export {
     ISequencedClient,
     ISignalClient,
 } from "./clients";
+export { IClientConfiguration } from "./config";
 export {
     IApprovedProposal,
     ICommittedProposal,
@@ -33,7 +34,6 @@ export {
     IQuorumProposalsEvents,
     ISequencedProposal,
 } from "./consensus";
-export { IClientConfiguration } from "./config";
 export { IsoDate } from "./date";
 export {
     IBranchOrigin,
@@ -58,6 +58,8 @@ export {
     NackErrorType,
     SignalType,
 } from "./protocol";
+export { ScopeType } from "./scopes";
+export { IConnect, IConnected } from "./sockets";
 export {
     FileMode,
     IAttachment,
@@ -81,7 +83,6 @@ export {
     SummaryType,
     SummaryTypeNoHandle,
 } from "./summary";
-export { IUser } from "./users";
 export {
     IActorClient,
     ISummaryTokenClaims,
@@ -89,5 +90,4 @@ export {
     ITokenProvider,
     ITokenService,
 } from "./tokens";
-export { ScopeType } from "./scopes";
-export { IConnect, IConnected } from "./sockets";
+export { IUser } from "./users";

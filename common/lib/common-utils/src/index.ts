@@ -10,6 +10,12 @@
  */
 
 export { assert } from "./assert";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
+export { Uint8ArrayToArrayBuffer } from "./bufferShared";
+export { delay } from "./delay";
+export { doIfNotDisposed } from "./disposal";
+export { EventForwarder } from "./eventForwarder";
+export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
 export {
     Buffer,
     bufferToString,
@@ -20,11 +26,9 @@ export {
     stringToBuffer,
     Uint8ArrayToString,
 } from "./indexNode";
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
-export { doIfNotDisposed } from "./disposal";
-export { EventForwarder } from "./eventForwarder";
-export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
+export { Lazy } from "./lazy";
 export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
+export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";
 export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
@@ -41,7 +45,3 @@ export {
 export { ITraceEvent, Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";
-export { Lazy } from "./lazy";
-export { IsomorphicPerformance } from "./performanceIsomorphic";
-export { delay } from "./delay";
-export { Uint8ArrayToArrayBuffer } from "./bufferShared";
