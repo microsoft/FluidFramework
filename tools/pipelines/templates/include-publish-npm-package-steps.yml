@@ -27,6 +27,10 @@ parameters:
   type: string
   default:
 
+- name: maximumRetryIfNetworkError
+  type: number
+  default: 3
+
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -53,7 +57,6 @@ steps:
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
           echo Deleting @fluid-msinternal packages
@@ -72,7 +75,6 @@ steps:
     workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
-  retryCountOnTaskFailure: 3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
     targetType: 'inline'
@@ -104,44 +106,40 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          checkVersion=${f##/*}
-          checkVersion=${checkVersion:2:-4}
-
-          if [[ $checkVersion == *"fluidframework"* ]]; then
-            checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
-          else
-            checkVersion=$(echo $checkVersion | sed 's/-/\/''/2')
-          fi
-
-          checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
-          checkError=$(npm view $checkVersion)
-
-          if [[ "$checkError" == "" || "$checkError" =~ "npm ERR!" ]]; then
+          for i in {1..$maxIter}
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
-                if ! grep -q "You cannot publish over the previously published versions" "publish_log"
-                then
-                  let t1+=1
+                if [ [grep -q "network read ECONNRESET" "publish_log"] && [! $i -eq $maximumRetryIfNetworkError] ]; then
+                  echo "Network Error"
+                  continue
                 else
-                  echo Package has already been published.
-                  local_f="${f}_local"
-                  mv "$f" "$local_f"
-                  package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                  npm pack $package_name
-                  if cmp -s "$f" "$local_f"
+                  if ! grep -q "You cannot publish over the previously published versions" "publish_log"
                   then
-                    echo Continuing as published package matches the current one that was attempting to be released.
-                  else
-                    echo ERROR: Published package does not match the current one attempting to be released for the same version.
                     let t1+=1
+                  else
+                    echo Package has already been published.
+                    local_f="${f}_local"
+                    mv "$f" "$local_f"
+                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                    npm pack $package_name
+                    if cmp -s "$f" "$local_f"
+                    then
+                      echo Continuing as published package matches the current one that was attempting to be released.
+                    else
+                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                      let t1+=1
+                    fi
+                    rm "$f"
+                    mv "$local_f" "$f"
+                    exit $t1
                   fi
-                  rm "$f"
-                  mv "$local_f" "$f"
                 fi
+            else
+              break
             fi
-          fi
-          rm publish_log
+            rm publish_log
+          done
         fi
       done
       rm ~/.npmrc
