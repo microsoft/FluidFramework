@@ -10,13 +10,13 @@ import { Delta } from "../../tree";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
-import * as F from "./format";
+import { MarkList, ModifyInsert } from "./format";
 import { isSkipMark } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
-    marks: F.MarkList<TNodeChange>,
+    marks: MarkList<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
@@ -152,7 +152,7 @@ const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
 function cloneAndModify<TNodeChange>(
-    insert: F.ModifyInsert<TNodeChange>,
+    insert: ModifyInsert<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
 ): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
