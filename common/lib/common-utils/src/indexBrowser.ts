@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { Uint8ArrayToString, isArrayBuffer, stringToBuffer, bufferToString, IsoBuffer } from "./bufferBrowser";
+export {
+    Uint8ArrayToString,
+    isArrayBuffer,
+    stringToBuffer,
+    bufferToString,
+    IsoBuffer,
+} from "./bufferBrowser";
 export { hashFile, gitHashFile } from "./hashFileBrowser";
 export { performance } from "./performanceBrowser";

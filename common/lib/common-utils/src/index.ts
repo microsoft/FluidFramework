@@ -30,7 +30,14 @@ export { Deferred, LazyPromise } from "./promises";
 export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";
 export { safelyParseJSON } from "./safeParser";
-export { setLongTimeout, ITimer, Timer, IPromiseTimerResult, IPromiseTimer, PromiseTimer } from "./timer";
+export {
+    setLongTimeout,
+    ITimer,
+    Timer,
+    IPromiseTimerResult,
+    IPromiseTimer,
+    PromiseTimer,
+} from "./timer";
 export { Trace, ITraceEvent } from "./trace";
 export { EventEmitterEventType, TypedEventTransform, TypedEventEmitter } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";
