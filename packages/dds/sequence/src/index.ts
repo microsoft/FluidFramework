@@ -6,9 +6,10 @@
 /**
  * Supports distributed data structures which are list-like.
  *
- * This library's main export is {@link SharedSequence}, a DDS for storing and simultaneously editing a sequence of
+ * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
  * text.
  *
+ * See the package's README for a high-level introduction to `SharedString`'s feature set.
  * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
  * working with text.
  *
@@ -30,6 +31,7 @@ export {
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
+    SerializedIntervalDelta,
 } from "./intervalCollection";
 export {
     IMapMessageLocalMetadata,
@@ -37,28 +39,12 @@ export {
 } from "./defaultMapInterfaces";
 export { getTextAndMarkers, ISharedString, SharedStringSegment, SharedString } from "./sharedString";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
-export { SharedStringFactory, SharedObjectSequenceFactory, SharedNumberSequenceFactory } from "./sequenceFactory";
+export { SharedStringFactory } from "./sequenceFactory";
 export { SequenceEvent, SequenceDeltaEvent, SequenceMaintenanceEvent, ISequenceDeltaRange } from "./sequenceDeltaEvent";
 export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence";
-export { SharedObjectSequence } from "./sharedObjectSequence";
-export { SharedNumberSequence } from "./sharedNumberSequence";
 export {
-    positionToRowCol,
-    PaddingSegment,
-    SparseMatrixItem,
-    RunSegment,
-    MatrixSegment,
-    maxCol,
-    maxCols,
-    maxRow,
-    maxRows,
-    maxCellPosition,
-    rowColToPosition,
-    SparseMatrix,
-    SparseMatrixFactory,
-} from "./sparsematrix";
-export {
-    SharedIntervalCollectionFactory,
-    ISharedIntervalCollection,
-    SharedIntervalCollection,
+	SharedIntervalCollectionFactory,
+	ISharedIntervalCollection,
+	SharedIntervalCollection,
 } from "./sharedIntervalCollection";
+export { IInterval, IntervalConflictResolver } from "./intervalTree";

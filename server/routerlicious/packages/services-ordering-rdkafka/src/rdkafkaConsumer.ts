@@ -23,8 +23,12 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	commitRetryDelay: number;
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
-	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 	zooKeeperClientConstructor?: ZookeeperClientConstructor;
+
+	/**
+	 * See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+	 */
+	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
 /**
@@ -263,6 +267,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("throttled", event);
 		});
 
+		consumer.on("event.log", (event) => {
+			this.emit("log", event);
+		});
+
 		consumer.connect();
 	}
 
@@ -276,15 +284,19 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.closed = true;
 		}
 
+		// set consumer to undefined before disconnecting in order to
+		// avoid calls to assign/unassign/commit during the async disconnect
+		const consumer = this.consumer;
+		this.consumer = undefined;
+
 		await new Promise<void>((resolve) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-			if (this.consumer && this.consumer.isConnected()) {
-				this.consumer.disconnect(resolve);
+			if (consumer && consumer.isConnected()) {
+				consumer.disconnect(resolve);
 			} else {
 				resolve();
 			}
 		});
-		this.consumer = undefined;
 
 		if (this.zooKeeperClient) {
 			this.zooKeeperClient.close();
