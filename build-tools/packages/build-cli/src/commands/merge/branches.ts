@@ -5,7 +5,12 @@
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base";
-import { github } from "../../lib";
+import {
+    pullRequestExists,
+    pullRequestInfo,
+    getUserAccess,
+    createPullRequest
+} from "../../lib";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -49,7 +54,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
 
         const context = await this.getContext();
         const gitRepo = context.gitRepo;
-        const prExists: boolean = await github.pullRequestExists(flags.auth, this.logger);
+        const prExists: boolean = await pullRequestExists(flags.auth, this.logger);
 
         if (prExists) {
             this.exit(-1);
@@ -136,7 +141,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             await gitRepo.setUpstream(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
             await gitRepo.resetBranch(unmergedCommitList[0]);
             // fetch name of owner associated to the pull request
-            const prInfo = await github.pullRequestInfo(
+            const prInfo = await pullRequestInfo(
                 flags.auth,
                 unmergedCommitList[0],
                 this.logger,
@@ -144,9 +149,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.info(
                 `Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
             );
-            const user = await github.getUserAccess(flags.auth, this.logger);
+            const user = await getUserAccess(flags.auth, this.logger);
             this.info(`List users with push access to main branch ${user}`);
-            prNumber = await github.createPullRequest(
+            prNumber = await createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
                 flags.target,
@@ -158,7 +163,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             );
         } else {
             // fetch name of owner associated to the pull request
-            const prInfo = await github.pullRequestInfo(
+            const prInfo = await pullRequestInfo(
                 flags.auth,
                 unmergedCommitList[commit],
                 this.logger,
@@ -166,9 +171,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.info(
                 `Fetch pull request info for bulk commit ids till ${unmergedCommitList[commit]} and assignee ${prInfo.data[0].assignee.login}`,
             );
-            const user = await github.getUserAccess(flags.auth, this.logger);
+            const user = await getUserAccess(flags.auth, this.logger);
             this.info(`List users with push access to main branch ${user}`);
-            prNumber = await github.createPullRequest(
+            prNumber = await createPullRequest(
                 flags.auth,
                 branchName,
                 flags.target,

@@ -3,5 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./oldestClientObserver";
+export {
+    IOldestClientObservableEvents,
+    IOldestClientObservable,
+    IOldestClientObserverEvents,
+    IOldestClientObserver,
+} from "./interfaces";
+export { OldestClientObserver } from "./oldestClientObserver";
