@@ -13,7 +13,7 @@ export function computeHierarchicalOrdinal(
     previousOrdinal: string | undefined) {
     assert(
         maxCount <= 16 && actualCount <= maxCount,
-        "count must be less than max, and max must be 16 or less");
+        0x3f0 /* count must be less than max, and max must be 16 or less */);
 
     const ordinalWidth = 1 << (maxCount - actualCount);
     let ordinal: string;

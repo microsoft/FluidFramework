@@ -216,20 +216,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, "Unexpected op");
+                assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
                 // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "complete", "Unexpected op type");
+                    assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
 
                 // Remove complete op from this.pendingCompletedTasks
                 const pendingIds = this.pendingCompletedTasks.get(taskId);
-                assert(pendingIds !== undefined && pendingIds.length > 0, "pendingIds is empty");
+                assert(pendingIds !== undefined && pendingIds.length > 0, 0x402 /* pendingIds is empty */);
                 const removed = pendingIds.shift();
-                assert(removed === messageId, "Removed complete op id does not match");
+                assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
             }
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
