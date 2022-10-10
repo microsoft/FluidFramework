@@ -202,7 +202,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                         process.exitCode = 1;
                     }
 
-                    if(process.exitCode === 1) {
+                    if (process.exitCode === 1) {
                         this.warning(output);
                     } else {
                         this.info(output);
@@ -213,7 +213,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     logStats() {
         this.log(
-            `Statistics: ${CheckPolicy.processed} processed, ${CheckPolicy.count - CheckPolicy.processed
+            `Statistics: ${CheckPolicy.processed} processed, ${
+                CheckPolicy.count - CheckPolicy.processed
             } excluded, ${CheckPolicy.count} total`,
         );
         for (const [action, handlerPerf] of CheckPolicy.handlerActionPerf.entries()) {
