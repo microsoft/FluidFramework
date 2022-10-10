@@ -1,5 +1,5 @@
 {
-    "tags": ["schema-stored"],
-    "exports": ["index"],
-    "imports": ["util","dependency-tracking"]
+  "tags": ["schema-stored"],
+  "exports": ["index"],
+  "imports": ["util", "dependency-tracking"]
 }

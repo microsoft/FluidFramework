@@ -45,7 +45,10 @@ export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     };
 }
 
-function composeFieldMarks(baseFieldMarks: T.FieldMarks, newFieldMarks: T.FieldMarks): T.FieldMarks {
+function composeFieldMarks(
+    baseFieldMarks: T.FieldMarks,
+    newFieldMarks: T.FieldMarks,
+): T.FieldMarks {
     const composed: T.FieldMarks = {};
     for (const key of Object.keys(newFieldMarks)) {
         const composedMarkList = composeMarkLists(baseFieldMarks[key] ?? [], newFieldMarks[key]);
@@ -61,10 +64,7 @@ function composeFieldMarks(baseFieldMarks: T.FieldMarks, newFieldMarks: T.FieldM
     return composed;
 }
 
-function composeMarkLists(
-    baseMarkList: T.MarkList,
-    newMarkList: T.MarkList,
-): T.MarkList {
+function composeMarkLists(baseMarkList: T.MarkList, newMarkList: T.MarkList): T.MarkList {
     const factory = new MarkListFactory();
     const baseIter = new StackyIterator(baseMarkList);
     const newIter = new StackyIterator(newMarkList);
@@ -100,7 +100,12 @@ function composeMarkLists(
             // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
-        } else if (isTomb(baseMark) || isGapEffectMark(baseMark) || isTomb(newMark) || isGapEffectMark(newMark)) {
+        } else if (
+            isTomb(baseMark) ||
+            isGapEffectMark(baseMark) ||
+            isTomb(newMark) ||
+            isGapEffectMark(newMark)
+        ) {
             // We don't currently support Tomb and Gap marks (and don't offer ways to generate them).
             fail("TODO: support Tomb and Gap marks");
         } else {
@@ -172,7 +177,8 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         case "MInsert": {
             switch (newType) {
@@ -185,7 +191,8 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Modify": {
@@ -202,7 +209,8 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                     // In the long run we want to preserve them.
                     return clone(newMark);
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Revive": {
@@ -220,10 +228,12 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                     // The deletion undoes the revival
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }
 

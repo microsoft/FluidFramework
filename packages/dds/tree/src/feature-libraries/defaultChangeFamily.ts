@@ -8,7 +8,7 @@ import { ITreeCursor } from "../forest";
 import { ChangeRebaser } from "../rebase";
 import { FieldKindIdentifier } from "../schema-stored";
 import { brand } from "../util";
-import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPathWithFieldKinds, Value } from "../tree";
+import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath, Value } from "../tree";
 import {
     FieldKind,
     ModularChangeFamily,
@@ -65,7 +65,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
         this.modularBuilder = new ModularEditBuilder(family, fieldKinds, deltaReceiver, anchors);
     }
 
-    public setValue(path: UpPathWithFieldKinds, value: Value): void {
+    public setValue(path: UpPath, value: Value): void {
         this.modularBuilder.setValue(path, value);
     }
 
@@ -76,7 +76,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
      * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
      * is bounded by the lifetime of this edit builder.
      */
-    public valueField(parent: UpPathWithFieldKinds | undefined, field: FieldKey): ValueFieldEditBuilder {
+    public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor): void => {
                 const change: FieldChangeset = brand(valueFieldKind.changeHandler.editor.set(newContent));
@@ -92,7 +92,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
      * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
      * is bounded by the lifetime of this edit builder.
      */
-    public optionalField(parent: UpPathWithFieldKinds | undefined, field: FieldKey): OptionalFieldEditBuilder {
+    public optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
                 const change: FieldChangeset = brand(optional.changeHandler.editor.set(newContent, wasEmpty));
@@ -108,7 +108,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
      * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
      * is bounded by the lifetime of this edit builder.
      */
-    public sequenceField(parent: UpPathWithFieldKinds | undefined, field: FieldKey): SequenceFieldEditBuilder {
+    public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
         return {
             insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
                 const change: FieldChangeset = brand(sequence.changeHandler.editor.insert(index, newContent));

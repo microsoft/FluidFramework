@@ -78,7 +78,6 @@ describe("AnchorSet", () => {
             type: Delta.MarkType.MoveOut,
             count: 1,
             moveId: brand(1),
-
         };
 
         const moveIn: Delta.MoveIn = {
@@ -94,7 +93,10 @@ describe("AnchorSet", () => {
         const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
         anchors.applyDelta(delta);
         checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
-        checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]));
+        checkEquality(
+            anchors.locate(anchor2),
+            makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
+        );
         checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
     });
 });
@@ -113,7 +115,11 @@ type PathStep = [FieldKey, number];
 function makePath(...steps: PathStep[]): UpPath {
     assert(steps.length > 0, "Path cannot be empty");
     return steps.reduce(
-        (path: UpPath | undefined, step: PathStep) => ({ parent: path, parentField: step[0], parentIndex: step[1] }),
+        (path: UpPath | undefined, step: PathStep) => ({
+            parent: path,
+            parentField: step[0],
+            parentIndex: step[1],
+        }),
         undefined,
     ) as UpPath;
 }

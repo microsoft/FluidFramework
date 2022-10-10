@@ -5,7 +5,10 @@
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import {
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import {
     ITelemetryContext,
     ISummaryTreeWithStats,
@@ -13,9 +16,17 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
-    IEditableForest, initializeForest, ITreeSubscriptionCursor, TreeNavigationResult,
+    IEditableForest,
+    initializeForest,
+    ITreeSubscriptionCursor,
+    TreeNavigationResult,
 } from "../forest";
-import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
+import {
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { JsonableTree, Delta } from "../tree";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
@@ -45,7 +56,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     // Note that if invalidation happens when these promises are running, you may get stale results.
     private readonly treeBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
-    public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
+    public constructor(
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly forest: IEditableForest,
+    ) {
         this.cursor = this.forest.allocateCursor();
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
@@ -124,7 +138,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         };
     }
 
-    public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
+    public async load(
+        services: IChannelStorageService,
+        parse: SummaryElementParser,
+    ): Promise<void> {
         if (await services.contains(treeBlobKey)) {
             const treeBuffer = await services.readBlob(treeBlobKey);
             const treeBufferString = bufferToString(treeBuffer, "utf8");

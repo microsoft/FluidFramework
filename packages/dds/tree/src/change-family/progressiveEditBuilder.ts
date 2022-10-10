@@ -18,7 +18,8 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,
         private readonly deltaReceiver: (delta: Delta.Root) => void,
-        private readonly anchorSet: AnchorSet) {}
+        private readonly anchorSet: AnchorSet,
+    ) {}
 
     /**
      * Subclasses add editing methods which call this with their generated edits.

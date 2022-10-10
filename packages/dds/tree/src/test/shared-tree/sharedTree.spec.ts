@@ -4,7 +4,12 @@
  */
 import { fail, strict as assert } from "assert";
 import {
-    FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol, getSchemaString
+    FieldKinds,
+    singleTextCursor,
+    anchorSymbol,
+    isUnwrappedNode,
+    valueSymbol,
+    getSchemaString,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
@@ -113,14 +118,13 @@ describe("SharedTree", () => {
 
             // Insert root node
             initializeTestTreeWithValue(tree1, 42);
-            
+
             // Insert child in global field
             tree1.runTransaction((forest, editor) => {
                 const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
                 const field = editor.sequenceField({
                     parent: undefined,
                     parentField: detachedFieldAsKey(forest.rootField),
-                    parentFieldKind: FieldKinds.sequence.identifier,
                     parentIndex: 0,
                 }, globalFieldKeySymbol);
                 field.insert(0, writeCursor);
@@ -149,7 +153,6 @@ describe("SharedTree", () => {
                 const field = editor.sequenceField({
                     parent: undefined,
                     parentField: detachedFieldAsKey(forest.rootField),
-                    parentFieldKind: FieldKinds.sequence.identifier,
                     parentIndex: 0,
                 }, globalFieldKeySymbol);
                 field.delete(0, 1);
@@ -224,14 +227,14 @@ describe("SharedTree", () => {
         // Perform an edit
         sharedTree.runTransaction((forest, editor) => {
             // Perform an edit
-            const path = sharedTree.locate(anchor)??fail("anchor should exist");
+            const path = sharedTree.locate(anchor) ?? fail("anchor should exist");
             sharedTree.context.prepareForEdit();
             editor.setValue(path, 2);
 
             // Check that the edit is reflected in the EditableTree
             assert.equal(editable[valueSymbol], 2);
 
-            sharedTree.context.prepareForEdit()
+            sharedTree.context.prepareForEdit();
             return TransactionResult.Apply;
         });
 
@@ -246,7 +249,7 @@ const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
     extraLocalFields: fieldSchema(FieldKinds.sequence),
     globalFields: [globalFieldKey],
-})
+});
 const testSchema: SchemaData = {
     treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
     globalFieldSchema: new Map([
@@ -260,7 +263,7 @@ const testSchema: SchemaData = {
  * Use {@link getTestValue} to read the value.
  */
 function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-    tree.storedSchema.update(testSchema)
+    tree.storedSchema.update(testSchema);
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {

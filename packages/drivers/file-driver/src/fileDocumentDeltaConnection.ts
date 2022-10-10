@@ -128,12 +128,6 @@ export class ReplayFileDeltaConnection
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: ReplayMaxMessageSize,
-                summary: {
-                    idleTime: 5000,
-                    maxOps: 1000,
-                    maxTime: 5000 * 12,
-                    maxAckWaitTime: 600000,
-                },
             },
             supportedVersions: [fileProtocolVersion],
             user: null,

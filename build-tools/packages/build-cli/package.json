@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.4.7000",
+  "version": "0.4.8000",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,7 +33,7 @@
     "build:genver": "gen-version",
     "build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:manifest": "oclif manifest",
-    "build:readme": "node \"./bin/dev\" generate readme",
+    "build:readme": "node \"./bin/dev\" generate readme --multi",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
@@ -70,15 +70,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.7000",
-    "@fluidframework/build-tools": "^0.4.7000",
-    "@fluidframework/bundle-size-tools": "^0.4.7000",
-    "@oclif/core": "~1.9.5",
+    "@fluid-tools/version-tools": "^0.4.8000",
+    "@fluidframework/build-tools": "^0.4.8000",
+    "@fluidframework/bundle-size-tools": "^0.4.8000",
+    "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "@octokit/core": "4.0.5",
     "@rushstack/node-core-library": "^3.51.1",
     "chalk": "^2.4.2",
     "date-fns": "^2.29.1",

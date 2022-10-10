@@ -13,6 +13,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -39,7 +40,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: IContainer, rootDataObject: RootDataObject);
+    constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
     connect(): Promise<void>;
@@ -74,22 +75,21 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
 // @public
 export interface IFluidContainerEvents extends IEvent {
-    // @eventProperty
-    (event: "connected", listener: () => void): void;
-    // @eventProperty
-    (event: "dispose", listener: () => void): void;
-    // @eventProperty
-    (event: "disconnected", listener: () => void): void;
-    // @eventProperty
-    (event: "saved", listener: () => void): void;
-    // @eventProperty
-    (event: "dirty", listener: () => void): void;
+    (event: "connected" | "disconnected", listener: () => void): void;
+    (event: "saved" | "dirty", listener: () => void): void;
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
 // @public
 export interface IMember {
     connections: IConnection[];
     userId: string;
+}
+
+// @public
+export interface IRootDataObject {
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    readonly initialObjects: LoadableObjectRecord;
 }
 
 // @public
@@ -126,7 +126,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @public
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
-}> {
+}> implements IRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     protected hasInitialized(): Promise<void>;
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
