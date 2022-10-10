@@ -545,7 +545,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Attach the container after the blob is uploaded.
             await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-            // GC requires at least one op to have been processed. It needs a server timestamp and uses the timestamp of the op.
+            // GC requires at least one op to have been processed. It needs a server timestamp and
+            // uses the timestamp of the op.
             defaultDataStore._root.set("make container connect in", "write mode");
 
             // Load a second container.
@@ -588,7 +589,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Attach the container after the blob is uploaded.
             await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-            // GC requires at least one op to have been processed. It needs a server timestamp and uses the timestamp of the op.
+            // GC requires at least one op to have been processed. It needs a server timestamp and
+            // uses the timestamp of the op.
             defaultDataStore._root.set("make container connect in", "write mode");
             // Make sure we are connected or we may get a local ID handle
             await ensureContainerConnectedWriteMode(container as Container);
@@ -646,7 +648,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Attach the container after the blob is uploaded.
             await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-            // GC requires at least one op to have been processed. It needs a server timestamp and uses the timestamp of the op.
+            // GC requires at least one op to have been processed. It needs a server timestamp and
+            // uses the timestamp of the op.
             defaultDataStore._root.set("make container connect in", "write mode");
             // Make sure we are connected or we may get a local ID handle
             await ensureContainerConnectedWriteMode(container as Container);
