@@ -12,13 +12,24 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreContext, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
 describe("FluidDataStoreRuntime Tests", () => {
     let dataStoreContext: MockFluidDataStoreContext;
     let sharedObjectRegistry: ISharedObjectRegistry;
-    const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
-        FluidDataStoreRuntime.load(context, registry, /* existing */ false);
+    function createRuntime(
+        context: IFluidDataStoreContext,
+        registry: ISharedObjectRegistry,
+        entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>) {
+            return new FluidDataStoreRuntime(
+                context,
+                registry,
+                /* existing */ false,
+                entrypointInitializationFn ?? (async (rt) => requestFluidObject(rt, "/")));
+    }
 
     beforeEach(() => {
         dataStoreContext = new MockFluidDataStoreContext();
@@ -32,10 +43,13 @@ describe("FluidDataStoreRuntime Tests", () => {
         };
     });
 
-    it("loadRuntime rejects ids with forward slashes", () => {
+    it("FluidDataStoreRuntime.load rejects ids with forward slashes", () => {
         const invalidId = "beforeSlash/afterSlash";
         dataStoreContext = new MockFluidDataStoreContext(invalidId);
-        const codeBlock = () => loadRuntime(dataStoreContext, sharedObjectRegistry);
+        const codeBlock = () => FluidDataStoreRuntime.load(
+            dataStoreContext,
+            sharedObjectRegistry,
+            /* existing */ false);
         assert.throws(codeBlock,
             (e) => validateAssertionError(e,
                 "Id cannot contain slashes. DataStoreContext should have validated this."));
@@ -58,7 +72,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         let failed: boolean = false;
         let dataStoreRuntime: FluidDataStoreRuntime | undefined;
         try {
-            dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+            dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
         } catch (error) {
             failed = true;
         }
@@ -67,7 +81,7 @@ describe("FluidDataStoreRuntime Tests", () => {
     });
 
     it("can summarize an empty data store runtime", async () => {
-        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
         const summarizeResult = await dataStoreRuntime.summarize(true, false);
         assert(summarizeResult.summary.type === SummaryType.Tree, "Data store runtime did not return a summary tree");
         assert(Object.keys(summarizeResult.summary.tree).length === 0, "The summary should be empty");
@@ -78,17 +92,23 @@ describe("FluidDataStoreRuntime Tests", () => {
         const expectedGCData: IGarbageCollectionData = {
             gcNodes: { "/": [] },
         };
-        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
         const gcData = await dataStoreRuntime.getGCData();
         assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
     });
 
     it("createChannel rejects ids with slashes", async () => {
-        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
         const invalidId = "beforeSlash/afterSlash";
         const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
         assert.throws(codeBlock,
             (e) => e.errorType === ContainerErrorType.usageError
                 && e.message === `Id cannot contain slashes: ${invalidId}`);
+    });
+
+    it("entrypoint is initialized correctly", async () => {
+        const myObj: FluidObject = { fakeProp: "fakeValue" };
+        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry, async (rt) => myObj);
+        assert((await dataStoreRuntime.IFluidLoadable?.handle.get()) === myObj, "Entrypoint was not initialized");
     });
 });
