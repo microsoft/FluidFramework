@@ -44,6 +44,7 @@ import {
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
+    defaultSnapshotCacheExpiryMs,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
@@ -60,6 +61,8 @@ type GcWithPrivates = IGarbageCollector & {
     readonly testMode: boolean;
     readonly latestSummaryGCVersion: GCVersion;
     readonly sessionExpiryTimeoutMs: number | undefined;
+    readonly maxSnapshotCacheDurationMs: number | "none";
+    readonly sweepTimeoutBufferMs: number;
     readonly inactiveTimeoutMs: number;
     readonly sweepTimeoutMs: number | undefined;
     readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number; };
@@ -150,47 +153,98 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Configuration", () => {
-        const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions, snapshotCacheExpiryMs?: number): GcWithPrivates => {
-            const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
-            return createGarbageCollector({ metadata, gcOptions, snapshotCacheExpiryMs }) as GcWithPrivates;
-        };
         const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
+
+        // These helpers cast the result to GcWithPrivates for easier access to private members for testing
+        // For existing, it also set snapshotCacheExpiryMs by default which allows testing of Sweep Timeout calculation
+        const createGcForExisting = (gcMetadata: IGCMetadata, snapshotCacheExpiryMsCreateParam: number | "UNDEFINED" = defaultSnapshotCacheExpiryMs): GcWithPrivates => {
+            const metadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
+            const snapshotCacheExpiryMs = typeof snapshotCacheExpiryMsCreateParam === "number" ? snapshotCacheExpiryMsCreateParam : undefined;
+            return createGarbageCollector({ metadata, gcOptions: undefined, snapshotCacheExpiryMs }) as GcWithPrivates;
+        };
+        function createGcForNew(gcOptions: IGCRuntimeOptions, snapshotCacheExpiryMsCreateParam?: number) {
+            const snapshotCacheExpiryMs = typeof snapshotCacheExpiryMsCreateParam === "number" ? snapshotCacheExpiryMsCreateParam : undefined;
+            return createGarbageCollector({ metadata: undefined, gcOptions, snapshotCacheExpiryMs }) as GcWithPrivates;
+        }
+
         describe("Existing container", () => {
-            it("No metadata", () => {
-                gc = createGcWithPrivateMembers({});
+            it("Empty metadata", () => {
+                gc = createGcForExisting({});
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+                assert.equal(gc.maxSnapshotCacheDurationMs, 5 * oneDayMs, "maxSnapshotCacheDurationMs incorrect");
+                assert.equal(gc.sweepTimeoutBufferMs, oneDayMs, "sweepTimeoutBufferMs incorrect");
                 assert(gc.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
             });
             it("gcFeature 0", () => {
-                gc = createGcWithPrivateMembers({ gcFeature: 0 });
+                gc = createGcForExisting({ gcFeature: 0 });
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
             });
             it("gcFeature 0, sweepEnabled true", () => {
-                gc = createGcWithPrivateMembers({ gcFeature: 0, sweepEnabled: true });
+                gc = createGcForExisting({ gcFeature: 0, sweepEnabled: true });
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 0, "latestSummaryGCVersion incorrect");
             });
-            it("gcFeature 1", () => {
-                gc = createGcWithPrivateMembers({ gcFeature: 1 });
+            it("Sweep Enabled via gcFeature 1", () => {
+                gc = createGcForExisting({ gcFeature: 1 });
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
             });
             it("sweepEnabled false", () => {
-                gc = createGcWithPrivateMembers({ sweepEnabled: false });
+                gc = createGcForExisting({ gcFeature: 1, sweepEnabled: false });
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
             });
-            it("sessionExpiryTimeoutMs set", () => {
-                gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: customSessionExpiryDurationMs });
+            it("sweepEnabled true, maxSnapshotCacheDurationMs 'none'", () => {
+                assert.throws(
+                    () => { createGcForExisting({ gcFeature: 1, sweepEnabled: true, maxSnapshotCacheDurationMs: "none" }); },
+                    "Should be unsupported");
+            });
+            it("Sweep Timeout constituents set", () => {
+                gc = createGcForExisting({
+                    sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+                    maxSnapshotCacheDurationMs: 123,
+                    sweepTimeoutBufferMs: 456,
+                },
+                123);
+
                 assert.equal(gc.sessionExpiryTimeoutMs, customSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
+                assert.equal(gc.maxSnapshotCacheDurationMs, 123, "maxSnapshotCacheDurationMs incorrect");
+                assert.equal(gc.sweepTimeoutBufferMs, 456, "sweepTimeoutBufferMs incorrect");
+            });
+            it("maxSnapshotCacheDurationMs cannot be exceeded by createParam", () => {
+                const someSnapshotCacheExpiryMs = 12345;
+                // should not throw if the values match
+                createGcForExisting({ maxSnapshotCacheDurationMs: someSnapshotCacheExpiryMs }, someSnapshotCacheExpiryMs);
+                createGcForExisting({ maxSnapshotCacheDurationMs: undefined }, undefined);
+
+                // should not throw if the persisted value is larger or undefined
+                createGcForExisting({ maxSnapshotCacheDurationMs: someSnapshotCacheExpiryMs + 1 }, someSnapshotCacheExpiryMs);
+                createGcForExisting({ maxSnapshotCacheDurationMs: undefined }, someSnapshotCacheExpiryMs);
+
+                // should throw if the persisted value is smaller or the provided value alone is undefined
+                // This means the driver could have loaded a snapshot older than is accounted for in the Sweep Timeout
+                assert.throws(
+                    () => { createGcForExisting({ maxSnapshotCacheDurationMs: someSnapshotCacheExpiryMs - 1 }, someSnapshotCacheExpiryMs); },
+                    (e) => e.errorType === "usageError",
+                    "Should be unsupported");
+                assert.throws(
+                    () => { createGcForExisting({ maxSnapshotCacheDurationMs: someSnapshotCacheExpiryMs }, undefined /* snapshotCacheExpiryMsCreateParam */); },
+                    (e) => e.errorType === "usageError",
+                    "Should be unsupported");
             });
             it("Metadata Roundtrip", () => {
-                const inputMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, sessionExpiryTimeoutMs: customSessionExpiryDurationMs };
-                gc = createGcWithPrivateMembers(inputMetadata);
+                const inputMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+                    maxSnapshotCacheDurationMs: 123,
+                    sweepTimeoutBufferMs: 456,
+                };
+                gc = createGcForExisting(inputMetadata, 123 /* snapshotCacheExpiryMsCreateParam */);
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, inputMetadata, "getMetadata returned different metadata than loaded from");
             });
@@ -199,69 +253,76 @@ describe("Garbage Collection Tests", () => {
         describe("New Container", () => {
             it("No options", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+                gc = createGcForNew({}, defaultSnapshotCacheExpiryMs);
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.maxSnapshotCacheDurationMs === defaultSnapshotCacheExpiryMs, "maxSnapshotCacheDurationMs incorrect");
+                assert(gc.sweepTimeoutBufferMs === oneDayMs, "sweepTimeoutBufferMs incorrect");
                 assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
             });
             it("gcAllowed true", () => {
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true });
+                gc = createGcForNew({ gcAllowed: true });
                 assert(gc.gcEnabled, "gcEnabled incorrect");
             });
             it("gcAllowed false", () => {
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
+                gc = createGcForNew({ gcAllowed: false });
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
             });
             it("sweepAllowed true, gcAllowed false", () => {
                 assert.throws(
-                    () => { gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false, sweepAllowed: true }); },
+                    () => { gc = createGcForNew({ gcAllowed: false, sweepAllowed: true }); },
                     (e) => e.errorType === "usageError",
                     "Should be unsupported");
             });
             it("sweepAllowed true, gcAllowed true, no snapshotCacheExpiryMs", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true });
-                assert(gc.gcEnabled, "gcEnabled incorrect");
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                gc = createGcForNew({ gcAllowed: true, sweepAllowed: true });
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(!gc.shouldRunSweep, "shouldRunSweep incorrect");
-                assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect"); // Only because of TEMPORARY measure to provide default value of snapshotExpiry
+                assert(gc.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.maxSnapshotCacheDurationMs === "none", "maxSnapshotCacheDurationMs incorrect");
             });
             it("sweepAllowed true, gcAllowed true, with snapshotCacheExpiryMs", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
-                assert(gc.gcEnabled, "gcEnabled incorrect");
+                gc = createGcForNew({ gcAllowed: true, sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.maxSnapshotCacheDurationMs === 123, "maxSnapshotCacheDurationMs incorrect");
             });
-            it("sweepAllowed true, gcAllowed true, sessionExpiry off", () => {
+            it("sweepAllowed true, gcAllowed true, with snapshotCacheExpiryMs, sessionExpiry off", () => {
                 injectedSettings[runSessionExpiryKey] = false;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true });
-                assert(gc.gcEnabled, "gcEnabled incorrect");
+                gc = createGcForNew({ gcAllowed: true, sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
             });
-            it("sweepAllowed false, sessionExpiry on", () => {
+            it("sweepAllowed false, with snapshotCacheExpiryMs, sessionExpiry on", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.gcEnabled, "gcEnabled incorrect");
+                gc = createGcForNew({ sweepAllowed: false }, 123 /* snapshotCacheExpiryMs */);
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
+                assert(gc.maxSnapshotCacheDurationMs === 123, "maxSnapshotCacheDurationMs incorrect");
             });
-            it("sweepAllowed false, sessionExpiry off", () => {
-                injectedSettings[runSessionExpiryKey] = false;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.gcEnabled, "gcEnabled incorrect");
-                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-                assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+            it("snapshotCacheExpiryMs = 0 then sweepTimeoutBufferMs = 1ms", () => {
+                gc = createGcForNew({}, 0 /* snapshotCacheExpiryMs */);
+                assert(gc.maxSnapshotCacheDurationMs === 0, "maxSnapshotCacheDurationMs incorrect");
+                assert(gc.sweepTimeoutBufferMs === 1, "sweepTimeoutBufferMs incorrect");
             });
             it("Metadata Roundtrip", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs };
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                const expectedMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+                    maxSnapshotCacheDurationMs: 123,
+                    sweepTimeoutBufferMs: oneDayMs,
+                };
+                gc = createGcForNew({ sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });
@@ -269,7 +330,6 @@ describe("Garbage Collection Tests", () => {
 
         describe("Session Expiry and Sweep Timeout", () => {
             const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
-            const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
@@ -285,63 +345,81 @@ describe("Garbage Collection Tests", () => {
             // - Computed from Session Expiry, Snapshot Expiry and a fixed buffer
             // - Only set if Session Expiry timer is set, but using Session Expiry value written to file
 
-            function validateSweepTimeout(snapshotCacheExpiryMs: number = defaultSnapshotCacheExpiryMs) {
+            function validateSweepTimeout() {
                 assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
-                if (gc.sessionExpiryTimeoutMs === undefined) {
-                    assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if sessionExpiryTimeoutMs is undefined");
+                if (gc.sessionExpiryTimeoutMs === undefined || gc.maxSnapshotCacheDurationMs === "none") {
+                    assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if sessionExpiryTimeoutMs is undefined or maxSnapshotCacheDurationMs is 'none'");
                 } else {
-                    assert.equal(gc.sweepTimeoutMs, gc.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs);
+                    assert.equal(gc.sweepTimeoutMs, gc.sessionExpiryTimeoutMs + gc.maxSnapshotCacheDurationMs + gc.sweepTimeoutBufferMs);
                 }
             }
 
-            it("defaultSessionExpiryDurationMs", () => {
-                gc = createGcWithPrivateMembers();
+            const sampleSnapshotCacheExpiryMs = 12345;
+            function createGcOverride(gcOptions: IGCRuntimeOptions, snapshotCacheExpiryMsCreateParam: number | "UNDEFINED" = sampleSnapshotCacheExpiryMs) {
+                const snapshotCacheExpiryMs = typeof snapshotCacheExpiryMsCreateParam === "number" ? snapshotCacheExpiryMsCreateParam : undefined;
+                return createGcForNew(gcOptions, snapshotCacheExpiryMs);
+            }
+
+            it("defaultSessionExpiryDurationMs with snapshotCacheExpiryMs", () => {
+                gc = createGcOverride({});
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
                 validateSweepTimeout();
             });
-            it("defaultSessionExpiryDurationMs with custom snapshotCacheExpiryMs", () => {
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {}, 12345);
+            it("defaultSessionExpiryDurationMs with snapshotCacheExpiryMs, but sweep not allowed", () => {
+                gc = createGcOverride({ sweepAllowed: false });
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
-                validateSweepTimeout(12345);
+                validateSweepTimeout();
+            });
+            it("defaultSessionExpiryDurationMs with no snapshotCacheExpiryMs", () => {
+                gc = createGcOverride({}, "UNDEFINED" /* snapshotCacheExpiryMsCreateParam */);
+                assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
+                assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
+                assert.equal(gc.maxSnapshotCacheDurationMs, "none", "maxSnapshotCacheDurationMs incorrect");
+                validateSweepTimeout();
             });
             it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
-                gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs: 123 });
+                gc = createGcOverride({ sessionExpiryTimeoutMs: 123 });
                 assert.equal(gc.sessionExpiryTimeoutMs, 123, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 123, "sessionExpiryTimer incorrect");
                 validateSweepTimeout();
             });
             it("IGCMetadata.sessionExpiryTimeoutMs", () => {
-                gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
+                gc = createGcForExisting({ sessionExpiryTimeoutMs: 456 } /* metadata */, sampleSnapshotCacheExpiryMs);
                 assert.equal(gc.sessionExpiryTimeoutMs, 456, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
                 validateSweepTimeout();
             });
-            function testSessionExpiryMsOverride() {
+            function testSessionExpiryMsOverride(existing: boolean) {
                 assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 789, "sessionExpiry used for timer should be the override value");
-                validateSweepTimeout();
 
-                const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature: 1, sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs };
+                const expectedMetadata: IGCMetadata = {
+                    sweepEnabled: false,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+                    maxSnapshotCacheDurationMs: existing ? defaultSnapshotCacheExpiryMs : "none",
+                    sweepTimeoutBufferMs: oneDayMs,
+                };
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             }
             it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - New Container", () => {
                 injectedSettings[testOverrideSessionExpiryMsKey] = 789;
-                gc = createGcWithPrivateMembers();
-                testSessionExpiryMsOverride();
+                gc = createGcForNew({});
+                testSessionExpiryMsOverride(false /* existing */);
             });
             it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - Existing Container", () => {
                 injectedSettings[testOverrideSessionExpiryMsKey] = 789;
-                gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs, gcFeature: 1 } /* metadata */);
-                testSessionExpiryMsOverride();
+                gc = createGcForExisting({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs, gcFeature: 1 } /* metadata */);
+                testSessionExpiryMsOverride(true /* existing */);
             });
             it("RunSessionExpiry setting turned off", () => {
                 injectedSettings[runSessionExpiryKey] = false;
                 injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
-                gc = createGcWithPrivateMembers();
+                gc = createGcForNew({});
                 assert.equal(gc.sessionExpiryTimeoutMs, undefined, "sessionExpiryTimeoutMs should be undefined if runSessionExpiryKey setting is false");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                 validateSweepTimeout();
@@ -349,7 +427,7 @@ describe("Garbage Collection Tests", () => {
             it("Disable SessionExpiry", () => {
                 injectedSettings[disableSessionExpiryKey] = true;
                 injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
-                gc = createGcWithPrivateMembers();
+                gc = createGcForNew({});
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                 // (validateSweepTimeout doesn't try to handle this case)
@@ -374,7 +452,7 @@ describe("Garbage Collection Tests", () => {
                 testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings[runGCKey] = testCase.runGC;
-                        gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: testCase.gcEnabled, disableGC: testCase.disableGC });
+                        gc = createGcForNew({ gcAllowed: testCase.gcEnabled, disableGC: testCase.disableGC });
                         assert.equal(gc.gcEnabled, testCase.gcEnabled, "PRECONDITION: gcEnabled set incorrectly");
                         assert.equal(gc.shouldRunGC, testCase.expectedResult, "shouldRunGC not set as expected");
                     });
@@ -385,8 +463,8 @@ describe("Garbage Collection Tests", () => {
                     { shouldRunGC: false, setSweepTimeout: true, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: false, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, runSweep: false, expectedResult: false },
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: true },
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: true },
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, expectedResult: false },
                 ];
                 testCases.forEach((testCase) => {
@@ -394,7 +472,7 @@ describe("Garbage Collection Tests", () => {
                         injectedSettings[runGCKey] = testCase.shouldRunGC;
                         injectedSettings[runSweepKey] = testCase.runSweep;
                         injectedSettings[runSessionExpiryKey] = testCase.setSweepTimeout; // Sweep timeout is set iff sessionExpiry runs (under other default inputs)
-                        gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: testCase.sweepEnabled });
+                        gc = createGcForNew({ sweepAllowed: testCase.sweepEnabled }, 12345 /* snapshotCacheExpiryMs */);
                         assert.equal(gc.shouldRunGC, testCase.shouldRunGC, "PRECONDITION: shouldRunGC set incorrectly");
                         assert.equal(gc.sweepTimeoutMs !== undefined, testCase.setSweepTimeout, "PRECONDITION: sweep timeout set incorrectly");
                         assert.equal(gc.sweepEnabled, testCase.sweepEnabled, "PRECONDITION: sweepEnabled set incorrectly");
@@ -415,7 +493,7 @@ describe("Garbage Collection Tests", () => {
                 testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = testCase.testOverride;
-                        gc = createGcWithPrivateMembers(undefined /* metadata */, { inactiveTimeoutMs: testCase.option });
+                        gc = createGcForNew({ inactiveTimeoutMs: testCase.option });
                         assert.equal(gc.inactiveTimeoutMs, testCase.expectedResult, "inactiveTimeoutMs not set as expected");
                     });
                 });
@@ -423,7 +501,7 @@ describe("Garbage Collection Tests", () => {
                     injectedSettings[runSessionExpiryKey] = true;
                     injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = Number.MAX_VALUE;
                     assert.throws(
-                        () => { gc = createGcWithPrivateMembers(); },
+                        () => { gc = createGcForNew({}, defaultSnapshotCacheExpiryMs); },
                         (e) => e.errorType === "usageError",
                         "inactiveTimeout must not be greater than sweepTimeout");
                 });
@@ -438,7 +516,7 @@ describe("Garbage Collection Tests", () => {
                 testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings[gcTestModeKey] = testCase.setting;
-                        gc = createGcWithPrivateMembers(undefined /* metadata */, { runGCInTestMode: testCase.option });
+                        gc = createGcForNew({ runGCInTestMode: testCase.option });
                         assert.equal(gc.testMode, testCase.expectedResult, "testMode not set as expected");
                     });
                 });

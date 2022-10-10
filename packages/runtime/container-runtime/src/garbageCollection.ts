@@ -83,6 +83,7 @@ export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
+export const defaultSnapshotCacheExpiryMs = 5 * oneDayMs; // 5 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -444,7 +445,7 @@ export class GarbageCollector implements IGarbageCollector {
     /** The time in ms to expire a session for a client for gc. */
     private readonly sessionExpiryTimeoutMs: number | undefined;
     /** The maximum duration a snapshot may be cached and then loaded from. Provided by the driver */
-    private readonly maxSnapshotCacheDurationMs: number | undefined;
+    private readonly maxSnapshotCacheDurationMs: number | "none";
     /**
      * This buffer is added to the Sweep Timeout to account for any clock skew or other edge cases.
      * We use server timestamps throughout so the skew should be minimal but it defaults to one day to be safe.
@@ -520,16 +521,29 @@ export class GarbageCollector implements IGarbageCollector {
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             // These three numbers add up to the Sweep Timeout
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-            this.maxSnapshotCacheDurationMs = metadata?.maxSnapshotCacheDurationMs;
+            this.maxSnapshotCacheDurationMs = metadata?.maxSnapshotCacheDurationMs ?? defaultSnapshotCacheExpiryMs;
             this.sweepTimeoutBufferMs = metadata?.sweepTimeoutBufferMs ?? oneDayMs; // Backfill default value of 1 day
 
             // Validate some invariants around Snapshot Cache Expiry
+            assert(this.maxSnapshotCacheDurationMs !== "none" || !this.sweepEnabled,
+                "No snapshotCacheExpiry should disable Sweep");
             const effectiveDriverSnapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? Number.MAX_VALUE;
-            const effectivePersistedSnapshotCacheExpiryMs = this.maxSnapshotCacheDurationMs ?? Number.MAX_VALUE;
-            assert(effectiveDriverSnapshotCacheExpiryMs <= effectivePersistedSnapshotCacheExpiryMs,
-                "The snapshotCacheExpiry used in this session by the driver must not exceed the persisted value");
-            assert(this.maxSnapshotCacheDurationMs !== undefined || !this.sweepEnabled,
-                "undefined snapshotCacheExpiry should disable Sweep");
+            const effectivePersistedSnapshotCacheExpiryMs =
+                this.maxSnapshotCacheDurationMs === "none" ? Number.MAX_VALUE : this.maxSnapshotCacheDurationMs;
+            if (effectiveDriverSnapshotCacheExpiryMs > effectivePersistedSnapshotCacheExpiryMs) {
+                throw new UsageError(
+                   "The snapshotCacheExpiry used in this session by the driver must not exceed the persisted value" +
+                   `${JSON.stringify({
+                            fromCreateParams: createParams.snapshotCacheExpiryMs,
+                            fromFile: this.maxSnapshotCacheDurationMs,
+                    })}`,
+                   //* TODO: Move to props
+                    //    { details: JSON.stringify({
+                    //         fromCreateParams: createParams.snapshotCacheExpiryMs,
+                    //         fromFile: this.maxSnapshotCacheDurationMs,
+                    // })},
+                );
+            }
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -540,17 +554,18 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
+            this.maxSnapshotCacheDurationMs = createParams.snapshotCacheExpiryMs ?? "none";
+
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true,
             // and Sweep cannot be enabled if there's no maxSnapshotCacheDurationMs
             this.sweepEnabled =
                 this.gcOptions.sweepAllowed === true
-                && this.maxSnapshotCacheDurationMs !== undefined;
+                && this.maxSnapshotCacheDurationMs !== "none";
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
-            this.maxSnapshotCacheDurationMs = createParams.snapshotCacheExpiryMs;
             // If we're using TestOverrides to achieve a short Sweep Timeout, lock the buffer to 1ms. Otherwise 1 day.
             this.sweepTimeoutBufferMs =
                 (this.maxSnapshotCacheDurationMs === 0)
@@ -575,7 +590,7 @@ export class GarbageCollector implements IGarbageCollector {
              * Sweep timeout is the time after which unreferenced content can be swept.
              * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
              */
-            if (this.maxSnapshotCacheDurationMs !== undefined) {
+            if (this.maxSnapshotCacheDurationMs !== "none") {
                 this.sweepTimeoutMs =
                     this.sessionExpiryTimeoutMs + this.maxSnapshotCacheDurationMs + this.sweepTimeoutBufferMs;
             }

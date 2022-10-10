@@ -109,7 +109,7 @@ export interface IGCMetadata {
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
     /** Maximum duration a snapshot may be cached and then loaded from for this container */
-    readonly maxSnapshotCacheDurationMs?: number;
+    readonly maxSnapshotCacheDurationMs?: number | "none";
     /** The buffer used to compute Sweep Timeout for this container */
     readonly sweepTimeoutBufferMs?: number;
 }
