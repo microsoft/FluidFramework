@@ -35,9 +35,4 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
-export {
-    pullRequestExists,
-    pullRequestInfo,
-    getUserAccess,
-    createPullRequest,
-} from "./github";
+export { pullRequestExists, pullRequestInfo, getUserAccess, createPullRequest } from "./github";
