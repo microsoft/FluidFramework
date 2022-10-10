@@ -1887,8 +1887,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        this.pendingStateManager.onFlush();
     }
 
     public orderSequentially(callback: () => void): void {
@@ -1928,7 +1926,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+        if (this._orderSequentiallyCalls === 0) {
             this.flush();
         }
     }

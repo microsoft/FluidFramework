@@ -31,6 +31,7 @@ export interface IPendingMessage {
 /**
  * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
  * to flush pending messages.
+ * TODO: deprecate this
  */
 export interface IPendingFlush {
     type: "flush";
@@ -74,16 +75,14 @@ export interface IRuntimeStateHandler{
  */
 export class PendingStateManager implements IDisposable {
     private readonly pendingStates = new Deque<IPendingState>();
-    private readonly initialStates: Deque<IPendingState>;
+    private readonly initialStates = new Deque<IPendingState>();
     private readonly disposeOnce = new Lazy<void>(() => {
         this.initialStates.clear();
         this.pendingStates.clear();
     });
 
-    // Maintains the count of messages that are currently unacked.
-    private _pendingMessagesCount: number = 0;
     public get pendingMessagesCount(): number {
-        return this._pendingMessagesCount;
+        return this.pendingStates.length;
     }
 
     // Indicates whether we are processing a batch.
@@ -100,10 +99,11 @@ export class PendingStateManager implements IDisposable {
      * @returns A boolean indicating whether there are messages or not.
      */
     public hasPendingMessages(): boolean {
-        return this._pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
+        return this.pendingStates.length !== 0 || !this.initialStates.isEmpty();
     }
 
     public getLocalState(): IPendingLocalState | undefined {
+        // TODO: review this method
         assert(this.initialStates.isEmpty(), 0x2e9 /* "Must call getLocalState() after applying initial states" */);
         if (this.hasPendingMessages()) {
             return {
@@ -119,7 +119,28 @@ export class PendingStateManager implements IDisposable {
         private readonly stateHandler: IRuntimeStateHandler,
         initialLocalState: IPendingLocalState | undefined,
     ) {
-        this.initialStates = new Deque<IPendingState>(initialLocalState?.pendingStates ?? []);
+        // TODO: improve comment. for back-compat purposes where "batch: false" wasn't set here
+        if (initialLocalState?.pendingStates) {
+            const pendingStates = initialLocalState?.pendingStates;
+            let currentlyBatching = false;
+            for (let i = 0; i < pendingStates.length; i++) {
+                const initialState = pendingStates[i];
+                if (initialState.type === "message") {
+                    if (initialState.opMetadata?.batch) {
+                        currentlyBatching = true;
+                    } else if (initialState.opMetadata?.batch === false) {
+                        currentlyBatching = false;
+                    } else if (
+                        currentlyBatching
+                        && (i === pendingStates.length - 1 || pendingStates[i + 1].type === "flush")
+                    ) {
+                        currentlyBatching = false;
+                        initialState.opMetadata = { ...initialState.opMetadata, batch: false };
+                    }
+                    this.initialStates.push(initialState);
+                }
+            }
+        }
     }
 
     public get disposed() { return this.disposeOnce.evaluated; }
@@ -152,22 +173,13 @@ export class PendingStateManager implements IDisposable {
         };
 
         this.pendingStates.push(pendingMessage);
-
-        this._pendingMessagesCount++;
     }
 
     /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
      */
     public onFlush() {
-        // If the previous state is not a message, flush is a no-op.
-        const previousState = this.pendingStates.peekBack();
-        if (previousState?.type !== "message") {
-            return;
-        }
-
-        // An explicit flush is interesting and is tracked only if there are messages sent in TurnBased mode.
-        this.pendingStates.push({ type: "flush" });
+        // TODO: deprecate this method
     }
 
     /**
@@ -177,6 +189,8 @@ export class PendingStateManager implements IDisposable {
     public async applyStashedOpsAt(seqNum?: number) {
         // apply stashed ops at sequence number
         while (!this.initialStates.isEmpty()) {
+            // TODO assert can only be "message"
+
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const nextState = this.initialStates.peekFront()!;
             if (nextState.type === "message") {
@@ -196,11 +210,7 @@ export class PendingStateManager implements IDisposable {
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const firstPendingState = this.initialStates.shift()!;
-            this.pendingStates.push(firstPendingState);
-            if (firstPendingState.type === "message") {
-                this._pendingMessagesCount++;
-            }
+            this.pendingStates.push(this.initialStates.shift()!);
         }
     }
 
@@ -232,9 +242,6 @@ export class PendingStateManager implements IDisposable {
             this.stateHandler.close(error);
             return;
         }
-
-        this._pendingMessagesCount--;
-        assert(this._pendingMessagesCount >= 0, 0x3d6 /* positive */);
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -354,28 +361,45 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        // Reset the pending message count because all these messages will be removed from the queue.
-        this._pendingMessagesCount = 0;
-
-        const messageBatchQueue = new Deque<IPendingMessage>();
-
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
         // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
         // which must not be replayed.
         while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const pendingState = this.pendingStates.shift()!;
+            let pendingState = this.pendingStates.shift()!;
             switch (pendingState.type) {
                 case "message":
-                    assert(pendingState.opMetadata?.batch !== false || messageBatchQueue.length > 0,
-                        "We cannot process batches in chunks");
+                    assert(pendingState.opMetadata?.batch !== false, "We cannot process batches in chunks");
+
                     /**
                      * We want to ensure grouped messages get processed in a batch.
                      * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
                      * either receive the whole batch ack or nothing at all.
                      */
-                    if (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch) {
-                        messageBatchQueue.enqueue(pendingState);
+                    if (pendingState.opMetadata?.batch) {
+                        this.stateHandler.orderSequentially(() => {
+                            do {
+                                if (pendingState.type !== "message") {
+                                    // TODO: can assert that we shouldn't see something other than "message"
+                                    break;
+                                }
+
+                                this.stateHandler.reSubmit(
+                                    pendingState.messageType,
+                                    pendingState.content,
+                                    pendingState.localOpMetadata,
+                                    pendingState.opMetadata);
+
+                                // TODO: double check this logic actually works correctly when we don't have batch prop
+                                if (pendingState.opMetadata?.batch === false) {
+                                    break;
+                                }
+
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                pendingState = this.pendingStates.shift()!;
+                                pendingStatesCount--;
+                            } while (pendingStatesCount > 0);
+                        });
                     } else {
                         this.stateHandler.reSubmit(
                             pendingState.messageType,
@@ -384,43 +408,10 @@ export class PendingStateManager implements IDisposable {
                             pendingState.opMetadata);
                     }
                     break;
-                case "flush":
-                    /**
-                     * A "flush" call can indicate the end of a batch.
-                     * We can't rely on the "batch" property in the message metadata as it gets
-                     * updated elsewhere and it is not the same object instance that gets updated.
-                     */
-                    if (messageBatchQueue.length > 0) {
-                        this.stateHandler.orderSequentially(() => {
-                            while (messageBatchQueue.length > 0) {
-                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                const message = messageBatchQueue.dequeue()!;
-                                this.stateHandler.reSubmit(
-                                    message.messageType,
-                                    message.content,
-                                    message.localOpMetadata,
-                                    message.opMetadata);
-                            }
-                        });
-                    }
-                    assert(messageBatchQueue.length === 0, "cannot flush in the middle of a batch");
-                    this.stateHandler.flush();
-                    break;
                 default:
                     break;
             }
             pendingStatesCount--;
-        }
-
-        // There are some cases where ops are stashed but not flushed. We need to ensure they are resubmitted
-        while (messageBatchQueue.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const message = messageBatchQueue.dequeue()!;
-            this.stateHandler.reSubmit(
-                message.messageType,
-                message.content,
-                message.localOpMetadata,
-                message.opMetadata);
         }
     }
 }
