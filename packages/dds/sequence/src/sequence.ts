@@ -144,7 +144,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 case MergeTreeDeltaType.REMOVE: {
                     const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
                     if (lastRem?.pos1 === r.position) {
-                        assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
+                        assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
                         lastRem.pos2 += r.segment.cachedLength;
                     } else {
                         ops.push(createRemoveRangeOp(
