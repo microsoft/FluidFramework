@@ -716,7 +716,6 @@ export const shortCodeMap = {
     "0x378": "index must be less than or equal to length",
     "0x379": "index must be less than length",
     "0x37a": "Cursor must be current to be used",
-    "0x37b": "relayServiceTenantAndSessionId should be present",
     "0x37c": "Cannot wait for seqNumber below last processed sequence number",
     "0x37e": "Must have a valid protocol handler instance",
     "0x37f": "reentrancy?",
