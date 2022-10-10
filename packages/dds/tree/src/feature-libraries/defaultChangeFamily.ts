@@ -8,38 +8,39 @@ import { ITreeCursor } from "../forest";
 import { ChangeRebaser } from "../rebase";
 import { FieldKindIdentifier } from "../schema-stored";
 import { brand } from "../util";
-import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, Value } from "../tree";
+import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPathWithFieldKinds, Value } from "../tree";
 import {
     FieldKind,
     ModularChangeFamily,
-    FieldChangeMap,
-    UpPathWithFieldKinds,
     ModularEditBuilder,
     FieldChangeset,
+    FieldChangeMap,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+
+export type DefaultChangeset = FieldChangeMap;
 
 /**
  * Implementation of ChangeFamily based on the default set of supported field kinds.
  *
  * @sealed
  */
-export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, FieldChangeMap> {
+export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
     private readonly modularFamily: ModularChangeFamily;
     
     public constructor() {
         this.modularFamily = new ModularChangeFamily(fieldKinds);
     }
 
-    get rebaser(): ChangeRebaser<FieldChangeMap> {
+    get rebaser(): ChangeRebaser<DefaultChangeset> {
         return this.modularFamily.rebaser;
     }
 
-    get encoder(): ChangeEncoder<FieldChangeMap> {
+    get encoder(): ChangeEncoder<DefaultChangeset> {
         return this.modularFamily.encoder;
     }
 
-    intoDelta(change: FieldChangeMap): Delta.Root<ITreeCursorSynchronous> {
+    intoDelta(change: DefaultChangeset): Delta.Root<ITreeCursorSynchronous> {
         return this.modularFamily.intoDelta(change);
     }
 
@@ -48,14 +49,16 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Fie
     }
 }
 
+export const defaultChangeFamily = new DefaultChangeFamily();
+
 /**
  * @sealed
  */
-export class DefaultEditBuilder implements ProgressiveEditBuilder<FieldChangeMap> {
+export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChangeset> {
     private readonly modularBuilder: ModularEditBuilder;
 
     constructor(
-        family: ChangeFamily<unknown, FieldChangeMap>,
+        family: ChangeFamily<unknown, DefaultChangeset>,
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
@@ -121,7 +124,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<FieldChangeMap
     /**
      * {@inheritDoc (ProgressiveEditBuilder:interface).getChanges}
      */
-    public getChanges(): FieldChangeMap[] {
+    public getChanges(): DefaultChangeset[] {
         return this.modularBuilder.getChanges();
     }
 }

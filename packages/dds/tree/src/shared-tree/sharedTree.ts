@@ -19,10 +19,10 @@ import {
     EditableTreeContext,
     ForestIndex, ObjectForest,
     SchemaIndex,
-    sequenceChangeFamily,
-    SequenceChangeFamily,
-    SequenceChangeset,
-    SequenceEditBuilder,
+    defaultChangeFamily,
+    DefaultChangeFamily,
+    FieldChangeMap,
+    DefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
@@ -39,7 +39,7 @@ import { Anchor, AnchorLocator, AnchorSet, UpPath } from "../tree";
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *
@@ -86,7 +86,7 @@ export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObje
  * TODO: detail compatibility requirements.
  * TODO: expose or implement Checkout.
  */
-class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily> implements ISharedTree {
+class SharedTree extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily> implements ISharedTree {
     public readonly context: EditableTreeContext;
     public readonly forest: IForestSubscription;
     public readonly storedSchema: SchemaEditor;
@@ -94,7 +94,7 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
      * Rather than implementing TransactionCheckout, have a member that implements it.
      * This allows keeping the `IEditableForest` private.
      */
-    private readonly transactionCheckout: TransactionCheckout<SequenceEditBuilder, SequenceChangeset>;
+    private readonly transactionCheckout: TransactionCheckout<DefaultEditBuilder, FieldChangeMap>;
 
     public constructor(
         id: string,
@@ -104,13 +104,13 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
             const anchors = new AnchorSet();
             const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
             const forest = new ObjectForest(schema, anchors);
-            const indexes: Index<SequenceChangeset>[] = [
+            const indexes: Index<FieldChangeMap>[] = [
                 new SchemaIndex(runtime, schema),
                 new ForestIndex(runtime, forest),
             ];
             super(
                 indexes,
-                sequenceChangeFamily, anchors, id, runtime, attributes, telemetryContextPrefix,
+                defaultChangeFamily, anchors, id, runtime, attributes, telemetryContextPrefix,
                 );
 
             this.forest = forest;
@@ -135,7 +135,7 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
 
     public runTransaction(transaction: (
         forest: IForestSubscription,
-        editor: SequenceEditBuilder,
+        editor: DefaultEditBuilder,
     ) => TransactionResult): TransactionResult {
         return runSynchronousTransaction(this.transactionCheckout, transaction);
     }

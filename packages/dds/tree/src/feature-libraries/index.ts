@@ -5,7 +5,7 @@
 
 export * from "./object-forest";
 export * from "./editable-tree";
-export * from "./defaultRebaser";
+export * from "./defaultChangeFamily";
 export * from "./forestIndex";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
@@ -35,7 +35,6 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
