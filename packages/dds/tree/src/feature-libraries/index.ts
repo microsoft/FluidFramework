@@ -89,7 +89,7 @@ export {
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export     { neverField,     emptyField,     neverTree,     defaultSchemaPolicy } from "./defaultSchema";
+export { neverField, emptyField, neverTree, defaultSchemaPolicy } from "./defaultSchema";
 export {
     isNeverField,
     ModularChangeFamily,
@@ -119,5 +119,4 @@ export {
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
-
-export     { mapFieldMarks,     mapMarkList,     mapMark,     applyModifyToTree } from "./deltaUtils";
+export { mapFieldMarks, mapMarkList, mapMark, applyModifyToTree } from "./deltaUtils";
