@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, UpPath, CursorLocationType, ITreeCursorSynchronous } from "../tree";
+import { FieldKey, TreeType, UpPath, CursorLocationType, ITreeCursorSynchronous, Value } from "../tree";
 import { fail } from "../util";
 
 /**
@@ -21,7 +21,7 @@ export function singleStackTreeCursor<TNode>(
  * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
  */
 export interface CursorAdapter<TNode> {
-    value(node: TNode): any;
+    value(node: TNode): Value;
     type(node: TNode): TreeType;
     keysFromNode(node: TNode): readonly FieldKey[];
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
@@ -247,9 +247,8 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
     /**
      * @returns the value of the current node
      */
-    public get value(): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.adapter.value(this.getNode());
+    public get value(): Value {
+        return this.adapter.value(this.getNode()) as Value;
     }
 
     /**
