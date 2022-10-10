@@ -1041,8 +1041,13 @@ export class LocalDetachedFluidDataStoreContext
 
         super.bindRuntime(dataStoreChannel);
 
-        // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
-        // FluidDataStoreRuntime, which exposes its handle.
+        // Load the handle to the data store's entrypoint to make sure that for a detached data store, the entrypoint
+        // initialization function is called before the data store gets attached and potentially connected to the
+        // delta stream, so it gets a chance to do things while the data store is still "purely local".
+        // This preserves the behavior from before we introduced entrypoints, where the instantiateDataStore method
+        // of data store factories tends to construct the data object (at least kick off an async method that returns
+        // it); that code moved to the entrypoint initialization function, so we want to ensure it still executes
+        // before the data store is attached.
         const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = dataStoreChannel;
         await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
 
