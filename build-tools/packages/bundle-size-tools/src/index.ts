@@ -33,6 +33,10 @@ export {
     BannedModulesPluginOptions,
 } from "./bannedModulesPlugin/bannedModulesPlugin";
 export {
+    BundleBuddyConfigWebpackPlugin,
+    BundleBuddyPluginConfig,
+} from "./BundleBuddyConfigWebpackPlugin";
+export {
     BundleBuddyConfig,
     BundleComparison,
     BundleComparisonResult,
@@ -42,10 +46,6 @@ export {
     ChunkToAnalyze,
     WebpackStatsProcessor,
 } from "./BundleBuddyTypes";
-export {
-    BundleBuddyConfigWebpackPlugin,
-    BundleBuddyPluginConfig,
-} from "./BundleBuddyConfigWebpackPlugin";
 export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
 export {
     BundleBuddyConfigProcessorOptions,
