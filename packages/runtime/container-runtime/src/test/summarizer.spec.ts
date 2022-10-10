@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SummarizerStopReason } from "@fluidframework/container-runtime-previous";
+import { SummarizerStopReason } from "../summarizerTypes";
 import { Summarizer } from "../summarizer";
 
 describe("Runtime", () => {
@@ -13,7 +13,8 @@ describe("Runtime", () => {
             it("Should not run last summary when reason is not parentNotConnected", () => {
                 const stopReasons: SummarizerStopReason[] = [
                     "failToSummarize",
-                    "parentShouldNotSummarize",
+                    "notElectedParent",
+                    "notElectedClient",
                     "summarizerClientDisconnected",
                     "summarizerException",
                 ];
