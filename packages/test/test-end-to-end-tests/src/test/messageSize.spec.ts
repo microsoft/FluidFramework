@@ -17,6 +17,7 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { GenericError } from "@fluidframework/container-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -83,46 +84,36 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    itExpects("A large op will close the container with chunking disabled", [
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
+    itExpects("A large op will close the container", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
     ], async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
-        });
+        const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
+        await setupContainers(testContainerConfig, { });
         const errorEvent = containerError(container1);
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 1;
-        setMapKeys(dataObject1map, messageCount, largeString);
+        try {
+            setMapKeys(dataObject1map, messageCount, largeString);
+            assert(false, "should throw");
+        } catch {
+        }
 
         const error = await errorEvent;
         assert.ok(error instanceof GenericError);
-        assert.ok(error.getTelemetryProperties().length ?? 0 > maxMessageSizeInBytes);
-        assert.deepEqual(error.getTelemetryProperties().limit, maxMessageSizeInBytes);
+        assert.ok(error.getTelemetryProperties().opSize ?? 0 > maxMessageSizeInBytes);
+
+        // Limit has to be around 1Mb, but we should not assume here precise number.
+        const limit = error.getTelemetryProperties().limit as number;
+        assert(limit > maxMessageSizeInBytes / 2);
+        assert(limit < maxMessageSizeInBytes * 2);
     });
 
-    it("Small ops will pass with chunking disabled", async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
-        });
+    it("Small ops will pass", async () => {
+        const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
+        await setupContainers(testContainerConfig, { });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
-        setMapKeys(dataObject1map, messageCount, largeString);
-        await provider.ensureSynchronized();
-
-        assertMapValues(dataObject2map, messageCount, largeString);
-    });
-
-    it("Large ops pass with chunking enabled", async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": -1,
-        });
-        // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
-        const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
-        const messageCount = 5;
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 
@@ -134,6 +125,20 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         // Max op size is 768000, round down to account for some overhead
         const largeString = generateStringOfSize(750000);
         const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Batched small ops pass when batch is larger than max op size", async function() {
+        // flush mode is not applicable for the local driver
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
+        await setupContainers({ ...testContainerConfig, runtimeOptions: { flushMode: FlushMode.Immediate } }, {});
+        const largeString = generateStringOfSize(500000);
+        const messageCount = 10;
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 

@@ -4,7 +4,17 @@
  */
 
 import { expect } from 'chai';
-import { filter, find, getOrCreate, identity, map, memoizeGetter, reduce } from '../Common';
+import {
+	filter,
+	find,
+	getOrCreate,
+	identity,
+	map,
+	memoizeGetter,
+	reduce,
+	RestOrArray,
+	unwrapRestOrArray,
+} from '../Common';
 
 describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {
@@ -94,5 +104,25 @@ describe('Common', () => {
 		expect(find(inputs, predicateFind)).to.equal(inputs.find(predicateFind));
 		const predicateNever = (n: number) => n < 0;
 		expect(find(inputs, predicateNever)).to.equal(inputs.find(predicateNever));
+	});
+
+	describe('unwrapRestOrArray', () => {
+		function testUnwrap(...params: RestOrArray<number>): readonly number[] {
+			return unwrapRestOrArray(params);
+		}
+		it('unwraps array arguments', () => {
+			const input = [0, 1, 2, 3];
+			const result = testUnwrap(input);
+			expect(result).to.equal(input);
+		});
+		it('does not unwrap rest arguments', () => {
+			const input = [0, 1, 2, 3];
+			const spreadResult = testUnwrap(...input);
+			const restResult = testUnwrap(0, 1, 2, 3);
+			expect(Array.isArray(spreadResult)).to.equal(true);
+			expect(Array.isArray(restResult)).to.equal(true);
+			expect(spreadResult.length).to.equal(input.length);
+			expect(restResult.length).to.equal(input.length);
+		});
 	});
 });

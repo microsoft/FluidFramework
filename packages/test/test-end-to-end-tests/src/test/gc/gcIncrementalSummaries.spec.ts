@@ -8,11 +8,15 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Validates that unchanged Fluid objects are not summarized again. Basically, only objects that have changed since
@@ -21,7 +25,7 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
  * - It received an op.
  * - Its reference state changed, i.e., it was referenced and became unreferenced or vice-versa.
  */
-describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
+ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let mainContainer: IContainer;
     let dataStoreA: ITestDataObject;

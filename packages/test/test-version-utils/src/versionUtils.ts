@@ -239,20 +239,61 @@ export const loadPackage = (modulePath: string, pkg: string) =>
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
-    const version = new semver.SemVer(baseVersion);
-    // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
-    if (version.major === 1) {
-        if (requested === -1) {
-            return "^0.59.0-0";
-        } else if (requested === -2) {
-            return "^0.58.0-0";
-        }
-    } else if (version.major === 2) {
-        if (requested === -1) {
-            return "^1.0.0-0";
-        } else if (requested === -2) {
-            return "^0.59.0-0";
-        }
+
+    const isInternal = baseVersion.includes("internal");
+
+    if (isInternal) {
+        const internalVersions = baseVersion.split("-internal.");
+        return internalSchema(internalVersions[0], internalVersions[1], requested);
     }
-    return `^${version.major}.${version.minor + requested}.0-0`;
+
+    let version;
+    try {
+        version = new semver.SemVer(baseVersion);
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
+
+    // calculate requested major version number
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const requestedMajorVersion = version.major + requested;
+    // if the major version number is bigger than 0 then return it as normal
+    if (requestedMajorVersion > 0) {
+        return `^${requestedMajorVersion}.0.0-0`;
+    }
+    // if the major version number is <= 0 then we return the equivalent pre-releases
+    const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+
+    // Minor number in 0.xx release represent a major change hence different rules
+    // are applied for computing the requested version.
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+    // too old a version / non existing version requested
+    if (requestedMinorVersion <= 0) {
+        // cap at min version
+        return "^0.0.1-0";
+    }
+    return `^0.${requestedMinorVersion}.0-0`;
+}
+
+export function internalSchema(publicVersion: string, internalVersion: string, requested: number | string): string {
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
+
+    if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
+        const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+        const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
+        return `^0.${requestedMinorVersion}.0-0`;
+    }
+
+    let parsedVersion;
+    try {
+        parsedVersion = new semver.SemVer(internalVersion);
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
+
+    // eslint-disable-next-line max-len
+    return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }

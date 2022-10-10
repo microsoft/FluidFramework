@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This library contains common utility functions and classes used by the Fluid Framework.
+ *
+ * @packageDocumentation
+ */
+
 export * from "./assert";
 export * from "./indexNode";
 export * from "./base64Encoding";

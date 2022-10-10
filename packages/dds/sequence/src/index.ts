@@ -6,9 +6,10 @@
 /**
  * Supports distributed data structures which are list-like.
  *
- * This package's main export is {@link SharedSequence}, a DDS for storing and simultaneously editing a sequence of
+ * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
  * text.
  *
+ * See the package's README for a high-level introduction to `SharedString`'s feature set.
  * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
  * working with text.
  *
@@ -22,12 +23,15 @@ export {
     Interval,
     IntervalCollection,
     IntervalCollectionIterator,
+    IntervalLocator,
+    intervalLocatorFromEndpoint,
     IntervalType,
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
+    SerializedIntervalDelta,
 } from "./intervalCollection";
 export {
     IMapMessageLocalMetadata,
@@ -38,7 +42,5 @@ export * from "./sequence";
 export * from "./sequenceFactory";
 export * from "./sequenceDeltaEvent";
 export * from "./sharedSequence";
-export * from "./sharedObjectSequence";
-export * from "./sharedNumberSequence";
-export * from "./sparsematrix";
 export * from "./sharedIntervalCollection";
+export { IInterval, IntervalConflictResolver } from "./intervalTree";

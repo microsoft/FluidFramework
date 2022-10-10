@@ -25,11 +25,11 @@ import {
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { TelemetryNullLogger } from '@fluidframework/common-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
@@ -191,7 +191,7 @@ export function setUpTestSharedTree(
 		});
 	}
 
-	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
+	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
 	if (localMode === true) {
 		componentRuntime.local = true;
@@ -466,7 +466,7 @@ export async function asyncFunctionThrowsCorrectly(
 	return errorMessage === expectedError;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare

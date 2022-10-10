@@ -17,7 +17,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -283,11 +283,14 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedMap in local (detached) state set a key.
+         *
          * - The map is then attached so that it is available to remote clients.
+         *
          * - One of the remote clients sets a new value to the same key.
+         *
          * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
-         *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
-         *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+         * the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+         * when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
          */
 
         // Create a new map in local (detached) state.
@@ -316,6 +319,24 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
+
+    it("attaches if referring SharedMap becomes attached or is already attached", async () => {
+        const detachedMap1: ISharedMap = SharedMap.create(dataObject1.runtime);
+        const detachedMap2: ISharedMap = SharedMap.create(dataObject1.runtime);
+
+        // When an unattached map refers to another unattached map, both remain unattached
+        detachedMap1.set("newSharedMap", detachedMap2.handle);
+        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
+        assert.equal(detachedMap1.isAttached(), false, "detachedMap1 should not be attached");
+        assert.equal(detachedMap2.isAttached(), false, "detachedMap2 should not be attached");
+
+        // When referring map becomes attached, the referred map becomes attached
+        // and the attachment transitively passes to a second referred map
+        sharedMap1.set("newSharedMap", detachedMap1.handle);
+        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
+        assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
+        assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
+    });
 });
 
 describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
@@ -327,6 +348,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     let container: Container;
     let dataObject: ITestFluidObject;
     let sharedMap: SharedMap;
+
     let containerRuntime: ContainerRuntime;
     let clearEventCount: number;
     let changedEventData: IValueChanged[];
@@ -339,10 +361,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(async () => {
         const configWithFeatureGates = {
             ...testContainerConfig,
-            loaderProps: { configProvider: configProvider({
-                "Fluid.ContainerRuntime.EnableRollback": true,
-            }) },
+            loaderProps: {
+                configProvider: configProvider({
+                    "Fluid.ContainerRuntime.EnableRollback": true,
+                }),
+            },
         };
+
         container = await provider.makeTestContainer(configWithFeatureGates) as Container;
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
@@ -354,6 +379,75 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         });
         sharedMap.on("clear", (local, target) => {
             clearEventCount++;
+        });
+    });
+    describe("Concurrent op processing", () => {
+        let container2: Container;
+        let dataObject2: ITestFluidObject;
+        let sharedMap2: SharedMap;
+
+        beforeEach(async () => {
+            provider.reset();
+            provider = getTestObjectProvider();
+        });
+
+        const setupContainers = async (
+            containerConfig: ITestContainerConfig,
+            featureGates: Record<string, ConfigTypes> = {},
+        ) => {
+            const configWithFeatureGates = {
+                ...containerConfig,
+                loaderProps: { configProvider: configProvider(featureGates) },
+            };
+            const container1 = await provider.makeTestContainer(configWithFeatureGates) as Container;
+            container2 = await provider.loadTestContainer(configWithFeatureGates) as Container;
+
+            dataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+            dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+
+            sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+            sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+
+            await provider.ensureSynchronized();
+        };
+
+        // ADO #1834 tracks fixing it!
+        // This test case does not work correctly - it used to work before batching changes for the wrong reason.
+        // Please see above ticket for more info
+        itExpects.skip("Should close container when sending an op while processing another op",
+            [{
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Making changes to data model is disallowed while processing ops.",
+            }], async () => {
+                await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": true });
+
+                sharedMap.on("valueChanged", (changed, local) => {
+                    if (!local) {
+                        assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
+                    }
+                    // Avoid re-entrancy by setting a new key
+                    if (changed.key !== "key2") {
+                        sharedMap2.set("key2", "v2");
+                    }
+                });
+                // Set 1st key to trigger above valueChanged
+                sharedMap.set("key1", "v1");
+                await provider.ensureSynchronized();
+            });
+
+        it("Negative test with unset concurrentOpSend feature gate", async () => {
+            await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": false });
+            sharedMap.on("valueChanged", (changed, local) => {
+                // Avoid re-entrancy by setting a new key
+                if (changed.key !== "key2") {
+                    sharedMap2.set("key2", "v2");
+                }
+            });
+            // Set 1st key to trigger above valueChanged
+            sharedMap.set("key1", "v1");
+            await provider.ensureSynchronized();
+            assert.equal(sharedMap.get("key1"), "v1", "The new value is not updated in map 1");
+            assert.equal(sharedMap2.get("key2"), "v2", "The new value is not updated in map 2");
         });
     });
 

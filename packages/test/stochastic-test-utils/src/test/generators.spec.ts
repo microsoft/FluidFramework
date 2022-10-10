@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import Random from "random-js";
 import {
     asyncGeneratorFromArray,
     chain,
@@ -18,10 +18,9 @@ import {
     take,
     takeAsync,
 } from "../generators";
-import {
-    makeRandom,
-} from "../random";
-import { AsyncGenerator, Generator, done } from "../types";
+import { makeRandom } from "../random";
+import { AsyncGenerator, Generator, IRandom, done } from "../types";
+import { chiSquaredCriticalValues, computeChiSquared, Counter } from "./utils";
 
 function assertGeneratorProduces<T>(generator: Generator<T, void>, results: T[]): void {
     const actual: T[] = [];
@@ -41,26 +40,6 @@ async function assertAsyncGeneratorProduces<T>(generator: AsyncGenerator<T, void
         result = await generator();
     }
     assert.deepEqual(actual, results);
-}
-
-class Counter<T> {
-    private readonly counts = new Map<T, number>();
-
-    public increment(t: T): void {
-        this.counts.set(t, this.get(t) + 1);
-    }
-
-    public get(t: T): number {
-        return this.counts.get(t) ?? 0;
-    }
-
-    public entries(): Iterable<[T, number]> {
-        return this.counts.entries();
-    }
-
-    public values(): Iterable<number> {
-        return this.counts.values();
-    }
 }
 
 describe("generators", () => {
@@ -266,36 +245,9 @@ describe("generators", () => {
 
     // The distribution produced by createWeightedGenerator is a multinomial distribution. See:
     // https://en.wikipedia.org/wiki/Multinomial_distribution
-    // A chi-squared test is a reasonable assessment of whether the observed distribution matches the expected one.
-    // https://en.wikipedia.org/wiki/Chi-squared_test
-    // These are 99% threshholds, i.e. for 1 degree of freedom, there's a 99% chance that a random sample of the
-    // expected distribution produces a result with chi squared at most 6.63.
-    // These are technically probabilities for underlying normal distribution, but by the central limit theorem,
-    // a multinomial distribution with large sample size approaches one.
-    const chiSquaredCriticalValues = new Map([
-        [1, 6.63],
-        [2, 9.21],
-        [3, 11.34],
-        [4, 13.28],
-    ]);
-
-    function computeChiSquared<T>(weights: [T, number][], sampleCounts: Counter<T>): number {
-        const numberOfSamples = Array.from(sampleCounts.values()).reduce((partialSum, value) => partialSum + value);
-        const totalWeight = weights.reduce<number>((partialSum, [, weight]) => partialSum + weight, 0);
-
-        let chiSquared = 0;
-        for (const [value, weight] of weights) {
-            const expectedFrequency = numberOfSamples * weight / totalWeight;
-            const actualFrequency = sampleCounts.get(value);
-            assert(actualFrequency !== undefined);
-            chiSquared += (actualFrequency - expectedFrequency) ** 2 / (expectedFrequency * (1 - weight / totalWeight));
-        }
-
-        return chiSquared;
-    }
 
     describe("createWeightedGenerator", () => {
-        let random: Random;
+        let random: IRandom;
         beforeEach(() => {
             random = makeRandom(0);
         });
@@ -314,9 +266,10 @@ describe("generators", () => {
 
                 const chiSquared = computeChiSquared(weights, sampleCounts);
                 const degreesOfFreedom = weights.length - 1;
-                const criticalValue = chiSquaredCriticalValues.get(degreesOfFreedom);
+                const criticalValue = chiSquaredCriticalValues[degreesOfFreedom];
                 assert(criticalValue !== undefined);
-                assert(chiSquared < criticalValue);
+                assert(chiSquared < criticalValue,
+                    `Expected 'chiSquared' to be less than ${criticalValue}, but got ${chiSquared}.`);
             });
         }
 
@@ -353,7 +306,7 @@ describe("generators", () => {
     });
 
     describe("createWeightedAsyncGenerator", () => {
-        let random: Random;
+        let random: IRandom;
         beforeEach(() => {
             random = makeRandom(0);
         });
@@ -372,9 +325,10 @@ describe("generators", () => {
 
                 const chiSquared = computeChiSquared(weights, sampleCounts);
                 const degreesOfFreedom = weights.length - 1;
-                const criticalValue = chiSquaredCriticalValues.get(degreesOfFreedom);
+                const criticalValue = chiSquaredCriticalValues[degreesOfFreedom];
                 assert(criticalValue !== undefined);
-                assert(chiSquared < criticalValue);
+                assert(chiSquared < criticalValue,
+                    `Expected 'chiSquared' to be less than ${criticalValue}, but got ${chiSquared}.`);
             });
         }
 

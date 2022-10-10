@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
     IOdspSnapshot,
@@ -120,11 +120,12 @@ describe("Tests for snapshot fetch", () => {
                 resolved,
                 async (_options) => "token",
                 logger,
-                true,
                 { ...nonPersistentCache, persistedCache: epochTracker },
                 GetHostStoragePolicyInternal(),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
+                undefined,
             );
         });
 
@@ -260,11 +261,11 @@ describe("Tests for snapshot fetch", () => {
                 resolved,
                 async (_options) => "token",
                 logger,
-                true,
                 { ...nonPersistentCache, persistedCache: epochTracker },
                 GetHostStoragePolicyInternal(true /* isSummarizer */),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
             );
         });
 

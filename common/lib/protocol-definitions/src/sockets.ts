@@ -13,7 +13,7 @@ import { ITokenClaims } from "./tokens";
  */
 export interface IConnect {
     /**
-     *  The tenant ID for the document
+     * The tenant ID for the document.
      */
     tenantId: string;
 
@@ -25,6 +25,8 @@ export interface IConnect {
     /**
      * Authorization token
      */
+    // TODO: Update this to use undefined instead of null.
+    // eslint-disable-next-line @rushstack/no-new-null
     token: string | null;
 
     /**
@@ -36,6 +38,12 @@ export interface IConnect {
      * Semver list of protocol versions supported by the client ordered in priority of use
      */
     versions: string[];
+
+    /**
+     * Version of the driver which is connecting. It can be used at server to record in telemetry or
+     * to block/allow specific driver version for specific features.
+     */
+    driverVersion?: string;
 
     /**
      * Connection mode of client.
@@ -58,13 +66,15 @@ export interface IConnect {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**
      * Properties that client can send to server to tell info about client environment. These are a bunch of properties
      * separated by ";" which server can log to better understand client environment etc.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
-    */
+     */
     relayUserAgent?: string;
 }
 
@@ -151,6 +161,8 @@ export interface IConnected {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**

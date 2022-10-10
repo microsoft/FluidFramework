@@ -21,12 +21,17 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - server/gitssh
@@ -42,6 +47,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -56,6 +62,7 @@ extends:
     releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false

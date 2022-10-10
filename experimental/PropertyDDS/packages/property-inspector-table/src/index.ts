@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import InspectorTableIcons from "../assets/icons/SVGStoreIcons";
+export { InspectorTableIcons };
+
 export * from "./InspectorTable";
-export * from "./InspectorTableTypes";
 export * from "./PropertyDataCreationHandlers";
+export * from "./propertyInspectorUtils";
 export * from "./icons";
 export * from "./ModalManager";
 export * from "./ModalRoot";
+export * from "./CustomChip";
+export * from "./TypeColumn";
+export * from "./utils";
+export * from "./InspectorTableTypes";

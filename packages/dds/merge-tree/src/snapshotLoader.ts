@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { ISegment, MergeTree } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import {
     IJSONSegmentWithMergeInfo,
@@ -23,6 +23,7 @@ import {
 } from "./snapshotChunks";
 import { SnapshotV1 } from "./snapshotV1";
 import { SnapshotLegacy } from "./snapshotlegacy";
+import { MergeTree } from "./mergeTree";
 
 export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;

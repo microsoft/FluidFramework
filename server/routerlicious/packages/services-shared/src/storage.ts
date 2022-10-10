@@ -92,23 +92,20 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
-        if (this.enableWholeSummaryUpload) {
-            return {
+        return this.enableWholeSummaryUpload
+            ? {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ".app": appTree,
                 },
-            };
-        } else {
-            return {
+            } : {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ...appTree.tree,
                 },
             };
-        }
     }
 
     public async createDocument(
@@ -120,6 +117,7 @@ export class DocumentStorage implements IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
+        deltaStreamUrl: string,
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
@@ -194,7 +192,9 @@ export class DocumentStorage implements IDocumentStorage {
         const session: ISession = {
             ordererUrl,
             historianUrl,
+            deltaStreamUrl,
             isSessionAlive: true,
+            isSessionActive: false,
         };
 
         const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
@@ -379,7 +379,7 @@ export class DocumentStorage implements IDocumentStorage {
             const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
             await opsCollection
                 .insertMany(dbOps, false)
-                .catch((error) => {
+                .catch(async (error) => {
                     // Duplicate key errors are ignored
                     if (error.code !== 11000) {
                         // Needs to be a full rejection here

@@ -2,54 +2,89 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as semver from "semver";
 
-import { Context } from "./context";
-import { VersionBag } from "./versionBag";
-import { fatal, prereleaseSatisfies } from "./utils";
+import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
-import { FluidRepo } from "../common/fluidRepo";
+import { Context } from "./context";
+import { fatal, prereleaseSatisfies } from "./utils";
+import { VersionBag } from "./versionBag";
 
 /**
- * Bump cross package/monorepo dependencies
+ * Bump cross-release group dependencies.
  *
- * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
+ * @remarks
  *
- * @param repo the repo to operate one
- * @param bumpDepPackages update dependencies to these set of packages to current in repo version
- * @param updateLock whether to update the lock file (by npm i) or not
- * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
+ * Update the dependencies on the packages specified to a specific version, or the latest version if not specified.
+ *
+ * @param context - The repo {@link Context}.
+ * @param commitMessage - The commit message to use when committing changes. This must be provided if `commit` is true.
+ * @param commit - If true, commit the changes to a new branch.
+ * @param bumpDepPackages - A map of package names to the version that dependencies on that package should be set to.
+ * @param updateLock - If true, update the lock file by running `npm install` automatically.
+ * @param release - If true, make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs
+ * ^0.16.0-0)
+ * @param releaseGroup - Only update dependencies within this release group. If not specified, operates on the whole
+ * repo.
  */
-export async function bumpDependencies(context: Context, commitMessage: string, bumpDepPackages: Map<string, string | undefined>, updateLock: boolean, commit: boolean = false, release: boolean = false) {
+export async function bumpDependencies(
+    context: Context,
+    bumpDepPackages: Map<string, string | undefined>,
+    updateLock: boolean = false,
+    commit: boolean = false,
+    commitMessage?: string,
+    release: boolean = true,
+    releaseGroup?: MonoRepoKind,
+) {
     const suffix = release ? "" : "-0";
-    const bumpPackages = context.repo.packages.packages.map(pkg => {
-        const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
-        const matched = bumpDepPackages.has(matchName);
-        // Only add the suffix if it is not user specified
-        const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
-        return { matched, pkg, version };
-    }).filter(rec => rec.matched);
+    const bumpPackages = context.repo.packages.packages
+        .map((pkg) => {
+            const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
+            const matched = bumpDepPackages.has(matchName);
+            // Only add the suffix if the version is not user specified
+            const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
+            return { matched, pkg, version };
+        })
+        .filter((rec) => rec.matched);
     if (bumpPackages.length === 0) {
         fatal("Unable to find dependencies to bump");
     }
 
-    const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]));
-    return bumpDependenciesCore(context, commitMessage, bumpPackageMap, updateLock, commit, release);
+    if (commitMessage === undefined && commit === true) {
+        fatal("No commit message was provided.");
+    }
+
+    const bumpPackageMap = new Map(
+        bumpPackages.map((rec) => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]),
+    );
+    const filteredPackages = await context.repo.packages.filterPackages(releaseGroup);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return bumpDependenciesCore(
+        context,
+        filteredPackages,
+        bumpPackageMap,
+        updateLock,
+        commit,
+        commitMessage!,
+        release,
+    );
 }
 
 async function bumpDependenciesCore(
     context: Context,
-    commitMessage: string,
-    bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
+    filteredPackages: Package[],
+    bumpPackageMap: Map<string, { pkg: Package; rangeSpec: string }>,
     updateLock: boolean,
     commit: boolean,
+    commitMessage: string,
     release: boolean,
 ) {
     let changed = false;
     const updateLockPackage: Package[] = [];
 
     const changedVersion = new VersionBag();
-    for (const pkg of context.repo.packages.packages) {
+    for (const pkg of filteredPackages) {
         if (await bumpPackageDependencies(pkg, bumpPackageMap, release, changedVersion)) {
             updateLockPackage.push(pkg);
             changed = true;
@@ -60,7 +95,7 @@ async function bumpDependenciesCore(
         if (updateLockPackage.length !== 0) {
             if (updateLock) {
                 // Fix package lock
-                if (!await FluidRepo.ensureInstalled(updateLockPackage, false)) {
+                if (!(await FluidRepo.ensureInstalled(updateLockPackage, false))) {
                     fatal("Install Failed");
                 }
             } else {
@@ -77,14 +112,21 @@ async function bumpDependenciesCore(
         if (commit) {
             console.log(`Creating branch ${bumpBranch}`);
             await context.createBranch(bumpBranch);
-            await context.gitRepo.commit(`${commitMessage}\n\n${changedVersionMessage}`, "bump dependencies");
+            await context.gitRepo.commit(
+                `${commitMessage}\n\n${changedVersionMessage}`,
+                "bump dependencies",
+            );
         }
         console.log(`      ${commitMessage}`);
         console.log(changedVersionMessage);
 
         if (commit) {
-            console.log("======================================================================================================");
-            console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName}`);
+            console.log(
+                "======================================================================================================",
+            );
+            console.log(
+                `Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
+            );
         }
 
         return changedVersionMessage;
@@ -94,15 +136,17 @@ async function bumpDependenciesCore(
 }
 
 export function getReleasedPrereleaseDependencies(context: Context) {
-    const bumpPackageMap = new Map<string, { pkg: Package, rangeSpec: string }>();
+    const bumpPackageMap = new Map<string, { pkg: Package; rangeSpec: string }>();
     for (const pkg of context.repo.packages.packages) {
         for (const dep of pkg.combinedDependencies) {
-            // detect if the dependency include prerelease.  This doesn't work if it is range
-            if (dep.version.includes("-")) {
+            if (semver.prerelease(dep.version) !== null) {
                 const depPackage = context.fullPackageMap.get(dep.name);
                 // The prerelease dependence doesn't match the live version, assume that it is released already
                 if (depPackage && !prereleaseSatisfies(depPackage.version, dep.version)) {
-                    bumpPackageMap.set(dep.name, { pkg: depPackage, rangeSpec: dep.version.substring(0, dep.version.lastIndexOf("-")) });
+                    bumpPackageMap.set(dep.name, {
+                        pkg: depPackage,
+                        rangeSpec: dep.version.substring(0, dep.version.lastIndexOf("-")),
+                    });
                 }
             }
         }
@@ -110,18 +154,30 @@ export function getReleasedPrereleaseDependencies(context: Context) {
     return bumpPackageMap;
 }
 
-export async function cleanPrereleaseDependencies(context: Context, updateLock: boolean, commit: boolean) {
+export async function cleanPrereleaseDependencies(
+    context: Context,
+    updateLock: boolean,
+    commit: boolean,
+) {
     const releasedPrereleaseDependencies = getReleasedPrereleaseDependencies(context);
     if (releasedPrereleaseDependencies.size === 0) {
         console.log("No released prerelease dependencies found.");
         return;
     }
-    console.log(`Updating released prerelease dependencies`
-        + `\n${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
+    console.log(
+        `Updating released prerelease dependencies` +
+            `\n${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`,
+    );
 
-    await bumpDependenciesCore(context,
+    await bumpDependenciesCore(
+        context,
+        context.repo.packages.packages,
+        releasedPrereleaseDependencies,
+        updateLock,
+        commit,
         "Remove prelease dependencies on release packages",
-        releasedPrereleaseDependencies, updateLock, commit, false);
+        false,
+    );
 }
 
 /**
@@ -134,17 +190,23 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
  */
 export async function bumpPackageDependencies(
     pkg: Package,
-    bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
+    bumpPackageMap: Map<string, { pkg: Package; rangeSpec: string }>,
     release: boolean,
-    changedVersion?: VersionBag
+    changedVersion?: VersionBag,
 ) {
     let changed = false;
     for (const { name, dev } of pkg.combinedDependencies) {
         const dep = bumpPackageMap.get(name);
         if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
             const depVersion = dep.rangeSpec;
-            const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
-            if (release ? dependencies[name].startsWith(`${depVersion}-`) : dependencies[name] !== depVersion) {
+            const dependencies = dev
+                ? pkg.packageJson.devDependencies
+                : pkg.packageJson.dependencies;
+            if (
+                release
+                    ? dependencies[name].startsWith(`${depVersion}-`)
+                    : dependencies[name] !== depVersion
+            ) {
                 if (changedVersion) {
                     changedVersion.add(dep.pkg, depVersion);
                 }
@@ -159,4 +221,3 @@ export async function bumpPackageDependencies(
     }
     return changed;
 }
-

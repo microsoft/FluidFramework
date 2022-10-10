@@ -25,6 +25,8 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
+    MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -40,13 +42,15 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
-    isClientMessage,
+    isRuntimeMessage,
+    MessageType2,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     DataProcessingError,
+    UsageError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
@@ -70,6 +74,25 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 /**
+ * Determines if message was sent by client, not service
+ */
+function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
+    if (isRuntimeMessage(message)) {
+        return true;
+    }
+    switch (message.type) {
+        case MessageType.Propose:
+        case MessageType.Reject:
+        case MessageType.NoOp:
+        case MessageType2.Accept:
+        case MessageType.Summarize:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -88,6 +111,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
+
+    private readonly mc: MonitoringContext;
+
+    // A boolean used to assert that ops are not being sent while processing another op.
+    private currentlyProcessingOps: boolean = false;
+
+    // Feature gate that closes a container when sending an op if the container is
+    // concurrently processing another op
+    private readonly preventConcurrentOpSend: boolean = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -113,6 +145,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
     // The sequence number we initially loaded from
+    // In case of reading from a snapshot or pending state, its value will be equal to
+    // the last message that got serialized.
     private initSequenceNumber: number = 0;
 
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
@@ -185,9 +219,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
+        if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
+            this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
+        }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
-            contents: JSON.stringify(contents),
+            contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
@@ -196,13 +233,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-
         const message = this.connectionManager.prepareMessageToSend(messagePartial);
         if (message === undefined) {
             return -1;
         }
 
-        this.opsSize += message.contents.length;
+        assert(isClientMessage(message), "client sends non-client message");
+
+        if (contents !== undefined) {
+            this.opsSize += contents.length;
+        }
 
         this.messageBuffer.push(message);
 
@@ -211,22 +251,32 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-
         return message.clientSequenceNumber;
     }
 
     public submitSignal(content: any) { return this.connectionManager.submitSignal(content); }
 
     public flush() {
-        if (this.messageBuffer.length === 0) {
+        const batch = this.messageBuffer;
+        if (batch.length === 0) {
             return;
         }
 
-        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
-        this.emit("prepareSend", this.messageBuffer);
-
-        this.connectionManager.sendMessages(this.messageBuffer);
         this.messageBuffer = [];
+
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
+        this.emit("prepareSend", batch);
+
+        if (batch.length === 1) {
+            assert(batch[0].metadata?.batch === undefined, 0x3c9 /* no batch markup on single message */);
+        } else {
+            assert(batch[0].metadata?.batch === true, 0x3ca /* no start batch markup */);
+            assert(batch[batch.length - 1].metadata?.batch === false, 0x3cb /* no end batch markup */);
+        }
+
+        this.connectionManager.sendMessages(batch);
+
+        assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
     }
 
     public get connectionProps(): ITelemetryProperties {
@@ -293,7 +343,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-
+        this.mc = loggerToMonitoringContext(logger);
+        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") === true;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
@@ -762,15 +813,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
+        this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
-        // All non-system messages are coming from some client, and should have clientId
-        // System messages may have no clientId (but some do, like propose, noop, summarize)
-        assert(
-            message.clientId !== undefined
-            || !(isClientMessage(message)),
-            0x0ed /* "non-system message have to have clientId" */,
-        );
+        const isString = typeof message.clientId === "string";
+        assert(message.clientId === null || isString, "undefined or string");
+        // All client messages are coming from some client, and should have clientId,
+        // and non-client message should not have clientId. But, there are two exceptions:
+        // 1. (Legacy) We can see message.type === "attach" or "chunkedOp" for legacy files before RTM
+        // 2. Non-immediate noops (contents: null) can be sent by service without clientId
+        if (!isString && isClientMessage(message) && message.type !== MessageType.NoOp) {
+            throw new DataCorruptionError("Mismatch in clientId",
+                { ...extractSafePropertiesFromMessage(message), messageType: message.type });
+        }
 
         // TODO Remove after SPO picks up the latest build.
         if (
@@ -791,6 +847,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
+
+        // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
+        // reference sequence number as this op.
+        // System ops (when no clients are connected) are the only ops where equation is possible.
+        const diff = message.sequenceNumber - message.minimumSequenceNumber;
+        if (diff < 0 || diff === 0 && message.clientId !== null) {
+            throw new DataCorruptionError("MSN has to be lower than sequence #",
+                extractSafePropertiesFromMessage(message));
+        }
+
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
@@ -816,7 +882,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             throw new Error("Attempted to process an inbound message without a handler attached");
         }
         this.handler.process(message);
-
+        this.currentlyProcessingOps = false;
         const endTime = Date.now();
 
         // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers

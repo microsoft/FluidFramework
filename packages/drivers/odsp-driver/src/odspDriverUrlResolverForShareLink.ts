@@ -136,7 +136,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
-            odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
+            odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {},
                 { sharingLinkToRedeem: this.removeNavParam(request.url) });
         }
         if (odspResolvedUrl.itemId) {
@@ -171,10 +171,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             return cachedLinkPromise;
         }
         const newLinkPromise = getFileLink(
-            this.shareLinkFetcherProps.tokenFetcher,
-            resolvedUrl,
-            this.shareLinkFetcherProps.identityType,
-            this.logger,
+            this.shareLinkFetcherProps.tokenFetcher, resolvedUrl, this.logger,
         ).catch((error) => {
             // This should imply that error is a non-retriable error.
             this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);

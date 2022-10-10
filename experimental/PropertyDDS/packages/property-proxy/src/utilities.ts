@@ -33,11 +33,12 @@ export function forceType<T>(value: any | T): value is T {
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utilities {
     /**
     * Wraps a function with push/pophNotificationDelayScope.
-    * @param property The property that is operated on.
-    * @param updateFunction The function containing the code that modifies properties in the workspace.
+    * @param property - The property that is operated on.
+    * @param updateFunction - The function containing the code that modifies properties in the workspace.
     */
     export function wrapWithPushPopNotificationDelayScope(property: BaseProperty, updateFunction: () => void) {
         if (property.getWorkspace()) {
@@ -60,9 +61,9 @@ export namespace Utilities {
      * if `property` is not an {@link external:ArrayProperty ArrayProperty}
      * or a {@link external:MapProperty MapProperty}.
      * In that case the returned element will be `element` only if `property` is of a primitive type.
-     * @param property The property that is operated on.
-     * @param element The element to be inserted.
-     * @param caller Only used if the property parameter is an {@link external:ArrayProperty ArrayProperty}.
+     * @param property - The property that is operated on.
+     * @param element - The element to be inserted.
+     * @param caller - Only used if the property parameter is an {@link external:ArrayProperty ArrayProperty}.
      * Triggers special behavior for the methods copyWithin(), fill(), reverse(), sort().
      * @return The prepared element that is ready for insertion.
      */
@@ -77,11 +78,7 @@ export namespace Utilities {
             if (property.isPrimitiveType() &&
                 !PropertyFactory.instanceOf(property, "Reference", "array") &&
                 !PropertyFactory.instanceOf(property, "Reference", "map")) {
-                if (element.isPrimitiveType()) {
-                    return element.getValue();
-                } else {
-                    return element.getValues();
-                }
+                return element.isPrimitiveType() ? element.getValue() : element.getValues();
             } else {
                 // Some special cases to allow out of the box functionality for arrays
                 if (element.getParent() && property.getContext() === "array" && forceType<ArrayProperty>(property)) {
@@ -107,11 +104,9 @@ export namespace Utilities {
                 throw new Error(PropertyProxyErrors.ITERABLE_INSERTION);
             }
             if (property.getContext() === "array" || property.getContext() === "map") {
-                if (property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")) {
-                    return element;
-                } else {
-                    return PropertyFactory.create(property.getTypeid(), "single", element);
-                }
+                return property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")
+                    ? element
+                    : PropertyFactory.create(property.getTypeid(), "single", element);
             } else {
                 return element;
             }
@@ -120,8 +115,8 @@ export namespace Utilities {
 
     /**
      * Assigns as value property to another property.
-     * @param property The target of the assignation.
-     * @param value The value that is to be assigned.
+     * @param property - The target of the assignation.
+     * @param value - The value that is to be assigned.
      */
     export function assign(property: BaseProperty, value: BaseProperty | any) {
         const context = property.getContext();
@@ -206,7 +201,7 @@ export namespace Utilities {
     /**
      * This function should be called if the target of the assignment is a property that has "single" defined
      * as its context to check if the passed value is an iterable. In that case an Error will be thrown.
-     * @param value The value to be checked.
+     * @param value - The value to be checked.
      */
     export function throwOnIterableForSingleProperty(value: any) {
         if (value && typeof value !== "string" &&
@@ -217,9 +212,9 @@ export namespace Utilities {
 
     /**
      * This is a utility function that sets the value of the referenced property.
-     * @param property The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
-     * @param key The key of the referenced property in the ReferenceArray/Map.
-     * @param value The value to be set.
+     * @param property - The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
+     * @param key - The key of the referenced property in the ReferenceArray/Map.
+     * @param value - The value to be set.
      */
     export function setValueOfReferencedProperty(
         property: ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty,
@@ -245,14 +240,14 @@ export namespace Utilities {
 
     /**
      * Check if a passed in string `key`contains an asterisk.
-     * @param key The key to check.
+     * @param key - The key to check.
      * @return True if `key` contains an asterisk.
      */
     export const containsAsterisk = (key: any) => (String(key) === key && key[key.length - 1] === "*");
 
     /**
      * Check if a passed in string `key`contains a caret.
-     * @param key The key to check.
+     * @param key - The key to check.
      * @return True if `key` contains a caret.
      */
     export const containsCaret = (key: string) => (String(key) === key && key[key.length - 1] === "^");
@@ -261,12 +256,12 @@ export namespace Utilities {
      * This method handles the proxification of child properties and also takes care of the special cases,
      * that arises if an '^' was part of the key `key` that identifies which child of `property` is about to be
      * proxied.
-     * @param property The parent property.
-     * @param key The key that determines which child of `property` is proxied.
-     * @param caretFound Indicates if the key initially contained a caret at the end.
-     * @param isReferenceCollection Indicates if `property` is either a
+     * @param property - The parent property.
+     * @param key - The key that determines which child of `property` is proxied.
+     * @param caretFound - Indicates if the key initially contained a caret at the end.
+     * @param isReferenceCollection - Indicates if `property` is either a
      * ReferenceArray- or ReferenceMapProperty.
-     *  @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
+     * @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
      */
     export function proxifyInternal(property: ContainerProperty | ReferenceType
         , key: string | number,
@@ -327,7 +322,7 @@ export namespace Utilities {
 /**
  * Helper that checks if the input is a valid iterable and returns an array containing the entries
  * of the Iterable.
- * @param value The Iterable that contains the entries.
+ * @param value - The Iterable that contains the entries.
  * @return An array of the entries contained in the passed Iterable.
  * @hidden
  */

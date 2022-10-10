@@ -16,7 +16,6 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
 
 /**
  * A property object that allows to add child properties dynamically.
- *
  */
 export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
@@ -43,7 +42,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the sub-property having the given name in this property.
      *
-     * @param  {string|number} in_id the id of the prop you wish to retrieve.
+     * @param {string|number} in_id - The id of the prop you wish to retrieve.
      *
      * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
      */
@@ -53,8 +52,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Adds an optional child to list of possible optional children.
-     * @param {string} in_id Id of the optional child
-     * @param {string} in_typeid typeid which determines what type the child should be
+     * @param {string} in_id - Id of the optional child
+     * @param {string} in_typeid - typeid which determines what type the child should be
      * @private
      */
     _addOptionalChild(in_id, in_typeid) {
@@ -68,9 +67,9 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Appends a property
      *
-     * @param {String | property-properties.BaseProperty } in_id - The id under which the property is added. This parameter is
-     *                                                   optional. For NamedProperties it can be omitted. In that case
-     *                                                   the GUID of the named property will be used.
+     * @param {String | property-properties.BaseProperty } in_id - The id under which the property is added.
+     * This parameter is optional. For NamedProperties it can be omitted. In that case the GUID of the named
+     * property will be used.
      *
      * @param {property-properties.BaseProperty} [in_property] - The property to add
      * @throws if in_id is not a string or a number
@@ -135,19 +134,15 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         if (this._parent) {
             return this.getRoot()._getScope();
         } else {
-            if (this._checkedOutRepositoryInfo) {
-                return this._checkedOutRepositoryInfo.getScope();
-            } else {
-                return undefined;
-            }
+            return this._checkedOutRepositoryInfo ? this._checkedOutRepositoryInfo.getScope() : undefined;
         }
     }
 
     /**
      * Removes the given property
      *
-     * @param {string|property-properties.BaseProperty} in_property - The property to remove
-     *                                                          (either its id or the whole property).
+     * @param {string|property-properties.BaseProperty} in_property - The property to remove (either its id or the
+     * whole property).
      * @throws if trying to remove an entry that does not exist
      * @return {property-properties.BaseProperty} the property removed.
      */
@@ -177,11 +172,11 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _validateRemove(in_id) {
         if (!this._dynamicChildren[in_id]) {
-            if (this._staticChildren[in_id] !== undefined) {
-                throw new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id);
-            } else {
-                throw new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
-            }
+            const error = this._staticChildren[in_id] !== undefined
+                ? new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id)
+                : new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
+
+            throw error;
         }
     }
 
@@ -197,13 +192,10 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Inserts a property into the collection
      *
-     * @param {string}                      in_key      -
-     *     Key of the entry in the collection
-     * @param {property-properties.NamedProperty} in_property -
-     *     The property to insert
-     * @param {boolean}                     in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {string} in_key - Key of the entry in the collection
+     * @param {property-properties.NamedProperty} in_property - The property to insert
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there. When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_property, in_reportToView) {
         if (validationsEnabled.enabled) {
@@ -224,9 +216,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * Removes an entry with the given key
      *
      * @param {string} in_key - key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there. When batching updates, this can be prevented via this flag.
      */
     _removeByKey(in_key, in_reportToView) {
         this._checkIsNotReadOnly(true);
@@ -255,8 +246,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * Gets the information to which CheckedOutRepositoryInfo object this root property belongs.
      * Note: these functions should only be used internally (within the PropertySets library)
      *
-     * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo|undefined} If this is the root of the checked out
-     *     hierarchy, this will return the checkout
+     * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo|undefined} If this is the root of the
+     * checked out hierarchy, this will return the checkout.
      * @protected
      */
     _getCheckedOutRepositoryInfo() {
@@ -295,8 +286,11 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Given an object that mirrors a PSet Template, assign the properties
-     * eg.
+     * Given an object that mirrors a PSet Template, assign the properties.
+     *
+     * E.g.
+     *
+     * ```
      * <pre>
      * Templates = {
      *   properties: [
@@ -305,10 +299,13 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      *   ]
      * }
      * </pre>
-     * You would update the values like
-     * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
-     * WARNING: not completely implemented for all types
-     * @param {object} in_properties The properties you would like to assign
+     * ```
+     *
+     * You would update the values like: `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
+     *
+     * WARNING: not completely implemented for all types.
+     *
+     * @param {object} in_properties - The properties you would like to assign
      * @private
      */
     setValues(in_properties) {

@@ -22,18 +22,22 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -47,12 +51,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -62,9 +66,10 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/build/eslint-config-fluid
     tagName: eslint-config-fluid
     taskBuild: print-config
     taskBuildDocs: false
     taskLint: false
-    taskTest: false
+    taskTest: [] # no tests

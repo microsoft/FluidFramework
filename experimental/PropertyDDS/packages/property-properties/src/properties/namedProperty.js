@@ -15,9 +15,9 @@ const { BaseProperty } = require('./baseProperty');
  */
 export class NamedProperty extends ContainerProperty {
     /**
-     * @param {object} in_params         - List of parameters
-     * @param {string} in_params.id      - id of the property (null, if the GUID should be used for the ID)
-     * @param {string} in_params.typeid  - The type identifier
+     * @param {object} in_params - List of parameters
+     * @param {string} in_params.id - id of the property (null, if the GUID should be used for the ID)
+     * @param {string} in_params.typeid - The type identifier
      *
      * @constructor
      * @protected
@@ -37,11 +37,7 @@ export class NamedProperty extends ContainerProperty {
      * @return {string} String identifying the property
      */
     getId() {
-        if (this._id !== null) {
-            return this._id;
-        } else {
-            return this.getGuid();
-        }
+        return this._id !== null ? this._id : this.getGuid();
     }
 
     /**

@@ -65,6 +65,8 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
+            "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "throttling": {
                 "restCalls": {
                     "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
@@ -217,7 +219,8 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
-            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
+            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"],
+            "enforceDiscoveryFlow": {{ .Values.session.enforceDiscoveryFlow }}
         },
         "tenantConfig": [
             {{- $lastIndex := sub (len .Values.riddler.tenants) 1}}

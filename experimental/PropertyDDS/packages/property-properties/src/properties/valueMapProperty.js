@@ -35,8 +35,8 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Inserts a value into the map. Using insert with a key that already exists will throw an error.
      *
-     * @param {string}                      in_key      - The key under which the entry is added
-     * @param {*}       in_value    - The primitive type value to set
+     * @param {string} in_key - The key under which the entry is added
+     * @param {*} in_value - The primitive type value to set
      * @throws if a value already exists for in_key
      */
     insert(in_key, in_value) {
@@ -45,12 +45,15 @@ export class ValueMapProperty extends MapProperty {
     }
 
     /**
-     * Returns an object with all the nested values contained in this property
-     * @return {object} an object representing the values of your property
-     * for example: {
-          'firstString': 'test1',
-          'secondString': 'test2'
-        }
+     * Returns an object with all the nested values contained in this property.
+     *
+     * @example
+     * ```javascript
+     * {
+     *   'firstString': 'test1',
+     *   'secondString': 'test2'
+     * }
+     * ```
       */
     getValues() {
         var ids = this.getIds();
@@ -98,8 +101,8 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Sets the value of a property into the map.
      *
-     * @param {string} in_key the key under which the entry is set
-     * @param {*} in_value the value to be set
+     * @param {string} in_key - The key under which the entry is set
+     * @param {*} in_value - The value to be set
      */
     set(in_key, in_value) {
         if (validationsEnabled.enabled) {
@@ -334,8 +337,8 @@ export class Integer64MapProperty extends ValueMapProperty {
      *
      * Note: this will overwrite an already existing value
      *
-     * @param {string}                                  in_key    - The key under which the entry is stored
-     * @param {Int64|Uint64|string|number}              in_value  - The value or property to store in the map
+     * @param {string} in_key - The key under which the entry is stored
+     * @param {Int64|Uint64|string|number} in_value - The value or property to store in the map
      */
     set(in_key, in_value) {
         var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
@@ -372,11 +375,7 @@ export class Integer64MapProperty extends ValueMapProperty {
         _.mapValues(this._dynamicChildren, function(val, key) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
             //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
-            if (val instanceof Int64) {
-                int64Prop = new Int64Property({});
-            } else {
-                int64Prop = new Uint64Property({});
-            }
+            int64Prop = val instanceof Int64 ? new Int64Property({}) : new Uint64Property({});
             int64Prop.setValueLow(val.getValueLow());
             int64Prop.setValueHigh(val.getValueHigh());
             printFct(indent + key + ': ' + int64Prop);

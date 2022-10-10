@@ -144,8 +144,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     // (undocumented)
     get quorum(): Quorum;
     // (undocumented)
-    readonly _quorum: Quorum;
-    // (undocumented)
     sequenceNumber: number;
     // (undocumented)
     setConnectionState(connected: boolean, clientId: string | undefined): void;
@@ -153,12 +151,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     snapshot(): IQuorumSnapshot;
     // (undocumented)
     readonly term: number;
-}
-
-// @public (undocumented)
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    // (undocumented)
-    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
 // @public

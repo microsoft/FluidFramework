@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     convertSnapshotAndBlobsToSummaryTree,
- } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -38,11 +38,15 @@ import { IRouterliciousDriverPolicies } from "./policies";
 const latestSnapshotId: string = "latest";
 
 export class WholeSummaryDocumentStorageService implements IDocumentStorageService {
-    private readonly summaryUploadManager: ISummaryUploadManager;
     private firstVersionsCall: boolean = true;
 
     public get repositoryUrl(): string {
         return "";
+    }
+
+    private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
+        const manager = await this.getStorageManager();
+        return new WholeSummaryUploadManager(manager);
     }
 
     constructor(
@@ -53,8 +57,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         private readonly driverPolicies?: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache(),
-        protected readonly noCacheGitManager?: GitManager) {
-        this.summaryUploadManager = new WholeSummaryUploadManager(manager);
+        private readonly noCacheGitManager?: GitManager,
+        private readonly getStorageManager: (disableCache?: boolean) => Promise<GitManager> = async (disableCache) =>
+            disableCache && this.noCacheGitManager !== undefined ? this.noCacheGitManager : this.manager,
+    ) {
     }
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
@@ -87,7 +93,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 versionId: id,
                 count,
             },
-            async () => this.manager.getCommits(id, count),
+            async () => {
+                const manager = await this.getStorageManager();
+                return manager.getCommits(id, count);
+            },
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,
@@ -111,7 +120,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.blobCache.get(blobId);
+        const cachedBlob = await this.blobCache.get(this.getCacheKey(blobId));
         if (cachedBlob !== undefined) {
             return cachedBlob;
         }
@@ -123,7 +132,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 blobId,
             },
             async (event) => {
-                const response = await this.manager.getBlob(blobId);
+                const manager = await this.getStorageManager();
+                const response = await manager.getBlob(blobId);
                 event.end({
                     size: response.size,
                 });
@@ -132,7 +142,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
         const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
-        await this.blobCache.put(blob.sha, bufferValue);
+        await this.blobCache.put(this.getCacheKey(blob.sha), bufferValue);
 
         return bufferValue;
     }
@@ -142,8 +152,14 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             this.logger,
             {
                 eventName: "uploadSummaryWithContext",
+                proposalHandle: context.proposalHandle,
+                ackHandle: context.ackHandle,
+                referenceSequenceNumber: context.referenceSequenceNumber,
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => {
+                const summaryUploadManager = await this.getSummaryUploadManager();
+                return summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel");
+            },
         );
         return summaryHandle;
     }
@@ -156,7 +172,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: summaryHandle.handle,
             },
             async (event) => {
-                const response = await this.manager.getSummary(summaryHandle.handle);
+                const manager = await this.getStorageManager();
+                const response = await manager.getSummary(summaryHandle.handle);
                 event.end({
                     size: response.trees[0]?.entries.length,
                 });
@@ -177,7 +194,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 size: uint8ArrayFile.length,
             },
             async (event) => {
-                const response = await this.manager.createBlob(
+                const manager = await this.getStorageManager();
+                const response = await manager.createBlob(
                     Uint8ArrayToString(
                         uint8ArrayFile, "base64"),
                     "base64").then((r) => ({ id: r.sha, url: r.url }));
@@ -190,7 +208,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     private async fetchAndCacheSnapshotTree(versionId: string, disableCache?: boolean): Promise<ISnapshotTreeVersion> {
-        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(versionId);
+        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(this.getCacheKey(versionId));
         if (cachedSnapshotTreeVersion !== undefined) {
             return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
         }
@@ -202,9 +220,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: versionId,
             },
             async (event) => {
-                const response = disableCache && this.noCacheGitManager !== undefined ?
-                    await this.noCacheGitManager.getSummary(versionId) :
-                    await this.manager.getSummary(versionId);
+                const manager = await this.getStorageManager(disableCache);
+                const response = await manager.getSummary(versionId);
                 event.end({
                     size: response.trees[0]?.entries.length,
                 });
@@ -219,7 +236,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(
-                snapshotTreeId,
+                this.getCacheKey(snapshotTreeId),
                 snapshotTreeVersion,
             ),
             this.initBlobCache(normalizedWholeSummary.blobs),
@@ -230,7 +247,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             // However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
             // cache with versionId?
             cachePs.push(this.snapshotTreeCache.put(
-                versionId,
+                this.getCacheKey(versionId),
                 snapshotTreeVersion,
             ));
         }
@@ -243,8 +260,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
         const blobCachePutPs: Promise<void>[] = [];
         blobs.forEach((value, id) => {
-            blobCachePutPs.push(this.blobCache.put(id, value));
+            const cacheKey = this.getCacheKey(id);
+            blobCachePutPs.push(this.blobCache.put(cacheKey, value));
         });
         await Promise.all(blobCachePutPs);
+    }
+
+    private getCacheKey(blobId: string): string {
+        return `${this.id}:${blobId}`;
     }
 }

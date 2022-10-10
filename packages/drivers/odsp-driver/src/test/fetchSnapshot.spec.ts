@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { stub } from "sinon";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
@@ -85,11 +85,11 @@ describe("Tests for snapshot fetch", () => {
             resolved,
             async (_options) => "token",
             logger,
-            true,
             { ...nonPersistentCache, persistedCache: epochTracker },
             hostPolicy,
             epochTracker,
             async () => { return {}; },
+            () => "tenantid/id",
         );
     });
 

@@ -10,7 +10,7 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external::SetProperty}.
- * @param target The {@link ComponentSet} that holds a reference
+ * @param target - The {@link ComponentSet} that holds a reference
  * to the {@link external:SetProperty SetProperty}.
  * @return An iterator.
  * @hidden
@@ -40,7 +40,7 @@ class ComponentSet extends Set {
     private readonly property!: SetProperty;
     /**
      * Sets the {@link external:SetProperty SetProperty} to operate on sets the Symbol.iterator attribute.
-     * @param property The {@link external:SetProperty SetProperty} to operate on.
+     * @param property - The {@link external:SetProperty SetProperty} to operate on.
      */
     constructor(property: SetProperty) {
         super();
@@ -162,7 +162,7 @@ class ComponentSet extends Set {
     /**
      * Obtains the guid from a {@link external:NamedProperty NamedProperty} that is
      * part of a {@link external:SetProperty SetProperty}.
-     * @param value The entry in the set for which a guid is queried.
+     * @param value - The entry in the set for which a guid is queried.
      * @return The guid of the passed {@link external:NamedProperty NamedProperty}.
      */
     // TODO(marcus): inline interface is a workaround it represents a proxy of NamedProperty that
@@ -187,7 +187,7 @@ class ComponentSet extends Set {
 
     /**
      * Removes the entry with the passed guid from the wrapped {@link external:SetProperty SetProperty}.
-     * @param guid The guid of the entry to be removed.
+     * @param guid - The guid of the entry to be removed.
      */
     _deleteById(guid: string) {
         this.property.remove(guid);

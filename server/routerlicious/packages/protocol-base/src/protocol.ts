@@ -66,7 +66,7 @@ export interface IProtocolHandler {
  * Handles protocol specific ops.
  */
 export class ProtocolOpHandler implements IProtocolHandler {
-    public readonly _quorum: Quorum;
+    private readonly _quorum: Quorum;
     public get quorum(): Quorum {
         return this._quorum;
     }
@@ -143,6 +143,11 @@ export class ProtocolOpHandler implements IProtocolHandler {
                 break;
 
             case MessageType.Propose:
+                // back-compat: ADO #1385: This should become unconditional eventually.
+                // Can be done only after Container.processRemoteMessage() stops parsing content!
+                if (typeof message.contents === "string") {
+                    message.contents = JSON.parse(message.contents);
+                }
                 const proposal = message.contents as IProposal;
                 this._quorum.addProposal(
                     proposal.key,
@@ -154,9 +159,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
                 // On a quorum proposal, immediately send a response to expedite the approval.
                 immediateNoOp = true;
                 break;
-
-            case MessageType.Reject:
-                throw new Error("Quorum rejection is removed.");
 
             default:
         }
@@ -179,27 +181,5 @@ export class ProtocolOpHandler implements IProtocolHandler {
             minimumSequenceNumber: this.minimumSequenceNumber,
             ...this._quorum.snapshot(),
         };
-    }
-}
-
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
-
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                // pre-0.58 error message: messageClientIdMissingFromQuorum
-                throw new Error("Remote message's clientId is missing from the quorum");
-            }
-
-            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                // pre-0.58 error message: messageClientIdShouldHaveLeft
-                throw new Error("Remote message's clientId already should have left");
-            }
-        }
-
-        return super.processMessage(message, local);
     }
 }

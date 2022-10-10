@@ -1,5 +1,5 @@
 {
-    "tags": [ "forest" ],
-    "exports": [ "index"],
-    "imports": ["schema","tree","dependency-tracking","util","forest","rebase"]
+  "tags": ["transaction"],
+  "exports": ["index"],
+  "imports": ["util", "forest", "change-family", "checkout"]
 }

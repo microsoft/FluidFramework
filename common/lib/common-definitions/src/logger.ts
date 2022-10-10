@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-// Examples of known categories, however category can be any string for extensibility
+/**
+ * Examples of known categories, however category can be any string for extensibility.
+ */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// Logging entire objects is considered extremely dangerous from a telemetry point of view because people
-// can easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
-// General best practice is to explicitly log the fields you care about from objects
+/**
+ * Property types that can be logged.
+ *
+ * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
+ * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
+ * General best practice is to explicitly log the fields you care about from objects.
+ */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 /**
@@ -20,6 +26,10 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
     tag: string;
 }
+
+/**
+ * JSON-serializable properties, which will be logged with telemetry.
+ */
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
@@ -56,7 +66,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Error telemetry event.
  * Maps to category = "error"
  */
- export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
     eventName: string;
 }
 
@@ -72,7 +82,9 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
  * An error object that supports exporting its properties to be logged to telemetry
  */
 export interface ILoggingError extends Error {
-    /** Return all properties from this object that should be logged to telemetry */
+    /**
+     * Return all properties from this object that should be logged to telemetry
+     */
     getTelemetryProperties(): ITelemetryProperties;
 }
 
@@ -94,17 +106,20 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      * @param error - optional error object to log
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 
     /**
      * Send error telemetry event
      * @param event - Event to send
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
 
     /**
      * Send performance telemetry event
      * @param event - Event to send
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
 }

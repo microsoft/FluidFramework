@@ -42,7 +42,7 @@ interface SharedTreeUndoRedoOptions {
  */
 export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOptions): void {
 	const { localMode, title, undo, redo, beforeEach: additionalSetup } = options;
-	const afterEdit = options.afterEdit || noop;
+	const afterEdit = options.afterEdit ?? noop;
 	const testOutOfOrderRevert = options.testOutOfOrderRevert === undefined ? true : options.testOutOfOrderRevert;
 
 	const treeOptions = {
@@ -75,7 +75,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			const secondTree = localMode
 				? undefined
 				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			undoSharedTree = secondTree || sharedTree;
+			undoSharedTree = secondTree ?? sharedTree;
 
 			if (additionalSetup !== undefined) {
 				if (secondTree !== undefined) {

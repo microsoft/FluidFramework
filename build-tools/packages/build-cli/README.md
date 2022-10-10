@@ -1,187 +1,59 @@
-# @fluid-internal/build-cli
+# @fluid-tools/build-cli
 
 flub is a build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
 maintainable CLI using [oclif](https://oclif.io).
 
-flub is not built in CI. You need to build it locally.
-
 <!-- toc -->
-* [@fluid-internal/build-cli](#fluid-internalbuild-cli)
+* [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
 * [Usage](#usage)
-* [Commands](#commands)
+* [Command Topics](#command-topics)
 <!-- tocstop -->
 
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/build-cli
+$ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
-$ flub (--version)
-@fluid-internal/build-cli/0.3.0 linux-x64 node-v14.20.0
+$ flub (--version|-V)
+@fluid-tools/build-cli/0.4.8000
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
 <!-- usagestop -->
-# Commands
+
 <!-- commands -->
-* [`flub bump`](#flub-bump)
-* [`flub bump deps`](#flub-bump-deps)
-* [`flub commands`](#flub-commands)
-* [`flub help [COMMAND]`](#flub-help-command)
-* [`flub info`](#flub-info)
-* [`flub version VERSION`](#flub-version-version)
+# Command Topics
 
-## `flub bump`
+* [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
+* [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
+* [`flub commands`](docs/commands.md) - list all the commands
+* [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
+* [`flub help`](docs/help.md) - Display help for flub.
+* [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
+* [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
+* [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 
-Bump versions of packages and dependencies.
-
-```
-USAGE
-  $ flub bump -t major|minor|patch|current [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p
-    <value> | ]
-
-FLAGS
-  -g, --releaseGroup=<option>  release group
-                               <options: client|server|azure|build-tools>
-  -p, --package=<value>        package
-  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -t, --type=<option>          (required) bump type
-                               <options: major|minor|patch|current>
-  -v, --verbose                Verbose logging.
-
-DESCRIPTION
-  Bump versions of packages and dependencies.
-
-EXAMPLES
-  $ flub bump
-```
-
-_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/bump.ts)_
-
-## `flub bump deps`
-
-Bump the dependencies version of specified package or release group
-
-```
-USAGE
-  $ flub bump deps [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p <value> | ]
-
-FLAGS
-  -g, --releaseGroup=<option>  release group
-                               <options: client|server|azure|build-tools>
-  -p, --package=<value>        package
-  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -v, --verbose                Verbose logging.
-
-DESCRIPTION
-  Bump the dependencies version of specified package or release group
-
-EXAMPLES
-  $ flub bump deps
-```
-
-## `flub commands`
-
-list all the commands
-
-```
-USAGE
-  $ flub commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--sort <value>] [--filter
-    <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
-
-FLAGS
-  -h, --help         Show CLI help.
-  -x, --extended     show extra columns
-  --columns=<value>  only show provided columns (comma-separated)
-  --csv              output is csv format [alias: --output=csv]
-  --filter=<value>   filter property by partial string matching, ex: name=foo
-  --hidden           show hidden commands
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --output=<option>  output in a more machine friendly format
-                     <options: csv|json|yaml>
-  --sort=<value>     property to sort by (prepend '-' for descending)
-  --tree             show tree of commands
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  list all the commands
-```
-
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
-
-## `flub help [COMMAND]`
-
-Display help for flub.
-
-```
-USAGE
-  $ flub help [COMMAND] [-n]
-
-ARGUMENTS
-  COMMAND  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for flub.
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
-
-## `flub info`
-
-Get info about the repo, release groups, and packages.
-
-```
-USAGE
-  $ flub info [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p]
-
-FLAGS
-  -g, --releaseGroup=<option>  release group
-                               <options: client|server|azure|build-tools>
-  -p, --[no-]private           Include private packages (default true).
-  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -v, --verbose                Verbose logging.
-
-DESCRIPTION
-  Get info about the repo, release groups, and packages.
-```
-
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
-
-## `flub version VERSION`
-
-Convert version strings between regular semver and the Fluid internal version scheme.
-
-```
-USAGE
-  $ flub version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
-
-ARGUMENTS
-  VERSION  The version to convert.
-
-FLAGS
-  -t, --type=<option>      bump type
-                           <options: major|minor|patch|current>
-  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  Convert version strings between regular semver and the Fluid internal version scheme.
-```
-
-_See code: [@fluid-internal/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
 <!-- commandsstop -->
+
+## Developer notes
+
+This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
+oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
+PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
+
+### Testing
+
+The `release` command provides a `testMode` flag, which subclasses are expected to check when handling states. If in
+test mode, all handled states should immediately return true. This enables tests to verify that new states are handled
+in some way. Other commands could adopt this, but only the `release command` uses it today.
+
+The `release` command also provides a `state` flag that can be used to initialize the state machine to a specific state.
+This is intended for testing.
 
 ## Trademark
 

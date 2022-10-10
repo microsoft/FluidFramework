@@ -31,9 +31,10 @@ export function create(
     // Express app configuration
     const app: express.Express = express();
 
+    const requestSize = config.get("requestSizeLimit");
     // initialize RestLess server translation
     const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
+        const restLessServer = new RestLessServer({ requestSizeLimit: requestSize });
         return (req, res, next) => {
             restLessServer
                 .translate(req, res)
@@ -59,7 +60,6 @@ export function create(
         app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
-    const requestSize = config.get("requestSizeLimit");
     app.use(json({ limit: requestSize }));
     app.use(urlencoded({ limit: requestSize, extended: false }));
 

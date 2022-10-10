@@ -231,6 +231,24 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
+
+    it("attaches if referring SharedCell becomes attached or is already attached", async () => {
+        const detachedCell1: ISharedCell = SharedCell.create(dataObject1.runtime);
+        const detachedCell2: ISharedCell = SharedCell.create(dataObject1.runtime);
+
+        // When an unattached cell refers to another unattached cell, both remain unattached
+        detachedCell1.set(detachedCell2.handle);
+        assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
+        assert.equal(detachedCell1.isAttached(), false, "detachedCell1 should not be attached");
+        assert.equal(detachedCell2.isAttached(), false, "detachedCell2 should not be attached");
+
+        // When referring cell becomes attached, the referred cell becomes attached
+        // and the attachment transitively passes to a second referred cell
+        sharedCell1.set(detachedCell1.handle);
+        assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
+        assert.equal(detachedCell1.isAttached(), true, "detachedCell1 should be attached");
+        assert.equal(detachedCell2.isAttached(), true, "detachedCell2 should be attached");
+    });
 });
 
 describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {

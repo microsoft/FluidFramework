@@ -19,13 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    SortedDictionary,
-} from "../base";
-import {
-    ProxString,
     RedBlackTree,
+    SortedDictionary,
     Stack,
-    TST,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
@@ -33,9 +29,8 @@ import {
     IMergeNode,
     ISegment,
     Marker,
-    MergeTree,
     reservedMarkerIdKey,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
 import {
@@ -46,13 +41,15 @@ import {
 import { SnapshotLegacy } from "../snapshotlegacy";
 import {
     IJSONTextSegment,
-    MergeTreeTextHelper,
     TextSegment,
 } from "../textSegment";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { ProxString, TST } from "./tst";
 
 function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
     const props: Property<TKey, TData>[] = [];
@@ -306,8 +303,16 @@ function checkInsertMergeTree(
     let checkText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     const clockStart = clock();
-    insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-        textSegment.text, undefined, undefined);
+    insertText({
+        mergeTree,
+        pos,
+        refSeq: UniversalSequenceNumber,
+        clientId: LocalClientId,
+        seq: UniversalSequenceNumber,
+        text: textSegment.text,
+        props: undefined,
+        opArgs: undefined,
+    });
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -338,7 +343,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -346,7 +351,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
     log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
@@ -381,8 +386,16 @@ export function mergeTreeLargeTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         const clockStart = clock();
-        insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-            s, undefined, undefined);
+        insertText({
+            mergeTree,
+            pos,
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            text: s,
+            props: undefined,
+            opArgs: undefined,
+        });
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -622,7 +635,7 @@ export function TestPack(verbose = true) {
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
-        const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
+        const avePackTime = ((packTime ?? 0) / (client.accumOps)).toFixed(1);
         const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         const adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
@@ -728,23 +741,17 @@ export function TestPack(verbose = true) {
 
         function clientProcessSome(client: TestClient, all = false) {
             const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
+            const countToApply = all
+                ? cliMsgCount
+                : random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             client.applyMessages(countToApply);
         }
 
         function serverProcessSome(_server: TestClient, all = false) {
             const svrMsgCount = _server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
+            const countToApply = all
+                ? svrMsgCount
+                : random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             return _server.applyMessages(countToApply);
         }
 
@@ -1462,11 +1469,7 @@ export class RandomPack {
 }
 
 function docNodeToString(docNode: DocumentNode) {
-    if (typeof docNode === "string") {
-        return docNode;
-    } else {
-        return docNode.name;
-    }
+    return typeof docNode === "string" ? docNode : docNode.name;
 }
 
 export type DocumentNode = string | DocumentTree;
@@ -1740,15 +1743,16 @@ function findReplacePerf(filename: string) {
                     1,
                     false,
                     undefined as any);
-                insertText(
-                    client.mergeTree,
-                    pos + i,
-                    UniversalSequenceNumber,
-                    client.getClientId(),
-                    1,
-                    "teh",
-                    undefined,
-                    undefined);
+                insertText({
+                    mergeTree: client.mergeTree,
+                    pos: pos + i,
+                    refSeq: UniversalSequenceNumber,
+                    clientId: client.getClientId(),
+                    seq: 1,
+                    text: "teh",
+                    props: undefined,
+                    opArgs: undefined,
+                });
                 pos = pos + i + 3;
                 cReplaces++;
             } else {

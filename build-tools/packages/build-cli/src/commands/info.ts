@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { isMonoRepoKind, MonoRepoKind, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { table } from "table";
+
+import { MonoRepoKind, isMonoRepoKind } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
 
 /**
  * The root `info` command.
  */
-export default class InfoCommand extends BaseCommand {
+export default class InfoCommand extends BaseCommand<typeof InfoCommand.flags> {
     static description = "Get info about the repo, release groups, and packages.";
 
     static flags = {
-        ...super.flags,
         releaseGroup: releaseGroupFlag({
             required: false,
         }),
@@ -27,17 +27,15 @@ export default class InfoCommand extends BaseCommand {
             description: "Include private packages (default true).",
             required: false,
         }),
+        ...BaseCommand.flags,
     };
 
-    static args = [];
-
     async run(): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { args, flags } = await this.parse(InfoCommand);
-        const context = await this.getContext(flags.verbose);
+        const flags = this.processedFlags;
+        const context = await this.getContext();
         let packages =
             flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
-                ? context.packagesForReleaseGroup(flags.releaseGroup)
+                ? context.packagesInReleaseGroup(flags.releaseGroup)
                 : [...context.fullPackageMap.values()];
 
         // Filter out private packages

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -17,7 +16,6 @@ import {
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import express from "express";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
@@ -38,7 +36,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    operationsDbMongoManager: MongoManager,
+    deltaService: IDeltaService,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size
@@ -91,13 +89,12 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        operationsDbMongoManager,
+        deltaService,
         storage,
         producer,
         appTenants,
         documentsCollection);
 
-    app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
 
     // Catch 404 and forward to error handler

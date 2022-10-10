@@ -10,7 +10,7 @@ import {
     MergeTreeDeltaType,
 } from "./ops";
 import { PropertySet } from "./properties";
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 
 export type MergeTreeDeltaOperationType =
     typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;

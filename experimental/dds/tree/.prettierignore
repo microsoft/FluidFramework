@@ -1,3 +1,9 @@
+# Common ignore patterns for packages using prettier.
+# This can be referenced by using the `--ignore-path` cli argument and providing the relative path to this file.
+# If your package requires other local exceptions, you can specify a local `.prettierignore` file with the appropriate
+# settings, and not specify the `--ignore-path` argument in the formatting scripts.
+# Note that you will (unfortunately) have to redundantly specify the below as applicable in that file.
+
 # Coverage
 nyc
 

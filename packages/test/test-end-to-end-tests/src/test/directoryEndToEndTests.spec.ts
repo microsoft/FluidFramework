@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
+describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -235,7 +235,7 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 expectAllAfterValues("testKey2", "/", "value2.2");
             });
 
-            it("set/delete", async () => {
+            it("set/delete", async function() {
                 // delete after set
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.set("testKey3", "value3.2");
@@ -247,7 +247,7 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized();
+                await provider.ensureSynchronized(this.timeout() / 3);
 
                 expectAllAfterValues("testKey3", "/", undefined);
             });
@@ -499,7 +499,7 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
             });
 
-            it("set/delete", async () => {
+            it("set/delete", async function() {
                 // delete after set
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.set("testKey3", "value3.2");
@@ -511,7 +511,7 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized();
+                await provider.ensureSynchronized(this.timeout() / 3);
 
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
@@ -570,13 +570,13 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             });
         });
 
-        it("Only creates a subdirectory once when simultaneously created", async () => {
+        it("Only creates a subdirectory once when simultaneously created", async function() {
             const root1SubDir = sharedDirectory1.createSubDirectory("testSubDir");
             root1SubDir.set("testKey", "testValue");
             const root2SubDir = sharedDirectory2.createSubDirectory("testSubDir");
             root2SubDir.set("testKey2", "testValue2");
 
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(this.timeout() / 2);
 
             assert.strictEqual(sharedDirectory1.getSubDirectory("testSubDir"), root1SubDir,
                 "Created two separate subdirectories in root1");
@@ -594,12 +594,15 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
              * https://github.com/microsoft/FluidFramework/issues/2400
              *
              * - A SharedDirectory in local state performs a set or directory operation.
+             *
              * - A second SharedDirectory is then created from the summary of the first one.
+             *
              * - The second SharedDirectory performs the same operation as the first one but with a different value.
+             *
              * - The expected behavior is that the first SharedDirectory updates the key with the new value. But in the
-             *   bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
-             *   an op. So when it gets a remote op with the same key, it ignores it as it has a pending op with the
-             *   same key.
+             * bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
+             * an op. So when it gets a remote op with the same key, it ignores it as it has a pending op with the
+             * same key.
              */
 
             it("can process set in local state", async () => {
@@ -677,6 +680,26 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                     undefined,
                     "The sub directory is not deleted from directory 1");
             });
+        });
+    });
+
+    describe("Attachment behavior", () => {
+        it("attaches if referring SharedDirectory becomes attached or is already attached", async () => {
+            const detachedDirectory1: ISharedDirectory = SharedDirectory.create(dataObject1.runtime);
+            const detachedDirectory2: ISharedDirectory = SharedDirectory.create(dataObject1.runtime);
+
+            // When an unattached directory refers to another unattached directory, both remain unattached
+            detachedDirectory1.set("newSharedDirectory", detachedDirectory2.handle);
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), false, "detachedDirectory1 should not be attached");
+            assert.equal(detachedDirectory2.isAttached(), false, "detachedDirectory2 should not be attached");
+
+            // When referring directory becomes attached, the referred directory becomes attached
+            // and the attachment transitively passes to a second referred directory
+            sharedDirectory1.set("newSharedDirectory", detachedDirectory1.handle);
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), true, "detachedDirectory1 should be attached");
+            assert.equal(detachedDirectory2.isAttached(), true, "detachedDirectory2 should be attached");
         });
     });
 });

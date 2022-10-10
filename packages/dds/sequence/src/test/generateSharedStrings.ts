@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
 import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalType } from "../intervalCollection";
+import {
+    SharedStringWithV1IntervalCollection,
+    V1IntervalCollectionSharedStringFactory,
+} from "./v1IntervalCollectionHelpers";
 
 export const LocationBase: string = "src/test/snapshots/";
 
@@ -20,9 +25,25 @@ export const supportedVersions = new Map<string, any>([
     ["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
     ["legacyWithCatchUp", {}],
     ["v1", { newMergeTreeSnapshotFormat: true }],
+    ["v1Intervals", {}],
 ]);
 
-export function* generateStrings(): Generator<[string, SharedString]> {
+function createIntervals(sharedString) {
+    const rand = new Random(Random.engines.mt19937().seed(0));
+    const collection1 = sharedString.getIntervalCollection("collection1");
+    collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+
+    const collection2 = sharedString.getIntervalCollection("collection2");
+    for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
+        collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+    }
+}
+
+export function* generateStrings(): Generator<{
+    snapshotPath: string;
+    expected: SharedString;
+    snapshotIsNormalized: boolean; // false for v1, true for new formats
+}> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
@@ -31,6 +52,17 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             string.initializeLocal();
             return string;
         };
+        const createNewV1SharedString = (): SharedStringWithV1IntervalCollection => {
+            const string = new SharedStringWithV1IntervalCollection(
+                dataStoreRuntime,
+                documentId,
+                V1IntervalCollectionSharedStringFactory.Attributes,
+            );
+            string.initializeLocal();
+            return string;
+        };
+
+        const normalized = version !== "v1Intervals";
 
         for (const key of Object.keys(options)) {
             dataStoreRuntime.options[key] = options[key];
@@ -43,7 +75,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerOnly`, sharedString];
+        yield { snapshotPath: `${version}/headerOnly`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // Big enough that snapshot will have body
@@ -51,7 +83,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerAndBody`, sharedString];
+        yield { snapshotPath: `${version}/headerAndBody`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // Very big sharedString
@@ -59,7 +91,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}-${i}`);
         }
 
-        yield [`${version}/largeBody`, sharedString];
+        yield { snapshotPath: `${version}/largeBody`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with markers
@@ -75,7 +107,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             });
         }
 
-        yield [`${version}/withMarkers`, sharedString];
+        yield { snapshotPath: `${version}/withMarkers`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with annotations
@@ -86,15 +118,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.annotateRange(i, i + 10, { bold: true });
         }
 
-        yield [`${version}/withAnnotations`, sharedString];
-
-        sharedString = createNewSharedString();
-        // Very big sharedString
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-            sharedString.insertText(0, `${insertText}-${i}`);
-        }
-
-        yield [`${version}/largeBody`, sharedString];
+        yield { snapshotPath: `${version}/withAnnotations`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with intervals
@@ -102,15 +126,23 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        const rand = new Random(Random.engines.mt19937().seed(0));
-        const collection1 = sharedString.getIntervalCollection("collection1");
-        collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+        createIntervals(sharedString);
 
-        const collection2 = sharedString.getIntervalCollection("collection2");
-        for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-            collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+        yield { snapshotPath: `${version}/withIntervals`, expected: sharedString, snapshotIsNormalized: normalized };
+
+        if (version === "v1Intervals") {
+            sharedString = createNewV1SharedString();
+            // SharedString with V1 intervals
+            for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
+                sharedString.insertText(0, `${insertText}${i}`);
+            }
+            createIntervals(sharedString);
+
+            yield {
+                snapshotPath: `${version}/withV1Intervals`,
+                expected: sharedString,
+                snapshotIsNormalized: normalized,
+            };
         }
-
-        yield [`${version}/withIntervals`, sharedString];
     }
 }

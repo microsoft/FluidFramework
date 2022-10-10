@@ -13,10 +13,15 @@ export interface ITokenService {
 }
 
 export interface ITokenResponse {
-    // JWT value
+    /**
+     * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} value.
+     */
     jwt: string;
 
-    // Flag indicating whether token was obtained from local cache
+    /**
+     * Flag indicating whether token was obtained from local cache.
+     * Undefined indicates that the source of the token could not be determined.
+     */
     fromCache?: boolean;
 }
 

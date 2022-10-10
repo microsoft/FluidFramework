@@ -14,27 +14,33 @@ import { ISequencedClient } from "./clients";
  * the proposal.
  */
 export interface IProposal {
-    // The key for the proposal
+    /**
+     * The key for the proposal.
+     */
     key: string;
 
-    // The value of the proposal
+    /**
+     * The value of the proposal.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any;
 }
 
 /**
  * Similar to IProposal except includes the sequence number when it was made in addition to the fields on IProposal
  */
-export type ISequencedProposal = { sequenceNumber: number; } & IProposal;
+export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an ISequencedProposal
  */
-export type IApprovedProposal = { approvalSequenceNumber: number; } & ISequencedProposal;
+export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an IApprovedProposal
  */
-export type ICommittedProposal = { commitSequenceNumber: number; } & IApprovedProposal;
+export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
  * Events fired by a Quorum in response to client tracking.
@@ -51,7 +57,15 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
     (
         event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            // TODO: use `unknown` instead.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            value: any,
+            approvalSequenceNumber: number,
+        ) => void,
+    );
 }
 
 /**
@@ -72,20 +86,24 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, ID
  * Interface for tracking proposals in the Quorum.
  */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;
 
+    // TODO: return `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get(key: string): any;
 }
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
  */
-export interface IQuorum extends
-    Omit<IQuorumClients, "on" | "once" | "off">,
-    Omit<IQuorumProposals, "on" | "once" | "off">,
-    IEventProvider<IQuorumEvents> { }
+export interface IQuorum
+    extends Omit<IQuorumClients, "on" | "once" | "off">,
+        Omit<IQuorumProposals, "on" | "once" | "off">,
+        IEventProvider<IQuorumEvents> {}
 
 export interface IProtocolState {
     sequenceNumber: number;

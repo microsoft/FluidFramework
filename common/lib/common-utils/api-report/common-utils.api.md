@@ -20,7 +20,7 @@ import { TransformedEvent } from '@fluidframework/common-definitions';
 // @public
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
@@ -50,10 +50,10 @@ export class Deferred<T> {
 // @public
 export const delay: (timeMs: number) => Promise<void>;
 
-// @public (undocumented)
+// @public
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
 
-// @public (undocumented)
+// @public
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
@@ -73,10 +73,10 @@ export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> i
     protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
 }
 
-// @public (undocumented)
+// @public
 export const fromBase64ToUtf8: (input: string) => string;
 
-// @public (undocumented)
+// @public
 export const fromUtf8ToBase64: (input: string) => string;
 
 // @public
@@ -224,9 +224,7 @@ export class PromiseTimer implements IPromiseTimer {
     constructor(defaultTimeout: number, defaultHandler: () => void);
     // (undocumented)
     clear(): void;
-    // (undocumented)
     get hasTimer(): boolean;
-    // (undocumented)
     start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult>;
     // (undocumented)
     protected wrapHandler(handler: () => void): void;
@@ -253,7 +251,7 @@ export class RateLimiter {
 }
 
 // @public
-export function safelyParseJSON(json: string): any;
+export function safelyParseJSON(json: string): any | undefined;
 
 // @public
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
@@ -261,7 +259,7 @@ export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTime
 // @public
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
@@ -328,7 +326,5 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
 // @public
 export function unreachableCase(_: never, message?: string): never;
-
-// (No @packageDocumentation comment for this package)
 
 ```

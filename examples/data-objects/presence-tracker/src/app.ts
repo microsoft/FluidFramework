@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SignalManager } from "@fluid-experimental/data-objects";
+import { Signaler } from "@fluid-experimental/data-objects";
 import {
     IFluidContainer,
     ContainerSchema,
@@ -22,7 +22,7 @@ import { MouseTracker } from "./MouseTracker";
 const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
-        signalManager: SignalManager,
+        signaler: Signaler,
     },
 };
 
@@ -113,12 +113,11 @@ async function start(): Promise<void> {
     const focusTracker = new FocusTracker(
         container,
         services.audience,
-        container.initialObjects.signalManager as SignalManager,
+        container.initialObjects.signaler as Signaler,
     );
     const mouseTracker = new MouseTracker(
-        container,
         services.audience,
-        container.initialObjects.signalManager as SignalManager,
+        container.initialObjects.signaler as Signaler,
     );
     renderFocusPresence(focusTracker, contentDiv);
     renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);

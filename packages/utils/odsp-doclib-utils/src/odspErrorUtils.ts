@@ -5,16 +5,21 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, TelemetryLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
+    DriverErrorTelemetryProps,
     isOnline,
     RetryableError,
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError, IOdspErrorAugmentations } from "@fluidframework/odsp-driver-definitions";
+import {
+    OdspErrorType,
+    OdspError,
+    IOdspErrorAugmentations,
+ } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
@@ -59,6 +64,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     // Ex. x-fluid-telemetry:Origin=c
     const fluidTelemetry = headers.get("x-fluid-telemetry");
     if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
+        additionalProps.xFluidTelemetry = fluidTelemetry;
         const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
         for (const [key, value] of keyValueMap) {
             if ("Origin" === key.trim()) {
@@ -93,6 +99,21 @@ export interface OdspErrorResponse {
     error: OdspErrorResponseInnerError & {
         message: string;
     };
+}
+
+/** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
+export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
+    readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        readonly redirectLocation: string | undefined,
+        props: DriverErrorTelemetryProps,
+    ) {
+        // do not log redirectLocation (URL can contain sensitive info)
+        super(message, props, new Set(["redirectLocation"]));
+    }
 }
 
 /** Empirically-based type guard for error responses from ODSP */
@@ -141,9 +162,9 @@ export function createOdspNetworkError(
     let facetCodes: string[] | undefined;
     let innerMostErrorCode: string | undefined;
     if (parseResult.success) {
-        // Log the whole response if it looks like the error format we expect
-        props.response = responseText;
         const errorResponse = parseResult.errorResponse;
+        // logging the error response message
+        props.responseMessage = errorResponse.error.message;
         facetCodes = parseFacetCodes(errorResponse);
         if (facetCodes !== undefined) {
             innerMostErrorCode = facetCodes[0];
@@ -178,6 +199,10 @@ export function createOdspNetworkError(
                 // For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
                 const responseError = parseResult?.errorResponse?.error;
                 redirectLocation = responseError?.["@error.redirectLocation"];
+                if (redirectLocation !== undefined) {
+                    error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+                    break;
+                }
             }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverProps);
@@ -232,7 +257,8 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
-    enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
+
+    enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }
 
@@ -241,15 +267,10 @@ export function enrichOdspError(
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
-    redirectLocation?: string,
 ) {
     error.online = OnlineStatus[isOnline()];
     if (facetCodes !== undefined) {
         error.facetCodes = facetCodes;
-    }
-
-    if (redirectLocation !== undefined) {
-        error.redirectLocation = redirectLocation;
     }
 
     if (response) {

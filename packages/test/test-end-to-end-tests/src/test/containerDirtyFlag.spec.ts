@@ -15,6 +15,7 @@ import {
     ITestContainerConfig,
     ITestObjectProvider,
     DataObjectFactoryType,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -32,12 +33,6 @@ const lots = 30;
 const testValue = "test value";
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
-
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return new Promise((resolve) => container.once("connected", () => resolve()));
-    }
-}
 
 const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;
@@ -127,10 +122,6 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
         });
 
         it("handles container with pending ops not to be sent out", async function() {
-            // GitHub issue: #9534
-            if (provider.driver.type === "tinylicious") {
-                this.skip();
-            }
             const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
                 [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
             });

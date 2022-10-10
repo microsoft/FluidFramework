@@ -24,12 +24,12 @@ export async function run<T extends IResources>(
         .start(logger)
         .catch(async (error) => {
             await runner
-                    .stop()
-                    .catch((innerError) => {
-                        logger?.error(`Could not stop runner due to error: ${innerError}`);
-                        Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
-                        error.forceKill = true;
-                    });
+                .stop()
+                .catch((innerError) => {
+                    logger?.error(`Could not stop runner due to error: ${innerError}`);
+                    Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
+                    error.forceKill = true;
+                });
             return Promise.reject(error);
         });
 
@@ -38,11 +38,13 @@ export async function run<T extends IResources>(
         runner.stop();
     });
 
-    // Wait for the runner to complete
-    await runningP;
-
-    // And then dispose of any resources
-    await resources.dispose();
+    try {
+        // Wait for the runner to complete
+        await runningP;
+    } finally {
+        // And then dispose of any resources
+        await resources.dispose();
+    }
 }
 
 /**

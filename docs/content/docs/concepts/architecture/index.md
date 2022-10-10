@@ -14,7 +14,7 @@ level, identify the important lower level concepts, and discuss some of our key 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
 ```goat
-+-----Client----------------------------------------------------------------+
++-----Client (or Host)------------------------------------------------------+
 |                                                                           |
 | +----------------------------------------------------------------------+  |
 | |        Fluid Loader                                                  |  |
@@ -34,7 +34,7 @@ The Fluid loader connects to the Fluid service and loads a Fluid container.
 | | +--------------------------+  +----------------+  +----------------+ |  |  +---------------------+
 | | |                          |  |                |  |                | |  |  |                     |
 | | |                          |  |                |  |                | |  |  |    Fluid Service    |
-| | |   Shared Object          |  | Shared Object  |  | Shared Object  | |  |  |                     |
+| | |      Data Store          |  |   Data Store   |  |   Data Store   | |  |  |                     |
 | | |                          |  |                |  |                | |  |  +---------------------+
 | | |                          |  |                |  |                | |  |
 | | |                          |  |                |  |                | |  |

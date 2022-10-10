@@ -144,7 +144,7 @@ export class Collection<T> {
     /**
      * Filter out by function
      * @param in_filterFunction - with arguments key and item
-     * @returns  New filtered collection
+     * @returns A new filtered collection
      */
     filter(in_filterFunction: (key: string, item: T) => boolean): Collection<T> {
         const rtn = new Collection<T>();
@@ -171,22 +171,16 @@ export class Collection<T> {
     filterByKey(in_filterKey: string | string[]): Collection<T> {
         const rtn = new Collection<T>();
 
-        let filterCb;
-
-        if (_.isArray(in_filterKey)) {
-            filterCb = function(in_key, in_item) {
+        const filterCb = _.isArray(in_filterKey)
+            ? function(in_key, in_item) {
                 if (in_filterKey.includes(in_key)) {
                     rtn.add(in_key, in_item);
                 }
-            };
-        } else {
-            // if in_filterKey is an array
-            filterCb = function(in_key, in_item) {
+            } : function(in_key, in_item) {
                 if (in_key === in_filterKey) {
                     rtn.add(in_key, in_item);
                 }
             };
-        }
 
         this.iterate(filterCb);
 
@@ -309,9 +303,9 @@ export class Collection<T> {
     /**
      * Set an existing key to a value. If key doesn't exist this call will throw
      * an error.
-     * @param in_key - the key we want to modify
-     * @param  in_value - the value we are to set at this key
-     * @returns the value passed in
+     * @param in_key - The key we want to modify
+     * @param in_value - The value we are to set at this key
+     * @returns The value passed in
      */
     set(in_key: string, in_value: T) {
         this._checkKeyExists(in_key);
@@ -324,7 +318,7 @@ export class Collection<T> {
     /**
      * Iterate over this collection and run the callback with passing the key and
      * item in the iteration loop.
-     * @param  in_callback - a function that we will call on each item
+     * @param in_callback - A function that we will call on each item
      * of this collection. If the callback returns false then the iteration will exit early.
      */
     iterate(in_callback) {

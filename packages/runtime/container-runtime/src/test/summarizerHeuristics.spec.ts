@@ -14,16 +14,15 @@ import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerH
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
 
-describe.only("Runtime", () => {
-    describe.only("Summarization", () => {
-        describe.only("Summarize Heuristic Runner", () => {
+describe("Runtime", () => {
+    describe("Summarization", () => {
+        describe("Summarize Heuristic Runner", () => {
             let clock: sinon.SinonFakeTimers;
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
 
             const defaultSummaryConfig: ISummaryConfigurationHeuristics = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
@@ -47,7 +46,7 @@ describe.only("Runtime", () => {
             };
             const getLastAttempt = () => attempts.length > 0 ? attempts[attempts.length - 1] : undefined;
             function assertAttemptCount(count: number, message?: string) {
-                const fullMessage = `${attempts.length} !== ${count}; ${message || "unexpected attempt count"}`;
+                const fullMessage = `${attempts.length} !== ${count}; ${message ?? "unexpected attempt count"}`;
                 assert(attempts.length === count, fullMessage);
             }
 
@@ -55,7 +54,6 @@ describe.only("Runtime", () => {
                 refSequenceNumber = 0,
                 lastOpSequenceNumber = refSequenceNumber,
                 summaryTime = Date.now(),
-                idleTime = defaultSummaryConfig.idleTime,
                 maxTime = defaultSummaryConfig.maxTime,
                 maxOps = defaultSummaryConfig.maxOps,
                 maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
@@ -76,7 +74,6 @@ describe.only("Runtime", () => {
                 data = new SummarizeHeuristicData(lastOpSequenceNumber, { refSequenceNumber, summaryTime });
                 summaryConfig = {
                     state: "enabled",
-                    idleTime,
                     maxTime,
                     maxOps,
                     maxAckWaitTime,

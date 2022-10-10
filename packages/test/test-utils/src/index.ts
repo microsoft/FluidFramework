@@ -12,3 +12,6 @@ export * from "./retry";
 export * from "./testContainerRuntimeFactory";
 export * from "./testFluidObject";
 export * from "./timeoutUtils";
+export * from "./DriverWrappers";
+export * from "./TestSummaryUtils";
+export * from "./TestConfigs";

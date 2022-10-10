@@ -11,25 +11,23 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
- * @param target The ComponentArray that holds a reference to the
+ * @param target - The ComponentArray that holds a reference to the
  * {@link external:ArrayProperty ArrayProperty}.
  * @return {Iterator} The iterator.
  * @hidden
  */
 const createArrayIterator = (target: ComponentArray) => function*() {
     for (let i = 0; i < target.getProperty().getLength(); i++) {
-        if (PropertyFactory.instanceOf(target.getProperty().get(i)!, "BaseProperty")) {
-            yield PropertyProxy.proxify(target.getProperty().get(i)!);
-        } else {
-            yield target.getProperty().get(i);
-        }
+        yield (PropertyFactory.instanceOf(target.getProperty().get(i)!, "BaseProperty")
+            ? PropertyProxy.proxify(target.getProperty().get(i)!)
+            : target.getProperty().get(i));
     }
 };
 
 /**
  * Prepares the elements that are to be inserted into the {@link external:ArrayProperty ArrayProperty}.
- * @param property The ArrayProperty in which elements are to be inserted.
- * @param elements The elements to be inserted.
+ * @param property - The ArrayProperty in which elements are to be inserted.
+ * @param elements - The elements to be inserted.
  * @return The array that contains elements ready for insertion.
  * @hidden
  */
@@ -39,7 +37,7 @@ const prepareElementsForInsertion =
 
 /**
  * ComponentArray extends Array to work directly on the data stored in PropertyDDS.
- *  No local copy of the data is maintained.
+ * No local copy of the data is maintained.
  * Serves as input for the {@link ComponentArrayProxyHandler}.
  * @extends Array
  * @hidden
@@ -49,7 +47,7 @@ class ComponentArray extends Array {
 
     /**
      * Sets the {@link external:ArrayProperty ArrayProperty} to operate on sets the Symbol.iterator attribute.
-     * @param property The ArrayProperty to operate on.
+     * @param property - The ArrayProperty to operate on.
      */
     constructor(private readonly property: ArrayProperty) {
         super();
@@ -169,11 +167,9 @@ class ComponentArray extends Array {
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, "BaseProperty")) {
-            return PropertyProxy.proxify(popped);
-        } else {
-            return popped;
-        }
+        return PropertyFactory.instanceOf(popped, "BaseProperty")
+            ? PropertyProxy.proxify(popped)
+            : popped;
     }
 
     /**
@@ -204,11 +200,7 @@ class ComponentArray extends Array {
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, "BaseProperty")) {
-            return PropertyProxy.proxify(first);
-        } else {
-            return first;
-        }
+        return PropertyFactory.instanceOf(first, "BaseProperty") ? PropertyProxy.proxify(first) : first;
     }
 
     /**
@@ -289,8 +281,8 @@ class ComponentArray extends Array {
 
     /**
      * Swaps two elements in place in the array.
-     * @param idxOne The index of one of the elements to be swapped.
-     * @param idxTwo The index of one of the elements to be swapped.
+     * @param idxOne - The index of one of the elements to be swapped.
+     * @param idxTwo - The index of one of the elements to be swapped.
      */
     swap(idxOne: number, idxTwo: number) {
         if (idxOne >= this.property.getLength() || idxTwo >= this.property.getLength()) {

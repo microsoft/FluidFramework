@@ -49,7 +49,8 @@ export interface ICellProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export interface INameCellProps {
-  editReferenceHandler: () => void;
+  editReferenceHandler: any;
+  readOnly: boolean;
 }
 
 const deletionHandler = (rowData: IInspectorRow) => {
@@ -69,11 +70,9 @@ const deletionHandler = (rowData: IInspectorRow) => {
 const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTextAreaElement>) => {
   const prop = (rowData.parent! as BaseProperty);
   let path = prop.getAbsolutePath();
-  if (prop.getContext() === "single") {
-    path += (!prop.isRoot() ? "." : "") + rowData.propertyId;
-  } else {
-    path += `[${ rowData.propertyId }]`;
-  }
+  path += prop.getContext() === "single"
+    ? (!prop.isRoot() ? "." : "") + rowData.propertyId
+    : `[${ rowData.propertyId }]`;
 
   const el = ref.current;
   el.value = path;
@@ -102,7 +101,7 @@ const NameCellHoveredClass = "NameCell__hovered";
  * Inspector table name column cell. Displays the property name for which the row represents.
  */
 const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellProps & ICellProps> =
-({ rowData, iconRenderer, classes, className, editReferenceHandler, ...restProps }) => {
+({ rowData, iconRenderer, classes, className, editReferenceHandler, readOnly, ...restProps }) => {
   const icon = iconRenderer(rowData);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -146,9 +145,11 @@ const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellPro
               handler: copyHandler.bind(null, rowData),
             },
             delete:
-              (!rowData.parentIsConstant && !isStaticProperty(rowData.parent as BaseProperty, rowData.propertyId)) ?
+              (
+                !readOnly &&
+                !rowData.parentIsConstant && !isStaticProperty(rowData.parent as BaseProperty, rowData.propertyId)) ?
                 { handler: () => deletionHandler(rowData) } : undefined,
-            edit: (rowData.isReference) ?
+            edit: !readOnly && (rowData.isReference) ?
               { handler: editReferenceHandler } : undefined,
           }}
           modalTextParameters={{

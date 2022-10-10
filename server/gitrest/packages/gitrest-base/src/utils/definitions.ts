@@ -14,6 +14,7 @@ export enum Constants {
 export interface IStorageDirectoryConfig {
     useRepoOwner: boolean;
     baseDir?: string;
+    suffixPath?: string;
 }
 
 export interface IExternalWriterConfig {

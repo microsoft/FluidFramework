@@ -15,14 +15,11 @@ const { BaseProperty } = require('./baseProperty');
 export class ValueProperty extends BaseProperty {
     /**
      * @virtual
-     * @param {Object=} in_params - the parameters
-     * @param {Object=} in_params.dataObj optional argument containing an object
-     *                  that should be used as the backing store of this value
-     *                  property
-     * @param {Object=} in_params.dataId optional argument must be provided when
-     *                  in_params.dataObj is passed. Must contain a valid member
-     *                  name of dataObj. This member will be used to set/get
-     *                  values of this value property
+     * @param {Object=} in_params - The parameters
+     * @param {Object=} in_params.dataObj - Optional argument containing an object that should be used as the backing
+     * store of this value property.
+     * @param {Object=} in_params.dataId - optional argument must be provided when in_params.dataObj is passed. Must
+     * contain a valid member name of dataObj. This member will be used to set/get values of this value property.
      * @constructor
      * @protected
      * @extends property-properties.BaseProperty
@@ -56,16 +53,16 @@ export class ValueProperty extends BaseProperty {
     /**
      * Ensure the array dirty mask is also cleaned when cleaning the tree.
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean.
+     * If none are supplied all will be removed.
      */
     cleanDirty(in_flags) {
         this._cleanDirty(in_flags);
     }
 
     /**
-     * @param {*} in_value the new value
-     * @throws if property is read only
+     * @param {*} in_value - The new value
+     * @throws If property is read only
      */
     setValue(in_value) {
         this._checkIsNotReadOnly(true);
@@ -75,10 +72,9 @@ export class ValueProperty extends BaseProperty {
     /**
      * Internal function to update the value of a property
      *
-     * @param {*} in_value the new value
+     * @param {*} in_value - The new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @return {boolean} true if the value was actually changed
      */
     _setValue(in_value, in_reportToView) {
@@ -139,16 +135,14 @@ export class ValueProperty extends BaseProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for ValueProperty
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy.
+     * Has no effect for ValueProperty
      * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * The type of dirtiness to use when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
      *
      * @return {*} The serialized representation of this property
      * @private
@@ -156,11 +150,7 @@ export class ValueProperty extends BaseProperty {
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return this._data;
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType) ? this._data : {};
         } else {
             return this._data;
         }
@@ -170,8 +160,7 @@ export class ValueProperty extends BaseProperty {
      * Calls back the given function with a human-readable string
      * representation of the property.
      * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
-     *                              Used for arrays.
+     * @param {string} externalId - Name of the current property at the upper level. Used for arrays.
      * @param {function} printFct - Function to call for printing each property
      */
     _prettyPrint(indent, externalId, printFct) {

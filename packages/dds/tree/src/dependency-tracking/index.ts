@@ -9,3 +9,4 @@ export * from "./disposingDependee";
 export * from "./simpleDependee";
 export * from "./simpleObservingDependent";
 export * from "./incrementalObservation";
+export * from "./cachedValue";

@@ -33,31 +33,40 @@ async function evaluateBrowserHash(
 ): Promise<string> {
     // convert the file to a string to pass into page.evaluate because
     // Buffer/Uint8Array are not directly jsonable
-    const fileCharCodeString = Array.prototype.map.call(file, (byte) => {
-        return String.fromCharCode(byte);
-    }).join("");
+    const fileCharCodeString = Array.prototype.map
+        .call(file, (byte) => {
+            return String.fromCharCode(byte);
+        })
+        .join("");
 
     // puppeteer has issues with calling crypto through page.exposeFunction but not directly,
     // so pull in the function as a string and eval it directly instead
     // there are also issues around nested function calls when using page.exposeFunction, so
     // do only the crypto.subtle part in page.evaluate and do the other half outside
     const browserHashFn = HashBrowser.__get__("digestBuffer").toString();
-    const hashCharCodeString = await (page.evaluate(async (fn, f, alg) => {
-        // convert back into Uint8Array
-        const fileCharCodes = Array.prototype.map.call([...f], (char) => {
-            return char.charCodeAt(0) as number;
-        }) as number[];
-        const fileUint8 = Uint8Array.from(fileCharCodes);
+    const hashCharCodeString = await (page.evaluate(
+        async (fn, f, alg) => {
+            // convert back into Uint8Array
+            const fileCharCodes = Array.prototype.map.call([...f], (char) => {
+                return char.charCodeAt(0) as number;
+            }) as number[];
+            const fileUint8 = Uint8Array.from(fileCharCodes);
 
-        // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-        const hashFn = Function(`"use strict"; return ( ${fn} );`);
-        const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
+            // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+            const hashFn = Function(`"use strict"; return ( ${fn} );`);
+            const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
 
-        // Similarly, return the hash array as a string instead of a Uint8Array
-        return Array.prototype.map.call(pageHashArray, (byte) => {
-            return String.fromCharCode(byte);
-        }).join("");
-    }, browserHashFn, fileCharCodeString, algorithm) as Promise<string>);
+            // Similarly, return the hash array as a string instead of a Uint8Array
+            return Array.prototype.map
+                .call(pageHashArray, (byte) => {
+                    return String.fromCharCode(byte);
+                })
+                .join("");
+        },
+        browserHashFn,
+        fileCharCodeString,
+        algorithm,
+    ) as Promise<string>);
 
     // reconstruct the Uint8Array from the string
     const charCodes = Array.prototype.map.call([...hashCharCodeString], (char) => {

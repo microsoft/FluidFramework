@@ -1,18 +1,14 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "composite": true,
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "perf_hooks": ["types/perf_hooks.d.ts"]
-        }
+  "extends": "@fluidframework/build-common/ts-common-config.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "perf_hooks": ["types/perf_hooks.d.ts"],
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "src/test/**/*"
-    ]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/test/**/*"],
 }

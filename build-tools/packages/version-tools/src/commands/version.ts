@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { isVersionBumpTypeExtended } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import * as semver from "semver";
 import { table } from "table";
+
+import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
+    MINIMUM_PUBLIC_VERSION,
     bumpInternalVersion,
-    DEFAULT_PUBLIC_VERSION,
     fromInternalScheme,
-    toInternalScheme,
     getVersionRange,
     isInternalVersionScheme,
+    toInternalScheme,
 } from "../internalVersionScheme";
 
 interface VersionScheme {
@@ -51,7 +51,7 @@ export default class VersionCommand extends Command {
             required: false,
         }),
         publicVersion: Flags.string({
-            default: DEFAULT_PUBLIC_VERSION,
+            default: MINIMUM_PUBLIC_VERSION,
             description: "The public version to use in the Fluid internal version.",
         }),
     };
@@ -80,6 +80,11 @@ export default class VersionCommand extends Command {
         {
             description: "You can use ^ and ~ as a shorthand.",
             command: "<%= config.bin %> <%= command.id %> ^1.0.0",
+        },
+        {
+            description:
+                "You can use the 'current' bump type to calculate ranges without bumping the version.",
+            command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type current",
         },
     ];
 

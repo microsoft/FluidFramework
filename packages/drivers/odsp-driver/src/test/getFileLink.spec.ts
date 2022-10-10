@@ -14,16 +14,17 @@ describe("getFileLink", () => {
     const logger = new TelemetryUTLogger();
     const storageTokenFetcher = async () => "StorageToken";
     const fileItemResponse = {
-        webDavUrl: `${siteUrl}/fetchDavUrl`,
-        webUrl: `${siteUrl}/fetchWebUrl`,
+        webDavUrl: "fetchDavUrl",
+        webUrl: "fetchWebUrl",
+        sharepointIds: { listItemUniqueId: "fetchFileId" },
     };
 
     it("should return share link with existing access", async () => {
         const result = await mockFetchMultiple(
-            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, logger),
             [
                 async () => okResponse({}, fileItemResponse),
-                async () => okResponse({}, { d: { LinkingUrl: "sharelink" } }),
+                async () => okResponse({}, { d: { directUrl: "sharelink" } }),
             ],
         );
         assert.strictEqual(
@@ -32,7 +33,7 @@ describe("getFileLink", () => {
 
     it("should reject if file web dav url is missing", async () => {
         await assert.rejects(mockFetchMultiple(
-            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId5" }, "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId5" }, logger),
             [
                 async () => okResponse({}, {}),
                 // We retry once on malformed response from server, so need a second response mocked.
@@ -43,7 +44,7 @@ describe("getFileLink", () => {
 
     it("should reject if file item is not found", async () => {
         await assert.rejects(mockFetchSingle(async () => {
-            return getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId6" }, "Enterprise", logger);
+            return getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId6" }, logger);
             },
             notFound,
         ), "File link should reject when not found");

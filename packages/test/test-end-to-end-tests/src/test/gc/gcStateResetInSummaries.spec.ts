@@ -12,14 +12,17 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestContainerConfig,
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+ } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import {
-    createSummarizer,
     getGCStateFromSummary,
-    summarizeNow,
-    waitForContainerConnection,
 } from "./gcTestSummaryUtils";
 
 /**

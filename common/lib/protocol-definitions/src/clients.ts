@@ -35,14 +35,12 @@ export interface IClient {
 }
 
 export interface ISequencedClient {
-
     client: IClient;
 
     sequenceNumber: number;
 }
 
 export interface ISignalClient {
-
     clientId: string;
 
     client: IClient;

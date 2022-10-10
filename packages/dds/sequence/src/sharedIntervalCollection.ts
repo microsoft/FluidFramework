@@ -31,8 +31,8 @@ import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 const snapshotFileName = "header";
 
 /**
- * The factory that defines the SharedIntervalCollection
- * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ * The factory that defines the SharedIntervalCollection.
+ * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -77,12 +77,11 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
 /**
- * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollection
     extends SharedObject implements ISharedIntervalCollection<Interval> {
@@ -125,16 +124,6 @@ export class SharedIntervalCollection
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             new IntervalCollectionValueType(),
         );
-    }
-
-    /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
-     */
-    public async waitIntervalCollection(
-        label: string,
-    ): Promise<IntervalCollection<Interval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
     public getIntervalCollection(label: string): IntervalCollection<Interval> {

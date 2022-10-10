@@ -10,6 +10,9 @@ parameters:
 - name: feedName
   type: string
 
+- name: devFeedName
+  type: string
+
 - name: official
   type: string
 
@@ -36,7 +39,8 @@ steps:
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
@@ -52,6 +56,8 @@ steps:
 
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
+          echo Deleting @fluid-msinternal packages
+          rm -f fluid-msinternal-*
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
@@ -82,8 +88,21 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       t1=0
-      for f in *.tgz
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
+        sorted=true
+      else
+        packages=*.tgz
+        sorted=false
+      fi
+      for packageName in $packages
       do
+        if [[ $sorted == true ]]; then
+          f=$(find -name "${packageName}-[0-9]*.tgz")
+        else
+          f=$packageName
+        fi
+        if [[ $f != "" ]]; then
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
@@ -108,6 +127,7 @@ steps:
               fi
           fi
           rm publish_log
+        fi
       done
       rm ~/.npmrc
       exit $t1

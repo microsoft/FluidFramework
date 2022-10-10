@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -25,7 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { InMemoryCache } from "./cache";
+import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
 
@@ -37,6 +38,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enableDiscovery: false,
     enableWholeSummaryUpload: false,
     enableRestLess: true,
+    enableInternalSummaryCaching: true,
 };
 
 /**
@@ -46,8 +48,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
+    private readonly blobCache: ICache<ArrayBufferLike>;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -57,6 +59,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        this.blobCache = new InMemoryCache<ArrayBufferLike>();
+        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>()
+            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -121,20 +127,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         let documentId: string;
         let token: string | undefined;
         let session: ISession | undefined;
-        let fluidResolvedUrl: IResolvedUrl;
         if (typeof res === "string") {
             documentId = res;
         } else {
             documentId = res.id;
             token = res.token;
-            session = res.session;
+            session = this.driverPolicies.enableDiscovery ? res.session : undefined;
         }
-        if (session && this.driverPolicies.enableDiscovery) {
-            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
-        } else {
-            fluidResolvedUrl = resolvedUrl;
-        }
-        parsedUrl = parseFluidUrl(fluidResolvedUrl.url);
+        parsedUrl = parseFluidUrl(resolvedUrl.url);
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
@@ -147,7 +147,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
-        const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
@@ -157,22 +157,22 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         return this.createDocumentService(
             {
-                ...fluidResolvedUrl,
+                ...resolvedUrl,
                 url: parsedUrl.toString(),
                 id: documentId,
                 endpoints: {
-                    ...fluidResolvedUrl.endpoints,
+                    ...resolvedUrl.endpoints,
                     deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
             logger,
             clientIsSummarizer,
-            true,
+            session,
         );
     }
 
     /**
-     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createDocumentService}
      *
      * @returns Routerlicious document service.
      */
@@ -180,7 +180,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
         clientIsSummarizer?: boolean,
-        isCreateContainer?: boolean,
+        session?: ISession,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -192,8 +192,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
-        let fluidResolvedUrl: IResolvedUrl;
-        if (!isCreateContainer && this.driverPolicies.enableDiscovery) {
+        const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
+            if (!this.driverPolicies.enableDiscovery) {
+                return resolvedUrl;
+            }
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,
@@ -204,19 +206,20 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.driverPolicies.enableRestLess,
                 resolvedUrl.endpoints.ordererUrl,
             );
-
-            // the backend responds with the actual document session associated with the container.
-            const session: ISession = await ordererRestWrapper.get<ISession>(
+            // The service responds with the current document session associated with the container.
+            const discoveredSession = await ordererRestWrapper.get<ISession>(
                 `/documents/${tenantId}/session/${documentId}`,
             );
-            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
-        } else {
-            fluidResolvedUrl = resolvedUrl;
-        }
+            return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
+        };
+        const fluidResolvedUrl: IFluidResolvedUrl = session !== undefined
+            ? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
+            : await discoverFluidResolvedUrl();
 
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
         if (!ordererUrl || !deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
@@ -226,6 +229,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             fluidResolvedUrl,
             ordererUrl,
             deltaStorageUrl,
+            deltaStreamUrl,
             storageUrl,
             logger2,
             this.tokenProvider,
@@ -233,7 +237,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             documentId,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            discoverFluidResolvedUrl);
     }
 }
 
@@ -248,7 +253,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  * - How would a user delete the created document?
  * - What would a retry pattern look like here?
  */
- export class DocumentPostCreateError extends Error {
+export class DocumentPostCreateError extends Error {
     public constructor(
         /**
          * Inner error being wrapped.

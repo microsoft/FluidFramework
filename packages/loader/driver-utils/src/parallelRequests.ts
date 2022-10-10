@@ -23,7 +23,7 @@ type WorkingState = "working" | "done" | "canceled";
  * data in the right order. Take a look at UT for examples.
  * @param concurrency - level of concurrency
  * @param from - starting point of fetching data (inclusive)
- * @param to  - ending point of fetching data. exclusive, or undefined if unknown
+ * @param to - ending point of fetching data. exclusive, or undefined if unknown
  * @param payloadSize - batch size
  * @param logger - logger to use
  * @param requestCallback - callback to request batches

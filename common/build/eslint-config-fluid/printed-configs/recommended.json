@@ -200,7 +200,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -289,6 +289,9 @@
             "error"
         ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
             "error"
         ],
         "@typescript-eslint/prefer-optional-chain": [
@@ -500,6 +503,9 @@
         "import/no-named-as-default-member": [
             1
         ],
+        "import/no-nodejs-modules": [
+            "warn"
+        ],
         "import/no-unassigned-import": [
             "error"
         ],
@@ -525,10 +531,45 @@
         "jsdoc/check-examples": [
             "off"
         ],
+        "jsdoc/check-indentation": [
+            "error"
+        ],
+        "jsdoc/check-line-alignment": [
+            "error"
+        ],
         "jsdoc/check-tag-names": [
             "off"
         ],
+        "jsdoc/empty-tags": [
+            "error"
+        ],
+        "jsdoc/multiline-blocks": [
+            "error",
+            {
+                "noSingleLineBlocks": true
+            }
+        ],
+        "jsdoc/no-bad-blocks": [
+            "error"
+        ],
+        "jsdoc/require-asterisk-prefix": [
+            "error"
+        ],
+        "jsdoc/require-description": [
+            "error",
+            {
+                "checkConstructors": false,
+                "checkGetters": true,
+                "checkSetters": true
+            }
+        ],
         "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
+        "jsdoc/require-param-description": [
+            "error"
+        ],
+        "jsdoc/require-returns-description": [
             "error"
         ],
         "jsx-quotes": [

@@ -4,14 +4,12 @@
  */
 
 module.exports = {
-    "extends": [
-        "./recommended.js"
-    ],
-    "overrides": [
+    extends: ["./recommended.js"],
+    overrides: [
         {
             // Rules only for TypeScript files
-            "files": ["*.ts", "*.tsx"],
-            "rules": {
+            files: ["*.ts", "*.tsx"],
+            rules: {
                 // STRICT RULES
                 "@typescript-eslint/explicit-member-accessibility": [
                     "error",
@@ -22,8 +20,8 @@ module.exports = {
                             constructors: "no-public",
                             methods: "explicit",
                             properties: "explicit",
-                            parameterProperties: "explicit"
-                        }
+                            parameterProperties: "explicit",
+                        },
                     },
                 ],
 
@@ -32,15 +30,10 @@ module.exports = {
                 "@typescript-eslint/no-parameter-properties": [
                     "warn",
                     {
-                        "allows": [
-                            "private",
-                            "private readonly",
-                            "public readonly",
-                            "readonly",
-                        ]
+                        allows: ["private", "private readonly", "public readonly", "readonly"],
                     },
                 ],
-            }
-        }
-    ]
+            },
+        },
+    ],
 };

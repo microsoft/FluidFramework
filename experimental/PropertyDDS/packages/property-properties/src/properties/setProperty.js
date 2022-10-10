@@ -6,6 +6,7 @@
 /**
  * @fileoverview Definition of the set property class
  */
+
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const _ = require('lodash');
@@ -15,6 +16,7 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
+
 /**
  * A SetProperty is a collection class that can contain an unordered set of properties. These properties
  * must derive from NamedProperty and their URN is used to identify them within the set.
@@ -53,14 +55,18 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-    * Returns an object with all the nested values contained in this property
-    * @return {object} an object representing the values of your property
-    * for example: {
+    * Returns an object with all the nested values contained in this property.
+    * @return {object} An object representing the values of your property.
+    * For example:
+    *
+    * ```json
+    * {
     *   position: {
     *    x: 2,
     *    y: 5
     *   }
     * }
+    * ```
     */
     getValues() {
         var ids = this.getIds();
@@ -78,15 +84,13 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
-     * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
+     * @param {boolean} [in_hideCollection=false] - If true the collection type (if applicable) will be omitted
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'set');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'set');
     }
 
     /**
@@ -104,7 +108,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
+     * @param {String} in_segment - The path segment to resolve
      * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
      *
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
@@ -112,11 +116,9 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // Base Properties only support paths separated via dots
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this._dynamicChildren[in_segment];
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            ? this._dynamicChildren[in_segment]
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     /**
@@ -137,11 +139,13 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Adds a property to the set
-     * - If the property's key exists, the entry is replaced with new one.
-     * - If the property's key does not exist, the property is appended.*
+     * Adds a property to the set.
      *
-     * @param {NamedProperty|NamedNodeProperty|Object} in_property - The property to add to the list
+     * - If the property's key exists, the entry is replaced with new one.
+     *
+     * - If the property's key does not exist, the property is appended.
+     *
+     * @param {NamedProperty|NamedNodeProperty|Object} in_property - The property to add to the list.
      */
     set(in_property) {
         this._checkIsNotReadOnly(true);
@@ -201,16 +205,16 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the collection entry with the given ID
      *
-     * @param {string|array<string|number>} in_ids - key of the entry to return or an array of keys
-     *     if an array is passed, the .get function will be performed on each id in sequence
-     *     for example .get(['position','x']) is equivalent to .get('position').get('x').
-     *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-     *     refers to.
+     * @param {string|array<string|number>} in_ids - key of the entry to return or an array of keys if an array is
+     * passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
+     * equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
+     * that the ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+     * should this function behave during reference resolution?
      *
-     * @return {property-properties.NamedProperty|undefined} The entry in the collection or undefined if none could be found
+     * @return {property-properties.NamedProperty|undefined} The entry in the collection or undefined if none could be
+     * found
      */
     get(in_ids, in_options) {
         if (_.isArray(in_ids)) {
@@ -222,14 +226,22 @@ export class SetProperty extends IndexedCollectionBaseProperty {
             in_options.referenceResolutionMode =
                 in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                     in_options.referenceResolutionMode;
-            if (in_ids === PATH_TOKENS.ROOT) {
-                prop = prop.getRoot();
-            } else if (in_ids === PATH_TOKENS.UP) {
-                prop = prop.getParent();
-            } else if (in_ids === PATH_TOKENS.REF) {
-                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            } else {
-                prop = prop._dynamicChildren[in_ids];
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    prop = prop._dynamicChildren[in_ids];
+                    break;
+                }
             }
 
             return prop;
@@ -251,7 +263,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
      * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
-     *   properties with that typeid, else use the set's typeid (support polymorphic items).
+     * properties with that typeid, else use the set's typeid (support polymorphic items).
      * @private
      */
     _setValuesInternal(in_properties, in_typed) {
@@ -275,13 +287,12 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Adds a list of properties to the set.
-     * See {@link SetProperty.setValues}
+     * Adds a list of properties to the set. See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
-     * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
-     *   properties with that typeid, else use the set's typeid (support polymorphic items).
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
-     *   or if the function is called directly with the values to set.
+     * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the properties with that
+     * typeid, else use the set's typeid (support polymorphic items).
+     * @param {Bool} in_initial - Whether we are setting default/initial values or if the function is called directly
+     * with the values to set.
      * @override
      */
     _setValues(in_properties, in_typed, in_initial) {
@@ -332,11 +343,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

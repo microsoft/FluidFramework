@@ -96,7 +96,10 @@ describe("Buffer isomorphism", () => {
             const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i]);
             expect(browserBuffer1.toString("base64")).toEqual(testArrayBase64[i]);
 
-            const browserBuffer2 = BufferBrowser.IsoBuffer.from(browserBuffer1.toString("base64"), "base64");
+            const browserBuffer2 = BufferBrowser.IsoBuffer.from(
+                browserBuffer1.toString("base64"),
+                "base64",
+            );
             expect(browserBuffer2.toString()).toEqual(testArrayUtf8[i]);
         }
     });

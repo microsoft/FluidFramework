@@ -377,8 +377,8 @@ export function sliceToGroupOps(
 ): IMergeTreeDeltaOp[] {
     const ops = new Array<IMergeTreeDeltaOp>();
 
-    const sliceOpenStart = slice.openStart || 0;
-    const sliceOpenEnd = slice.openEnd || 0;
+    const sliceOpenStart = slice.openStart ?? 0;
+    const sliceOpenEnd = slice.openEnd ?? 0;
     let offset = from + adjustOffset(from, 0, 0, insert, gapDistance);
 
     slice.content.forEach((value, index) => {

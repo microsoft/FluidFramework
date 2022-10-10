@@ -3,22 +3,33 @@
  * Licensed under the MIT License.
  */
 
-export { cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
-    bumpRepo
-} from "./bumpVersion/bumpVersion";
+    getSimpleVersion,
+    getVersionsFromStrings,
+    getIsLatest,
+} from "./buildVersion/buildVersionLib";
+export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
+export { bumpRepo } from "./bumpVersion/bumpVersion";
 export { Context } from "./bumpVersion/context";
 export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
-export { adjustVersion } from "./bumpVersion/utils";
+export { releaseVersion } from "./bumpVersion/releaseVersion";
+export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
-export * from "./bumpVersion/versionSchemes";
+export { FluidRepo } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
+export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
+export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
+export { Package } from "./common/npmPackage";
+export { LayerGraph } from "./layerCheck/layerGraph";
+export { Timer } from "./common/timer";
 export {
-    isMonoRepoKind,
-    MonoRepoKind,
-    supportedMonoRepoValues
-} from "./common/monoRepo";
-export {
-    Package
-} from "./common/npmPackage";
+    execAsync,
+    execWithErrorAsync,
+    readJsonAsync,
+    readFileAsync,
+    writeFileAsync,
+} from "./common/utils";
+export { Handler } from "./repoPolicyCheck/common";
+export { policyHandlers } from "./repoPolicyCheck/handlers";
+export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";

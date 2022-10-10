@@ -14,9 +14,10 @@ import {
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
-import { getWithRetryForTokenRefresh } from "../odspUtils";
+import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
 import { pkgVersion } from "../packageVersion";
+import { mockFetchError } from "./mockFetch";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -105,6 +106,36 @@ describe("Odsp Error", () => {
             assert(networkError.message.includes("testMessage"), "error message should include socket error message");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
+        }
+    });
+
+    it("errorObjectFromSocketError with inner errors", async () => {
+        const socketError: IOdspSocketError = {
+            message: "testMessage",
+            code: 400,
+            error: {
+                code: "notAllowed",
+                innerError: {
+                    code: "ipBlocked",
+                    innerError: {
+                        code: "SurelyBlocked",
+                    },
+                },
+                message: "Blocking due to policy",
+            },
+        };
+        const networkError = errorObjectFromSocketError(socketError, "error");
+        if (networkError.errorType !== DriverErrorType.genericNetworkError) {
+            assert.fail("networkError should be a genericNetworkError");
+        } else {
+            assert(networkError.message.includes("error"), "error message should include handler name");
+            assert(networkError.message.includes("testMessage"), "error message should include socket error message");
+            assert.equal(networkError.canRetry, false);
+            assert.equal(networkError.statusCode, 400);
+            assert.equal(networkError.getTelemetryProperties().innerMostErrorCode, "SurelyBlocked",
+                "Innermost error code should be correct");
+            assert.equal(networkError.facetCodes?.length, 3,
+                "3 facet codes should be there");
         }
     });
 
@@ -282,5 +313,27 @@ describe("Odsp Error", () => {
         assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError, "Error type should be locationRedirection");
         assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
         assert.strictEqual(error.statusCode, 404, "Status code should match");
+    });
+
+    it("Sharepoint url should be redacted in the error", async () => {
+        try {
+            await mockFetchError(
+                async () => fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
+                new Error("Request to https://6c482541-f706-4168-9e58-8e35a9992f58.sharepoint.com failed"));
+            assert.fail("Fetch should throw an error");
+        } catch (error: any) {
+            assert((error.message as string).includes("REDACTED_URL"), "sharepoint url should get redacted");
+        }
+    });
+
+    it("url should be redacted in the error", async () => {
+        try {
+            await mockFetchError(
+                async () => fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
+                new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"));
+            assert.fail("Fetch should throw an error");
+        } catch (error: any) {
+            assert((error.message as string).includes("REDACTED_URL"), "url should get redacted");
+        }
     });
 });

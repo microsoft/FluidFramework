@@ -17,6 +17,7 @@ resources:
       - release/*
       - main
       - next
+      - lts
 
 variables:
 - group: prague-key-vault
@@ -90,15 +91,15 @@ stages:
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:frs:report
-        # splitTestVariants:
-        #   - name: Non-compat
-        #     flags: --compatVersion=0
-        #   - name: N-1
-        #     flags: --compatVersion=-1
-        #   - name: N-2
-        #     flags: --compatVersion=-2
-        #   - name: LTS
-        #     flags: --compatVersion=LTS
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: N-1
+            flags: --compatVersion=-1
+          - name: N-2
+            flags: --compatVersion=-2
+          - name: LTS
+            flags: --compatVersion=LTS
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

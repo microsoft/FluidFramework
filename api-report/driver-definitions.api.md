@@ -34,6 +34,7 @@ export enum DriverErrorType {
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
+    fluidInvalidSchema = "fluidInvalidSchema",
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
@@ -42,6 +43,7 @@ export enum DriverErrorType {
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
+    usageError = "usageError",
     writeError = "writeError"
 }
 
@@ -57,6 +59,23 @@ export enum DriverHeader {
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
     criticalBootDomains?: string[];
+}
+
+// @public (undocumented)
+export enum FetchSource {
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    noCache = "noCache"
+}
+
+// @public (undocumented)
+export type FiveDaysMs = 432000000;
+
+// @public
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
 }
 
 // @public (undocumented)
@@ -109,7 +128,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
-    (event: "disconnect", listener: (reason: any) => void): any;
+    (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
     // (undocumented)
@@ -153,7 +172,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -165,15 +184,14 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
-    // (undocumented)
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError;
     // (undocumented)
     readonly statusCode?: number;
 }

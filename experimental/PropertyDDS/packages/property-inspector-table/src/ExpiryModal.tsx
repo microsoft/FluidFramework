@@ -166,18 +166,14 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
         const newState = {} as IModalExpiryState;
         newState.expiryState = expiryInfo.state;
-        if (expiryInfo.when) {
-            newState.expiresIn = new Date(expiryInfo.when).toLocaleString();
-        } else {
-            newState.expiresIn = "never";
-        }
+        newState.expiresIn = expiryInfo.when ? new Date(expiryInfo.when).toLocaleString() : "never";
         return newState;
     };
 
     /**
      * Set the expiration state of this modal.
      * @param newState - If present, it will be set as the new state of the modal. Otherwise, {{getExpiryInfo}} will be
-     *  called and its return values will be used to fill the state.
+     * called and its return values will be used to fill the state.
      */
     const setExpiryState = (newState?: IModalExpiryState) => {
         if (newState) {
@@ -244,23 +240,18 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     // Renders the life cycle state chip or placeholder
     const renderLifeCycleState = () => {
-        let lifeCycle;
-        if (modalExpiryState.expiresIn === expiryPlaceHolder) {
-            lifeCycle = (
+        return modalExpiryState.expiresIn === expiryPlaceHolder
+            ? (
                 <span>
                     {modalExpiryState.expiresIn}
                 </span>
-            );
-        } else {
-            lifeCycle = (
+            ) : (
                 <CustomChip
                     height={30}
                     label={lifeCycleDescriptions[modalExpiryState.expiryState]}
                     className={classNames(classes.expiryStateChip, [modalExpiryState.expiryState])}
                 />
             );
-        }
-        return lifeCycle;
     };
 
     // Renders the main view of the modal

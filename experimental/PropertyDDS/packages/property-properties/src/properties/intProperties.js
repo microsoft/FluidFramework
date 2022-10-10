@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable new-cap */
+
 /**
  * @fileoverview Definition of the Int*Property classes
  */
@@ -104,12 +104,11 @@ export class Integer64Property extends ValueProperty {
     /**
      * Internal function to update the value of the Integer64Property
      *
-     * @param {Int64|String|Number} in_value the new value
+     * @param {Int64|String|Number} in_value - The new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @return {boolean} true if the value was actually changed
-     * @throws if in_value is a string that contains characters other than numbers
+     * @throws If in_value is a string that contains characters other than numbers
      */
     _setValue(in_value, in_reportToView) {
         var oldLowValue = this._data.getValueLow();
@@ -144,8 +143,8 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_high set the higher 32 bit integer part
-     * @throws if in_high is not a number
+     * @param {number} in_high - Set the higher 32 bit integer part
+     * @throws If in_high is not a number
      * @return {boolean} true if the value was actually changed
      */
     setValueHigh(in_high) {
@@ -161,8 +160,8 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_low set the lower 32 bit integer part
-     * @throws if in_low is not a number
+     * @param {number} in_low - Set the lower 32 bit integer part
+     * @throws If in_low is not a number
      * @return {boolean} true if the value was actually changed
      */
     setValueLow(in_low) {
@@ -210,26 +209,23 @@ export class Integer64Property extends ValueProperty {
      * Serialize the property
      *
      * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
+     * Only include dirty entries in the serialization
      * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for value properties
+     * Include the typeid of the root of the hierarchy - has no effect for value properties
      * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE   * @return {*} The serialized representation of this property
+     * The type of dirtiness to use when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
      * @return {*} The serialized representation of this property
      * @private
      */
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return [this._data.getValueLow(), this._data.getValueHigh()];
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType)
+                ? [this._data.getValueLow(), this._data.getValueHigh()]
+                : {};
         } else {
             return [this._data.getValueLow(), this._data.getValueHigh()];
         }
@@ -238,8 +234,8 @@ export class Integer64Property extends ValueProperty {
     /**
      * The toString() method returns a string representing the specified Integer64 object.
      *
-     * @param {number} [in_radix = 10]  An integer between 2 and 36 specifying
-     *      the base to use for representing numeric values.
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 specifying
+     * the base to use for representing numeric values.
      * @return {string} A string representing the specified Integer64 object.
      */
     toString(in_radix) {
@@ -249,9 +245,9 @@ export class Integer64Property extends ValueProperty {
     /**
      * The Integer64.fromString() method parses a string argument updates object's lower and higher 32 bit integer parts.
      *
-     * @param {string} in_string The value to parse. Leading whitespace in the string argument is ignored.
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
-     *     radix (the base in mathematical numeral systems) of the above mentioned string.
+     * @param {string} in_string - The value to parse. Leading whitespace in the string argument is ignored.
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
+     * radix (the base in mathematical numeral systems) of the above mentioned string.
      * @throws if in_string is not a string
      * @throws if in_radix is entered but is not a number between 2 and 36
      * @throws if the property is a Uint64 property and in_string is a negative number

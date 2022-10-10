@@ -11,15 +11,15 @@ import {
     Stack,
 } from "../collections";
 import {
-    ClientSeq,
-    clientSeqComparer,
     compareNumbers,
     IncrementalExecOp,
     IncrementalMapState,
     ISegment,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
+import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
-import { MergeTreeTextHelper, TextSegment } from "../textSegment";
+import { TextSegment } from "../textSegment";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
 
 /**
@@ -97,7 +97,7 @@ export class TestServer extends TestClient {
     applyMessages(msgCount: number) {
         let _msgCount = msgCount;
         while (_msgCount > 0) {
-            const msg = this.q.dequeue();
+            const msg = this.dequeueMsg();
             if (msg) {
                 if (msg.sequenceNumber >= 0) {
                     this.transformUpstreamMessage(msg);
@@ -171,11 +171,9 @@ function incrementalGatherText(segment: ISegment, state: IncrementalMapState<Tex
         if ((state.start <= 0) && (state.end >= segment.text.length)) {
             state.context.text += segment.text;
         } else {
-            if (state.end >= segment.text.length) {
-                state.context.text += segment.text.substring(state.start);
-            } else {
-                state.context.text += segment.text.substring(state.start, state.end);
-            }
+            state.context.text += state.end >= segment.text.length
+                ? segment.text.substring(state.start)
+                : segment.text.substring(state.start, state.end);
         }
     }
     state.op = IncrementalExecOp.Go;
@@ -191,7 +189,7 @@ export function checkTextMatchRelative(
     msg: ISequencedDocumentMessage) {
     const client = server.clients[clientId];
     const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
-    const cliText = client.checkQ.dequeue();
+    const cliText = client.checkQ.shift()?.data;
     if ((cliText === undefined) || (cliText !== serverText)) {
         console.log(`mismatch `);
         console.log(msg);

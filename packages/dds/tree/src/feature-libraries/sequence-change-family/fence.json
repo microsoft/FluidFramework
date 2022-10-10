@@ -1,0 +1,13 @@
+{
+  "tags": ["sequence-change-family"],
+  "exports": ["index"],
+  "imports": [
+    "change-family",
+    "forest",
+    "rebase",
+    "schema-stored",
+    "tree",
+    "util",
+    "feature-libraries"
+  ]
+}

@@ -12,9 +12,14 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestContainerConfig,
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
@@ -240,6 +245,51 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                     },
                 ],
                 "revived event not generated as expected for attachment blobs",
+            );
+        });
+
+        itExpects("can generate events for non-summarizer clients", [
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
+        ], async () => {
+            const waitForSummary = async (summarizer: ISummarizer) => {
+                await provider.ensureSynchronized();
+                const summaryResult = await summarizeNow(summarizer);
+                return summaryResult.summaryVersion;
+            };
+
+            // Create a summarizer client that will be used to summarize the container.
+            const summarizer1 = await createSummarizer(provider, mainContainer, undefined, { inactiveTimeoutMs });
+
+            // Create a data store, mark it as referenced and then unreferenced; summarize;
+            const dataStore = await requestFluidObject<ITestDataObject>(
+                await containerRuntime.createDataStore(TestDataObjectType), "");
+            const url = dataStore.handle.absolutePath;
+            defaultDataStore._root.set("dataStore", dataStore.handle);
+            defaultDataStore._root.delete("dataStore");
+
+            // Summarize the container. This summary will be used to load another container.
+            const summaryVersion1 = await waitForSummary(summarizer1);
+
+            // Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
+            await waitForInactiveTimeout();
+
+            // Load a non-summarizer container from the above summary that uses the mock logger.
+            const container2 = await provider.loadTestContainer(
+                { ...testContainerConfig, loaderProps: { logger: mockLogger } },
+                { [LoaderHeader.version]: summaryVersion1 },
+            );
+
+            // Load the inactive data store. This should result in a loaded event from the non-summarizer container.
+            await container2.request({ url });
+            mockLogger.assertMatch(
+                [
+                    {
+                        eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+                        timeout: inactiveTimeoutMs,
+                        id: url,
+                    },
+                ],
+                "loaded event not generated as expected",
             );
         });
 

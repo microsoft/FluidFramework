@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.
  */
-export class Audience extends EventEmitter implements IAudience {
+export class Audience extends EventEmitter implements IAudienceOwner {
     private readonly members = new Map<string, IClient>();
 
     public on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
@@ -21,8 +21,12 @@ export class Audience extends EventEmitter implements IAudience {
      * Adds a new client to the audience
      */
     public addMember(clientId: string, details: IClient) {
-        this.members.set(clientId, details);
-        this.emit("addMember", clientId, details);
+        // Given that signal delivery is unreliable process, we might observe same client being added twice
+        // In such case we should see exactly same payload (IClient), and should not raise event twice!
+        if (!this.members.has(clientId)) {
+            this.members.set(clientId, details);
+            this.emit("addMember", clientId, details);
+        }
     }
 
     /**
@@ -52,15 +56,5 @@ export class Audience extends EventEmitter implements IAudience {
      */
     public getMember(clientId: string): IClient | undefined {
         return this.members.get(clientId);
-    }
-
-    /**
-     * Clears the audience
-     */
-    public clear(): void {
-        const clientIds = this.members.keys();
-        for (const clientId of clientIds) {
-            this.removeMember(clientId);
-        }
     }
 }
