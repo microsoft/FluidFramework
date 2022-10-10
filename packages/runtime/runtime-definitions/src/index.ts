@@ -29,7 +29,6 @@ export {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 export { IEnvelope, ISignalEnvelope, IInboundSignalMessage, IAttachMessage, InboundAttachMessage } from "./protocol";
 export {
