@@ -40,7 +40,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: IContainer, rootDataObject: RootDataObject);
+    constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
     connect(): Promise<void>;
@@ -87,6 +87,12 @@ export interface IMember {
 }
 
 // @public
+export interface IRootDataObject {
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    readonly initialObjects: LoadableObjectRecord;
+}
+
+// @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
     getMyself(): M | undefined;
@@ -120,7 +126,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @public
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
-}> {
+}> implements IRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     protected hasInitialized(): Promise<void>;
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
