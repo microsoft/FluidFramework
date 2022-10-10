@@ -90,7 +90,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         });
     }
 
-    public get tree() { return this._tree!; }
+    public get tree() { return this._tree; }
 
     public get pset() {
         return this.tree.root;

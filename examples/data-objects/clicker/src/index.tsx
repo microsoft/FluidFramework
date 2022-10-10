@@ -70,7 +70,7 @@ export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
         this.taskManager.subscribeToTask(consoleLogTaskId);
         this.taskManager.on("assigned", (taskId: string) => {
             if (taskId === consoleLogTaskId) {
-                console.log("Assigned:", (this.taskManager as any).runtime.clientId);
+                console.log("Assigned:", (this.taskManager).runtime.clientId);
                 void clickerAgent.run();
             }
         });

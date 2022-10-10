@@ -93,7 +93,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
         // Casting IUser to any to get the name is ugly but currently there is no other way to do it.
         // Servers extend IUser in their own specific interface to add name but all of them do have it.
-        const userName = (lastEditedDetails.user as any).name;
+        const userName = (lastEditedDetails.user).name;
         let colorCode = 0;
         this.users.forEach((userDetails: IVltavaUserDetails) => {
             if (userDetails.name === userName) {

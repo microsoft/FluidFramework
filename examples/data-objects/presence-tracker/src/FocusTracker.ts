@@ -106,7 +106,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
             member.connections.forEach((connection) => {
                 const focus = this.getFocusPresenceForUser(userId, connection.id);
                 if (focus !== undefined) {
-                    statuses.set((member as any).userName, focus);
+                    statuses.set((member).userName, focus);
                 }
             });
         });

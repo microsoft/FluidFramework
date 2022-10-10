@@ -1541,7 +1541,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
                 // Expand word backward
                 let leftPos = segStartPos;
                 while (leftPos > 0 && leftPos === wordStart) {
-                    const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment!;
+                    const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment;
                     if (MergeTree.TextSegment.is(leftSeg)) {
                         const mword = maximalWord(leftSeg, leftSeg.cachedLength - 1);
                         wordStart -= mword.wordEnd - mword.wordStart;
@@ -1553,7 +1553,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
                 // Expand word forward
                 let rightPos = segStartPos + segoff.segment.cachedLength;
                 while (rightPos < sharedString.getLength() && rightPos === wordEnd) {
-                    const rightSeg = sharedString.getContainingSegment(rightPos).segment!;
+                    const rightSeg = sharedString.getContainingSegment(rightPos).segment;
                     if (MergeTree.TextSegment.is(rightSeg)) {
                         const mword = maximalWord(rightSeg, 0);
                         wordEnd += mword.wordEnd;
@@ -3202,7 +3202,7 @@ export class FlowView extends ui.Component {
                     clientId,
                     fresh: true,
                     localRef: this.sharedString.createLocalReferencePosition(
-                        segoff.segment, segoff.offset!, MergeTree.ReferenceType.SlideOnRemove, undefined),
+                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined),
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId)!.presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
@@ -3215,7 +3215,7 @@ export class FlowView extends ui.Component {
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
                             this.sharedString.createLocalReferencePosition(markSegoff.segment,
-                                markSegoff.offset!, MergeTree.ReferenceType.SlideOnRemove, undefined);
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined);
                     }
                 }
                 this.updatePresenceVector(localPresenceInfo);
