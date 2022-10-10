@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/routerlicious-urlresolver";
-export const pkgVersion = "2.0.0-internal.1.4.1";
+export const pkgVersion = "2.0.0-internal.1.4.2";
