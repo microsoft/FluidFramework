@@ -38,8 +38,8 @@ export interface IDataObjectGridItem {
 }
 
 export interface IDataObjectGrid extends EventEmitter {
-    readonly getItems: () => Map<string, IDataObjectGridStoredItem<IDataObjectGridItem>>;
-    readonly getItem: (id: string) => IDataObjectGridStoredItem<any> | undefined;
+    readonly getItems: () => IDataObjectGridStoredItem<IDataObjectGridItem>[];
+    readonly getItem: (id: string) => IDataObjectGridStoredItem<IDataObjectGridItem> | undefined;
     readonly addItem: (type: string) => Promise<void>;
     readonly removeItem: (type: string) => void;
     readonly updateLayout: (key: string, newLayout: Layout) => void;
@@ -50,6 +50,7 @@ export interface IDataObjectGrid extends EventEmitter {
  * Spaces collects serializable formats of items and stores them with grid-based layout information.
  */
 export interface IDataObjectGridStoredItem<T> {
+    id: string;
     serializableItemData: Serializable<T>;
     layout: Layout;
 }
@@ -72,11 +73,11 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
         return DataObjectGrid.factory;
     }
 
-    public readonly getItems = (): Map<string, IDataObjectGridStoredItem<IDataObjectGridItem>> => {
-        return this.root;
+    public readonly getItems = (): IDataObjectGridStoredItem<IDataObjectGridItem>[] => {
+        return [...this.root.values()] as IDataObjectGridStoredItem<IDataObjectGridItem>[];
     };
 
-    public readonly getItem = (id: string): IDataObjectGridStoredItem<any> | undefined => {
+    public readonly getItem = (id: string): IDataObjectGridStoredItem<IDataObjectGridItem> | undefined => {
         return this.root.get(id);
     };
 
@@ -91,6 +92,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
         this.root.set(
             id,
             {
+                id,
                 serializableItemData: {
                     serializableObject,
                     itemType: type,
@@ -127,7 +129,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
 
     protected async hasInitialized() {
         this.root.on("valueChanged", () => {
-            this.emit("itemListChanged", new Map(this.getItems().entries()));
+            this.emit("itemListChanged", this.getItems());
         });
     }
 }

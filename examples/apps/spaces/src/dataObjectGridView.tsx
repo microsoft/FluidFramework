@@ -7,7 +7,7 @@ import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import { ISpacesItemEntry, spacesItemMap } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
-import { IDataObjectGrid, IDataObjectGridStoredItem } from "./dataObjectGrid";
+import { IDataObjectGrid, IDataObjectGridItem, IDataObjectGridStoredItem } from "./dataObjectGrid";
 
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
@@ -92,12 +92,12 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
         const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
-        const [itemMap, setItemMap] =
-            React.useState<Map<string, IDataObjectGridStoredItem<any>>>(model.getItems());
+        const [itemList, setItemList] =
+            React.useState<IDataObjectGridStoredItem<IDataObjectGridItem>[]>(model.getItems());
 
         React.useEffect(() => {
-            const onItemListChanged = (newMap: Map<string, Layout>) => {
-                setItemMap(newMap);
+            const onItemListChanged = (newList: IDataObjectGridStoredItem<IDataObjectGridItem>[]) => {
+                setItemList(newList);
             };
             model.on("itemListChanged", onItemListChanged);
             return () => {
@@ -106,7 +106,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
         });
 
         // Render nothing if there are no items
-        if (model.getItems().size === 0) {
+        if (model.getItems().length === 0) {
             return <></>;
         }
 
@@ -124,7 +124,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
 
         const itemViews: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        itemMap.forEach((item, itemId) => {
+        itemList.forEach((item) => {
             const getItemView = async () => {
                 const registryEntry = registry.get(item.serializableItemData.itemType);
 
@@ -139,15 +139,15 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             const layout = item.layout;
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
-            layout.i = itemId;
+            layout.i = item.id;
             layouts.push(layout);
             itemViews.push(
-                <div key={itemId} className="spaces-item-view-wrapper">
+                <div key={item.id} className="spaces-item-view-wrapper">
                     <SpacesItemView
-                        url={getUrlForItem(itemId)}
+                        url={getUrlForItem(item.id)}
                         editable={editable}
                         getItemView={getItemView}
-                        removeItem={() => model.removeItem(itemId)}
+                        removeItem={() => model.removeItem(item.id)}
                     />
                 </div>,
             );
@@ -183,7 +183,7 @@ interface IDataObjectGridViewProps {
 export const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (props: IDataObjectGridViewProps) => {
     const { model, getDirectUrl } = props;
     // TODO: Different editable behavior, not based on size
-    const [editable, setEditable] = React.useState<boolean>(model.getItems().size === 0);
+    const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);
     return (
         <div className="spaces-view">
             <DataObjectGridToolbar
