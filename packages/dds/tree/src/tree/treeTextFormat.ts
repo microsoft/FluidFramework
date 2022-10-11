@@ -169,10 +169,12 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
         if (global === undefined) {
             return [];
         }
-        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).filter((key: GlobalFieldKey) => {
-            const value: Value = global[key];
-            return !Array.isArray(value) || value.length !== 0;
-        }).map(symbolFromKey);
+        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[])
+            .filter((key: GlobalFieldKey) => {
+                const value: Value = global[key];
+                return !Array.isArray(value) || value.length !== 0;
+            })
+            .map(symbolFromKey);
     }
 
     // Omit any empty fields from local keys
@@ -188,10 +190,12 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
     }
     return [
         ...localKeys,
-        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).filter((key: GlobalFieldKey) => {
-            const value: Value = global[key];
-            return !Array.isArray(value) || value.length !== 0;
-        }).map(symbolFromKey),
+        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[])
+            .filter((key: GlobalFieldKey) => {
+                const value: Value = global[key];
+                return !Array.isArray(value) || value.length !== 0;
+            })
+            .map(symbolFromKey),
     ];
 }
 
