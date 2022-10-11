@@ -4,4 +4,13 @@
  */
 
 export { JsonCursor, cursorToJsonObject } from "./jsonCursor";
-export * from "./jsonDomainSchema";
+export {
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonRoot,
+    jsonSchemaData,
+    jsonString,
+} from "./jsonDomainSchema";
