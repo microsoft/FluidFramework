@@ -21,7 +21,7 @@ import { forbidden, optional, sequence, value as valueFieldKind } from "./defaul
 export type DefaultChangeset = FieldChangeMap;
 
 /**
- * Implementation of ChangeFamily based on the default set of supported field kinds.
+ * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
  *
  * @sealed
  */
@@ -53,6 +53,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 }
 
 /**
+ * Implementation of {@link ProgressiveEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
 export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChangeset> {
@@ -140,7 +141,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
 
 export interface ValueFieldEditBuilder {
     /**
-     * Creates a change which replaces the current newContent of the field with `newContent`.
+     * Issues a change which replaces the current newContent of the field with `newContent`.
      * @param newContent - the new content for the field
      */
     set(newContent: ITreeCursor): void;
@@ -148,7 +149,7 @@ export interface ValueFieldEditBuilder {
 
 export interface OptionalFieldEditBuilder {
     /**
-     * Creates a change which replaces the current newContent of the field with `newContent`
+     * Issues a change which replaces the current newContent of the field with `newContent`
      * @param newContent - the new content for the field
      * @param wasEmpty - whether the field is empty when creating this change
      */
@@ -157,14 +158,14 @@ export interface OptionalFieldEditBuilder {
 
 export interface SequenceFieldEditBuilder {
     /**
-     * Creates a change which inserts the `newContent` at the given `index`.
+     * Issues a change which inserts the `newContent` at the given `index`.
      * @param index - the index at which to insert the `newContent`.
      * @param newContent - the new content to be inserted in the field
      */
     insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
 
     /**
-     * Creates a change which deletes `count` elements starting at the given `index`.
+     * Issues a change which deletes `count` elements starting at the given `index`.
      * @param index - The index of the first deleted element.
      * @param count - The number of elements to delete.
      */
