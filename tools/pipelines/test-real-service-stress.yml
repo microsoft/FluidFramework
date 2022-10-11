@@ -8,11 +8,11 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 schedules:
-- cron: "45 16 * * *"
-  displayName: Daily morning run
+- cron: "0 14 * * *" # Run every day at 7 am PST
+  displayName: Garbage Collection Daily Test Run
   branches:
     include:
-    - test/*
+    - test/gc-stress
   always: true
 
 resources:
@@ -25,7 +25,7 @@ resources:
       - main
       - next
       - lts
-      - test/*
+      - test/gc-stress
 
 variables:
 - group: prague-key-vault
