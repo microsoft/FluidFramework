@@ -2,6 +2,8 @@
   "extends": "@fluidframework/build-common/ts-common-config.json",
   "exclude": ["src/test/**/*"],
   "compilerOptions": {
+        "target": "ES2018",
+        "lib": ["ES2018", "DOM", "DOM.Iterable"],
     "rootDir": "./src",
     "outDir": "./dist",
     "noImplicitAny": true,
