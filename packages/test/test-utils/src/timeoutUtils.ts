@@ -4,7 +4,7 @@
  */
 
 import { Container } from "@fluidframework/container-loader";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;
@@ -13,14 +13,12 @@ export const defaultTimeoutDurationMs = 250;
 // and provide a promise that will be reject before the test timeout happen with a `timeBuffer` of 15 ms.
 // Once rejected, a new TestTimeout object will be create for the timeout.
 
-type PromiseRejectFunc = (reason?: any) => void;
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
 class TestTimeout {
     private timeout: number = 0;
     private timer: NodeJS.Timeout | undefined;
-    private reject: PromiseRejectFunc = () => { };
-    private readonly promise: Promise<void>;
+    private readonly deferred: Deferred<void>;
     private rejected = false;
 
     private static instance: TestTimeout;
@@ -45,7 +43,7 @@ class TestTimeout {
     }
 
     public async getPromise() {
-        return this.promise;
+        return this.deferred.promise;
     }
 
     public getTimeout() {
@@ -53,15 +51,14 @@ class TestTimeout {
     }
 
     private constructor() {
-        this.promise
-            = new Promise((resolve, reject: PromiseRejectFunc) => { this.reject = reject; });
+        this.deferred = new Deferred();
         // Ignore rejection for timeout promise if no one is waiting for it.
-        this.promise.catch(() => { });
+        this.deferred.promise.catch(() => { });
     }
 
     private resetTimer(runnable: Mocha.Runnable) {
         assert(!this.timer, "clearTimer should have been called before reset");
-        assert(!this.rejected, "can't reset a rejected TestTimeout");
+        assert(!this.deferred.isCompleted, "can't reset a completed TestTimeout");
 
         // Check the test timeout setting
         const timeout = runnable.timeout();
@@ -72,7 +69,7 @@ class TestTimeout {
 
         // Set up timer to reject near the test timeout.
         this.timer = setTimeout(() => {
-            this.reject(this);
+            this.deferred.reject(this);
             this.rejected = true;
         }, this.timeout);
     }
