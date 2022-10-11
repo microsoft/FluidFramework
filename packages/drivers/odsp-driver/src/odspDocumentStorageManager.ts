@@ -312,8 +312,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                                 method = "cache";
                             } else {
                                 method = "network";
-                                const options: ISnapshotOptions = { ...hostSnapshotOptions };
-                                retrievedSnapshot = await this.fetchSnapshot(options, scenarioName);
+                                retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, scenarioName);
                             }
                         }
                     }
