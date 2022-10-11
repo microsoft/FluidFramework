@@ -107,7 +107,6 @@ steps:
         fi
         if [[ $f != "" ]]; then
           for i in $( seq 0 $maximumRetryIfNetworkError )
-            echo "i :" $i
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
