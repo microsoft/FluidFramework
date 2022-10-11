@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./heap";
-export * from "./list";
+export { Comparer, Heap } from "./heap";
+export { List, ListNode, ListNodeRange, walkList } from "./list";
 export {
 	ConflictAction,
 	Dictionary,
@@ -20,4 +20,4 @@ export {
 	RedBlackTree,
 	SortedDictionary,
 } from "./rbTree";
-export * from "./stack";
+export { Stack } from "./stack";
