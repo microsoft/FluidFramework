@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as semver from "semver";
-import { isVersionBumpType, VersionBumpType, VersionChangeType } from "@fluid-tools/version-tools";
-import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
-import { bumpVersionCommand } from "./bumpVersion";
+
+import { VersionBumpType, VersionChangeType, isVersionBumpType } from "@fluid-tools/version-tools";
+
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
+import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
+import { bumpVersionCommand } from "./bumpVersion";
 import { Context } from "./context";
 import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
@@ -32,7 +33,8 @@ Options:
      --virtualPatch              Use a virtual patch number for beta versioning (0.<major>.<minor>00<patch>)
      --writeReleaseVersions      Write out the latest versions of packages if the repo were to be released in its current state to versions.json
 ${commonOptionString}
-`);
+`,
+    );
 }
 
 const paramBumpDepPackages = new Map<string, string | undefined>();
@@ -155,14 +157,16 @@ function parseOptions(argv: string[]) {
             paramReleaseName = name;
 
             if (version) {
-                if (typeof version === "string") {
+                if (isVersionBumpType(version)) {
                     paramReleaseVersion = version;
                 } else {
                     fatal(`Invalid version ${version} for flag --release`);
                 }
             }
 
-            if (extra) { i++; }
+            if (extra) {
+                i++;
+            }
             continue;
         }
 
@@ -181,7 +185,9 @@ function parseOptions(argv: string[]) {
                 }
             }
 
-            if (extra) { i++; }
+            if (extra) {
+                i++;
+            }
             continue;
         }
 
@@ -194,7 +200,9 @@ function parseOptions(argv: string[]) {
 
             paramBumpName = name;
             paramBumpVersion = version;
-            if (extra) { i++; }
+            if (extra) {
+                i++;
+            }
             continue;
         }
 
@@ -279,7 +287,11 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
-    const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", await gitRepo.getCurrentBranchName());
+    const context = new Context(
+        gitRepo,
+        "github.com/microsoft/FluidFramework",
+        await gitRepo.getCurrentBranchName(),
+    );
     try {
         const command = checkFlagsConflicts();
 
@@ -291,7 +303,12 @@ async function main() {
 
         switch (command) {
             case "releaseBump":
-                await createReleaseBump(MonoRepoKind.Client, context, paramReleaseVersion, paramVirtualPatch);
+                await createReleaseBump(
+                    MonoRepoKind.Client,
+                    context,
+                    paramReleaseVersion,
+                    paramVirtualPatch,
+                );
                 break;
             case "dep":
                 console.log("Bumping dependencies");
@@ -300,17 +317,29 @@ async function main() {
                     paramBumpDepPackages,
                     /*updateLock*/ paramLocal,
                     /*commit*/ paramCommit,
-                    "Bump dependencies version"
+                    "Bump dependencies version",
                 );
                 break;
             case "release":
-                await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);
+                await releaseVersion(
+                    context,
+                    paramReleaseName!,
+                    paramLocal,
+                    paramVirtualPatch,
+                    paramReleaseVersion,
+                );
                 break;
             case "version":
                 await showVersions(context, paramVersionName!, paramVersion);
                 break;
             case "bump":
-                await bumpVersionCommand(context, paramBumpName!, paramBumpVersion ?? "patch", paramCommit, paramVirtualPatch);
+                await bumpVersionCommand(
+                    context,
+                    paramBumpName!,
+                    paramBumpVersion ?? "patch",
+                    paramCommit,
+                    paramVirtualPatch,
+                );
                 break;
             case "update":
                 await cleanPrereleaseDependencies(context, paramLocal, paramCommit);
@@ -320,7 +349,9 @@ async function main() {
                 break;
         }
     } catch (e: any) {
-        if (!e.fatal) { throw e; }
+        if (!e.fatal) {
+            throw e;
+        }
         console.error(`ERROR: ${e.message}`);
         if (paramClean) {
             await context.cleanUp();
@@ -329,8 +360,8 @@ async function main() {
     }
 }
 
-main().catch(e => {
-    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
+main().catch((e) => {
+    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
     if (e.stack) {
         console.error(`Stack:\n${e.stack}`);
     }

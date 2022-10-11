@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.4.7000",
+  "version": "0.4.8000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,7 +31,7 @@
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
-    "build:readme": "../build-cli/bin/dev generate readme",
+    "build:readme": "node \"../build-cli/bin/dev\" generate readme",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
@@ -68,7 +68,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "~1.9.5",
+    "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
@@ -82,6 +82,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/chai": "^4",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",

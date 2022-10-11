@@ -74,7 +74,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.4.7000
+@fluid-tools/version-tools/0.4.8000
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND

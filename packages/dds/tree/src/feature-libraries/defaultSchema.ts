@@ -8,13 +8,13 @@ import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 import { FullSchemaPolicy } from "./modular-schema";
 
 /**
-* FieldSchema which is impossible for any data to be in schema with.
-*/
+ * FieldSchema which is impossible for any data to be in schema with.
+ */
 export const neverField = fieldSchema(value, []);
 
 /**
-* FieldSchema which is impossible to put anything in.
-*/
+ * FieldSchema which is impossible to put anything in.
+ */
 
 export const emptyField = fieldSchema(forbidden, []);
 
@@ -22,11 +22,11 @@ export const emptyField = fieldSchema(forbidden, []);
  * TreeSchema which is impossible for any data to be in schema with.
  */
 export const neverTree: TreeSchema = {
-	localFields: emptyMap,
-	globalFields: emptySet,
-	extraLocalFields: neverField,
-	extraGlobalFields: false,
-	value: ValueSchema.Nothing,
+    localFields: emptyMap,
+    globalFields: emptySet,
+    extraLocalFields: neverField,
+    extraGlobalFields: false,
+    value: ValueSchema.Nothing,
 };
 
 /**
@@ -36,7 +36,7 @@ export const neverTree: TreeSchema = {
  * and allows adding new global fields along with their schema at any point.
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
-	fieldKinds,
-	defaultTreeSchema: neverTree,
-	defaultGlobalFieldSchema: emptyField,
+    fieldKinds,
+    defaultTreeSchema: neverTree,
+    defaultGlobalFieldSchema: emptyField,
 };

@@ -3,15 +3,24 @@
  * Licensed under the MIT License.
  */
 
-export * from './AdoArtifactFileProvider';
-export * from './AdoSizeComparator';
-export * from './Constants';
-export * from './DefaultStatsProcessors';
-export * from './FileSystemBundleFileProvider';
-export * from './getAzureDevopsApi';
-export * from './getBuildTagForCommit';
-export * from './getBundleBuddyConfigMap';
-export * from './getBundleFilePathsFromFolder';
-export * from './getBundleSummaries';
-export * from './getCommentForBundleDiff';
-export * from './PrCommentsUtils';
+export {
+    getBundleBuddyConfigFileFromZip,
+    getBundlePathsFromZipObject,
+    getStatsFileFromZip,
+    getZipObjectFromArtifact,
+} from "./AdoArtifactFileProvider";
+export { ADOSizeComparator } from "./AdoSizeComparator";
+export { IADOConstants, totalSizeMetricName } from "./Constants";
+export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
+export {
+    getBundleBuddyConfigFromFileSystem,
+    getBundlePathsFromFileSystem,
+    getStatsFileFromFileSystem,
+} from "./FileSystemBundleFileProvider";
+export { getAzureDevopsApi } from "./getAzureDevopsApi";
+export { getBuildTagForCommit } from "./getBuildTagForCommit";
+export { getBundleBuddyConfigMap, GetBundleBuddyConfigMapArgs } from "./getBundleBuddyConfigMap";
+export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
+export { getBundleSummaries, GetBundleSummariesArgs } from "./getBundleSummaries";
+export { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
+export { prCommentsUtils } from "./PrCommentsUtils";

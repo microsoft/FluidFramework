@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import path from "path";
-import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
-// eslint-disable-next-line import/no-internal-modules
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-// eslint-disable-next-line import/no-internal-modules
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import path from "path";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+
+import { Context, Logger, MonoRepo, Package, readJsonAsync } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
+
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 import { indentString } from "./text";
 
@@ -62,7 +62,9 @@ export async function npmCheckUpdates(
 }> {
     const updatedPackages: Package[] = [];
 
-    /** A set of all the packageName, versionString pairs of updated dependencies. */
+    /**
+     * A set of all the packageName, versionString pairs of updated dependencies.
+     */
     const updatedDependencies: PackageVersionMap = {};
 
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
@@ -195,11 +197,17 @@ export async function npmCheckUpdates(
  * @internal
  */
 export interface PreReleaseDependencies {
-    /** A map of release groups to a version string. */
+    /**
+     * A map of release groups to a version string.
+     */
     releaseGroups: Map<ReleaseGroup, string>;
-    /** A map of release packages to a version string. Only includes independent packages. */
+    /**
+     * A map of release packages to a version string. Only includes independent packages.
+     */
     packages: Map<ReleasePackage, string>;
-    /** True if there are no pre-release dependencies. False otherwise. */
+    /**
+     * True if there are no pre-release dependencies. False otherwise.
+     */
     isEmpty: boolean;
 }
 
@@ -277,25 +285,6 @@ export async function getPreReleaseDependencies(
     };
 }
 
-/** Convenience function to hydrate an array of {@link Package} objects from {@link ReleasePackage}s. */
-function getPackagesFromReleasePackages(
-    context: Context,
-    relPackages: ReleasePackage[],
-): Package[] {
-    const packages: Package[] = [];
-
-    for (const rp of relPackages) {
-        const pkg = context.fullPackageMap.get(rp);
-        if (pkg === undefined) {
-            throw new Error(`Can't find package in context: ${rp}`);
-        }
-
-        packages.push(pkg);
-    }
-
-    return packages;
-}
-
 /**
  * Returns true if a release group or package in the repo has been released.
  *
@@ -319,7 +308,7 @@ export async function isReleased(
 
     const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
     if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
-        // eslint-disable-next-line no-param-reassign
+        // eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
         releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
     }
 
@@ -409,9 +398,14 @@ export function getVersionFromTag(tag: string): string | undefined {
  * @internal
  */
 export interface VersionDetails {
-    /** The version. */
-    version: string;
-    /** The date the version was released, if applicable. */
+    /**
+     * The version of the release.
+     */
+    version: ReleaseVersion;
+
+    /**
+     * The date the version was released, if applicable.
+     */
     date?: Date;
 }
 

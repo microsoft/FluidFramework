@@ -38,8 +38,11 @@ export function isOnline(): OnlineStatus {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- */
- export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+ *
+ * @deprecated - In favour of {@link @fluidframework/driver-definitions#IAnyDriverError} so that
+ * it can used from the base to upper layers.
+*/
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
 }
 
@@ -76,16 +79,9 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
-// Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
-// compatible way to augment an enum, as it can't be optional. So for now
-// we need to duplicate the value here. We likely need to rethink our
-// DriverErrorType strategy so that it supports extension with optional
-// value.
-const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
-    static readonly errorType: string =
-        DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
-    readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
     readonly canRetry = false;
 
     constructor(message: string, props: DriverErrorTelemetryProps) {

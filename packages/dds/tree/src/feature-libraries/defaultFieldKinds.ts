@@ -95,7 +95,8 @@ export function lastWriteWinsRebaser<TChange>(data: {
 }): FieldChangeRebaser<TChange> {
     return {
         rebase: (change: TChange, over: TChange) => change,
-        compose: (changes: TChange[]) => changes.length >= 0 ? changes[changes.length - 1] : data.noop,
+        compose: (changes: TChange[]) =>
+            changes.length >= 0 ? changes[changes.length - 1] : data.noop,
         invert: data.invert,
     };
 }
@@ -170,10 +171,12 @@ export const counterHandle: FieldChangeHandler<number> = {
     }),
     encoder: new ValueEncoder<number>(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-    intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [{
-        type: Delta.MarkType.Modify,
-        setValue: change,
-    }],
+    intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
+        {
+            type: Delta.MarkType.Modify,
+            setValue: change,
+        },
+    ],
 };
 
 /**
@@ -249,7 +252,11 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
         return inverse;
     },
 
-    rebase: (change: ValueChangeset, over: ValueChangeset, rebaseChild: NodeChangeRebaser): ValueChangeset => {
+    rebase: (
+        change: ValueChangeset,
+        over: ValueChangeset,
+        rebaseChild: NodeChangeRebaser,
+    ): ValueChangeset => {
         if (change.changes === undefined || over.changes === undefined) {
             return change;
         }
@@ -263,7 +270,11 @@ interface EncodedValueChangeset {
 }
 
 const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
-    encodeForJson: (formatVersion: number, change: ValueChangeset, encodeChild: NodeChangeEncoder) => {
+    encodeForJson: (
+        formatVersion: number,
+        change: ValueChangeset,
+        encodeChild: NodeChangeEncoder,
+    ) => {
         const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
         if (change.value !== undefined) {
             encoded.value = change.value;
@@ -276,7 +287,11 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
         return encoded;
     },
 
-    decodeJson: (formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder) => {
+    decodeJson: (
+        formatVersion: number,
+        change: JsonCompatibleReadOnly,
+        decodeChild: NodeChangeDecoder,
+    ) => {
         const encoded = change as EncodedValueChangeset;
         const decoded: ValueChangeset = {};
         if (encoded.value !== undefined) {
@@ -322,15 +337,20 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
                 const cursor = singleTextCursor(change.value);
                 const mutableTree = mapTreeFromCursor(cursor);
                 const fields = applyModifyToTree(mutableTree, modify);
-                mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [singleMapTreeCursor(mutableTree)] }
-                    : { type: Delta.MarkType.InsertAndModify, content: singleMapTreeCursor(mutableTree), fields };
+                mark =
+                    fields.size === 0
+                        ? {
+                              type: Delta.MarkType.Insert,
+                              content: [singleMapTreeCursor(mutableTree)],
+                          }
+                        : {
+                              type: Delta.MarkType.InsertAndModify,
+                              content: singleMapTreeCursor(mutableTree),
+                              fields,
+                          };
             }
 
-            return [
-                { type: Delta.MarkType.Delete, count: 1 },
-                mark,
-            ];
+            return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
         }
 
         return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
@@ -338,15 +358,17 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
 };
 
 /**
-* Exactly one item.
-*/
+ * Exactly one item.
+ */
 export const value: FieldKind = new FieldKind(
     brand("Value"),
     Multiplicity.Value,
     valueChangeHandler,
     (types, other) =>
-        (other.kind === sequence.identifier || other.kind === value.identifier || other.kind === optional.identifier)
-        && allowsTreeSchemaIdentifierSuperset(types, other.types),
+        (other.kind === sequence.identifier ||
+            other.kind === value.identifier ||
+            other.kind === optional.identifier) &&
+        allowsTreeSchemaIdentifierSuperset(types, other.types),
     new Set(),
 );
 
@@ -375,7 +397,10 @@ export interface OptionalChangeset {
 }
 
 const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
-    compose: (changes: OptionalChangeset[], composeChild: NodeChangeComposer): OptionalChangeset => {
+    compose: (
+        changes: OptionalChangeset[],
+        composeChild: NodeChangeComposer,
+    ): OptionalChangeset => {
         let fieldChange: OptionalFieldChange | undefined;
         const childChanges: NodeChangeset[] = [];
         for (const change of changes) {
@@ -426,7 +451,11 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
         return inverse;
     },
 
-    rebase: (change: OptionalChangeset, over: OptionalChangeset, rebaseChild: NodeChangeRebaser): OptionalChangeset => {
+    rebase: (
+        change: OptionalChangeset,
+        over: OptionalChangeset,
+        rebaseChild: NodeChangeRebaser,
+    ): OptionalChangeset => {
         if (change.fieldChange !== undefined) {
             if (over.fieldChange !== undefined) {
                 const wasEmpty = over.fieldChange.newContent === undefined;
@@ -472,7 +501,7 @@ const optionalFieldEditor: OptionalFieldEditor = {
     }),
 
     buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
-        assert(index === 0, "Optional fields only support a single child node");
+        assert(index === 0, 0x404 /* Optional fields only support a single child node */);
         return { childChange };
     },
 };
@@ -483,7 +512,11 @@ interface EncodedOptionalChangeset {
 }
 
 const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
-    encodeForJson: (formatVersion: number, change: OptionalChangeset, encodeChild: NodeChangeEncoder) => {
+    encodeForJson: (
+        formatVersion: number,
+        change: OptionalChangeset,
+        encodeChild: NodeChangeEncoder,
+    ) => {
         const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
         if (change.fieldChange !== undefined) {
             encoded.fieldChange = change.fieldChange;
@@ -496,7 +529,11 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
         return encoded;
     },
 
-    decodeJson: (formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder) => {
+    decodeJson: (
+        formatVersion: number,
+        change: JsonCompatibleReadOnly,
+        decodeChild: NodeChangeDecoder,
+    ) => {
         const encoded = change as EncodedOptionalChangeset;
         const decoded: OptionalChangeset = {};
         if (encoded.fieldChange !== undefined) {
@@ -522,11 +559,13 @@ function deltaFromInsertAndChange(
             const nodeDelta = deltaFromNode(nodeChange);
             const fields = applyModifyToTree(content, nodeDelta);
             if (fields.size > 0) {
-                return [{
-                    type: Delta.MarkType.InsertAndModify,
-                    content: singleMapTreeCursor(content),
-                    fields,
-                }];
+                return [
+                    {
+                        type: Delta.MarkType.InsertAndModify,
+                        content: singleMapTreeCursor(content),
+                        fields,
+                    },
+                ];
             }
         }
         return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
@@ -540,8 +579,8 @@ function deltaFromInsertAndChange(
 }
 
 /**
-* 0 or 1 items.
-*/
+ * 0 or 1 items.
+ */
 export const optional: FieldKind = new FieldKind(
     brand("Optional"),
     Multiplicity.Optional,
@@ -558,18 +597,15 @@ export const optional: FieldKind = new FieldKind(
             );
 
             if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-                return [
-                    { type: Delta.MarkType.Delete, count: 1 },
-                    ...insertDelta,
-                ];
+                return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
             }
 
             return insertDelta;
         },
     },
     (types, other) =>
-        (other.kind === sequence.identifier || other.kind === optional.identifier)
-        && allowsTreeSchemaIdentifierSuperset(types, other.types),
+        (other.kind === sequence.identifier || other.kind === optional.identifier) &&
+        allowsTreeSchemaIdentifierSuperset(types, other.types),
     new Set([value.identifier]),
 );
 
@@ -581,40 +617,40 @@ export const sequence: FieldKind = new FieldKind(
     Multiplicity.Sequence,
     sequenceFieldChangeHandler,
     (types, other) =>
-        (other.kind === sequence.identifier)
-        && allowsTreeSchemaIdentifierSuperset(types, other.types),
+        other.kind === sequence.identifier &&
+        allowsTreeSchemaIdentifierSuperset(types, other.types),
     // TODO: add normalizer/importers for handling ops from other kinds.
     new Set([]),
 );
 
 /**
-* Exactly 0 items.
-*
-* Using Forbidden makes what types are listed for allowed in a field irrelevant
-* since the field will never have values in it.
-*
-* Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
-* and having no allowed types (or only never types).
-* Because of this, its possible to express everything constraint wise without Forbidden,
-* but using Forbidden can be more semantically clear than optional with no allowed types.
-*
-* For view schema, this can be useful if you need to:
-* - run a specific out of schema handler when a field is present,
-* but otherwise are ignoring or tolerating (ex: via extra fields) unmentioned fields.
-* - prevent a specific field from being used as an extra field
-* (perhaps for some past of future compatibility reason)
-* - keep a field in a schema for metadata purposes
-* (ex: for improved error messaging, error handling or documentation)
-* that is not used in this specific version of the schema (ex: to document what it was or will be used for).
-*
-* For stored schema, this can be useful if you need to:
-* - have a field which can have its schema updated to Optional or Sequence of any type.
-* - to exclude a field from extra fields
-* - for the schema system to use as a default for fields which aren't declared
-* (ex: when updating a field that did not exist into one that does)
-*
-* See {@link emptyField} for a constant, reusable field using Forbidden.
-*/
+ * Exactly 0 items.
+ *
+ * Using Forbidden makes what types are listed for allowed in a field irrelevant
+ * since the field will never have values in it.
+ *
+ * Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
+ * and having no allowed types (or only never types).
+ * Because of this, its possible to express everything constraint wise without Forbidden,
+ * but using Forbidden can be more semantically clear than optional with no allowed types.
+ *
+ * For view schema, this can be useful if you need to:
+ * - run a specific out of schema handler when a field is present,
+ * but otherwise are ignoring or tolerating (ex: via extra fields) unmentioned fields.
+ * - prevent a specific field from being used as an extra field
+ * (perhaps for some past of future compatibility reason)
+ * - keep a field in a schema for metadata purposes
+ * (ex: for improved error messaging, error handling or documentation)
+ * that is not used in this specific version of the schema (ex: to document what it was or will be used for).
+ *
+ * For stored schema, this can be useful if you need to:
+ * - have a field which can have its schema updated to Optional or Sequence of any type.
+ * - to exclude a field from extra fields
+ * - for the schema system to use as a default for fields which aren't declared
+ * (ex: when updating a field that did not exist into one that does)
+ *
+ * See {@link emptyField} for a constant, reusable field using Forbidden.
+ */
 export const forbidden: FieldKind = new FieldKind(
     brand("Forbidden"),
     Multiplicity.Forbidden,
@@ -628,4 +664,5 @@ export const forbidden: FieldKind = new FieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-    [value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]));
+    [value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
+);

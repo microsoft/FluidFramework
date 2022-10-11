@@ -2,15 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { strict as assert } from "assert";
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
-import { bumpVersionScheme, ReleaseVersion } from "@fluid-tools/version-tools";
-// eslint-disable-next-line import/no-internal-modules
 import type { ArgInput } from "@oclif/core/lib/interfaces";
+import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+
+import {
+    ReleaseVersion,
+    VersionScheme,
+    bumpVersionScheme,
+    detectVersionScheme,
+} from "@fluid-tools/version-tools";
+
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
@@ -18,8 +24,10 @@ import { bumpReleaseGroup, generateBumpVersionBranchName } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
-    static description =
+    static summary =
         "Bumps the version of a release group or package to the next minor, major, or patch version.";
+
+    static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
 
     static args: ArgInput = [packageOrReleaseGroupArg];
 
@@ -50,9 +58,16 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
                 "Bump the server release group to the next major version, forcing the semver version scheme.",
             command: "<%= config.bin %> <%= command.id %> server -t major --scheme semver",
         },
+        {
+            description:
+                "By default, the bump command will run npm install in any affected packages and commit the results to a new branch. You can skip these steps using the --no-commit and --no-install flags.",
+            command: "<%= config.bin %> <%= command.id %> server -t major --no-commit --no-install",
+        },
     ];
 
-    /** An array of messages that will be shown after the command runs. */
+    /**
+     * An array of messages that will be shown after the command runs.
+     */
     private readonly finalMessages: string[] = [];
 
     public async run(): Promise<void> {
@@ -60,8 +75,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const flags = this.processedFlags;
 
         const context = await this.getContext();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const bumpType = flags.bumpType!;
-        const scheme = flags.scheme;
         const shouldInstall = flags.install && !flags.skipChecks;
         const shouldCommit = flags.commit && !flags.skipChecks;
 
@@ -71,6 +86,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         let repoVersion: ReleaseVersion;
         let packageOrReleaseGroup: Package | MonoRepo;
+        let scheme: VersionScheme | undefined;
         const updatedPackages: Package[] = [];
 
         if (isReleaseGroup(args.package_or_release_group)) {
@@ -81,6 +97,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             );
 
             repoVersion = releaseRepo.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(...releaseRepo.packages);
             packageOrReleaseGroup = releaseRepo;
         } else {
@@ -101,6 +118,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             }
 
             repoVersion = releasePackage.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(releasePackage);
             packageOrReleaseGroup = releasePackage;
         }
@@ -109,7 +127,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         this.logHr();
         this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
-        this.log(`Bump type: ${chalk.blue(flags.bumpType!)}`);
+        this.log(`Bump type: ${chalk.blue(bumpType)}`);
         this.log(`Versions: ${newVersion} <== ${repoVersion}`);
         this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
         this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);

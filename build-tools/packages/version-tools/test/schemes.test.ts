@@ -4,8 +4,8 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
+
 import { detectVersionScheme, getLatestReleaseFromList } from "../src/schemes";
 
 const pre1VersionList = [

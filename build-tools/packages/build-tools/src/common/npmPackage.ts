@@ -2,30 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
-import { hasMagic, sync as globSync } from "glob";
+import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
+
+import { options } from "../fluidBuild/options";
 import { defaultLogger } from "./logging";
+import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import {
+    ExecAsyncResult,
     copyFileAsync,
     execWithErrorAsync,
+    existsSync,
+    isSameFileOrDir,
+    lookUpDirSync,
+    readJsonSync,
     rimrafWithErrorAsync,
     unlinkAsync,
     writeFileAsync,
-    ExecAsyncResult,
-    readJsonSync,
-    existsSync,
-    lookUpDirSync,
-    isSameFileOrDir,
-} from "./utils"
-import { MonoRepo, MonoRepoKind } from "./monoRepo";
-import { options } from "../fluidBuild/options";
+} from "./utils";
 
-const {info, verbose} = defaultLogger;
+const { info, verbose } = defaultLogger;
 export type ScriptDependencies = { [key: string]: string[] };
 
 interface IPerson {
@@ -67,9 +67,9 @@ interface IPackage {
     fluidBuild?: {
         buildDependencies: {
             merge?: {
-                [key: string]: ScriptDependencies
-            }
-        }
+                [key: string]: ScriptDependencies;
+            };
+        };
     };
 }
 
@@ -102,7 +102,11 @@ export class Package {
 
     private _packageJson: IPackage;
 
-    constructor(private readonly packageJsonFileName: string, public readonly group: string, public readonly monoRepo?: MonoRepo) {
+    constructor(
+        private readonly packageJsonFileName: string,
+        public readonly group: string,
+        public readonly monoRepo?: MonoRepo,
+    ) {
         this._packageJson = readJsonSync(packageJsonFileName);
         verbose(`Package Loaded: ${this.nameColored}`);
     }
@@ -148,14 +152,14 @@ export class Package {
     }
 
     public get combinedDependencies() {
-        const it = function*(packageJson: IPackage) {
+        const it = function* (packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
-                yield ({ name: item, version: packageJson.dependencies[item], dev: false });
+                yield { name: item, version: packageJson.dependencies[item], dev: false };
             }
             for (const item in packageJson.devDependencies) {
-                yield ({ name: item, version: packageJson.devDependencies[item], dev: true });
+                yield { name: item, version: packageJson.devDependencies[item], dev: true };
             }
-        }
+        };
         return it(this.packageJson);
     }
 
@@ -176,7 +180,10 @@ export class Package {
     }
 
     public async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
+        return writeFileAsync(
+            this.packageJsonFileName,
+            `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`,
+        );
     }
 
     public reload() {
@@ -185,12 +192,16 @@ export class Package {
 
     public async noHoistInstall(repoRoot: string) {
         // Fluid specific
-        const rootNpmRC = path.join(repoRoot, ".npmrc")
+        const rootNpmRC = path.join(repoRoot, ".npmrc");
         const npmRC = path.join(this.directory, ".npmrc");
         const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
 
         await copyFileAsync(rootNpmRC, npmRC);
-        const result = await execWithErrorAsync(npmCommand, { cwd: this.directory }, this.nameColored);
+        const result = await execWithErrorAsync(
+            npmCommand,
+            { cwd: this.directory },
+            this.nameColored,
+        );
         await unlinkAsync(npmRC);
 
         return result;
@@ -209,10 +220,12 @@ export class Package {
         }
         let succeeded = true;
         for (const dep of this.combinedDependencies) {
-            if (!lookUpDirSync(this.directory, (currentDir) => {
-                // TODO: check semver as well
-                return existsSync(path.join(currentDir, "node_modules", dep.name));
-            })) {
+            if (
+                !lookUpDirSync(this.directory, (currentDir) => {
+                    // TODO: check semver as well
+                    return existsSync(path.join(currentDir, "node_modules", dep.name));
+                })
+            ) {
                 succeeded = false;
                 if (print) {
                     console.error(`${this.nameColored}: dependency ${dep.name} not found`);
@@ -223,7 +236,9 @@ export class Package {
     }
 
     public async install() {
-        if (this.monoRepo) { throw new Error("Package in a monorepo shouldn't be installed"); }
+        if (this.monoRepo) {
+            throw new Error("Package in a monorepo shouldn't be installed");
+        }
         console.log(`${this.nameColored}: Installing - npm i`);
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.directory }, this.directory);
@@ -236,15 +251,25 @@ interface TaskExec<TItem, TResult> {
     reject: (reason?: any) => void;
 }
 
-async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TItem) => Promise<TResult>, messageCallback?: (item: TItem) => string) {
+async function queueExec<TItem, TResult>(
+    items: Iterable<TItem>,
+    exec: (item: TItem) => Promise<TResult>,
+    messageCallback?: (item: TItem) => string,
+) {
     let numDone = 0;
-    const timedExec = messageCallback ? async (item: TItem) => {
-        const startTime = Date.now();
-        const result = await exec(item);
-        const elapsedTime = (Date.now() - startTime) / 1000;
-        info(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
-        return result;
-    } : exec;
+    const timedExec = messageCallback
+        ? async (item: TItem) => {
+              const startTime = Date.now();
+              const result = await exec(item);
+              const elapsedTime = (Date.now() - startTime) / 1000;
+              info(
+                  `[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
+                      3,
+                  )}s`,
+              );
+              return result;
+          }
+        : exec;
     const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
         try {
             taskExec.resolve(await timedExec(taskExec.item));
@@ -260,10 +285,14 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 }
 
 export class Packages {
-    public constructor(public readonly packages: Package[]) {
-    }
+    public constructor(public readonly packages: Package[]) {}
 
-    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo,) {
+    public static loadDir(
+        dirFullPath: string,
+        group: string,
+        ignoredDirFullPaths: string[] | undefined,
+        monoRepo?: MonoRepo,
+    ) {
         const packageJsonFileName = path.join(dirFullPath, "package.json");
         if (existsSync(packageJsonFileName)) {
             return [new Package(packageJsonFileName, group, monoRepo)];
@@ -274,8 +303,13 @@ export class Packages {
         files.map((dirent) => {
             if (dirent.isDirectory() && dirent.name !== "node_modules") {
                 const fullPath = path.join(dirFullPath, dirent.name);
-                if (ignoredDirFullPaths === undefined || !ignoredDirFullPaths.some(name => isSameFileOrDir(name, fullPath))) {
-                    packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
+                if (
+                    ignoredDirFullPaths === undefined ||
+                    !ignoredDirFullPaths.some((name) => isSameFileOrDir(name, fullPath))
+                ) {
+                    packages.push(
+                        ...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo),
+                    );
                 }
             }
         });
@@ -291,7 +325,12 @@ export class Packages {
      * @param monoRepo A {@link MonoRepo} instance that will be associated with the packages.
      * @returns An array containing all the packages that were found under the globPath.
      */
-    public static loadGlob(globPath: string, group: MonoRepoKind, ignoredGlobs: string[] | undefined, monoRepo?: MonoRepo,): Package[] {
+    public static loadGlob(
+        globPath: string,
+        group: MonoRepoKind,
+        ignoredGlobs: string[] | undefined,
+        monoRepo?: MonoRepo,
+    ): Package[] {
         const packages: Package[] = [];
 
         if (hasMagic(globPath)) {
@@ -316,22 +355,28 @@ export class Packages {
     }
 
     public async cleanNodeModules() {
-        return this.queueExecOnAllPackage(pkg => pkg.cleanNodeModules(), "rimraf node_modules");
+        return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
     }
 
     public async noHoistInstall(repoRoot: string) {
-        return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
+        return this.queueExecOnAllPackage((pkg) => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
     public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
-        if(releaseGroup === undefined) {
+        if (releaseGroup === undefined) {
             return this.packages;
         }
         return this.packages.filter((p) => p.monoRepo?.kind === releaseGroup);
     }
 
-    public async forEachAsync<TResult>(exec: (pkg: Package) => Promise<TResult>, parallel: boolean, message?: string) {
-        if (parallel) { return this.queueExecOnAllPackageCore(exec, message) }
+    public async forEachAsync<TResult>(
+        exec: (pkg: Package) => Promise<TResult>,
+        parallel: boolean,
+        message?: string,
+    ) {
+        if (parallel) {
+            return this.queueExecOnAllPackageCore(exec, message);
+        }
 
         const results: TResult[] = [];
         for (const pkg of this.packages) {
@@ -345,14 +390,28 @@ export class Packages {
         let numDone = 0;
         const execCleanScript = async (pkg: Package, cleanScript: string) => {
             const startTime = Date.now();
-            const result = await execWithErrorAsync(cleanScript, {
-                cwd: pkg.directory,
-                env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
-            }, pkg.nameColored);
+            const result = await execWithErrorAsync(
+                cleanScript,
+                {
+                    cwd: pkg.directory,
+                    env: {
+                        PATH: `${process.env["PATH"]}${path.delimiter}${path.join(
+                            pkg.directory,
+                            "node_modules",
+                            ".bin",
+                        )}`,
+                    },
+                },
+                pkg.nameColored,
+            );
 
             if (status) {
                 const elapsedTime = (Date.now() - startTime) / 1000;
-                info(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
+                info(
+                    `[${++numDone}/${cleanP.length}] ${
+                        pkg.nameColored
+                    }: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,
+                );
             }
             return result;
         };
@@ -363,16 +422,24 @@ export class Packages {
             }
         }
         const results = await Promise.all(cleanP);
-        return !results.some(result => result.error);
+        return !results.some((result) => result.error);
     }
 
-    private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {
-        const messageCallback = message ? (pkg: Package) => ` ${pkg.nameColored}: ${message}` : undefined;
+    private async queueExecOnAllPackageCore<TResult>(
+        exec: (pkg: Package) => Promise<TResult>,
+        message?: string,
+    ) {
+        const messageCallback = message
+            ? (pkg: Package) => ` ${pkg.nameColored}: ${message}`
+            : undefined;
         return queueExec(this.packages, exec, messageCallback);
     }
 
-    private async queueExecOnAllPackage(exec: (pkg: Package) => Promise<ExecAsyncResult>, message?: string) {
+    private async queueExecOnAllPackage(
+        exec: (pkg: Package) => Promise<ExecAsyncResult>,
+        message?: string,
+    ) {
         const results = await this.queueExecOnAllPackageCore(exec, message);
-        return !results.some(result => result.error);
+        return !results.some((result) => result.error);
     }
 }

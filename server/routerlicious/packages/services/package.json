@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957",
     "@fluidframework/server-services-client": "^0.1038.2000",
     "@fluidframework/server-services-core": "^0.1038.2000",
     "@fluidframework/server-services-ordering-kafkanode": "^0.1038.2000",

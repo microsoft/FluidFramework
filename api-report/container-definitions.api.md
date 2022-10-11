@@ -486,7 +486,7 @@ export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-    process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
+    process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
