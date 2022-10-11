@@ -10,7 +10,7 @@ pr: none
 
 schedules:
   - cron: "00 03 * * SAT"
-    displayName: Schedlued Tests on Saturday Nights Weekly
+    displayName: Scheduled Tests on Saturday Nights Weekly
     branches:
       include:
       - main
