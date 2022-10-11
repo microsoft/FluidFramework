@@ -113,12 +113,15 @@ export class TestTreeProvider {
      * Give this {@link TestTreeProvider} the ability to summarize on demand during a test by creating a summarizer
      * client for the container at the given index. This must be called before any trees submit any edits, or else a
      * different summarizer client might already have been elected.
-     * @param index - the container that will spawn the summarizer client
      * @returns a function which will cause a summary to happen when awaited. May be called multiple times.
      */
-    public async enableManualSummarization(index = 0): Promise<() => Promise<void>> {
-        assert(index < this.trees.length, "Index out of bounds: not enough trees");
-        const summarizer = await createSummarizer(this.provider, this.containers[index]);
+    public async enableManualSummarization(): Promise<() => Promise<void>> {
+        // TODO: support manual summarization with multiple trees once bug #1876 is fixed.
+        assert(
+            this.trees.length === 1,
+            "Manual summarization cannot be enabled for multiple trees.",
+        );
+        const summarizer = await createSummarizer(this.provider, this.containers[0]);
         return async () => {
             await summarizeNow(summarizer, "TestTreeProvider");
         };
