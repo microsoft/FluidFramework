@@ -106,12 +106,12 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          for i in {1..$maximumRetryIfNetworkError}
+          for i in $( seq 0 $maximumRetryIfNetworkError )
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
                 if [ [grep -q "network read ECONNRESET" "publish_log"] && [! $i -eq $maximumRetryIfNetworkError] ]; then
-                  echo "Network Error"
+                  echo "Network Error Detected"
                   continue
                 else
                   if ! grep -q "You cannot publish over the previously published versions" "publish_log"
