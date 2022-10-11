@@ -52,7 +52,7 @@ class V1SequenceIntervalCollectionFactory
     }
     public store(value: V1IntervalCollection<SequenceInterval>):
     ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-        return Array.from(value, (interval) => interval?.serialize(value.casted.client)) as unknown as
+        return Array.from(value, (interval) => interval?.serialize()) as unknown as
         ISerializedIntervalCollectionV2;
     }
 }

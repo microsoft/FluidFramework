@@ -699,8 +699,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
     // (undocumented)
-    setValue(path: UpPathWithFieldKinds, value: Value): void;
-    submitChange(path: UpPathWithFieldKinds | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
+    setValue(path: UpPath, value: Value): void;
+    submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
 }
 
 // @public
@@ -1331,14 +1331,6 @@ export interface UpPath {
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
-}
-
-// @public (undocumented)
-export interface UpPathWithFieldKinds extends UpPath {
-    // (undocumented)
-    readonly parent: UpPathWithFieldKinds | undefined;
-    // (undocumented)
-    readonly parentFieldKind: FieldKindIdentifier;
 }
 
 // @public

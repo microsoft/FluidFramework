@@ -16,6 +16,7 @@ import {
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { insertSegments, insertText, markRangeRemoved, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
@@ -148,29 +149,25 @@ const treeFactories: ITestTreeFactory[] = [
 
             const remove = Math.round(initialText.length / 4);
             // remove from start
-            markRangeRemoved({
-                mergeTree,
-                start: 0,
-                end: remove,
-                refSeq: UniversalSequenceNumber,
-                clientId: localClientId,
-                seq: UnassignedSequenceNumber,
-                overwrite: false,
-                opArgs: undefined as any,
-            });
+            mergeTree.markRangeRemoved(
+                0,
+                remove,
+                UniversalSequenceNumber,
+                localClientId,
+                UniversalSequenceNumber,
+                false,
+                undefined as any);
             initialText = initialText.substring(remove);
 
             // remove from end
-            markRangeRemoved({
-                mergeTree,
-                start: initialText.length - remove,
-                end: initialText.length,
-                refSeq: UniversalSequenceNumber,
-                clientId: localClientId,
-                seq: UnassignedSequenceNumber,
-                overwrite: false,
-                opArgs: undefined as any,
-            });
+            mergeTree.markRangeRemoved(
+                initialText.length - remove,
+                initialText.length,
+                UniversalSequenceNumber,
+                localClientId,
+                UniversalSequenceNumber,
+                false,
+                undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(
@@ -335,7 +332,7 @@ describe("MergeTree.insertingWalk", () => {
         });
 
         const segments: string[] = [];
-        mergeTree.walkAllSegments(mergeTree.root, (seg) => {
+        walkAllChildSegments(mergeTree.root, (seg) => {
             if (TextSegment.is(seg)) {
                 if (seg.localRemovedSeq !== undefined || seg.removedSeq !== undefined) {
                     segments.push(`(${seg.text})`);
