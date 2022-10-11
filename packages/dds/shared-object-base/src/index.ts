@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./serializer";
-export * from "./sharedObject";
-export * from "./summarySerializer";
-export * from "./types";
-export * from "./utils";
-export * from "./valueType";
+export { FluidSerializer, IFluidSerializer, ISerializedHandle, isSerializedHandle } from "./serializer";
+export { SharedObject, SharedObjectCore } from "./sharedObject";
+export { SummarySerializer } from "./summarySerializer";
+export { ISharedObject, ISharedObjectEvents } from "./types";
+export { createSingleBlobSummary, makeHandlesSerializable, parseHandles, serializeHandles } from "./utils";
+export { ValueType } from "./valueType";
