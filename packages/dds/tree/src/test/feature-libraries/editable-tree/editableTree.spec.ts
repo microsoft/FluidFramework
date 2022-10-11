@@ -452,6 +452,7 @@ describe("editable-tree", () => {
         ]);
         const context = getEditableTreeContext(forest);
         assert.throws(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             () => (context.root as EditableTree).child,
             (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
             "Expected exception was not thrown",

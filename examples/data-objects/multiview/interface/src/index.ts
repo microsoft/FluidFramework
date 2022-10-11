@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ICoordinate } from "./interface";
+export { IConstellation, ICoordinate } from "./interface";
