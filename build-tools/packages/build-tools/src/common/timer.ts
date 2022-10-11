@@ -2,18 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { defaultLogger } from "./logging";
 
-const {info}=defaultLogger;
+const { info } = defaultLogger;
 
 export class Timer {
     private lastTime: number = Date.now();
     private totalTime: number = 0;
 
-    constructor(private enabled: boolean) {
-
-    }
+    constructor(private enabled: boolean) {}
     public time(msg?: string, print?: boolean) {
         const currTime = Date.now();
         const diffTime = currTime - this.lastTime;

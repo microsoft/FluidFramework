@@ -937,6 +937,32 @@ export class MergeTree {
             : node.cachedLength;
     }
 
+    /**
+     * Compute local partial length information
+     *
+     * Public only for use by internal tests
+     *
+     * @internal
+     */
+    public computeLocalPartials(refSeq: number) {
+        if (this.localPartialsComputed) {
+            return;
+        }
+
+        const rebaseCollabWindow = new CollaborationWindow();
+        rebaseCollabWindow.loadFrom(this.collabWindow);
+        if (refSeq < this.collabWindow.minSeq) {
+            rebaseCollabWindow.minSeq = refSeq;
+        }
+        this.root.partialLengths = PartialSequenceLengths.combine(
+            this.root,
+            rebaseCollabWindow,
+            true,
+            true,
+        );
+        this.localPartialsComputed = true;
+    }
+
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId === clientId)) {
             if (node.isLeaf()) {
@@ -945,7 +971,7 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                this.ensureLocalPartialsComputed(refSeq);
+                this.computeLocalPartials(refSeq);
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
@@ -2075,23 +2101,6 @@ export class MergeTree {
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
-    }
-
-    private ensureLocalPartialsComputed(refSeq: number): void {
-        if (!this.localPartialsComputed) {
-            const rebaseCollabWindow = new CollaborationWindow();
-            rebaseCollabWindow.loadFrom(this.collabWindow);
-            if (refSeq < this.collabWindow.minSeq) {
-                rebaseCollabWindow.minSeq = refSeq;
-            }
-            this.root.partialLengths = PartialSequenceLengths.combine(
-                this.root,
-                rebaseCollabWindow,
-                true,
-                true,
-            );
-            this.localPartialsComputed = true;
-        }
     }
 
     // Segments should either be removed remotely, removed locally, or inserted locally

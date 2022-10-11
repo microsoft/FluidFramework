@@ -4,7 +4,6 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ReadBuffer } from "./ReadBufferUtils";
 import {
     BlobCore,
     codeToBytesMap,
@@ -13,7 +12,6 @@ import {
     MarkerCodesEnd,
     MarkerCodesStart,
     NodeCore,
-    TreeBuilder,
 } from "./zipItDataRepresentationUtils";
 
 /**
@@ -52,11 +50,11 @@ export class WriteBuffer {
         assert(code === 0, 0x226 /* Should write complete data */);
     }
 
-    public done(): ReadBuffer {
+    public done(): Uint8Array {
         assert(this.data !== undefined, 0x227 /* "Data should be there" */);
         // We can slice it to have smaller memory representation.
         // But it will be way more expensive in terms of CPU cycles!
-        const buffer = new ReadBuffer(this.data.subarray(0, this.index));
+        const buffer = this.data.subarray(0, this.index);
         this.data = undefined;
         return buffer;
     }
@@ -238,7 +236,7 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
         } else if (typeof child === "boolean") {
             buffer.write(boolToCodeMap[child ? 1 : 0]);
         } else {
-            assert(child._stringElement, "Unsupported node type");
+            assert(child._stringElement, 0x3dd /* Unsupported node type */);
             if (child.dictionary) {
                 serializeDictionaryString(buffer, child.content, dictionary);
             } else {
@@ -263,11 +261,7 @@ export class TreeBuilderSerializer extends NodeCoreSerializer {
         super();
     }
 
-    static load(buffer: ReadBuffer): TreeBuilder {
-        return TreeBuilder.load(buffer);
-    }
-
-    public serialize(): ReadBuffer {
+    public serialize(): Uint8Array {
         const buffer = new WriteBuffer();
         super.serialize(buffer);
         return buffer.done();

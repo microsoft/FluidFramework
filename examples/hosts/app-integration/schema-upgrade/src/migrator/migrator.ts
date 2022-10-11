@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IModelLoader } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 import type {
@@ -12,7 +13,6 @@ import type {
     IMigratorEvents,
     MigrationState,
 } from "../migrationInterfaces";
-import type { IModelLoader } from "../modelLoader";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentModel: IMigratableModel;

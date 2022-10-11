@@ -7,7 +7,6 @@ import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISnapshotContents } from "./odspPublicUtils";
-import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
 import {
     addBoolProperty,
@@ -138,15 +137,17 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
  * @param snapshotContents - snapshot tree contents to serialize
  * @returns - ReadBuffer - binary representation of the data.
  */
-export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): ReadBuffer {
+export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): Uint8Array {
     const builder = new TreeBuilderSerializer();
     // Create the root node.
     const rootNode = builder.addNode();
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
 
-    const latestSequenceNumber = snapshotContents.latestSequenceNumber ??
-        snapshotContents.ops.length > 0 ?
-        snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+    let latestSequenceNumber = snapshotContents.latestSequenceNumber;
+    if (latestSequenceNumber === undefined) {
+        latestSequenceNumber = snapshotContents.ops.length > 0 ?
+            snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+    }
 
     writeSnapshotProps(rootNode, latestSequenceNumber);
 

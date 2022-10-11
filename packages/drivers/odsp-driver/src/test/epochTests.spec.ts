@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
 import {
     IOdspResolvedUrl,
     ICacheEntry,
     IEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { EpochTracker } from "../epochTracker";
+import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
@@ -46,6 +46,14 @@ describe("Tests for Epoch Tracker", () => {
 
     afterEach(async () => {
         await epochTracker.removeEntries().catch(() => {});
+    });
+
+    it("defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs policy", () => {
+        // This is the maximum allowed value per the policy - 5 days
+        const maximumCacheDurationMs: Exclude<IDocumentStorageServicePolicies["maximumCacheDurationMs"], undefined> =
+            432000000;
+
+        assert(defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs, "Actual cache expiry used must meet the policy");
     });
 
     it("Cache, old versions", async () => {

@@ -7,14 +7,19 @@ export * from "./object-forest";
 export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
-export { SchemaIndex } from "./schemaIndex";
+export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
-	singleTextCursor as singleTextCursorNew,
-	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+    singleTextCursor as singleTextCursorNew,
+    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
+
+// Split this up into separate import and export for compatibility with API-Extractor.
+import * as SequenceField from "./sequence-field";
+export { SequenceField };
+
 export * from "./defaultSchema";
 export {
     isNeverField,
@@ -30,7 +35,6 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -40,8 +44,12 @@ export {
     Multiplicity,
     FullSchemaPolicy,
     allowsRepoSuperset,
+    GenericChangeset,
+    genericFieldKind,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
+
+export * from "./deltaUtils";

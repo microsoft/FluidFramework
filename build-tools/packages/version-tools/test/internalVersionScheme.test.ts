@@ -4,15 +4,15 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
 import * as semver from "semver";
+
 import {
     fromInternalScheme,
-    toInternalScheme,
     getVersionRange,
-    isInternalVersionScheme,
     isInternalVersionRange,
+    isInternalVersionScheme,
+    toInternalScheme,
 } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
@@ -152,7 +152,7 @@ describe("internalScheme", () => {
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.2`, range));
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.3`, range));
 
-            // Check that minor and major bumps do not saisfy the range
+            // Check that minor and major bumps do not satisfy the range
             assert.isFalse(semver.satisfies(`2.0.0-internal.1.1.0`, range));
             assert.isFalse(semver.satisfies(`2.0.0-internal.2.1.0`, range));
         });
@@ -169,9 +169,35 @@ describe("internalScheme", () => {
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.2.2`, range));
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.3.3`, range));
 
-            // Check that major bumps do not saisfy the range
+            // Check that major bumps do not satisfy the range
             assert.isFalse(semver.satisfies(`2.0.0-internal.2.0.0`, range));
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
+        });
+
+        /**
+         * Builds that are produced from dev builds or other non-release builds don't have the "internal" prerelease
+         * identifier intentionally to ensure they don't satisfy the caret/tilde-equivalent semver ranges we provide to
+         * partners. These tests check that the dev versions are excluded.
+         */
+        it("Prerelease/dev versions do not satisfy ranges", () => {
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-dev.1.1.1.95400`,
+                    `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`,
+                ),
+            );
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-dev.1.0.1.95400`,
+                    `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`,
+                ),
+            );
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-dev.1.5.0.95400`,
+                    `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`,
+                ),
+            );
         });
     });
 });

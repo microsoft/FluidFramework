@@ -1103,6 +1103,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
+            () => this.clientId,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -2700,7 +2701,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                    this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
@@ -2835,25 +2836,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
-             summaryLogger,
-             {
-                 eventName: "RefreshLatestSummaryGetSnapshot",
-                 ackHandle,
-                 summaryRefSeq,
-                 fetchLatest: false,
-             });
-             return fetchResult.snapshotTree;
-         };
-         const result = await this.summarizerNode.refreshLatestSummary(
-             proposalHandle,
-             summaryRefSeq,
-             snapshotTreeFetcher,
-             readAndParseBlob,
-             summaryLogger,
-         );
+                ackHandle,
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    ackHandle,
+                    summaryRefSeq,
+                    fetchLatest: false,
+                });
+            return fetchResult.snapshotTree;
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            snapshotTreeFetcher,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 

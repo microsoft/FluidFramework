@@ -11,7 +11,12 @@ import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidfram
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+} from "@fluidframework/protocol-definitions";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -122,7 +127,7 @@ async function runAndValidateBatch(
     }
 }
 
-describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
+describeNoCompat("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -141,13 +146,40 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
             });
         await runAndValidateBatch(provider, proxyDsf, this.timeout());
     });
-    it("working batch",
-    async function() {
+
+    it("working batch", async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
+
+    it("contains batch metadata", async function() {
+        const provider = getTestObjectProvider({ resetAfterEach: true });
+        let batchesSent = 0;
+        let sentMessages: IDocumentMessage[] = [];
+
+        const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+            provider.documentServiceFactory,
+            {
+                createDocumentService: {
+                    connectToDeltaStream: {
+                        submit: (ds) => (messages) => {
+                            sentMessages = [...messages];
+                            batchesSent++;
+                            ds.submit(messages);
+                        },
+                    },
+                },
+            });
+
+        await runAndValidateBatch(provider, proxyDsf, this.timeout());
+        assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+        assert.strictEqual(sentMessages.length, 11, "expected 11 messages");
+        assert.strictEqual(sentMessages[0].metadata?.batch, true, "first message should contain batch metadata");
+        assert.strictEqual(sentMessages[10].metadata?.batch, false, "last message should contain batch metadata");
+    });
+
     describe("client sends invalid batches ", () => {
-        itExpects.skip("Batch end without start",
+        itExpects("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
@@ -254,7 +286,10 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
 
         itExpects.skip("force nack",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -284,14 +319,17 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });
     describe("server sends invalid batch", () => {
         itExpects("interleave system message",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -345,7 +383,7 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });
