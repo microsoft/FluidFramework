@@ -20,6 +20,10 @@ import { forbidden, optional, sequence, value as valueFieldKind } from "./defaul
 
 export type DefaultChangeset = FieldChangeMap;
 
+const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+    [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
+);
+
 /**
  * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
  *
@@ -29,7 +33,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
     private readonly modularFamily: ModularChangeFamily;
 
     public constructor() {
-        this.modularFamily = new ModularChangeFamily(fieldKinds);
+        this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
     }
 
     get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -51,6 +55,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
         return new DefaultEditBuilder(this, deltaReceiver, anchorSet);
     }
 }
+
+export const defaultChangeFamily = new DefaultChangeFamily();
 
 /**
  * Implementation of {@link ProgressiveEditBuilder} based on the default set of supported field kinds.
@@ -171,7 +177,3 @@ export interface SequenceFieldEditBuilder {
      */
     delete(index: number, count: number): void;
 }
-
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-    [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
-);

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
 import {
-    DefaultChangeFamily,
+    defaultChangeFamily as family,
     DefaultEditBuilder,
     singleTextCursor,
     singleTextCursorNew,
@@ -38,8 +38,6 @@ const root_foo2_foo5: UpPath = {
 
 const nodeX = { type: jsonString.name, value: "X" };
 const nodeXCursor: ITreeCursorSynchronous = singleTextCursorNew(nodeX);
-
-const family = new DefaultChangeFamily();
 
 function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
     assert.equal(actual.length, expected.length);

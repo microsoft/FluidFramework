@@ -21,6 +21,7 @@ import {
     ObjectForest,
     SchemaIndex,
     DefaultChangeFamily,
+    defaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
     UnwrappedEditableField,
@@ -115,7 +116,7 @@ class SharedTree
         ];
         super(
             indexes,
-            new DefaultChangeFamily(),
+            defaultChangeFamily,
             anchors,
             id,
             runtime,
