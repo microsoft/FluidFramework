@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-coverage pipeline (for the purpose of detecting flaky tests)
+# test-reliability pipeline (for the purpose of detecting flaky tests)
 
 name: $(Build.BuildId)
 
@@ -9,13 +9,12 @@ trigger: none
 pr: none
 
 schedules:
-  - cron: "00 03 * * SAT"
+  - cron: "00 03 * * SUN"
     displayName: Scheduled Tests on Saturday Nights Weekly
     branches:
       include:
       - main
       - next
-      - release/*
     always: true
 
 variables:
@@ -29,7 +28,7 @@ stages:
       displayName: ${{ stageName }}
       dependsOn: []
       jobs:
-      - template: templates/include-test-coverage.yml
+      - template: templates/include-test-reliability.yml
         parameters:
           testPackage: "@fluidframework/test-end-to-end-tests"
           testWorkspace: ${{ variables.testWorkspace }}
