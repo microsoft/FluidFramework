@@ -116,7 +116,6 @@ steps:
                 if grep -q "network read ECONNRESET" "publish_log"
                 then
                   if ! $i -eq $maximumRetryIfNetworkError
-                  then
                     echo "Network Error Detected"
                     continue
                   else
