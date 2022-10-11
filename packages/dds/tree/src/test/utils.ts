@@ -117,7 +117,10 @@ export class TestTreeProvider {
      */
     public async enableManualSummarization(): Promise<() => Promise<void>> {
         // TODO: support manual summarization with multiple trees once bug #1876 is fixed.
-        assert(this.trees.length === 1, "Manual summarization cannot be enabled for multiple trees.")
+        assert(
+            this.trees.length === 1,
+            "Manual summarization cannot be enabled for multiple trees.",
+        );
         const summarizer = await createSummarizer(this.provider, this.containers[0]);
         return async () => {
             await summarizeNow(summarizer, "TestTreeProvider");
