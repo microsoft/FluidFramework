@@ -27,7 +27,7 @@ parameters:
   type: string
   default:
 
-- name: maximumRetryIfNetworkError
+- name: maximumRetryAfterNetworkError
   type: number
   default: 3
 
@@ -106,51 +106,53 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          echo "Max : " $maximumRetryIfNetworkError
-          for i in $( seq 1 $maximumRetryIfNetworkError )
+
+          for i in $( seq 1 $maximumRetryAfterNetworkError )
           do
-            echo "i :" $i
-            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
-            if grep -q "npm ERR!" "publish_log"
+          npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+          if grep -q "npm ERR!" "publish_log"
+          then
+            if grep -q "network read ECONNRESET" "publish_log"
             then
-                if grep -q "network read ECONNRESET" "publish_log"
+              if ! $i -eq $maximumRetryAfterNetworkError
+              then
+                echo "Network Error Detected - Retry Process"
+                continue
+              else # 117
+                echo "Network Error Detected - Exit Process"
+                let t1+=1
+                exit $t1
+              fi # 117
+            else # 115
+              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
+              then
+                let t1+=1
+              else # 125
+                echo Package has already been published.
+                local_f="${f}_local"
+                mv "$f" "$local_f"
+                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                npm pack $package_name
+                if cmp -s "$f" "$local_f"
                 then
-                  if ! $i -eq $maximumRetryIfNetworkError
-                  then
-                    echo "Network Error Detected"
-                    continue
-                  else
-                    echo "Final Network Error"
-                    exit $t1
-                  fi
-                else
-                  if ! grep -q "You cannot publish over the previously published versions" "publish_log"
-                  then
-                    let t1+=1
-                  else
-                    echo Package has already been published.
-                    local_f="${f}_local"
-                    mv "$f" "$local_f"
-                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                    npm pack $package_name
-                    if cmp -s "$f" "$local_f"
-                    then
-                      echo Continuing as published package matches the current one that was attempting to be released.
-                    else
-                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                      let t1+=1
-                    fi
-                    rm "$f"
-                    mv "$local_f" "$f"
-                    exit $t1
-                  fi
-                fi
-            else
-              break
-            fi
-            rm publish_log
-          done
-        fi
+                  echo Continuing as published package matches the current one that was attempting to be released.
+                else # 134
+                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                  let t1+=1
+                fi # 134
+                rm "$f"
+                mv "$local_f" "$f"
+              fi # 125
+            fi # 115
+
+          else # 113
+            break
+          fi # 113
+          rm publish_log
+        fi # 108
       done
       rm ~/.npmrc
       exit $t1
+
+
+
