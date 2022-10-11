@@ -68,7 +68,7 @@ interface IDirectoryMessageHandler {
      */
     submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
 
-    applyStashedOp(op: IDirectoryOperation): DirectoryLocalOpMetadata | undefined;
+    applyStashedOp(op: IDirectoryOperation): unknown;
 }
 
 /**
@@ -1881,7 +1881,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this._storage.get(key)!);
         });
-        this.clearCore(false);
+        this.clearCore(local);
         temp.forEach((value, key, map) => {
             this.setCore(key, value, true);
         });
