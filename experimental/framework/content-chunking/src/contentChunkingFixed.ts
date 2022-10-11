@@ -4,6 +4,9 @@
  */
 import { IContentChunker } from "./contentChunkingInterfaces";
 
+/**
+ * Implementation class for the fixed size chunker
+ */
 export class FixedSizeContentChunker implements IContentChunker {
     chunkSize: number;
     constructor(chunkSize: number) {
