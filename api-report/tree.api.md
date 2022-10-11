@@ -235,10 +235,10 @@ const DUMMY_INVERT_TAG: ChangesetTag_2;
 // @public
 export interface EditableTree {
     readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
-    readonly [key: string]: UnwrappedEditableField;
+    readonly [key: FieldKey]: UnwrappedEditableField;
 }
 
 // @public
@@ -863,7 +863,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 
 // @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<FieldChangeMap> implements ProgressiveEditBuilder<FieldChangeMap> {
-    constructor(family: ChangeFamily<unknown, FieldChangeMap>, fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
+    constructor(family: ChangeFamily<unknown, FieldChangeMap>, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;

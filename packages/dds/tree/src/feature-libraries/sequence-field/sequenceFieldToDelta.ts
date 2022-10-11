@@ -108,7 +108,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Revive": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        // TODO: Restore the actual node
+                        // TODO: Restore the actual node, possibly as part of Delta application
                         content: makeArray(mark.count, () =>
                             singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
                         ),
@@ -117,10 +117,15 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "MRevive": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        // TODO: Restore the actual node
-                        content: [singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE })],
+                    const modify = deltaFromChild(mark.changes);
+                    const fields =
+                        modify.fields ?? fail("MRevive marks should always carry field changes");
+                    const insertMark: Delta.InsertAndModify = {
+                        type: Delta.MarkType.InsertAndModify,
+                        // TODO: Restore the actual node, possibly as part of Delta application
+                        content: singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        // TODO: Apply the field changes to the restored node
+                        fields,
                     };
                     out.pushContent(insertMark);
                     break;
