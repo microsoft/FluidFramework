@@ -78,6 +78,7 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
+        maxBatchSize: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

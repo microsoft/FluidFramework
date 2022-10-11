@@ -444,6 +444,16 @@ export interface IContainerRuntimeOptions {
      * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
      */
     readonly enableOfflineLoad?: boolean;
+
+    /**
+     * If specified, when in FlushMode.TurnBased, if the size of the ops between JS turns exceeds this value,
+     * an error will be thrown and the container will close.
+     *
+     * If unspecified, the limit is 950 * 1024.
+     *
+     * 'Infinity' will disable any limit.
+     */
+    readonly maxBatchSize?: number;
 }
 
 /**
@@ -515,6 +525,12 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 
 const defaultFlushMode = FlushMode.TurnBased;
 
+// The actual limit is 1Mb (socket.io and Kafka limits)
+// We can't estimate it fully, as we
+// - do not know what properties relay service will add
+// - we do not stringify final op, thus we do not know how much escaping will be added.
+const defaultMaxBatchSize = 950 * 1024;
+
 /**
  * @deprecated - use ContainerRuntimeMessage instead
  */
@@ -541,7 +557,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 /**
  * Unpacks runtime messages
  *
- * @remarks This API makes no promises regarding backward-compatability. This is internal API.
+ * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
  *
@@ -637,6 +653,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
+            maxBatchSize = defaultMaxBatchSize,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -712,6 +729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 loadSequenceNumberVerification,
                 flushMode,
                 enableOfflineLoad,
+                maxBatchSize,
             },
             containerScope,
             logger,
@@ -853,13 +871,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-
-    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth usage,
-    // but at the same time we want to send these ops sooner, to reduce overall latency of processing a batch.
-    // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-    // payloads. That number represents final (compressed) bits (once compression is implemented).
-    private readonly pendingAttachBatch = new BatchManager(64 * 1024);
-    private readonly pendingBatch = new BatchManager();
+    private readonly pendingAttachBatch: BatchManager;
+    private readonly pendingBatch: BatchManager;
 
     private readonly garbageCollector: IGarbageCollector;
 
@@ -991,6 +1004,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         this._flushMode = runtimeOptions.flushMode;
+
+        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression
+        // & bandwidth usage, but at the same time we want to send these ops sooner, to reduce overall
+        // latency of processing a batch.
+        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
+        // payloads. That number represents final (compressed) bits (once compression is implemented).
+        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSize, 64 * 1024);
+        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSize);
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
