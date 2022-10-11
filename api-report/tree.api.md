@@ -150,7 +150,7 @@ function decodeJson<TNodeChange>(formatVersion: number, change: JsonCompatibleRe
 // @public (undocumented)
 export type DefaultChangeset = FieldChangeMap;
 
-// @public @sealed (undocumented)
+// @public @sealed
 export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChangeset> {
     constructor(family: ChangeFamily<unknown, DefaultChangeset>, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
     // (undocumented)
@@ -440,12 +440,6 @@ export type GapCount = number;
 
 // @public (undocumented)
 type GapCount_2 = number;
-
-// @public (undocumented)
-interface GapEffectPolicy {
-    excludePriorInsertions?: true;
-    includePosteriorInsertions?: true;
-}
 
 // @public
 export interface GenericFieldsNode<TChild> {
@@ -1207,7 +1201,6 @@ declare namespace SequenceField {
         Tomb,
         Modify_2 as Modify,
         HasPlaceFields,
-        GapEffectPolicy,
         Insert_2 as Insert,
         ModifyInsert,
         MoveIn_2 as MoveIn,
