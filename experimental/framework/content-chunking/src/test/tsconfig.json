@@ -1,0 +1,26 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "compilerOptions": {
+        "rootDir": "./",
+        "outDir": "../../dist/test",
+        "types": [
+            "node",
+            "mocha"
+        ],
+        "declaration": false,
+        "noUnusedLocals": false,
+        "declarationMap": false
+    },
+    "include": [
+        "./**/*"
+    ],
+    "references": [
+        {
+            "path": "../.."
+        }
+    ]
+}
