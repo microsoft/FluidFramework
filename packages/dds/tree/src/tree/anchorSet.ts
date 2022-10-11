@@ -153,7 +153,7 @@ export class AnchorSet {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const node = stack.pop()!;
             assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
-            node.status = Status.Dead;
+            node.status = Status.Dangling;
             for (const children of node.children.values()) {
                 stack.push(...children);
             }
@@ -212,8 +212,6 @@ export class AnchorSet {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 srcChildren[index].parentIndex < srcStart!.parentIndex + count
             ) {
-                // Sever the child -> parent connection
-                srcChildren[index].parentPath = undefined;
                 numberToMove++;
                 index++;
             }
@@ -370,13 +368,14 @@ enum Status {
      */
     Disposed,
     /**
-     * Indicates the `NodePath` corresponds to a deleted node in the document
-     * and is not being maintained by the `AnchorSet`.
+     * Indicates the `NodePath` corresponds to a deleted node in the document.
+     * Such `NodePath`s are maintained by the `AnchorSet` (other than updating
+     * their status to `Disposed` when appropriate).
      *
      * Accessing such a node is invalid.
      * Nodes in this state are retained to detect use-after-free bugs.
      */
-    Dead,
+    Dangling,
 }
 
 /**
@@ -435,12 +434,14 @@ class PathNode implements UpPath {
         public parentIndex: number,
         /**
          * The parent of this `PathNode` (an up pointer in the `PathNode` tree).
-         * There must be a corresponding down pointer from the `parentPath` node to this node.
+         * If the status of this node is `Alive`, then there must be a corresponding down pointer from the
+         * `parentPath` node to this node.
          * When undefined, this node is the {@link AnchorSet.root} for `this.anchorSet` and thus has no parent.
          *
          * When updating the tree, `AnchorSet` may transiently leave the up and down pointers inconsistent
          * (updating down pointers first), but must ensure they are consistent before the editing operation returns
          * to non-`AnchorSet` code.
+         * This consistency guarantee only applies nodes `Alive` nodes.
          */
         public parentPath: PathNode | undefined,
     ) {}
@@ -529,9 +530,7 @@ class PathNode implements UpPath {
      * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
      */
     public removeChild(child: PathNode): void {
-        // It's possible for this node to be `Dead` because we don't remove the children of path nodes
-        // that correspond to deleted content.
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status === Status.Alive, 0x40e /* PathNode must be alive */);
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
@@ -558,11 +557,13 @@ class PathNode implements UpPath {
     }
 
     /**
-     * Removes this from parent, and sets this to disposed.
+     * Removes this from parent if alive, and sets this to disposed.
      */
     private disposeThis(): void {
-        assert(this.status !== Status.Disposed, 0x410 /* PathNode must be alive */);
-        this.parentPath?.removeChild(this);
+        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        if (this.status === Status.Alive) {
+            this.parentPath?.removeChild(this);
+        }
 
         this.status = Status.Disposed;
     }
