@@ -66,9 +66,9 @@ export async function fetchSnapshot(
 
     if (fetchFullSnapshot) {
         if (versionId !== "latest") {
-            queryParams = { channels: 1, blobs: 2 };
+            queryParams = { blobs: 2 };
         } else {
-            queryParams = { deltas: 1, channels: 1, blobs: 2 };
+            queryParams = { deltas: 1, blobs: 2 };
         }
     }
 
