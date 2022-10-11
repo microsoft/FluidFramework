@@ -98,6 +98,12 @@ steps:
         packages=*.tgz
         sorted=false
       fi
+
+      for testIdx in $( seq 1 $maximumRetryIfNetworkError )
+      do
+        echo "TESTIDX :" $testIdx
+      done
+
       for packageName in $packages
       do
         if [[ $sorted == true ]]; then
@@ -113,7 +119,7 @@ steps:
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
-                if grep -q "network read ECONNRESET" "publish_log"
+                if grep -q "code ENOTFOUND" "publish_log"
                 then
                   if ! $i -eq $maximumRetryIfNetworkError
                   then
