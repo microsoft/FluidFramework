@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/aqueduct",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "A set of implementations for Fluid Framework interfaces.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -65,19 +65,19 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-loader": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-runtime": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/map": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/request-handler": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/synthesize": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/view-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-runtime": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/datastore": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/map": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/request-handler": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/synthesize": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/view-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -85,7 +85,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -105,6 +105,7 @@
     "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_IDataObjectProps": {
+        "backCompat": false,
         "forwardCompat": false
       }
     }

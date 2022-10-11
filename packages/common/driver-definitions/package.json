@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-definitions",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "Fluid driver definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,8 +38,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0"
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
@@ -58,9 +58,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "InterfaceDeclaration_IDocumentDeltaConnection": {
-        "backCompat": false
-      },
       "TypeAliasDeclaration_DriverError": {
         "backCompat": false
       },
@@ -82,8 +79,17 @@
       "InterfaceDeclaration_IAuthorizationError": {
         "backCompat": false
       },
+      "InterfaceDeclaration_IDocumentDeltaConnection": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_ILocationRedirectionError": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageServicePolicies": {
+        "forwardCompat": false
       }
     }
   }

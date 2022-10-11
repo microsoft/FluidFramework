@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// Tokens
 export * from "./defaultTokenProvider";
-export * from "./deltaStorageService";
-export * from "./documentService";
-export * from "./documentServiceFactory";
-export * from "./documentStorageService";
-export * from "./nullBlobStorageService";
-export * from "./policies";
 export * from "./tokens";
+
+// Factory
+export * from "./documentServiceFactory";
+
+// Configuration
+export * from "./policies";
