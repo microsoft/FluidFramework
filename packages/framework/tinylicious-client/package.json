@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/build-tools": "^0.4.6000",
+    "@fluidframework/build-tools": "^0.4.8000-99089",
     "@fluidframework/container-runtime": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
