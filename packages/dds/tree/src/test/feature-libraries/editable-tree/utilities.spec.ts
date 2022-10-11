@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { defaultSchemaPolicy, FieldKinds, Multiplicity } from "../../../feature-libraries";
 import {
@@ -55,7 +55,8 @@ describe("editable-tree utilities", () => {
     });
 
     it("field utils", () => {
-        const schema = arraySchema.localFields.get(EmptyKey) as FieldSchema;
+        const schema =
+            arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
         const expectedPrimary: { key: LocalFieldKey; schema: FieldSchema } = {
             key: EmptyKey,
             schema,
