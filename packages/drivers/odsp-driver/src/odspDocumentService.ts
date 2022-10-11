@@ -176,6 +176,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 this.mc.logger,
+                true,
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
