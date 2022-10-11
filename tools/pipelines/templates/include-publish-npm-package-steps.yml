@@ -109,6 +109,7 @@ steps:
           echo "Max : " $maximumRetryIfNetworkError
           for i in $( seq 1 $maximumRetryIfNetworkError )
           do
+            echo "i :" $i
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
@@ -118,6 +119,7 @@ steps:
                     echo "Network Error Detected"
                     continue
                   else
+                    echo "Final Network Error"
                     exit $t1
                   fi
                 else
