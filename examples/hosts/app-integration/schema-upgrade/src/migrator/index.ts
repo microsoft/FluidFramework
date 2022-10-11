@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./migrator";
+export { Migrator } from "./migrator";
