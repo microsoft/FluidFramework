@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+export { EventEmitter } from "events";
 
 export { Chronometer } from "./chronometer";
 export { ConsoleUtils } from "./consoleUtils";
@@ -27,7 +28,6 @@ export {
 } from "./datastructures";
 export { DeferredPromise } from "./deferredPromise";
 export { DeterministicRandomGenerator } from "./deterministicRandomGenerator";
-export { EventEmitter } from "events";
 export { FlaggedError, HTTPError, HTTPErrorNoStack, OperationError } from "./error_objects";
 export { GuidUtils } from "./guidUtils";
 export { calculateHash } from "./hashCalculator";

@@ -6,8 +6,8 @@
 import InspectorTableIcons from "../assets/icons/SVGStoreIcons";
 export { InspectorTableIcons };
 
-export { getIconFromTypeId, getDefaultInspectorTableIcons, typeidToIconMap } from "./icons";
 export { CustomChip } from "./CustomChip";
+export { getIconFromTypeId, getDefaultInspectorTableIcons, typeidToIconMap } from "./icons";
 export {
     defaultInspectorTableChildGetter,
     defaultInspectorTableDataGetter,

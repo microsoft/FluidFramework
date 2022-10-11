@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
-import {
+export {
     BaseProxifiedProperty,
     CollectionTypes,
     GenericProxify,
@@ -17,20 +16,5 @@ import {
     ProxyType,
     ReferenceType,
 } from "./interfaces";
-import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
-export {
-    BaseProxifiedProperty,
-    CollectionTypes,
-    GenericProxify,
-    IParentAndPathOfReferencedProperty,
-    PrimitiveTypes,
-    PropertyProxy,
-    PropertyTypes,
-    ProxifiedArrayProperty,
-    ProxifiedMapProperty,
-    ProxifiedPropertyValueArray,
-    ProxifiedSetProperty,
-    ProxyType,
-    proxySymbol,
-    ReferenceType,
-};
+export { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
+export { PropertyProxy, proxySymbol } from "./propertyProxy";

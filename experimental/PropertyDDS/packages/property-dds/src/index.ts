@@ -15,10 +15,10 @@ export {
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
 } from "./propertyTree";
-export { PropertyTreeFactory } from "./propertyTreeFactory";
 export { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
 export {
 	CompressedPropertyTreeFactory,
 	DeflatedPropertyTreeFactory,
 	LZ4PropertyTreeFactory,
 } from "./propertyTreeExtFactories";
+export { PropertyTreeFactory } from "./propertyTreeFactory";
