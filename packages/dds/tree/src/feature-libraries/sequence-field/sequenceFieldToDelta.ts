@@ -4,7 +4,8 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { brand, brandOpaque, fail, makeArray, OffsetListFactory } from "../../util";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
@@ -104,10 +105,33 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(moveMark);
                     break;
                 }
+                case "Revive": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        // TODO: Restore the actual node, possibly as part of Delta application
+                        content: makeArray(mark.count, () =>
+                            singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        ),
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
+                case "MRevive": {
+                    const modify = deltaFromChild(mark.changes);
+                    const fields =
+                        modify.fields ?? fail("MRevive marks should always carry field changes");
+                    const insertMark: Delta.InsertAndModify = {
+                        type: Delta.MarkType.InsertAndModify,
+                        // TODO: Restore the actual node, possibly as part of Delta application
+                        content: singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        // TODO: Apply the field changes to the restored node
+                        fields,
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
                 case "MMoveIn":
                 case "MMoveOut":
-                case "Revive":
-                case "MRevive":
                 case "Return":
                 case "MReturn":
                     fail(ERR_NOT_IMPLEMENTED);
@@ -123,6 +147,8 @@ export function sequenceFieldToDelta<TNodeChange>(
     }
     return out.list;
 }
+
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
  * Converts inserted content into the format expected in Delta instances.
