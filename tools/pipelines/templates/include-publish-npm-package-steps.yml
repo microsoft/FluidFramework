@@ -111,9 +111,12 @@ steps:
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
-                if [ [grep -q "network read ECONNRESET" "publish_log"] && [! $i -eq $maximumRetryIfNetworkError] ]; then
-                  echo "Network Error Detected"
-                  continue
+                if grep -q "network read ECONNRESET" "publish_log"
+                then
+                  if ! $i -eq $maximumRetryIfNetworkError
+                    echo "Network Error Detected"
+                    continue
+                  fi
                 else
                   if ! grep -q "You cannot publish over the previously published versions" "publish_log"
                   then
