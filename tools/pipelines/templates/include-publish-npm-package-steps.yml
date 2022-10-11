@@ -27,10 +27,6 @@ parameters:
   type: string
   default:
 
-- name: maximumRetryIfNetworkError
-  type: number
-  default: 3
-
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -91,6 +87,7 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       t1=0
+      maximumRetryIfNetworkError=3
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
         sorted=true
