@@ -5,7 +5,7 @@
 
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
-import { FieldKey, NodeData, Value } from "./types";
+import { FieldKey, NodeData } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -160,7 +160,6 @@ export function setGenericTreeField<T>(
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
     const local = tree[FieldScope.local];
     const global = tree[FieldScope.global];
-
     // This function is used when iterating through a tree.
     // This means that this is often called on nodes with no keys
     // (most trees are a large portion leaf nodes).
@@ -169,33 +168,14 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
         if (global === undefined) {
             return [];
         }
-        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[])
-            .filter((key: GlobalFieldKey) => {
-                const value: Value = global[key];
-                return !Array.isArray(value) || value.length !== 0;
-            })
-            .map(symbolFromKey);
+        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey);
     }
-
-    // Omit any empty fields from local keys
-    const localKeys = (Object.getOwnPropertyNames(local) as LocalFieldKey[]).filter(
-        (key: LocalFieldKey) => {
-            const value: Value = local[key];
-            return !Array.isArray(value) || value.length !== 0;
-        },
-    );
-
     if (global === undefined) {
-        return localKeys;
+        return Object.getOwnPropertyNames(local) as LocalFieldKey[];
     }
     return [
-        ...localKeys,
-        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[])
-            .filter((key: GlobalFieldKey) => {
-                const value: Value = global[key];
-                return !Array.isArray(value) || value.length !== 0;
-            })
-            .map(symbolFromKey),
+        ...(Object.getOwnPropertyNames(local) as LocalFieldKey[]),
+        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey),
     ];
 }
 
