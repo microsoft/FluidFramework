@@ -123,5 +123,5 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     ack = notSupported;
 }
 const notSupported = () => {
-    assert(false, "operation not supported");
+    assert(false, 0x3ed /* operation not supported */);
 };
