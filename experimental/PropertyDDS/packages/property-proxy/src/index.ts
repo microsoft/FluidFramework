@@ -5,15 +5,32 @@
 
 import { PropertyProxy, proxySymbol } from "./propertyProxy";
 import {
-    ReferenceType, ProxyType,
-    ProxifiedArrayProperty, ProxifiedMapProperty,
-    ProxifiedPropertyValueArray, BaseProxifiedProperty, ProxifiedSetProperty, GenericProxify,
-    PropertyTypes, PrimitiveTypes, CollectionTypes,
+    BaseProxifiedProperty,
+    CollectionTypes,
+    GenericProxify,
+    PrimitiveTypes,
+    PropertyTypes,
+    ProxifiedArrayProperty,
+    ProxifiedMapProperty,
+    ProxifiedPropertyValueArray,
+    ProxifiedSetProperty,
+    ProxyType,
+    ReferenceType,
 } from "./interfaces";
 import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
 export {
-    PropertyProxy, proxySymbol, ReferenceType,
-    ProxyType, ProxifiedArrayProperty, ProxifiedMapProperty,
-    ProxifiedPropertyValueArray, BaseProxifiedProperty, ProxifiedSetProperty,
-    GenericProxify, IParentAndPathOfReferencedProperty, PropertyTypes, PrimitiveTypes, CollectionTypes,
+    BaseProxifiedProperty,
+    CollectionTypes,
+    GenericProxify,
+    IParentAndPathOfReferencedProperty,
+    PrimitiveTypes,
+    PropertyProxy,
+    PropertyTypes,
+    ProxifiedArrayProperty,
+    ProxifiedMapProperty,
+    ProxifiedPropertyValueArray,
+    ProxifiedSetProperty,
+    ProxyType,
+    proxySymbol,
+    ReferenceType,
 };
