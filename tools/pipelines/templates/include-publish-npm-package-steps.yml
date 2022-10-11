@@ -95,12 +95,6 @@ steps:
         packages=*.tgz
         sorted=false
       fi
-
-      for testIdx in $( seq 1 $maximumRetryIfNetworkError )
-      do
-        echo "TESTIDX :" $testIdx
-      done
-
       for packageName in $packages
       do
         if [[ $sorted == true ]]; then
@@ -109,7 +103,6 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          echo "Max : " $maximumRetryIfNetworkError
           for i in $( seq 1 $maximumRetryIfNetworkError )
           do
             echo "i :" $i
