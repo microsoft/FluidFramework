@@ -19,13 +19,10 @@ export interface IGCDataStore {
 }
 
 /**
- * How much faster than its parent should a data stores at each level send ops.
- * Keeping this 1 for now to prevent throttling of ops.
- */
-const opRateMultiplierPerLevel = 1;
-
-/** The number of ops after which the data object performs an activity. */
-const activityThreshold = 10;
+ * The maximum number of leaf children that can be running at a given time. This is used to limit the number of
+ * ops that can be sent per minute so that ops are not throttled.
+*/
+const maxRunningLeafChildren = 3;
 
 /**
  * Activities that data stores perform.
@@ -197,26 +194,37 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
         console.log(`########## Started child [${id}]`);
         assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
+
+        this.myId = id;
+        this.shouldRun = true;
         // Set the local inactive timeout 500 less than the actual to keep buffer when marking data stores as inactive.
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
-        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
-        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
+
+        /**
+         * Adjust the totalSendCount and opRatePerMin. There can be maximum of maxRunningLeafChildren children running
+         * at the same time.
+         * - This data store and each child sends 1/4th of the number of ops per min.
+         * - This data store sends 1/4th the number of total ops since its sending at 1/4th the op rate.
+         */
+        const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / (maxRunningLeafChildren + 1));
+        const totalSendCount = config.testConfig.totalSendCount / 4;
         this._childRunConfig = {
             ...config,
             testConfig: {
                 ...config.testConfig,
                 opRatePerMin,
+                totalSendCount,
             },
         };
-        this.myId = id;
-        this.shouldRun = true;
 
-        const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
+        // Perform an activity every 1/6th minute = every 10 seconds.
+        const activityThresholdOpCount = Math.ceil((opRatePerMin / 6));
         let localSendCount = 0;
         let childFailed = false;
-        while (this.shouldRun && !this.runtime.disposed && !childFailed) {
-            // After every few ops, perform an activity.
-            if (localSendCount % activityThreshold === 0) {
+        const delayBetweenOpsMs = 60 * 1000 / opRatePerMin;
+        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
+            // After every activityThresholdOpCount ops, perform an activity.
+            if (localSendCount % activityThresholdOpCount === 0) {
                 console.log(
                     `########## Child data store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
 
@@ -265,7 +273,9 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
         let activityCompleted = false;
         while (!activityCompleted) {
             activityCompleted = false;
-            const action = random.integer(0, 2)(config.randEng);
+
+            // Add a new reference or revive only if it's possible to run a child at the moment.
+            const action = this.canRunNewChild() ? random.integer(0, 2)(config.randEng) : GCActivityType.Unreference;
             switch (action) {
                 case GCActivityType.CreateAndReference: {
                     return this.createAndReferenceChild();
@@ -289,6 +299,17 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
             }
         }
         return true;
+    }
+
+    /**
+     * Returns whether it's possible to run a new child at the moment. For instance, there is a limit on the number
+     * of child than can be running in parallel to control the number of ops per minute.
+     */
+    private canRunNewChild() {
+        if (this.referencedChildrenDetails.length < maxRunningLeafChildren) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -330,7 +351,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
     }
 
     /**
-     * Retrieves the oldes unreferenced child, references it and asks it to run.
+     * Retrieves the oldest unreferenced child, references it and asks it to run.
      */
     private async reviveChild(childDetails: IChildDetails): Promise<boolean> {
         console.log(`########## Reviving child [${childDetails.id}]`);
@@ -445,16 +466,11 @@ export const dataObjectFactoryCollab = new DataObjectFactory(
 
 /**
  * Root data object that creates a collab and a non-collab child and runs them.
- * It also controls how long the test runs by controlling the run time of each client. Basically, this data object in
- * each client increments a shared counter. When the counter value reaches "totalSendCount", the client finishes.
  */
-export class RootDataObject extends BaseDataObject implements IGCDataStore {
+export class RootDataObject extends DataObject implements IGCDataStore {
     public static get type(): string {
         return "RootDataObject";
     }
-
-    private myId: string | undefined;
-    private shouldRun: boolean = false;
 
     private readonly dataObjectNonCollabKey = "nonCollabChild";
     private readonly dataObjectCollabKey = "collabChild";
@@ -473,9 +489,6 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     }
 
     public async run(config: IRunConfig): Promise<boolean> {
-        this.myId = `client${config.runId + 1}Root`;
-        this.shouldRun = true;
-
         const nonCollabChildHandle = this.root.get<IFluidHandle<IGCDataStore>>(this.dataObjectNonCollabKey);
         assert(nonCollabChildHandle !== undefined, "Non collab data store not present");
         this.nonCollabChild = await nonCollabChildHandle.get();
@@ -485,62 +498,36 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         this.collabChild = await collabChildHandle.get();
 
         /**
-         * Adjust the op rate per minute of this client and for the child data objects.
-        */
+         * Adjust the op rate and total send count for each child.
+         * - Each child sends half the number of ops per min.
+         * - Each child sends half the total number of ops.
+         */
         const opRatePerMinPerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
-        const opRatePerMinPerChild = opRatePerMinPerClient / 2;
-        const childConfig = {
+        const opRatePerMinPerChild = Math.ceil(opRatePerMinPerClient / 2);
+        const totalSendCountPerChild = Math.ceil(config.testConfig.totalSendCount / 2);
+        const childConfig: IRunConfig = {
             ...config,
             testConfig: {
                 ...config.testConfig,
                 opRatePerMin: opRatePerMinPerChild,
+                totalSendCount: totalSendCountPerChild,
             },
         };
 
-        /**
-         * TODO: Handle running these children and their errors correctly.
-         */
-        let childFailed = false;
-        this.nonCollabChild.run(childConfig, `client${config.runId + 1}NonCollab`).then((done: boolean) => {
-            if (!done) {
-                childFailed = true;
-            }
-        }).catch((error) => {
-            childFailed = true;
+        // Add a  random jitter of +- 50% of randomDelayMs to stagger the start of child in each client.
+        const randomDelayMs = 1000;
+        await delay(randomDelayMs + randomDelayMs * random.real(0, .5, true)(config.randEng));
+        const child1RunP = this.nonCollabChild.run(childConfig, `client${config.runId + 1}NonCollab`);
+
+        await delay(randomDelayMs + randomDelayMs * random.real(0, .5, true)(config.randEng));
+        const child2RunP = this.collabChild.run(childConfig, `client${config.runId + 1}Collab`);
+
+        return Promise.all([child1RunP, child2RunP]).then((result) => {
+            return result[0] && result[1];
         });
-
-        this.collabChild.run(childConfig, `client${config.runId + 1}Collab`).then((done: boolean) => {
-            if (!done) {
-                childFailed = true;
-            }
-        }).catch((error) => {
-            childFailed = true;
-        });
-
-        const delayBetweenOpsMs = 60 * 1000 / opRatePerMinPerClient;
-        const totalSendCount = config.testConfig.totalSendCount;
-        let localSendCount = 0;
-        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
-            if (localSendCount % 10 === 0) {
-                console.log(
-                    `>>>>>>>>>> Root data store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
-            }
-            this.counter.increment(1);
-            localSendCount++;
-
-            // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
-            await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
-        }
-
-        this.stop();
-        const notDone = this.runtime.disposed || childFailed;
-        console.log(
-            `>>>>>>>>> Stopping [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
-        return !notDone;
     }
 
     public stop() {
-        this.shouldRun = false;
         this.nonCollabChild?.stop();
         this.collabChild?.stop();
     }

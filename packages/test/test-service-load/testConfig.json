@@ -1,10 +1,10 @@
 {
     "profiles": {
         "gc": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 600,
             "progressIntervalMs": 5000,
-            "numClients": 10,
-            "totalSendCount": 1000,
+            "numClients": 5,
+            "totalSendCount": 1200,
             "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
@@ -20,10 +20,10 @@
             }
         },
         "gc_ci": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 800,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 7200,
+            "totalSendCount": 48000,
             "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
@@ -39,7 +39,7 @@
             }
         },
         "gc_fault": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 600,
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 1000,
