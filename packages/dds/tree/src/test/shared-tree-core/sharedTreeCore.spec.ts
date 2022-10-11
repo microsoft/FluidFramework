@@ -25,7 +25,11 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeFamily, DefaultChangeset } from "../../feature-libraries";
+import {
+    DefaultChangeFamily,
+    defaultChangeFamily,
+    DefaultChangeset,
+} from "../../feature-libraries";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -149,7 +153,7 @@ describe("SharedTreeCore", () => {
 
         return new SharedTreeCore(
             indexes ?? [],
-            new DefaultChangeFamily(),
+            defaultChangeFamily,
             new AnchorSet(),
             "TestSharedTree",
             runtime,

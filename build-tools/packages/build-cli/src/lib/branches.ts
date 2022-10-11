@@ -91,7 +91,7 @@ export function generateBumpVersionBranchName(
  * @internal
  */
 export function generateBumpDepsBranchName(
-    bumpedDep: ReleaseGroup,
+    bumpedDep: ReleaseGroup | ReleasePackage,
     bumpType: DependencyUpdateType | VersionBumpType,
     releaseGroup?: ReleaseGroup,
 ): string {
@@ -153,19 +153,15 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 /**
  * Generates an appropriate commit message when bumping a release group or package.
  *
- * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
+ * @param releaseGroupOrPackage - The release group or independent package to generate a commit message for.
  * @param bumpType - The bump type.
  * @param version - The current version of the release group or package.
  * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
- * @returns The generated branch name.
- *
- * @remarks
- *
- * Generated branch names are of the form `bump_deps_<RELEASEGROUP>_<BUMPTYPE>`.
+ * @returns The generated commit message.
  *
  * @internal
  */
-export function generateCommitMessage(
+export function generateBumpVersionCommitMessage(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
     version: ReleaseVersion,
@@ -176,6 +172,36 @@ export function generateCommitMessage(
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
     const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpType})\n\nBumped ${name} from ${version} to ${newVersion}.`;
+    return message;
+}
+
+/**
+ * Generates an appropriate commit message when bumping the dependencies of release group or package.
+ *
+ * @param bumpedDep - The release group on which dependencies were bumped.
+ * @param bumpType - The bump type.
+ * @param releaseGroup - If set, changes were made to only this release group.
+ * @returns The generated commit message.
+ *
+ * @internal
+ */
+export function generateBumpDepsCommitMessage(
+    bumpedDep: ReleaseGroup | ReleasePackage | "prerelease",
+    bumpType: DependencyUpdateType | VersionBumpType,
+    releaseGroup?: ReleaseGroup,
+): string {
+    const name =
+        bumpedDep === "prerelease"
+            ? "released prerelease packages"
+            : isReleaseGroup(bumpedDep)
+            ? `${bumpedDep} release group`
+            : PackageName.getUnscopedName(bumpedDep);
+
+    const releaseGroupSegment = isReleaseGroup(releaseGroup)
+        ? ` in the ${releaseGroup} release group`
+        : " in all packages and release groups";
+
+    const message = `Update deps (${bumpType}) on ${name}${releaseGroupSegment}`;
     return message;
 }
 
