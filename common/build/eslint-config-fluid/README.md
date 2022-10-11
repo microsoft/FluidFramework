@@ -28,24 +28,22 @@ print out the applied config as a JSON file. As we make changes to the config, w
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
-
 ## Scripts
 
-| Script                     | Description                                                                                                   |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `cleanup-printed-configs`  | Clean up the printed configs. Removes the `parser` property and sorts the JSON.                               |
-| `format`                   | `npm run prettier:fix`                                                                                        |
-| `lint`                     | `npm run prettier`                                                                                            |
-| `lint:fix`                 | `npm run prettier:fix`                                                                                        |
-| `prettier`                 | `prettier --check .`                                                                                          |
-| `prettier:fix`             | `prettier --write .`                                                                                          |
-| `print-config`             | Print all the eslint configs.                                                                                 |
-| `print-config:default`     | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
-| `print-config:minimal`     | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json`                  |
-| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json`          |
-| `print-config:strict`      | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json`                    |
-| `print-config:test`        | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`).          |
-
+| Script | Description |
+|--------|-------------|
+| `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
+| `format` | `npm run prettier:fix` |
+| `lint` | `npm run prettier` |
+| `lint:fix` | `npm run prettier:fix` |
+| `prettier` | `prettier --check .` |
+| `prettier:fix` | `prettier --write .` |
+| `print-config` | Print all the eslint configs. |
+| `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
+| `print-config:minimal` | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
+| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
+| `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
+| `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.

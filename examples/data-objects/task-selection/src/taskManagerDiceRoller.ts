@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TaskManager } from "@fluid-experimental/task-manager";
+import { TaskManager } from "@fluidframework/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

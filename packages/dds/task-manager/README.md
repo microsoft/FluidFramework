@@ -9,12 +9,12 @@ To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-experimental/task-manager
+npm i @fluidframework/task-manager
 ```
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/task-manager** is available at <https://fluidframework.com/docs/apis/task-manager>.
+API documentation for **@fluidframework/task-manager** is available at <https://fluidframework.com/docs/apis/task-manager>.
 
 ## Trademark
 
