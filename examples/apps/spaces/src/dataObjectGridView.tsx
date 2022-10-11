@@ -176,7 +176,7 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
         );
     };
 
-interface IDataObjectGridAppViewProps {
+export interface IDataObjectGridAppViewProps {
     readonly model: IDataObjectGrid;
     readonly getDirectUrl: (id: string) => string;
 }
