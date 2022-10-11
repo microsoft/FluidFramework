@@ -106,7 +106,9 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          for i in $( seq 0 $maximumRetryIfNetworkError )
+          echo "Max : " $maximumRetryIfNetworkError
+          for i in $( seq 1 $maximumRetryIfNetworkError )
+          do
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
