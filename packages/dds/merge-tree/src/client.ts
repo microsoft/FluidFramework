@@ -10,7 +10,7 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
@@ -74,7 +74,7 @@ function elapsedMicroseconds(trace: Trace) {
  *
  * @internal
  */
-export type IClientEvents = (event: "normalize", listener: () => void) => void;
+export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
 
 export class Client extends TypedEventEmitter<IClientEvents> {
     public measureOps = false;
@@ -964,7 +964,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     ): IMergeTreeOp {
         const rebaseTo = this.getCollabWindow().currentSeq;
         if (rebaseTo !== this.lastNormalizationRefSeq) {
-            this.emit("normalize");
+            this.emit("normalize", this);
             this._mergeTree.normalizeSegmentsOnRebase();
             this.lastNormalizationRefSeq = rebaseTo;
         }

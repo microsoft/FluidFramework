@@ -5,12 +5,13 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import type { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -308,7 +309,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 // Warning: (ae-internal-missing-underscore) The name "IClientEvents" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type IClientEvents = (event: "normalize", listener: () => void) => void;
+export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
 
 // @public (undocumented)
 export interface ICombiningOp {

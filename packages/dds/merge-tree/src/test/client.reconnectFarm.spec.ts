@@ -17,6 +17,7 @@ import {
     applyMessages,
     IMergeTreeOperationRunnerConfig,
     IConfigRange,
+    insert,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
@@ -76,7 +77,7 @@ export const defaultOptions: IReconnectFarmConfig = {
     clients: { min: 2, max: 8 },
     opsPerRoundRange: { min: 40, max: 320 },
     rounds: 3,
-    operations: [annotateRange, removeRange],
+    operations: [annotateRange, removeRange, insert],
     growthFunc: (input: number) => input * 2,
 };
 
@@ -85,7 +86,7 @@ const clientNames = generateClientNames();
 
 function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): void {
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
-        it(`ReconnectFarm_${clientCount}_${extraSeed}`, async () => {
+        it(`ReconnectFarm_${clientCount}_${extraSeed ?? 0}`, async () => {
             const random = makeRandom(0xDEADBEEF, 0xFEEDBED, clientCount, extraSeed ?? 0);
             const testOpts = { ...opts };
             if (extraSeed) {

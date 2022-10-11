@@ -15,6 +15,7 @@ import {
     removeRange,
     IMergeTreeOperationRunnerConfig,
     IConfigRange,
+    insert,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
@@ -132,7 +133,7 @@ export const defaultOptions: IApplyStashedOpFarmConfig = {
     clients: { min: 3, max: 12 },
     opsPerRoundRange: { min: 40, max: 120 },
     rounds: 3,
-    operations: [annotateRange, removeRange],
+    operations: [annotateRange, removeRange, insert],
     growthFunc: (input: number) => input * 2,
 };
 

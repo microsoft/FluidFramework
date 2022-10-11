@@ -56,6 +56,15 @@ export const insertAtRefPos: TestOperation =
         }
     };
 
+export const insert: TestOperation =
+    (client: TestClient, _start: number, _end: number, random: IRandom) => {
+        // Note: the _start param is generated using exclusive range. This provides more coverage by allowing
+        // insertion at the end.
+        const start = random.integer(0, client.getLength());
+        const text = client.longClientId!.repeat(random.integer(1, 3));
+        return client.insertTextLocal(start, text);
+};
+
 export interface IConfigRange {
     min: number;
     max: number;
@@ -165,7 +174,7 @@ export function generateOperationMessagesForClients(
         const len = client.getLength();
         const sg = client.peekPendingSegmentGroups();
         let op: IMergeTreeOp | undefined;
-        if (len === 0 || len < minLength || (len < minLength * 3 && random.bool(1 / 3))) {
+        if (len === 0 || len < minLength) {
             const text = client.longClientId!.repeat(random.integer(1, 3));
             op = client.insertTextLocal(
                 random.integer(0, len),
