@@ -32,7 +32,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc -b"
+    "tsc": "tsc"
   },
   "dependencies": {
     "azure-devops-node-api": "^11.2.0",
