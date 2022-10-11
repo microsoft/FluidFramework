@@ -10,7 +10,7 @@ import ReactDOM from "react-dom";
 
 import { DataObjectGridContainer } from "./container";
 import { IDataObjectGrid } from "./dataObjectGrid";
-import { DataObjectGridView } from "./dataObjectGridView";
+import { DataObjectGridAppView } from "./dataObjectGridView";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -39,7 +39,7 @@ async function start() {
     const contentDiv = document.getElementById("content");
     if (contentDiv !== null) {
         ReactDOM.render(
-            React.createElement(DataObjectGridView, { model: defaultObject, getDirectUrl: () => "" }),
+            React.createElement(DataObjectGridAppView, { model: defaultObject, getDirectUrl: () => "" }),
             contentDiv,
         );
     }

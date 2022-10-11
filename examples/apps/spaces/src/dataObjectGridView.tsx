@@ -13,13 +13,14 @@ import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
 
 const ReactGridLayout = WidthProvider(RGL);
-interface ISpacesEditButtonProps {
+
+interface IEditButtonProps {
     clickCallback(): void;
     title: string;
 }
 
-const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
-    (props: React.PropsWithChildren<ISpacesEditButtonProps>) =>
+const EditButton: React.FC<IEditButtonProps> =
+    (props: React.PropsWithChildren<IEditButtonProps>) =>
         <button
             className="spaces-edit-button"
             onClick={props.clickCallback}
@@ -31,34 +32,34 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
             {props.children}
         </button>;
 
-interface ISpacesEditPaneProps {
+interface IEditPaneProps {
     url: string;
     removeItem(): void;
 }
 
-const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
-    (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
+const EditPane: React.FC<IEditPaneProps> =
+    (props: React.PropsWithChildren<IEditPaneProps>) => {
         const { url, removeItem } = props;
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton title="Delete" clickCallback={removeItem}>❌</SpacesEditButton>
-                <SpacesEditButton
+                <EditButton title="Delete" clickCallback={removeItem}>❌</EditButton>
+                <EditButton
                     title="Open in new window"
                     clickCallback={() => window.open(url, "_blank")}
-                >↗️</SpacesEditButton>
+                >↗️</EditButton>
             </div>
         );
     };
 
-interface ISpacesItemViewProps {
+interface IItemViewProps {
     url: string;
     editable: boolean;
     getItemView(): Promise<JSX.Element | undefined>;
     removeItem(): void;
 }
 
-const SpacesItemView: React.FC<ISpacesItemViewProps> =
-    (props: React.PropsWithChildren<ISpacesItemViewProps>) => {
+const ItemView: React.FC<IItemViewProps> =
+    (props: React.PropsWithChildren<IItemViewProps>) => {
         const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 
         React.useEffect(() => {
@@ -71,7 +72,7 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
             <div className="spaces-item-view">
                 {
                     props.editable &&
-                    <SpacesEditPane url={props.url} removeItem={props.removeItem} />
+                    <EditPane url={props.url} removeItem={props.removeItem} />
                 }
                 <div className="spaces-embedded-item-wrapper">
                     {itemView}
@@ -81,15 +82,15 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
     };
 
 // Stronger typing here maybe?
-interface ISpacesStorageViewProps<T = any> {
+interface IDataObjectGridViewProps {
     getUrlForItem: (itemId: string) => string;
     model: IDataObjectGrid;
     registry: Map<string, ISpacesItemEntry>;
     editable: boolean;
 }
 
-export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
-    (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
+export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
+    (props: React.PropsWithChildren<IDataObjectGridViewProps>) => {
         const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
         const [itemList, setItemList] =
@@ -143,7 +144,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             layouts.push(layout);
             itemViews.push(
                 <div key={item.id} className="spaces-item-view-wrapper">
-                    <SpacesItemView
+                    <ItemView
                         url={getUrlForItem(item.id)}
                         editable={editable}
                         getItemView={getItemView}
@@ -175,12 +176,12 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
         );
     };
 
-interface IDataObjectGridViewProps {
+interface IDataObjectGridAppViewProps {
     readonly model: IDataObjectGrid;
     readonly getDirectUrl: (id: string) => string;
 }
 
-export const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (props: IDataObjectGridViewProps) => {
+export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (props: IDataObjectGridAppViewProps) => {
     const { model, getDirectUrl } = props;
     // TODO: Different editable behavior, not based on size
     const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);
@@ -192,7 +193,7 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (props: ID
                 addItem={(type: string) => { model.addItem(type).catch(console.error); }}
                 registry={spacesItemMap}
             />
-            <SpacesStorageView
+            <DataObjectGridView
                 // TODO: Maybe can just pass in the views rather than making it go fetch
                 getUrlForItem={getDirectUrl}
                 model={model}
