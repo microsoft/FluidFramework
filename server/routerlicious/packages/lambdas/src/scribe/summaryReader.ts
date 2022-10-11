@@ -46,7 +46,6 @@ export class SummaryReader implements ISummaryReader {
         if (this.enableWholeSummaryUpload) {
             try {
                 let wholeFlatSummary: IWholeFlatSummary | undefined;
-
                 try {
                     wholeFlatSummary = await requestWithRetry(
                         async () => this.summaryStorage.getSummary(LatestSummaryId),
