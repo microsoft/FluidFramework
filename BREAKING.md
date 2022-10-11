@@ -22,7 +22,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
 
 ### Deprecate existing flag in runtime
-`existing` flag in runtime has been deprecated and will be removed in a future breaking change.
+`existing` flag in runtime has been deprecated and will be removed in a future breaking change. In addition,
+the `existing` flag will be required and can be expected when running `instantiateRuntime`. Clients should assert that
+it's not undefined and should use the value passed in.
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
