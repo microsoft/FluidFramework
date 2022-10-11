@@ -63,7 +63,7 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
-        this.modularBuilder = new ModularEditBuilder(family, fieldKinds, deltaReceiver, anchors);
+        this.modularBuilder = new ModularEditBuilder(family, deltaReceiver, anchors);
     }
 
     public setValue(path: UpPath, value: Value): void {

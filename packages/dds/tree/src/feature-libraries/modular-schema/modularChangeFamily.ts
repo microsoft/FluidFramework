@@ -245,7 +245,7 @@ export class ModularChangeFamily
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ): ModularEditBuilder {
-        return new ModularEditBuilder(this, this.fieldKinds, deltaReceiver, anchors);
+        return new ModularEditBuilder(this, deltaReceiver, anchors);
     }
 }
 
@@ -370,7 +370,6 @@ export class ModularEditBuilder
 {
     constructor(
         family: ChangeFamily<unknown, FieldChangeMap>,
-        fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
