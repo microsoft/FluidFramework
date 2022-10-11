@@ -15,15 +15,139 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.0.0
+
+## 2.0.0-internal.2.0.0 Upcoming changes
+- [Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
+- [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
+- [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
+- [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+
+### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
+`ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
+```diff
+    async refreshLatestSummaryAck(
+-       proposalHandle: string | undefined,
+-       ackHandle: string,
+-       summaryRefSeq: number,
+-       summaryLogger: ITelemetryLogger,
++       options: IRefreshSummaryAckOptions,
+    ):
+```
+
+### Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package
+The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
+
+### IFluidContainerEvents event naming correction
+Renamed **dispose** to **disposed** to better communicate the state and align with currently emitted event.
+It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
+
+### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined
+Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
+So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
+
+## 2.0.0-internal.2.0.0 Breaking changes
+- [Update to React 17](#Update-to-React-17)
+- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
+- [Marker.toString simplified](#markertostring-simplified)
+- [Remove IContainerRuntimeBase.setFlushMode](#remove-icontainerruntimebasesetflushmode)
+- [getTextAndMarkers changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [waitIntervalCollection removed](#waitintervalcollection-removed)
+- [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
+- [Remove deprecated data structures from @fluidframework/sequence](#remove-deprecated-data-structures-from-fluidframeworksequence)
+- [Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager](renamed-lockTask-to-volunteerForTask-from-@fluid-experimental/task-manager)
+- [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)/
+- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
+- [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
+- [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+
+### Update to React 17
+The following packages use React and thus were impacted:
+- @fluidframework/view-adapters
+- @fluid-tools/webpack-fluid-loader
+- @fluid-experimental/react-inputs
+- @fluid-experimental/property-inspector-table
+
+Users of these packages may need to update to React 17, and/or take other action to ensure compatibility.
+
+### IntervalCollection event semantics changed
+
+The semantics of events emitted by IntervalCollection were changed to be more consistent:
+
+- propertyChanged events receive the same "isLocal" and op information that other events received
+- changeInterval events will no longer take place for changes that impact an interval's properties only. Clients that need to perform work on such changes should listen to "propertyChanged" events instead.
+- For local changes, changeInterval events will only be emitted on initial application of the change (as opposed to the
+  previous behavior, which fired an event on the local application of a change as well as on server ack of that change))
+- changeInterval events now receive information about the interval's previous position.
+- addInterval and deleteInterval event handler now properly reflects that the `op` argument can be undefined. This was true
+  before, but not reflected in the type system.
+
+More details can be found on `IIntervalCollectionEvent`'s doc comment.
+
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+
+### MergeTree class no longer exported
+The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### Marker.toString simplified
+
+In merge-tree, Marker's string representation returned by `toString` was simplified.
+This new representation is used in the return value of `SharedString.getTextRangeWithMarkers`.
+The previous logic was moved to the public export `debugMarkerToString`.
+
+### Remove IContainerRuntimeBase.setFlushMode
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+
+### getTextAndMarkers changed to be a free function
+
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### waitIntervalCollection removed
+
+`SharedSegmentSequence.waitIntervalCollection` has been removed.
+Use `getIntervalCollection` instead, which has the same semantics but is synchronous.
+
+### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
+The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
+
+### Remove deprecated data structures from @fluidframework/sequence
+`SharedNumberSequence`, `SharedObjectSequence`, and `SharedMatrix` have been removed from `@fluidframework/sequence`. They are currently still available in `@fluid-experimental/sequence-deprecated.
+
+### Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager
+`TaskManager.lockTask()` has been renamed `volunteerForTask()` and now returns a `Promise<boolean>` instead of a `Promise<void>`. Please update all usages accordingly.
+
+### Renamed haveTaskLock to assigned from @fluid-experimental/task-manager
+`TaskManager.haveTaskLock()` has been renamed `assigned()`. Please update all usages accordingly.
+
+### Remove ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Remove IContainerRuntime.flush
+`IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### Remove ScheduleManager and DeltaScheduler
+`ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
 # 2.0.0-internal.1.3.0
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
+- [iframe-driver removed](#iframe-driver-removed)
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
 was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
 This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
+
+### iframe-driver removed
+The iframe-driver is now deprecated and should not be used, it will be removed in an upcoming release.
 
 # 2.0.0-internal.1.1.0
 

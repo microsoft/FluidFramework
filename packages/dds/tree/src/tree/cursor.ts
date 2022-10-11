@@ -246,7 +246,7 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
     cursor: TCursor,
     f: (cursor: TCursor) => void,
 ): void {
-    assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+    assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
     for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
         f(cursor);
     }

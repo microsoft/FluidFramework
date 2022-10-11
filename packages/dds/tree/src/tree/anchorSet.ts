@@ -121,10 +121,7 @@ export class AnchorSet {
         const parent = path.parent ?? this.root;
         const parentPath = this.trackInner(parent);
 
-        const child = parentPath.getOrCreateChild(
-            path.parentField,
-            path.parentIndex,
-        );
+        const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
 
         // Now that child is added (if needed), remove the extra ref that we added in the recursive call.
         parentPath.removeRef();
@@ -155,7 +152,7 @@ export class AnchorSet {
         while (stack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const node = stack.pop()!;
-            assert(node.status === Status.Alive, "PathNode must be alive");
+            assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
             node.status = Status.Dead;
             for (const children of node.children.values()) {
                 stack.push(...children);
@@ -190,7 +187,8 @@ export class AnchorSet {
             0x352 /* moveChildren is a no-op and should not be called if there is no src or dst */,
         );
 
-        const srcParent = srcStart === undefined ? undefined : this.find(srcStart.parent ?? this.root);
+        const srcParent =
+            srcStart === undefined ? undefined : this.find(srcStart.parent ?? this.root);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const srcChildren = srcParent?.children?.get(srcStart!.parentField);
         // Sorted list of PathNodes to move from src to dst.
@@ -201,13 +199,19 @@ export class AnchorSet {
             let numberBeforeMove = 0;
             let numberToMove = 0;
             let index = 0;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < srcStart!.parentIndex) {
+            while (
+                index < srcChildren.length &&
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                srcChildren[index].parentIndex < srcStart!.parentIndex
+            ) {
                 numberBeforeMove++;
                 index++;
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < srcStart!.parentIndex + count) {
+            while (
+                index < srcChildren.length &&
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                srcChildren[index].parentIndex < srcStart!.parentIndex + count
+            ) {
                 numberToMove++;
                 index++;
             }
@@ -306,7 +310,11 @@ export class AnchorSet {
             },
             onInsert: (start: number, content: Delta.ProtoNode[]): void => {
                 assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
-                this.moveChildren(content.length, undefined, { parent, parentField, parentIndex: start });
+                this.moveChildren(content.length, undefined, {
+                    parent,
+                    parentField,
+                    parentIndex: start,
+                });
             },
             onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
                 assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
@@ -314,7 +322,8 @@ export class AnchorSet {
             },
             onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
                 assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
-                const srcPath = moveTable.get(id) ?? fail("Must visit a move in after its move out");
+                const srcPath =
+                    moveTable.get(id) ?? fail("Must visit a move in after its move out");
                 this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
             },
             onSetValue: (value: Value): void => {},
@@ -435,7 +444,7 @@ class PathNode implements UpPath {
     }
 
     public get parent(): UpPath | undefined {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
         assert(
             this.parentPath !== undefined,
             0x355 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */,
@@ -448,18 +457,15 @@ class PathNode implements UpPath {
     }
 
     public addRef(count = 1): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40a /* PathNode must be alive */);
         this.refCount += count;
     }
 
     public removeRef(count = 1): void {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
         this.refCount -= count;
         if (this.refCount < 1) {
-            assert(
-                this.refCount === 0,
-                0x358 /* PathNode Refcount should not be negative. */,
-            );
+            assert(this.refCount === 0, 0x358 /* PathNode Refcount should not be negative. */);
 
             if (this.children.size === 0) {
                 this.disposeThis();
@@ -472,7 +478,7 @@ class PathNode implements UpPath {
      * Creates child (with 1 ref) if needed.
      */
     public getOrCreateChild(key: FieldKey, index: number): PathNode {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40c /* PathNode must be alive */);
         let field = this.children.get(key);
         if (field === undefined) {
             field = [];
@@ -496,7 +502,7 @@ class PathNode implements UpPath {
      * Does NOT add a ref.
      */
     public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
         const field = this.children.get(key);
         if (field === undefined) {
             return undefined;
@@ -511,16 +517,13 @@ class PathNode implements UpPath {
      * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
      */
     public removeChild(child: PathNode): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40e /* PathNode must be alive */);
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child);
-        assert(
-            childIndex !== undefined,
-            0x35c /* child must be parented to be removed */,
-        );
+        assert(childIndex !== undefined, 0x35c /* child must be parented to be removed */);
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.afterEmptyField(key);
@@ -533,7 +536,7 @@ class PathNode implements UpPath {
      * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
      */
     public afterEmptyField(key: FieldKey): void {
-        assert(this.status === Status.Alive, "PathNode must be alive");
+        assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
         this.children.delete(key);
         if (this.refCount === 0 && this.children.size === 0) {
             this.disposeThis();
@@ -544,7 +547,7 @@ class PathNode implements UpPath {
      * Removes this from parent, and sets this to disposed.
      */
     private disposeThis(): void {
-        assert(this.status !== Status.Disposed, "PathNode must be alive");
+        assert(this.status !== Status.Disposed, 0x410 /* PathNode must be alive */);
         this.parentPath?.removeChild(this);
 
         this.status = Status.Disposed;

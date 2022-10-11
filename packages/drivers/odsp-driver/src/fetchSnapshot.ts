@@ -29,7 +29,7 @@ import {
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
+import { currentReadVersion, ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
 
@@ -241,7 +241,7 @@ async function fetchLatestSnapshotCore(
                     ...propsToLog,
                 });
 
-                let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
                 let contentTypeToRead: string | undefined;
                 if (contentType?.includes("application/ms-fluid")) {
                     contentTypeToRead = "application/ms-fluid";
@@ -264,7 +264,7 @@ async function fetchLatestSnapshotCore(
                         case "application/ms-fluid": {
                             const content = await odspResponse.content.arrayBuffer();
                             propsToLog.bodySize = content.byteLength;
-                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
+                            const snapshotContents: ISnapshotContentsWithProps = parseCompactSnapshotResponse(
                                 new Uint8Array(content),
                                 logger);
                             if (snapshotContents.snapshotTree.trees === undefined ||
@@ -275,6 +275,15 @@ async function fetchLatestSnapshotCore(
                                         propsToLog,
                                     );
                                 }
+                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                            if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+                                logger.sendErrorEvent({
+                                    eventName: "SlowSnapshotParseCodePaths",
+                                    slowTreeStructureCount: slowTreeParseCodePaths,
+                                    slowBlobStructureCount: slowBlobParseCodePaths,
+                                });
+                            }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
@@ -393,6 +402,8 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
+                    slowTreeStructureCount: snapshot.slowTreeStructureCount ?? 0,
+                    slowBlobStructureCount: snapshot.slowBlobStructureCount ?? 0,
                     userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.

@@ -26,23 +26,23 @@ import { mapFieldMarks, mapMarkList, mapTreeFromCursor } from "../feature-librar
 // Testing utilities
 
 export function deepFreeze<T>(object: T): void {
-	// Retrieve the property names defined on object
-	const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-	// Freeze properties before freezing self
-	for (const name of propNames) {
-		const value = object[name];
-		if (typeof value === "object") {
-			deepFreeze(value);
-		}
-	}
-	Object.freeze(object);
+    // Retrieve the property names defined on object
+    const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
+    // Freeze properties before freezing self
+    for (const name of propNames) {
+        const value = object[name];
+        if (typeof value === "object") {
+            deepFreeze(value);
+        }
+    }
+    Object.freeze(object);
 }
 
 export class MockDependent extends SimpleObservingDependent {
-	public readonly tokens: (InvalidationToken | undefined)[] = [];
-	public constructor(name: string = "MockDependent") {
-		super((token) => this.tokens.push(token), name);
-	}
+    public readonly tokens: (InvalidationToken | undefined)[] = [];
+    public constructor(name: string = "MockDependent") {
+        super((token) => this.tokens.push(token), name);
+    }
 }
 
 /**
@@ -97,13 +97,16 @@ export class TestTreeProvider {
      * _i_ is the index of the tree in order of creation.
      */
     public async createTree(): Promise<ISharedTree> {
-        const container = this.trees.length === 0
-        ? await this.provider.makeTestContainer()
-        : await this.provider.loadTestContainer();
+        const container =
+            this.trees.length === 0
+                ? await this.provider.makeTestContainer()
+                : await this.provider.loadTestContainer();
 
         this._containers.push(container);
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-        return this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(TestTreeProvider.treeId);
+        return (this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(
+            TestTreeProvider.treeId,
+        ));
     }
 
     /**
@@ -132,10 +135,11 @@ export class TestTreeProvider {
         this.provider = new TestObjectProvider(
             Loader,
             driver,
-            () => new TestContainerRuntimeFactory(
-                "@fluid-example/test-dataStore",
-                new TestFluidObjectFactory(registry),
-            ),
+            () =>
+                new TestContainerRuntimeFactory(
+                    "@fluid-example/test-dataStore",
+                    new TestFluidObjectFactory(registry),
+                ),
         );
 
         return new Proxy(this, {
@@ -160,13 +164,17 @@ export class TestTreeProvider {
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
  * after the spy is no longer needed.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function spyOnMethod(methodClass: Function, methodName: string, spy: () => void): () => void {
+export function spyOnMethod(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    methodClass: Function,
+    methodName: string,
+    spy: () => void,
+): () => void {
     const { prototype } = methodClass;
     const method = prototype[methodName];
     assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
-    const methodSpy = function(this: unknown, ...args: unknown[]): unknown {
+    const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
         spy();
         return method.call(this, ...args);
     };
