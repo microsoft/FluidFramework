@@ -116,6 +116,8 @@ steps:
                   if ! $i -eq $maximumRetryIfNetworkError
                     echo "Network Error Detected"
                     continue
+                  else
+                    exit $t1
                   fi
                 else
                   if ! grep -q "You cannot publish over the previously published versions" "publish_log"
