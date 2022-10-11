@@ -487,7 +487,7 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
     // (undocumented)
     keys: Iterable<FieldKey>;
     // (undocumented)
-    length(key: FieldKey): number;
+    length(key?: FieldKey): number;
     seek(offset: number): TResult;
     readonly type: TreeType;
     up(): TResult;
@@ -1013,7 +1013,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     // (undocumented)
     protected readonly keyStack: FieldKey[];
     // (undocumented)
-    length(key: FieldKey): number;
+    length(key?: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)

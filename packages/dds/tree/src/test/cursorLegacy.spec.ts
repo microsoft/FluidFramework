@@ -212,6 +212,21 @@ export function testJsonableTreeCursor(
                     assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                     assert.equal(cursor.value, 0);
                 });
+
+                it(`can get a length of array from within the field`, () => {
+                    const cursor = factory({
+                        type: brand("Foo"),
+                        fields: {
+                            [EmptyKey]: [
+                                { type: brand("Bar"), value: 0 },
+                                { type: brand("Bar"), value: 1 },
+                            ],
+                        },
+                    });
+                    const length = cursor.length(EmptyKey);
+                    assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                    assert.equal(cursor.length(), length);
+                });
             });
         });
 
