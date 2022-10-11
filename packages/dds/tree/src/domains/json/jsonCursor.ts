@@ -15,7 +15,7 @@ import {
     mapCursorFields,
     ITreeCursorSynchronous,
 } from "../../tree";
-import { CursorAdapter, singleStackTreeCursor } from "../../feature-libraries";
+import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray,
     jsonBoolean,
@@ -94,7 +94,8 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         case jsonNumber.name:
         case jsonBoolean.name:
         case jsonString.name:
-            return reader.value as number | boolean | string;
+            assert(isPrimitiveValue(reader.value), "expected a primitive value");
+            return reader.value as JsonCompatible;
         case jsonArray.name: {
             reader.enterField(EmptyKey);
             const result = mapCursorFieldNew(reader, cursorToJsonObject);
@@ -105,9 +106,9 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             const result: JsonCompatible = {};
             mapCursorFields(reader, (cursor) => {
                 const key = cursor.getFieldKey() as LocalFieldKey;
-                assert(cursor.firstNode() === true, 0x360 /* expected navigation ok */);
+                assert(cursor.firstNode(), "expected non-empty field");
                 result[key] = cursorToJsonObject(reader);
-                cursor.exitNode();
+                assert(!cursor.nextNode(), "expected exactly one node");
             });
             return result;
         }
