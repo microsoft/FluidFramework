@@ -5,7 +5,7 @@
 
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
-import { EmptyKey, FieldKey, NodeData } from "./types";
+import { FieldKey, NodeData, Value } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -169,21 +169,29 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
         if (global === undefined) {
             return [];
         }
-        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey);
+        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).filter((key: GlobalFieldKey) => {
+            const value: Value = global[key];
+            return !Array.isArray(value) || value.length !== 0;
+        }).map(symbolFromKey);
     }
 
-    // If this node contains an empty array, it should return no keys.
-    const localKeys =
-        local[EmptyKey] !== undefined && local[EmptyKey].length === 0
-            ? []
-            : (Object.getOwnPropertyNames(local) as LocalFieldKey[]);
+    // Omit any empty fields from local keys
+    const localKeys = (Object.getOwnPropertyNames(local) as LocalFieldKey[]).filter(
+        (key: LocalFieldKey) => {
+            const value: Value = local[key];
+            return !Array.isArray(value) || value.length !== 0;
+        },
+    );
 
     if (global === undefined) {
         return localKeys;
     }
     return [
         ...localKeys,
-        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey),
+        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).filter((key: GlobalFieldKey) => {
+            const value: Value = global[key];
+            return !Array.isArray(value) || value.length !== 0;
+        }).map(symbolFromKey),
     ];
 }
 
