@@ -26,7 +26,8 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Fields ********** //
 
     /**
-     * Moves the "current field" forward one in an arbitrary field traversal order.
+     * Moves the "current field" forward one in an arbitrary field traversal order,
+     * skipping any empty fields.
      *
      * If there is no remaining field to iterate to,
      * returns false and navigates up to the parent setting the mode to `Nodes`.
