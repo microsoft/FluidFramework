@@ -308,9 +308,9 @@ export interface FieldChangeEncoder<TChangeset> {
 }
 
 // @public
-export interface FieldChangeHandler<TChangeset, TEditor = unknown> {
+export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    editor: FieldEditor<TChangeset> & TEditor;
+    editor: TEditor;
     // (undocumented)
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
@@ -344,7 +344,7 @@ export interface FieldEditor<TChangeset> {
 export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @public @sealed
-export class FieldKind<TEditor = unknown> {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
     constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
     allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;

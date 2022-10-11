@@ -12,7 +12,7 @@ import {
     SchemaData,
 } from "../../schema-stored";
 import { isNeverField } from "./comparison";
-import { FieldChangeHandler } from "./fieldChangeHandler";
+import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -28,7 +28,7 @@ import { FieldChangeHandler } from "./fieldChangeHandler";
  *
  * @sealed
  */
-export class FieldKind<TEditor = unknown> {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
     /**
      * @param identifier - Globally scoped identifier.
      * @param multiplicity - bound on the number of children that fields of this kind may have.
