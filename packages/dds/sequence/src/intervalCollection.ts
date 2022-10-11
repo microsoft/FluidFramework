@@ -1057,7 +1057,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                     }
                 },
                 () => {
-                    assert(previousInterval !== undefined, "Invalid interleaving of before/after slide");
+                    assert(previousInterval !== undefined, 0x3fa /* Invalid interleaving of before/after slide */);
                     pendingChanges--;
                     if (pendingChanges === 0) {
                         this.addIntervalToIndex(interval);
@@ -1194,7 +1194,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValu
                     if (!params) {
                         return;
                     }
-                    assert(op !== undefined, "op should exist here");
+                    assert(op !== undefined, 0x3fb /* op should exist here */);
                     collection.ackAdd(params, local, op, localOpMetadata);
                 },
                 rebase,
@@ -1204,7 +1204,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValu
             "delete",
             {
                 process: (collection, params, local, op) => {
-                    assert(op !== undefined, "op should exist here");
+                    assert(op !== undefined, 0x3fc /* op should exist here */);
                     collection.ackDelete(params, local, op);
                 },
                 rebase: (collection, op, localOpMetadata) => {
@@ -1222,7 +1222,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValu
                     if (!params) {
                         return;
                     }
-                    assert(op !== undefined, "op should exist here");
+                    assert(op !== undefined, 0x3fd /* op should exist here */);
                     collection.ackChange(params, local, op, localOpMetadata);
                 },
                 rebase,
@@ -1702,7 +1702,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // This API cannot change the ID, and writing to the ID property will result in an exception. So we
         // strip it out of the properties here.
         const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
-        assert(id !== undefined, "id must exist on the interval");
+        assert(id !== undefined, 0x3fe /* id must exist on the interval */);
         const interval: TInterval | undefined = this.getIntervalById(id);
         if (!interval) {
             // The interval has been removed locally; no-op.
