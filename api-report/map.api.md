@@ -21,7 +21,6 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public @sealed
 export class DirectoryFactory implements IChannelFactory {
@@ -212,7 +211,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
     // @internal (undocumented)
-    protected applyStashedOp(op: any): DirectoryLocalOpMetadata | undefined;
+    protected applyStashedOp(op: any): unknown;
     clear(): void;
     countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
