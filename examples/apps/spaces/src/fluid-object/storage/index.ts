@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./spacesStorage";
-export * from "./spacesStorageView";
+export { ISpacesStorage, ISpacesStoredItem, SpacesStorage } from "./spacesStorage";
+export { SpacesStorageView } from "./spacesStorageView";
