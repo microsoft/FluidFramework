@@ -135,7 +135,7 @@ class SharedTree
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
-        assert(this.editManager.anchors !== undefined, "editManager must have anchors");
+        assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
         return this.editManager.anchors?.locate(anchor);
     }
 

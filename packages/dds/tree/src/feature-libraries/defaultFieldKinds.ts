@@ -501,7 +501,7 @@ const optionalFieldEditor: OptionalFieldEditor = {
     }),
 
     buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
-        assert(index === 0, "Optional fields only support a single child node");
+        assert(index === 0, 0x404 /* Optional fields only support a single child node */);
         return { childChange };
     },
 };
