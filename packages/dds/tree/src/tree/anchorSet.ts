@@ -434,14 +434,13 @@ class PathNode implements UpPath {
         public parentField: FieldKey,
         public parentIndex: number,
         /**
-         * Starts as defined (except on {@link AnchorSet.root}) but is changed to `undefined` when the
-         * corresponding document node is deleted from its field.
-         * Is kept in sync with the parent `PathNode`:
+         * The parent of this `PathNode` (an up pointer in the `PathNode` tree).
+         * There must be a corresponding down pointer from the `parentPath` node to this node.
+         * When undefined, this node is the {@link AnchorSet.root} for `this.anchorSet` and thus has no parent.
          *
-         * - When `parentPath` is defined, then this `PathNode` is listed as a child of that parent
-         * (and that parent only).
-         *
-         * - When `parentPath` is `undefined`, then no `PathNode` lists this `PathNode` as its child.
+         * When updating the tree, `AnchorSet` may transiently leave the up and down pointers inconsistent
+         * (updating down pointers first), but must ensure they are consistent before the editing operation returns
+         * to non-`AnchorSet` code.
          */
         public parentPath: PathNode | undefined,
     ) {}
