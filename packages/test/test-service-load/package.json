@@ -72,7 +72,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/task-manager": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/aqueduct": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
@@ -87,6 +86,7 @@
     "@fluidframework/protocol-definitions": "^1.1.0-97957",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/task-manager": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-drivers": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",

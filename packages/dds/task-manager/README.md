@@ -1,4 +1,4 @@
-# @fluid-experimental/task-manager
+# @fluidframework/task-manager
 
 <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:scripts=FALSE) -->
 <!-- This section is automatically generated.
