@@ -19,27 +19,9 @@ import {
     spacesItemMap,
 } from "./dataObjectRegistry";
 
-/**
- * ISpacesItem stores an itemType and a serializable object pairing.  Spaces maps this typename to its itemMap,
- * which lets it find how to get an item out of the serializable object.  The serializable object likely includes
- * one or more handles to persisted model components, though could include anything it wants.  So the Spaces component
- * owns the typenames, but the individual types own their own serializable object format.
- */
-export interface IDataObjectGridItem {
-    /**
-     * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
-     */
-    serializableObject: Serializable;
-    /**
-     * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
-     * knows how to deal with it.
-     */
-    itemType: string;
-}
-
 export interface IDataObjectGrid extends EventEmitter {
-    readonly getItems: () => DataObjectGridItem[];
-    readonly getItem: (id: string) => DataObjectGridItem | undefined;
+    readonly getItems: () => IDataObjectGridItem[];
+    readonly getItem: (id: string) => IDataObjectGridItem | undefined;
     readonly addItem: (type: string) => Promise<string>;
     readonly removeItem: (id: string) => void;
     readonly updateLayout: (id: string, newLayout: Layout) => void;
@@ -49,19 +31,24 @@ export interface IDataObjectGrid extends EventEmitter {
 /**
  * Spaces collects serializable formats of items and stores them with grid-based layout information.
  */
-export interface IDataObjectGridStoredItem<T> {
-    id: string;
-    serializableItemData: Serializable<T>;
-    layout: Layout;
-}
-
-export class DataObjectGridItem {
-    public constructor(
-        public readonly id: string,
-        public readonly type: string,
-        public readonly serializableData: Serializable,
-        public readonly layout: Layout,
-    ) { }
+export interface IDataObjectGridItem {
+    /**
+     * A unique id for the item.
+     */
+    readonly id: string;
+    /**
+     * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
+     * knows how to deal with it.
+     */
+    readonly type: string;
+    /**
+     * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
+     */
+    readonly serializableData: Serializable;
+    /**
+     * The react grid layout of the item.
+     */
+    readonly layout: Layout;
 }
 
 /**
@@ -82,26 +69,12 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
         return DataObjectGrid.factory;
     }
 
-    private readonly convertStoredToClass = (
-        stored: IDataObjectGridStoredItem<IDataObjectGridItem>,
-    ): DataObjectGridItem => {
-        return new DataObjectGridItem(
-            stored.id,
-            stored.serializableItemData.itemType,
-            stored.serializableItemData.serializableObject,
-            stored.layout,
-        );
+    public readonly getItems = (): IDataObjectGridItem[] => {
+        return [...this.root.values()] as IDataObjectGridItem[];
     };
 
-    public readonly getItems = (): DataObjectGridItem[] => {
-        return [...this.root.values()].map(this.convertStoredToClass);
-    };
-
-    public readonly getItem = (id: string): DataObjectGridItem | undefined => {
-        const stored = this.root.get(id);
-        return stored !== undefined
-            ? this.convertStoredToClass(stored)
-            : undefined;
+    public readonly getItem = (id: string): IDataObjectGridItem | undefined => {
+        return this.root.get(id);
     };
 
     public readonly addItem = async (type: string) => {
@@ -110,18 +83,17 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
             throw new Error("Unknown item, can't add");
         }
 
-        const serializableObject = await itemMapEntry.create(this.context);
+        const serializableData = await itemMapEntry.create(this.context);
         const id = uuid();
+        const newItem: IDataObjectGridItem = {
+            id,
+            type,
+            serializableData,
+            layout: { x: 0, y: 0, w: 6, h: 2 },
+        };
         this.root.set(
             id,
-            {
-                id,
-                serializableItemData: {
-                    serializableObject,
-                    itemType: type,
-                },
-                layout: { x: 0, y: 0, w: 6, h: 2 },
-            },
+            newItem,
         );
         return id;
     };
@@ -131,26 +103,28 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
     };
 
     public readonly updateLayout = (id: string, newLayout: Layout): void => {
-        const currentEntry = this.root.get<IDataObjectGridStoredItem<IDataObjectGridItem>>(id);
-        if (currentEntry === undefined) {
+        const currentItem = this.root.get<IDataObjectGridItem>(id);
+        if (currentItem === undefined) {
             throw new Error("Couldn't find requested item");
         }
-        const model = {
-            serializableItemData: currentEntry.serializableItemData,
+        const updatedItem: IDataObjectGridItem = {
+            id: currentItem.id,
+            type: currentItem.type,
+            serializableData: currentItem.serializableData,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
         };
-        this.root.set(id, model);
+        this.root.set(id, updatedItem);
     };
 
     public readonly getViewForItem = async (item: IDataObjectGridItem) => {
-        const registryEntry = spacesItemMap.get(item.itemType);
+        const registryEntry = spacesItemMap.get(item.type);
 
         if (registryEntry === undefined) {
             // Probably would be ok to return undefined instead
             throw new Error("Cannot get view, unknown widget type");
         }
 
-        return registryEntry.getView(item.serializableObject);
+        return registryEntry.getView(item.serializableData);
     };
 
     protected async hasInitialized() {

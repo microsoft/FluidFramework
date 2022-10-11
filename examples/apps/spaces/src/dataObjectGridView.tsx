@@ -7,7 +7,7 @@ import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import { ISpacesItemEntry, spacesItemMap } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
-import { DataObjectGridItem, IDataObjectGrid } from "./dataObjectGrid";
+import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid";
 
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
@@ -93,10 +93,10 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
         const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
         const [itemList, setItemList] =
-            React.useState<DataObjectGridItem[]>(model.getItems());
+            React.useState<IDataObjectGridItem[]>(model.getItems());
 
         React.useEffect(() => {
-            const onItemListChanged = (newList: DataObjectGridItem[]) => {
+            const onItemListChanged = (newList: IDataObjectGridItem[]) => {
                 setItemList(newList);
             };
             model.on("itemListChanged", onItemListChanged);
