@@ -9,6 +9,7 @@ import {
     IDocumentStorageServicePolicies,
     ISummaryContext,
     LoaderCachingPolicy,
+    FiveDaysMs,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
@@ -16,7 +17,7 @@ import { ISnapshotContents } from "./odspPublicUtils";
 
 /* eslint-disable max-len */
 
-const maximumCacheDurationMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
+const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
 class BlobCache {
     // Save the timeout so we can cancel and reschedule it as needed
@@ -126,7 +127,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
             config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
                 ? 0
                 : maximumCacheDurationMs
-        );
+        ) as FiveDaysMs;
 
         this.policies = {
             // By default, ODSP tells the container not to prefetch/cache.

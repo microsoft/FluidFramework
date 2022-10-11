@@ -15,6 +15,8 @@
 
 /azure/                                                                   @microsoft/fluid-cr-framework
 
+/build-tools/                                                             @microsoft/fluid-cr-infra
+
 /common/build/                                                            @microsoft/fluid-cr-infra
 /common/lib/                                                              @microsoft/fluid-cr-core
 /docs/                                                                    @microsoft/fluid-cr-docs
@@ -25,6 +27,7 @@
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
+/packages/dds/tree                                                        @microsoft/fluid-cr-tree
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
 /packages/framework/                                                      @microsoft/fluid-cr-framework
@@ -68,10 +71,11 @@ api-report/driver-utils.api.md                                            @micro
 api-report/driver-web-cache.api.md                                        @microsoft/fluid-cr-drivers
 api-report/experimental-tree.api.md                                       @microsoft/fluid-cr-tree
 api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
-api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework @microsoft/fluid-cr-api
+api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework
 api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
 api-report/iframe-driver.api.md                                           @microsoft/fluid-cr-drivers
 api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
+api-report/location-redirection-utils.api.md                              @microsoft/fluid-cr-loader
 api-report/map.api.md                                                     @microsoft/fluid-cr-dds
 api-report/matrix.api.md                                                  @microsoft/fluid-cr-dds
 api-report/merge-tree.api.md                                              @microsoft/fluid-cr-dds

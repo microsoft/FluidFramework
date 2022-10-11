@@ -276,6 +276,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>);
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -399,6 +400,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -424,6 +426,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -645,26 +648,14 @@ use_old_InterfaceDeclaration_IGarbageCollectionState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails():
-    TypeOnly<old.IGarbageCollectionSummaryDetails>;
-declare function use_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    use: TypeOnly<current.IGarbageCollectionSummaryDetails>);
-use_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    get_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails():
-    TypeOnly<current.IGarbageCollectionSummaryDetails>;
-declare function use_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    use: TypeOnly<old.IGarbageCollectionSummaryDetails>);
-use_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    get_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -844,6 +835,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerNode():
 declare function use_current_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<current.ISummarizerNode>);
 use_current_InterfaceDeclaration_ISummarizerNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -856,6 +848,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerNode():
 declare function use_old_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<old.ISummarizerNode>);
 use_old_InterfaceDeclaration_ISummarizerNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -916,6 +909,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<current.ISummarizerNodeWithGC>);
 use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*
@@ -928,6 +922,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<old.ISummarizerNodeWithGC>);
 use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*
