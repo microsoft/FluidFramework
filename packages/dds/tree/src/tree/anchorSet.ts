@@ -369,7 +369,7 @@ enum Status {
     Disposed,
     /**
      * Indicates the `NodePath` corresponds to a deleted node in the document.
-     * Such `NodePath`s are maintained by the `AnchorSet` (other than updating
+     * Such `NodePath`s are not maintained by the `AnchorSet` (other than updating
      * their status to `Disposed` when appropriate).
      *
      * Accessing such a node is invalid.
@@ -441,7 +441,7 @@ class PathNode implements UpPath {
          * When updating the tree, `AnchorSet` may transiently leave the up and down pointers inconsistent
          * (updating down pointers first), but must ensure they are consistent before the editing operation returns
          * to non-`AnchorSet` code.
-         * This consistency guarantee only applies nodes `Alive` nodes.
+         * This consistency guarantee only applies to nodes that are `Alive`.
          */
         public parentPath: PathNode | undefined,
     ) {}
@@ -549,7 +549,7 @@ class PathNode implements UpPath {
      * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
      */
     public afterEmptyField(key: FieldKey): void {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
         this.children.delete(key);
         if (this.refCount === 0 && this.children.size === 0) {
             this.disposeThis();
