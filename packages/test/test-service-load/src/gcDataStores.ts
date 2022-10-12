@@ -201,13 +201,17 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
 
         /**
-         * Adjust the totalSendCount and opRatePerMin. There can be maximum of maxRunningLeafChildren children running
-         * at the same time.
-         * - This data store and each child sends 1/4th of the number of ops per min.
-         * - This data store sends 1/4th the number of total ops since its sending at 1/4th the op rate.
+         * Adjust the totalSendCount and opRatePerMin such that this data store and its children collectively send
+         * totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafChildren children running
+         * at the same time. So maxDataStores = maxRunningLeafChildren + 1 (this data store).
+         * - Ops per minute sent by this data store and its children is 1/maxDataStores times the opRatePerMin.
+         * - totalSendCount of this data stores is 1/maxDataStores times the totalSendCount as its children are also
+         *   sending ops at the same. What this boils down to is that totalSendCount is controlling how long the test
+         *   runs since the total number of ops sent may be less than totalSendCount.
          */
-        const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / (maxRunningLeafChildren + 1));
-        const totalSendCount = config.testConfig.totalSendCount / 4;
+        const maxDataStores = maxRunningLeafChildren + 1;
+        const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / maxDataStores);
+        const totalSendCount = config.testConfig.totalSendCount / maxDataStores;
         this._childRunConfig = {
             ...config,
             testConfig: {
@@ -306,10 +310,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
      * of child than can be running in parallel to control the number of ops per minute.
      */
     private canRunNewChild() {
-        if (this.referencedChildrenDetails.length < maxRunningLeafChildren) {
-            return true;
-        }
-        return false;
+        return this.referencedChildrenDetails.length < maxRunningLeafChildren;
     }
 
     /**
@@ -515,15 +516,15 @@ export class RootDataObject extends DataObject implements IGCDataStore {
         };
 
         // Add a  random jitter of +- 50% of randomDelayMs to stagger the start of child in each client.
-        const randomDelayMs = 1000;
-        await delay(randomDelayMs + randomDelayMs * random.real(0, .5, true)(config.randEng));
+        const approxDelayMs = 1000;
+        await delay(approxDelayMs + approxDelayMs * random.real(0, .5, true)(config.randEng));
         const child1RunP = this.nonCollabChild.run(childConfig, `client${config.runId + 1}NonCollab`);
 
-        await delay(randomDelayMs + randomDelayMs * random.real(0, .5, true)(config.randEng));
+        await delay(approxDelayMs + approxDelayMs * random.real(0, .5, true)(config.randEng));
         const child2RunP = this.collabChild.run(childConfig, `client${config.runId + 1}Collab`);
 
-        return Promise.all([child1RunP, child2RunP]).then((result) => {
-            return result[0] && result[1];
+        return Promise.all([child1RunP, child2RunP]).then(([child1Result, child2Result]) => {
+            return child1Result && child2Result;
         });
     }
 
