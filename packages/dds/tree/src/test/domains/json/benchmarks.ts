@@ -24,7 +24,7 @@ export function sumMap(cursor: ITreeCursorNew): number {
         total += value;
     }
 
-    forEachField(cursor, () => forEachNode(cursor, sumMap));
+    forEachField(cursor, () => forEachNode(cursor, (c) => { total += sumMap(c); }));
 
     return total;
 }
