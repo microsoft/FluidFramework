@@ -5,13 +5,14 @@
     "importHelpers": true,
     "declarationMap": false,
     "rootDir": "./",
-    "outDir": "../dist/test",
+    "outDir": "../../lib/test",
     "types": ["node", "mocha", "chai"],
     "skipLibCheck": true,
   },
+  "include": ["./**/*"],
   "references": [
     {
-      "path": "..",
+      "path": "../..",
     },
   ],
 }
