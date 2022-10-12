@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as semver from "semver";
 
-import { Context } from "./context";
+import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+
+import { MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { Package } from "../common/npmPackage";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
-import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
+import { Context } from "./context";
 import { runPolicyCheckWithFix } from "./policyCheck";
 import { fatal } from "./utils";
-import { isMonoRepoKind, MonoRepoKind } from "../common/monoRepo";
-import { Package } from "../common/npmPackage";
-import * as semver from "semver";
-import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
 
 /**
  * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately
@@ -36,20 +37,27 @@ export async function createReleaseBump(
 
     const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     if (!remote) {
-        fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`)
+        fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`);
     }
 
     if (context.originalBranchName !== "main" && context.originalBranchName !== "next") {
-        console.warn("WARNING: Release bumps outside of main/next branch are not normal!  Make sure you know what you are doing.")
-    } else if (!skipUpToDateCheck && !await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote)) {
+        console.warn(
+            "WARNING: Release bumps outside of main/next branch are not normal!  Make sure you know what you are doing.",
+        );
+    } else if (
+        !skipUpToDateCheck &&
+        !(await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote))
+    ) {
         fatal(`Local main/next branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
     const releasedPrereleaseDependencies = getReleasedPrereleaseDependencies(context);
     if (releasedPrereleaseDependencies.size !== 0) {
-        fatal(`Prelease dependencies for released package found. `
-            + `Run 'bump-version --update' and submit the PR to update the dependencies first.`
-            + `\n  ${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
+        fatal(
+            `Prelease dependencies for released package found. ` +
+                `Run 'bump-version --update' and submit the PR to update the dependencies first.` +
+                `\n  ${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`,
+        );
     }
 
     // Create release branch based on client version
@@ -75,23 +83,29 @@ export async function createReleaseBump(
     await context.createBranch(bumpBranch);
 
     // Make sure everything is installed (so that we can do build:genver)
-    if (!skipInstall && !await context.repo.install()) {
+    if (!skipInstall && !(await context.repo.install())) {
         fatal("Install failed");
     }
 
     // Bump the version
     const bumpType = bumpTypeOverride ?? "";
-    if(!bumpType) {
+    if (!bumpType) {
         fatal(`No bump type provided.`);
     }
 
-    console.log(`Release bump: bumping ${bumpType} version for development`)
+    console.log(`Release bump: bumping ${bumpType} version for development`);
     console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));
 
-    console.log("======================================================================================================");
-    console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName} `);
+    console.log(
+        "======================================================================================================",
+    );
+    console.log(
+        `Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName} `,
+    );
     if (context.originalBranchName === "main") {
-        console.log(`After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`);
+        console.log(
+            `After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`,
+        );
     }
     console.log(`Then --release can be use to start the release.`);
 }
@@ -104,7 +118,13 @@ export async function createReleaseBump(
  * @param packageNeedBump the set of packages that needs to be bump
  * @param oldVersions old versions
  */
-async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType, releaseName: string, depVersions: ReferenceVersionBag, virtualPatch: boolean) {
+async function bumpCurrentBranch(
+    context: Context,
+    versionBump: VersionBumpType,
+    releaseName: string,
+    depVersions: ReferenceVersionBag,
+    virtualPatch: boolean,
+) {
     const monoRepoNeedsBump = new Set<MonoRepoKind>();
     const packageNeedBump = new Set<Package>();
     for (const [name] of depVersions) {
@@ -121,12 +141,24 @@ async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType,
         }
     }
 
-    const newVersions = await bumpRepo(context, versionBump, monoRepoNeedsBump, packageNeedBump, virtualPatch, depVersions);
+    const newVersions = await bumpRepo(
+        context,
+        versionBump,
+        monoRepoNeedsBump,
+        packageNeedBump,
+        virtualPatch,
+        depVersions,
+    );
     const repoState = getRepoStateChange(depVersions.repoVersions, newVersions);
 
     const releaseNewVersion = newVersions.get(releaseName);
     const currentBranchName = await context.gitRepo.getCurrentBranchName();
-    console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName} `);
-    await context.gitRepo.commit(`[bump] package version to ${releaseNewVersion} for development after ${releaseName.toLowerCase()} release\n${repoState} `, "create bumped version commit");
+    console.log(
+        `  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName} `,
+    );
+    await context.gitRepo.commit(
+        `[bump] package version to ${releaseNewVersion} for development after ${releaseName.toLowerCase()} release\n${repoState} `,
+        "create bumped version commit",
+    );
     return `Repo Versions in branch ${currentBranchName}: ${repoState} `;
 }

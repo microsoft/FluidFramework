@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { EnumDeclaration, Project, TypeChecker } from "ts-morph";
+
 import { BreakingIncrement, IValidator } from "./validatorUtils";
 
 interface EnumData {
@@ -33,7 +33,7 @@ export class EnumValidator implements IValidator {
         return { properties };
     }
 
-    public validate(project: Project, pkgDir: string) : BreakingIncrement {
+    public validate(project: Project, pkgDir: string): BreakingIncrement {
         if (this.oldTypeData === undefined || this.newTypeData === undefined) {
             throw new Error("missing typedata");
         }

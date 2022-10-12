@@ -27,9 +27,7 @@ describe("TestChange", () => {
     it("can be composed", () => {
         const change1 = TestChange.mint([0, 1], 2);
         const change2 = TestChange.mint([0, 1, 2], 3);
-        const composed = TestChange.compose(
-            [change1, change2],
-        );
+        const composed = TestChange.compose([change1, change2]);
 
         const expected = TestChange.mint([0, 1], [2, 3]);
         assert.deepEqual(composed, expected);
@@ -38,10 +36,7 @@ describe("TestChange", () => {
     it("can be composed without verification", () => {
         const change1 = TestChange.mint([0], 1);
         const change2 = TestChange.mint([2], 3);
-        const composed = TestChange.compose(
-            [change1, change2],
-            false,
-        );
+        const composed = TestChange.compose([change1, change2], false);
 
         const expected = TestChange.mint([0], [1, 3]);
         assert.deepEqual(composed, expected);
@@ -50,9 +45,7 @@ describe("TestChange", () => {
     it("composition of inverses leads to normalized form", () => {
         const change1 = TestChange.mint([0], [1, 2]);
         const change2 = TestChange.mint([0, 1, 2], [-2, -1, 3]);
-        const composed = TestChange.compose(
-            [change1, change2],
-        );
+        const composed = TestChange.compose([change1, change2]);
 
         const expected = TestChange.mint([0], [3]);
         assert.deepEqual(composed, expected);
@@ -60,9 +53,7 @@ describe("TestChange", () => {
 
     it("can be inverted", () => {
         const change1 = TestChange.mint([0, 1], 2);
-        const inverted = TestChange.invert(
-            change1,
-        );
+        const inverted = TestChange.invert(change1);
 
         const expected = TestChange.mint([0, 1, 2], -2);
         assert.deepEqual(inverted, expected);
@@ -71,10 +62,7 @@ describe("TestChange", () => {
     it("can be rebased", () => {
         const change1 = TestChange.mint([0], 1);
         const change2 = TestChange.mint([0], 2);
-        const rebased = TestChange.rebase(
-            change2,
-            change1,
-        );
+        const rebased = TestChange.rebase(change2, change1);
 
         const expected = TestChange.mint([0, 1], 2);
         assert.deepEqual(rebased, expected);
@@ -89,7 +77,9 @@ describe("TestChange", () => {
         };
 
         assert.deepEqual(delta, expected);
-        assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), { type: Delta.MarkType.Modify });
+        assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), {
+            type: Delta.MarkType.Modify,
+        });
     });
 
     it("can be encoded in JSON", () => {

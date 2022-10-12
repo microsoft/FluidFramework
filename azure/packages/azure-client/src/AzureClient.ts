@@ -228,25 +228,22 @@ export class AzureClient {
         );
 
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        return new (class extends FluidContainer {
-            /**
-             * See {@link FluidContainer.attach}
-             *
-             * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
-             * or the id that will be returned.
-             * This exists because we are projecting a separation of server responsibility to the end developer that
-             * doesn't exist in the framework.
-             */
-            public async attach(): Promise<string> {
-                if (this.attachState !== AttachState.Detached) {
-                    throw new Error("Cannot attach container. Container is not in detached state");
-                }
-                await container.attach(createNewRequest);
-                const resolved = container.resolvedUrl;
-                ensureFluidResolvedUrl(resolved);
-                return resolved.id;
+
+        /**
+         * See {@link FluidContainer.attach}
+         */
+        const attach = async (): Promise<string> => {
+            if (container.attachState !== AttachState.Detached) {
+                throw new Error("Cannot attach container. Container is not in detached state");
             }
-        })(container, rootDataObject);
+            await container.attach(createNewRequest);
+            const resolved = container.resolvedUrl;
+            ensureFluidResolvedUrl(resolved);
+            return resolved.id;
+        };
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        fluidContainer.attach = attach;
+        return fluidContainer;
     }
     // #endregion
 }

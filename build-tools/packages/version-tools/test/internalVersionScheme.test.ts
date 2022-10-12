@@ -4,15 +4,15 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { assert } from "chai";
 import * as semver from "semver";
+
 import {
     fromInternalScheme,
-    toInternalScheme,
     getVersionRange,
-    isInternalVersionScheme,
     isInternalVersionRange,
+    isInternalVersionScheme,
+    toInternalScheme,
 } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
@@ -174,19 +174,28 @@ describe("internalScheme", () => {
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
         });
 
-        // Skipped for now because they are known to fail. We'll enable them once we've determined how to number our PR
-        // builds
-        it.skip("Prerelease versions do not satisfy ranges", () => {
+        /**
+         * Builds that are produced from dev builds or other non-release builds don't have the "internal" prerelease
+         * identifier intentionally to ensure they don't satisfy the caret/tilde-equivalent semver ranges we provide to
+         * partners. These tests check that the dev versions are excluded.
+         */
+        it("Prerelease/dev versions do not satisfy ranges", () => {
             assert.isFalse(
                 semver.satisfies(
-                    `2.0.0-internal.1.1.1.95400`,
+                    `2.0.0-dev.1.1.1.95400`,
                     `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`,
                 ),
             );
             assert.isFalse(
                 semver.satisfies(
-                    `2.0.0-internal.1.0.1.95400`,
+                    `2.0.0-dev.1.0.1.95400`,
                     `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`,
+                ),
+            );
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-dev.1.5.0.95400`,
+                    `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`,
                 ),
             );
         });

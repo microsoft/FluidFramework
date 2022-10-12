@@ -4,13 +4,7 @@
  */
 
 import { compareSets, fail } from "../../util";
-import {
-    TreeSchema,
-    ValueSchema,
-    FieldSchema,
-    TreeTypeSet,
-    SchemaData,
-} from "../../schema-stored";
+import { TreeSchema, ValueSchema, FieldSchema, TreeTypeSet, SchemaData } from "../../schema-stored";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
 /**
@@ -53,16 +47,18 @@ export function allowsTreeSuperset(
                 allowsFieldSuperset(
                     policy,
                     originalData,
-                    originalData.globalFieldSchema.get(originalField) ?? policy.defaultGlobalFieldSchema,
+                    originalData.globalFieldSchema.get(originalField) ??
+                        policy.defaultGlobalFieldSchema,
                     policy.defaultGlobalFieldSchema,
                 ),
             // true iff the new field can be empty, since it may be empty in original
-           bExtra: (supersetField) =>
+            bExtra: (supersetField) =>
                 allowsFieldSuperset(
                     policy,
                     originalData,
                     policy.defaultGlobalFieldSchema,
-                    originalData.globalFieldSchema.get(supersetField) ?? policy.defaultGlobalFieldSchema,
+                    originalData.globalFieldSchema.get(supersetField) ??
+                        policy.defaultGlobalFieldSchema,
                 ),
         })
     ) {
@@ -87,12 +83,13 @@ export function allowsTreeSuperset(
                     original.extraLocalFields,
                     superset.localFields.get(supersetField) ?? fail("missing expected field"),
                 ),
-            same: (sameField) => allowsFieldSuperset(
-                policy,
+            same: (sameField) =>
+                allowsFieldSuperset(
+                    policy,
                     originalData,
-                original.localFields.get(sameField) ?? fail("missing expected field"),
-                superset.localFields.get(sameField) ?? fail("missing expected field"),
-            ),
+                    original.localFields.get(sameField) ?? fail("missing expected field"),
+                    superset.localFields.get(sameField) ?? fail("missing expected field"),
+                ),
         })
     ) {
         return false;
@@ -106,10 +103,7 @@ export function allowsTreeSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsValueSuperset(
-    original: ValueSchema,
-    superset: ValueSchema,
-): boolean {
+export function allowsValueSuperset(original: ValueSchema, superset: ValueSchema): boolean {
     return original === superset || superset === ValueSchema.Serializable;
 }
 
@@ -124,8 +118,12 @@ export function allowsFieldSuperset(
     original: FieldSchema,
     superset: FieldSchema,
 ): boolean {
-    return (policy.fieldKinds.get(original.kind) ?? fail("missing kind")
-        ).allowsFieldSuperset(policy, originalData, original.types, superset);
+    return (policy.fieldKinds.get(original.kind) ?? fail("missing kind")).allowsFieldSuperset(
+        policy,
+        originalData,
+        original.types,
+        superset,
+    );
 }
 
 /**
@@ -165,7 +163,10 @@ export function allowsRepoSuperset(
     original: SchemaData,
     superset: SchemaData,
 ): boolean {
-    const fields = new Set([...original.globalFieldSchema.keys(), ...superset.globalFieldSchema.keys()]);
+    const fields = new Set([
+        ...original.globalFieldSchema.keys(),
+        ...superset.globalFieldSchema.keys(),
+    ]);
     for (const key of fields) {
         // TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
         if (
@@ -201,11 +202,18 @@ export function isNeverField(
     field: FieldSchema,
 ): boolean {
     if (
-        (policy.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity === Multiplicity.Value &&
+        (policy.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity ===
+            Multiplicity.Value &&
         field.types !== undefined
     ) {
         for (const type of field.types) {
-            if (!isNeverTree(policy, originalData, originalData.treeSchema.get(type) ?? policy.defaultTreeSchema)) {
+            if (
+                !isNeverTree(
+                    policy,
+                    originalData,
+                    originalData.treeSchema.get(type) ?? policy.defaultTreeSchema,
+                )
+            ) {
                 return false;
             }
         }
@@ -216,9 +224,15 @@ export function isNeverField(
     return false;
 }
 
-export function isNeverTree(policy: FullSchemaPolicy, originalData: SchemaData, tree: TreeSchema): boolean {
-    if ((policy.fieldKinds.get(tree.extraLocalFields.kind) ?? fail("missing field kind")).multiplicity
-            === Multiplicity.Value) {
+export function isNeverTree(
+    policy: FullSchemaPolicy,
+    originalData: SchemaData,
+    tree: TreeSchema,
+): boolean {
+    if (
+        (policy.fieldKinds.get(tree.extraLocalFields.kind) ?? fail("missing field kind"))
+            .multiplicity === Multiplicity.Value
+    ) {
         return true;
     }
     for (const field of tree.localFields.values()) {
