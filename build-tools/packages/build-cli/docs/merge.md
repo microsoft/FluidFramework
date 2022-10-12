@@ -4,6 +4,7 @@
 Sync branches depending on the batch size passed
 
 * [`flub merge branches`](#flub-merge-branches)
+* [`flub merge info`](#flub-merge-info)
 
 ## `flub merge branches`
 
@@ -23,4 +24,25 @@ FLAGS
 
 DESCRIPTION
   Sync branches depending on the batch size passed
+```
+
+## `flub merge info`
+
+Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.
+
+```
+USAGE
+  $ flub merge info [-b <value>] [-v]
+
+FLAGS
+  -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.
+  -v, --verbose            Verbose logging.
+
+DESCRIPTION
+  Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.
+
+EXAMPLES
+  Get info about the merge status of the main and next branch in the repo.
+
+    $ flub merge info
 ```

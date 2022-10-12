@@ -9,13 +9,7 @@ import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand.flags> {
-    static description = "Get info about the merge status of branches in the repo.";
-
-    static aliases = [
-        "check:branches",
-        "check:main-next",
-        "info:main-next",
-    ];
+    static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.`;
 
     static flags = {
         branch: Flags.string({
@@ -29,7 +23,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
     static examples = [
         {
-            description: "Get info about the merge status of branches in the repo.",
+            description: "Get info about the merge status of the main and next branch in the repo.",
             command: "<%= config.bin %> <%= command.id %>",
         },
     ];
@@ -50,8 +44,12 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
             [branch1, branch2] = branchFlags;
         }
 
-        if(branchFlags?.length > 2) {
-            this.warning(`Only two branch names are used; ignoring the following arguments: ${[branchFlags.slice(2)]}`);
+        if (branchFlags?.length > 2) {
+            this.warning(
+                `Only two branch names are used; ignoring the following arguments: ${[
+                    branchFlags.slice(2),
+                ]}`,
+            );
         }
 
         const context = await this.getContext();
@@ -82,7 +80,11 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
         const [b1Log, b2Log] = [chalk.bold.blue(branch1), chalk.bold.blue(branch2)];
 
         this.logHr();
-        this.log(` The ${b2Log} branch is ${chalk.bold(revs.length.toString())} commits ${chalk.red("behind")} ${b1Log}`);
+        this.log(
+            ` The ${b2Log} branch is ${chalk.bold(revs.length.toString())} commits ${chalk.red(
+                "behind",
+            )} ${b1Log}`,
+        );
         this.log();
     }
 }

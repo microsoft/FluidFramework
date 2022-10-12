@@ -16,7 +16,6 @@ import {
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
-    toInternalScheme,
     toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
