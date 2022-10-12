@@ -25,6 +25,19 @@ describe("Get the major version number above or below the baseVersion", () => {
     assert.strictEqual(getRequestedRange("2.0.0-internal.1.2.3", -1), "^1.0.0-0");
     assert.strictEqual(getRequestedRange("2.0.0-internal.2.1.0", -1), ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0");
     assert.strictEqual(getRequestedRange("2.0.0-internal.3.0.0", -1), ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.3.0.0", -2), ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0");
+
+    assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -1), ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -2), ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -3), ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0");
+
+    assert.strictEqual(getRequestedRange("2.0.0-internal.5.0.0", -1), ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.5.0.0", -2), ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.5.0.0", -3), ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0");
+
+    assert.strictEqual(getRequestedRange("2.0.0-internal.6.0.0", -1), ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.6.0.0", -2), ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0-internal.6.0.0", -3), ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0");
 
     // asserts for malformed major versions
     assert.strictEqual(getRequestedRange("2.0.0", 0), "2.0.0");

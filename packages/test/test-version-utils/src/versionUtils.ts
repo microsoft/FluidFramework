@@ -288,8 +288,15 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
     }
 
     let parsedVersion;
+    let semverInternal: string = internalVersion;
+
+    if (internalVersion > publicVersion && requested <= -2) {
+        const str = internalVersion.split(".");
+        semverInternal = (parseInt(str[0], 10) + ((requested as number) + 1)).toString().concat(".0.0");
+    }
+
     try {
-        parsedVersion = new semver.SemVer(internalVersion);
+        parsedVersion = new semver.SemVer(semverInternal);
     } catch (err: unknown) {
         throw new Error(err as string);
     }
