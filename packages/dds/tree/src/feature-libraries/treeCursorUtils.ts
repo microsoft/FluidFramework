@@ -178,6 +178,12 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
             this.exitField();
             return false;
         }
+
+        // Skip empty fields during iteration
+        if (this.getField().length === 0) {
+            return this.nextField();
+        }
+
         return true;
     }
 
@@ -191,6 +197,12 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
         this.indexStack.push(this.index);
         this.index = 0;
         this.siblings = fields;
+
+        // Skip empty fields during iteration
+        if (this.getField().length === 0) {
+            return this.nextField();
+        }
+
         return true;
     }
 

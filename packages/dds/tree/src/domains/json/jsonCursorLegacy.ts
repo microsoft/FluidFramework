@@ -160,7 +160,10 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
                 if (node === null) {
                     return [];
                 } else if (Array.isArray(node)) {
-                    return [EmptyKey];
+                    // Skip empty `EmptyKey` fields. This doesn't check for other empty fields
+                    // and is a temporary workaround to get tests using different versions of cursors passing.
+                    // This is only an issue until the legacy cursor is removed.
+                    return node.length === 0 ? [] : [EmptyKey];
                 } else {
                     return Object.keys(node as object) as Iterable<FieldKey>;
                 }
