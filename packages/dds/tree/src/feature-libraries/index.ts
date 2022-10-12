@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 export {
-    Change,
-    DefaultChangeFamily,
     DefaultChangeset,
-    DefaultEditor,
-    DefaultRebaser,
-    SetValue,
-} from "./defaultRebaser";
+    DefaultChangeFamily,
+    defaultChangeFamily,
+    DefaultEditBuilder,
+    ValueFieldEditBuilder,
+    OptionalFieldEditBuilder,
+    SequenceFieldEditBuilder,
+} from "./defaultChangeFamily";
 export {
     anchorSymbol,
     EditableField,
