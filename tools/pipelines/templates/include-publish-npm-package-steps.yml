@@ -86,7 +86,6 @@ steps:
       fi
       echo Tag: $tag
       cp .npmrc ~/.npmrc
-      t1=0
       maximumRetryIfNetworkError=3
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
@@ -116,14 +115,11 @@ steps:
                     continue
                   else
                     echo "Final Network Error"
-                    let t1+=1
-                    exit $t1
+                    exit 1
                   fi
                 else
-                  if ! grep -q "You cannot publish over the previously published versions" "publish_log"
+                  if grep -q "You cannot publish over the previously published versions" "publish_log"
                   then
-                    let t1+=1
-                  else
                     echo Package has already been published.
                     local_f="${f}_local"
                     mv "$f" "$local_f"
@@ -132,14 +128,14 @@ steps:
                     if cmp -s "$f" "$local_f"
                     then
                       echo Continuing as published package matches the current one that was attempting to be released.
+                      continue
                     else
                       echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                      let t1+=1
                     fi
                   fi
                   rm "$f"
                   mv "$local_f" "$f"
-                  exit $t1
+                  exit 1
                 fi
             else
               rm publish_log
@@ -150,4 +146,4 @@ steps:
         fi
       done
       rm ~/.npmrc
-      exit $t1
+      exit 1
