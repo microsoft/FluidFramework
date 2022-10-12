@@ -11,6 +11,8 @@ import { MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "../commands/check/policy";
 import {
     generateBumpDepsBranchName,
     generateBumpDepsCommitMessage,
@@ -26,8 +28,6 @@ import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
-// eslint-disable-next-line import/no-internal-modules
-import { CheckPolicy } from "../commands/check/policy";
 
 /**
  * Checks that the current branch matches the expected branch for a release.
@@ -422,8 +422,8 @@ export const checkPolicy: StateHandlerFunction = async (
                 "packages",
                 "build-tools",
                 "data",
-                "exclusions.json"
-            )
+                "exclusions.json",
+            ),
         ]);
 
         // check for policy check violation
