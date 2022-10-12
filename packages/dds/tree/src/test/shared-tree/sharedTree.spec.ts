@@ -29,14 +29,8 @@ describe("SharedTree", () => {
         const provider = await TestTreeProvider.create(1);
         provider.trees[0].runTransaction((f, editor) => {
             const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
-            editor.insert(
-                {
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(f.rootField),
-                    parentIndex: 0,
-                },
-                writeCursor,
-            );
+            const field = editor.sequenceField(undefined, detachedFieldAsKey(f.rootField));
+            field.insert(0, writeCursor);
 
             return TransactionResult.Apply;
         });
@@ -106,14 +100,8 @@ describe("SharedTree", () => {
 
             // Delete node
             tree1.runTransaction((forest, editor) => {
-                editor.delete(
-                    {
-                        parent: undefined,
-                        parentField: detachedFieldAsKey(forest.rootField),
-                        parentIndex: 0,
-                    },
-                    1,
-                );
+                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                field.delete(0, 1);
                 return TransactionResult.Apply;
             });
 
@@ -134,18 +122,15 @@ describe("SharedTree", () => {
             // Insert child in global field
             tree1.runTransaction((forest, editor) => {
                 const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
-                editor.insert(
+                const field = editor.sequenceField(
                     {
-                        parent: {
-                            parent: undefined,
-                            parentField: detachedFieldAsKey(forest.rootField),
-                            parentIndex: 0,
-                        },
-                        parentField: globalFieldKeySymbol,
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
                         parentIndex: 0,
                     },
-                    writeCursor,
+                    globalFieldKeySymbol,
                 );
+                field.insert(0, writeCursor);
 
                 return TransactionResult.Apply;
             });
@@ -168,18 +153,15 @@ describe("SharedTree", () => {
 
             // Delete node
             tree2.runTransaction((forest, editor) => {
-                editor.delete(
+                const field = editor.sequenceField(
                     {
-                        parent: {
-                            parent: undefined,
-                            parentField: detachedFieldAsKey(forest.rootField),
-                            parentIndex: 0,
-                        },
-                        parentField: globalFieldKeySymbol,
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
                         parentIndex: 0,
                     },
-                    1,
+                    globalFieldKeySymbol,
                 );
+                field.delete(0, 1);
                 return TransactionResult.Apply;
             });
 
@@ -202,26 +184,14 @@ describe("SharedTree", () => {
 
             // Insert nodes
             tree1.runTransaction((forest, editor) => {
-                editor.insert(
-                    {
-                        parent: undefined,
-                        parentField: detachedFieldAsKey(forest.rootField),
-                        parentIndex: 0,
-                    },
-                    singleTextCursor({ type: brand("Test"), value: 1 }),
-                );
+                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                field.insert(0, singleTextCursor({ type: brand("Test"), value: 1 }));
                 return TransactionResult.Apply;
             });
 
             tree1.runTransaction((forest, editor) => {
-                editor.insert(
-                    {
-                        parent: undefined,
-                        parentField: detachedFieldAsKey(forest.rootField),
-                        parentIndex: 1,
-                    },
-                    singleTextCursor({ type: brand("Test"), value: 2 }),
-                );
+                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                field.insert(1, singleTextCursor({ type: brand("Test"), value: 2 }));
                 return TransactionResult.Apply;
             });
 
@@ -304,14 +274,8 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        editor.insert(
-            {
-                parent: undefined,
-                parentField: detachedFieldAsKey(forest.rootField),
-                parentIndex: 0,
-            },
-            writeCursor,
-        );
+        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+        field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
     });
