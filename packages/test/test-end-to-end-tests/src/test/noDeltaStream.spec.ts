@@ -117,6 +117,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                             ...testContainerConfig.runtimeOptions,
                             summaryOptions: {
                                 ...testContainerConfig.runtimeOptions?.summaryOptions,
+                                disableSummaries: false,
                             },
                         },
                     })]],

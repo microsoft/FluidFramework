@@ -95,8 +95,7 @@ async function runAndValidateBatch(
         const loader = provider.createLoader(
             [[
                 provider.defaultCodeDetails,
-                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: {
-                    summaryConfigOverrides: { state: "disabled" } } } }),
+                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
             ]],
             {
                 documentServiceFactory: proxyDsf,

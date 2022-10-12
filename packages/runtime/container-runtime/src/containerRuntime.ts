@@ -147,6 +147,7 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
     ISummarizerRuntime,
     IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -377,6 +378,40 @@ export interface ISummaryRuntimeOptions {
      * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
+
+    /**
+     * Flag that disables summaries if it is set to true.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
+     */
+    disableSummaries?: boolean;
+
+    /**
+     * @defaultValue 7000 operations (ops)
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
+     */
+    maxOpsSinceLastSummary?: number;
+
+    /**
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     *
+     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
+     */
+    summarizerClientElection?: boolean;
+
+    /**
+     * Options that control the running summarizer behavior.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
+     * */
+    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -869,11 +904,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summariesDisabled: boolean;
     private isSummariesDisabled(): boolean {
+        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
+            return true;
+        }
         return this.summaryConfiguration.state === "disabled";
     }
 
     private readonly heuristicsDisabled: boolean;
     private isHeuristicsDisabled(): boolean {
+        // back-compat: disableHeuristics was moved from ISummarizerOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
+            return true;
+        }
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
@@ -882,12 +927,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
             return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
         }
+        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
+            return true;
+        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.summarizerClientElection === true
             : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
+        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
+            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
+        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.maxOpsSinceLastSummary
             : 0;

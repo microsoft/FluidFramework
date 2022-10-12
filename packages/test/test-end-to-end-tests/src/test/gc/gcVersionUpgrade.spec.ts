@@ -53,6 +53,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
     const dataObjectFactory = new TestFluidObjectFactory([]);
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
+            disableSummaries: true,
             summaryConfigOverrides: {
                 state: "disabled",
             },
