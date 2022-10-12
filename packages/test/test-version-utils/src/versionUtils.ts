@@ -281,6 +281,7 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
     if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
     if (publicVersion === "2.0.0" && internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
 
+    // if the version number is for the older version scheme before 1.0.0
     if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
         const lastPrereleaseVersion = new semver.SemVer("0.59.0");
         const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
@@ -291,8 +292,8 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
     let semverInternal: string = internalVersion;
 
     if (internalVersion > publicVersion && requested <= -2) {
-        const str = internalVersion.split(".");
-        semverInternal = (parseInt(str[0], 10) + ((requested as number) + 1)).toString().concat(".0.0");
+        const version = internalVersion.split(".");
+        semverInternal = (parseInt(version[0], 10) + ((requested as number) + 1)).toString().concat(".0.0");
     }
 
     try {
