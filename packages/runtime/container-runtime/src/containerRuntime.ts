@@ -464,8 +464,10 @@ export interface IContainerRuntimeOptions {
      * If unspecified, the limit is 950 * 1024.
      *
      * 'Infinity' will disable any limit.
+     *
+     * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
-    readonly maxBatchSize?: number;
+    readonly maxBatchSizeInBytes?: number;
 }
 
 /**
@@ -541,7 +543,7 @@ const defaultFlushMode = FlushMode.TurnBased;
 // We can't estimate it fully, as we
 // - do not know what properties relay service will add
 // - we do not stringify final op, thus we do not know how much escaping will be added.
-const defaultMaxBatchSize = 950 * 1024;
+const defaultMaxBatchSizeInBytes = 950 * 1024;
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -672,7 +674,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
             compressionOptions = {},
-            maxBatchSize = defaultMaxBatchSize,
+            maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -749,7 +751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flushMode,
                 enableOfflineLoad,
                 compressionOptions,
-                maxBatchSize,
+                maxBatchSizeInBytes,
             },
             containerScope,
             logger,
@@ -1031,8 +1033,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // latency of processing a batch.
         // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
         // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSize, 64 * 1024);
-        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSize);
+        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
+        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes);
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;

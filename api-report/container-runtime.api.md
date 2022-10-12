@@ -325,7 +325,7 @@ export interface IContainerRuntimeOptions {
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
-    readonly maxBatchSize?: number;
+    readonly maxBatchSizeInBytes?: number;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }

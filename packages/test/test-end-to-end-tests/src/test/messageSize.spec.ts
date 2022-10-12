@@ -110,7 +110,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     });
 
     it("A large batch (smaller than 1MB) will not close the container if there is no batch size limit", async () => {
-        await setupContainers({ ...testContainerConfig, runtimeOptions: { maxBatchSize: Infinity } }, {});
+        await setupContainers({ ...testContainerConfig, runtimeOptions: { maxBatchSizeInBytes: Infinity } }, {});
         // 950 * 1024 is the default max batch size limit
         const largeString = generateStringOfSize(950 * 1024 / 2);
         const messageCount = 2;
