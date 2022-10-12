@@ -264,7 +264,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return summarySnapshotTree;
     }
 
-    protected initializeFromSnapshot(odspSnapshotCacheValue: ISnapshotContents): string | undefined {
+    protected initializeFromSnapshot(odspSnapshotCacheValue: ISnapshotContents, cacheOps: boolean = true): string | undefined {
         this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
         const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
 
@@ -280,7 +280,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
             this.initBlobsCache(blobs);
         }
 
-        this.ops = ops;
+        if (cacheOps) {
+            this.ops = ops;
+        }
         return id;
     }
 }
