@@ -113,10 +113,6 @@ jobs:
               sudo cp cert.crt /usr/local/share/ca-certificates/
               sudo update-ca-certificates
 
-              # Make sure it worked
-              echo 'CURL after cert install'
-              curl -v https://historian.r11s-wu2-ppe.prague.office-int.com
-
       # Print parameters/Vars
       - task: Bash@3
         displayName: Print Parameters and Variables
