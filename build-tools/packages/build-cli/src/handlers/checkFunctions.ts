@@ -285,22 +285,17 @@ export const checkMainNextIntegrated: StateHandlerFunction = async (
 ): Promise<boolean> => {
     if (testMode) return true;
 
-    const { bumpType, shouldCheckMainNextIntegrated } = data;
+    const { bumpType, context, shouldCheckMainNextIntegrated } = data;
+    assert(context !== undefined, "Context is undefined.");
 
-    // TODO: Implement this
     if (bumpType === "major") {
         if (shouldCheckMainNextIntegrated === true) {
-            log.warning(`Automated main/next integration check not yet implemented.`);
-            log.warning(`Make sure next has been integrated into main before continuing.`);
+            const [main, next] = await Promise.all([
+                context.gitRepo.getShaForBranch("main"),
+                context.gitRepo.getShaForBranch("next"),
+            ]);
 
-            const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-                type: "confirm",
-                name: "integrated",
-                message: `Has next has been integrated into main?`,
-            };
-
-            const answers = await inquirer.prompt(confirmIntegratedQuestion);
-            if (answers.integrated !== true) {
+            if (main !== next) {
                 BaseStateHandler.signalFailure(machine, state);
             }
         } else {
