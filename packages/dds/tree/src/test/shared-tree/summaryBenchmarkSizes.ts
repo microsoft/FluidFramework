@@ -114,7 +114,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 }
 
 function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath): void {
-    // Apply an edit to the tree which inserts a node with a value
+    // Apply an edit to the tree which inserts a node with a value.
     tree.runTransaction((_forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
         editor.insert(path, writeCursor);
