@@ -534,12 +534,10 @@ export class SummaryWriter implements ISummaryWriter {
                     missingOpsSequenceNumbers.push(i);
                 }
             }
-            if (missingOpsSequenceNumbers.length > 0) {
-                Lumberjack.info(
-                    // eslint-disable-next-line max-len
-                    `FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(missingOpsSequenceNumbers)}`
-                    , this.lumberProperties);
-            }
+            Lumberjack.info(
+                // eslint-disable-next-line max-len
+                `FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(missingOpsSequenceNumbers)}`
+                , this.lumberProperties);
         }
 
         const logTailEntries: ITreeEntry[] = [
