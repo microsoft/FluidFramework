@@ -995,6 +995,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
+        //* rename
+        const policyExists = this._storage.policies?.maximumCacheDurationMs !== undefined;
+
         this.garbageCollector = GarbageCollector.create({
             runtime: this,
             gcOptions: this.runtimeOptions.gcOptions,
@@ -1008,6 +1011,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
             getContainerDiagnosticId: () => this.context.id,
             activeConnection: () => this.deltaManager.active,
+            snapshotCachePolicyExists: policyExists,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
