@@ -5,6 +5,8 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "target": "ES2018",
+        "lib": ["ES2018", "DOM", "DOM.Iterable"],
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [

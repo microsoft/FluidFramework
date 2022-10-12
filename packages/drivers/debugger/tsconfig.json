@@ -5,9 +5,10 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "target": "ES2018",
         "rootDir": "./src",
         "outDir": "./dist",
-        "lib": [ "ES2017", "ES2018.Promise", "ES2018.AsyncIterable", "DOM", "DOM.Iterable" ],
+        "lib": [ "ES2018", "DOM", "DOM.Iterable" ],
         "types": [ "node" ]
     },
     "include": [
