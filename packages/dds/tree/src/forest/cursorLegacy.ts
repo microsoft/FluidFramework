@@ -64,8 +64,9 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
     readonly type: TreeType;
 
     /**
-     * @returns the keys of the currently selected node. Only non-empty fields will be included.
+     * @returns the keys of the currently selected node.
      * TODO: ordering invariants: Consistent over time? Consistent across nodes? Sorted?
+     * TODO: empty fields: are they always omitted here? Sometimes omitted? Depends on field kind and schema?
      * */
     keys: Iterable<FieldKey>;
 

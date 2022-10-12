@@ -177,12 +177,6 @@ class StackCursor<TNode extends NodeData>
             this.exitField();
             return false;
         }
-
-        // Skip empty fields
-        if (this.getField().length === 0) {
-            return this.nextField();
-        }
-
         return true;
     }
 
@@ -196,12 +190,6 @@ class StackCursor<TNode extends NodeData>
         this.indexStack.push(this.index);
         this.index = 0;
         this.siblings = fields;
-
-        // Skip empty fields
-        if (this.getField().length === 0) {
-            return this.nextField();
-        }
-
         return true;
     }
 

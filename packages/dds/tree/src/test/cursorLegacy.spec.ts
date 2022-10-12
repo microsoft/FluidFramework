@@ -69,10 +69,6 @@ export function testJsonableTreeCursor(
 
             it("array", () => {
                 assert.deepEqual(
-                    [...factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } }).keys],
-                    [],
-                );
-                assert.deepEqual(
                     [
                         ...factory({
                             type: brand("Foo"),

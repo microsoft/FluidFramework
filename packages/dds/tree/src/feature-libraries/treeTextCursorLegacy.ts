@@ -99,12 +99,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     }
 
     get keys(): Iterable<FieldKey> {
-        const node = this.getNode();
-        // This filters out empty fields
-        return genericTreeKeys(node).filter((key) => {
-            const siblings = getGenericTreeField(this.getNode(), key, false);
-            return siblings.length !== 0;
-        });
+        return genericTreeKeys(this.getNode());
     }
 
     down(key: FieldKey, index: number): SynchronousNavigationResult {
