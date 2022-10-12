@@ -168,7 +168,8 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  *
  * @typeParam M - A service-specific {@link IMember} type.
  */
-export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
+export interface IServiceAudience<M extends IMember>
+    extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
      * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
      * member object.  The implementation may choose to exclude certain connections from the returned map.
@@ -179,7 +180,7 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
     /**
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
-    getMyself(): M | undefined;
+    getMyself(): IMyself<M> | undefined;
 }
 
 /**
@@ -215,3 +216,8 @@ export interface IMember {
      */
     connections: IConnection[];
 }
+
+/**
+ * An extended member object that includes currentConnectionId
+ */
+export type IMyself<M extends IMember = IMember> = M & { currentConnectionId: string; };
