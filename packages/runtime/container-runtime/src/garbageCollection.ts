@@ -251,6 +251,7 @@ export class UnreferencedStateTracker {
         this.sweepTimer = new TimerWithNoDefaultTimeout(
             () => {
                 this._state = UnreferencedState.SweepReady;
+                //* Follow up on race condition here when timeouts are sub-second
                 assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
             },
         );
@@ -976,6 +977,8 @@ export class GarbageCollector implements IGarbageCollector {
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
+            sweepTimeoutBufferMs: this.sweepTimeoutBufferMs,
+            testOverrideSweepTimeoutMs: this.testOverrideSweepTimeoutMs,
         };
     }
 

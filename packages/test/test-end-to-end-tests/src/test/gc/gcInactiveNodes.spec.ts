@@ -11,7 +11,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase, MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
     ITestContainerConfig,
     ITestObjectProvider,
@@ -22,39 +22,70 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 /**
+ * @param settings - feature flags to set
+ * @returns a config provider that returns feature flag information
+ */
+ export const mockConfigProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+    return {
+        getRawConfig: (name: string): ConfigTypes => {
+            return settings[name];
+        },
+    };
+});
+
+/**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
-    const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
-    const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
-    const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
-    const inactiveTimeoutMs = 100;
-    const testContainerConfig: ITestContainerConfig = {
-        runtimeOptions: {
-            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-            gcOptions: { gcAllowed: true, inactiveTimeoutMs },
-        },
-    };
+//* ONLY!
+describeNoCompat.only("GC SweepReady nodes tests", (getTestObjectProvider) => {
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:SweepReadyObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:SweepReadyObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:SweepReadyObject_Loaded";
 
     let provider: ITestObjectProvider;
     let mockLogger: MockLogger;
 
-    /** Waits for the inactive timeout to expire. */
-    async function waitForInactiveTimeout(): Promise<void> {
+    const inactiveTimeoutMs = 2000;
+    const sweepTimeoutMs = 4000;
+    const sessionExpiryTimeoutMs = 1000000000;
+    const defaultSettings = {
+        //* "Fluid.GarbageCollection.RunSessionExpiry": true,
+        "Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+        "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
+    };
+    function testContainerConfig(props?: {
+        settings?: Record<string, ConfigTypes>;
+        useMockLogger?: boolean;
+    }): ITestContainerConfig {
+        const settings = props?.settings ?? defaultSettings;
+        const useMockLogger = props?.useMockLogger ?? false;
+        return {
+            runtimeOptions: {
+                summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+                gcOptions: { gcAllowed: true, sweepAllowed: true, inactiveTimeoutMs, sessionExpiryTimeoutMs },
+            },
+            loaderProps: {
+                configProvider: mockConfigProvider(settings),
+                logger: useMockLogger ? mockLogger : undefined,
+            },
+        };
+    }
+
+    /** Waits for the SweepReady timeout to expire. */
+    async function waitForSweepReadyTimeout(): Promise<void> {
         await new Promise<void>((resolve) => {
-            setTimeout(resolve, inactiveTimeoutMs + 10);
+            setTimeout(resolve, sweepTimeoutMs + 10);
         });
     }
 
     /** Validates that none of the inactive events have been logged since the last run. */
     function validateNoInactiveEvents() {
-        assert(
-            !mockLogger.matchAnyEvent([
+        mockLogger.assertMatchNone([
                 { eventName: revivedEvent },
                 { eventName: changedEvent },
                 { eventName: loadedEvent },
-            ]),
+            ],
             "inactive object events should not have been logged",
         );
     }
@@ -88,7 +119,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         });
     }
 
-    describe("Inactive timeout", () => {
+    describe("SweepReady timeout", () => {
         let containerRuntime: IContainerRuntimeBase;
         let mainContainer: IContainer;
         let defaultDataStore: ITestDataObject;
@@ -102,21 +133,19 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             }
 
             mockLogger = new MockLogger();
-            mainContainer = await provider.makeTestContainer(testContainerConfig);
+            mainContainer = await provider.makeTestContainer(testContainerConfig());
             defaultDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
             containerRuntime = defaultDataStore._context.containerRuntime;
             await waitForContainerConnection(mainContainer);
         });
 
-        itExpects("can generate events when unreferenced data store is accessed after it's inactive", [
-            { eventName: changedEvent, timeout: inactiveTimeoutMs },
-            { eventName: loadedEvent, timeout: inactiveTimeoutMs },
-            { eventName: revivedEvent, timeout: inactiveTimeoutMs },
+        //* ONLY!
+        itExpects.only("can generate events when unreferenced data store is accessed after it's inactive", [
+            { eventName: changedEvent, timeout: sweepTimeoutMs },
+            { eventName: loadedEvent, timeout: sweepTimeoutMs },
+            { eventName: revivedEvent, timeout: sweepTimeoutMs },
         ], async () => {
-            const summarizerRuntime = await createSummarizerClient({
-                ...testContainerConfig,
-                loaderProps: { logger: mockLogger },
-            });
+            const summarizerRuntime = await createSummarizerClient(testContainerConfig({ useMockLogger: true }));
             const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
             const dataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
             const url = dataObject.handle.absolutePath;
@@ -134,8 +163,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             await summarize(summarizerRuntime);
             validateNoInactiveEvents();
 
-            // Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
-            await waitForInactiveTimeout();
+            // Wait for SweepReady timeout. This will ensure that the unreferenced data store is SweepReady.
+            await waitForSweepReadyTimeout();
 
             // Make changes to the inactive data store and validate that we get the changedEvent.
             dataObject._root.set("key", "value");
@@ -147,13 +176,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                 [
                     {
                         eventName: changedEvent,
-                        timeout: inactiveTimeoutMs,
+                        timeout: sweepTimeoutMs,
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                     },
                     {
                         eventName: loadedEvent,
-                        timeout: inactiveTimeoutMs,
+                        timeout: sweepTimeoutMs,
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                     },
@@ -174,7 +203,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                 [
                     {
                         eventName: revivedEvent,
-                        timeout: inactiveTimeoutMs,
+                        timeout: sweepTimeoutMs,
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                         fromId: defaultDataStore._root.handle.absolutePath,
@@ -188,10 +217,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             { eventName: loadedEvent, timeout: inactiveTimeoutMs },
             { eventName: revivedEvent, timeout: inactiveTimeoutMs },
         ], async () => {
-            const summarizerRuntime = await createSummarizerClient({
-                ...testContainerConfig,
-                loaderProps: { logger: mockLogger },
-            });
+            const summarizerRuntime = await createSummarizerClient(testContainerConfig({ useMockLogger: true }));
             const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(summarizerRuntime, "/");
 
             // Upload an attachment blobs and mark them referenced.
@@ -216,7 +242,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             validateNoInactiveEvents();
 
             // Wait for inactive timeout. This will ensure that the unreferenced blob is inactive.
-            await waitForInactiveTimeout();
+            await waitForSweepReadyTimeout();
 
             // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
             await summarizerBlobHandle.get();
@@ -271,11 +297,11 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             const summaryVersion1 = await waitForSummary(summarizer1);
 
             // Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
-            await waitForInactiveTimeout();
+            await waitForSweepReadyTimeout();
 
             // Load a non-summarizer container from the above summary that uses the mock logger.
             const container2 = await provider.loadTestContainer(
-                { ...testContainerConfig, loaderProps: { logger: mockLogger } },
+                testContainerConfig({ useMockLogger: true }),
                 { [LoaderHeader.version]: summaryVersion1 },
             );
 
@@ -326,7 +352,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                 await createSummarizer(provider, mainContainer, summaryVersion1, { inactiveTimeoutMs });
 
             // Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
-            await waitForInactiveTimeout();
+            await waitForSweepReadyTimeout();
 
             // Send an op for the deleted data store and revived it. There should not be any errors.
             dataStore._root.set("key", "value");
