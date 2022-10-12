@@ -20,8 +20,13 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.3.0.0 Upcoming changes
 
 ## 2.0.0-internal.3.0.0 Breaking changes
+- [Make existing flag required](#make-existing-flag-required)
 - [Remove iframe-driver](#remove-iframe-driver)
 
+### Make existing flag required
+The `existing` flag has been updated to be expected and required in the `instantiateRuntime` method. The vast
+majority of clients can rely on the `existing` flag being there as it was introduced in client version 0.44. However, it's
+best practice to asser that 'existing' is not undefined and to use the value passed in.
 ### Remove iframe-driver
 The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
 
