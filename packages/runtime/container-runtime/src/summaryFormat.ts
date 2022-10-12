@@ -99,14 +99,21 @@ export interface IGCMetadata {
      * - A value greater than 0 means GC is enabled.
      */
     readonly gcFeature?: GCVersion;
-    /** If this is present, the session for this container will expire after this time and the container will close */
-    readonly sessionExpiryTimeoutMs?: number;
     /**
      * Tells whether the GC sweep phase is enabled for this container.
      * - True means sweep phase is enabled.
      * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
      */
     readonly sweepEnabled?: boolean;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
+    /** If this is present, ignore typical sweep timeout calculation and use this value instead */
+    readonly testOverrideSweepTimeoutMs?: number;
+    /**
+     * This buffer defaults to one day. It's added to account for any clock skew and other edge cases.
+     * We use server timestamps throughout so the skew should be minimal.
+     */
+    readonly sweepTimeoutBufferMs?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
