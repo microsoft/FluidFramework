@@ -577,11 +577,13 @@ function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
+    // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
     down(key: FieldKey, index: number): TResult;
     // (undocumented)
     keys: Iterable<FieldKey>;
-    // (undocumented)
-    length(key: FieldKey): number;
     seek(offset: number): TResult;
     readonly type: TreeType;
     up(): TResult;
@@ -672,11 +674,13 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: Jsonable<T>);
     // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
+    // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
-    // (undocumented)
-    length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
@@ -1346,6 +1350,10 @@ export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigati
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: JsonableTree[], index: number, field?: DetachedField);
     // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
+    // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     protected getNode(): JsonableTree;
@@ -1359,8 +1367,6 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     protected readonly keyStack: FieldKey[];
-    // (undocumented)
-    length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
