@@ -6,6 +6,7 @@ import type { ArgInput } from "@oclif/core/lib/interfaces";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
+import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 

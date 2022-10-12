@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable camelcase */
 import { Octokit } from "@octokit/core";
 
 import { CommandLogger } from "../logging";

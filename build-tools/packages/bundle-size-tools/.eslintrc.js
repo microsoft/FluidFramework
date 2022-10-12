@@ -8,7 +8,7 @@ module.exports = {
     plugins: ["@typescript-eslint"],
     parser: "@typescript-eslint/parser",
     parserOptions: {
-        project: ["./tsconfig.json"],
+        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
     rules: {
         "@typescript-eslint/switch-exhaustiveness-check": "error",

@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { assert } from "chai";
 import * as semver from "semver";
 
@@ -11,7 +13,7 @@ import {
     isInternalVersionRange,
     isInternalVersionScheme,
     toInternalScheme,
-} from "../internalVersionScheme";
+} from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
     describe("checking for internal version scheme", () => {
