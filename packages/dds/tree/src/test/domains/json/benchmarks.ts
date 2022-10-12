@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { forEachNode, ITreeCursorNew } from "../../../tree";
+import { forEachNode, forEachField, ITreeCursorNew } from "../../../tree";
 
 export function sum(cursor: ITreeCursorNew): number {
     let total = 0;
@@ -12,8 +12,8 @@ export function sum(cursor: ITreeCursorNew): number {
         total += value;
     }
 
-    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
-        for (let inField = cursor.firstNode(); inField; inField = cursor.nextField()) {
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+        for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
             total += sum(cursor);
         }
     }
@@ -28,9 +28,11 @@ export function sumMap(cursor: ITreeCursorNew): number {
         total += value;
     }
 
-    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
-        forEachNode(cursor, sumMap);
-    }
+    forEachField(cursor, () =>
+        forEachNode(cursor, (c) => {
+            total += sumMap(c);
+        }),
+    );
 
     return total;
 }
