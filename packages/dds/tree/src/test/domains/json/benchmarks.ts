@@ -12,8 +12,8 @@ export function sum(cursor: ITreeCursorNew): number {
         total += value;
     }
 
-    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-        for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        for (let inField = cursor.firstNode(); inField; inField = cursor.nextField()) {
             total += sum(cursor);
         }
     }
