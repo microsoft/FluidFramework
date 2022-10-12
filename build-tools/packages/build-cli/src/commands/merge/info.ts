@@ -50,6 +50,10 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
             [branch1, branch2] = branchFlags;
         }
 
+        if(branchFlags?.length > 2) {
+            this.warning(`Only two branch names are used; ignoring the following arguments: ${[branchFlags.slice(2)]}`);
+        }
+
         const context = await this.getContext();
         const repo = new Repository(context.gitRepo.resolvedRoot);
         const remote = await repo.getRemote(context.originRemotePartialUrl);
@@ -75,9 +79,10 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
         const revs = rawRevs.split(/\r?\n/);
 
+        const [b1Log, b2Log] = [chalk.bold.blue(branch1), chalk.bold.blue(branch2)];
+
         this.logHr();
-        this.log(`${branch2} is ${chalk.bold(revs.length.toString())} commits ${chalk.red("behind")} ${branch1}`);
+        this.log(` The ${b2Log} branch is ${chalk.bold(revs.length.toString())} commits ${chalk.red("behind")} ${b1Log}`);
         this.log();
-        this.verbose(JSON.stringify(revs.slice(0, 10)));
     }
 }
