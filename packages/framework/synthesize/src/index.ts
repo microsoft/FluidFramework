@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./dependencyContainer";
-export * from "./IFluidDependencySynthesizer";
-export * from "./types";
+export { DependencyContainer } from "./dependencyContainer";
+export { IFluidDependencySynthesizer, IProvideFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
+export {
+	AsyncFluidObjectProvider,
+	AsyncOptionalFluidObjectProvider,
+	AsyncRequiredFluidObjectProvider,
+	FluidObjectProvider,
+	FluidObjectSymbolProvider,
+} from "./types";
