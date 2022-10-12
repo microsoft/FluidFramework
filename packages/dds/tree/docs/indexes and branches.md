@@ -136,7 +136,8 @@ To make implementations of indexes simpler, helper code could be authored for bo
 
 To avoid having multiple data-structures tracking how different branches relate to each-other, we can generalize `Rebaser` into a `RevisionManager` that can handle this once, and indexes can use it to track/notify/lookup anything needed related to that.
 
-Since indexes can depend on other indexes, the RevisionManager can be an index, which unifies its need to persist state in summaries with how indexes already do.
+Since indexes can depend on other indexes (like how ForestIndex depends on the SchemaIndex), the RevisionManager can be an index.
+This would remove the need to special case how it stores its state in summaries: it could do so just like all the other indexes.
 
 This approach leaves most of the design tradeoffs inside the index implementations, meaning that changing them will not impact the system architecture.
 This also means that different indexes (or even the same indexes in different apps) can take different approaches, allowing for more specialized optimizations and incremental API migrations when needed.
