@@ -104,7 +104,8 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_LocalReference": {
         "forwardCompat": false
@@ -269,6 +270,9 @@
       },
       "InterfaceDeclaration_ReferencePosition": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_SegmentGroup": {
+        "forwardCompat": false
       },
       "ClassDeclaration_TrackingGroup": {
         "forwardCompat": false

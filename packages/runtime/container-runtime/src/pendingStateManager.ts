@@ -333,7 +333,7 @@ export class PendingStateManager implements IDisposable {
         while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             let pendingMessage = this.pendingMessages.shift()!;
-            assert(pendingMessage.opMetadata?.batch !== false, "We cannot process batches in chunks");
+            assert(pendingMessage.opMetadata?.batch !== false, 0x41b /* We cannot process batches in chunks */);
 
             /**
              * We want to ensure grouped messages get processed in a batch.

@@ -238,7 +238,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
-        assert(isClientMessage(message), "client sends non-client message");
+        assert(isClientMessage(message), 0x419 /* client sends non-client message */);
 
         if (contents !== undefined) {
             this.opsSize += contents.length;
@@ -818,7 +818,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.lastProcessedMessage = message;
 
         const isString = typeof message.clientId === "string";
-        assert(message.clientId === null || isString, "undefined or string");
+        assert(message.clientId === null || isString, 0x41a /* undefined or string */);
         // All client messages are coming from some client, and should have clientId,
         // and non-client message should not have clientId. But, there are two exceptions:
         // 1. (Legacy) We can see message.type === "attach" or "chunkedOp" for legacy files before RTM

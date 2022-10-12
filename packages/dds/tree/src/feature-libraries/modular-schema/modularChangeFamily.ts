@@ -4,7 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "../../change-family";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+} from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";
@@ -359,9 +364,12 @@ interface EncodedFieldChange {
 /**
  * @sealed
  */
-export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
+export class ModularEditBuilder
+    extends ProgressiveEditBuilderBase<FieldChangeMap>
+    implements ProgressiveEditBuilder<FieldChangeMap>
+{
     constructor(
-        family: ModularChangeFamily,
+        family: ChangeFamily<unknown, FieldChangeMap>,
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {

@@ -8,9 +8,11 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
-import { SegmentGroup } from "../mergeTreeNodes";
-import { MergeTreeDeltaType } from "../ops";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes";
+import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
+import { TrackingGroup } from "../mergeTreeTracking";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestClient } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
@@ -530,8 +532,14 @@ describe("client.applyMsg", () => {
         assert.strictEqual(seg.segment, undefined);
     });
 
-    /* eslint-disable max-len */
     /**
+     * Regression test for an issue whereby reconnected clients could have segment orders that yielded
+     * different tiebreaking results for inserted segments. Specifically, client C's "c" segment
+     * should be considered for tiebreaking against the "b" segment as judged by the op it submitted for "c",
+     * but since client C rebased the op which inserted "c", its segments were in a meaningfully different order
+     * from other clients. This issue was fixed by making client C adjust the ordering of its segments at rebase
+     * (i.e. reconnection) time so that they align with the resubmitted op.
+     * Condensed view of this mismatch:
      * ```
      * _: Local State
      * -: Deleted
@@ -540,59 +548,35 @@ describe("client.applyMsg", () => {
      * Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
      * sequence number represented as offset from msn. L means local.
      * op types: 0) insert 1) remove 2) annotate
-     *
-     * op         | client A      | op         | client B      | op         | client C      | op         | client D
-     *            |               |            |               |            |               | L:0:D0@0   | __
-     *            |               |            |               |            |               |            | DD
-     *            |               |            |               | L:0:C0@0   | _             |            | __
-     *            |               |            |               |            | C             |            | DD
-     * 1:0:D0@0   | DD            | 1:0:D0@0   | DD            | 1:0:D0@0   | _DD           | 1:0:D0@0   | DD
-     *            |               |            |               |            | C             |            |
-     * 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
-     *            | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ___CDD
-     *            |               |            |               |            |               |            | DDD
-     *            | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ____CDD
-     *            |               |            |               |            |               |            | DDDD
-     * 3:2:D0@0   | DDDCDD        |            | CDD           | 3:2:D0@0   | DDDCDD        | 3:2:D0@0   | _DDDCDD
-     *            |               |            |               |            |               |            | D
-     * 4:2:D0@0   | DDDDCDD       |            | CDD           | 4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
-     *            | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D0@0   |   * ___DDDDCDD
-     *            |               |            |               |            |               |            | DDD
-     *            | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D1@6,9 |   * ___DDD___D
-     *            |               |            |               |            |               |            | DDD   ---
-     * 5:4:D0@0   | DDDDDDDCDD    |            | CDD           |            | DDDDCDD       | 5:4:D0@0   |   * DDDDDD___D
-     *            |               |            |               |            |               |            |       ---
-     * 6:4:D1@6,9 | DDDDDD---D    |            | CDD           |            | DDDDCDD       | 6:4:D1@6,9 |   * DDDDDD---D
-     *            | DDDDDD---D    | L:2:B0@1   | C_DD          |            | DDDDCDD       |            |   * DDDDDD---D
-     *            |               |            |  b            |            |               |            |
-     *            | DDDDDD---D    |            | C_DD          | L:4:C0@5   | DDDDC_DD      |            |   * DDDDDD---D
-     *            |               |            |  b            |            |      c        |            |
-     *            | DDDDDD---D    | 3:2:D0@0   | DDDC_DD       |            | DDDDC_DD      |            |   * DDDDDD---D
-     *            |               |            |     b         |            |      c        |            |
-     *            | DDDDDD---D    | 4:2:D0@0   | DDDDC_DD      |            | DDDDC_DD      |            |   * DDDDDD---D
-     *            |               |            |      b        |            |      c        |            |
-     *            | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD   |            | DDDDC_DD      |            |   * DDDDDD---D
-     *            |               |            |         b     |            |      c        |            |
-     *            | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D  |            | DDDDC_DD      |            |   * DDDDDD---D
-     *            |               |            |          b    |            |      c        |            |
-     *            | DDDDDD---D    |            | DDDDDD- -_-D  | 5:4:D0@0   | DDDDDDDC_DD   |            |   * DDDDDD---D
-     *            |               |            |          b    |            |         c     |            |
-     *            | DDDDDD---D    |            | DDDDDD- -_-D  | 6:4:D1@6,9 | DDDDDD- -_-D  |            |   * DDDDDD---D
-     *            |               |            |          b    |            |          c    |            |
-     * 7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDD- -b-D  | 7:6:B0@6   | DDDDDDb- -_-D | 7:6:B0@6   | DDDDDDb   * ---D
-     *            |               |            |               |            |           c   |            |
-     * 8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDc- -b-D | 8:6:C0@6   | DDDDDDb- -c-D | 8:6:C0@6   | DDDDDDcb      * ---D
-     *
+     * op types: 0) insert 1) remove 2) annotate
+     * op         | client A      | op         | client C
+     *            |               | L:0:C0@0   | _
+     *            |               |            | C
+     * 1:0:D0@0   | DD            | 1:0:D0@0   | _DD
+     *            |               |            | C
+     * 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
+     * 3:2:D0@0   | DDDCDD        | 3:2:D0@0   | DDDCDD
+     * 4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
+     * 5:4:D0@0   | DDDDDDDCDD    |            | DDDDCDD
+     * 6:4:D1@6,9 | DDDDDD---D    |            | DDDDCDD
+     *            | DDDDDD---D    | L:4:C0@5   | DDDDC_DD
+     *            |               |            |      c
+     *            | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD
+     *            |               |            |         c
+     *            | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D
+     *            |               |            |          c
+     * 7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDDb- -_-D
+     *            |               |            |           c
+     * 8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDb- -c-D
      * Client C does not match client A
      * ```
      */
-    /* eslint-enable max-len */
-    it.skip("Concurrent insert into removed segment across block boundary", () => {
+    it("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
             { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
              "A", "B", "C", "D");
 
-        const logger = new TestClientLogger(clients.all);
+        const logger = new TestClientLogger([clients.A, clients.C]);
         let seq = 0;
         const ops: ISequencedDocumentMessage[] = [];
         const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(() => []);
@@ -623,14 +607,47 @@ describe("client.applyMsg", () => {
         const bOp = { op: clients.B.insertTextLocal(1, "b")!, sg: clients.B.peekPendingSegmentGroups()! };
         const cOp = { op: clients.C.insertTextLocal(5, "c")!, sg: clients.C.peekPendingSegmentGroups()! };
 
+        // TODO: tracking group
+        const { segment, offset } = clients.C.getContainingSegment(5);
+        assert(segment !== undefined, "expected segment");
+        const ref = clients.C.createLocalReferencePosition(segment, offset, ReferenceType.Simple, undefined);
+
+        let beforeSlides = 0;
+        let afterSlides = 0;
+        ref.callbacks = {
+            beforeSlide: (lref) => {
+                assert(lref === ref, "wrong ref slid");
+                beforeSlides++;
+            },
+            afterSlide: (lref) => {
+                assert(lref === ref, "wrong ref slid");
+                afterSlides++;
+            },
+        };
+
         // catch up disconnected clients
         perClientOps.forEach(
             (clientOps, i) => clientOps.splice(0).forEach((op) => clients.all[i].applyMsg(op)));
 
         // rebase and resubmit disconnected client ops
         ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
-        ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
 
+        const trackingGroup = new TrackingGroup();
+        const trackedSegs: ISegment[] = [];
+        walkAllChildSegments(clients.C.mergeTree.root, (seg) => {
+            trackedSegs.push(seg);
+            trackingGroup.link(seg);
+        });
+
+        assert.equal(beforeSlides, 0, "should be no slides");
+        assert.equal(afterSlides, 0, "should be no slides");
+        ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
+        assert.equal(beforeSlides, 1, "should be 1 slide");
+        assert.equal(afterSlides, 1, "should be 1 slide");
+
+        trackedSegs.forEach((seg) => {
+            assert(trackingGroup.has(seg), "Tracking group should still have segment.");
+        });
         // process the resubmitted ops
         ops.splice(0).forEach((op) => clients.all.forEach((c) => {
             c.applyMsg(op);
