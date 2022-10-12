@@ -47,6 +47,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         enableOfflineLoad: true,
         summaryOptions: {
+            initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{

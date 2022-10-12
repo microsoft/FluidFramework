@@ -6,7 +6,7 @@
 import {
     IContainerRuntimeOptions,
     IGCRuntimeOptions,
-    ISummaryConfigurationHeuristics,
+    ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import {
     booleanCases,
@@ -56,36 +56,25 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 
-const summaryConfigurationMatrix: OptionsMatrix<ISummaryConfigurationHeuristics> = {
-    state: ["enabled"],
-    minIdleTime: [0],
-    maxIdleTime: [30 * 1000], // 30 secs.
-    maxTime: [60 * 1000], // 1 min.
-    maxOps: [100], // Summarize if 100 weighted ops received since last snapshot.
-    minOpsForLastSummaryAttempt: [10],
-    maxAckWaitTime: [10 * 60 * 1000], // 10 mins.
-    maxOpsSinceLastSummary: [400, 800, 2000],
-    initialSummarizerDelayMs: [2, 2500, 6000],
+const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
+    disableSummaries: [false],
+    initialSummarizerDelayMs: numberCases,
+    summaryConfigOverrides: [undefined],
+    maxOpsSinceLastSummary: numberCases,
     summarizerClientElection: booleanCases,
-    nonRuntimeOpWeight: [0.1],
-    runtimeOpWeight: [1.0],
+    summarizerOptions: [undefined],
 };
 
 export function generateRuntimeOptions(
     seed: number, overrides: Partial<OptionsMatrix<IContainerRuntimeOptions>> | undefined) {
     const gcOptions =
         generatePairwiseOptions(applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any), seed);
-
-    const summaryOptionsMatrixOptions =
-        generatePairwiseOptions(summaryConfigurationMatrix, seed);
-
-    const newSummaryOptions = summaryOptionsMatrixOptions.map((option) => {
-            return { summaryConfigOverrides: option };
-    });
+    const summaryOptions =
+        generatePairwiseOptions(applyOverrides(summaryOptionsMatrix, overrides?.summaryOptions as any), seed);
 
     const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
         gcOptions: [undefined, ...gcOptions],
-        summaryOptions: [undefined, ...newSummaryOptions],
+        summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],

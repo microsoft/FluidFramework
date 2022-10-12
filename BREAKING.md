@@ -21,18 +21,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Remove iframe-driver](#remove-iframe-driver)
-- [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
 
 ### Remove iframe-driver
 The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
 
-### Remove Deprecated Fields from ISummaryRuntimeOptions
-The following fields are being removed from `ISummaryRuntimeOptions` as they became properties from `ISummaryConfiguration`:
-
-`ISummaryRuntimeOptions.disableSummaries`
-`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
-`ISummaryRuntimeOptions.summarizerClientElection`
-`ISummaryRuntimeOptions.summarizerOptions`
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes

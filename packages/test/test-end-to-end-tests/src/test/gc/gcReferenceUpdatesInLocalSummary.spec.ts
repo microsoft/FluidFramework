@@ -80,7 +80,8 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-           summaryConfigOverrides: {
+            disableSummaries: true,
+            summaryConfigOverrides: {
                 state: "disabled",
             },
          },

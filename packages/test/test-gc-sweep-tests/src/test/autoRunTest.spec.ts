@@ -32,7 +32,7 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
     summaryOptions.summarizerClientElection = true;
     // Summaries should run automatically
     const runtimeOptions: IContainerRuntimeOptions = {
-        ...summaryOptions,
+        summaryOptions,
         gcOptions: {
             gcAllowed: true,
         },

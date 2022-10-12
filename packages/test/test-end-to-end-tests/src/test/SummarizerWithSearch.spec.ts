@@ -223,9 +223,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
         createDataStoreRuntime(),
     );
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            summaryConfigOverrides: { state: "disabled" },
-        },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: false },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

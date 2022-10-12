@@ -171,7 +171,7 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
     let provider: ITestObjectProvider;
     const dataObjectFactory = new TestFluidObjectFactory([]);
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

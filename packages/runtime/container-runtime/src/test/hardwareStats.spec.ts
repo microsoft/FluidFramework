@@ -33,7 +33,7 @@ describe("Hardware Stats", () => {
         undefined, // requestHandler
         {
             summaryOptions: {
-                summaryConfigOverrides: { state: "disabled" },
+                disableSummaries: true,
             },
         },
     );
