@@ -5,8 +5,9 @@
 
 export {
     generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
     generateBumpDepsBranchName,
-    generateCommitMessage,
+    generateBumpDepsCommitMessage,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
     getReleaseSourceForReleaseGroup,
@@ -37,4 +38,4 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
-export * as github from "./github";
+export { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "./github";
