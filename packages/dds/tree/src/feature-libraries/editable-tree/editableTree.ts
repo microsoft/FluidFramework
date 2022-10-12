@@ -244,7 +244,7 @@ export class ProxyTarget {
 
     public has(key: string): boolean {
         // Make fields present only if non-empty.
-        return this.cursor.length(brand(key)) !== 0;
+        return this.cursor.childFieldLength(brand(key)) !== 0;
     }
 
     /**

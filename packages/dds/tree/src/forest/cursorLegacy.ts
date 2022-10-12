@@ -71,10 +71,14 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
     keys: Iterable<FieldKey>;
 
     /**
-     * @returns the number of immediate children for the given key of the currently selected node
-     * or the number of immediate children in the current field if the key is undefined.
+     * @returns the number of immediate children for the given key of the currently selected node.
      */
-    length(key?: FieldKey): number;
+    childFieldLength(key: FieldKey): number;
+
+    /**
+     * @returns the number of immediate children in the current field.
+     */
+    currentFieldLength(): number;
 
     /**
      * value associated with the currently selected node.
