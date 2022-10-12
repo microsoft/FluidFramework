@@ -85,6 +85,7 @@ describe("Tests for snapshot fetch", () => {
             resolved,
             async (_options) => "token",
             logger,
+            true,
             { ...nonPersistentCache, persistedCache: epochTracker },
             hostPolicy,
             epochTracker,
