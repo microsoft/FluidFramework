@@ -488,6 +488,23 @@ export function testJsonableTreeCursor(
                 });
             });
         });
+
+        for (const [name, data] of cursorTestCases) {
+            const restrictedKeys: FieldKey[] = [
+                brand("__proto__"),
+                brand("toString"),
+                brand("toFixed"),
+                brand("hasOwnProperty"),
+            ];
+
+            it(`returns no values for retricted keys on ${name} tree`, () => {
+                for (const key of restrictedKeys) {
+                    const cursor = factory(data);
+                    cursor.enterField(key);
+                    assert.equal(cursor.getFieldLength(), 0);
+                }
+            });
+        }
     });
 }
 

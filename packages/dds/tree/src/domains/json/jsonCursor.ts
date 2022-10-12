@@ -58,7 +58,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
                 } else if (Array.isArray(node)) {
                     return [EmptyKey];
                 } else {
-                    return Object.keys(node as object) as FieldKey[];
+                    return Object.getOwnPropertyNames(node as object) as FieldKey[];
                 }
             default:
                 return [];
@@ -69,8 +69,12 @@ const adapter: CursorAdapter<JsonCompatible> = {
             return node;
         }
 
-        const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
-        return field === undefined ? [] : [field];
+        if (Object.prototype.hasOwnProperty.call(node, key)) {
+            const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
+            return field === undefined ? [] : [field];
+        }
+
+        return [];
     },
 };
 

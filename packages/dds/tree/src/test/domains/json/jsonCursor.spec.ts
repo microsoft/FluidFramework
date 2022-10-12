@@ -253,6 +253,23 @@ describe("JsonCursor", () => {
             expectFound(cursor, EmptyKey, 1);
         });
     });
+
+    for (const [name, data] of testCases) {
+        const restrictedKeys: FieldKey[] = [
+            brand("__proto__"),
+            brand("toString"),
+            brand("toFixed"),
+            brand("hasOwnProperty"),
+        ];
+
+        it(`returns no values for retricted keys on ${name} tree`, () => {
+            for (const key of restrictedKeys) {
+                const cursor = singleJsonCursor(data);
+                cursor.enterField(key);
+                assert.equal(cursor.getFieldLength(), 0);
+            }
+        });
+    }
 });
 
 const cursors: { cursorName: string; cursor: ITreeCursorNew }[] = [];
