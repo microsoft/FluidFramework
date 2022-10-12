@@ -193,6 +193,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    /**
+     * Tombstone is a temporary feature that marks a datastore as deleted, although it does not actually delete the
+     * datastoreContext itself.
+     */
     private _tombstoned = false;
     public get tombstoned() { return this._tombstoned; }
 
@@ -313,19 +317,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public async tombstone() {
-        this.verifyNotClosed();
+    public tombstone() {
         if (this.tombstoned) {
             return;
         }
-
-        assert(!(await this.isRoot()), "Tombstone should not be called on root datastores!");
-        assert(!this.isLocalDataStore, "Local data should have been wiped before tombstone is called!");
-
-        // Note loaded and channel !== undefined are the same thing as you are only loaded if the channel is defined
-        assert(!this.loaded || this.channel === undefined, "Cannot tombstone a loaded datastore.");
-        assert(this.pending === undefined || this.pending.length === 0,
-            "Cannot tombstone a datastore with pending ops!");
 
         this._tombstoned = true;
     }
@@ -421,6 +416,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
+        this.verifyNotTombstoned();
 
         const innerContents = messageArg.contents as FluidDataStoreMessage;
         const message = {
@@ -443,6 +439,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
+        this.verifyNotTombstoned();
 
         // Signals are ignored if the store is not yet loaded
         if (!this.loaded) {
@@ -617,6 +614,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
+        this.verifyNotTombstoned();
         assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
@@ -639,6 +637,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     public setChannelDirty(address: string): void {
         this.verifyNotClosed();
+        this.verifyNotTombstoned();
 
         // Get the latest sequence number.
         const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
@@ -654,6 +653,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
+        this.verifyNotTombstoned();
+
         assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
@@ -774,6 +775,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Context is closed");
+        }
+    }
+
+    // Verify not tombstoned is seperate from not closed as the setConnectionState method is internal
+    private verifyNotTombstoned() {
+        if (this.tombstoned) {
+            throw new Error("Context is tombstoned!");
         }
     }
 
