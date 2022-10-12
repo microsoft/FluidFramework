@@ -534,9 +534,12 @@ export class SummaryWriter implements ISummaryWriter {
                     missingOpsSequenceNumbers.push(i);
                 }
             }
-            Lumberjack.info(
-                `FullLogTail missing ops from: ${from} to: ${to} with op: ${JSON.stringify(missingOpsSequenceNumbers)}`
-                , this.lumberProperties);
+            if (missingOpsSequenceNumbers.length > 0) {
+                Lumberjack.info(
+                    // eslint-disable-next-line max-len
+                    `FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(missingOpsSequenceNumbers)}`
+                    , this.lumberProperties);
+            }
         }
 
         const logTailEntries: ITreeEntry[] = [
@@ -565,11 +568,12 @@ export class SummaryWriter implements ISummaryWriter {
         const logtailSequenceNumbers = new Set();
         logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
         const missingOps = lastSummaryMessages?.filter((ms) =>
-            !(logtailSequenceNumbers.has(ms.sequenceNumber)));
+            !(logtailSequenceNumbers.has(ms.sequenceNumber)) && ms.sequenceNumber > gt && ms.sequenceNumber < lt);
         const missingOpsSN: number[] = [];
         missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
         if (missingOpsSN.length > 0) {
-            Lumberjack.info(`Fetched ops from last summary logtail: ${JSON.stringify(missingOpsSN)}`
+            // eslint-disable-next-line max-len
+            Lumberjack.info(`Fetched ops gt: ${gt} exclusive, lt: ${lt} exclusive of last summary logtail: ${JSON.stringify(missingOpsSN)}`
                 , this.lumberProperties);
         }
         return missingOps;
