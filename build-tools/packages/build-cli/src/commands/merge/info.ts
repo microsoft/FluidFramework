@@ -8,13 +8,30 @@ import chalk from "chalk";
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
+/**
+ * An object containing merge status between two branches.
+ */
 interface BranchMergeInfo {
+    /**
+     * The branches being compared.
+     */
+    branches: string[];
+    /**
+     * The number of commits difference between the branches. This will equal the length of the commits array and is
+     * included for convenience.
+     */
+    commitCount: number;
+
+    /**
+     * The commits that are in branch 1 but not branch 2.
+     */
     commits: string[];
 }
 
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand.flags> {
-    static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.`;
+    static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
 
+    static enableJsonFlag = true;
     static flags = {
         branch: Flags.string({
             char: "b",
@@ -30,9 +47,11 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
             description: "Get info about the merge status of the main and next branch in the repo.",
             command: "<%= config.bin %> <%= command.id %>",
         },
+        {
+            description: "Output the merge status as JSON using --json.",
+            command: "<%= config.bin %> <%= command.id %> --json",
+        },
     ];
-
-    static enableJsonFlag = true;
 
     public async run(): Promise<BranchMergeInfo> {
         const flags = this.processedFlags;
@@ -94,7 +113,6 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
         this.log();
 
         // If --json is passed, this object is output to stdout JSON-serialized.
-        // return [rawRevs];
-        return { commits: ["done"] };
+        return { branches: [branch1, branch2], commits: revs, commitCount: revs.length };
     }
 }
