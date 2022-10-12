@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
-import { FieldKey, JsonableTree } from "../../../tree";
+import { FieldKey, isGlobalFieldKey, JsonableTree, keyFromSymbol } from "../../../tree";
 import { fail, brand } from "../../../util";
 import {
     UnwrappedEditableField,
@@ -15,11 +15,14 @@ import {
     valueSymbol,
     getTypeSymbol,
     Multiplicity,
+    EditableField,
+    EditableTree,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
     getFieldKind,
     getFieldSchema,
+    isPrimitive,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import { schemaMap } from "./mockData";
@@ -85,5 +88,53 @@ export function expectTreeSequence(
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
         expectTreeEquals(schemaData, field[index], expected[index]);
+    }
+}
+
+export function expectFieldEquals(
+    schemaData: SchemaDataAndPolicy,
+    field: EditableField,
+    expected: JsonableTree[],
+): void {
+    const [fieldSchema, , nodes] = field;
+    assert(Array.isArray(expected));
+    assert(Array.isArray(nodes));
+    assert.equal(nodes.length, expected.length);
+    const fieldKind = getFieldKind(fieldSchema);
+    if (fieldKind.multiplicity !== Multiplicity.Sequence) {
+        assert(nodes.length <= 1);
+    }
+    for (let i = 0; i < nodes.length; i++) {
+        expectNodeEquals(schemaData, nodes[i], expected[i]);
+    }
+}
+
+export function expectNodeEquals(
+    schemaData: SchemaDataAndPolicy,
+    node: EditableTree,
+    expected: JsonableTree,
+): void {
+    assert.equal(expected.type, node[getTypeSymbol]());
+    assert.equal(expected.value, node[valueSymbol]);
+    const nodeSchema = schemaData.treeSchema.get(expected.type) ?? fail("type");
+    assert.deepEqual(nodeSchema, node[getTypeSymbol](undefined, false));
+    if (isPrimitiveValue(expected.value)) {
+        assert(isPrimitive(nodeSchema));
+        assert.deepEqual([...node], []);
+        return;
+    }
+    for (const field of node) {
+        const [, childKey] = field;
+        const expectedGlobalFields = expected.globalFields ?? {};
+        const expectedFields = expected.fields ?? {};
+        let expectedField: JsonableTree[];
+        if (isGlobalFieldKey(childKey)) {
+            assert(childKey in expectedGlobalFields);
+            expectedField = expectedGlobalFields[keyFromSymbol(childKey)];
+        } else {
+            assert(childKey in expectedFields);
+            expectedField = expectedFields[childKey];
+        }
+        expectFieldEquals(schemaData, field, expectedField);
     }
 }

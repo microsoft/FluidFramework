@@ -6,8 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import { IEditableForest, TreeNavigationResult } from "../../forest";
 import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { rootFieldKey } from "../../tree";
-import { proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
+import { rootFieldKey, symbolFromKey } from "../../tree";
+import {
+    EditableField,
+    getEditableField,
+    getUnwrappedField,
+    ProxyTarget,
+    UnwrappedEditableField,
+} from "./editableTree";
 import { getFieldKind } from "./utilities";
 
 /**
@@ -29,7 +35,13 @@ export interface EditableTreeContext {
      *
      * Not (yet) supported: create properties, set values and delete properties.
      */
-    readonly root: UnwrappedEditableField;
+    readonly root: EditableField;
+
+    /**
+     * Same as `root`, but with unwrapped fields.
+     * See ${@link UnwrappedEditableField} for what is unwrapped.
+     */
+    readonly unwrappedRoot: UnwrappedEditableField;
 
     /**
      * Call before editing.
@@ -71,19 +83,38 @@ export class ProxyContext implements EditableTreeContext {
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
     }
 
-    public get root(): UnwrappedEditableField {
+    public get unwrappedRoot(): UnwrappedEditableField {
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
+        const fieldKind = getFieldKind(rootSchema);
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
         const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
             do {
-                targets.push(new ProxyTarget(this, cursor));
+                targets.push(new ProxyTarget(this, true, cursor));
             } while (cursor.seek(1) === TreeNavigationResult.Ok);
         }
         cursor.free();
         this.forest.anchors.forget(destination);
+        return getUnwrappedField(fieldKind, targets);
+    }
+
+    // This code is kept independent of `get unwrappedRoot()` (i.e. duplicated) on purpose,
+    // as it will probably differ a lot in editing case.
+    public get root(): EditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
-        return proxifyField(getFieldKind(rootSchema), targets);
+        const cursor = this.forest.allocateCursor();
+        const destination = this.forest.root(this.forest.rootField);
+        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
+        const targets: ProxyTarget[] = [];
+        if (cursorResult === TreeNavigationResult.Ok) {
+            do {
+                targets.push(new ProxyTarget(this, false, cursor));
+            } while (cursor.seek(1) === TreeNavigationResult.Ok);
+        }
+        cursor.free();
+        this.forest.anchors.forget(destination);
+        return getEditableField(rootSchema, symbolFromKey(rootFieldKey), targets);
     }
 }

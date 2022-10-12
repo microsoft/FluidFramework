@@ -233,7 +233,10 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag_2;
 
 // @public
-export interface EditableTree {
+export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+
+// @public
+export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
     readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
@@ -245,7 +248,8 @@ export interface EditableTree {
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
-    readonly root: UnwrappedEditableField;
+    readonly root: EditableField;
+    readonly unwrappedRoot: UnwrappedEditableField;
 }
 
 // @public

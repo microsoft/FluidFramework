@@ -14,7 +14,6 @@ export {
     valueSymbol,
     anchorSymbol,
     proxyTargetSymbol,
-    isArrayField,
     isUnwrappedNode,
 } from "./editableTree";
 

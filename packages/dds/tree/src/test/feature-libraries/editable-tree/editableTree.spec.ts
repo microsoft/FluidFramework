@@ -43,7 +43,6 @@ import {
     isUnwrappedNode,
     emptyField,
 } from "../../../feature-libraries";
-
 import {
     getPrimaryField,
     // eslint-disable-next-line import/no-internal-modules
@@ -64,7 +63,7 @@ import {
     personData,
     Int32,
 } from "./mockData";
-import { expectTreeEquals, expectTreeSequence } from "./utils";
+import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
 
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
@@ -78,7 +77,7 @@ function buildTestProxy(
 ): readonly [SchemaDataAndPolicy, UnwrappedEditableField] {
     const forest = setupForest(fullSchemaData, [data]);
     const context = getEditableTreeContext(forest);
-    const root: UnwrappedEditableField = context.root;
+    const root: UnwrappedEditableField = context.unwrappedRoot;
     return [forest.schema, root];
 }
 
@@ -87,7 +86,7 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
     return [schema, proxy as PersonType];
 }
 
-describe("editable-tree", () => {
+describe.only("editable-tree", () => {
     it("proxified forest", () => {
         const [, proxy] = buildTestPerson();
         assert.ok(proxy);
@@ -100,11 +99,18 @@ describe("editable-tree", () => {
         );
         assert.equal(proxy[getTypeSymbol](brand("name")), stringSchema.name);
         assert.equal(proxy.address[getTypeSymbol](brand("phones")), phonesSchema.name);
+        assert.equal(proxy.address[getTypeSymbol](brand("sequencePhones")), undefined);
     });
 
     it("traverse a complete tree", () => {
         const [schema, typedProxy] = buildTestPerson();
         expectTreeEquals(schema, typedProxy, personData);
+    });
+
+    it("traverse a complete tree (generic)", () => {
+        const forest = setupForest(fullSchemaData, [personData]);
+        const context = getEditableTreeContext(forest);
+        expectFieldEquals(forest.schema, context.root, [personData]);
     });
 
     it('"in" works as expected', () => {
@@ -156,21 +162,21 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, []);
             const context = getEditableTreeContext(forest);
-            assert.deepStrictEqual(context.root, []);
+            assert.deepEqual(context.unwrappedRoot, []);
             context.free();
         }
         // Test 1 item
         {
             const forest = setupForest(schemaData, [emptyNode]);
             const context = getEditableTreeContext(forest);
-            expectTreeSequence(forest.schema, context.root, [emptyNode]);
+            expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode]);
             context.free();
         }
         // Test 2 items
         {
             const forest = setupForest(schemaData, [emptyNode, emptyNode]);
             const context = getEditableTreeContext(forest);
-            expectTreeSequence(forest.schema, context.root, [emptyNode, emptyNode]);
+            expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode, emptyNode]);
             context.free();
         }
     });
@@ -183,8 +189,8 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [emptyNode]);
         const context = getEditableTreeContext(forest);
-        assert(isUnwrappedNode(context.root));
-        expectTreeEquals(forest.schema, context.root, emptyNode);
+        assert(isUnwrappedNode(context.unwrappedRoot));
+        expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
         context.free();
     });
 
@@ -198,14 +204,14 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, []);
             const context = getEditableTreeContext(forest);
-            assert.equal(context.root, undefined);
+            assert.equal(context.unwrappedRoot, undefined);
             context.free();
         }
         // With value
         {
             const forest = setupForest(schemaData, [emptyNode]);
             const context = getEditableTreeContext(forest);
-            expectTreeEquals(forest.schema, context.root, emptyNode);
+            expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
             context.free();
         }
     });
@@ -244,22 +250,28 @@ describe("editable-tree", () => {
             },
         ]);
         const context = getEditableTreeContext(forest);
-        assert(isUnwrappedNode(context.root));
-        assert.deepEqual(context.root[getTypeSymbol](globalFieldSymbol, false), stringSchema);
-        assert.equal(context.root[globalFieldSymbol], "global foo");
-        assert.equal(context.root[globalFieldKeyAsLocalField], "foo");
-        assert.deepEqual(Object.getOwnPropertyDescriptor(context.root, globalFieldSymbol), {
-            configurable: true,
-            enumerable: true,
-            value: "global foo",
-            writable: false,
-        });
+        assert(isUnwrappedNode(context.unwrappedRoot));
+        assert.deepEqual(
+            context.unwrappedRoot[getTypeSymbol](globalFieldSymbol, false),
+            stringSchema,
+        );
+        assert.equal(context.unwrappedRoot[globalFieldSymbol], "global foo");
+        assert.equal(context.unwrappedRoot[globalFieldKeyAsLocalField], "foo");
+        assert.deepEqual(
+            Object.getOwnPropertyDescriptor(context.unwrappedRoot, globalFieldSymbol),
+            {
+                configurable: true,
+                enumerable: true,
+                value: "global foo",
+                writable: false,
+            },
+        );
         assert.equal(
-            Object.getOwnPropertyDescriptor(context.root, Symbol.for("whatever")),
+            Object.getOwnPropertyDescriptor(context.unwrappedRoot, Symbol.for("whatever")),
             undefined,
         );
-        assert(globalFieldKey in context.root);
-        assert(!(Symbol.for("whatever") in context.root));
+        assert(globalFieldKey in context.unwrappedRoot);
+        assert(!(Symbol.for("whatever") in context.unwrappedRoot));
         context.free();
     });
 
@@ -271,7 +283,7 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
         const context = getEditableTreeContext(forest);
-        assert.equal(context.root, 1);
+        assert.equal(context.unwrappedRoot, 1);
         context.free();
     });
 
@@ -288,7 +300,7 @@ describe("editable-tree", () => {
             },
         ]);
         const context = getEditableTreeContext(forest);
-        assert.equal((context.root as EditableTree)["child" as FieldKey], 1);
+        assert.equal((context.unwrappedRoot as EditableTree)["child" as FieldKey], 1);
         context.free();
     });
 
@@ -306,7 +318,7 @@ describe("editable-tree", () => {
         ]);
         const context = getEditableTreeContext(forest);
         assert.throws(
-            () => (context.root as EditableTree)["child" as FieldKey],
+            () => (context.unwrappedRoot as EditableTree)["child" as FieldKey],
             (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
             "Expected exception was not thrown",
         );
@@ -325,8 +337,8 @@ describe("editable-tree", () => {
             const data = { type: phonesSchema.name };
             const forest = setupForest(schemaData, [data]);
             const context = getEditableTreeContext(forest);
-            assert.deepStrictEqual(context.root, []);
-            expectTreeEquals(forest.schema, context.root, data);
+            assert.deepEqual(context.unwrappedRoot, []);
+            expectTreeEquals(forest.schema, context.unwrappedRoot, data);
             context.free();
         }
         // Non-empty
@@ -338,7 +350,7 @@ describe("editable-tree", () => {
                 },
             ]);
             const context = getEditableTreeContext(forest);
-            assert.deepStrictEqual(context.root, [1]);
+            assert.deepEqual(context.unwrappedRoot, [1]);
             context.free();
         }
     });
