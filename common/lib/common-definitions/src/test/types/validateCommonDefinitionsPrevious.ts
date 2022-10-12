@@ -184,6 +184,54 @@ use_old_TypeAliasDeclaration_IEventTransformer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoggingError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILoggingError():
+    TypeOnly<old.ILoggingError>;
+declare function use_current_InterfaceDeclaration_ILoggingError(
+    use: TypeOnly<current.ILoggingError>);
+use_current_InterfaceDeclaration_ILoggingError(
+    get_old_InterfaceDeclaration_ILoggingError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoggingError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILoggingError():
+    TypeOnly<current.ILoggingError>;
+declare function use_old_InterfaceDeclaration_ILoggingError(
+    use: TypeOnly<old.ILoggingError>);
+use_old_InterfaceDeclaration_ILoggingError(
+    get_current_InterfaceDeclaration_ILoggingError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType():
+    TypeOnly<old.ITaggedTelemetryPropertyType>;
+declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
+    use: TypeOnly<current.ITaggedTelemetryPropertyType>);
+use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
+    get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType():
+    TypeOnly<current.ITaggedTelemetryPropertyType>;
+declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
+    use: TypeOnly<old.ITaggedTelemetryPropertyType>);
+use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
+    get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
@@ -203,7 +251,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     use: TypeOnly<old.ITelemetryBaseEvent>);
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
 /*
@@ -252,7 +299,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEvent(
     use: TypeOnly<old.ITelemetryErrorEvent>);
 use_old_InterfaceDeclaration_ITelemetryErrorEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryErrorEvent());
 
 /*
@@ -277,7 +323,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEvent(
     use: TypeOnly<old.ITelemetryGenericEvent>);
 use_old_InterfaceDeclaration_ITelemetryGenericEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryGenericEvent());
 
 /*
@@ -326,7 +371,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
     use: TypeOnly<old.ITelemetryPerformanceEvent>);
 use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
 /*
@@ -351,7 +395,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryProperties():
 declare function use_old_InterfaceDeclaration_ITelemetryProperties(
     use: TypeOnly<old.ITelemetryProperties>);
 use_old_InterfaceDeclaration_ITelemetryProperties(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryProperties());
 
 /*
