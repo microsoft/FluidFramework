@@ -97,7 +97,7 @@ export class TestServer extends TestClient {
     applyMessages(msgCount: number) {
         let _msgCount = msgCount;
         while (_msgCount > 0) {
-            const msg = this.q.dequeue();
+            const msg = this.dequeueMsg();
             if (msg) {
                 if (msg.sequenceNumber >= 0) {
                     this.transformUpstreamMessage(msg);
@@ -189,7 +189,7 @@ export function checkTextMatchRelative(
     msg: ISequencedDocumentMessage) {
     const client = server.clients[clientId];
     const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
-    const cliText = client.checkQ.dequeue();
+    const cliText = client.checkQ.shift()?.data;
     if ((cliText === undefined) || (cliText !== serverText)) {
         console.log(`mismatch `);
         console.log(msg);
