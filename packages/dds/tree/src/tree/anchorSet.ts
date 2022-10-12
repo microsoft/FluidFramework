@@ -558,6 +558,9 @@ class PathNode implements UpPath {
 
     /**
      * Removes this from parent if alive, and sets this to disposed.
+     * Must only be called when this node is no longer needed (has no references and no children).
+     *
+     * Allowed when dangling (but not when disposed).
      */
     private disposeThis(): void {
         assert(this.status !== Status.Disposed, "PathNode must not be disposed");
