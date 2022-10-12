@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { Flags } from "@oclif/core";
+import * as childProcess from "child_process";
 import * as fs from "fs";
 import { EOL as newline } from "os";
-import * as childProcess from "child_process";
 import path from "path";
-import { Flags } from "@oclif/core";
+
 import { policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {
@@ -93,19 +94,19 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 : new RegExp(this.processedFlags.path, "i");
 
         if (this.processedFlags.handler !== undefined) {
-            this.log(`Filtering handlers by regex: ${handlerRegex}`);
+            this.info(`Filtering handlers by regex: ${handlerRegex}`);
         }
 
         if (this.processedFlags.path !== undefined) {
-            this.log(`Filtering file paths by regex: ${pathRegex}`);
+            this.info(`Filtering file paths by regex: ${pathRegex}`);
         }
 
         if (this.processedFlags.fix) {
-            this.log("Resolving errors if possible.");
+            this.info("Resolving errors if possible.");
         }
 
         if (this.processedFlags.exclusions === undefined) {
-            this.error("ERROR: No exclusions file provided.");
+            this.error("No exclusions file provided.");
         }
 
         let exclusionsFile: string[];
@@ -173,43 +174,41 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     // route files to their handlers by regex testing their full paths
     // synchronize output, exit code, and resolve decision for all handlers
-    routeToHandlers(file: string, handlerRegex: RegExp) {
-        const filteredHandlers = policyHandlers.filter(
-            (handler) => handler.match.test(file) && handlerRegex.test(handler.name),
-        );
+    routeToHandlers(file: string, handlerRegex: RegExp): void {
+        policyHandlers
+            .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
+            // eslint-disable-next-line unicorn/no-array-for-each
+            .forEach((handler) => {
+                const result = runWithPerf(handler.name, "handle", () =>
+                    handler.handler(file, CheckPolicy.pathToGitRoot),
+                );
+                if (result !== undefined && result !== "") {
+                    let output = `${newline}file failed policy check: ${file}${newline}${result}`;
+                    const resolver = handler.resolver;
+                    if (this.processedFlags.fix && resolver) {
+                        output += `${newline}attempting to resolve: ${file}`;
+                        const resolveResult = runWithPerf(handler.name, "resolve", () =>
+                            resolver(file, CheckPolicy.pathToGitRoot),
+                        );
 
-        for (const handler of filteredHandlers) {
-            const result = runWithPerf(handler.name, "handle", () =>
-                handler.handler(file, CheckPolicy.pathToGitRoot),
-            );
-            const resolver = handler.resolver;
+                        if (resolveResult?.message !== undefined) {
+                            output += newline + resolveResult.message;
+                        }
 
-            if (result === undefined) {
-                return;
-            }
+                        if (!resolveResult.resolved) {
+                            process.exitCode = 1;
+                        }
+                    } else {
+                        process.exitCode = 1;
+                    }
 
-            if (!this.processedFlags.fix || resolver === undefined) {
-                return this.exit(1);
-            }
-
-            let output = `${newline}file failed policy check: ${file}${newline}${result}`;
-
-            output += `${newline}attempting to resolve: ${file}`;
-            const resolveResult = runWithPerf(handler.name, "resolve", () =>
-                resolver(file, CheckPolicy.pathToGitRoot),
-            );
-
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (resolveResult.message) {
-                output += newline + resolveResult.message;
-            }
-
-            if (!resolveResult.resolved) {
-                return this.exit(1);
-            }
-
-            this.log(output);
-        }
+                    if (process.exitCode === 1) {
+                        this.warning(output);
+                    } else {
+                        this.info(output);
+                    }
+                }
+            });
     }
 
     logStats() {
@@ -235,7 +234,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
         CheckPolicy.count++;
         if (!exclusions.every((value) => !value.test(line))) {
-            this.log(`Excluded: ${line}`);
+            this.verbose(`Excluded: ${line}`);
             return;
         }
 

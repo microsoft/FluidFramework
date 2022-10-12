@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    List,
-    ListMakeHead,
+    List, walkList,
 } from "../collections";
 
 describe("Collections.List", () => {
@@ -14,40 +13,32 @@ describe("Collections.List", () => {
     let list: List<number>;
 
     beforeEach(() => {
-        list = ListMakeHead<number>();
+        list = new List<number>();
         for (let i = 0; i < listCount; i++) {
             list.unshift(i);
         }
     });
 
-    describe(".count", () => {
+    describe(".length", () => {
         it("Should return the total number of items in the list",
-            () => assert.equal(list.count(), listCount, "The list count doesn't match the expected count."));
+            () => assert.equal(list.length, listCount, "The list count doesn't match the expected count."));
     });
 
     describe(".first", () => {
         it("Should return the first item in the list",
-            () => assert.equal(list.first(), listCount - 1, "first item not expected value"));
+            () => assert.equal(list.first?.data, listCount - 1, "first item not expected value"));
     });
 
     describe(".last", () => {
         it("Should return the last item in the list",
-            () => assert.equal(list.last(), 0, "last item not expected value"));
+            () => assert.equal(list.last?.data, 0, "last item not expected value"));
     });
 
-    describe(".isHead", () => {
-        it("Should return true for the head of the list",
-            () => assert.equal(list.isHead, true, "expected node is not head"));
-
-        it("Should return false when not the head of the list",
-            () => assert.equal(list.next.isHead, false, "unexpected node is head"));
-    });
-
-    describe(".walk", () => {
+    describe("walkList", () => {
         it("Should walk all items of the list", () => {
             let i = listCount - 1;
-            list.walk((data) => {
-                assert.equal(data, i, "elemeted not expected value");
+            walkList(list, (node) => {
+                assert.equal(node.data, i, "elemeted not expected value");
                 i--;
             });
         });
@@ -57,7 +48,7 @@ describe("Collections.List", () => {
         it("Should walk all items of the list", () => {
             let i = listCount - 1;
             for (const item of list) {
-                assert.equal(item, i, "elemeted not expected value");
+                assert.equal(item.data, i, "elemeted not expected value");
                 i--;
             }
         });
@@ -67,16 +58,16 @@ describe("Collections.List", () => {
         it("Should add item to the start of the list",
             () => {
                 list.unshift(99);
-                assert.equal(list.first(), 99, "first item not expected value");
-                assert.equal(list.count(), listCount + 1, "The list count doesn't match the expected count.");
+                assert.equal(list.first?.data, 99, "first item not expected value");
+                assert.equal(list.length, listCount + 1, "The list count doesn't match the expected count.");
             });
     });
-    describe(".enqueue", () => {
+    describe(".push", () => {
         it("Should add item to the end of the list",
             () => {
-                list.enqueue(99);
-                assert.equal(list.last(), 99, "last item not expected value");
-                assert.equal(list.count(), listCount + 1, "The list count doesn't match the expected count.");
+                list.push(99);
+                assert.equal(list.last?.data, 99, "last item not expected value");
+                assert.equal(list.length, listCount + 1, "The list count doesn't match the expected count.");
             });
     });
 });

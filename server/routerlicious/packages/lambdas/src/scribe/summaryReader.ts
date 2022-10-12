@@ -5,7 +5,12 @@
 
 import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { convertWholeFlatSummaryToSnapshotTreeAndBlobs, IGitManager } from "@fluidframework/server-services-client";
+import {
+    convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+    IGitManager,
+    IWholeFlatSummary,
+    LatestSummaryId,
+} from "@fluidframework/server-services-client";
 import { IDeliState, requestWithRetry, shouldRetryNetworkError } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -40,18 +45,37 @@ export class SummaryReader implements ISummaryReader {
 
         if (this.enableWholeSummaryUpload) {
             try {
-                const existingRef = await requestWithRetry(
-                    async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-                    "readWholeSummary_getRef",
-                    this.lumberProperties,
-                    shouldRetryNetworkError,
-                    this.maxRetriesOnError);
-                const wholeFlatSummary = await requestWithRetry(
-                    async () => this.summaryStorage.getSummary(existingRef.object.sha),
-                    "readWholeSummary_getSummary",
-                    this.lumberProperties,
-                    shouldRetryNetworkError,
-                    this.maxRetriesOnError);
+                let wholeFlatSummary: IWholeFlatSummary | undefined;
+                try {
+                    wholeFlatSummary = await requestWithRetry(
+                        async () => this.summaryStorage.getSummary(LatestSummaryId),
+                        "readWholeSummary_getSummary",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError);
+                } catch (error: any) {
+                        Lumberjack.warning(
+                            `Error fetching summary with ID ${LatestSummaryId}. Will try with explicit ref.`,
+                            this.lumberProperties,
+                            error);
+                        wholeFlatSummary = undefined;
+                }
+
+                if (!wholeFlatSummary) {
+                    const existingRef = await requestWithRetry(
+                        async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
+                        "readWholeSummary_getRef",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError);
+                    wholeFlatSummary = await requestWithRetry(
+                        async () => this.summaryStorage.getSummary(existingRef.object.sha),
+                        "readWholeSummary_getSummary",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError);
+                }
+
                 const normalizedSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
                 // Obtain IDs of specific fields from the downloaded summary

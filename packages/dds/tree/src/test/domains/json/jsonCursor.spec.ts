@@ -18,13 +18,22 @@ const testCases = [
     ["integer", [Number.MIN_SAFE_INTEGER - 1, 0, Number.MAX_SAFE_INTEGER + 1]],
     ["finite", [-Number.MAX_VALUE, -Number.MIN_VALUE, -0, Number.MIN_VALUE, Number.MAX_VALUE]],
     ["non-finite", [NaN, -Infinity, +Infinity]],
-    ["string", ["", "\\\"\b\f\n\r\t", "😀"]],
+    ["string", ["", '\\"\b\f\n\r\t', "😀"]],
     ["object", [{}, { one: "field" }, { nested: { depth: 1 } }]],
     ["array", [[], ["oneItem"], [["nested depth 1"]]]],
-    ["composite", [
-        { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
-        [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
-    ]],
+    [
+        "composite",
+        [
+            {
+                n: null,
+                b: true,
+                i: 0,
+                s: "",
+                a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }],
+            },
+            [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
+        ],
+    ],
 ];
 
 describe("JsonCursor", () => {
@@ -36,13 +45,19 @@ describe("JsonCursor", () => {
                 it(`${name}: ${JSON.stringify(expected)}`, () => {
                     const cursor = new JsonCursor(expected);
 
-                    assert.deepEqual(cursorToJsonObject(cursor), expected,
-                        "JsonCursor results must match source.");
+                    assert.deepEqual(
+                        cursorToJsonObject(cursor),
+                        expected,
+                        "JsonCursor results must match source.",
+                    );
 
                     // Read tree a second time to verify that the previous traversal returned the cursor's
                     // internal state machine to the root (i.e., stacks should be empty.)
-                    assert.deepEqual(cursorToJsonObject(cursor), expected,
-                        "JsonCursor must return same results on second traversal.");
+                    assert.deepEqual(
+                        cursorToJsonObject(cursor),
+                        expected,
+                        "JsonCursor must return same results on second traversal.",
+                    );
                 });
             }
         }
@@ -52,7 +67,10 @@ describe("JsonCursor", () => {
         it("object", () => {
             assert.deepEqual([...new JsonCursor({}).keys], []);
             assert.deepEqual([...new JsonCursor({ x: {} }).keys], ["x"]);
-            assert.deepEqual(new Set(new JsonCursor({ x: {}, test: 6 }).keys), new Set(["x", "test"]));
+            assert.deepEqual(
+                new Set(new JsonCursor({ x: {}, test: 6 }).keys),
+                new Set(["x", "test"]),
+            );
         });
 
         it("array", () => {
@@ -138,6 +156,13 @@ describe("JsonCursor", () => {
                 assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 0);
             });
+
+            it(`can get a length of array from within the field`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                const length = cursor.childFieldLength(EmptyKey);
+                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                assert.equal(cursor.currentFieldLength(), length);
+            });
         });
     });
 
@@ -145,20 +170,49 @@ describe("JsonCursor", () => {
         const notFoundKey: FieldKey = brand("notFound");
         const foundKey: FieldKey = brand("found");
 
-        function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
-            assert(0 <= index && index < cursor.length(key),
-                `.length() must include index of existing child '${String(key)}[${index}]'.`);
+        function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0, childFieldLength = 1) {
+            assert(
+                0 <= index && index < cursor.childFieldLength(key),
+                `.length() must include index of existing child '${String(key)}[${index}]'.`,
+            );
 
-            assert.equal(cursor.down(key, index), TreeNavigationResult.Ok,
-                `Must navigate to child '${String(key)}[${index}]'.`);
+            assert.equal(
+                cursor.down(key, index),
+                TreeNavigationResult.Ok,
+                `Must navigate to child '${String(key)}[${index}]'.`,
+            );
+
+            assert.equal(
+                cursor.currentFieldLength(),
+                childFieldLength,
+                `A field with existing child '${String(
+                    key,
+                )}[${index}]' must have a length '${childFieldLength}'.`,
+            );
         }
 
-        function expectNotFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
-            assert(!(index >= 0) || index >= cursor.length(key),
-                `.length() must exclude index of missing child '${String(key)}[${index}]'.`);
+        function expectNotFound(
+            cursor: ITreeCursor,
+            key: FieldKey,
+            index = 0,
+            currentFieldLength = 1,
+        ) {
+            assert(
+                !(index >= 0) || index >= cursor.childFieldLength(key),
+                `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
+            );
 
-            assert.equal(cursor.down(key, index), TreeNavigationResult.NotFound,
-                `Must return 'NotFound' for missing child '${String(key)}[${index}]'`);
+            assert.equal(
+                cursor.down(key, index),
+                TreeNavigationResult.NotFound,
+                `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
+            );
+
+            assert.equal(
+                cursor.currentFieldLength(),
+                currentFieldLength,
+                `Must stay at parent field with length '${currentFieldLength}' if 'NotFound'.`,
+            );
         }
 
         it("Missing key in map returns NotFound", () => {
@@ -191,12 +245,12 @@ describe("JsonCursor", () => {
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
             // by subsequently moving to an existing key.
-            expectFound(cursor, EmptyKey, 1);
+            expectFound(cursor, EmptyKey, 1, 2);
         });
     });
 });
 
-const cursors: { cursorName: string; cursor: ITreeCursor; }[] = [];
+const cursors: { cursorName: string; cursor: ITreeCursor }[] = [];
 
 for (const [name, testValues] of testCases) {
     for (const data of testValues) {

@@ -17,15 +17,17 @@ import { ICheckout, TransactionResult } from "../checkout";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
-    ForestIndex, ObjectForest,
+    ForestIndex,
+    ObjectForest,
     SchemaIndex,
-    sequenceChangeFamily,
-    SequenceChangeFamily,
-    SequenceChangeset,
-    SequenceEditBuilder,
+    DefaultChangeFamily,
+    defaultChangeFamily,
+    FieldChangeMap,
+    DefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
+    DefaultChangeset,
 } from "../feature-libraries";
 import { IForestSubscription } from "../forest";
 import { StoredSchemaRepository, InMemoryStoredSchemaRepository } from "../schema-stored";
@@ -39,7 +41,7 @@ import { Anchor, AnchorLocator, AnchorSet, UpPath } from "../tree";
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *
@@ -86,7 +88,10 @@ export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObje
  * TODO: detail compatibility requirements.
  * TODO: expose or implement Checkout.
  */
-class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily> implements ISharedTree {
+class SharedTree
+    extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
+    implements ISharedTree
+{
     public readonly context: EditableTreeContext;
     public readonly forest: IForestSubscription;
     public readonly storedSchema: SchemaEditor;
@@ -94,38 +99,44 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
      * Rather than implementing TransactionCheckout, have a member that implements it.
      * This allows keeping the `IEditableForest` private.
      */
-    private readonly transactionCheckout: TransactionCheckout<SequenceEditBuilder, SequenceChangeset>;
+    private readonly transactionCheckout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>;
 
     public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
-        telemetryContextPrefix: string) {
-            const anchors = new AnchorSet();
-            const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-            const forest = new ObjectForest(schema, anchors);
-            const indexes: Index<SequenceChangeset>[] = [
-                new SchemaIndex(runtime, schema),
-                new ForestIndex(runtime, forest),
-            ];
-            super(
-                indexes,
-                sequenceChangeFamily, anchors, id, runtime, attributes, telemetryContextPrefix,
-                );
+        telemetryContextPrefix: string,
+    ) {
+        const anchors = new AnchorSet();
+        const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+        const forest = new ObjectForest(schema, anchors);
+        const indexes: Index<DefaultChangeset>[] = [
+            new SchemaIndex(runtime, schema),
+            new ForestIndex(runtime, forest),
+        ];
+        super(
+            indexes,
+            defaultChangeFamily,
+            anchors,
+            id,
+            runtime,
+            attributes,
+            telemetryContextPrefix,
+        );
 
-            this.forest = forest;
-            this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-            this.transactionCheckout = {
-                forest,
-                changeFamily: this.changeFamily,
-                submitEdit: (edit) => this.submitEdit(edit),
-            };
+        this.forest = forest;
+        this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+        this.transactionCheckout = {
+            forest,
+            changeFamily: this.changeFamily,
+            submitEdit: (edit) => this.submitEdit(edit),
+        };
 
-            this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
-        assert(this.editManager.anchors !== undefined, "editManager must have anchors")
+        assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
         return this.editManager.anchors?.locate(anchor);
     }
 
@@ -133,10 +144,9 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
         return this.context.root;
     }
 
-    public runTransaction(transaction: (
-        forest: IForestSubscription,
-        editor: SequenceEditBuilder,
-    ) => TransactionResult): TransactionResult {
+    public runTransaction(
+        transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => TransactionResult,
+    ): TransactionResult {
         return runSynchronousTransaction(this.transactionCheckout, transaction);
     }
 
@@ -149,7 +159,11 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
      * and its not clear how it would fit into such a system if implemented in shared-tree-core:
      * maybe op dispatch is part of the shared-tree level?
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        localOpMetadata: unknown,
+    ) {
         if (!this.storedSchema.tryHandleOp(message)) {
             super.processCore(message, local, localOpMetadata);
         }

@@ -6,6 +6,10 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
+
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -26,12 +30,10 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import {
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,

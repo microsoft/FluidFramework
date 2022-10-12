@@ -80,7 +80,7 @@ export interface ICowForestSnapshot extends IForestSnapshot {
         parentId: NodeId,
         label: FieldKey,
         index: number,
-        childIds: readonly NodeId[]
+        childIds: readonly NodeId[],
     ): IForestSnapshot;
 
     /**
@@ -95,8 +95,8 @@ export interface ICowForestSnapshot extends IForestSnapshot {
         parentId: NodeId,
         label: FieldKey,
         startIndex: number,
-        endIndex: number
-    ): { forest: IForestSnapshot; detached: readonly NodeId[]; };
+        endIndex: number,
+    ): { forest: IForestSnapshot; detached: readonly NodeId[] };
 
     /**
      * Replaces a node's value. The node must exist in this `Forest`.

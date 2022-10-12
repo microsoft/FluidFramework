@@ -26,8 +26,10 @@ import { brand } from "../../util";
 
 const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
 
-export const jsonSchemaData: SchemaData = { treeSchema: jsonTypeSchema, globalFieldSchema: new Map() };
-
+export const jsonSchemaData: SchemaData = {
+    treeSchema: jsonTypeSchema,
+    globalFieldSchema: new Map(),
+};
 
 const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 

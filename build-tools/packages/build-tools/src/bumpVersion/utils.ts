@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { execAsync } from "../common/utils";
 import * as semver from "semver";
+
 import {
-    VersionScheme,
-    isVersionBumpType,
     VersionBumpType,
     VersionChangeType,
     VersionChangeTypeExtended,
+    VersionScheme,
+    isVersionBumpType,
 } from "@fluid-tools/version-tools";
+
+import { execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -30,7 +31,9 @@ export function fatal(error: string): never {
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
     const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
     if (result.error) {
-        fatal(`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`);
+        fatal(
+            `ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
+        );
     }
     return result.stdout;
 }
@@ -52,5 +55,5 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 
 export function prereleaseSatisfies(packageVersion: string, range: string) {
     // Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
-    return semver.satisfies(`${packageVersion}-zzz`, range)
+    return semver.satisfies(`${packageVersion}-zzz`, range);
 }

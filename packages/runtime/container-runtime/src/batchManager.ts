@@ -19,20 +19,16 @@ export type BatchMessage = IBatchMessage & {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-    private pendingBatch: BatchMessage [] = [];
+    private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
 
-    // The actual limit is 1Mb (socket.io and Kafka limits)
-    // We can't estimate it fully, as we
-    // - do not know what properties relay service will add
-    // - we do not stringify final op, thus we do not know how much escaping will be added.
-    private static readonly hardLimit = 950 * 1024;
-
     public get length() { return this.pendingBatch.length; }
-    public get limit() { return BatchManager.hardLimit; }
-    public static get limit() { return BatchManager.hardLimit; }
+    public get limit() { return this.hardLimit; }
 
-    constructor(public readonly softLimit?: number) {}
+    constructor(
+        private readonly hardLimit: number,
+        public readonly softLimit?: number,
+    ) { }
 
     public push(message: BatchMessage): boolean {
         const contentSize = this.batchContentSize + message.contents.length;
@@ -73,7 +69,7 @@ export class BatchManager {
     /**
      * Capture the pending state at this point
      */
-     public checkpoint() {
+    public checkpoint() {
         const startPoint = this.pendingBatch.length;
         return {
             rollback: (process: (message: BatchMessage) => void) => {

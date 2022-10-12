@@ -66,10 +66,25 @@ describe("AnchorSet", () => {
         anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
         assert.equal(anchors.locate(anchor4), undefined);
         assert.equal(anchors.locate(anchor1), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor4));
+        assert.doesNotThrow(() => anchors.forget(anchor1));
         checkEquality(anchors.locate(anchor2), path2);
         checkEquality(anchors.locate(anchor3), path3);
-        assert.doesNotThrow(() => anchors.forget(anchor4));
         assert.throws(() => anchors.locate(anchor4));
+        assert.throws(() => anchors.locate(anchor1));
+
+        checkEquality(anchors.locate(anchor2), path2);
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+        checkEquality(anchors.locate(anchor2), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor2));
+        assert.throws(() => anchors.locate(anchor2));
+
+        // The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
+        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+        checkEquality(anchors.locate(anchor3), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor3));
+        assert.throws(() => anchors.locate(anchor3));
     });
 
     it("can rebase over move", () => {
@@ -78,7 +93,6 @@ describe("AnchorSet", () => {
             type: Delta.MarkType.MoveOut,
             count: 1,
             moveId: brand(1),
-
         };
 
         const moveIn: Delta.MoveIn = {
@@ -94,7 +108,10 @@ describe("AnchorSet", () => {
         const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
         anchors.applyDelta(delta);
         checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
-        checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]));
+        checkEquality(
+            anchors.locate(anchor2),
+            makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
+        );
         checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
     });
 });
@@ -113,7 +130,11 @@ type PathStep = [FieldKey, number];
 function makePath(...steps: PathStep[]): UpPath {
     assert(steps.length > 0, "Path cannot be empty");
     return steps.reduce(
-        (path: UpPath | undefined, step: PathStep) => ({ parent: path, parentField: step[0], parentIndex: step[1] }),
+        (path: UpPath | undefined, step: PathStep) => ({
+            parent: path,
+            parentField: step[0],
+            parentIndex: step[1],
+        }),
         undefined,
     ) as UpPath;
 }

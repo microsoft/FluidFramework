@@ -26,7 +26,9 @@ function composeNoVerify(changes: TestChangeset[]): TestChangeset {
 
 function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
     changes.forEach(deepFreeze);
-    return SF.sequenceFieldChangeRebaser.compose(changes, () => assert.fail("Unexpected call to child rebaser"));
+    return SF.sequenceFieldChangeRebaser.compose(changes, () =>
+        assert.fail("Unexpected call to child rebaser"),
+    );
 }
 
 describe("SequenceField - Compose", () => {
@@ -53,24 +55,29 @@ describe("SequenceField - Compose", () => {
     });
 
     it("Does not leave empty mark lists and fields", () => {
-        const insertion: SF.Changeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-        ];
-        const deletion: SF.Changeset = [
-            { type: "Delete", id: 2, count: 1 },
-        ];
+        const insertion: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }];
+        const deletion: SF.Changeset = [{ type: "Delete", id: 2, count: 1 }];
         const actual = shallowCompose([insertion, deletion]);
         assert.deepEqual(actual, cases.no_change);
     });
 
     it("insert ○ modify", () => {
         const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
+            {
+                type: "Insert",
+                id: 1,
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                ],
+            },
         ];
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 42 } },
-        }];
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 42 } },
+            },
+        ];
         const expected: SF.Changeset = [
             {
                 type: "MInsert",
@@ -88,34 +95,40 @@ describe("SequenceField - Compose", () => {
         const childChangeA = TestChange.mint([0], 1);
         const childChangeB = TestChange.mint([0, 1], 2);
         const childChangeAB = TestChange.compose([childChangeA, childChangeB]);
-        const insert: TestChangeset = [{
-            type: "MInsert",
-            id: 1,
-            content: { type, value: 1 },
-            changes: childChangeA,
-        }];
-        const modify: TestChangeset = [{
-            type: "Modify",
-            changes: childChangeB,
-        }];
-        const expected: TestChangeset = [{
-            type: "MInsert",
-            id: 1,
-            content: { type, value: 1 },
-            changes: childChangeAB,
-        }];
+        const insert: TestChangeset = [
+            {
+                type: "MInsert",
+                id: 1,
+                content: { type, value: 1 },
+                changes: childChangeA,
+            },
+        ];
+        const modify: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChangeB,
+            },
+        ];
+        const expected: TestChangeset = [
+            {
+                type: "MInsert",
+                id: 1,
+                content: { type, value: 1 },
+                changes: childChangeAB,
+            },
+        ];
         const actual = compose([insert, modify]);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ○ modify", () => {
-        const deletion: SF.Changeset = [
-            { type: "Delete", id: 1, count: 3 },
+        const deletion: SF.Changeset = [{ type: "Delete", id: 1, count: 3 }];
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 2 } },
+            },
         ];
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 2 } },
-        }];
         const expected: SF.Changeset = [
             { type: "Delete", id: 1, count: 3 },
             {
@@ -128,13 +141,13 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive: SF.Changeset = [
-            { type: "Revive", id: 1, count: 3, tomb },
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 3, tomb }];
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 2 } },
+            },
         ];
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 2 } },
-        }];
         const expected: SF.Changeset = [
             {
                 type: "MRevive",
@@ -152,83 +165,99 @@ describe("SequenceField - Compose", () => {
         const childChangeA = TestChange.mint([0], 1);
         const childChangeB = TestChange.mint([0, 1], 2);
         const childChangeAB = TestChange.compose([childChangeA, childChangeB]);
-        const modifyA: TestChangeset = [{
-            type: "Modify",
-            changes: childChangeA,
-        }];
-        const modifyB: TestChangeset = [{
-            type: "Modify",
-            changes: childChangeB,
-        }];
-        const expected: TestChangeset = [{
-            type: "Modify",
-            changes: childChangeAB,
-        }];
+        const modifyA: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChangeA,
+            },
+        ];
+        const modifyB: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChangeB,
+            },
+        ];
+        const expected: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChangeAB,
+            },
+        ];
         const actual = compose([modifyA, modifyB]);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ○ delete (within insert)", () => {
         const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [
-                { type, value: 1 },
-                { type, value: 2 },
-                { type, value: 3 },
-            ] },
+            {
+                type: "Insert",
+                id: 1,
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                    { type, value: 3 },
+                ],
+            },
         ];
-        const deletion: SF.Changeset = [
-            1,
-            { type: "Delete", id: 2, count: 1 },
-        ];
+        const deletion: SF.Changeset = [1, { type: "Delete", id: 2, count: 1 }];
         const actual = shallowCompose([insert, deletion]);
         const expected: SF.Changeset = [
-            { type: "Insert", id: 1, content: [
-                { type, value: 1 },
-                { type, value: 3 },
-            ] },
+            {
+                type: "Insert",
+                id: 1,
+                content: [
+                    { type, value: 1 },
+                    { type, value: 3 },
+                ],
+            },
         ];
         assert.deepEqual(actual, expected);
     });
 
     it("insert ○ delete (across inserts)", () => {
         const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [
-                { type, value: 1 },
-                { type, value: 2 },
-            ] },
-            { type: "Insert", id: 2, content: [
-                { type, value: 3 },
-                { type, value: 4 },
-            ] },
-            { type: "Insert", id: 3, content: [
-                { type, value: 5 },
-                { type, value: 6 },
-            ] },
+            {
+                type: "Insert",
+                id: 1,
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                ],
+            },
+            {
+                type: "Insert",
+                id: 2,
+                content: [
+                    { type, value: 3 },
+                    { type, value: 4 },
+                ],
+            },
+            {
+                type: "Insert",
+                id: 3,
+                content: [
+                    { type, value: 5 },
+                    { type, value: 6 },
+                ],
+            },
         ];
-        const deletion: SF.Changeset = [
-            1,
-            { type: "Delete", id: 2, count: 4 },
-        ];
+        const deletion: SF.Changeset = [1, { type: "Delete", id: 2, count: 4 }];
         const actual = shallowCompose([insert, deletion]);
         const expected: SF.Changeset = [
-            { type: "Insert", id: 1, content: [
-                { type, value: 1 },
-            ] },
-            { type: "Insert", id: 3, content: [
-                { type, value: 6 },
-            ] },
+            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
+            { type: "Insert", id: 3, content: [{ type, value: 6 }] },
         ];
         assert.deepEqual(actual, expected);
     });
 
     it("modify ○ delete", () => {
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 1 } },
-        }];
-        const deletion: SF.Changeset = [
-            { type: "Delete", id: 2, count: 1 },
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 1 } },
+            },
         ];
+        const deletion: SF.Changeset = [{ type: "Delete", id: 2, count: 1 }];
         const actual = shallowCompose([modify, deletion]);
         assert.deepEqual(actual, deletion);
     });
@@ -260,9 +289,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive: SF.Changeset = [
-            { type: "Revive", id: 1, count: 5, tomb },
-        ];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 5, tomb }];
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", id: 3, count: 1 },
@@ -278,13 +305,13 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ insert", () => {
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 1 } },
-        }];
-        const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 1 } },
+            },
         ];
+        const insert: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
             {
@@ -297,12 +324,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("delete ○ insert", () => {
-        const deletion: SF.Changeset = [
-            { type: "Delete", id: 1, count: 3 },
-        ];
-        const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-        ];
+        const deletion: SF.Changeset = [{ type: "Delete", id: 1, count: 3 }];
+        const insert: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
@@ -313,12 +336,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const deletion: SF.Changeset = [
-            { type: "Revive", id: 1, count: 5, tomb },
-        ];
-        const insert: SF.Changeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-        ];
+        const deletion: SF.Changeset = [{ type: "Revive", id: 1, count: 5, tomb }];
+        const insert: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
@@ -332,7 +351,14 @@ describe("SequenceField - Compose", () => {
         const insertA: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
             2,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] },
+            {
+                type: "Insert",
+                id: 2,
+                content: [
+                    { type, value: 2 },
+                    { type, value: 3 },
+                ],
+            },
         ];
         const insertB: SF.Changeset = [
             { type: "Insert", id: 3, content: [{ type, value: 3 }] },
@@ -352,13 +378,13 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ revive", () => {
-        const modify: SF.Changeset = [{
-            type: "Modify",
-            changes: { valueChange: { value: 1 } },
-        }];
-        const revive: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
+        const modify: SF.Changeset = [
+            {
+                type: "Modify",
+                changes: { valueChange: { value: 1 } },
+            },
         ];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
         const expected: SF.Changeset = [
             { type: "Revive", id: 1, count: 2, tomb },
             {
@@ -371,12 +397,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("delete ○ revive", () => {
-        const deletion: SF.Changeset = [
-            { type: "Delete", id: 1, count: 3 },
-        ];
-        const revive: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
-        ];
+        const deletion: SF.Changeset = [{ type: "Delete", id: 1, count: 3 }];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
         // TODO: test with merge-right policy as well
         // TODO: test revive of deleted content
         const expected: SF.Changeset = [
@@ -388,12 +410,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ revive", () => {
-        const reviveA: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
-        ];
-        const reviveB: SF.Changeset = [
-            { type: "Revive", id: 2, count: 3, tomb },
-        ];
+        const reviveA: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
+        const reviveB: SF.Changeset = [{ type: "Revive", id: 2, count: 3, tomb }];
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", id: 2, count: 3, tomb },
@@ -407,7 +425,14 @@ describe("SequenceField - Compose", () => {
         const insert: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
             2,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] },
+            {
+                type: "Insert",
+                id: 2,
+                content: [
+                    { type, value: 2 },
+                    { type, value: 3 },
+                ],
+            },
         ];
         const revive: SF.Changeset = [
             { type: "Revive", id: 3, count: 1, tomb },

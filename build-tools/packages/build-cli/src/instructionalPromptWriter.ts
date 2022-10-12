@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
+
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
@@ -81,8 +81,8 @@ export abstract class InstructionalPromptWriter {
         const prompt = await this.formatPrompt(data);
 
         this.log.logHr();
-        this.log.info("");
-        this.log.info(prompt);
+        this.log.log("");
+        this.log.log(prompt);
     }
 }
 

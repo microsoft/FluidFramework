@@ -32,6 +32,7 @@ export {
     mapCursorField as mapCursorFieldNew,
     mapCursorFields,
     forEachNode,
+    forEachField,
     ITreeCursorSynchronous,
 } from "./cursor";
 
