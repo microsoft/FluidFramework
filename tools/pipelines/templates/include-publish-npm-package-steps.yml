@@ -117,6 +117,7 @@ steps:
                     continue
                   else
                     echo "Final Network Error"
+                    let t1+=1
                     exit $t1
                   fi
                 else
@@ -136,12 +137,13 @@ steps:
                       echo ERROR: Published package does not match the current one attempting to be released for the same version.
                       let t1+=1
                     fi
-                    rm "$f"
-                    mv "$local_f" "$f"
-                    exit $t1
                   fi
+                  rm "$f"
+                  mv "$local_f" "$f"
+                  exit $t1
                 fi
             else
+              rm publish_log
               break
             fi
             rm publish_log
