@@ -33,15 +33,15 @@ export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest, ObjectForest } from "./object-forest";
 export {
+    singleTextCursor as singleTextCursorNew,
+    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+} from "./treeTextCursor";
+export {
     jsonableTreeFromCursor,
     RootedTextCursor,
     singleTextCursor,
     TextCursor,
 } from "./treeTextCursorLegacy";
-export {
-    singleTextCursor as singleTextCursorNew,
-    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
-} from "./treeTextCursor";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export {
     ChangesetTag,
