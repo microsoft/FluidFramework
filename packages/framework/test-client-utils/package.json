@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-client-utils",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "Fluid client development and test utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,8 +37,8 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
