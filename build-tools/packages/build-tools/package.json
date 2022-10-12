@@ -73,7 +73,8 @@
     "semver": "^7.3.7",
     "shelljs": "^0.8.4",
     "sort-package-json": "1.54.0",
-    "ts-morph": "^7.1.2"
+    "ts-morph": "^7.1.2",
+    "yaml": "^2.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",

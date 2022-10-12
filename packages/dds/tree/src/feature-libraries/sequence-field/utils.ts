@@ -5,13 +5,29 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
-import * as F from "./format";
+import {
+    Attach,
+    Detach,
+    HasPlaceFields,
+    Insert,
+    Mark,
+    Modify,
+    ModifyDetach,
+    ModifyReattach,
+    MoveIn,
+    ObjectMark,
+    Reattach,
+    SizedMark,
+    SizedObjectMark,
+    Skip,
+    Tomb,
+} from "./format";
 
-export function isModify<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Modify<TNodeChange> {
+export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
 }
 
-export function isAttach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Attach<TNodeChange> {
+export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
     return (
         isObjMark(mark) &&
         (mark.type === "Insert" ||
@@ -22,8 +38,8 @@ export function isAttach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Atta
 }
 
 export function isReattach<TNodeChange>(
-    mark: F.Mark<TNodeChange>,
-): mark is F.Reattach | F.ModifyReattach<TNodeChange> {
+    mark: Mark<TNodeChange>,
+): mark is Reattach | ModifyReattach<TNodeChange> {
     return (
         isObjMark(mark) &&
         (mark.type === "Revive" ||
@@ -33,11 +49,11 @@ export function isReattach<TNodeChange>(
     );
 }
 
-export function isTomb(mark: F.Mark<unknown>): mark is F.Tomb {
+export function isTomb(mark: Mark<unknown>): mark is Tomb {
     return isObjMark(mark) && mark.type === "Tomb";
 }
 
-export function getAttachLength(attach: F.Attach): number {
+export function getAttachLength(attach: Attach): number {
     const type = attach.type;
     switch (type) {
         case "MInsert":
@@ -56,8 +72,8 @@ export function getAttachLength(attach: F.Attach): number {
  * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
  */
 export function isEqualPlace(
-    lhs: Readonly<F.HasPlaceFields>,
-    rhs: Readonly<F.HasPlaceFields>,
+    lhs: Readonly<HasPlaceFields>,
+    rhs: Readonly<HasPlaceFields>,
 ): boolean {
     return lhs.heed === rhs.heed && lhs.tiebreak === rhs.tiebreak;
 }
@@ -66,7 +82,7 @@ export function isEqualPlace(
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: F.Mark<unknown>): number {
+export function getOutputLength(mark: Mark<unknown>): number {
     if (isSkipMark(mark)) {
         return mark;
     }
@@ -99,7 +115,7 @@ export function getOutputLength(mark: F.Mark<unknown>): number {
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the input context of the mark.
  */
-export function getInputLength(mark: F.Mark<unknown>): number {
+export function getInputLength(mark: Mark<unknown>): number {
     if (isSkipMark(mark)) {
         return mark;
     }
@@ -125,7 +141,7 @@ export function getInputLength(mark: F.Mark<unknown>): number {
     }
 }
 
-export function isSkipMark(mark: F.Mark<unknown>): mark is F.Skip {
+export function isSkipMark(mark: Mark<unknown>): mark is Skip {
     return typeof mark === "number";
 }
 
@@ -136,7 +152,7 @@ export function isSkipMark(mark: F.Mark<unknown>): mark is F.Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends F.SizedMark<unknown>>(
+export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     mark: TMark,
     length: number,
 ): [TMark, TMark] {
@@ -150,7 +166,7 @@ export function splitMarkOnInput<TMark extends F.SizedMark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as F.SizedObjectMark;
+    const markObj = mark as SizedObjectMark;
     const type = mark.type;
     switch (type) {
         case "Modify":
@@ -180,7 +196,7 @@ export function splitMarkOnInput<TMark extends F.SizedMark<unknown>>(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends F.Mark<unknown>>(
+export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     mark: TMark,
     length: number,
 ): [TMark, TMark] {
@@ -194,7 +210,7 @@ export function splitMarkOnOutput<TMark extends F.Mark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as F.ObjectMark;
+    const markObj = mark as ObjectMark;
     const type = markObj.type;
     switch (type) {
         case "Modify":
@@ -227,8 +243,8 @@ export function splitMarkOnOutput<TMark extends F.Mark<unknown>>(
 }
 
 export function isDetachMark<TNodeChange>(
-    mark: F.Mark<TNodeChange> | undefined,
-): mark is F.Detach | F.ModifyDetach<TNodeChange> {
+    mark: Mark<TNodeChange> | undefined,
+): mark is Detach | ModifyDetach<TNodeChange> {
     if (isObjMark(mark)) {
         const type = mark.type;
         return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
@@ -237,8 +253,8 @@ export function isDetachMark<TNodeChange>(
 }
 
 export function isObjMark<TNodeChange>(
-    mark: F.Mark<TNodeChange> | undefined,
-): mark is F.ObjectMark<TNodeChange> {
+    mark: Mark<TNodeChange> | undefined,
+): mark is ObjectMark<TNodeChange> {
     return typeof mark === "object";
 }
 
@@ -249,7 +265,7 @@ export function isObjMark<TNodeChange>(
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark(lhs: F.ObjectMark, rhs: Readonly<F.ObjectMark>): boolean {
+export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boolean {
     if (rhs.type !== lhs.type) {
         return false;
     }
@@ -257,13 +273,13 @@ export function tryExtendMark(lhs: F.ObjectMark, rhs: Readonly<F.ObjectMark>): b
     switch (type) {
         case "Insert":
         case "MoveIn": {
-            const lhsAttach = lhs as F.Insert | F.MoveIn;
+            const lhsAttach = lhs as Insert | MoveIn;
             if (rhs.id === lhsAttach.id ?? isEqualPlace(lhsAttach, rhs)) {
                 if (rhs.type === "Insert") {
-                    const lhsInsert = lhsAttach as F.Insert;
+                    const lhsInsert = lhsAttach as Insert;
                     lhsInsert.content.push(...rhs.content);
                 } else {
-                    const lhsMoveIn = lhsAttach as F.MoveIn;
+                    const lhsMoveIn = lhsAttach as MoveIn;
                     lhsMoveIn.count += rhs.count;
                 }
                 return true;
@@ -272,7 +288,7 @@ export function tryExtendMark(lhs: F.ObjectMark, rhs: Readonly<F.ObjectMark>): b
         }
         case "Delete":
         case "MoveOut": {
-            const lhsDetach = lhs as F.Detach;
+            const lhsDetach = lhs as Detach;
             if (rhs.id === lhsDetach.id && rhs.tomb === lhsDetach.tomb) {
                 lhsDetach.count += rhs.count;
                 return true;
@@ -281,7 +297,7 @@ export function tryExtendMark(lhs: F.ObjectMark, rhs: Readonly<F.ObjectMark>): b
         }
         case "Revive":
         case "Return": {
-            const lhsReattach = lhs as F.Reattach;
+            const lhsReattach = lhs as Reattach;
             if (rhs.id === lhsReattach.id && rhs.tomb === lhsReattach.tomb) {
                 lhsReattach.count += rhs.count;
                 return true;
@@ -289,7 +305,7 @@ export function tryExtendMark(lhs: F.ObjectMark, rhs: Readonly<F.ObjectMark>): b
             break;
         }
         case "Tomb": {
-            const lhsTomb = lhs as F.Tomb;
+            const lhsTomb = lhs as Tomb;
             if (rhs.change === lhsTomb.change) {
                 lhsTomb.count += rhs.count;
                 return true;

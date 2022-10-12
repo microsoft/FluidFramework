@@ -180,30 +180,19 @@ describe("JsonCursor", () => {
                     "A failed seek will exit the node",
                 );
             });
+
+            it(`can get a length of array from within the field`, () => {
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                assert.equal(cursor.getFieldLength(), 2);
+                assert.equal(cursor.firstNode(), true);
+            });
         });
     });
 
     describe("enterNode", () => {
         const notFoundKey: FieldKey = brand("notFound");
         const foundKey: FieldKey = brand("found");
-
-        function expectFound(cursor: ITreeCursorNew, key: FieldKey, index = 0) {
-            cursor.enterField(key);
-            assert(
-                0 <= index && index < cursor.getFieldLength(),
-                `.getFieldLength() must include index of existing child '${String(
-                    key,
-                )}[${index}]'.`,
-            );
-
-            assert.doesNotThrow(
-                () => cursor.enterNode(index),
-                `Must navigate to child '${String(key)}[${index}]'.`,
-            );
-
-            cursor.exitNode();
-            cursor.exitField();
-        }
 
         function expectError(cursor: ITreeCursorNew, key: FieldKey, index = 0) {
             cursor.enterField(key);
@@ -214,28 +203,20 @@ describe("JsonCursor", () => {
 
             assert.throws(
                 () => cursor.enterNode(index),
-                `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
+                `Must error for missing child '${String(key)}[${index}]'`,
             );
 
             cursor.exitField();
         }
 
-        it("Missing key in map returns NotFound", () => {
+        it("Missing key in map errors", () => {
             const cursor = singleJsonCursor({ [foundKey as string]: true });
             expectError(cursor, notFoundKey);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, foundKey);
         });
 
-        it("Out of bounds map index returns NotFound", () => {
+        it("Out of bounds map index errors", () => {
             const cursor = singleJsonCursor({ [foundKey as string]: true });
             expectError(cursor, foundKey, 1);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, foundKey);
         });
 
         it("Empty array must not contain 0th item", () => {
@@ -243,14 +224,10 @@ describe("JsonCursor", () => {
             expectError(cursor, EmptyKey, 0);
         });
 
-        it("Out of bounds array index returns NotFound", () => {
+        it("Out of bounds array index errors", () => {
             const cursor = singleJsonCursor([0, 1]);
             expectError(cursor, EmptyKey, -1);
             expectError(cursor, EmptyKey, 2);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, EmptyKey, 1);
         });
     });
 

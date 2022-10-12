@@ -93,7 +93,12 @@ export {
     JsonCompatibleObject,
 } from "./util";
 
-export { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "./change-family";
+export {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+} from "./change-family";
 
 export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
 
@@ -133,7 +138,6 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -159,6 +163,12 @@ export {
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,
+    DefaultEditBuilder,
+    DefaultChangeset,
+    ValueFieldEditBuilder,
+    OptionalFieldEditBuilder,
+    SequenceFieldEditBuilder,
+    SequenceField,
     NodePath,
     PlacePath,
     Transposed,

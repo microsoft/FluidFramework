@@ -13,7 +13,9 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
     generateReleaseBranchName,
     getPreReleaseDependencies,
     getReleaseSourceForReleaseGroup,
@@ -587,18 +589,14 @@ export const checkShouldCommit: StateHandlerFunction = async (
         return true;
     }
 
-    const version = releaseVersion;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const newVersion = bumpVersionScheme(version, bumpType!);
-
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
 
     await context.createBranch(branchName);
-
     log.verbose(`Created bump branch: ${branchName}`);
 
-    const commitMsg = `[bump] ${releaseGroup}: ${version} => ${newVersion} (${bumpType})\n\nPost-release ${bumpType} bump of ${releaseGroup}.`;
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;
@@ -635,9 +633,9 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
     await context.gitRepo.createBranch(branchName);
 
     log.verbose(`Created bump branch: ${branchName}`);
-    log.info(`BUMP: ${releaseGroup}: Bumped prerelease dependencies to release versions.`);
+    log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-    const commitMsg = `[bump] ${releaseGroup}: update prerelease dependencies to release versions`;
+    const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;

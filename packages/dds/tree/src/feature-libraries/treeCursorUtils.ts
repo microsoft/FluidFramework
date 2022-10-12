@@ -110,7 +110,7 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
     public enterNode(index: number): void {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
-        assert(index in siblings, "child must exist at index");
+        assert(index in siblings, 0x405 /* child must exist at index */);
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = index;
@@ -217,7 +217,7 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
     }
 
     public nextNode(): boolean {
-        assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
+        assert(this.mode === CursorLocationType.Nodes, 0x406 /* can only nextNode when in Nodes */);
         this.index++;
         if (this.index < (this.siblings as []).length) {
             return true;
