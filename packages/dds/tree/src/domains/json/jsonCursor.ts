@@ -65,8 +65,8 @@ const adapter: CursorAdapter<JsonCompatible> = {
         }
     },
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
-        if (key === EmptyKey && Array.isArray(node)) {
-            return node;
+        if (Array.isArray(node)) {
+            return key === EmptyKey ? node : [];
         }
 
         if (Object.prototype.hasOwnProperty.call(node, key)) {

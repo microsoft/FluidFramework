@@ -246,6 +246,12 @@ describe("JsonCursor", () => {
             }
         });
     }
+
+    it(`returns no values for number keys on a non-empty array`, () => {
+        const cursor = singleJsonCursor(["oneItem"]);
+        cursor.enterField(brand("0"));
+        assert.equal(cursor.getFieldLength(), 0);
+    });
 });
 
 const cursors: { cursorName: string; cursor: ITreeCursorNew }[] = [];
