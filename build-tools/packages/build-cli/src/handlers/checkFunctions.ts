@@ -7,7 +7,7 @@ import inquirer from "inquirer";
 import { Machine } from "jssm";
 import path from "path";
 
-import { MonoRepoKind, exec } from "@fluidframework/build-tools";
+import { MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
@@ -26,6 +26,8 @@ import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "../commands/check/policy";
 
 /**
  * Checks that the current branch matches the expected branch for a release.
@@ -411,32 +413,18 @@ export const checkPolicy: StateHandlerFunction = async (
             );
         }
 
-        // await CheckPolicy.run([
-        //     "--fix",
-        //     "--exclusions",
-        //     path.join(
-        //         context.gitRepo.resolvedRoot,
-        //         "build-tools",
-        //         "packages",
-        //         "build-tools",
-        //         "data",
-        //         "exclusions.json"
-        //     )
-        // ]);
-
-        await exec(
-            `node ${path.join(
+        await CheckPolicy.run([
+            "--fix",
+            "--exclusions",
+            path.join(
                 context.gitRepo.resolvedRoot,
                 "build-tools",
                 "packages",
                 "build-tools",
-                "dist",
-                "repoPolicyCheck",
-                "repoPolicyCheck.js",
-            )} -r`,
-            context.gitRepo.resolvedRoot,
-            "policy-check:fix failed",
-        );
+                "data",
+                "exclusions.json"
+            )
+        ]);
 
         // check for policy check violation
         const afterPolicyCheckStatus = await context.gitRepo.getStatus();
