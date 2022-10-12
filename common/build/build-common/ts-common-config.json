@@ -1,7 +1,7 @@
 {
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2020",
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
@@ -15,6 +15,6 @@
     "types": [],
     "strict": true,
     "pretty": true,
-    "lib": ["ES2018", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
   }
 }

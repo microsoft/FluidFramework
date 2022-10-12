@@ -1,8 +1,8 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
         "compilerOptions": {
-        "target": "ES2018",
-        "lib": ["ES2018", "DOM", "DOM.Iterable"],
+        "target": "ES2020",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
