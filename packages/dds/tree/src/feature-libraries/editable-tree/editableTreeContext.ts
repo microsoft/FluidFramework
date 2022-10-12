@@ -7,14 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IEditableForest, TreeNavigationResult } from "../../forest";
 import { lookupGlobalFieldSchema } from "../../schema-stored";
 import { rootFieldKey, symbolFromKey } from "../../tree";
-import {
-    EditableField,
-    getEditableField,
-    getUnwrappedField,
-    ProxyTarget,
-    UnwrappedEditableField,
-} from "./editableTree";
-import { getFieldKind } from "./utilities";
+import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -85,7 +78,6 @@ export class ProxyContext implements EditableTreeContext {
 
     public get unwrappedRoot(): UnwrappedEditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
-        const fieldKind = getFieldKind(rootSchema);
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
@@ -97,7 +89,12 @@ export class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        return getUnwrappedField(fieldKind, targets);
+        return proxifyField(
+            rootSchema,
+            symbolFromKey(rootFieldKey),
+            targets,
+            true,
+        ) as UnwrappedEditableField;
     }
 
     // This code is kept independent of `get unwrappedRoot()` (i.e. duplicated) on purpose,
@@ -115,6 +112,11 @@ export class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        return getEditableField(rootSchema, symbolFromKey(rootFieldKey), targets);
+        return proxifyField(
+            rootSchema,
+            symbolFromKey(rootFieldKey),
+            targets,
+            false,
+        ) as EditableField;
     }
 }

@@ -241,7 +241,7 @@ export interface EditableTree extends Iterable<EditableField> {
     readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
-    readonly [key: FieldKey]: UnwrappedEditableField;
+    readonly [key: FieldKey]: UnwrappedEditableField | EditableField;
 }
 
 // @public
@@ -559,6 +559,9 @@ function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeCh
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+// @public
+export function isEditableField(field: UnwrappedEditableField | EditableField): field is EditableField;
 
 // @public
 export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {

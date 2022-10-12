@@ -15,6 +15,7 @@ export {
     anchorSymbol,
     proxyTargetSymbol,
     isUnwrappedNode,
+    isEditableField,
 } from "./editableTree";
 
 export { EditableTreeContext } from "./editableTreeContext";
