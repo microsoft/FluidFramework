@@ -225,7 +225,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends counter op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const counter = await d.getSharedObject<SharedCounter>(counterId);
             counter.increment(testIncrementValue);
         });
@@ -279,7 +279,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful counter op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const counter = await d.getSharedObject<SharedCounter>(counterId);
             counter.increment(3);
         });
