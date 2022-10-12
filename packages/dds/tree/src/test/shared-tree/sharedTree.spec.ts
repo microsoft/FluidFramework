@@ -84,6 +84,87 @@ describe("SharedTree", () => {
         assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
     });
 
+    it("can process ops after loading from summary", async () => {
+        function insert(tree: ISharedTree, index: number, value: string): void {
+            tree.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                field.insert(index, singleTextCursor({ type: brand("Node"), value }));
+                return TransactionResult.Apply;
+            });
+        }
+
+        // Validate that the given tree has the state we create in this test
+        function validateTree(tree: ISharedTree): void {
+            const readCursor = tree.forest.allocateCursor();
+            const destination = tree.forest.root(tree.forest.rootField);
+            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            assert.equal(cursorResult, TreeNavigationResult.Ok);
+            assert.equal(readCursor.value, "A");
+            assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+            assert.equal(readCursor.value, "B");
+            assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+            assert.equal(readCursor.value, "C");
+            assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+            readCursor.free();
+            tree.forest.forgetAnchor(destination);
+        }
+
+        const provider = await TestTreeProvider.create(1);
+        const summarize = await provider.enableManualSummarization();
+        const tree1 = provider.trees[0];
+        const tree2 = await provider.createTree();
+        const tree3 = await provider.createTree();
+
+        const schema: SchemaData = {
+            treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+            globalFieldSchema: new Map([
+                // This test requires the use of a sequence field
+                [rootFieldKey, fieldSchema(FieldKinds.sequence)],
+            ]),
+        };
+        tree1.storedSchema.update(schema);
+
+        insert(tree1, 0, "Z");
+        insert(tree1, 1, "A");
+        insert(tree1, 2, "C");
+
+        await provider.ensureSynchronized();
+
+        // Delete Z
+        tree2.runTransaction((forest, editor) => {
+            const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+            field.delete(0, 1);
+            return TransactionResult.Apply;
+        });
+
+        // Issue #1: Before summarizing, we need to sequence the deletion of Z without
+        // tree3 being made aware of it.
+        // Issue #2: summarizing seems to synchronize all the trees.
+        await summarize();
+
+        // Insert B between A and C (before knowing of Z being deleted)
+        insert(tree3, 2, "B");
+
+        await provider.ensureSynchronized();
+
+        // Should load the last summary (state: "AC") and process
+        // the insertion of B by tree3
+        const joinedLaterTree = await provider.createTree();
+
+        await provider.ensureSynchronized();
+
+        // Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
+        // in summaries or not.
+        validateTree(tree1);
+        validateTree(tree2);
+        validateTree(tree3);
+        // joinedLaterTree should only get the correct end state if was able to get the adequate
+        // EditManager state from the summary. Specifically, in order to correctly rebase the insert
+        // of B, joinedLaterTree needs to have a local copy of the edit that deleted Z, so it can
+        // rebase the insertion of  B over that edit.
+        validateTree(joinedLaterTree);
+    });
+
     describe("Editing", () => {
         it("can insert and delete a node", async () => {
             const value = "42";
