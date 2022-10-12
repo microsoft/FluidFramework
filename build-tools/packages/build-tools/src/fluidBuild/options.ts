@@ -57,6 +57,7 @@ export const options: FastBuildOptions = {
     samples: true,
     fix: false,
     all: false,
+    forceAll: false,
     server: false,
     azure: false,
     services: false,
