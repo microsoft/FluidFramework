@@ -28,6 +28,8 @@ import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "../commands/check/policy";
 
 /**
  * Checks that the current branch matches the expected branch for a release.
