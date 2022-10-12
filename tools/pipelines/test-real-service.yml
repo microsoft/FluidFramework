@@ -65,7 +65,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
-        r11sSelfSignedCertSecureFile: wu2-ppe=tls-certificate.pem
+        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
         splitTestVariants:
           - name: Non-compat
             flags: --compatVersion=0
