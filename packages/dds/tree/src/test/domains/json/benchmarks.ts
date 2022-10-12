@@ -12,7 +12,11 @@ export function sum(cursor: ITreeCursorNew): number {
         total += value;
     }
 
-    forEachField(cursor, () => forEachNode(cursor, () => (total += sum(cursor))));
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+        for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+            total += sum(cursor);
+        }
+    }
 
     return total;
 }
