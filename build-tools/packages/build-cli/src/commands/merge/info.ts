@@ -8,6 +8,10 @@ import chalk from "chalk";
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
+interface BranchMergeInfo {
+    commits: string[];
+}
+
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand.flags> {
     static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.`;
 
@@ -28,7 +32,9 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
         },
     ];
 
-    public async run(): Promise<void> {
+    static enableJsonFlag = true;
+
+    public async run(): Promise<BranchMergeInfo> {
         const flags = this.processedFlags;
         const branchFlags = flags.branch;
 
@@ -86,5 +92,9 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
             )} ${b1Log}`,
         );
         this.log();
+
+        // If --json is passed, this object is output to stdout JSON-serialized.
+        // return [rawRevs];
+        return { commits: ["done"] };
     }
 }
