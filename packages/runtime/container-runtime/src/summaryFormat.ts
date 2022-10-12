@@ -90,6 +90,14 @@ export interface ICreateContainerMetadata {
     createContainerTimestamp?: number;
 }
 
+/**
+ * Used to convey the maximum duration a snapshot may be cached and then loaded from for this container.
+ * If a number, then it's that duration in ms
+ * If "none", then there is no maximum gauranteed
+ * If "indeterminate", then the value is not yet known (e.g this is the case for initial snapshot used when attaching)
+*/
+export type SnapshotCacheDurationPolicy = number | "none" | "indeterminate";
+
 export type GCVersion = number;
 export interface IGCMetadata {
     /**
@@ -104,12 +112,17 @@ export interface IGCMetadata {
      * - True means sweep phase is enabled.
      * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
      */
-     readonly sweepEnabled?: boolean;
+    readonly sweepEnabled?: boolean;
 
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
-    /** Maximum duration a snapshot may be cached and then loaded from for this container */
-    readonly maxSnapshotCacheDurationMs?: number | "none";
+    /**
+     * Maximum duration a snapshot may be cached and then loaded from for this container.
+     * If a number, then it's that duration in ms
+     * If "none", then there is no maximum imposed
+     * If "indeterminate", then the value is not yet known (this is the case for initial snapshot used when attaching)
+    */
+    readonly maxSnapshotCacheDurationMs?: SnapshotCacheDurationPolicy;
     /** The buffer used to compute Sweep Timeout for this container */
     readonly sweepTimeoutBufferMs?: number;
 }

@@ -53,10 +53,13 @@ export class LocalDocumentService implements IDocumentService {
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
             new TelemetryNullLogger(),
-            { minBlobSize: 2048 }, // Test blob aggregation.
-            undefined,
-            undefined,
-            undefined,
+            {
+                minBlobSize: 2048, // Test blob aggregation
+                maximumCacheDurationMs: 0, // This essentially disables the snapshot cache
+            },
+            undefined /* driverPolicies */,
+            undefined /* blobCache */,
+            undefined /* snapshotTreeCache */,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)));
     }
 

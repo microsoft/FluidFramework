@@ -24,6 +24,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+    "qt": "npm run build:test && npm run test:realsvc:local",
     "test": "npm run test:realsvc",
     "test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
     "test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",

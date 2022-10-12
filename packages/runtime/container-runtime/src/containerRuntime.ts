@@ -131,8 +131,10 @@ import {
     extractSummaryMetadataMessage,
     IContainerRuntimeMetadata,
     ICreateContainerMetadata,
+    IGCMetadata,
     ISummaryMetadataMessage,
     metadataBlobName,
+    SnapshotCacheDurationPolicy,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
@@ -995,10 +997,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        //* Test to prove this doesn't get persisted as undefined?
-        // Note: This will be undefined in a new (created detached) Interactive client.
-        // But we only need it for the Summarizer, which always loads from that summary generated for attach.
-        const maximumCacheDurationMs = _storage?.policies?.maximumCacheDurationMs;
+        // Note: This will be indeterminate for a new (created detached) Interactive client.
+        const maximumCacheDurationMs: SnapshotCacheDurationPolicy =
+            _storage?.policies !== undefined
+                ? _storage.policies.maximumCacheDurationMs ?? "none"
+                : "indeterminate";
 
         this.garbageCollector = GarbageCollector.create({
             runtime: this,

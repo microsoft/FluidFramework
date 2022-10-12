@@ -51,6 +51,7 @@ import {
     ReadFluidDataStoreAttributes,
     dataStoreAttributesBlobName,
     IGCMetadata,
+    SnapshotCacheDurationPolicy,
 } from "./summaryFormat";
 
 /** This is the current version of garbage collection. */
@@ -191,7 +192,7 @@ export interface IGarbageCollectorCreateParams {
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
     readonly getContainerDiagnosticId: () => string;
-    readonly snapshotCacheExpiryMs?: number;
+    readonly snapshotCacheExpiryMs: SnapshotCacheDurationPolicy;
 }
 
 /** The state of node that is unreferenced. */
@@ -442,15 +443,15 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
-    /** The time in ms to expire a session for a client for gc. */
-    private readonly sessionExpiryTimeoutMs: number | undefined;
+    /** The time in ms to expire a session for a client for gc. Undefined means Session Expiry not in effect */
+    private readonly sessionExpiryTimeoutMs: IGCMetadata["sessionExpiryTimeoutMs"];
     /** The maximum duration a snapshot may be cached and then loaded from. Provided by the driver */
-    private readonly maxSnapshotCacheDurationMs: number | "none";
+    private readonly maxSnapshotCacheDurationMs: Required<IGCMetadata>["maxSnapshotCacheDurationMs"];
     /**
      * This buffer is added to the Sweep Timeout to account for any clock skew or other edge cases.
      * We use server timestamps throughout so the skew should be minimal but it defaults to one day to be safe.
      */
-    private readonly sweepTimeoutBufferMs: number;
+    private readonly sweepTimeoutBufferMs: Required<IGCMetadata>["sweepTimeoutBufferMs"];
     /** The time after which an unreferenced node is inactive. */
     private readonly inactiveTimeoutMs: number;
     /** The time after which an unreferenced node is ready to be swept. */
@@ -521,29 +522,10 @@ export class GarbageCollector implements IGarbageCollector {
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             // These three numbers add up to the Sweep Timeout
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-            this.maxSnapshotCacheDurationMs = metadata?.maxSnapshotCacheDurationMs ?? defaultSnapshotCacheExpiryMs;
+            this.maxSnapshotCacheDurationMs = this.computeMaxSnapshotCacheDurationMsForExisting(
+                metadata?.maxSnapshotCacheDurationMs,
+                createParams.snapshotCacheExpiryMs);
             this.sweepTimeoutBufferMs = metadata?.sweepTimeoutBufferMs ?? oneDayMs; // Backfill default value of 1 day
-
-            // Validate some invariants around Snapshot Cache Expiry
-            assert(this.maxSnapshotCacheDurationMs !== "none" || !this.sweepEnabled,
-                "No snapshotCacheExpiry should disable Sweep");
-            const effectiveDriverSnapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? Number.MAX_VALUE;
-            const effectivePersistedSnapshotCacheExpiryMs =
-                this.maxSnapshotCacheDurationMs === "none" ? Number.MAX_VALUE : this.maxSnapshotCacheDurationMs;
-            if (effectiveDriverSnapshotCacheExpiryMs > effectivePersistedSnapshotCacheExpiryMs) {
-                throw new UsageError(
-                   "The snapshotCacheExpiry used in this session by the driver must not exceed the persisted value" +
-                   `${JSON.stringify({
-                            fromCreateParams: createParams.snapshotCacheExpiryMs,
-                            fromFile: this.maxSnapshotCacheDurationMs,
-                    })}`,
-                   //* TODO: Move to props
-                    //    { details: JSON.stringify({
-                    //         fromCreateParams: createParams.snapshotCacheExpiryMs,
-                    //         fromFile: this.maxSnapshotCacheDurationMs,
-                    // })},
-                );
-            }
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -554,7 +536,7 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
-            this.maxSnapshotCacheDurationMs = createParams.snapshotCacheExpiryMs ?? "none";
+            this.maxSnapshotCacheDurationMs = createParams.snapshotCacheExpiryMs ?? "none"; //* change type of createParam
 
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true,
             // and Sweep cannot be enabled if there's no maxSnapshotCacheDurationMs
@@ -590,7 +572,7 @@ export class GarbageCollector implements IGarbageCollector {
              * Sweep timeout is the time after which unreferenced content can be swept.
              * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
              */
-            if (this.maxSnapshotCacheDurationMs !== "none") {
+            if (this.maxSnapshotCacheDurationMs !== "none") { //* add indeterminate case too (do typeof === number)
                 this.sweepTimeoutMs =
                     this.sessionExpiryTimeoutMs + this.maxSnapshotCacheDurationMs + this.sweepTimeoutBufferMs;
             }
@@ -822,6 +804,51 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName: "GarbageCollectorLoaded",
                 gcConfigs: JSON.stringify(this.configs),
             });
+        }
+    }
+
+    /**
+     * This reconciles the values provided by the snapshot we loaded from and the current driver, which may differ.
+     * @param persistedPolicy - The policy found in the snapshot we loaded from. Older snapshots will yield undefined.
+     * @param driverPolicy - The policy provided by the driver describing the policy in effect for this session.
+     * @returns - The policy to be used for this session and persisted in subsequent summaries.
+     */
+    private computeMaxSnapshotCacheDurationMsForExisting(
+        persistedPolicy: SnapshotCacheDurationPolicy | undefined,
+        driverPolicy: SnapshotCacheDurationPolicy,
+    ): SnapshotCacheDurationPolicy {
+        // This will be the case for snapshots generated before this value started being persisted.
+        // That code had the policy hardcoded to this default value of 5 days, so we'll use that.
+        if (persistedPolicy === undefined) {
+            return defaultSnapshotCacheExpiryMs;
+        }
+
+        // This will be the case when loading from the initial snapshot
+        if (persistedPolicy === "indeterminate") {
+            return driverPolicy;
+        }
+
+        const retval = persistedPolicy ?? defaultSnapshotCacheExpiryMs; //* covered above
+
+        // Validate some invariants around Snapshot Cache Expiry
+        assert(this.maxSnapshotCacheDurationMs !== "none" || !this.sweepEnabled,
+            "No snapshotCacheExpiry should disable Sweep");
+        const effectiveDriverSnapshotCacheExpiryMs = driverPolicy ?? Number.MAX_VALUE;
+        const effectivePersistedSnapshotCacheExpiryMs =
+            this.maxSnapshotCacheDurationMs === "none" ? Number.MAX_VALUE : this.maxSnapshotCacheDurationMs;
+        if (effectiveDriverSnapshotCacheExpiryMs > effectivePersistedSnapshotCacheExpiryMs) {
+            throw new UsageError(
+               "The snapshotCacheExpiry used in this session by the driver must not exceed the persisted value" +
+               `${JSON.stringify({
+                        driverPolicy,
+                        persistedPolicy,
+                })}`,
+               //* TODO: Move to props
+                //    { details: JSON.stringify({
+                //         driverPolicy,
+                //         persistedPolicy,
+                // })},
+            );
         }
     }
 

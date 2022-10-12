@@ -40,13 +40,10 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     /** Asserts that matchEvents is true, and prints the actual/expected output if not */
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
         const actualEvents = this.events;
+        const detailedOutput = JSON.stringify({ "expected events": expectedEvents, "actual events": actualEvents })
+            .replace(/("\w+ events":)\[/, "\n$1\n[");
         if (!this.matchEvents(expectedEvents)) {
-            throw new Error(`${message}
-expected:
-${JSON.stringify(expectedEvents)}
-
-actual:
-${JSON.stringify(actualEvents)}`);
+            throw new Error(`${message}\n${detailedOutput}`);
         }
     }
 
@@ -66,27 +63,20 @@ ${JSON.stringify(actualEvents)}`);
     /** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
         const actualEvents = this.events;
+        const detailedOutput = JSON.stringify({ "expected events": expectedEvents, "actual events": actualEvents })
+        .replace("\" events\":[", " events:\n[");
         if (!this.matchAnyEvent(expectedEvents)) {
-            throw new Error(`${message}
-expected:
-${JSON.stringify(expectedEvents)}
-
-actual:
-${JSON.stringify(actualEvents)}`);
-            }
+            throw new Error(`${message}\n${detailedOutput}`);
+        }
     }
 
     /** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
         const actualEvents = this.events;
+        const detailedOutput = { "disallowed events": disallowedEvents, "actual events": actualEvents };
         if (this.matchAnyEvent(disallowedEvents)) {
-            throw new Error(`${message}
-disallowed events:
-${JSON.stringify(disallowedEvents)}
-
-actual:
-${JSON.stringify(actualEvents)}`);
-            }
+            throw new Error(`${message}\n${JSON.stringify(detailedOutput)}`);
+        }
     }
 
     private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
