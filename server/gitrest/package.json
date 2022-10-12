@@ -64,7 +64,7 @@
     "async": "^3.2.2",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
-    "lerna": "^4.0.0",
+    "lerna": "^5.1.8",
     "lorem-ipsum": "^1.0.6",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
