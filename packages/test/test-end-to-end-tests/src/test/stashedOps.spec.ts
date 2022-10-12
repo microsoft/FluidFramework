@@ -79,14 +79,13 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
     return pendingState;
 };
 
-type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
+type SharedObjCallback = (container: IContainer, dataStore: ITestFluidObject) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback = () => undefined) => {
+const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: SharedObjCallback = () => undefined) => {
     const container = await args.loadTestContainer(testContainerConfig);
     await ensureContainerConnected(container);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
-    const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
     [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
 
@@ -94,7 +93,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     await args.opProcessingController.pauseProcessing(container);
     assert(dataStore.runtime.deltaManager.outbound.paused);
 
-    await cb(container, dataStore, map);
+    await cb(container, dataStore);
 
     let pendingState: string;
     if (send) {
@@ -189,7 +188,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends op", async function() {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, testValue);
         });
 
@@ -204,7 +204,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends cell op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const cell = await d.getSharedObject<SharedCell>(cellId);
             cell.set(testValue);
         });
@@ -220,7 +220,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful op", async function() {
-        const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, "something unimportant");
         });
 
@@ -238,7 +239,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful cell op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const cell = await d.getSharedObject<SharedCell>(cellId);
             cell.set("something unimportant");
         });
@@ -257,7 +258,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends delete op and can set after", async function() {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.delete("clear");
         });
 
@@ -276,7 +278,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends a lot of ops", async function() {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
 
@@ -293,7 +296,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend a lot of successful ops", async function() {
-        const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
 
@@ -312,8 +316,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends batched ops", async function() {
-        const pendingOps = await getPendingOps(provider, false, (container, d, map) => {
-            (container as any).context.runtime.orderSequentially(() => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
+            (c as any).context.runtime.orderSequentially(() => {
                 [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
             });
         });
@@ -331,8 +336,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful batched ops", async function() {
-        const pendingOps = await getPendingOps(provider, true, (container, d, map) => {
-            (container as any).context.runtime.orderSequentially(() => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
+            (c as any).context.runtime.orderSequentially(() => {
                 [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
             });
         });
@@ -352,7 +358,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("resends chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, bigString);
         });
 
@@ -369,7 +376,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("doesn't resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-        const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, bigString);
             map.set(testKey2, bigString);
         });
@@ -393,7 +401,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
         await provider.ensureSynchronized();
 
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.clear();
         });
 
@@ -407,7 +416,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("successful map clear no resend", async function() {
-        const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.clear();
         });
 
@@ -426,7 +436,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends string insert op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.insertText(s.getLength(), " world!");
         });
@@ -442,7 +452,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful string insert op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.insertText(s.getLength(), " world!");
         });
@@ -459,7 +469,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends string remove op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.removeText(0, s.getLength());
         });
@@ -475,7 +485,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful string remove op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.removeText(0, s.getLength());
         });
@@ -493,7 +503,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends string annotate op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.annotateRange(0, s.getLength(), { bold: true });
         });
@@ -509,7 +519,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful string annotate op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.annotateRange(0, s.getLength(), { bold: true });
         });
@@ -527,7 +537,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends marker ops", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const s = await d.getSharedObject<SharedString>(stringId);
             s.insertMarker(
                 s.getLength(),
@@ -576,7 +586,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("resends attach op", async function() {
         const newMapId = "newMap";
         let id;
-        const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
+        const pendingOps = await getPendingOps(provider, false, async (container, d) => {
             const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
             const runtime = defaultDataStore.context.containerRuntime;
 
@@ -604,7 +614,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
     it("doesn't resend successful attach op", async function() {
         const newMapId = "newMap";
-        const pendingOps = await getPendingOps(provider, true, async (container, d, m) => {
+        const pendingOps = await getPendingOps(provider, true, async (container, d) => {
             const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
             const runtime = defaultDataStore.context.containerRuntime;
 
@@ -663,7 +673,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("can make changes offline and resubmit them", async function() {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
 
@@ -687,7 +698,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("can make changes offline and stash them", async function() {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
 
@@ -727,7 +739,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:connectedStateRejected" },
         { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
     ], async () => {
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
 
@@ -821,7 +834,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const newMapId = "newMap";
         let id;
         // stash attach op
-        const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
+        const pendingOps = await getPendingOps(provider, false, async (container, d) => {
             const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
             const runtime = defaultDataStore.context.containerRuntime;
 
@@ -905,7 +918,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map1.set("test op 1", "test op 1");
         await waitForSummary();
 
-        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, testValue);
         });
 
