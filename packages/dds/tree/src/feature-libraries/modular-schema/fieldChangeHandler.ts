@@ -11,11 +11,14 @@ import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  */
-export interface FieldChangeHandler<TChangeset> {
+export interface FieldChangeHandler<
+    TChangeset,
+    TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
+> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
-    editor: FieldEditor<TChangeset>;
+    editor: TEditor;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
     // TODO

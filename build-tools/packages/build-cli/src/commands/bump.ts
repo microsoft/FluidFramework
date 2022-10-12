@@ -20,7 +20,11 @@ import {
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
-import { bumpReleaseGroup, generateBumpVersionBranchName } from "../lib";
+import {
+    bumpReleaseGroup,
+    generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
+} from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
@@ -158,14 +162,18 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         }
 
         if (shouldCommit) {
-            const commitMessage = stripAnsi(
-                `Bump ${packageOrReleaseGroup} to ${newVersion} (${bumpType} bump)`,
+            const commitMessage = generateBumpVersionCommitMessage(
+                args.package_or_release_group,
+                bumpType,
+                repoVersion,
+                scheme,
             );
 
             const bumpBranch = generateBumpVersionBranchName(
                 args.package_or_release_group,
                 bumpType,
                 repoVersion,
+                scheme,
             );
             this.log(`Creating branch ${bumpBranch}`);
             await context.createBranch(bumpBranch);

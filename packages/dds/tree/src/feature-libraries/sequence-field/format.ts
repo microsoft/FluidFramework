@@ -61,26 +61,6 @@ export interface HasPlaceFields {
     tiebreak?: Tiebreak;
 }
 
-export interface GapEffectPolicy {
-    /**
-     * When `true`, if a concurrent insertion that is sequenced before the range operation falls
-     * within the bounds of the range, then the inserted content will *not* be included in the
-     * range and therefore will *not* be affected by the operation performed on the range.
-     *
-     * Defaults to false.
-     */
-    excludePriorInsertions?: true;
-    /**
-     * When `true`, if a concurrent insertion that is sequenced after the range operation falls
-     * within the bounds of the range, then the inserted content will be included in the range and
-     * therefore will be affected by the operation performed on the range, unless that insertion
-     * stipulates that it is not commutative with respect to the range operation.
-     *
-     * Defaults to false.
-     */
-    includePosteriorInsertions?: true;
-}
-
 export interface Insert extends HasOpId, HasPlaceFields {
     type: "Insert";
     content: ProtoNode[];
