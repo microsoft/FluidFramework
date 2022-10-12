@@ -6,7 +6,7 @@ import * as path from "path";
 
 import { FluidRepo } from "../common/fluidRepo";
 import { defaultLogger } from "../common/logging";
-import { MonoRepoKind } from "../common/monoRepo";
+import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
 import { existsSync, globFn, isSameFileOrDir, lookUpDirSync } from "../common/utils";
@@ -22,17 +22,19 @@ export interface IPackageMatchedOptions {
     all: boolean;
     server: boolean;
     azure: boolean;
+    forceAll: boolean;
     dirs: string[];
 }
 
 /** Packages in this list will not have their scripts checked for conformance with repo standards. */
 const uncheckedPackages = [
-    "@fluid-internal/build-cli",
-    "@fluid-internal/version-tools",
     "@fluid-tools/build-cli",
     "@fluid-tools/version-tools",
     "@fluidframework/build-tools",
 ];
+
+/** Monorepos/release groups in this list will not be included unless the forceAll option is passed. */
+const defaultForceAllReleaseGroups = [MonoRepoKind.BuildTools];
 
 export class FluidRepoBuild extends FluidRepo {
     constructor(resolvedRoot: string, services: boolean) {
@@ -88,20 +90,27 @@ export class FluidRepoBuild extends FluidRepo {
             return matched;
         }
 
-        if (options.all) {
+        if (options.forceAll) {
             return this.matchWithFilter(() => true);
         }
 
         const monoReposToConsider: MonoRepoKind[] = [];
 
-        if (options.azure) {
-            monoReposToConsider.push(MonoRepoKind.Azure);
-        }
-        if (options.server) {
-            monoReposToConsider.push(MonoRepoKind.Server);
-        }
-        if (!options.azure && !options.server) {
-            monoReposToConsider.push(MonoRepoKind.Client);
+        if (options.all) {
+            const allUnforcedMonoRepos = [...supportedMonoRepoValues()].filter(
+                (mr) => !defaultForceAllReleaseGroups.includes(mr),
+            );
+            monoReposToConsider.push(...allUnforcedMonoRepos);
+        } else {
+            if (options.azure || options.all) {
+                monoReposToConsider.push(MonoRepoKind.Azure);
+            }
+            if (options.server || options.all) {
+                monoReposToConsider.push(MonoRepoKind.Server);
+            }
+            if ((!options.azure && !options.server) || options.all) {
+                monoReposToConsider.push(MonoRepoKind.Client);
+            }
         }
 
         return this.matchWithFilter((pkg) =>
