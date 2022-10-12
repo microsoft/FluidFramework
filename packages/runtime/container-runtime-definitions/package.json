@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-runtime-definitions",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "Fluid Runtime definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,11 +33,11 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
@@ -57,6 +57,13 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "RemovedInterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_IContainerRuntime": {
         "backCompat": false
       },

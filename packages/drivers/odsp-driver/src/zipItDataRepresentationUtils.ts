@@ -507,15 +507,16 @@ export class NodeCore {
             stringBuffer[length] = 0;
             length++;
         }
+        assert(length === stringBuffer.length, 0x418 /* properly encoded */);
 
-        if (length === stringBuffer.length) {
+        const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
+        if (result.length === stringsToResolve.length + 1) {
             // All is good, we expect all the cases to get here
-            const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
-            assert(result.length === stringsToResolve.length + 1, 0x3e9 /* String content has \0 chars! */);
             for (let i = 0; i < stringsToResolve.length; i++) {
                 stringsToResolve[i].content = result[i];
             }
         } else {
+            // String content has \0 chars!
             // Recovery code
             logger.sendErrorEvent({ eventName: "StringParsingError" });
             for (const el of stringsToResolve) {

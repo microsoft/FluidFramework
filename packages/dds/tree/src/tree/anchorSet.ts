@@ -80,7 +80,7 @@ export class AnchorSet {
 
         const path = this.anchorToPath.get(anchor);
         assert(path !== undefined, 0x3a6 /* Cannot locate anchor which is not in this AnchorSet */);
-        return path.deleted ? undefined : path;
+        return path.status === Status.Alive ? path : undefined;
     }
 
     public forget(anchor: Anchor): void {
@@ -121,10 +121,7 @@ export class AnchorSet {
         const parent = path.parent ?? this.root;
         const parentPath = this.trackInner(parent);
 
-        const child = parentPath.getOrCreateChild(
-            path.parentField,
-            path.parentIndex,
-        );
+        const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
 
         // Now that child is added (if needed), remove the extra ref that we added in the recursive call.
         parentPath.removeRef();
@@ -144,6 +141,23 @@ export class AnchorSet {
         const parent = path.parent ?? this.root;
         const parentPath = this.find(parent);
         return parentPath?.tryGetChild(path.parentField, path.parentIndex);
+    }
+
+    /**
+     * Recursively marks the given `nodes` and their descendants as disposed and pointing to a deleted node.
+     * Node that this does NOT detach the nodes.
+     */
+    private deepDelete(nodes: readonly PathNode[]): void {
+        const stack = [...nodes];
+        while (stack.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const node = stack.pop()!;
+            assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
+            node.status = Status.Dangling;
+            for (const children of node.children.values()) {
+                stack.push(...children);
+            }
+        }
     }
 
     /**
@@ -173,7 +187,8 @@ export class AnchorSet {
             0x352 /* moveChildren is a no-op and should not be called if there is no src or dst */,
         );
 
-        const srcParent = srcStart === undefined ? undefined : this.find(srcStart.parent ?? this.root);
+        const srcParent =
+            srcStart === undefined ? undefined : this.find(srcStart.parent ?? this.root);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const srcChildren = srcParent?.children?.get(srcStart!.parentField);
         // Sorted list of PathNodes to move from src to dst.
@@ -184,13 +199,19 @@ export class AnchorSet {
             let numberBeforeMove = 0;
             let numberToMove = 0;
             let index = 0;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < srcStart!.parentIndex) {
+            while (
+                index < srcChildren.length &&
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                srcChildren[index].parentIndex < srcStart!.parentIndex
+            ) {
                 numberBeforeMove++;
                 index++;
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < srcStart!.parentIndex + count) {
+            while (
+                index < srcChildren.length &&
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                srcChildren[index].parentIndex < srcStart!.parentIndex + count
+            ) {
                 numberToMove++;
                 index++;
             }
@@ -199,6 +220,7 @@ export class AnchorSet {
                 srcChildren[index].parentIndex -= count;
                 index++;
             }
+            // Sever the parent -> child connections
             toMove = srcChildren.splice(numberBeforeMove, numberToMove);
             if (srcChildren.length === 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -211,10 +233,7 @@ export class AnchorSet {
         if (dst === undefined) {
             // Change is a delete.
             // Moved items have already been un-parented, so just mark them as deleted.
-            for (const moved of toMove) {
-                assert(!moved.deleted, 0x353 /* PathNode must not be deleted */);
-                moved.deleted = true;
-            }
+            this.deepDelete(toMove);
             return;
         }
 
@@ -292,7 +311,11 @@ export class AnchorSet {
             },
             onInsert: (start: number, content: Delta.ProtoNode[]): void => {
                 assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
-                this.moveChildren(content.length, undefined, { parent, parentField, parentIndex: start });
+                this.moveChildren(content.length, undefined, {
+                    parent,
+                    parentField,
+                    parentIndex: start,
+                });
             },
             onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
                 assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
@@ -300,7 +323,8 @@ export class AnchorSet {
             },
             onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
                 assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
-                const srcPath = moveTable.get(id) ?? fail("Must visit a move in after its move out");
+                const srcPath =
+                    moveTable.get(id) ?? fail("Must visit a move in after its move out");
                 this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
             },
             onSetValue: (value: Value): void => {},
@@ -324,6 +348,34 @@ export class AnchorSet {
 
         visitDelta(delta, visitor);
     }
+}
+
+/**
+ * Indicates the status of a `NodePath`.
+ */
+enum Status {
+    /**
+     * Indicates the `NodePath` is being maintained and corresponds to a valid
+     * (i.e., not deleted) node in the document.
+     */
+    Alive,
+    /**
+     * Indicates the `NodePath` is not being maintained by the `AnchorSet`.
+     * The `NodePath` may or may not correspond to a valid node in the document.
+     *
+     * Accessing such a node is invalid.
+     * Nodes in this state are retained to detect use-after-free bugs.
+     */
+    Disposed,
+    /**
+     * Indicates the `NodePath` corresponds to a deleted node in the document.
+     * Such `NodePath`s are not maintained by the `AnchorSet` (other than updating
+     * their status to `Disposed` when appropriate).
+     *
+     * Accessing such a node is invalid.
+     * Nodes in this state are retained to detect use-after-free bugs.
+     */
+    Dangling,
 }
 
 /**
@@ -357,7 +409,7 @@ class PathNode implements UpPath {
      */
     private refCount = 1;
 
-    public deleted = false;
+    public status: Status = Status.Alive;
 
     /**
      * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
@@ -380,6 +432,17 @@ class PathNode implements UpPath {
         public readonly anchorSet: AnchorSet,
         public parentField: FieldKey,
         public parentIndex: number,
+        /**
+         * The parent of this `PathNode` (an up pointer in the `PathNode` tree).
+         * If the status of this node is `Alive`, then there must be a corresponding down pointer from the
+         * `parentPath` node to this node.
+         * When undefined, this node is the {@link AnchorSet.root} for `this.anchorSet` and thus has no parent.
+         *
+         * When updating the tree, `AnchorSet` may transiently leave the up and down pointers inconsistent
+         * (updating down pointers first), but must ensure they are consistent before the editing operation returns
+         * to non-`AnchorSet` code.
+         * This consistency guarantee only applies to nodes that are `Alive`.
+         */
         public parentPath: PathNode | undefined,
     ) {}
 
@@ -394,7 +457,7 @@ class PathNode implements UpPath {
     }
 
     public get parent(): UpPath | undefined {
-        assert(!this.deleted, 0x354 /* PathNode must not be deleted */);
+        assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
         assert(
             this.parentPath !== undefined,
             0x355 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */,
@@ -407,21 +470,18 @@ class PathNode implements UpPath {
     }
 
     public addRef(count = 1): void {
-        assert(!this.deleted, 0x356 /* PathNode must not be deleted */);
+        assert(this.status === Status.Alive, 0x40a /* PathNode must be alive */);
         this.refCount += count;
     }
 
     public removeRef(count = 1): void {
-        assert(!this.deleted, 0x357 /* PathNode must not be deleted */);
+        assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
         this.refCount -= count;
         if (this.refCount < 1) {
-            assert(
-                this.refCount === 0,
-                0x358 /* PathNode Refcount should not be negative. */,
-            );
+            assert(this.refCount === 0, 0x358 /* PathNode Refcount should not be negative. */);
 
             if (this.children.size === 0) {
-                this.deleteThis();
+                this.disposeThis();
             }
         }
     }
@@ -431,7 +491,7 @@ class PathNode implements UpPath {
      * Creates child (with 1 ref) if needed.
      */
     public getOrCreateChild(key: FieldKey, index: number): PathNode {
-        assert(!this.deleted, 0x359 /* PathNode must not be deleted */);
+        assert(this.status === Status.Alive, 0x40c /* PathNode must be alive */);
         let field = this.children.get(key);
         if (field === undefined) {
             field = [];
@@ -455,7 +515,7 @@ class PathNode implements UpPath {
      * Does NOT add a ref.
      */
     public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
-        assert(!this.deleted, 0x35a /* PathNode must not be deleted */);
+        assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
         const field = this.children.get(key);
         if (field === undefined) {
             return undefined;
@@ -470,16 +530,13 @@ class PathNode implements UpPath {
      * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
      */
     public removeChild(child: PathNode): void {
-        assert(!this.deleted, 0x35b /* PathNode must not be deleted */);
+        assert(this.status === Status.Alive, 0x40e /* PathNode must be alive */);
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
-        const childIndex = field?.indexOf(child);
-        assert(
-            childIndex !== undefined,
-            0x35c /* child must be parented to be removed */,
-        );
+        const childIndex = field?.indexOf(child) ?? -1;
+        assert(childIndex !== -1, 0x35c /* child must be parented to be removed */);
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.afterEmptyField(key);
@@ -492,20 +549,25 @@ class PathNode implements UpPath {
      * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
      */
     public afterEmptyField(key: FieldKey): void {
-        assert(!this.deleted, 0x35d /* PathNode must not be deleted */);
+        assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
         this.children.delete(key);
         if (this.refCount === 0 && this.children.size === 0) {
-            this.deleteThis();
+            this.disposeThis();
         }
     }
 
     /**
-     * Removes this from parent, and sets this to deleated.
+     * Removes this from parent if alive, and sets this to disposed.
+     * Must only be called when this node is no longer needed (has no references and no children).
+     *
+     * Allowed when dangling (but not when disposed).
      */
-    private deleteThis(): void {
-        assert(!this.deleted, 0x35e /* must not double delete PathNode */);
-        this.parentPath?.removeChild(this);
+    private disposeThis(): void {
+        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        if (this.status === Status.Alive) {
+            this.parentPath?.removeChild(this);
+        }
 
-        this.deleted = true;
+        this.status = Status.Disposed;
     }
 }

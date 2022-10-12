@@ -2,22 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 
 import { Context, MonoRepoKind } from "@fluidframework/build-tools";
+
 import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionBumpTypeExtended,
+    VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
-    ReleaseVersion,
     toVirtualPatchScheme,
-    VersionBumpType,
-    VersionBumpTypeExtended,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage, ReleaseSource } from "../releaseGroups";
+
+import { ReleaseGroup, ReleasePackage, ReleaseSource, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 
 /**
@@ -51,6 +53,7 @@ export async function createBumpBranch(
  * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
  * @param bumpType - The bump type.
  * @param version - The current version of the release group or package.
+ * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
  * @returns The generated branch name.
  *
  * @remarks
@@ -88,7 +91,7 @@ export function generateBumpVersionBranchName(
  * @internal
  */
 export function generateBumpDepsBranchName(
-    bumpedDep: ReleaseGroup,
+    bumpedDep: ReleaseGroup | ReleasePackage,
     bumpType: DependencyUpdateType | VersionBumpType,
     releaseGroup?: ReleaseGroup,
 ): string {
@@ -148,6 +151,63 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 }
 
 /**
+ * Generates an appropriate commit message when bumping a release group or package.
+ *
+ * @param releaseGroupOrPackage - The release group or independent package to generate a commit message for.
+ * @param bumpType - The bump type.
+ * @param version - The current version of the release group or package.
+ * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
+ * @returns The generated commit message.
+ *
+ * @internal
+ */
+export function generateBumpVersionCommitMessage(
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+    bumpType: VersionBumpTypeExtended,
+    version: ReleaseVersion,
+    scheme?: VersionScheme,
+): string {
+    const newVersion = bumpVersionScheme(version, bumpType, scheme);
+    const name = isReleaseGroup(releaseGroupOrPackage)
+        ? releaseGroupOrPackage
+        : PackageName.getUnscopedName(releaseGroupOrPackage);
+    const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpType})\n\nBumped ${name} from ${version} to ${newVersion}.`;
+    return message;
+}
+
+/**
+ * Generates an appropriate commit message when bumping the dependencies of release group or package.
+ *
+ * @param bumpedDep - The release group on which dependencies were bumped.
+ * @param bumpType - The bump type.
+ * @param releaseGroup - If set, changes were made to only this release group.
+ * @returns The generated commit message.
+ *
+ * @internal
+ */
+export function generateBumpDepsCommitMessage(
+    bumpedDep: ReleaseGroup | ReleasePackage | "prerelease",
+    bumpType: DependencyUpdateType | VersionBumpType,
+    releaseGroup?: ReleaseGroup,
+): string {
+    const name =
+        bumpedDep === "prerelease"
+            ? "released prerelease packages"
+            : isReleaseGroup(bumpedDep)
+            ? `${bumpedDep} release group`
+            : PackageName.getUnscopedName(bumpedDep);
+
+    const releaseGroupSegment = isReleaseGroup(releaseGroup)
+        ? ` in the ${releaseGroup} release group`
+        : " in all packages and release groups";
+
+    const message = `Update deps (${bumpType}) on ${name}${releaseGroupSegment}`;
+    return message;
+}
+
+/**
+ * Returns the default bump type for a branch.
+ *
  * @param branchName - The branch name to check.
  * @returns The default {@link VersionBumpType} for the branch, or `undefined` if no default is set for the branch.
  *
@@ -167,11 +227,9 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     }
 }
 
-const releaseGroupReleaseTypeMap = new Map<string, ReleaseSource>([
-    [MonoRepoKind.BuildTools, "interactive"],
-]);
-
 /**
+ * Returns the default {@link ReleaseSource} for a given release group or package.
+ *
  * @internal
  */
 export function getReleaseSourceForReleaseGroup(

@@ -17,19 +17,26 @@ import {
     IMergeTreeDeltaOp,
 } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
-import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
-import { MenuItem } from "prosemirror-menu";
-import { DOMSerializer, Fragment, Schema, Slice } from "prosemirror-model";
+import {
+    exampleSetup,
+} from "prosemirror-example-setup";
+import {
+    DOMSerializer,
+    Schema,
+    Slice,
+} from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
-import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
+import {
+    EditorState,
+    Plugin,
+    Transaction,
+} from "prosemirror-state";
 
-import { insertPoint } from "prosemirror-transform";
 import { EditorView } from "prosemirror-view";
 import { ComponentView } from "./componentView";
 import { IProseMirrorNode, nodeTypeKey, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge";
 import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
-import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
@@ -142,52 +149,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             return true;
         });
 
-        const menu = buildMenuItems(this.schema);
-        menu.insertMenu.content.push(new MenuItem({
-            title: "Insert Component",
-            label: "Component",
-            enable: (state) => true,
-            run: (state, _, view) => {
-                const { from, to } = state.selection;
-                let nodeAttrs: any = null;
-                if (state.selection instanceof NodeSelection && state.selection.node.type === fluidSchema.nodes.fluid) {
-                    nodeAttrs = state.selection.node.attrs;
-                }
-                openPrompt({
-                    title: "Insert component",
-                    fields: {
-                        src: new TextField({ label: "Url", required: true, value: nodeAttrs?.src }),
-                        title: new TextField({ label: "Title", value: nodeAttrs?.title }),
-                        alt: new TextField({
-                            label: "Description",
-                            value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
-                        }),
-                    },
-                    callback(attrs) {
-                        const node = fluidSchema.nodes.fluid.createAndFill(attrs);
-                        if (node) {
-                            view.dispatch(view.state.tr.replaceSelectionWith(node));
-                            view.focus();
-                        }
-                    },
-                });
-            },
-        }));
-
-        menu.insertMenu.content.push(new MenuItem({
-            title: "Insert footnote",
-            label: "Footnote",
-            select: (state) => insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null,
-            run(state, dispatch) {
-                const { empty, $from, $to } = state.selection;
-                let content = Fragment.empty;
-                if (!empty && $from.sameParent($to) && $from.parent.inlineContent) {
-                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset);
-                }
-                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)));
-            },
-        }));
-
         const doc = nodeStack.pop()!;
         console.log(JSON.stringify(doc, null, 2));
 
@@ -197,7 +158,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             plugins:
                 exampleSetup({
                     schema: this.schema,
-                    menuContent: menu.fullMenu,
                 })
                     .concat(this.plugin)
                     .concat(createSelection()),

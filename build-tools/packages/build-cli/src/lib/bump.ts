@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as semver from "semver";
 
-import { Context, exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
+import { Context, MonoRepo, Package, VersionBag, exec } from "@fluidframework/build-tools";
+
 import {
-    bumpVersionScheme,
-    bumpRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
     VersionChangeType,
     VersionScheme,
+    bumpRange,
+    bumpVersionScheme,
     getVersionRange,
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
-import * as semver from "semver";
 
 /**
  * A type representing the types of dependency updates that can be done. This type is intended to match the type

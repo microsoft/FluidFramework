@@ -15,8 +15,21 @@ const tomb = "Dummy Changeset Tag";
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
-    ["MInsert", { type: "MInsert", id: 0, content: { type, value: 42 }, changes: TestChange.mint([], 2) }],
-    ["Insert", { type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] }],
+    [
+        "MInsert",
+        { type: "MInsert", id: 0, content: { type, value: 42 }, changes: TestChange.mint([], 2) },
+    ],
+    [
+        "Insert",
+        {
+            type: "Insert",
+            id: 0,
+            content: [
+                { type, value: 42 },
+                { type, value: 43 },
+            ],
+        },
+    ],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
     ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
 ];

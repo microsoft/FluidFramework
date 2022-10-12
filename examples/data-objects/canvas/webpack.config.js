@@ -5,6 +5,7 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
+const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 
 const pkg = require("./package.json");
@@ -59,6 +60,11 @@ module.exports = env => {
             devtoolNamespace: fluidPackageName,
             libraryTarget: "umd"
         },
+        plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
+        ],
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
         // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.

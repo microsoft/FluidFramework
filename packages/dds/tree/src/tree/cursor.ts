@@ -26,7 +26,8 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Fields ********** //
 
     /**
-     * Moves the "current field" forward one in an arbitrary field traversal order.
+     * Moves the "current field" forward one in an arbitrary field traversal order,
+     * skipping any empty fields.
      *
      * If there is no remaining field to iterate to,
      * returns false and navigates up to the parent setting the mode to `Nodes`.
@@ -85,7 +86,7 @@ export interface ITreeCursor {
      *
      * Allowed when `mode` is `Fields`, and not `pending`.
      */
-     firstNode(): boolean;
+    firstNode(): boolean;
 
     /**
      * Sets current node to the node at the provided `index` of the current field.
@@ -166,14 +167,14 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Nodes and not pending ********** //
 
     /**
-     * Enters the first field (setting mode to `Fields`)
+     * Enters the first non-empty field (setting mode to `Fields`)
      * so fields can be iterated with `nextField` and `skipPendingFields`.
      *
      * If there are no fields, mode is returned to `Nodes` and false is returned.
      *
      * Allowed when `mode` is `Nodes` and not `pending`.
      */
-     firstField(): boolean;
+    firstField(): boolean;
 
     /**
      * Navigate to the field with the specified `key` and set the mode to `Fields`.
@@ -219,15 +220,54 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 }
 
 /**
+ * @param cursor - tree whose fields will be visited.
+ * @param f - builds output from field, which will be selected in cursor when cursor is provided.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns array resulting from applying `f` to each field of the current node on `cursor`.
+ * Returns an empty array if the node is empty or not present (which are considered the same).
+ * Note that order is not specified for field iteration.
+ */
+export function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => T,
+): T[] {
+    const output: T[] = [];
+    forEachField(cursor, (c) => {
+        output.push(f(c));
+    });
+    return output;
+}
+
+/**
+ * @param cursor - cursor at a node whose fields will be visited.
+ * @param f - For on each field.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ */
+export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => void,
+): void {
+    assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+        f(cursor);
+    }
+}
+
+/**
  * @param cursor - tree whose field will be visited.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
+export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => T,
+): T[] {
     const output: T[] = [];
-    forEachNode(cursor, (c) => { output.push(f(c)); });
+    forEachNode(cursor, (c) => {
+        output.push(f(c));
+    });
     return output;
 }
 
@@ -236,8 +276,10 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
  * @param f - For on each node.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
-export function forEachNode(
-    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
+export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => void,
+): void {
     assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
     for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
         f(cursor);

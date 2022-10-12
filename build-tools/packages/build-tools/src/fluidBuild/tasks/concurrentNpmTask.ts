@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { AsyncPriorityQueue } from "async";
+
+import { BuildPackage, BuildResult } from "../buildGraph";
 import { NPMTask } from "./npmTask";
 import { Task, TaskExec } from "./task";
-import { BuildResult, BuildPackage } from "../buildGraph";
 
 export class ConcurrentNPMTask extends NPMTask {
     constructor(node: BuildPackage, command: string, tasks: Task[]) {

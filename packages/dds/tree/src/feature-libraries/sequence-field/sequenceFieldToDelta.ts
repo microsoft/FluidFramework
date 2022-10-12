@@ -4,18 +4,19 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { brand, brandOpaque, fail, makeArray, OffsetListFactory } from "../../util";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
-import * as F from "./format";
+import { MarkList, ModifyInsert } from "./format";
 import { isSkipMark } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
-    marks: F.MarkList<TNodeChange>,
+    marks: MarkList<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
@@ -104,10 +105,33 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(moveMark);
                     break;
                 }
+                case "Revive": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        // TODO: Restore the actual node, possibly as part of Delta application
+                        content: makeArray(mark.count, () =>
+                            singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        ),
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
+                case "MRevive": {
+                    const modify = deltaFromChild(mark.changes);
+                    const fields =
+                        modify.fields ?? fail("MRevive marks should always carry field changes");
+                    const insertMark: Delta.InsertAndModify = {
+                        type: Delta.MarkType.InsertAndModify,
+                        // TODO: Restore the actual node, possibly as part of Delta application
+                        content: singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        // TODO: Apply the field changes to the restored node
+                        fields,
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
                 case "MMoveIn":
                 case "MMoveOut":
-                case "Revive":
-                case "MRevive":
                 case "Return":
                 case "MReturn":
                     fail(ERR_NOT_IMPLEMENTED);
@@ -116,12 +140,15 @@ export function sequenceFieldToDelta<TNodeChange>(
                     // They have no impact on the current state.
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
     return out.list;
 }
+
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -130,7 +157,7 @@ export function sequenceFieldToDelta<TNodeChange>(
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
 function cloneAndModify<TNodeChange>(
-    insert: F.ModifyInsert<TNodeChange>,
+    insert: ModifyInsert<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
 ): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning

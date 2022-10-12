@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { Flags } from "@oclif/core";
 import * as childProcess from "child_process";
 import * as fs from "fs";
-import { getSimpleVersion, getIsLatest } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
+
+import { getIsLatest, getSimpleVersion } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../../base";
 
 /**
