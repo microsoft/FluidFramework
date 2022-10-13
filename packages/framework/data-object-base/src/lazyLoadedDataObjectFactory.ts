@@ -77,7 +77,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
         const entrypoint = await dataStore.getEntrypoint()?.get();
         // This data object factory should always be setting the entrypoint. Need the non-null assertion
-        // while we're plumbing it everywhere and it is still optional.
+        // while we're plumbing it everywhere and getEntrypoint() could still return undefined.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return entrypoint!;
     }
