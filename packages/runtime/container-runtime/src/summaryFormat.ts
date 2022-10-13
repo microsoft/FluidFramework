@@ -111,6 +111,8 @@ export interface IGCMetadata {
     /**
      */
     readonly sweepTimeoutMs?: number;
+    /** Indicates that the driver from around when the container was created implemented this policy */
+    readonly originalDriverImplementedSnapshotCachePolicy?: boolean;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */

@@ -446,6 +446,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly inactiveTimeoutMs: number;
     /** The time after which an unreferenced node is ready to be swept. */
     private readonly sweepTimeoutMs: number | undefined;
+    private readonly originalDriverImplementedSnapshotCachePolicy: boolean | undefined;
 
     /** For a given node path, returns the node's package path. */
     private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -526,6 +527,9 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+            this.originalDriverImplementedSnapshotCachePolicy =
+                metadata?.originalDriverImplementedSnapshotCachePolicy
+                ?? createParams.driverImplementsSnapshotCachePolicy;
             this.sweepTimeoutMs =
                 metadata?.sweepTimeoutMs
                 ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
@@ -595,14 +599,14 @@ export class GarbageCollector implements IGarbageCollector {
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
          * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
          * 3. The driver must implement the policy limiting the age of snapshots used for loading. Otherwise
-         *    the Sweep Timeout calculation is not valid.
+         * the Sweep Timeout calculation is not valid. We use the persisted value to ensure consistency over time.
          * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
-         *    feature flag.
+         * feature flag.
          */
         this.shouldRunSweep =
             this.shouldRunGC
             && this.sweepTimeoutMs !== undefined
-            && createParams.driverImplementsSnapshotCachePolicy
+            && this.originalDriverImplementedSnapshotCachePolicy === true
             && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
@@ -969,6 +973,13 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public getMetadata(): IGCMetadata {
+        // We only persist the value for the Summarizer, since Interactive client could be detached (then it's invalid)
+        // Note that if versions of the driver which disagree on this policy are active simultaneously in an ecosystem,
+        // this value could change in the lifetime of the file. But this is a corner case we will live with for now.
+        const driverImplementedSnapshotCachePolicy = this.isSummarizerClient
+            ? this.originalDriverImplementedSnapshotCachePolicy
+            : undefined;
+
         return {
             /**
              * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
@@ -978,6 +989,7 @@ export class GarbageCollector implements IGarbageCollector {
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
             sweepTimeoutMs: this.sweepTimeoutMs,
+            originalDriverImplementedSnapshotCachePolicy: driverImplementedSnapshotCachePolicy,
         };
     }
 
