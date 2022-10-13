@@ -61,7 +61,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
-    summarizerClientElection: booleanCases,
+    summarizerClientElection: [false],
     summarizerOptions: [undefined],
 };
 
