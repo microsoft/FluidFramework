@@ -51,8 +51,7 @@ stages:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
+        timeoutInMinutes: 150
         testCommand: start:odsp:gc:ci
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
@@ -70,8 +69,7 @@ stages:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
+        timeoutInMinutes: 150
         testCommand: start:t9s:gc:ci
         env:
           nothing_useful: hello world
