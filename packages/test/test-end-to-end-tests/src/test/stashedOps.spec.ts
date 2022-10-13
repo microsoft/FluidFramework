@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
+import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import {
@@ -35,11 +35,13 @@ const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
+const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [
     [mapId, SharedMap.getFactory()],
     [stringId, SharedString.getFactory()],
     [cellId, SharedCell.getFactory()],
-    [counterId, SharedCounter.getFactory()]];
+    [counterId, SharedCounter.getFactory()],
+    [directoryId, SharedDirectory.getFactory()]];
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
@@ -158,6 +160,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let string1: SharedString;
     let cell1: SharedCell;
     let counter1: SharedCounter;
+    let directory1: ISharedDirectory;
     let waitForSummary: () => Promise<void>;
 
     beforeEach(async () => {
@@ -173,6 +176,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
         cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
         counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
+        directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
 
@@ -196,105 +200,68 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, testValue);
+            const cell = await d.getSharedObject<SharedCell>(cellId);
+            cell.set(testValue);
+            const counter = await d.getSharedObject<SharedCounter>(counterId);
+            counter.increment(testIncrementValue);
+            const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+            directory.set(testKey, testValue);
         });
 
         // load container with pending ops, which should resend the op not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+        const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
         await ensureContainerConnected(container2);
         await provider.ensureSynchronized();
         assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
-    });
-
-    it("resends cell op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-            const cell = await d.getSharedObject<SharedCell>(cellId);
-            cell.set(testValue);
-        });
-
-        // load container with pending ops, which should resend the op not sent by previous container
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
         assert.strictEqual(cell1.get(), testValue);
         assert.strictEqual(cell2.get(), testValue);
-    });
-
-    it("resends counter op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-            const counter = await d.getSharedObject<SharedCounter>(counterId);
-            counter.increment(testIncrementValue);
-        });
-
-        // load container with pending ops, which should resend the op not sent by previous container
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
         assert.strictEqual(counter1.value, testIncrementValue);
         assert.strictEqual(counter2.value, testIncrementValue);
+        assert.strictEqual(directory1.get(testKey), testValue);
+        assert.strictEqual(directory2.get(testKey), testValue);
     });
 
     it("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(provider, true, async (c, d) => {
             const map = await d.getSharedObject<SharedMap>(mapId);
             map.set(testKey, "something unimportant");
+            const cell = await d.getSharedObject<SharedCell>(cellId);
+            cell.set("something unimportant");
+            const counter = await d.getSharedObject<SharedCounter>(counterId);
+            counter.increment(3);
+            const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+            directory.set(testKey, "I will be erased");
         });
 
         map1.set(testKey, testValue);
+        cell1.set(testValue);
+        counter1.increment(testIncrementValue);
+        directory1.set(testKey, testValue);
         await provider.ensureSynchronized();
 
         // load with pending ops, which it should not resend because they were already sent successfully
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+        const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 
         await provider.ensureSynchronized();
         assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
-    });
-
-    it("doesn't resend successful cell op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-            const cell = await d.getSharedObject<SharedCell>(cellId);
-            cell.set("something unimportant");
-        });
-
-        cell1.set(testValue);
-        await provider.ensureSynchronized();
-
-        // load with pending ops, which it should not resend because they were already sent successfully
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
-
-        await provider.ensureSynchronized();
         assert.strictEqual(cell1.get(), testValue);
         assert.strictEqual(cell2.get(), testValue);
-    });
-
-    it("doesn't resend successful counter op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-            const counter = await d.getSharedObject<SharedCounter>(counterId);
-            counter.increment(3);
-        });
-
-        counter1.increment(testIncrementValue);
-        await provider.ensureSynchronized();
-
-        // load with pending ops, which it should not resend because they were already sent successfully
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-
-        await provider.ensureSynchronized();
         assert.strictEqual(counter1.value, testIncrementValue + 3);
         assert.strictEqual(counter2.value, testIncrementValue + 3);
+        assert.strictEqual(directory1.get(testKey), testValue);
+        assert.strictEqual(directory2.get(testKey), testValue);
     });
 
     it("resends delete op and can set after", async function() {

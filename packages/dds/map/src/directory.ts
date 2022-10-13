@@ -764,7 +764,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 applyStashedOp: (op: IDirectorySetOperation): IKeyEditLocalOpMetadata | undefined => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
-                        return subdir.applyStashedSetMessage(op);
+                        const context = this.makeLocal(op.key, op.path, op.value);
+                        return subdir.applyStashedSetMessage(op, context);
                     }
                 },
             },
@@ -1420,15 +1421,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - Op to apply
      * @returns metadata generated for stahed op
      */
-    public applyStashedSetMessage(op: IDirectorySetOperation): IKeyEditLocalOpMetadata {
+    public applyStashedSetMessage(op: IDirectorySetOperation, context: ILocalValue): IKeyEditLocalOpMetadata {
         this.throwIfDisposed();
-
-        const localValue = this.directory.localValueMaker.fromInMemory(op.value);
-
         // Set the value locally.
         const previousValue = this.setCore(
             op.key,
-            localValue,
+            context,
             true,
         );
 
