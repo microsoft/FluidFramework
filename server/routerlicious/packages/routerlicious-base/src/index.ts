@@ -3,7 +3,30 @@
  * Licensed under the MIT License.
  */
 
-export * from "./alfred";
-export * from "./ordering";
-export * from "./riddler";
-export * from "./utils";
+export {
+	AlfredResources,
+	AlfredResourcesFactory,
+	AlfredRunner,
+	AlfredRunnerFactory,
+	DeltaService,
+	OrdererManager,
+} from "./alfred";
+export { OrderingResourcesFactory } from "./ordering";
+export {
+	ITenantDocument,
+	RiddlerResources,
+	RiddlerResourcesFactory,
+	RiddlerRunner,
+	RiddlerRunnerFactory,
+	TenantManager,
+} from "./riddler";
+export {
+	catch404,
+	Constants,
+	createDocumentRouter,
+	getIdFromRequest,
+	getSession,
+	getTenantIdFromRequest,
+	handleError,
+	IPlugin,
+} from "./utils";

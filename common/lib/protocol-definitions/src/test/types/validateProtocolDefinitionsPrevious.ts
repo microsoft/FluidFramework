@@ -251,7 +251,6 @@ declare function get_current_InterfaceDeclaration_IClientConfiguration():
 declare function use_old_InterfaceDeclaration_IClientConfiguration(
     use: TypeOnly<old.IClientConfiguration>);
 use_old_InterfaceDeclaration_IClientConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IClientConfiguration());
 
 /*
@@ -372,7 +371,6 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -1026,6 +1024,30 @@ use_old_InterfaceDeclaration_ISnapshotTreeEx(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IsoDate": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IsoDate():
+    TypeOnly<old.IsoDate>;
+declare function use_current_TypeAliasDeclaration_IsoDate(
+    use: TypeOnly<current.IsoDate>);
+use_current_TypeAliasDeclaration_IsoDate(
+    get_old_TypeAliasDeclaration_IsoDate());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IsoDate": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IsoDate():
+    TypeOnly<current.IsoDate>;
+declare function use_old_TypeAliasDeclaration_IsoDate(
+    use: TypeOnly<old.IsoDate>);
+use_old_TypeAliasDeclaration_IsoDate(
+    get_current_TypeAliasDeclaration_IsoDate());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAck": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryAck():
@@ -1074,18 +1096,6 @@ use_old_InterfaceDeclaration_ISummaryAttachment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryAuthor": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryAuthor": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryBlob": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryBlob():
@@ -1106,30 +1116,6 @@ declare function use_old_InterfaceDeclaration_ISummaryBlob(
     use: TypeOnly<old.ISummaryBlob>);
 use_old_InterfaceDeclaration_ISummaryBlob(
     get_current_InterfaceDeclaration_ISummaryBlob());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryCommitter": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryCommitter": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1513,7 +1499,6 @@ declare function get_current_EnumDeclaration_MessageType():
 declare function use_old_EnumDeclaration_MessageType(
     use: TypeOnly<old.MessageType>);
 use_old_EnumDeclaration_MessageType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_MessageType());
 
 /*
@@ -1563,6 +1548,30 @@ declare function use_old_EnumDeclaration_ScopeType(
     use: TypeOnly<old.ScopeType>);
 use_old_EnumDeclaration_ScopeType(
     get_current_EnumDeclaration_ScopeType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SignalType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SignalType():
+    TypeOnly<old.SignalType>;
+declare function use_current_EnumDeclaration_SignalType(
+    use: TypeOnly<current.SignalType>);
+use_current_EnumDeclaration_SignalType(
+    get_old_EnumDeclaration_SignalType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SignalType": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SignalType():
+    TypeOnly<current.SignalType>;
+declare function use_old_EnumDeclaration_SignalType(
+    use: TypeOnly<old.SignalType>);
+use_old_EnumDeclaration_SignalType(
+    get_current_EnumDeclaration_SignalType());
 
 /*
 * Validate forward compat by using old type in place of current type

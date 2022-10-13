@@ -6,10 +6,19 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
+import { ContainerErrorType } from '@fluidframework/container-definitions';
+import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { ICriticalContainerError } from '@fluidframework/container-definitions';
 
 export { AttachState }
 
 export { ConnectionState }
+
+export { ContainerErrorType }
+
+export { DriverErrorType }
+
+export { ICriticalContainerError }
 
 
 export * from "@fluidframework/fluid-static";
