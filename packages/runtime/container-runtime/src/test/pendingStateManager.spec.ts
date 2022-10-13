@@ -34,7 +34,7 @@ describe("Pending State Manager", () => {
             rollbackContent = [];
             rollbackShouldThrow = false;
 
-            batchManager = new BatchManager();
+            batchManager = new BatchManager(950 * 1024);
         });
 
         it("should do nothing when rolling back empty pending stack", () => {
