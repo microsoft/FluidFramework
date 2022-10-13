@@ -249,15 +249,8 @@ export class UnreferencedStateTracker {
                 0x3b0 /* inactive timeout must not be greater than the sweep timeout */);
         }
 
-        this.sweepTimer = new TimerWithNoDefaultTimeout(
-            () => {
-                this._state = UnreferencedState.SweepReady;
-                //* Follow up on race condition here when timeouts are sub-second
-                assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
-            },
-        );
-
         this.inactiveTimer = new TimerWithNoDefaultTimeout(() => {
+            console.log(`INACTIVE TIMER [${this.inactiveTimer.hasTimer}] [${this._state}]`);
             this._state = UnreferencedState.Inactive;
 
             // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
@@ -265,6 +258,16 @@ export class UnreferencedStateTracker {
                 this.sweepTimer.restart(this.sweepTimeoutMs - this.inactiveTimeoutMs);
             }
         });
+
+        this.sweepTimer = new TimerWithNoDefaultTimeout(
+            () => {
+                console.log(`SWEEP TIMER [${this.sweepTimer.hasTimer}] [${this._state}]`);
+                this._state = UnreferencedState.SweepReady;
+                //* Follow up on race condition here when timeouts are sub-second
+                assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
+            },
+        );
+
         this.updateTracking(currentReferenceTimestampMs);
     }
 
@@ -293,6 +296,7 @@ export class UnreferencedStateTracker {
 
         // The node is still active. Ensure the inactive timer is running with the proper remaining duration.
         this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
+        console.log(`RESTART [${this.inactiveTimeoutMs - unreferencedDurationMs}]`);
     }
 
     private clearTimers() {
