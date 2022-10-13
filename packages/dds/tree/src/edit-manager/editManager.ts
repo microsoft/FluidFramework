@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, bufferToString } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ChangeFamily } from "../change-family";
+import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { AnchorSet, Delta } from "../tree";
-import { Brand, fail, RecursiveReadonly } from "../util";
+import { Brand, fail, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -19,13 +24,20 @@ export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 export type SessionId = string;
 
 /**
+ * The storage key for the blob in the summary containing EditManager data
+ */
+const blobKey = "EditManagerBlob";
+
+const stringKey = "EditManagerString";
+
+/**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
  */
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
+export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> implements Index<TChangeset>, SummaryElement {
     // The trunk represents the list of received sequenced changes.
     // The change in each commit is rebased onto the previous change in the list.
     private readonly trunk: Commit<TChangeset>[] = [];
@@ -40,11 +52,94 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     // Every other change in this list is based on the change preceding it.
     private localChanges: TChangeset[] = [];
 
+    public readonly summaryElement?: SummaryElement = this;
+    public readonly key = "EditManager";
+
+    private readonly commitEncoder: CommitEncoder<TChangeset>;
+    private readonly commitDecoder: CommitDecoder<TChangeset>;
+
+    private localSessionId?: SessionId;
+
     public constructor(
-        private readonly localSessionId: SessionId,
         public readonly changeFamily: TChangeFamily,
         public readonly anchors?: AnchorSet,
-    ) {}
+    ) {
+        this.commitEncoder = (commit: Commit<TChangeset>): Commit<JsonCompatibleReadOnly> => ({
+            ...commit,
+            changeset: changeFamily.encoder.encodeForJson(0, commit.changeset),
+        });
+        this.commitDecoder = (commit: Commit<JsonCompatibleReadOnly>): Commit<TChangeset> => ({
+            ...commit,
+            changeset: changeFamily.encoder.decodeJson(0, commit.changeset),
+        });
+    }
+
+    public setSessionId(id: SessionId): void {
+        assert(this.localSessionId === undefined, "The session ID should only be set once");
+        this.localSessionId = id;
+    }
+
+    public getAttachSummary(
+        stringify: SummaryElementStringifier,
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        const dataString = encodeSummary({ trunk: this.trunk, branches: this.branches }, this.commitEncoder);
+        builder.addBlob(stringKey, dataString);
+        return builder.getSummaryTree();
+    }
+
+    public async summarize(
+        stringify: SummaryElementStringifier,
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
+    }
+
+    public getGCData(fullGC?: boolean): IGarbageCollectionData {
+        // TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
+        // by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
+        // to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
+        // blob.
+        return {
+            gcNodes: {},
+        };
+    }
+
+    public async load(
+        services: IChannelStorageService,
+        parse: SummaryElementParser,
+    ): Promise<void> {
+        const [hasString, hasBlob] = await Promise.all([
+            services.contains(stringKey),
+            services.contains(blobKey),
+        ]);
+        assert(hasString || hasBlob, "EditManager data is required in summary");
+        let schemaBuffer: ArrayBufferLike;
+        if (hasBlob) {
+            const handleBuffer = await services.readBlob(blobKey);
+            const handleString = bufferToString(handleBuffer, "utf-8");
+            const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
+            schemaBuffer = await handle.get();
+        } else {
+            schemaBuffer = await services.readBlob(stringKey);
+        }
+
+        // After the awaits, validate that the data is in a clean state.
+        // This detects any data that could have been accidentally added through
+        // invalid means and is about to be overwritten.
+        assert(
+            this.trunk.length === 0 && this.branches.size === 0,
+            "There should not already be stored EditManager data when loading from summary",
+        );
+
+        const dataString = bufferToString(schemaBuffer, "utf-8");
+        loadSummary(dataString, this.commitDecoder, { trunk: this.trunk, branches: this.branches });
+    }
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
         return this.trunk;
@@ -63,6 +158,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
+        assert(this.localSessionId !== undefined, "The session ID should be set before processing changes");
+
         if (this.trunk.length > 0) {
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
             assert(
@@ -110,6 +207,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addLocalChange(change: TChangeset): Delta.Root {
+        assert(this.localSessionId !== undefined, "The session ID should be set before processing changes");
+
         this.localChanges.push(change);
 
         if (this.anchors !== undefined) {
@@ -300,5 +399,46 @@ interface Branch<TChangeset> {
      */
     isDivergent: boolean;
 }
+
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
     "Received a sequenced change from the local session despite having no local changes";
+
+export interface SummaryData<TChangeset> {
+    readonly trunk: Commit<TChangeset>[];
+    readonly branches: Map<SessionId, Branch<TChangeset>>;
+}
+
+export interface ReadonlySummaryData<TChangeset> {
+    readonly trunk: readonly Readonly<Commit<TChangeset>>[];
+    readonly branches: ReadonlyMap<SessionId, Readonly<Branch<TChangeset>>>;
+}
+
+export interface ReadonlyJsonSummaryData {
+    readonly trunk: readonly Readonly<Commit<JsonCompatibleReadOnly>>[];
+    readonly branches: readonly [SessionId, Readonly<Branch<JsonCompatibleReadOnly>>][];
+}
+
+export type CommitEncoder<TChange> = (commit: Commit<TChange>) => Commit<JsonCompatibleReadOnly>;
+export type CommitDecoder<TChange> = (commit: Commit<JsonCompatibleReadOnly>) => Commit<TChange>;
+
+export function loadSummary<TChange>(summary: string, decoder: CommitDecoder<TChange>, repo: SummaryData<TChange>): void {
+    const { trunk, branches } = repo;
+    const json: ReadonlyJsonSummaryData = JSON.parse(summary);
+    for (const commit of json.trunk) {
+        trunk.push(decoder(commit));
+    }
+    for (const [k, b] of json.branches) {
+        const branch: Branch<TChange> = { ...b, localChanges: b.localChanges.map(decoder) };
+        branches.set(k, branch);
+    }
+}
+
+export function encodeSummary<TChange>(data: ReadonlySummaryData<TChange>, encoder: CommitEncoder<TChange>): string {
+    const json: ReadonlyJsonSummaryData = {
+        trunk: data.trunk.map(encoder),
+        branches: Array.from(
+            data.branches.entries(),
+            ([k, b]) => [k, { ...b, localChanges: b.localChanges.map(encoder) }]),
+    };
+    return JSON.stringify(json);
+}

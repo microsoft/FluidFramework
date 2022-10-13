@@ -53,8 +53,6 @@ export class SharedTreeCore<
     TChange,
     TChangeFamily extends ChangeFamily<any, TChange>,
 > extends SharedObject<ISharedTreeCoreEvents> {
-    public readonly editManager: EditManager<TChange, TChangeFamily>;
-
     /**
      * A random ID that uniquely identifies this client in the collab session.
      * This is sent alongside every op to identify which client the op originated from.
@@ -76,6 +74,7 @@ export class SharedTreeCore<
     public constructor(
         private readonly indexes: Index<TChange>[],
         public readonly changeFamily: TChangeFamily,
+        public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
 
         // Base class arguments
@@ -87,8 +86,7 @@ export class SharedTreeCore<
         super(id, runtime, attributes, telemetryContextPrefix);
 
         this.stableId = uuid();
-
-        this.editManager = new EditManager(this.stableId, changeFamily, anchors);
+        editManager.setSessionId(this.stableId);
         this.summaryElements = indexes
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);
@@ -184,7 +182,7 @@ export class SharedTreeCore<
         }
     }
 
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     protected applyStashedOp(content: any): unknown {
         throw new Error("Method not implemented.");
