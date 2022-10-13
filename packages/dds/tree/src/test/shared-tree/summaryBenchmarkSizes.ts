@@ -4,14 +4,17 @@
  */
 
 import assert from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { TransactionResult } from "../../checkout";
-import { PlacePath, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, PlacePath, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { detachedFieldAsKey, FieldKey, TreeValue } from "../../tree";
+import { detachedFieldAsKey, FieldKey, rootFieldKey, TreeValue } from "../../tree";
 import { brand } from "../../util";
 import { TestTreeProvider } from "../utils";
+import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+
+const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
 describe("Summary size benchmark", () => {
     it("for different sized trees", async () => {
@@ -22,6 +25,12 @@ describe("Summary size benchmark", () => {
         assert(output.summarySizeNarrowInsert10 < 3000);
         assert(output.summarySizeNarrowInsert100 < 20000);
         assert(output.summarySizeNoEdits < 1000);
+    });
+    it("for 1000 inserts width wise", async () => {
+        await assert.rejects(
+            getInsertsSummarySize(1000, 0, true),
+            {message: 'BatchTooLarge'}
+        )
     });
 });
 
@@ -100,14 +109,11 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        editor.insert(
-            {
-                parent: undefined,
-                parentField: detachedFieldAsKey(forest.rootField),
-                parentIndex: index,
-            },
-            writeCursor,
+        const field = editor.sequenceField(
+            undefined,
+            detachedFieldAsKey(forest.rootField),
         );
+        field.insert(index, writeCursor);
 
         return TransactionResult.Apply;
     });
@@ -115,9 +121,11 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 
 function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath): void {
     // Apply an edit to the tree which inserts a node with a value.
-    tree.runTransaction((_forest, editor) => {
+    tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        editor.insert(path, writeCursor);
+        const field = editor.sequenceField(path, detachedFieldAsKey(forest.rootField));
+        field.insert(0, writeCursor);
+
         return TransactionResult.Apply;
     });
 }
@@ -129,13 +137,21 @@ function setTestValuesWide(tree: ISharedTree, seed: number, numNodes: number): v
     }
 }
 
-async function getInsertsSummarySize(
+/**
+ *
+ * @param numNodes - number of nodes you would like to insert
+ * @param seed - seed to randomly generate values for the inserts
+ * @param depth - boolean to specify inserting nodes depth wise or width wise
+ * @returns the byte size of the tree's summary
+ */
+export async function getInsertsSummarySize(
     numNodes: number,
     seed: number,
     depth?: boolean,
 ): Promise<number> {
     const provider = await TestTreeProvider.create(1);
     const tree = provider.trees[0];
+    initializeTestTreeWithValue(tree, 1)
 
     if (depth) {
         const fooKey = brand<FieldKey>("foo");
@@ -173,8 +189,39 @@ function setTestValuesNarrow(
         );
         path = {
             parent: path,
-            parentField: random.pick(fieldKeys),
+            parentField: rootKey,
             parentIndex: 0,
         };
     }
+}
+
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const globalFieldSchema = fieldSchema(FieldKinds.value);
+const rootNodeSchema = namedTreeSchema({
+    name: brand("TestValue"),
+    extraLocalFields: fieldSchema(FieldKinds.sequence),
+    globalFields: [globalFieldKey],
+});
+const testSchema: SchemaData = {
+    treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootFieldSchema],
+        [globalFieldKey, globalFieldSchema],
+    ]),
+};
+
+/**
+ * Inserts a single node under the root of the tree with the given value.
+ */
+function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
+    tree.storedSchema.update(testSchema);
+
+    // Apply an edit to the tree which inserts a node with a value
+    tree.runTransaction((forest, editor) => {
+        const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+        field.insert(0, writeCursor);
+
+        return TransactionResult.Apply;
+    });
 }
