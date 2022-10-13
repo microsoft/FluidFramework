@@ -545,14 +545,14 @@ export class GarbageCollector implements IGarbageCollector {
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             // ...unless we're using the TestOverride
             this.sweepEnabled = this.gcOptions.sweepAllowed === true || testOverrideSweepTimeoutMs !== undefined;
-            this.sweepTimeoutMs =
-                testOverrideSweepTimeoutMs
-                ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
+            this.sweepTimeoutMs =
+                testOverrideSweepTimeoutMs
+                ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
         }
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.

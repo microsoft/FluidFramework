@@ -995,7 +995,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        const maxSnapshotCacheDurationMs = this._storage.policies?.maximumCacheDurationMs;
+        const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
         if (maxSnapshotCacheDurationMs !== undefined && maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000) {
             // This is a runtime enforcement of what's already explicit in the policy's type itself,
             // which dictates the value is either undefined or exactly 5 days in ms.
