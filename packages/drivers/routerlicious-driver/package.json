@@ -67,7 +67,7 @@
     "@fluidframework/driver-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/gitresources": "^0.1038.2000-98212",
     "@fluidframework/protocol-base": "^0.1038.2000-98212",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/server-services-client": "^0.1038.2000-98212",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "cross-fetch": "^3.1.5",
