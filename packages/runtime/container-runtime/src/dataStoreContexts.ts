@@ -87,7 +87,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
             return undefined;
         }
 
-        return this._contexts.get(id) as LocalFluidDataStoreContext;
+        return context as LocalFluidDataStoreContext;
     }
 
     /**
