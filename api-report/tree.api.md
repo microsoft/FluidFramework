@@ -561,9 +561,6 @@ function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeCh
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export function isEditableField(field: UnwrappedEditableField | EditableField): field is EditableField;
-
-// @public
 export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
     readonly root: UnwrappedEditableField;
