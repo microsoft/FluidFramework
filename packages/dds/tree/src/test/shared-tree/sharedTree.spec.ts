@@ -140,10 +140,10 @@ describe("SharedTree", () => {
             return TransactionResult.Apply;
         });
 
-        // Ensure tree2 has a change to send deletion of Z
+        // Ensure tree2 has a chance to send deletion of Z
         await provider.opProcessingController.processOutgoing(container2);
 
-        // Ensure tree1 has a change to receive the deletion of Z before putting out a summary
+        // Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
         await provider.opProcessingController.processIncoming(container1);
         validateTree(tree1, ["A", "C"])
 
