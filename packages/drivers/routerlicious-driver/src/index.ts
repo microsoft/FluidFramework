@@ -4,11 +4,11 @@
  */
 
 // Tokens
-export * from "./defaultTokenProvider";
-export * from "./tokens";
+export { DefaultTokenProvider } from "./defaultTokenProvider";
+export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";
 
 // Factory
-export * from "./documentServiceFactory";
+export { DocumentPostCreateError, RouterliciousDocumentServiceFactory } from "./documentServiceFactory";
 
 // Configuration
-export * from "./policies";
+export { IRouterliciousDriverPolicies } from "./policies";

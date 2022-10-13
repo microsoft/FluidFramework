@@ -61,7 +61,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
-    summarizerClientElection: booleanCases,
+    summarizerClientElection: [false],
     summarizerOptions: [undefined],
 };
 
@@ -79,6 +79,7 @@ export function generateRuntimeOptions(
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
         compressionOptions: [{ minimumSize: 500 }],
+        maxBatchSizeInBytes: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

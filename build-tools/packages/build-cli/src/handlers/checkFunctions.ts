@@ -13,8 +13,9 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     generateBumpVersionBranchName,
-    generateCommitMessage,
+    generateBumpVersionCommitMessage,
     generateReleaseBranchName,
     getPreReleaseDependencies,
     getReleaseSourceForReleaseGroup,
@@ -591,7 +592,7 @@ export const checkShouldCommit: StateHandlerFunction = async (
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const commitMsg = generateCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
+    const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
 
     await context.createBranch(branchName);
     log.verbose(`Created bump branch: ${branchName}`);
@@ -634,7 +635,7 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
     log.verbose(`Created bump branch: ${branchName}`);
     log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-    const commitMsg = `[dependencies] ${releaseGroup}: update prerelease dependencies to release versions`;
+    const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;

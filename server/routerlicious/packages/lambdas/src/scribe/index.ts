@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-export * from "./checkpointManager";
-export * from "./interfaces";
-export * from "./lambda";
-export * from "./lambdaFactory";
-export * from "./summaryReader";
-export * from "./summaryWriter";
+export { CheckpointManager } from "./checkpointManager";
+export {
+	ICheckpointManager,
+	ILatestSummaryState,
+	IPendingMessageReader,
+	ISummaryReader,
+	ISummaryWriter,
+	ISummaryWriteResponse,
+} from "./interfaces";
+export { ScribeLambda } from "./lambda";
+export { ScribeLambdaFactory } from "./lambdaFactory";
+export { SummaryReader } from "./summaryReader";
+export { SummaryWriter } from "./summaryWriter";

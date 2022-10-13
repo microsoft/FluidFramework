@@ -7,7 +7,27 @@
  * Exports for `id-compressor`
  */
 
-export * from './IdCompressor';
-export * from './IdRange';
-export * from './persisted-types';
+export {
+	defaultClusterCapacity,
+	hasOngoingSession,
+	IdCompressor,
+	isFinalId,
+	isLocalId,
+	legacySharedTreeInitialTreeId,
+} from './IdCompressor';
+export { getIds } from './IdRange';
+export {
+	IdCreationRange,
+	SerializedCluster,
+	SerializedClusterOverrides,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SerializedLocalOverrides,
+	SerializedLocalState,
+	SerializedSessionData,
+	SerializedSessionIdNormalizer,
+	UnackedLocalId,
+	VersionedSerializedIdCompressor,
+} from './persisted-types';
 export { createSessionId } from './NumericUuid';
