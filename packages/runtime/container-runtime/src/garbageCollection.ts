@@ -188,7 +188,6 @@ export interface IGarbageCollectorCreateParams {
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
     readonly getContainerDiagnosticId: () => string;
-    readonly isDriverGcCompatible: boolean;
 }
 
 /** The state of node that is unreferenced. */
@@ -446,7 +445,6 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly inactiveTimeoutMs: number;
     /** The time after which an unreferenced node is ready to be swept. */
     private readonly sweepTimeoutMs: number | undefined;
-    private readonly isDriverGcCompatible: boolean | undefined;
 
     /** For a given node path, returns the node's package path. */
     private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -527,13 +525,6 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-
-            const currentSessionCompatFlag = createParams.isDriverGcCompatible;
-            this.isDriverGcCompatible = metadata?.isDriverGcCompatible ?? currentSessionCompatFlag;
-            if (currentSessionCompatFlag !== this.isDriverGcCompatible) {
-                throw new UsageError("Driver compatibility with GC must not change over Container lifetime");
-            }
-
             this.sweepTimeoutMs =
                 metadata?.sweepTimeoutMs
                 ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
@@ -544,6 +535,7 @@ export class GarbageCollector implements IGarbageCollector {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
+            // This Test Override only applies for new containers
             const testOverrideSweepTimeoutMs =
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepTimeoutMs");
 
@@ -551,7 +543,7 @@ export class GarbageCollector implements IGarbageCollector {
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            // ...unless we're using TestOverrides
+            // ...unless we're using the TestOverride
             this.sweepEnabled = this.gcOptions.sweepAllowed === true || testOverrideSweepTimeoutMs !== undefined;
             this.sweepTimeoutMs =
                 testOverrideSweepTimeoutMs
@@ -610,7 +602,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.shouldRunSweep =
             this.shouldRunGC
             && this.sweepTimeoutMs !== undefined
-            && this.isDriverGcCompatible === true
             && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
@@ -977,13 +968,6 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public getMetadata(): IGCMetadata {
-        // We only persist the value for the Summarizer, since Interactive client could be detached (then it's invalid)
-        // Note that if versions of the driver which disagree on this policy are active simultaneously in an ecosystem,
-        // this value could change in the lifetime of the file. But this is a corner case we will live with for now.
-        const isDriverGcCompatible = this.isSummarizerClient
-            ? this.isDriverGcCompatible
-            : undefined;
-
         return {
             /**
              * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
@@ -993,7 +977,6 @@ export class GarbageCollector implements IGarbageCollector {
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
             sweepTimeoutMs: this.sweepTimeoutMs,
-            isDriverGcCompatible,
         };
     }
 

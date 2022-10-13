@@ -996,11 +996,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
         const maxSnapshotCacheDurationMs = this._storage.policies?.maximumCacheDurationMs;
+        if (maxSnapshotCacheDurationMs !== undefined && maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000) {
             // This is a runtime enforcement of what's already explicit in the policy's type itself,
             // which dictates the value is either undefined or exactly 5 days in ms.
             // As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
-        const isDriverGcCompatible: boolean =
-            maxSnapshotCacheDurationMs !== undefined && maxSnapshotCacheDurationMs <= 5 * 24 * 60 * 60 * 1000
+            throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+        }
 
         this.garbageCollector = GarbageCollector.create({
             runtime: this,
@@ -1015,7 +1016,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
             getContainerDiagnosticId: () => this.context.id,
             activeConnection: () => this.deltaManager.active,
-            isDriverGcCompatible,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;

@@ -25,7 +25,7 @@ import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from
  * @param settings - feature flags to set
  * @returns a config provider that returns feature flag information
  */
- export const mockConfigProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+export const mockConfigProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
     return {
         getRawConfig: (name: string): ConfigTypes => {
             return settings[name];

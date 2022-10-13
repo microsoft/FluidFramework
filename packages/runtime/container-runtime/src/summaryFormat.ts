@@ -107,12 +107,8 @@ export interface IGCMetadata {
     readonly sweepEnabled?: boolean;
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
-    //* comment
-    /**
-     */
+    /** How long to wait after an object is unreferenced before deleting it via GC Sweep */
     readonly sweepTimeoutMs?: number;
-    /** Indicates that the driver from around when the container was created implemented this policy */
-    readonly isDriverGcCompatible?: boolean;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */

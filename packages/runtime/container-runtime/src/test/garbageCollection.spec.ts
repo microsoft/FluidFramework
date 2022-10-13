@@ -125,7 +125,6 @@ describe("Garbage Collection Tests", () => {
             getLastSummaryTimestampMs: () => Date.now(),
             activeConnection: () => true,
             getContainerDiagnosticId: () => "someDocId",
-            driverImplementsSnapshotCachePolicy: true, // To enable running sweep
         });
     }
     let gc: GcWithPrivates | undefined;
