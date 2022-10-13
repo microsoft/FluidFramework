@@ -7,9 +7,9 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
+    ConnectionState,
     IContainer,
     ICriticalContainerError,
-    ConnectionState,
 } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
