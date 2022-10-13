@@ -14,7 +14,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
