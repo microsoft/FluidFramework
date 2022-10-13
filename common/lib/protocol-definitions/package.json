@@ -60,7 +60,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
+    "version": "1.1.0",
     "broken": {
       "RemovedInterfaceDeclaration_ISummaryConfiguration": {
         "forwardCompat": false,
