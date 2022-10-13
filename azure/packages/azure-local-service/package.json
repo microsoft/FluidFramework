@@ -1,12 +1,12 @@
 {
   "name": "@fluidframework/azure-local-service",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Local implementation of the Azure Fluid Relay service for testing/development use",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "server/azure-local-service"
+    "directory": "azure/packages/azure-local-service"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
@@ -16,10 +16,10 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "npm run tsc",
-    "build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

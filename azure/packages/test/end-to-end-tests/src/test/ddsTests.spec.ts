@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
