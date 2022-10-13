@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/test-end-to-end-tests";
-export const pkgVersion = "2.0.0-internal.1.4.2";
+export const pkgVersion = "2.0.0-internal.1.4.3";
