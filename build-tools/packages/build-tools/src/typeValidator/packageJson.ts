@@ -4,8 +4,19 @@
  */
 import child_process from "child_process";
 import * as fs from "fs";
-import { upperFirst } from "lodash";
+import * as semver from "semver";
 import * as util from "util";
+
+import {
+    ReleaseVersion,
+    detectVersionScheme,
+    fromInternalScheme,
+    fromVirtualPatchScheme,
+    getVersionRange,
+    isInternalVersionScheme,
+    toInternalScheme,
+    toVirtualPatchScheme,
+} from "@fluid-tools/version-tools";
 
 export type PackageDetails = {
     readonly packageDir: string;
@@ -72,6 +83,16 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
     };
 }
 
+/**
+ * Based on the current version of the package as per package.json, determines the previous version that we should run
+ * typetests against.
+ *
+ * This is always the latest patch release of the previous major version series, which is the caret-range or equivalent.
+ *
+ * @param packageDir - the path to the package.
+ * @param updateOptions
+ * @returns
+ */
 export async function getAndUpdatePackageDetails(
     packageDir: string,
     updateOptions: { cwd?: string } | undefined,
@@ -88,50 +109,52 @@ export async function getAndUpdatePackageDetails(
         return { skipReason: "Skipping package: type validation disabled" };
     }
 
-    // normalize the version to remove any pre-release version info,
-    // as we shouldn't change the type validation version for pre-release versions
-    const normalizedVersion = packageDetails.pkg.version.includes("-")
-        ? packageDetails.pkg.version.substring(0, packageDetails.pkg.version.indexOf("-"))
-        : packageDetails.pkg.version;
+    const version = packageDetails.pkg.version;
+    const scheme = detectVersionScheme(version);
+    let previousVersion: ReleaseVersion;
 
-    if (
-        updateOptions === undefined ||
-        normalizedVersion === packageDetails.pkg.typeValidation?.version
-    ) {
-        return packageDetails;
-    }
+    if (scheme === "internal") {
+        const [pubVer, intVer] = fromInternalScheme(version);
+        if (intVer.major === 0) {
+            throw new Error(`Internal major unexpectedly 0.`);
+        }
 
-    /*
-     * this is where we build the previous version we use to compare against the current version.
-     * For major we use semver such that the current major is compared against the latest
-     * previous major. In the case of minor we target specific previous minor version.
-     * Similarly for patch we do not use semver, we compare directly to the previous patch version.
-     *
-     * We do this to align with our release process. We are strictest between patches and minor, and looser between major
-     * We may need to adjust this as we adjust our release processes.
-     */
-    let normalizeParts = normalizedVersion.split(".").map((p) => Number.parseInt(p));
-    const validationVersionParts = packageDetails.pkg.typeValidation?.version
-        ?.split(".")
-        .map((p) => Number.parseInt(p)) ?? [0, 0, 0];
-    let semVer = "";
-    if (normalizeParts[0] !== validationVersionParts[0]) {
-        semVer = "^";
-        normalizeParts = [normalizeParts[0] - 1, 0, 0];
-    } else if (normalizeParts[1] !== validationVersionParts[1]) {
-        normalizeParts = [normalizeParts[0], normalizeParts[1] - 1, 0];
+        if (intVer.major === 1) {
+            previousVersion = "1.0.0";
+        } else {
+            previousVersion = toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
+        }
+    } else if (scheme === "virtualPatch") {
+        const ver = fromVirtualPatchScheme(version);
+        if (ver.major <= 1) {
+            throw new Error(`Virtual patch major unexpectedly <= 1.`);
+        }
+        previousVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
     } else {
-        normalizeParts[2] = validationVersionParts[2];
+        const ver = semver.parse(version);
+        if (ver === null) {
+            throw new Error(`COuldn't parse version string: ${version}`);
+        }
+
+        if (ver.major <= 1) {
+            throw new Error(`Virtual patch major unexpectedly <= 1.`);
+        }
+
+        previousVersion = `${ver.major}.0.0`;
     }
-    const previousVersion = normalizeParts.join(".");
+
+    // TODO: Should we use a range instead?
+    previousVersion = isInternalVersionScheme(previousVersion)
+        ? getVersionRange(previousVersion, "^")
+        : `^${previousVersion}`;
 
     // check that the version exists on npm before trying to add the
     // dev dep and bumping the typeValidation version
     // if the version does not exist, we will defer updating the package
-    const packageDef = `${packageDetails.pkg.name}@${semVer}${previousVersion}`;
+    const packageDef = `${packageDetails.pkg.name}@${previousVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
     const result = child_process
-        .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions.cwd ?? packageDir })
+        .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir })
         .toString();
     const maybeVersions =
         result !== undefined && result.length > 0 ? safeParse(result, args.join(" ")) : undefined;
@@ -151,7 +174,7 @@ export async function getAndUpdatePackageDetails(
         packageDetails.pkg.devDependencies = createSortedObject(packageDetails.pkg.devDependencies);
 
         packageDetails.pkg.typeValidation = {
-            version: normalizedVersion,
+            version,
             broken: {},
         };
         await util.promisify(fs.writeFile)(
