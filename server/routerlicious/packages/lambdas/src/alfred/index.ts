@@ -91,7 +91,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         traces: message.traces,
         type: message.type,
         compression: message.compression,
-    // back-compat ADO #1932: Remove cast when protocol change propagates
+        // back-compat ADO #1932: Remove cast when protocol change propagates
     } as any;
 
     return sanitizedMessage;
@@ -274,7 +274,7 @@ export function configureWebSocketServices(
                 }
                 // We don't understand the error, so it is likely an internal service error.
                 const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
-                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
             const clientId = generateClientId();
@@ -568,13 +568,13 @@ export function configureWebSocketServices(
 
                                     return true;
                                 })
-                              .map((message) => {
-                                  const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
-                                  const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
-                                      numberOfMessagesPerTrace, connection.clientId,
-                                      connection.tenantId, connection.documentId);
-                                  return sanitizedMessageWithTrace;
-                              });
+                                .map((message) => {
+                                    const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
+                                    const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
+                                        numberOfMessagesPerTrace, connection.clientId,
+                                        connection.tenantId, connection.documentId);
+                                    return sanitizedMessageWithTrace;
+                                });
 
                             if (sanitized.length > 0) {
                                 // Cannot await this order call without delaying other message batches in this submitOp.
@@ -684,11 +684,11 @@ function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: num
             message.traces = [];
         }
         message.traces.push(
-        {
-            action: "start",
-            service: "alfred",
-            timestamp: Date.now(),
-        });
+            {
+                action: "start",
+                service: "alfred",
+                timestamp: Date.now(),
+            });
 
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,
