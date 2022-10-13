@@ -4,32 +4,43 @@
  */
 
 // Constants
-export * from "./constants";
+export { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants";
 
-export * from "./contractsPublic";
+export {
+	ClpCompliantAppHeader,
+	IClpCompliantAppHeader,
+	ISharingLinkHeader,
+	OdspFluidDataStoreLocator,
+	SharingLinkHeader,
+} from "./contractsPublic";
 
 // public utils
-export * from "./odspPublicUtils";
-export * from "./odspUrlHelper";
-export * from "./createOdspUrl";
-export * from "./checkUrl";
+export { checkUrl } from "./checkUrl";
+export { createOdspUrl } from "./createOdspUrl";
+export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils";
+export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./odspUrlHelper";
 
 // prefetch latest snapshot before container load
-export * from "./prefetchLatestSnapshot";
+export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot";
 
 // Factory
-export * from "./odspDocumentServiceFactoryCore";
-export * from "./odspDocumentServiceFactory";
-export * from "./odspDocumentServiceFactoryWithCodeSplit";
+export { createLocalOdspDocumentServiceFactory, OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
+export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
+export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFactoryWithCodeSplit";
 
 // File creation
-export * from "./createOdspCreateContainerRequest";
+export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 
 // URI Resolver functionality, URI management
-export * from "./odspDriverUrlResolverForShareLink";
-export * from "./odspDriverUrlResolver";
+export { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+export { OdspDriverUrlResolverForShareLink, ShareLinkFetcherProps } from "./odspDriverUrlResolverForShareLink";
 
 // It's used by URL resolve code, but also has some public functions
-export * from "./odspFluidFileLink";
+export {
+	encodeOdspFluidDataStoreLocator,
+	getLocatorFromOdspUrl,
+	locatorQueryParamName,
+	storeLocatorInOdspUrl,
+} from "./odspFluidFileLink";
 
 export { parseCompactSnapshotResponse } from "./compactSnapshotParser";

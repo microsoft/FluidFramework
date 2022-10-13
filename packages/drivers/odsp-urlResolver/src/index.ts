@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./urlResolver";
+export { isOdspUrl, OdspUrlResolver } from "./urlResolver";
