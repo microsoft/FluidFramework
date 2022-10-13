@@ -527,8 +527,7 @@ export class SummaryWriter implements ISummaryWriter {
         if (!isLogtailEntriesMatch) {
             const missingOpsSequenceNumbers: number[] = [];
             const fullLogTailSequenceNumbersSet = new Set();
-            const fullLogTailSequenceNumbers = fullLogTail?.map((ms) => ms.sequenceNumber);
-            fullLogTailSequenceNumbers.forEach((op) => fullLogTailSequenceNumbersSet.add(op));
+            fullLogTail?.map((op) => fullLogTailSequenceNumbersSet.add(op.sequenceNumber));
             for (let i = from + 1; i < to; i++) {
                 if (!fullLogTailSequenceNumbersSet.has(i)) {
                     missingOpsSequenceNumbers.push(i);
