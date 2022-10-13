@@ -96,8 +96,8 @@ steps:
         sorted=false
       fi
       for packageName in $packages
-      let cnt+=1
       do
+        let cnt+=1
         if [[ $sorted == true ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
         else
