@@ -11,7 +11,6 @@ import {
     IDocumentMessage,
     INack,
     ISignalMessage,
-    MessageType,
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
@@ -90,7 +89,9 @@ function sanitizeMessage(message: any): IDocumentMessage {
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
-    };
+        compression: message.compression,
+    // back-compat ADO #1932: Remove cast when protocol change propagates
+    } as any;
 
     return sanitizedMessage;
 }
@@ -228,11 +229,7 @@ export function configureWebSocketServices(
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], mode: ConnectionMode): boolean {
-            if (hasWriteAccess(scopes)) {
-                return mode === "write";
-            } else {
-                return false;
-            }
+            return hasWriteAccess(scopes) ? mode === "write" : false;
         }
 
         function clearExpirationTimer() {
@@ -539,19 +536,6 @@ export function configureWebSocketServices(
                         try {
                             const sanitized = messages
                                 .filter((message) => {
-                                    if (message.type === MessageType.RoundTrip) {
-                                        if (message.traces) {
-                                            // End of tracking. Write traces.
-                                            // TODO: add Lumber metric here?
-                                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                                (error) => {
-                                                    logger.error(error.stack);
-                                                    Lumberjack.error(error.stack);
-                                                });
-                                        }
-                                        return false;
-                                    }
-
                                     if (verifyMaxMessageSize === true) {
                                         // Local tests show `JSON.stringify` to be fast
                                         // - <1ms for JSONs <100kb

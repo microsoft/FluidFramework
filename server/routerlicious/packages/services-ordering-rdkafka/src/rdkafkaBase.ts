@@ -11,6 +11,7 @@ import { tryImportNodeRdkafka } from "./tryImport";
 export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
+    disableTopicCreation?: boolean;
     sslCACertFilePath?: string;
     restartOnKafkaErrorCodes?: number[];
 }
@@ -52,7 +53,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
         // as usual will automatically include SSL support.
         const rdKafkaHasSSLEnabled =
-            kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
+            kafka.features.filter((feature) => feature.toLowerCase().includes("ssl"));
 
         if (options?.sslCACertFilePath) {
             // If the use of SSL is desired, but rdkafka has not been built with SSL support,
@@ -76,7 +77,10 @@ export abstract class RdkafkaBase extends EventEmitter {
 
     private async initialize() {
         try {
-            await this.ensureTopics();
+            if (!this.options.disableTopicCreation) {
+                await this.ensureTopics();
+            }
+
             this.connect();
         } catch (ex) {
             this.error(ex);
@@ -128,7 +132,7 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
-    private static isObject(value: any): value is object {
+    protected static isObject(value: any): value is object {
         return value !== null && typeof (value) === "object";
     }
 }

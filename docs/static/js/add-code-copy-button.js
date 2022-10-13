@@ -9,6 +9,8 @@
 // metadata at the top of the file
 
 const copyMessage = "Copy";
+const copyAriaLabel = "Copy this code snippet";
+
 const addCopyButtonsToCodeBlocks = () => {
     // Ensure the browser supports copy
     if (!document.queryCommandSupported("copy")) {
@@ -28,14 +30,18 @@ const addCopyButtonsToCodeBlocks = () => {
         const copyBtn = document.createElement("button");
         copyBtn.className = "highlight-copy-btn";
         copyBtn.textContent = copyMessage;
-        copyBtn.setAttribute("aria-label", "Copy this code snippet");
+        copyBtn.ariaLabel = copyAriaLabel;
+        copyBtn.ariaLive = "polite";
+        copyBtn.type = "button";
 
         // Set a message on the button then return to the initial
         // value after 1 second
-        const flashCopyMessage = (el, msg) => {
+        const flashCopyMessage = (el, msg, label) => {
             el.textContent = msg;
+            el.ariaLabel = label;
             setTimeout(() => {
                 el.textContent = copyMessage;
+                el.ariaLabel = copyAriaLabel;
             }, 1000);
         };
 
@@ -46,10 +52,10 @@ const addCopyButtonsToCodeBlocks = () => {
                 document.execCommand("copy");
                 selection.removeAllRanges();
 
-                flashCopyMessage(copyBtn, "Copied!");
+                flashCopyMessage(copyBtn, "Copied!", "Copied to the clipboard");
             } catch (e) {
                 console && console.log(e);
-                flashCopyMessage(copyBtn, "Failed");
+                flashCopyMessage(copyBtn, "Failed", "Failed to copy");
             }
         });
 

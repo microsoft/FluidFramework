@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { expect, test } from "@oclif/test";
 
 const test_tags = [
@@ -17,7 +16,8 @@ const test_tags = [
 ];
 
 describe("generate:buildVersion", () => {
-    test.stdout()
+    test.timeout(10000)
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",
@@ -35,9 +35,10 @@ describe("generate:buildVersion", () => {
             expect(ctx.stdout).to.contain("version=0.4.0-12345");
         });
 
-    test.env({
-        VERSION_BUILDNUMBER: "88802",
-    })
+    test.timeout(10000)
+        .env({
+            VERSION_BUILDNUMBER: "88802",
+        })
         .stdout()
         .command([
             "generate:buildVersion",

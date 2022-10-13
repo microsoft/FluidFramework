@@ -13,6 +13,7 @@ import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IBatchMessage } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -88,7 +89,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats>;
+    }): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -109,8 +110,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    flush(): void;
+    protected flushBatch(batch: BatchMessage[]): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -154,7 +157,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
-    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -165,8 +168,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
-    setFlushMode(mode: FlushMode): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -189,7 +190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -204,17 +205,6 @@ export interface ContainerRuntimeMessage {
 
 // @public (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
-
-// @public
-export class DeltaScheduler {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
-    // (undocumented)
-    batchBegin(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    batchEnd(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    static readonly processingTime = 50;
-}
 
 // @public (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -308,6 +298,11 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
+// @public
+export interface ICompressionRuntimeOptions {
+    readonly minimumSize?: number;
+}
+
 // @public (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
@@ -324,11 +319,13 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly maxBatchSizeInBytes?: number;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
@@ -341,13 +338,13 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getNodeType(nodePath: string): GCNodeType;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)
@@ -412,14 +409,6 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public
-export interface IPendingFlushMode {
-    // (undocumented)
-    flushMode: FlushMode;
-    // (undocumented)
-    type: "flushMode";
-}
-
 // @public (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
@@ -444,12 +433,20 @@ export interface IPendingMessage {
 }
 
 // @public (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
 export interface IProvideSummarizer {
     // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
+}
+
+// @public
+export interface IRefreshSummaryAckOptions {
+    readonly ackHandle: string;
+    readonly proposalHandle: string | undefined;
+    readonly summaryLogger: ITelemetryLogger;
+    readonly summaryRefSeq: number;
 }
 
 // @public
@@ -509,7 +506,7 @@ export interface ISummarizerEvents extends IEvent {
 
 // @public (undocumented)
 export interface ISummarizerInternalsProvider {
-    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
@@ -588,8 +585,6 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    // @deprecated (undocumented)
-    idleTime: number;
     maxIdleTime: number;
     maxOps: number;
     maxTime: number;
@@ -677,15 +672,6 @@ export enum RuntimeMessage {
 }
 
 // @public
-export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
-    // (undocumented)
-    afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    beforeOpProcessing(message: ISequencedDocumentMessage): void;
-}
-
-// @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @public
@@ -739,7 +725,11 @@ export type SummarizerStopReason =
 * client to no longer be elected as responsible for summaries. Then it
 * tries to stop its spawned summarizer client.
 */
-| "parentShouldNotSummarize"
+| "notElectedParent"
+/**
+* We are not already running the summarizer and we are not the current elected client id.
+*/
+| "notElectedClient"
 /** Summarizer client was disconnected */
 | "summarizerClientDisconnected" | "summarizerException";
 

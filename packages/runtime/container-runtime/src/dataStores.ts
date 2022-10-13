@@ -97,7 +97,6 @@ export class DataStores implements IDisposable {
         private readonly gcNodeUpdated: (
             nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
-        private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -142,7 +141,6 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    writeGCDataAtRoot: this.writeGCDataAtRoot,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -162,7 +160,6 @@ export class DataStores implements IDisposable {
                     makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
-                    writeGCDataAtRoot: this.writeGCDataAtRoot,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -247,7 +244,6 @@ export class DataStores implements IDisposable {
                     },
                 },
             ),
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
             pkg,
         });
 
@@ -351,7 +347,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
         });
         this.contexts.addUnbound(context);
         return context;
@@ -372,7 +367,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: false,
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
             createProps: props,
         });
         this.contexts.addUnbound(context);
@@ -469,12 +463,7 @@ export class DataStores implements IDisposable {
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        let eventName: "attaching" | "attached";
-        if (attachState === AttachState.Attaching) {
-            eventName = "attaching";
-        } else {
-            eventName = "attached";
-        }
+        const eventName = attachState === AttachState.Attaching ? "attaching" : "attached";
         for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
@@ -566,11 +555,15 @@ export class DataStores implements IDisposable {
 
     /**
      * Generates data used for garbage collection. It does the following:
+     *
      * 1. Calls into each child data store context to get its GC data.
+     *
      * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    identified as belonging to the child.
+     * identified as belonging to the child.
+     *
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
-     *    the GC data of this channel.
+     * the GC data of this channel.
+     *
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
@@ -596,10 +589,8 @@ export class DataStores implements IDisposable {
     /**
      * After GC has run, called to notify this Container's data stores of routes that are used in it.
      * @param usedRoutes - The routes that are used in all data stores in this Container.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
-     * unreferenced as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -610,7 +601,7 @@ export class DataStores implements IDisposable {
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
     }
 

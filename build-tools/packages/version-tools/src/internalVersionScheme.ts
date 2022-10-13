@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import * as semver from "semver";
+
 import { VersionBumpTypeExtended } from "./bumpTypes";
 
 /**
@@ -46,17 +46,24 @@ const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
  *
  * a.b.c-internal.x.y.z
  *
- * @param internalVersion - a version in the Fluid internal version scheme.
+ * @param internalVersion - A version in the Fluid internal version scheme.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns A tuple of [publicVersion, internalVersion]
  */
 export function fromInternalScheme(
     internalVersion: semver.SemVer | string,
+    allowPrereleases = false,
 ): [publicVersion: semver.SemVer, internalVersion: semver.SemVer] {
     const parsedVersion = semver.parse(internalVersion);
-    validateVersionScheme(parsedVersion);
+    validateVersionScheme(parsedVersion, allowPrereleases);
 
     assert(parsedVersion !== null);
-    const newSemVerString = parsedVersion.prerelease.slice(1).join(".");
+    const prereleaseSections = parsedVersion.prerelease;
+
+    const newSemVerString =
+        prereleaseSections.length > 4
+            ? `${prereleaseSections.slice(1, 4).join(".")}-${prereleaseSections.slice(4).join(".")}`
+            : prereleaseSections.slice(1).join(".");
     const newSemVer = semver.parse(newSemVerString);
     if (newSemVer === null) {
         throw new Error(`Couldn't convert ${internalVersion} to a standard semver.`);
@@ -90,33 +97,39 @@ export function fromInternalScheme(
  * @example
  *
  * a.b.c-internal.x.y.z
-
+ *
  * @param publicVersion - The public version.
  * @param version - The internal version.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns A version in the Fluid internal version scheme.
  */
 export function toInternalScheme(
     publicVersion: semver.SemVer | string,
     version: semver.SemVer | string,
+    allowPrereleases = false,
 ): semver.SemVer {
     const parsedVersion = semver.parse(version);
     if (parsedVersion === null) {
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
-    if (parsedVersion.prerelease.length !== 0) {
+    if (!allowPrereleases && parsedVersion.prerelease.length !== 0) {
         throw new Error(
             `Input version already has a pre-release component (${parsedVersion.prerelease}), which is not expected.`,
         );
     }
 
-    const newSemVerString = `${publicVersion}-internal.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}`;
+    const prereleaseSections = parsedVersion.prerelease;
+    const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
+    const newSemVerString = `${publicVersion}-internal.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
     const newSemVer = semver.parse(newSemVerString);
     if (newSemVer === null) {
-        throw new Error(`Couldn't convert ${version} to the internal version scheme.`);
+        throw new Error(
+            `Couldn't convert ${version} to the internal version scheme. Tried parsing: '${newSemVerString}'`,
+        );
     }
 
-    if (!isInternalVersionScheme(newSemVer)) {
+    if (!isInternalVersionScheme(newSemVer, allowPrereleases)) {
         throw new Error(`Converted version is not a valid Fluid internal version: ${newSemVer}`);
     }
 
@@ -276,4 +289,38 @@ export function getVersionRange(
         throw new Error(`The generated range string was invalid: "${rangeString}"`);
     }
     return range;
+}
+
+export function changePreReleaseIdentifier(
+    version: semver.SemVer | string,
+    newIdentifier: string,
+): string {
+    const ver = semver.parse(version);
+
+    if (ver === null) {
+        throw new Error(`Can't parse version: ${version}`);
+    }
+
+    const pr = ver.prerelease;
+    if (pr.length < 1) {
+        throw new Error(`Version has no prerelease section: ${version}`);
+    }
+
+    const identifier = pr[0];
+
+    if (typeof identifier === "number") {
+        // eslint-disable-next-line unicorn/prefer-type-error
+        throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
+    }
+
+    const newPrereleaseSection = [newIdentifier, ...pr.slice(1)].join(".");
+    const newVersionString = `${ver.major}.${ver.minor}.${ver.patch}-${newPrereleaseSection}`;
+
+    const newVer = semver.parse(newVersionString)?.version;
+
+    if (newVer === null || newVer === undefined) {
+        throw new Error(`Can't parse new version string: ${version}`);
+    }
+
+    return newVer;
 }

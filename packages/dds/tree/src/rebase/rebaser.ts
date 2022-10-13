@@ -34,7 +34,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
      */
     private readonly revisionTree: Map<
         RevisionTag,
-        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser>; }
+        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
     > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
@@ -51,8 +51,10 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
         to: RevisionTag,
     ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
         const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.rebase(changes, over);
+        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
+            changes,
+            over,
+        );
         const newRevision = this.makeRevision();
         this.revisionTree.set(newRevision, {
             before: to,
@@ -64,11 +66,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     /**
      * Modifies `anchors` to be valid at the destination.
      */
-    public rebaseAnchors(
-        anchors: AnchorSet,
-        from: RevisionTag,
-        to: RevisionTag,
-    ): void {
+    public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
         const over = this.getResolutionPath(from, to);
         this.rebaser.rebaseAnchors(anchors, over);
     }
@@ -103,11 +101,8 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
 }
 
 // TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
-export type ChangesetFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any>,
-    > = TChangeRebaser extends ChangeRebaser<infer TChangeset>
-    ? TChangeset
-    : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
+    TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 /**
  * Rebasing logic for a particular kind of change.

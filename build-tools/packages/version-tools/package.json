@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.4.5000",
+  "version": "0.4.8000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -11,29 +11,30 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "bin": {
     "fluv": "./bin/run"
   },
   "files": [
     "/bin",
-    "/dist",
+    "/lib",
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
-    "build:commonjs": "npm run build:clean && npm run tsc",
+    "build": "npm run build:genver && concurrently npm:clean:manifest npm:build:compile npm:lint && npm run build:docs",
+    "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "npm run build:commonjs",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
-    "build:readme": "oclif readme",
+    "build:readme": "node \"../build-cli/bin/dev\" generate readme",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run",
-    "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
+    "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
+    "clean:manifest": "rimraf oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -42,7 +43,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
-    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
+    "test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
     "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:report": "nyc npm run test:mocha:report",
     "tsc": "tsc"
@@ -52,12 +53,12 @@
     "cache-dir": "nyc/.cache",
     "exclude": [
       "src/test/**/*.ts",
-      "dist/test/**/*.js"
+      "lib/test/**/*.js"
     ],
     "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
-      "dist/**/*.js"
+      "lib/**/*.js"
     ],
     "report-dir": "nyc/report",
     "reporter": [
@@ -68,7 +69,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "~1.9.5",
+    "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
@@ -80,8 +81,9 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/chai": "^4",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
@@ -108,13 +110,17 @@
   "oclif": {
     "bin": "fluv",
     "dirname": "fluv",
-    "commands": "./dist/commands",
+    "commands": "./lib/commands",
     "additionalHelpFlags": [
       "-h"
+    ],
+    "additionalVersionFlags": [
+      "-V"
     ],
     "plugins": [
       "@oclif/plugin-help"
     ],
+    "repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/version-tools/<%- commandPath %>",
     "topicSeparator": " ",
     "topics": {}
   }

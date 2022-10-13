@@ -166,15 +166,10 @@ export class SummarizerNode implements IRootSummarizerNode {
         // If there is no latestSummary, clearSummary and return before reaching this code.
         assert(!!localPathsToUse, 0x1a5 /* "Tracked summary local paths not set" */);
 
-        // DataStore can be realized out-of-order during the summary execution (ex. the mixinSummaryHandler
-        // in order to provide search capability to the summaries). If that happens,
-        // a child node will not have the handle paths with ".channels".
-        // By using the _latestSummary's basePath we have a safe path to compose its pendingSummary.
-        // PR: https://github.com/microsoft/FluidFramework/pull/11697
         const summary = new SummaryNode({
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
-            basePath: parentSkipRecursion ? this._latestSummary?.basePath ?? parentPath : parentPath,
+            basePath: parentPath,
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {
@@ -209,11 +204,15 @@ export class SummarizerNode implements IRootSummarizerNode {
      * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
      * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
      * summary based off of that.
+     *
      * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
-     *          1. The latest summary was not udpated.
-     *          2. The latest summary was updated and the summary corresponding to the params was being tracked.
-     *          3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
-     *             case, the latest summary is updated based on the downloaded snapshot which is also returned.
+     *
+     * 1. The latest summary was not udpated.
+     *
+     * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
+     *
+     * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
+     * case, the latest summary is updated based on the downloaded snapshot which is also returned.
      */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
@@ -353,30 +352,13 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+    public updateBaseSummaryState(snapshot: ISnapshotTree) {
         // Check base summary to see if it has any additional path parts
         // separating child SummarizerNodes. Checks for .channels subtrees.
         const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
         if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
             this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
         }
-    }
-
-    public async loadBaseSummary(
-        snapshot: ISnapshotTree,
-        readAndParseBlob: ReadAndParseBlob,
-    ): Promise<ISnapshotTree> {
-        const pathParts: string[] = [];
-        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
-        if (childrenPathPart !== undefined) {
-            pathParts.push(childrenPathPart);
-        }
-
-        if (pathParts.length > 0 && this._latestSummary !== undefined) {
-            this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
-        }
-
-        return snapshot;
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {

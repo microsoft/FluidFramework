@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./runnerFactory";
-export * from "./runner";
-export * from "./services";
+export { AlfredRunner } from "./runner";
+export { AlfredResources, AlfredResourcesFactory, AlfredRunnerFactory, OrdererManager } from "./runnerFactory";
+export { DeltaService } from "./services";

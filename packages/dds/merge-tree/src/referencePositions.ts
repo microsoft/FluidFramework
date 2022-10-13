@@ -66,28 +66,16 @@ export interface ReferencePosition {
     isLeaf(): this is ISegment;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;
 
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-    if (compareReferencePositions(a, b) < 0) {
-        return a;
-    } else {
-        return b;
-    }
+    return compareReferencePositions(a, b) < 0 ? a : b;
 }
 
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
-    if (compareReferencePositions(a, b) > 0) {
-        return a;
-    } else {
-        return b;
-    }
+    return compareReferencePositions(a, b) > 0 ? a : b;
 }
 
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
@@ -96,12 +84,6 @@ export function compareReferencePositions(a: ReferencePosition, b: ReferencePosi
     if (aSeg === bSeg) {
         return a.getOffset() - b.getOffset();
     } else {
-        if (aSeg === undefined
-            || (bSeg !== undefined &&
-                aSeg.ordinal < bSeg.ordinal)) {
-            return -1;
-        } else {
-            return 1;
-        }
+        return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
     }
 }

@@ -283,11 +283,14 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedMap in local (detached) state set a key.
+         *
          * - The map is then attached so that it is available to remote clients.
+         *
          * - One of the remote clients sets a new value to the same key.
+         *
          * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
-         *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
-         *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+         * the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+         * when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
          */
 
         // Create a new map in local (detached) state.
@@ -341,9 +344,6 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
-    afterEach(async () => reset());
-
-    const reset = async () => provider.reset();
 
     let container: Container;
     let dataObject: ITestFluidObject;
@@ -387,7 +387,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         let sharedMap2: SharedMap;
 
         beforeEach(async () => {
-            await reset();
+            provider.reset();
             provider = getTestObjectProvider();
         });
 

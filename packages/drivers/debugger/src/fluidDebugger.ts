@@ -8,6 +8,7 @@ import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframe
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUi";
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
     /**
      * Creates document service wrapper that pops up Debugger window and allows user to play ops one by one.

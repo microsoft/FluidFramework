@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { detectVersionScheme, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 import {
     bumpTypeFlag,
     checkFlags,
     packageSelectorFlag,
     releaseGroupFlag,
     skipCheckFlag,
-    versionSchemeFlag,
 } from "../flags";
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
-import { StateMachineCommand, FluidReleaseMachine } from "../machines";
+import { FluidReleaseMachine } from "../machines";
+import { StateMachineCommand } from "../stateMachineCommand";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
@@ -23,16 +23,16 @@ import { StateMachineCommand, FluidReleaseMachine } from "../machines";
  */
 
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
-    machine = FluidReleaseMachine;
-    data: FluidReleaseStateHandlerData = {};
-    handler: StateHandler | undefined;
-
     static summary = "Releases a package or release group.";
     static description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
-    The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
+    The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
 
     This process is continued until all the dependencies have been released, after which the release group itself is released.`;
+
+    machine = FluidReleaseMachine;
+    handler: StateHandler | undefined;
+    data: FluidReleaseStateHandlerData = {};
 
     static flags = {
         releaseGroup: releaseGroupFlag({
@@ -60,6 +60,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
         this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
         this.data.context = context;
         this.data.promptWriter = new PromptWriter(this.logger);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
         this.data.bumpType = flags.bumpType as VersionBumpType;

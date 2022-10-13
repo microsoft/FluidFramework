@@ -55,7 +55,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * should this function behave during reference resolution?
      *
      * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
-     *    it could not be resolved
+     * it could not be resolved
      */
     get(in_ids, in_options) {
         in_options = in_options || {};
@@ -205,12 +205,10 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // Array tokens are automatically resolved
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        } else {
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            ? this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
             // Everything else is handled by the implementation in the base property
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     /**

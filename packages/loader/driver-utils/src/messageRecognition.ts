@@ -5,35 +5,8 @@
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 /**
- *
- * @param message-message
- * @returns whether or not the message type is one listed below
- * "op"
- * "summarize"
- * "propose"
- * "reject"
- * "noop"
- */
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
-    if (isRuntimeMessage(message)) {
-        return true;
-    }
-    switch (message.type) {
-        case MessageType.Propose:
-        case MessageType.Reject:
-        case MessageType.NoOp:
-        case MessageType2.Accept:
-        case MessageType.Summarize:
-            return true;
-        default:
-            return false;
-    }
-}
-
-/**
  * Tells if message was sent by container runtime
- * // ADO #1385: To be moved to container-definitions
- * @param message-message
+ * @privateRemarks ADO #1385: To be moved to container-definitions
  * @returns whether the message is a runtime message
  */
 export function isRuntimeMessage(message: { type: string; }): boolean {
@@ -51,16 +24,23 @@ enum RuntimeMessage {
 }
 
 /**
- * @deprecated - this API should not be used!
- * @param message-message
- * @returns whether or not the message type is one listed below (legacy)
- * "component"
- * "attach"
- * "chunkedOp"
- * "blobAttach"
- * "rejoin"
- * "alias"
- * "op"
+ * Determines whether or not the message type is one of the following: (legacy)
+ *
+ * - "component"
+ *
+ * - "attach"
+ *
+ * - "chunkedOp"
+ *
+ * - "blobAttach"
+ *
+ * - "rejoin"
+ *
+ * - "alias"
+ *
+ * - "op"
+ *
+ * @deprecated This API should not be used.
  */
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
