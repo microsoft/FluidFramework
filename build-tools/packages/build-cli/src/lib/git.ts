@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
+// flase positive?
+// eslint-disable-next-line node/no-missing-import
+import type { SetRequired } from "type-fest";
 
 import { CommandLogger } from "../logging";
 
@@ -10,7 +13,6 @@ import { CommandLogger } from "../logging";
  * Default options passed to the git client.
  */
 const defaultGitOptions: Partial<SimpleGitOptions> = {
-    baseDir: process.cwd(),
     binary: "git",
     maxConcurrentProcesses: 6,
     trimmed: true,
@@ -39,11 +41,16 @@ export class Repository {
     }
 
     constructor(
-        public readonly rootPath: string,
-        gitOptions?: Partial<SimpleGitOptions>,
+        gitOptions: SetRequired<Partial<SimpleGitOptions>, "baseDir">,
         protected readonly log?: CommandLogger,
     ) {
-        this.git = simpleGit(gitOptions ?? defaultGitOptions);
+        const options: SetRequired<Partial<SimpleGitOptions>, "baseDir"> = {
+            ...gitOptions,
+            ...defaultGitOptions,
+        };
+        log?.verbose("gitOptions:");
+        log?.verbose(JSON.stringify(options));
+        this.git = simpleGit(options);
     }
 
     /**
@@ -72,19 +79,5 @@ export class Repository {
                 return r.name;
             }
         }
-    }
-
-    async isBranchUpToDate(branch: string, remote: string): Promise<boolean> {
-        const { updated } = await this.git.fetch(remote, branch);
-
-        this.log?.info(JSON.stringify(updated));
-
-        const currentSha = await this.getShaForBranch(branch);
-        this.log?.verbose(`${branch} branch sha: ${currentSha}`);
-
-        const remoteSha = await this.getShaForBranch(branch, remote);
-        this.log?.verbose(`remote branch sha: ${remoteSha}`);
-
-        return remoteSha === currentSha;
     }
 }
