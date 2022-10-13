@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { AttachState } from "@fluidframework/container-definitions";
+export {
+    AttachState,
+    ContainerErrorType,
+    ICriticalContainerError,
+} from "@fluidframework/container-definitions";

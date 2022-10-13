@@ -12,6 +12,7 @@
  */
 
 export * from "./containerDefinitions";
+export * from "./driverDefinitions";
 export * from "./containerLoader";
 export * from "./fluidStatic";
 export * from "./map";
