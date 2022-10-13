@@ -18,10 +18,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
+- [Deprecate existing flag in IContainerContext](#deprecate-existing-flag-in-runtime)
 - [Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+
+### Deprecate existing flag in runtime
+The `existing` flag in runtime has been deprecated and will be removed in a future breaking change.
 
 ### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -138,14 +142,8 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 # 2.0.0-internal.1.3.0
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
-- [Deprecate existing flag in IContainerContext](#deprecate-existing-flag-in-runtime)
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
 - [iframe-driver removed](#iframe-driver-removed)
-
-### Deprecate existing flag in runtime
-`existing` flag in runtime has been deprecated and will be removed in a future breaking change. In addition,
-the `existing` flag will be required and can be expected when running `instantiateRuntime`. Clients should assert that
-it's not undefined and should use the value passed in.
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
