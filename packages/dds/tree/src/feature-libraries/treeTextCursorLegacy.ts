@@ -139,8 +139,12 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
         return TreeNavigationResult.Ok;
     }
 
-    length(key: FieldKey): number {
+    childFieldLength(key: FieldKey): number {
         return getGenericTreeField(this.getNode(), key, false).length;
+    }
+
+    currentFieldLength(): number {
+        return this.siblings.length;
     }
 }
 

@@ -169,7 +169,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         }
     }
 
-    public length(key: FieldKey): number {
+    public childFieldLength(key: FieldKey): number {
         const node = this.currentNode;
 
         // The 'Empty' field is used to access the indexer of array nodes.
@@ -180,6 +180,15 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         return (node as JsonCompatibleObject)[key as LocalFieldKey] === undefined
             ? 0 // A field with an undefined value has 0 length
             : 1; // All other fields have a length of 1
+    }
+
+    public currentFieldLength(): number {
+        const parent = this.parentStack[this.parentStack.length - 1];
+        if (this.currentKey === EmptyKey && Array.isArray(parent)) {
+            return parent.length;
+        }
+        // as we can only navigate to existing children, this cannot be other than 1
+        return 1;
     }
 
     public get value(): Value {

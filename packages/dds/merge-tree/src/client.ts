@@ -10,8 +10,8 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
+import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -67,7 +67,16 @@ function elapsedMicroseconds(trace: Trace) {
     return trace.trace().duration * 1000;
 }
 
-export class Client {
+/**
+ * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
+ * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
+ * they need for rebasing their ops on reconnection.
+ *
+ * @internal
+ */
+export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
+
+export class Client extends TypedEventEmitter<IClientEvents> {
     public measureOps = false;
     public accumTime = 0;
     public localTime = 0;
@@ -103,6 +112,7 @@ export class Client {
         public readonly logger: ITelemetryLogger,
         options?: PropertySet,
     ) {
+        super();
         this._mergeTree = new MergeTree(options);
     }
 
@@ -823,7 +833,11 @@ export class Client {
             }
 
             if (newOp) {
-                const newSegmentGroup: SegmentGroup = { segments: [], localSeq: segmentGroup.localSeq };
+                const newSegmentGroup: SegmentGroup = {
+                    segments: [],
+                    localSeq: segmentGroup.localSeq,
+                    refSeq: this.getCollabWindow().currentSeq,
+                };
                 segment.segmentGroups.enqueue(newSegmentGroup);
                 this._mergeTree.pendingSegments!.push(newSegmentGroup);
                 opList.push(newOp);
@@ -937,6 +951,7 @@ export class Client {
             shortRemoteClientId);
     }
 
+    private lastNormalizationRefSeq = 0;
     /**
      * Given an pending operation and segment group, regenerate the op, so it
      * can be resubmitted
@@ -947,6 +962,13 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
+        const rebaseTo = this.getCollabWindow().currentSeq;
+        if (rebaseTo !== this.lastNormalizationRefSeq) {
+            this.emit("normalize", this);
+            this._mergeTree.normalizeSegmentsOnRebase();
+            this.lastNormalizationRefSeq = rebaseTo;
+        }
+
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

@@ -22,9 +22,8 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:clean": "npm run clean",
-    "build:commonjs": "npm run build:clean && npm run tsc",
+    "build": "npm run build:genver && concurrently npm:clean:manifest npm:build:compile npm:lint && npm run build:docs",
+    "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "npm run build:commonjs",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
@@ -32,8 +31,10 @@
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "node \"../build-cli/bin/dev\" generate readme",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
+    "clean:manifest": "rimraf oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -42,7 +43,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
-    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
+    "test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
     "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:report": "nyc npm run test:mocha:report",
     "tsc": "tsc"

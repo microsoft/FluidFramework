@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerCode";
-export * from "./model";
+export { DiceRollerContainerRuntimeFactory } from "./containerCode";
+export { DiceRoller, DiceRollerInstantiationFactory } from "./model";

@@ -39,7 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
         private readonly forceAccessTokenViaAuthorizationHeader: boolean,
-        private readonly relayServiceTenantAndSessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string | undefined,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -94,8 +94,13 @@ export class OdspSummaryUploadManager {
                 this.forceAccessTokenViaAuthorizationHeader,
             );
             headers["Content-Type"] = "application/json";
-            headers["If-Match"] = `fluid:sessionid=${
-                this.relayServiceTenantAndSessionId()}${parentHandle ? `;containerid=${parentHandle}` : ""}`;
+            const relayServiceTenantAndSessionId = this.relayServiceTenantAndSessionId();
+            // This would be undefined in case of summary is uploaded in detached container with attachment
+            // blobs flow where summary is uploaded without connecting to push.
+            if (relayServiceTenantAndSessionId !== undefined) {
+                headers["If-Match"] = `fluid:sessionid=${
+                    relayServiceTenantAndSessionId}${parentHandle ? `;containerid=${parentHandle}` : ""}`;
+            }
 
             const postBody = JSON.stringify(snapshot);
 

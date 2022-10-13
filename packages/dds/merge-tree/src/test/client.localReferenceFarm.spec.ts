@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ReferencePosition } from "../referencePositions";
 import { ReferenceType } from "../ops";
 import {
@@ -35,8 +35,7 @@ describe("MergeTree.Client", () => {
     doOverRange(defaultOptions.initLen, defaultOptions.growthFunc, (initLen) => {
         doOverRange(defaultOptions.modLen, defaultOptions.growthFunc, (modLen) => {
             it(`LocalReferenceFarm_${initLen}_${modLen}`, async () => {
-                const mt = random.engines.mt19937();
-                mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, initLen, modLen]);
+                const random = makeRandom(0xDEADBEEF, 0xFEEDBED, initLen, modLen);
 
                 const clients: TestClient[] = new Array(3).fill(0).map(() => new TestClient());
                 clients.forEach(
@@ -45,7 +44,7 @@ describe("MergeTree.Client", () => {
                 let seq = 0;
                 // init with random values
                 seq = runMergeTreeOperationRunner(
-                    mt,
+                    random,
                     seq,
                     clients,
                     initLen,
@@ -93,7 +92,7 @@ describe("MergeTree.Client", () => {
                 validateRefs("After More Ops", () => {
                     // init with random values
                     seq = runMergeTreeOperationRunner(
-                        mt,
+                        random,
                         seq,
                         clients,
                         modLen,
