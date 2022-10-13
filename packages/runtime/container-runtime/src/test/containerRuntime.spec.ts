@@ -59,6 +59,7 @@ describe("Runtime", () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],
+                    false,
                     undefined, // requestHandler
                     {
                         flushMode: FlushMode.Immediate,
@@ -110,6 +111,7 @@ describe("Runtime", () => {
                         containerRuntime = await ContainerRuntime.load(
                             mockContext as IContainerContext,
                             [],
+                            false,
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
@@ -590,6 +592,7 @@ describe("Runtime", () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],
+                    false,
                     undefined, // requestHandler
                     {}, // runtimeOptions
                 );

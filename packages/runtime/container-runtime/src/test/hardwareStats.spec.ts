@@ -30,6 +30,7 @@ describe("Hardware Stats", () => {
     const loadContainer = async () => ContainerRuntime.load(
         mockContext as IContainerContext,
         [],
+        false,
         undefined, // requestHandler
         {
             summaryOptions: {
