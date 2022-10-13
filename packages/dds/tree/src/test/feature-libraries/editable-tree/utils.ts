@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
-import { FieldKey, isGlobalFieldKey, JsonableTree, keyFromSymbol } from "../../../tree";
+import { FieldKey, genericTreeKeys, getGenericTreeField, JsonableTree } from "../../../tree";
 import { fail, brand } from "../../../util";
 import {
     UnwrappedEditableField,
@@ -25,8 +25,14 @@ import {
     isPrimitive,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
+// eslint-disable-next-line import/no-internal-modules
+import { isArrayField } from "../../../feature-libraries/editable-tree/editableTree";
 import { schemaMap } from "./mockData";
 
+/**
+ * This helper function traverses the tree using field keys and expects
+ * fields to be unwrapped according to {@link UnwrappedEditableField} documentation.
+ */
 export function expectTreeEquals(
     schemaData: SchemaDataAndPolicy,
     inputField: UnwrappedEditableField,
@@ -36,7 +42,7 @@ export function expectTreeEquals(
     const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
     const primary = getPrimaryField(expectedType);
     if (primary !== undefined) {
-        assert(Array.isArray(inputField));
+        assert(isArrayField(inputField));
         // Handle inlined primary fields
         const expectedNodes = expected.fields?.[primary.key];
         if (expectedNodes === undefined) {
@@ -59,22 +65,12 @@ export function expectTreeEquals(
     assert.equal(node[valueSymbol], expected.value);
     const type = node[getTypeSymbol](undefined, false);
     assert.deepEqual(type, expectedType);
+    const expectedFields = new Set(genericTreeKeys(expected));
     for (const ok of Reflect.ownKeys(node)) {
         const key: FieldKey = brand(ok);
+        assert(expectedFields.delete(key));
         const subNode = node[key];
-        const expectedFields = expected.fields ?? {};
-        const expectedGlobalFields = expected.globalFields ?? {};
-        let expectedField: JsonableTree[];
-        if (isGlobalFieldKey(key)) {
-            const globalKey = keyFromSymbol(key);
-            assert(subNode !== undefined, globalKey);
-            assert.equal(globalKey in expectedFields, true);
-            expectedField = expectedGlobalFields[globalKey];
-        } else {
-            assert(subNode !== undefined, key);
-            assert.equal(key in expectedFields, true);
-            expectedField = expectedFields[key];
-        }
+        const expectedField = getGenericTreeField(expected, key, false);
         const isSequence =
             getFieldKind(getFieldSchema(brand(key), schemaData, type)).multiplicity ===
             Multiplicity.Sequence;
@@ -86,14 +82,19 @@ export function expectTreeEquals(
             expectTreeEquals(schemaData, subNode, expectedField[0]);
         }
     }
+    assert(expectedFields.size === 0);
 }
 
+/**
+ * This helper function checks sequence fields as arrays,
+ * where every element might be unwrapped on not.
+ */
 export function expectTreeSequence(
     schemaData: SchemaDataAndPolicy,
     field: UnwrappedEditableField,
     expected: JsonableTree[],
 ): void {
-    assert(Array.isArray(field));
+    assert(isArrayField(field));
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
@@ -101,6 +102,12 @@ export function expectTreeSequence(
     }
 }
 
+/**
+ * This helper function checks the field as {@link EditableField},
+ * where every node is a "non-unwrapped" EditableTree.
+ * Sequence fields and non-sequence fields having one node or none
+ * are handled in the same way.
+ */
 export function expectFieldEquals(
     schemaData: SchemaDataAndPolicy,
     field: EditableField,
@@ -108,7 +115,7 @@ export function expectFieldEquals(
 ): void {
     const [fieldSchema, , nodes] = field;
     assert(Array.isArray(expected));
-    assert(Array.isArray(nodes));
+    assert(isArrayField(nodes));
     assert.equal(nodes.length, expected.length);
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity !== Multiplicity.Sequence) {
@@ -119,6 +126,10 @@ export function expectFieldEquals(
     }
 }
 
+/**
+ * This helper function traverses the tree by iterating over its fields
+ * and expecting them to be "non-unwrapped" EditableTrees.
+ */
 export function expectNodeEquals(
     schemaData: SchemaDataAndPolicy,
     node: EditableTree,
@@ -133,19 +144,12 @@ export function expectNodeEquals(
         assert.deepEqual([...node], []);
         return;
     }
+    const expectedFields = new Set(genericTreeKeys(expected));
     for (const field of node) {
-        const [, childKey] = field;
-        const expectedGlobalFields = expected.globalFields ?? {};
-        const expectedFields = expected.fields ?? {};
-        let expectedField: JsonableTree[];
-        if (isGlobalFieldKey(childKey)) {
-            const globalKey = keyFromSymbol(childKey);
-            assert(globalKey in expectedGlobalFields);
-            expectedField = expectedGlobalFields[globalKey];
-        } else {
-            assert(childKey in expectedFields);
-            expectedField = expectedFields[childKey];
-        }
+        const [, key] = field;
+        assert(expectedFields.delete(key));
+        const expectedField = getGenericTreeField(expected, key, false);
         expectFieldEquals(schemaData, field, expectedField);
     }
+    assert(expectedFields.size === 0);
 }

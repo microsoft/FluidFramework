@@ -475,5 +475,12 @@ export function getEditableTreeContext(forest: IEditableForest): EditableTreeCon
  * Checks the type of an UnwrappedEditableField.
  */
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
-    return typeof field === "object" && field !== null && !Array.isArray(field);
+    return typeof field === "object" && !isArrayField(field);
+}
+
+/**
+ * Checks the type of an UnwrappedEditableField.
+ */
+export function isArrayField(field: UnwrappedEditableField): field is UnwrappedEditableTree[] {
+    return Array.isArray(field);
 }

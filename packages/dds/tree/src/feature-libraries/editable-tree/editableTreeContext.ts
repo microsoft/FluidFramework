@@ -77,29 +77,14 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
-        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
-        const cursor = this.forest.allocateCursor();
-        const destination = this.forest.root(this.forest.rootField);
-        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
-        if (cursorResult === TreeNavigationResult.Ok) {
-            do {
-                targets.push(new ProxyTarget(this, cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
-        }
-        cursor.free();
-        this.forest.anchors.forget(destination);
-        return proxifyField(
-            rootSchema,
-            symbolFromKey(rootFieldKey),
-            targets,
-            true,
-        ) as UnwrappedEditableField;
+        return this.getRoot(true) as UnwrappedEditableField;
     }
 
-    // This code is kept independent of `get unwrappedRoot()` (i.e. duplicated) on purpose,
-    // as it will probably differ a lot in editing case.
     public get root(): EditableField {
+        return this.getRoot(false) as EditableField;
+    }
+
+    private getRoot(unwrap: boolean) {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
@@ -112,11 +97,6 @@ export class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        return proxifyField(
-            rootSchema,
-            symbolFromKey(rootFieldKey),
-            targets,
-            false,
-        ) as EditableField;
+        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
     }
 }

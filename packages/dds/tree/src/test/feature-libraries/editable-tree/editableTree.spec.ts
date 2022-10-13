@@ -102,12 +102,12 @@ describe("editable-tree", () => {
         assert.equal(proxy.address[getTypeSymbol](brand("sequencePhones")), undefined);
     });
 
-    it("traverse a complete tree", () => {
+    it("traverse a complete tree by field keys", () => {
         const [schema, typedProxy] = buildTestPerson();
         expectTreeEquals(schema, typedProxy, personData);
     });
 
-    it("traverse a complete tree (generic)", () => {
+    it("traverse a complete tree by iteration", () => {
         const forest = setupForest(fullSchemaData, [personData]);
         const context = getEditableTreeContext(forest);
         expectFieldEquals(forest.schema, context.root, [personData]);
