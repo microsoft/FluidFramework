@@ -409,6 +409,9 @@ export const checkPolicy: StateHandlerFunction = async (
             );
         }
 
+        // oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
+        // but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
+        // expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
         await CheckPolicy.run([
             "--fix",
             "--exclusions",
