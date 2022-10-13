@@ -108,6 +108,7 @@ describe("Garbage Collection Tests", () => {
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
+            tombstoneUnusedRoutes: (unusedRoutes) => {},
         };
 
         return GarbageCollector.create({

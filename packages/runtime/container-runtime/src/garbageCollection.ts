@@ -75,6 +75,8 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+// Feature gate key to tombstone datastores.
+export const tombstoneKey = "Fluid.GarbageCollection.Tombstone";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -127,6 +129,8 @@ export interface IGarbageCollectionRuntime {
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to delete objects in the runtime whose routes are unused. */
     deleteUnusedRoutes(unusedRoutes: string[]): void;
+    /** After GC has run, called to tombstone objects in the runtime whose routes are unused. */
+    tombstoneUnusedRoutes(unusedRoutes: string[]): void;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
     getCurrentReferenceTimestampMs(): number | undefined;
     /** Returns the type of the GC node. */
@@ -372,6 +376,7 @@ export class GarbageCollector implements IGarbageCollector {
     public readonly trackGCState: boolean;
 
     private readonly testMode: boolean;
+    private readonly tombstoneMode: boolean;
     private readonly mc: MonitoringContext;
 
     /**
@@ -451,6 +456,7 @@ export class GarbageCollector implements IGarbageCollector {
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
             testMode: this.testMode,
+            tombstoneMode: this.tombstoneMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             trackGCState: this.trackGCState,
@@ -596,6 +602,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
+        this.tombstoneMode = this.mc.config.getBoolean(tombstoneKey) ?? this.gcOptions.tombstoneMode === true;
 
         // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
         // contain GC tree and GC is enabled.
@@ -874,6 +881,19 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.testMode) {
             this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
+        }
+
+        if (this.tombstoneMode) {
+            const tombstoneableRoutes: string[] = [];
+            for (const [key, value] of this.unreferencedNodesState.entries()) {
+                if (
+                    value.state === UnreferencedState.SweepReady &&
+                    this.runtime.getNodeType(key) === GCNodeType.DataStore
+                ) {
+                    tombstoneableRoutes.push(key);
+                }
+            }
+            this.runtime.tombstoneUnusedRoutes(tombstoneableRoutes);
         }
 
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and

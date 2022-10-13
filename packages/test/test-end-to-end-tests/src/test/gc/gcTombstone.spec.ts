@@ -7,9 +7,12 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    waitForContainerConnection,
+    ITestContainerConfig,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
@@ -18,6 +21,21 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let mainContainer: IContainer;
     let mainDataStore: ITestDataObject;
+
+    const sessionExpiryTimeoutMs = 1000;
+
+    const testContainerConfig: ITestContainerConfig = {
+        runtimeOptions: {
+            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+            gcOptions: {
+                gcAllowed: true,
+                sweepAllowed: true,
+                sessionExpiryTimeoutMs,
+                tombstoneMode: true,
+                snapshotCacheExpiryMs: 100,
+            },
+        },
+    };
 
     async function waitForSummary(container: IContainer) {
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
@@ -28,7 +46,7 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         provider = getTestObjectProvider({ syncSummarizer: true });
-        mainContainer = await provider.makeTestContainer(defaultGCConfig);
+        mainContainer = await provider.makeTestContainer(testContainerConfig);
         mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
     });

@@ -2256,7 +2256,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
         const blobManagerUnusedRoutes: string[] = [];
@@ -2271,6 +2271,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
         this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes);
+    }
+
+    /**
+     * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This enables
+     * testing scenarios without actually deleting content. The content acts as if it's deleted to the external user,
+     * but the internal runtime acts as if it exists - summarized, etc.
+     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     */
+    public tombstoneUnusedRoutes(unusedRoutes: string[]) {
+        this.dataStores.tombstoneUnusedRoutes(unusedRoutes);
     }
 
     /**

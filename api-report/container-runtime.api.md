@@ -189,6 +189,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
+    tombstoneUnusedRoutes(unusedRoutes: string[]): void;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
@@ -343,6 +344,7 @@ export interface IGarbageCollectionRuntime {
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getNodeType(nodePath: string): GCNodeType;
+    tombstoneUnusedRoutes(unusedRoutes: string[]): void;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
