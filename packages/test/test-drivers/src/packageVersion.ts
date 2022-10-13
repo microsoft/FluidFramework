@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/test-drivers";
-export const pkgVersion = "2.0.0-internal.2.1.0";
+export const pkgVersion = "2.0.0-internal.3.0.0";
