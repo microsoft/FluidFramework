@@ -107,15 +107,12 @@ steps:
           do
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
 
-            if [ $errorFlag == 0 ];
-            then
-              echo "Check ERROR MSG!"
-              npx npm-return-error-msg
-              errorFlag=1
-            fi
+            echo "Check ERROR MSG! BEFORE"
+            npx npm-return-error-msg
 
             if grep -q "npm ERR!" "publish_log"
             then
+                echo "Check ERROR MSG! AFTER"
                 if grep -q "code ENOTFOUND" "publish_log"
                 then
                   if ! $i -eq $maximumRetryIfNetworkError
