@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 
 import { CommandLogger } from "../logging";
