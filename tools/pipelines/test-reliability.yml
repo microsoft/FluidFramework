@@ -30,9 +30,9 @@ stages:
       jobs:
       - template: templates/include-test-reliability.yml
         parameters:
-          testPackage: "@fluidframework/test-end-to-end-tests"
+          testPackage: "@fluid-internal/local-server-tests"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: test:report
+          testCommand: test:coverage
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 

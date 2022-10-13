@@ -10,7 +10,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluidframework/test-end-to-end-tests"
+  default: "@fluid-internal/local-server-tests"
 
 - name: testWorkspace
   type: string
@@ -24,7 +24,7 @@ parameters:
 
 - name: testCommand
   type: string
-  default: test:report
+  default: test:coverage
 
 - name: continueOnError
   type: boolean
