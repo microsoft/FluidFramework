@@ -156,6 +156,13 @@ describe("JsonCursor", () => {
                 assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 0);
             });
+
+            it(`can get a length of array from within the field`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                const length = cursor.childFieldLength(EmptyKey);
+                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                assert.equal(cursor.currentFieldLength(), length);
+            });
         });
     });
 
@@ -163,9 +170,9 @@ describe("JsonCursor", () => {
         const notFoundKey: FieldKey = brand("notFound");
         const foundKey: FieldKey = brand("found");
 
-        function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
+        function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0, childFieldLength = 1) {
             assert(
-                0 <= index && index < cursor.length(key),
+                0 <= index && index < cursor.childFieldLength(key),
                 `.length() must include index of existing child '${String(key)}[${index}]'.`,
             );
 
@@ -174,11 +181,24 @@ describe("JsonCursor", () => {
                 TreeNavigationResult.Ok,
                 `Must navigate to child '${String(key)}[${index}]'.`,
             );
+
+            assert.equal(
+                cursor.currentFieldLength(),
+                childFieldLength,
+                `A field with existing child '${String(
+                    key,
+                )}[${index}]' must have a length '${childFieldLength}'.`,
+            );
         }
 
-        function expectNotFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
+        function expectNotFound(
+            cursor: ITreeCursor,
+            key: FieldKey,
+            index = 0,
+            currentFieldLength = 1,
+        ) {
             assert(
-                !(index >= 0) || index >= cursor.length(key),
+                !(index >= 0) || index >= cursor.childFieldLength(key),
                 `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
             );
 
@@ -186,6 +206,12 @@ describe("JsonCursor", () => {
                 cursor.down(key, index),
                 TreeNavigationResult.NotFound,
                 `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
+            );
+
+            assert.equal(
+                cursor.currentFieldLength(),
+                currentFieldLength,
+                `Must stay at parent field with length '${currentFieldLength}' if 'NotFound'.`,
             );
         }
 
@@ -219,7 +245,7 @@ describe("JsonCursor", () => {
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
             // by subsequently moving to an existing key.
-            expectFound(cursor, EmptyKey, 1);
+            expectFound(cursor, EmptyKey, 1, 2);
         });
     });
 });

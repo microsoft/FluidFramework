@@ -92,9 +92,17 @@ async function getFileLinkCore(
                 assert(storageToken !== null,
                     0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */);
 
+                // IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
+                // to the file. This was intentionally replaced with GetFileById() to solve the following issue:
+                // GetFileByUrl() uses webDavUrl to locate list item. This API does not work for Consumer scenarios
+                // where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
+                // GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
+                // unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
                 const { url, headers } = getUrlAndHeadersWithAuth(
-                    `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
-                        encodeURIComponent(`'${fileItem.webDavUrl}'`)
+                    `${
+                        odspUrlParts.siteUrl
+                    }/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${
+                        encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)
                     }`,
                     storageToken,
                     true,
@@ -128,19 +136,31 @@ async function getFileLinkCore(
 }
 
 /**
- * This represents a lite version of file item containing only the webUrl and webDavUrl properties
+ * Sharepoint Ids Interface
+ */
+ interface IGraphSharepointIds {
+    listId: string;
+    listItemId: string;
+    listItemUniqueId: string;
+    siteId: string;
+    siteUrl: string;
+    webId: string;
+  }
+
+/**
+ * This represents a lite version of file item containing only select file properties
  */
 interface FileItemLite {
     webUrl: string;
     webDavUrl: string;
+    sharepointIds: IGraphSharepointIds;
 }
 
-const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLite => {
-    if (typeof maybeFileItemLite.webUrl !== "string" || typeof maybeFileItemLite.webDavUrl !== "string") {
-        return false;
-    }
-    return true;
-};
+const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLite => (
+    typeof maybeFileItemLite.webUrl === "string" &&
+    typeof maybeFileItemLite.webDavUrl === "string" &&
+    typeof maybeFileItemLite.sharepointIds === "object"
+);
 
 async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
@@ -168,7 +188,7 @@ async function getFileItemLite(
                     0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(
-                    `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
+                    `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,
                     storageToken,
                     forceAccessTokenViaAuthorizationHeader,
                 );

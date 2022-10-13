@@ -1,0 +1,53 @@
+{
+  "name": "@fluidframework/azure-local-service",
+  "version": "1.1.0",
+  "description": "Local implementation of the Azure Fluid Relay service for testing/development use",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "azure/packages/azure-local-service"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "bin": "dist/index.js",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "npm run tsc",
+    "build:docs": "api-extractor run --local",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "ci:build:docs": "api-extractor run",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "start": "forever start dist/index.js",
+    "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
+    "stop": "forever stop dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "tinylicious": "^0.4.89251"
+  },
+  "devDependencies": {
+    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@microsoft/api-extractor": "^7.22.2",
+    "@rushstack/eslint-config": "^2.5.1",
+    "concurrently": "^6.2.0",
+    "copyfiles": "^2.4.1",
+    "eslint": "~8.6.0",
+    "forever": "^4.0.3",
+    "rimraf": "^2.6.2",
+    "ts-node": "^8.6.2",
+    "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

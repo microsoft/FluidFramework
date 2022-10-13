@@ -67,8 +67,6 @@ export const runGCKey = "Fluid.GarbageCollection.RunGC";
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to write GC data at the root of the summary tree.
-const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present.
@@ -126,7 +124,7 @@ export interface IGarbageCollectionRuntime {
     /** Returns the garbage collection data of the runtime. */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to delete objects in the runtime whose routes are unused. */
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
@@ -143,8 +141,6 @@ export interface IGarbageCollector {
     readonly shouldRunGC: boolean;
     /** Tells whether the GC state in summary needs to be reset in the next summary. */
     readonly summaryStateNeedsReset: boolean;
-    /** Tells whether GC data should be written to the root of the summary tree. */
-    readonly writeDataAtRoot: boolean;
     readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
@@ -379,14 +375,6 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly mc: MonitoringContext;
 
     /**
-     * Tells whether the GC data should be written to the root of the summary tree.
-     */
-    private _writeDataAtRoot: boolean = true;
-    public get writeDataAtRoot(): boolean {
-        return this._writeDataAtRoot;
-    }
-
-    /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
      *
      * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
@@ -462,7 +450,6 @@ export class GarbageCollector implements IGarbageCollector {
             sweepEnabled: this.sweepEnabled,
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
-            writeAtRoot: this._writeDataAtRoot,
             testMode: this.testMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
@@ -544,10 +531,10 @@ export class GarbageCollector implements IGarbageCollector {
             );
             this.sessionExpiryTimer.start();
 
-            // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
+            // TEMPORARY: Hardcode a default of 5 days which will be >= the policy's value in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
             // This will be removed before sweep is fully implemented.
-            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
+            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 5 * 24 * 60 * 60 * 1000;
 
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.
@@ -610,15 +597,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
 
-        // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
-        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
-
-        if (this._writeDataAtRoot) {
-            // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
-            // contain GC tree and GC is enabled.
-            const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
-            this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
-        }
+        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
+        // contain GC tree and GC is enabled.
+        const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+        this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -631,8 +613,6 @@ export class GarbageCollector implements IGarbageCollector {
                 // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
                 const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
                 if (gcSnapshotTree !== undefined) {
-                    // If the GC tree is written at root, we should also do the same.
-                    this._writeDataAtRoot = true;
                     const baseGCState = await getGCStateFromSnapshot(
                         gcSnapshotTree,
                         readAndParseBlob,
@@ -884,7 +864,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
-        this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
+        this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
         // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
         // delete these objects here instead.
@@ -1155,7 +1135,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.newReferencesSinceLastRun,
         );
 
-        if (this.writeDataAtRoot && missingExplicitReferences.length > 0) {
+        if (missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {
                     eventName: "gcUnknownOutboundReferences",
