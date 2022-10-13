@@ -86,7 +86,7 @@ steps:
       fi
       echo Tag: $tag
       cp .npmrc ~/.npmrc
-      errorFlag=true
+      errorFlag=0
       maximumRetryIfNetworkError=3
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
@@ -107,10 +107,11 @@ steps:
           do
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
 
-            if [[ $errorFlag == true ]]; then
+            if [ $errorFlag == 0 ];
+            then
               echo "Check ERROR MSG!"
               npx npm-return-error-msg
-              $errorFlag=false
+              errorFlag=1
             fi
 
             if grep -q "npm ERR!" "publish_log"
