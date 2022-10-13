@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./browserContainerHost";
-export * from "./component";
-export * from "./geometry";
-export * from "./utils";
+export { BrowserContainerHost } from "./browserContainerHost";
+export { Component } from "./component";
+export { distanceSquared, IPoint, ISize, Point, Rectangle, Square } from "./geometry";
+export { removeAllChildren } from "./utils";
