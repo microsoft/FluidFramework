@@ -22,7 +22,7 @@ const defaultGitOptions: Partial<SimpleGitOptions> = {
  * @remarks
  *
  * Eventually this should replace the legacy GitRepo class in build-tools. That class exec's git commands directly,
- * while this class uses a library wrapper around git instead.
+ * while this class uses a library wrapper around git where possible instead. Note that git is still called "directly" via the `raw` API.
  *
  * @internal
  */
