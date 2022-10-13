@@ -27,10 +27,7 @@ describe("Summary size benchmark", () => {
         assert(output.summarySizeNoEdits < 1000);
     });
     it("for 1000 inserts width wise", async () => {
-        await assert.rejects(
-            getInsertsSummarySize(1000, 0, true),
-            {message: 'BatchTooLarge'}
-        )
+        await assert.rejects(getInsertsSummarySize(1000, 0, true), { message: "BatchTooLarge" });
     });
 });
 
@@ -109,10 +106,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        const field = editor.sequenceField(
-            undefined,
-            detachedFieldAsKey(forest.rootField),
-        );
+        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
         field.insert(index, writeCursor);
 
         return TransactionResult.Apply;
@@ -151,7 +145,7 @@ export async function getInsertsSummarySize(
 ): Promise<number> {
     const provider = await TestTreeProvider.create(1);
     const tree = provider.trees[0];
-    initializeTestTreeWithValue(tree, 1)
+    initializeTestTreeWithValue(tree, 1);
 
     if (depth) {
         const fooKey = brand<FieldKey>("foo");
