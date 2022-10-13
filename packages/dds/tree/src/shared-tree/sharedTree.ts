@@ -14,7 +14,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICheckout, TransactionResult } from "../checkout";
-import { EditManager } from "../edit-manager";
+import { EditManager, EditManagerIndex } from "../edit-manager";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
@@ -91,8 +91,7 @@ export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObjec
  */
 class SharedTree
     extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
-    implements ISharedTree
-{
+    implements ISharedTree {
     public readonly context: EditableTreeContext;
     public readonly forest: IForestSubscription;
     public readonly storedSchema: SchemaEditor;
@@ -118,7 +117,7 @@ class SharedTree
         const indexes: Index<DefaultChangeset>[] = [
             new SchemaIndex(runtime, schema),
             new ForestIndex(runtime, forest),
-            editManager,
+            new EditManagerIndex(editManager),
         ];
         super(
             indexes,

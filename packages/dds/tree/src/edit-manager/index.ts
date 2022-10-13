@@ -4,3 +4,4 @@
  */
 
 export * from "./editManager";
+export * from "./editManagerIndex";
