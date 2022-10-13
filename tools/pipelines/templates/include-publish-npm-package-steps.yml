@@ -87,7 +87,6 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      cnt=0
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
         sorted=true
@@ -104,14 +103,6 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          for i in $( seq 1 $maximumRetryIfNetworkError )
-          do
-            if [ `expr $cnt % 10` == 0 ]
-            then
-              echo "Raise Network Error" $cnt
-              nmcli networking off
-            fi
-
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
@@ -149,8 +140,6 @@ steps:
               rm publish_log
               break
             fi
-            echo "Success"
-            nmcli networking on
             rm publish_log
           done
         fi
