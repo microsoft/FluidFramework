@@ -22,6 +22,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+- [Static `FluidDataStoreRuntime.load` method is now deprecated](#static-FluidDataStoreRuntime.load-method-is-now-deprecated)
 
 ### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -45,6 +46,11 @@ It's not a breaking change, but worth noting: we are now also exposing optional 
 ### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined
 Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
 So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
+
+### Static `FluidDataStoreRuntime.load` method is now deprecated
+
+Use `FluidDataStoreRuntime`'s constructor instead, and start providing the new `initializeEntrypoint` parameter
+to create the entrypoint / root object for the data store.
 
 ## 2.0.0-internal.2.0.0 Breaking changes
 - [Update to React 17](#Update-to-React-17)
