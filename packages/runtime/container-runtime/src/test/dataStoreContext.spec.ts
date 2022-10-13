@@ -349,7 +349,9 @@ describe("Data Store Context Tests", () => {
                     isRootDataStore: false,
                 });
 
-                assert.doesNotThrow(localDataStoreContext.tombstone, `Local dataStores should throw on tombstone`);
+                assert.doesNotThrow(() => {
+                    localDataStoreContext.tombstone();
+                }, `Local dataStores should throw on tombstone`);
             });
         });
     });
@@ -745,7 +747,9 @@ describe("Data Store Context Tests", () => {
                     isRootDataStore: false,
                 };
                 setupTombStoneTest();
-                assert.doesNotThrow(remoteDataStoreContext.tombstone, `Should be able to tombstone a non-root remote datastore!`);
+                assert.doesNotThrow(() => {
+                    remoteDataStoreContext.tombstone();
+                }, `Should be able to tombstone a non-root remote datastore!`);
             });
         });
     });
