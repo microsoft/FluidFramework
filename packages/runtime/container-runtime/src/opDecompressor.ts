@@ -66,8 +66,6 @@ export class OpDecompressor {
             (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
             assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
 
-            console.error(message);
-
             // Single compressed message
             const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);

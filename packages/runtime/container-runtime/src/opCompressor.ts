@@ -23,7 +23,6 @@ export class OpCompressor {
         const batchToSend: BatchMessage[] = [];
         this.compressedBatchCount++;
         const batchedContents: ContainerRuntimeMessage[] = [];
-        console.error(batch);
         for (const message of batch) {
             batchedContents.push(message.deserializedContent);
         }
@@ -50,8 +49,6 @@ export class OpCompressor {
         for (let i = 1; i < batch.length; i++) {
             batchToSend.push({ ...batch[i], contents: undefined, metadata: batch[i].metadata });
         }
-
-        console.error(batchToSend);
 
         return batchToSend;
     }
