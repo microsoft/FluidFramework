@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./partitionManager";
-export * from "./runner";
-export * from "./runnerFactory";
+export { PartitionManager } from "./partitionManager";
+export { KafkaRunner } from "./runner";
+export { IKafkaResources, KafkaRunnerFactory } from "./runnerFactory";
