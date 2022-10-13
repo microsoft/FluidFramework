@@ -5,6 +5,7 @@
     "schema-stored",
     "tree",
     "dependency-tracking",
+    "edit-manager",
     "util",
     "rebase",
     "forest",

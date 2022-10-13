@@ -53,3 +53,4 @@ import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
 export * from "./deltaUtils";
+export * from "./editManagerIndex";

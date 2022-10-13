@@ -14,7 +14,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICheckout, TransactionResult } from "../checkout";
-import { EditManager, EditManagerIndex } from "../edit-manager";
+import { EditManager } from "../edit-manager";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
@@ -29,6 +29,7 @@ import {
     getEditableTreeContext,
     SchemaEditor,
     DefaultChangeset,
+    EditManagerIndex,
 } from "../feature-libraries";
 import { IForestSubscription } from "../forest";
 import { StoredSchemaRepository, InMemoryStoredSchemaRepository } from "../schema-stored";

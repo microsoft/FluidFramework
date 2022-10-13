@@ -20,7 +20,7 @@ import {
     SummaryElementStringifier,
 } from "../shared-tree-core";
 import { JsonCompatibleReadOnly } from "../util";
-import { Branch, Commit, EditManager, MutableSummaryData, ReadonlySummaryData, SessionId } from "./editManager";
+import { Branch, Commit, EditManager, MutableSummaryData, ReadonlySummaryData, SessionId } from "../edit-manager";
 
 /**
  * The storage key for the blob in the summary containing EditManager data

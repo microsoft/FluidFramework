@@ -12,6 +12,7 @@
     "forest",
     "dependency-tracking",
     "shared-tree-core",
-    "change-family"
+    "change-family",
+    "edit-manager"
   ]
 }
