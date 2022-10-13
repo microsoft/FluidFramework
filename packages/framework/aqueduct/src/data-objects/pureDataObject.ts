@@ -13,7 +13,6 @@ import {
     IRequest,
     IResponse,
     FluidObject,
-    IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -74,11 +73,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-        // TODO: IFluidLoadable is currently only exposed in the FluidDataStoreRuntime class, not the
-        // IFluidDataStoreRuntime interface, thus the discovery with FluidObject. Once entrypoints are exposed more
-        // directly this should be simplified.
-        const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> & IFluidDataStoreRuntime = runtime;
-        const obj = await maybeIFluidLoadable?.IFluidLoadable?.handle?.get();
+        const obj = await runtime.getEntrypoint()?.get();
         assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
         return obj as PureDataObject;
     }

@@ -86,6 +86,9 @@
       "InterfaceDeclaration_ISummarizerNodeWithGC": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IDataStore": {
+        "forwardCompat": false
       }
     }
   }

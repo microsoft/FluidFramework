@@ -76,7 +76,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
-    getEntrypoint(): IFluidHandle | undefined;
+    // (undocumented)
+    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;

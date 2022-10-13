@@ -69,6 +69,9 @@
       },
       "InterfaceDeclaration_IProvideContainerRuntime": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {
+        "forwardCompat": false
       }
     }
   }

@@ -125,7 +125,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -136,7 +136,7 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IFluidRouter, IHaveEntrypoint, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // @deprecated
@@ -260,6 +260,11 @@ export interface IGarbageCollectionState {
     gcNodes: {
         [id: string]: IGarbageCollectionNodeData;
     };
+}
+
+// @public
+export interface IHaveEntrypoint {
+    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
 }
 
 // @public

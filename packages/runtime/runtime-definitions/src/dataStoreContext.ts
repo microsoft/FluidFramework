@@ -110,7 +110,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 /**
  * A fluid router with the capability of being assigned an alias
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
@@ -165,14 +165,6 @@ export interface IContainerRuntimeBase extends
      * and in such state is not persisted to storage (file). Storing a handle to this store
      * (or any of its parts, like DDS) into an already attached DDS (or non-attached DDS that will eventually
      * get attached to storage) will result in this store being attached to storage.
-     *
-     * @remarks
-     * The returned object might also implement the IProvideFluidLoadable interface. If you need access to the handle
-     * of the data store's entrypoint, first try treating it as a FluidObject<IProvideFluidLoadable> and using the
-     * value of the 'IFluidLoadable.handle' property; if anything in that chain is undefined (which means the
-     * implementation hasn't been updated to provide access to the handle in this way), fall back to the existing
-     * approach of treating the data store as an {@link @fluidframework/core-interfaces#IFluidRouter} and requesting
-     * its root object.
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
@@ -210,13 +202,31 @@ export enum BindState {
 }
 
 /**
- * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control
+ * Interface for components that expose an entrypoint, e.g. Data Stores.
+ */
+export interface IHaveEntrypoint {
+    /**
+     * Exposes a handle to the root object / entrypoint of the component. Use this as the primary way of interacting
+     * with the component. If this method returns undefined (meaning that exposing the entrypoint hasn't been
+     * implemented in a particular scenario) fall back to the current approach of requesting the root object through
+     * the request pattern.
+     *
+     * @remarks The plan for this method is that eventually the component will stop providing IFluidRouter
+     * functionality, and this will just return an IFluidHandle (no undefined) and will become the only way to access
+     * the component's entrypoint.
+     */
+    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
+}
+
+/**
+ * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
- * Functionality include attach, snapshot, op/signal processing, request routes,
+ * Functionality include attach, snapshot, op/signal processing, request routes, expose an entrypoint,
  * and connection state notifications
  */
 export interface IFluidDataStoreChannel extends
     IFluidRouter,
+    IHaveEntrypoint,
     IDisposable {
 
     readonly id: string;

@@ -9,7 +9,6 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -374,12 +373,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
         this.bindRuntime(channel);
 
-        // if (!existing) {
-        //     // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
-        //     // FluidDataStoreRuntime, which exposes its handle.
-        //     const channelAsFluidObject: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = channel;
-        //     await channelAsFluidObject.IFluidLoadable?.handle?.get();
-        // }
+        // Load the handle to the data store's entrypoint to make sure that the entrypoint initialization function is
+        // called and the entrypoint is fully initialized.
+        await channel.getEntrypoint()?.get();
     }
 
     /**
@@ -1006,8 +1002,7 @@ export class LocalDetachedFluidDataStoreContext
         // of data store factories tends to construct the data object (at least kick off an async method that returns
         // it); that code moved to the entrypoint initialization function, so we want to ensure it still executes
         // before the data store is attached.
-        const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = dataStoreChannel;
-        await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+        await dataStoreChannel.getEntrypoint()?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();

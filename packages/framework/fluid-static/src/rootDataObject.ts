@@ -9,8 +9,8 @@ import {
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject, IFluidLoadable, IProvideFluidLoadable } from "@fluidframework/core-interfaces";
-import { FlushMode, IDataStore } from "@fluidframework/runtime-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
     ContainerSchema,
     DataObjectClass,
@@ -120,8 +120,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-        const maybeIFluidLoadable: IDataStore & FluidObject<IProvideFluidLoadable> = dataStore;
-        const entrypoint = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+        const entrypoint = await dataStore.getEntrypoint()?.get();
         return entrypoint as unknown as T;
     }
 

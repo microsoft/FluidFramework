@@ -122,19 +122,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
-     * the data store. If this method returns undefined (meaning it hasn't been implemented in a particular scenario)
-     * fall back to the current approach of requesting the root object through the request pattern.
-     *
-     * @remarks The plan for this method is that eventually the data store will stop being an IFluidRouter and this
-     * will return an IFluidHandle (no undefined), and become the only way to access the object at the root of the data
-     * store.
+     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.getEntrypoint}
      */
-    public getEntrypoint(): IFluidHandle | undefined {
+    public getEntrypoint(): IFluidHandle<FluidObject> | undefined {
         return this.handle;
     }
 
-    private readonly handle?: IFluidHandle;
+    private readonly handle?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 

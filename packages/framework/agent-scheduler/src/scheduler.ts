@@ -7,7 +7,6 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     FluidObject,
     IFluidHandle,
-    IProvideFluidLoadable,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
@@ -20,7 +19,6 @@ import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    IDataStore,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
@@ -428,12 +426,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
         const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
         const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-        // TODO: IFluidLoadable is currently only exposed in the DataStore class, not the IDataStore interface,
-        // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
-        // simplified.
-        const maybeIFluidLoadable: IDataStore & FluidObject<IProvideFluidLoadable> = dataStore;
-        const entrypoint: (FluidObject<IAgentScheduler> & IProvideFluidLoadable) | undefined =
-            await maybeIFluidLoadable?.IFluidLoadable?.handle?.get();
+        const entrypoint: FluidObject<IAgentScheduler> | undefined = await dataStore.getEntrypoint()?.get();
 
         // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entrypoint, but double-check
         // while we plumb entrypoints correctly everywhere, so we can be sure the cast below is fine.

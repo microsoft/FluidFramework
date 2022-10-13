@@ -121,6 +121,7 @@ declare function get_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprec
 declare function use_current_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
     use: TypeOnly<current.IDataStoreWithBindToContext_Deprecated>);
 use_current_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated());
 
 /*

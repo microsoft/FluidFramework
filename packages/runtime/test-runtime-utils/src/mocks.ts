@@ -10,10 +10,9 @@ import {
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidLoadable,
-    IProvideFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -376,19 +375,14 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidLoadable {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: { clientId?: string; }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
     }
 
-    public get IFluidLoadable(): IFluidLoadable {
-        return {
-            handle: this.handle,
-            get IFluidLoadable() {
-                return this;
-            },
-        };
+    public getEntrypoint(): IFluidHandle<FluidObject> | undefined {
+        return this.handle;
     }
     private readonly handle = new MockHandle(null, "", "");
 

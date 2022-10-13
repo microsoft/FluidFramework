@@ -9,8 +9,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import {
     FluidObject,
-    IFluidLoadable,
-    IProvideFluidLoadable,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -57,7 +56,7 @@ enum AliasState {
     None = "None",
 }
 
-class DataStore implements IDataStore, Partial<IProvideFluidLoadable> {
+class DataStore implements IDataStore {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
     private readonly pendingAliases: Map<string, Promise<AliasResult>>;
@@ -158,25 +157,10 @@ class DataStore implements IDataStore, Partial<IProvideFluidLoadable> {
     }
 
     /**
-     * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
-     * the data store, and only fall back to requesting the root object through the request pattern if this property
-     * or the handle within it are not defined.
+     * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.getEntrypoint}
      */
-    public get IFluidLoadable(): IFluidLoadable | undefined {
-        // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
-        // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
-        // so it matches the definition of the IFluidLoadable interface.
-        const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable>
-            = this.fluidDataStoreChannel;
-        const handle = maybeIFluidLoadable.IFluidLoadable?.handle;
-        if (handle !== undefined) {
-            return {
-                handle,
-                get IFluidLoadable() {
-                    return this;
-                },
-            };
-        }
+    public getEntrypoint(): IFluidHandle<FluidObject> | undefined {
+        return this.fluidDataStoreChannel.getEntrypoint();
     }
 
     constructor(

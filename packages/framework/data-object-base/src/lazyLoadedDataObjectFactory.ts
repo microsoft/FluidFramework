@@ -5,15 +5,12 @@
 
 import {
     FluidObject,
-    IFluidLoadable,
-    IProvideFluidLoadable,
     IProvideFluidRouter,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-    IDataStore,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
@@ -59,9 +56,9 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                const maybeRouter: FluidObject<IProvideFluidRouter> & IFluidLoadable | undefined
-                    = await rt.getEntrypoint()?.get();
-                assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
+                const maybeRouter: FluidObject<IProvideFluidRouter> | undefined = await rt.getEntrypoint()?.get();
+                assert(maybeRouter !== undefined, "Entrypoint should have been initialized by now");
+                assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
                 return maybeRouter.IFluidRouter.request(request);
             });
 
@@ -78,8 +75,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         const { containerRuntime, packagePath } = parentContext;
 
         const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
-        const maybeIFluidLoadable: IDataStore & FluidObject<IProvideFluidLoadable> = dataStore;
-        const entrypoint = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+        const entrypoint = await dataStore.getEntrypoint()?.get();
         // This data object factory should always be setting the entrypoint. Need the non-null assertion
         // while we're plumbing it everywhere and it is still optional.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

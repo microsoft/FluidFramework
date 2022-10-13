@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidRouter, FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
@@ -61,8 +61,8 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     // request mixin in
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-            const maybeRouter: FluidObject<IFluidRouter> & IFluidLoadable | undefined =
-                (await runtimeArg.getEntrypoint()?.get());
+            const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.getEntrypoint()?.get();
+            assert(maybeRouter !== undefined, "Entrypoint should have been initialized by now");
             assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
             return maybeRouter?.IFluidRouter.request(request);
         },
