@@ -166,7 +166,7 @@ export const checkFlags = {
     }),
     policyCheck: Flags.boolean({
         allowNo: true,
-        default: true,
+        default: false,
         description: "Check that the local repo complies with all policy.",
     }),
 };
