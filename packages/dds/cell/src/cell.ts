@@ -290,14 +290,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     private setCore(value: Serializable<T>) {
         const previousLocalValue = this.get();
         this.data = value;
-        this.emit("valueChanged", { value, previousLocalValue });
+        this.emit("valueChanged", previousLocalValue);
         return previousLocalValue;
     }
 
     private deleteCore() {
         const previousLocalValue = this.get();
         this.data = undefined;
-        this.emit("delete", previousLocalValue);
+        this.emit("valueChanged", previousLocalValue);
         return previousLocalValue;
     }
 

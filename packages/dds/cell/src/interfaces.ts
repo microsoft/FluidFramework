@@ -7,8 +7,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 import { Serializable } from "@fluidframework/datastore-definitions";
 
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: IValueChanged) => void);
-    (event: "delete", listener: (value: Serializable<T>) => void);
+    (event: "valueChanged", listener: (value: Serializable<T>) => void);
 }
 
 /**
@@ -47,22 +46,6 @@ export interface ICellValue {
     // The actual value contained in the cell which needs to be wrapped to handle undefined
     value: any;
 }
-
-/**
- * Type of "valueChanged" event parameter.
- */
- export interface IValueChanged {
-    /**
-     * The value that will be filled to the cell
-     */
-    value: any;
-
-    /**
-     * The value that was stored at the cell prior to the change.
-     */
-    previousValue: any;
-}
-
 export interface ICellLocalOpMetadata {
     type: "edit";
     pendingMessageId: number;

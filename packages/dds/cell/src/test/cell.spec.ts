@@ -178,6 +178,32 @@ describe("Cell", () => {
                 assert.equal(cell1.get(), undefined, "Could not delete cell value");
                 assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
             });
+
+            it("Shouldn't delete value if there is pending set", () => {
+                const previousValues: any[] = [];
+
+                cell1.on("valueChanged", (changed) => {
+                    previousValues.push(changed);
+                });
+
+                cell2.set("value2");
+                cell2.delete();
+                cell1.set("value1");
+                cell2.delete();
+
+                containerRuntimeFactory.processSomeMessages(2);
+
+                assert.equal(previousValues.length, 3);
+                assert.equal(previousValues[0], undefined);
+                assert.equal(previousValues[1], undefined);
+                assert.equal(previousValues[2], undefined);
+                assert.equal(cell1.get(), "value1");
+
+                containerRuntimeFactory.processSomeMessages(2);
+
+                assert.equal(previousValues.length, 3);
+                assert.equal(cell1.get(), undefined);
+            });
         });
     });
 
