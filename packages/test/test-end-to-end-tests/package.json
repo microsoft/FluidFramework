@@ -29,7 +29,7 @@
     "test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
     "test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
     "test:realsvc:frs:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:frs --",
-    "test:realsvc:local": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:run -- --driver=local --timeout=10s",
+    "test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=10s",
     "test:realsvc:local:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:local --",
     "test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
     "test:realsvc:odsp:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:odsp --",

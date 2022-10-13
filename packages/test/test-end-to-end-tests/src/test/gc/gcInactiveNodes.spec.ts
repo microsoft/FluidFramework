@@ -46,8 +46,8 @@ describeNoCompat.only("GC SweepReady nodes tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let mockLogger: MockLogger;
 
-    const inactiveTimeoutMs = 100;
-    const sweepTimeoutMs = 200;
+    const inactiveTimeoutMs = 2000;
+    const sweepTimeoutMs = 4000;
     const sessionExpiryTimeoutMs = 1000000000;
     const defaultSettings = {
         //* "Fluid.GarbageCollection.RunSessionExpiry": true,
@@ -78,13 +78,6 @@ describeNoCompat.only("GC SweepReady nodes tests", (getTestObjectProvider) => {
             setTimeout(resolve, sweepTimeoutMs + 10);
         });
     }
-
-        /** Waits for the SweepReady timeout to expire. */
-        async function waitForSweepReadyTimeout2(): Promise<void> {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, inactiveTimeoutMs + 10);
-            });
-        }
 
     /** Validates that none of the inactive events have been logged since the last run. */
     function validateNoInactiveEvents() {
@@ -169,10 +162,6 @@ describeNoCompat.only("GC SweepReady nodes tests", (getTestObjectProvider) => {
             // Summarize and validate that no unreferenced errors were logged.
             await summarize(summarizerRuntime);
             validateNoInactiveEvents();
-
-            await waitForSweepReadyTimeout2();
-            // UNCOMMENT TO EXPOSE BUG
-            // await summarize(summarizerRuntime);
 
             // Wait for SweepReady timeout. This will ensure that the unreferenced data store is SweepReady.
             await waitForSweepReadyTimeout();
