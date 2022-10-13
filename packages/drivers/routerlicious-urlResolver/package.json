@@ -49,7 +49,7 @@
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@^1.0.0",
+    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/nconf": "^0.10.0",
