@@ -6,7 +6,6 @@
 import {
     IContainerRuntimeOptions,
     IGCRuntimeOptions,
-    ISummaryConfigurationHeuristics,
     ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import {
