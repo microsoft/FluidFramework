@@ -404,7 +404,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.IFluidLoadable?.handle?.get();
+                const agentScheduler = await this.getEntrypoint()?.get();
                 assert(agentScheduler !== undefined,
                     "Entrypoint for AgentSchedulerRuntime should have been initialized by now");
 

@@ -18,11 +18,9 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidLoadable } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -42,7 +40,7 @@ export enum DataStoreMessageType {
 }
 
 // @public
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<IProvideFluidLoadable> {
+export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
@@ -78,6 +76,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
+    getEntrypoint(): IFluidHandle | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;
@@ -85,7 +84,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): this;
-    readonly IFluidLoadable?: IFluidLoadable;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)

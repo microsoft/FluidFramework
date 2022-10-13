@@ -11,7 +11,6 @@ import {
     IFluidRouter,
     FluidObject,
     IFluidLoadable,
-    IProvideFluidLoadable,
     IProvideFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
@@ -182,9 +181,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> = rt;
                 const maybeRouter: FluidObject<IProvideFluidRouter> & IFluidLoadable | undefined
-                    = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+                    = await rt.getEntrypoint()?.get();
                 assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
                 return maybeRouter.IFluidRouter.request(request);
             });

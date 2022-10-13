@@ -109,6 +109,6 @@ describe("FluidDataStoreRuntime Tests", () => {
     it("entrypoint is initialized correctly", async () => {
         const myObj: FluidObject = { fakeProp: "fakeValue" };
         const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry, async (rt) => myObj);
-        assert((await dataStoreRuntime.IFluidLoadable?.handle.get()) === myObj, "Entrypoint was not initialized");
+        assert((await dataStoreRuntime.getEntrypoint()?.get()) === myObj, "Entrypoint was not initialized");
     });
 });

@@ -8,8 +8,6 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidLoadable,
-    IProvideFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -102,8 +100,7 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext,
-Partial<IProvideFluidLoadable> {
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * @deprecated - Instantiate the class using its constructor instead.
      *
@@ -126,10 +123,18 @@ Partial<IProvideFluidLoadable> {
 
     /**
      * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
-     * the data store, and only fall back to requesting the root object through the request pattern if this property
-     * or the handle within it are not defined.
+     * the data store. If this method returns undefined (meaning it hasn't been implemented in a particular scenario)
+     * fall back to the current approach of requesting the root object through the request pattern.
+     *
+     * @remarks The plan for this method is that eventually the data store will stop being an IFluidRouter and this
+     * will return an IFluidHandle (no undefined), and become the only way to access the object at the root of the data
+     * store.
      */
-    public readonly IFluidLoadable?: IFluidLoadable;
+    public getEntrypoint(): IFluidHandle | undefined {
+        return this.handle;
+    }
+
+    private readonly handle?: IFluidHandle;
 
     public get IFluidRouter() { return this; }
 
@@ -296,28 +301,11 @@ Partial<IProvideFluidLoadable> {
         }
 
         if (initializeEntrypoint) {
-            /**
-             * This is a Fluid handle to the object that acts as entry point for the data store runtime. It's exposed
-             * through the IFluidLoadable property so we can start making handles a first-class citizen and the primary
-             * way of interacting with some Fluid objects; in this case accessing the entry point of a data store
-             * runtime without having to use the request pattern to gets its root object. Use the IFluidLoadable
-             * property (with discovery through FluidObject<IProvideFluidLoadable>) if possible, but for now all code
-             * paths should first check if that property or the handle obtained through it are not undefined, and keep
-             * using current approaches (e.g. using the request pattern) if they are.
-             */
-            const handle = new FluidObjectHandle<FluidObject>(
+            this.handle = new FluidObjectHandle<FluidObject>(
                 new LazyPromise(async () => initializeEntrypoint(this)),
                 "",
                 this.objectsRoutingContext,
                 );
-            // Do some sleight-of-hand and return an object whose 'handle' property is always defined, and whose
-            // 'IFluidLoadable' property returns an object that complies with the necessary interface.
-            this.IFluidLoadable = {
-                handle,
-                get IFluidLoadable() {
-                    return this;
-                },
-            };
         }
 
         this.attachListener();
