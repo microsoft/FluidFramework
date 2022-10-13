@@ -47,6 +47,7 @@ describe("Runtime", () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],
+                    false,
                     undefined, // requestHandler
                     {}, // runtimeOptions
                 );
@@ -241,6 +242,7 @@ describe("Runtime", () => {
                         containerRuntime = await ContainerRuntime.load(
                             getMockContext() as IContainerContext,
                             [],
+                            false,
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
@@ -302,6 +304,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
+                    false,
                     undefined,
                     {},
                 );
@@ -315,6 +318,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
+                    false,
                     undefined,
                     {},
                 );
@@ -328,6 +332,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
+                    false,
                     undefined,
                     {},
                 );
@@ -341,6 +346,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
+                    false,
                     undefined,
                     {},
                 );
@@ -417,6 +423,7 @@ describe("Runtime", () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],
+                    false,
                     undefined, // requestHandler
                     {
                         summaryOptions: {

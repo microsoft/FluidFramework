@@ -82,8 +82,7 @@
         "backCompat": false
       },
       "InterfaceDeclaration_IContainerContext": {
-        "forwardCompat": false,
-        "backCompat":false
+        "forwardCompat": false
       }
     }
   }
