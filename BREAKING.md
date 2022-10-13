@@ -20,7 +20,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.3.0.0 Upcoming changes
 
 ## 2.0.0-internal.3.0.0 Breaking changes
-- [Make existing flag required](#make-existing-flag-required)
+- [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
 - [Remove iframe-driver](#remove-iframe-driver)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
