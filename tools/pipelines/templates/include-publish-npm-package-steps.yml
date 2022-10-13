@@ -108,6 +108,7 @@ steps:
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
 
             if [[ $errorFlag == true ]]; then
+              echo "Check ERROR MSG!"
               npx npm-return-error-msg
               $errorFlag=false
             fi
