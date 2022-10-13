@@ -503,6 +503,7 @@ export class OdspDocumentService implements IDocumentService {
             this._opsCache?.flushOps();
         }
         this._opsCache?.dispose();
+        this.clearJoinSessionTimer();
     }
 
     protected get opsCache() {
