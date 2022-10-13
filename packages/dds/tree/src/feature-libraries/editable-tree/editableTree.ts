@@ -103,12 +103,10 @@ export interface EditableTree extends Iterable<EditableField> {
      * Fields of this node, indexed by their field keys.
      *
      * This API exposes content in a way depending on the {@link Multiplicity} of the {@link FieldKind}.
-     * Sequences (including empty ones) are always exposed as arrays.
-     * If fields are unwrapped, everything else is either a single EditableTree or
-     * undefined depending on if it's empty.
-     * See {@link EditableTreeContext} for how unwrapping is defined.
+     * Sequences (including empty ones) are always exposed as arrays,
+     * and everything else is either a single EditableTree or undefined depending on if it's empty.
      */
-    readonly [key: FieldKey]: UnwrappedEditableField | EditableField;
+    readonly [key: FieldKey]: UnwrappedEditableField;
 }
 
 /**
@@ -145,11 +143,7 @@ export class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(
-        public readonly context: ProxyContext,
-        public readonly unwrapped: boolean,
-        cursor: ITreeSubscriptionCursor,
-    ) {
+    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
         context.withCursors.add(this);
     }
@@ -269,7 +263,7 @@ export class ProxyTarget {
         return undefined;
     }
 
-    public proxifyField(field: FieldKey): UnwrappedEditableField | EditableField {
+    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField | EditableField {
         const fieldSchema = getFieldSchema(
             field,
             this.context.forest.schema,
@@ -279,15 +273,17 @@ export class ProxyTarget {
         const childTargets = mapCursorField(
             this.cursor,
             field,
-            (c) => new ProxyTarget(this.context, this.unwrapped, c),
+            (c) => new ProxyTarget(this.context, c),
         );
-        return proxifyField(fieldSchema, field, childTargets, this.unwrapped);
+        return proxifyField(fieldSchema, field, childTargets, unwrap);
     }
 
     *[Symbol.iterator](): IterableIterator<EditableField> {
-        const fieldKeys = this.getFieldKeys();
-        for (const fieldKey of fieldKeys) {
-            yield this.proxifyField(fieldKey) as EditableField;
+        const fields = this.getFieldKeys().map(
+            (fieldKey) => this.proxifyField(fieldKey, false) as EditableField,
+        );
+        for (const field of fields) {
+            yield field;
         }
     }
 }
@@ -410,8 +406,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 /**
  * See {@link UnwrappedEditableTree} for documentation on what unwrapping this performs.
  */
-function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
-    if (target.unwrapped) {
+function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditableTree {
+    if (unwrap) {
         const fieldSchema = target.getType(undefined, false) as NamedTreeSchema;
         if (isPrimitive(fieldSchema)) {
             const nodeValue = target.cursor.value;
@@ -428,9 +424,9 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
             const childTargets = mapCursorField(
                 target.cursor,
                 primary.key,
-                (c) => new ProxyTarget(target.context, true, c),
+                (c) => new ProxyTarget(target.context, c),
             );
-            return childTargets.map(inProxyOrUnwrap);
+            return childTargets.map((childTarget) => inProxyOrUnwrap(childTarget, unwrap));
         }
     }
     return adaptWithProxy(target, handler);
@@ -440,7 +436,8 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
  * @param fieldSchema - the FieldSchema of the field.
  * @param fieldKey - the key of the field. Used to visualize the tree.
  * @param childTargets - targets for the children of the field.
- * @param unwrap - if true, the field and all its children are unwrapped. See {@link UnwrappedEditableField}.
+ * @param unwrap - if true, the children of the field are unwrapped (see {@link UnwrappedEditableField}),
+ * otherwise returns the field as {@link EditableField}.
  */
 export function proxifyField(
     fieldSchema: FieldSchema,
@@ -448,17 +445,20 @@ export function proxifyField(
     childTargets: ProxyTarget[],
     unwrap: boolean,
 ): UnwrappedEditableField | EditableField {
-    if (unwrap) {
-        const fieldKind = getFieldKind(fieldSchema);
-        if (fieldKind.multiplicity === Multiplicity.Sequence) {
-            // Return array for sequence fields
-            return childTargets.map(inProxyOrUnwrap) as UnwrappedEditableField;
-        }
-        // Avoid wrapping non-sequence fields in arrays
-        assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
-        return childTargets.length === 1 ? inProxyOrUnwrap(childTargets[0]) : undefined;
+    const proxifiedChildTargets = childTargets.map((childTarget) =>
+        inProxyOrUnwrap(childTarget, unwrap),
+    );
+    if (!unwrap) {
+        return [fieldSchema, fieldKey, proxifiedChildTargets as readonly EditableTree[]];
     }
-    return [fieldSchema, fieldKey, childTargets.map(inProxyOrUnwrap) as readonly EditableTree[]];
+    const fieldKind = getFieldKind(fieldSchema);
+    if (fieldKind.multiplicity === Multiplicity.Sequence) {
+        // Return array for sequence fields
+        return proxifiedChildTargets as UnwrappedEditableField;
+    }
+    // Avoid wrapping non-sequence fields in arrays
+    assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
+    return childTargets.length === 1 ? proxifiedChildTargets[0] : undefined;
 }
 
 /**

@@ -241,7 +241,7 @@ export interface EditableTree extends Iterable<EditableField> {
     readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
-    readonly [key: FieldKey]: UnwrappedEditableField | EditableField;
+    readonly [key: FieldKey]: UnwrappedEditableField;
 }
 
 // @public

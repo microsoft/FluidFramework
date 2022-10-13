@@ -84,7 +84,7 @@ export class ProxyContext implements EditableTreeContext {
         const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
             do {
-                targets.push(new ProxyTarget(this, true, cursor));
+                targets.push(new ProxyTarget(this, cursor));
             } while (cursor.seek(1) === TreeNavigationResult.Ok);
         }
         cursor.free();
@@ -107,7 +107,7 @@ export class ProxyContext implements EditableTreeContext {
         const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
             do {
-                targets.push(new ProxyTarget(this, false, cursor));
+                targets.push(new ProxyTarget(this, cursor));
             } while (cursor.seek(1) === TreeNavigationResult.Ok);
         }
         cursor.free();

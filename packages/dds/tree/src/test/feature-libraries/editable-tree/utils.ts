@@ -60,22 +60,31 @@ export function expectTreeEquals(
     assert.equal(node[valueSymbol], expected.value);
     const type = node[getTypeSymbol](undefined, false);
     assert.deepEqual(type, expectedType);
-    for (const key of Object.keys(node)) {
-        const subNode = node[key as FieldKey];
-        assert(!isEditableField(subNode));
-        assert(subNode !== undefined, key);
-        const fields = expected.fields ?? {};
-        assert.equal(key in fields, true);
-        const field: JsonableTree[] = fields[key];
+    for (const ok of Reflect.ownKeys(node)) {
+        const key: FieldKey = brand(ok);
+        const subNode = node[key];
+        const expectedFields = expected.fields ?? {};
+        const expectedGlobalFields = expected.globalFields ?? {};
+        let expectedField: JsonableTree[];
+        if (isGlobalFieldKey(key)) {
+            const globalKey = keyFromSymbol(key);
+            assert(subNode !== undefined, globalKey);
+            assert.equal(globalKey in expectedFields, true);
+            expectedField = expectedGlobalFields[globalKey];
+        } else {
+            assert(subNode !== undefined, key);
+            assert.equal(key in expectedFields, true);
+            expectedField = expectedFields[key];
+        }
         const isSequence =
             getFieldKind(getFieldSchema(brand(key), schemaData, type)).multiplicity ===
             Multiplicity.Sequence;
         // implicit sequence
         if (isSequence) {
-            expectTreeSequence(schemaData, subNode, field);
+            expectTreeSequence(schemaData, subNode, expectedField);
         } else {
-            assert.equal(field.length, 1);
-            expectTreeEquals(schemaData, subNode, field[0]);
+            assert.equal(expectedField.length, 1);
+            expectTreeEquals(schemaData, subNode, expectedField[0]);
         }
     }
 }
@@ -133,8 +142,9 @@ export function expectNodeEquals(
         const expectedFields = expected.fields ?? {};
         let expectedField: JsonableTree[];
         if (isGlobalFieldKey(childKey)) {
-            assert(childKey in expectedGlobalFields);
-            expectedField = expectedGlobalFields[keyFromSymbol(childKey)];
+            const globalKey = keyFromSymbol(childKey);
+            assert(globalKey in expectedGlobalFields);
+            expectedField = expectedGlobalFields[globalKey];
         } else {
             assert(childKey in expectedFields);
             expectedField = expectedFields[childKey];

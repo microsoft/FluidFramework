@@ -11,6 +11,7 @@ import {
     NamedTreeSchema,
     TreeSchemaIdentifier,
     SchemaData,
+    GlobalFieldKey,
 } from "../../../schema-stored";
 import { EmptyKey, rootFieldKey, JsonableTree } from "../../../tree";
 import { brand, Brand } from "../../../util";
@@ -67,6 +68,9 @@ export const simplePhonesSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
+const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
+const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
+
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
     localFields: {
@@ -76,6 +80,7 @@ export const addressSchema = namedTreeSchema({
         simplePhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
+    globalFields: [globalFieldKeySequencePhones],
     extraLocalFields: emptyField,
 });
 
@@ -139,7 +144,10 @@ export const rootPersonSchema = fieldSchema(FieldKinds.value, [personSchema.name
 
 export const fullSchemaData: SchemaData = {
     treeSchema: schemaMap,
-    globalFieldSchema: new Map([[rootFieldKey, rootPersonSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootPersonSchema],
+        [globalFieldKeySequencePhones, globalFieldSchemaSequencePhones],
+    ]),
 };
 
 // TODO: derive types like these from those schema, which subset EditableTree
@@ -216,6 +224,12 @@ export const personData: JsonableTree = {
                         },
                     ],
                     sequencePhones: [
+                        { type: stringSchema.name, value: "113" },
+                        { type: stringSchema.name, value: "114" },
+                    ],
+                },
+                globalFields: {
+                    [globalFieldKeySequencePhones]: [
                         { type: stringSchema.name, value: "113" },
                         { type: stringSchema.name, value: "114" },
                     ],
