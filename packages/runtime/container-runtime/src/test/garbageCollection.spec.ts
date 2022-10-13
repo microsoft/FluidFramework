@@ -36,7 +36,6 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     runSessionExpiryKey,
-    disableSessionExpiryKey,
     IGarbageCollectorCreateParams,
     oneDayMs,
     runGCKey,
@@ -126,6 +125,7 @@ describe("Garbage Collection Tests", () => {
             getLastSummaryTimestampMs: () => Date.now(),
             activeConnection: () => true,
             getContainerDiagnosticId: () => "someDocId",
+            driverImplementsSnapshotCachePolicy: true, // To enable running sweep
         });
     }
     let gc: GcWithPrivates | undefined;
@@ -273,7 +273,7 @@ describe("Garbage Collection Tests", () => {
             // 2. IGCRuntimeOptions.sessionExpiryTimeoutMs
             // 3. IGCMetadata.sessionExpiryTimeoutMs
             // 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
-            // 5. boolean settings: runSessionExpiryKey and disableSessionExpiryKey
+            // 5. boolean setting: runSessionExpiryKey
             // Sweep Timeout considerations:
             // - Computed from Session Expiry, Snapshot Expiry and a fixed buffer
             // - Only set if Session Expiry timer is set, but using Session Expiry value written to file
@@ -338,15 +338,6 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(gc.sessionExpiryTimeoutMs, undefined, "sessionExpiryTimeoutMs should be undefined if runSessionExpiryKey setting is false");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                 validateSweepTimeout();
-            });
-            it("Disable SessionExpiry", () => {
-                injectedSettings[disableSessionExpiryKey] = true;
-                injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
-                gc = createGcWithPrivateMembers();
-                assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
-                assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
-                // (validateSweepTimeout doesn't try to handle this case)
-                assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if SessionExpiry is disabled");
             });
         });
 
