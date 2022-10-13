@@ -92,6 +92,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         let cleanDirtiness = (collection) => {
             var entry;
 
+            // eslint-disable-next-line no-restricted-syntax
             for (let key in collection) {
                 entry = this._dynamicChildren[key];
                 if (entry._isDirty(in_flags)) {
