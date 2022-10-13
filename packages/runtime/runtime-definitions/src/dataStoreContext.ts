@@ -108,7 +108,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
- * A fluid router with the capability of being assigned an alias
+ * Exposs some functionality/features of a data store:
+ * - Handle to the data store's entrypoint
+ * - Fluid router for the data store
+ * - Can be assigned an alias
  */
 export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
     /**
@@ -161,10 +164,12 @@ export interface IContainerRuntimeBase extends
     ): Promise<IDataStore>;
 
     /**
-     * Creates a data store and returns its router object. The data store is not bound to a container,
-     * and in such state is not persisted to storage (file). Storing a handle to this store
-     * (or any of its parts, like DDS) into an already attached DDS (or non-attached DDS that will eventually
-     * get attached to storage) will result in this store being attached to storage.
+     * Creates a data store and returns an object that exposes a handle to the data store's entrypoint, and also serves
+     * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
+     * storage (file). Storing the entrypoint handle (or any other handle inside the data store, e.g. for DDS) into an
+     * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
+     * store being attached to storage.
+     * @param pkg - Package name of the data store factory
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
