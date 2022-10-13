@@ -477,26 +477,3 @@ export function getEditableTreeContext(forest: IEditableForest): EditableTreeCon
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
     return typeof field === "object" && field !== null && !Array.isArray(field);
 }
-
-/**
- * Checks if the field is unwrapped.
- */
-export function isEditableField(
-    field: UnwrappedEditableField | EditableField,
-): field is EditableField {
-    if (typeof field !== "object" || field === null) {
-        return false;
-    }
-    if (Array.isArray(field) && field.length === 3) {
-        const maybeUnwrapped = field[0];
-        if (
-            typeof maybeUnwrapped !== "object" ||
-            maybeUnwrapped === null ||
-            Array.isArray(maybeUnwrapped)
-        ) {
-            return false;
-        }
-        return !(proxyTargetSymbol in maybeUnwrapped);
-    }
-    return false;
-}

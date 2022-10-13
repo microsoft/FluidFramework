@@ -17,7 +17,6 @@ import {
     Multiplicity,
     EditableField,
     EditableTree,
-    isEditableField,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -107,8 +106,6 @@ export function expectFieldEquals(
     field: EditableField,
     expected: JsonableTree[],
 ): void {
-    // this is not required, only for testing
-    assert(isEditableField(field));
     const [fieldSchema, , nodes] = field;
     assert(Array.isArray(expected));
     assert(Array.isArray(nodes));
