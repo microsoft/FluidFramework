@@ -152,7 +152,10 @@ describe("SharedTreeCore", () => {
             packageVersion: "0.0.0",
         };
         const anchors = new AnchorSet();
-        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(defaultChangeFamily, anchors);
+        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
+            defaultChangeFamily,
+            anchors,
+        );
 
         return new SharedTreeCore(
             indexes ?? [],
@@ -173,7 +176,8 @@ describe("SharedTreeCore", () => {
 
     class MockIndex
         extends TypedEventEmitter<TestIndexEvents>
-        implements Index<DefaultChangeset>, SummaryElement {
+        implements Index<DefaultChangeset>, SummaryElement
+    {
         public static readonly blobKey = "MockIndexBlobKey";
         public static readonly blobContents = "MockIndexBlobContent";
 

@@ -182,7 +182,7 @@ export class SharedTreeCore<
         }
     }
 
-    protected onDisconnect() { }
+    protected onDisconnect() {}
 
     protected applyStashedOp(content: any): unknown {
         throw new Error("Method not implemented.");

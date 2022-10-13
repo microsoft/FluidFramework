@@ -145,7 +145,7 @@ describe("SharedTree", () => {
 
         // Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
         await provider.opProcessingController.processIncoming(container1);
-        validateTree(tree1, ["A", "C"])
+        validateTree(tree1, ["A", "C"]);
 
         // Have tree1 make a summary
         // Summarized state: A C

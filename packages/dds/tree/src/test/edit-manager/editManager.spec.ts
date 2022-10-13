@@ -52,10 +52,7 @@ function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
 } {
     const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
-        family,
-        anchors,
-    );
+    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
     manager.setSessionId(localSessionId);
     return { manager, anchors };
 }
@@ -383,7 +380,7 @@ function runUnitTestScenario(
                             iNextAck < acks.length
                                 ? acks[iNextAck].seq
                                 : // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                                finalSequencedEdit + 1 + iNextAck - acks.length;
+                                  finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChange.mint(knownToLocal, seq);
