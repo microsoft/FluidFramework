@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree } from "../../../feature-libraries";
+import {
+    emptyField,
+    FieldKinds,
+    EditableTree,
+    EditableTreeSequence,
+} from "../../../feature-libraries";
 import {
     namedTreeSchema,
     ValueSchema,
@@ -159,9 +164,9 @@ export type ComplexPhoneType = EditableTree & {
     prefix: string;
 };
 
-export type PhonesType = (number | string | ComplexPhoneType)[];
+export type PhonesType = EditableTreeSequence & (number | string | ComplexPhoneType)[];
 
-export type SimplePhonesType = string[];
+export type SimplePhonesType = EditableTreeSequence & string[];
 
 export type AddressType = EditableTree & {
     street: string;

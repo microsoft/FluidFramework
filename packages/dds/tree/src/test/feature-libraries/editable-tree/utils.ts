@@ -17,6 +17,7 @@ import {
     Multiplicity,
     EditableField,
     EditableTree,
+    isUnwrappedEditableSequence,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -25,8 +26,6 @@ import {
     isPrimitive,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-// eslint-disable-next-line import/no-internal-modules
-import { isArrayField } from "../../../feature-libraries/editable-tree/editableTree";
 import { schemaMap } from "./mockData";
 
 /**
@@ -42,7 +41,7 @@ export function expectTreeEquals(
     const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
     const primary = getPrimaryField(expectedType);
     if (primary !== undefined) {
-        assert(isArrayField(inputField));
+        assert(isUnwrappedEditableSequence(inputField));
         // Handle inlined primary fields
         const expectedNodes = expected.fields?.[primary.key];
         if (expectedNodes === undefined) {
@@ -94,7 +93,7 @@ export function expectTreeSequence(
     field: UnwrappedEditableField,
     expected: JsonableTree[],
 ): void {
-    assert(isArrayField(field));
+    assert(isUnwrappedEditableSequence(field));
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
@@ -115,7 +114,9 @@ export function expectFieldEquals(
 ): void {
     const [fieldSchema, , nodes] = field;
     assert(Array.isArray(expected));
-    assert(isArrayField(nodes));
+    if (nodes.length !== expected.length) {
+        debugger;
+    }
     assert.equal(nodes.length, expected.length);
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity !== Multiplicity.Sequence) {

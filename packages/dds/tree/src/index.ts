@@ -146,6 +146,8 @@ export {
     isNeverField,
     FullSchemaPolicy,
     UnwrappedEditableField,
+    EditableTreeSequence,
+    isUnwrappedEditableSequence,
     EditableTreeContext,
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,

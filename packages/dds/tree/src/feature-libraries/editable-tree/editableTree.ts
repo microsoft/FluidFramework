@@ -33,6 +33,13 @@ import {
     PrimitiveValue,
 } from "./utilities";
 import { EditableTreeContext, ProxyContext } from "./editableTreeContext";
+import {
+    EditableTreeSequence,
+    ProxyTargetSequence,
+    getSequenceHandler,
+    isUnwrappedEditableSequence,
+    isProxyTargetSequence,
+} from "./editableTreeSequence";
 
 /**
  * A symbol for extracting target from editable-tree proxies.
@@ -63,7 +70,6 @@ export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
  * To discover empty fields, inspect the schema using {@link getTypeSymbol}.
  *
  * TODO: support editing.
- * TODO: use proxies for array fields not just raw arrays (will be needed for laziness and editing).
  */
 export interface EditableTree extends Iterable<EditableField> {
     /**
@@ -118,37 +124,51 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 /**
  * EditableTree, but with these cases of unwrapping:
  * - primitives are unwrapped. See {@link EditableTreeOrPrimitive}.
- * - nodes with PrimaryField are unwrapped to just the primaryField. See `getPrimaryField`.
+ * - nodes with PrimaryField (see `getPrimaryField`) are unwrapped to {@link EditableTreeSequence}.
  * - fields are unwrapped based on their schema's multiplicity. See {@link UnwrappedEditableField}.
  */
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableTreeSequence;
 
 /**
  * A field of an {@link EditableTree}.
  */
-export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+export type EditableField = readonly [FieldSchema, FieldKey, EditableTreeSequence<EditableTree>];
 
 /**
  * Unwrapped field.
  * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
- * Sequence multiplicities are handled with arrays.
+ * Sequence multiplicities are handled with {@link EditableTreeSequence}.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
-export type UnwrappedEditableField =
-    | UnwrappedEditableTree
-    | undefined
-    | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableTreeSequence;
 
 export class ProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        this.lazyCursor = cursor.fork();
-        context.withCursors.add(this);
+    constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
+        if (cursor === undefined || cursor.state === ITreeSubscriptionCursorState.Freed) {
+            // set anchor as NeverAnchor
+            this.anchor = context.forest.anchors.track(null);
+            this.lazyCursor = context.forest.allocateCursor();
+            this.lazyCursor.free();
+        } else {
+            this.lazyCursor = cursor.fork();
+            context.withCursors.add(this);
+        }
+    }
+
+    /**
+     * Indicates that the node is empty.
+     * Currently it is used mostly by ProxyTargetSequence. In case the field is empty,
+     * the sequence cannot use the cursor to get its length, as the cursor points to a parent of the empty field.
+     */
+    public get isEmpty(): boolean {
+        return this.anchor === this.context.forest.anchors.track(null);
     }
 
     public free(): void {
+        if (this.isEmpty) return;
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
@@ -269,13 +289,14 @@ export class ProxyTarget {
             this.context.forest.schema,
             this.getType(undefined, false) as NamedTreeSchema,
         );
-        // Make the childTargets:
-        const childTargets = mapCursorField(
-            this.cursor,
-            field,
-            (c) => new ProxyTarget(this.context, c),
-        );
-        return proxifyField(fieldSchema, field, childTargets, unwrap);
+        const result = this.cursor.down(field, 0);
+        if (result === TreeNavigationResult.Ok) {
+            const target = new ProxyTarget(this.context, this.cursor);
+            this.cursor.up();
+            return proxifyField(fieldSchema, field, target, unwrap);
+        }
+        // empty field
+        return proxifyField(fieldSchema, field, new ProxyTarget(this.context), unwrap);
     }
 
     *[Symbol.iterator](): IterableIterator<EditableField> {
@@ -406,8 +427,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 /**
  * See {@link UnwrappedEditableTree} for documentation on what unwrapping this performs.
  */
-function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditableTree {
-    if (unwrap) {
+export function inProxyOrUnwrap(
+    target: ProxyTarget | ProxyTargetSequence | ProxyTargetSequence<EditableTree>,
+    unwrap: boolean,
+): UnwrappedEditableTree | EditableTreeSequence<EditableTree> {
+    // Unwrap primitives or PrimaryField. Sequences unwrap by themselves.
+    if (unwrap && !isProxyTargetSequence(target)) {
         const fieldSchema = target.getType(undefined, false) as NamedTreeSchema;
         if (isPrimitive(fieldSchema)) {
             const nodeValue = target.cursor.value;
@@ -421,13 +446,13 @@ function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditabl
         }
         const primary = target.getPrimaryArrayKey();
         if (primary !== undefined) {
-            const childTargets = mapCursorField(
-                target.cursor,
-                primary.key,
-                (c) => new ProxyTarget(target.context, c),
-            );
-            return childTargets.map((childTarget) => inProxyOrUnwrap(childTarget, unwrap));
+            target.cursor.down(primary.key, 0);
+            const primarySequence = ProxyTargetSequence.create(target, unwrap, primary.key);
+            return adaptWithProxy(primarySequence, getSequenceHandler());
         }
+    }
+    if (isProxyTargetSequence(target)) {
+        return adaptWithProxy(target, getSequenceHandler());
     }
     return adaptWithProxy(target, handler);
 }
@@ -442,23 +467,23 @@ function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditabl
 export function proxifyField(
     fieldSchema: FieldSchema,
     fieldKey: FieldKey,
-    childTargets: ProxyTarget[],
+    target: ProxyTarget,
     unwrap: boolean,
 ): UnwrappedEditableField | EditableField {
-    const proxifiedChildTargets = childTargets.map((childTarget) =>
-        inProxyOrUnwrap(childTarget, unwrap),
-    );
     if (!unwrap) {
-        return [fieldSchema, fieldKey, proxifiedChildTargets as readonly EditableTree[]];
+        const targetSequence = ProxyTargetSequence.create(target, unwrap);
+        return [
+            fieldSchema,
+            fieldKey,
+            inProxyOrUnwrap(targetSequence, unwrap) as EditableTreeSequence<EditableTree>,
+        ];
     }
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity === Multiplicity.Sequence) {
-        // Return array for sequence fields
-        return proxifiedChildTargets as UnwrappedEditableField;
+        const targetSequence = ProxyTargetSequence.create(target, unwrap);
+        return inProxyOrUnwrap(targetSequence, unwrap);
     }
-    // Avoid wrapping non-sequence fields in arrays
-    assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
-    return childTargets.length === 1 ? proxifiedChildTargets[0] : undefined;
+    return target.isEmpty ? undefined : inProxyOrUnwrap(target, unwrap);
 }
 
 /**
@@ -475,12 +500,5 @@ export function getEditableTreeContext(forest: IEditableForest): EditableTreeCon
  * Checks the type of an UnwrappedEditableField.
  */
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
-    return typeof field === "object" && !isArrayField(field);
-}
-
-/**
- * Checks the type of an UnwrappedEditableField.
- */
-export function isArrayField(field: UnwrappedEditableField): field is UnwrappedEditableTree[] {
-    return Array.isArray(field);
+    return typeof field === "object" && !isUnwrappedEditableSequence(field);
 }

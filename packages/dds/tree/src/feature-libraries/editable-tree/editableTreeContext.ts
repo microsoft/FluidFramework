@@ -88,15 +88,13 @@ export class ProxyContext implements EditableTreeContext {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
-        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
-        if (cursorResult === TreeNavigationResult.Ok) {
-            do {
-                targets.push(new ProxyTarget(this, cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
-        }
+        const result = this.forest.tryMoveCursorTo(destination, cursor);
+        const target = new ProxyTarget(
+            this,
+            result === TreeNavigationResult.Ok ? cursor : undefined,
+        );
         cursor.free();
         this.forest.anchors.forget(destination);
-        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
+        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), target, unwrap);
     }
 }

@@ -233,7 +233,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag_2;
 
 // @public
-export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+export type EditableField = readonly [FieldSchema, FieldKey, EditableTreeSequence<EditableTree>];
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
@@ -254,6 +254,14 @@ export interface EditableTreeContext {
 
 // @public
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
+
+// @public
+export interface EditableTreeSequence<T extends EditableTreeOrPrimitive = EditableTreeOrPrimitive> extends ArrayLike<T> {
+    readonly [getTypeSymbol]: (index?: number, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [proxyTargetSymbol]: object;
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<T>;
+}
 
 // @public (undocumented)
 export enum Effects {
@@ -578,6 +586,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
+
+// @public
+export function isUnwrappedEditableSequence(field: UnwrappedEditableField): field is EditableTreeSequence;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
@@ -1717,10 +1728,10 @@ class UnitEncoder extends ChangeEncoder<0> {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableTreeSequence;
 
 // @public
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableTreeSequence;
 
 // @public
 export interface UpPath {

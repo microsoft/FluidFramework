@@ -19,4 +19,6 @@ export {
 
 export { EditableTreeContext } from "./editableTreeContext";
 
+export { EditableTreeSequence, isUnwrappedEditableSequence } from "./editableTreeSequence";
+
 export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";
