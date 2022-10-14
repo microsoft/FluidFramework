@@ -58,7 +58,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
                 } else if (Array.isArray(node)) {
                     return [EmptyKey];
                 } else {
-                    return Object.getOwnPropertyNames(node as object) as FieldKey[];
+                    return Object.keys(node) as FieldKey[];
                 }
             default:
                 return [];
