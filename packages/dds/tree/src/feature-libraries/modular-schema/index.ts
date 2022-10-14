@@ -4,6 +4,7 @@
  */
 
 export * from "./fieldKind";
+export * from "./genericFieldKind";
 export * from "./fieldChangeHandler";
 export * from "./modularChangeFamily";
 export {

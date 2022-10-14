@@ -150,15 +150,13 @@
         "tools/benchmark",
         "tools/getkeys",
         "tools/test-tools",
-        "server/tinylicious",
-        "server/azure-local-service"
+        "server/tinylicious"
       ],
       "services": {
         "directory": "server",
         "ignoredDirs": [
           "routerlicious",
-          "tinylicious",
-          "azure-local-service"
+          "tinylicious"
         ]
       }
     }

@@ -301,7 +301,7 @@ describe("Runtime", () => {
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
-                                    disableSummaries: true,
+                                    summaryConfigOverrides: { state: "disabled" },
                                 },
                                 flushMode,
                             },

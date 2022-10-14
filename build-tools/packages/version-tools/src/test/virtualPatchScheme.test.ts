@@ -2,16 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { assert } from "chai";
 
-import { isVersionBumpType } from "../src/bumpTypes";
+import { isVersionBumpType } from "../bumpTypes";
 import {
     bumpVirtualPatchVersion,
     fromVirtualPatchScheme,
     toVirtualPatchScheme,
-} from "../src/virtualPatchScheme";
+} from "../virtualPatchScheme";
 
 describe("virtualPatch scheme", () => {
     describe("converting FROM virtualPatch scheme", () => {

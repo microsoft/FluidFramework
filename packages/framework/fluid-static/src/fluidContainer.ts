@@ -11,8 +11,7 @@ import {
     ICriticalContainerError,
     ConnectionState,
 } from "@fluidframework/container-definitions";
-import { LoadableObjectClass, LoadableObjectRecord } from "./types";
-import { RootDataObject } from "./rootDataObject";
+import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
  * Events emitted from {@link IFluidContainer}.
@@ -223,7 +222,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
     public constructor(
         private readonly container: IContainer,
-        private readonly rootDataObject: RootDataObject,
+        private readonly rootDataObject: IRootDataObject,
     ) {
         super();
         container.on("connected", this.connectedHandler);

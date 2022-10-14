@@ -7,14 +7,17 @@ import inquirer from "inquirer";
 import { Machine } from "jssm";
 import path from "path";
 
-import { MonoRepoKind, exec } from "@fluidframework/build-tools";
+import { MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "../commands/check/policy";
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     generateBumpVersionBranchName,
-    generateCommitMessage,
+    generateBumpVersionCommitMessage,
     generateReleaseBranchName,
     getPreReleaseDependencies,
     getReleaseSourceForReleaseGroup,
@@ -410,32 +413,18 @@ export const checkPolicy: StateHandlerFunction = async (
             );
         }
 
-        // await CheckPolicy.run([
-        //     "--fix",
-        //     "--exclusions",
-        //     path.join(
-        //         context.gitRepo.resolvedRoot,
-        //         "build-tools",
-        //         "packages",
-        //         "build-tools",
-        //         "data",
-        //         "exclusions.json"
-        //     )
-        // ]);
-
-        await exec(
-            `node ${path.join(
+        await CheckPolicy.run([
+            "--fix",
+            "--exclusions",
+            path.join(
                 context.gitRepo.resolvedRoot,
                 "build-tools",
                 "packages",
                 "build-tools",
-                "dist",
-                "repoPolicyCheck",
-                "repoPolicyCheck.js",
-            )} -r`,
-            context.gitRepo.resolvedRoot,
-            "policy-check:fix failed",
-        );
+                "data",
+                "exclusions.json",
+            ),
+        ]);
 
         // check for policy check violation
         const afterPolicyCheckStatus = await context.gitRepo.getStatus();
@@ -591,7 +580,7 @@ export const checkShouldCommit: StateHandlerFunction = async (
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const commitMsg = generateCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
+    const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
 
     await context.createBranch(branchName);
     log.verbose(`Created bump branch: ${branchName}`);
@@ -634,7 +623,7 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
     log.verbose(`Created bump branch: ${branchName}`);
     log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-    const commitMsg = `[dependencies] ${releaseGroup}: update prerelease dependencies to release versions`;
+    const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;

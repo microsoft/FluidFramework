@@ -94,6 +94,26 @@ export interface ContainerSchema {
 }
 
 /**
+ * Holds the collection of objects that the container was initially created with, as well as provides the ability
+ * to dynamically create further objects during usage.
+ */
+export interface IRootDataObject {
+    /**
+     * Provides a record of the initial objects defined on creation.
+     */
+    readonly initialObjects: LoadableObjectRecord;
+
+    /**
+     * Dynamically creates a new detached collaborative object (DDS/DataObject).
+     *
+     * @param objectClass - Type of the collaborative object to be created.
+     *
+     * @typeParam T - The class of the `DataObject` or `SharedObject`.
+     */
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+}
+
+/**
  * Signature for {@link IMember} change events.
  *
  * @param clientId - A unique identifier for the client.

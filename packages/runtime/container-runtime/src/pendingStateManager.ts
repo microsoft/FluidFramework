@@ -368,7 +368,7 @@ export class PendingStateManager implements IDisposable {
             switch (pendingState.type) {
                 case "message":
                     assert(pendingState.opMetadata?.batch !== false || messageBatchQueue.length > 0,
-                        "We cannot process batches in chunks");
+                        0x41b /* We cannot process batches in chunks */);
                     /**
                      * We want to ensure grouped messages get processed in a batch.
                      * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
@@ -403,7 +403,7 @@ export class PendingStateManager implements IDisposable {
                             }
                         });
                     }
-                    assert(messageBatchQueue.length === 0, "cannot flush in the middle of a batch");
+                    assert(messageBatchQueue.length === 0, 0x41c /* cannot flush in the middle of a batch */);
                     this.stateHandler.flush();
                     break;
                 default:

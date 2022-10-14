@@ -25,7 +25,7 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     IFluidContainer,
-    RootDataObject,
+    IRootDataObject,
 } from "@fluidframework/fluid-static";
 import {
     TinyliciousClientProps,
@@ -75,7 +75,7 @@ export class TinyliciousClient {
             config: {},
         });
 
-        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+        const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
         /**
          * See {@link FluidContainer.attach}
@@ -110,7 +110,7 @@ export class TinyliciousClient {
     ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
-        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+        const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };

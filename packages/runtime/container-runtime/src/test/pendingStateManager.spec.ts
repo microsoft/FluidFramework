@@ -35,7 +35,7 @@ describe("Pending State Manager", () => {
             rollbackContent = [];
             rollbackShouldThrow = false;
 
-            batchManager = new BatchManager(loggerToMonitoringContext(new MockLogger()));
+            batchManager = new BatchManager(loggerToMonitoringContext(new MockLogger()), 950 * 1024);
         });
 
         it("should do nothing when rolling back empty pending stack", () => {

@@ -239,8 +239,8 @@ function revertLocalInsert(
         const tracked = revertible.trackingGroup.tracked[0];
         assert(
             tracked.trackingCollection.unlink(revertible.trackingGroup),
-        "tracking group removed");
-        assert(tracked.isLeaf(), "inserts must track segments");
+        0x3f1 /* tracking group removed */);
+        assert(tracked.isLeaf(), 0x3f2 /* inserts must track segments */);
         if (toRemovalInfo(tracked) === undefined) {
             const start = driver.getPosition(tracked);
             driver.removeRange(start, start + tracked.cachedLength);
@@ -257,9 +257,9 @@ function revertLocalRemove(
 
         assert(
             tracked.trackingCollection.unlink(revertible.trackingGroup),
-        "tracking group removed");
+        0x3f3 /* tracking group removed */);
 
-        assert(!tracked.isLeaf(), "removes must track local refs");
+        assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
         let realPos = driver.localReferencePositionToPosition(tracked);
         const refSeg = tracked.getSegment();
@@ -282,7 +282,7 @@ function revertLocalRemove(
             realPos,
             props.segSpec);
         const insertSegment = driver.getContainingSegment(realPos).segment;
-        assert(insertSegment !== undefined, "insert segment must exist at position");
+        assert(insertSegment !== undefined, 0x3f5 /* insert segment must exist at position */);
 
         const localSlideFilter = (lref: LocalReferencePosition) =>
             (lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace === "mergeTreeDeltaRevertible";
@@ -323,7 +323,7 @@ function revertLocalRemove(
             forward);
         const internalDriver: InternalRevertDriver = driver;
         if (internalDriver.__mergeTreeRevertible?.detachedReferences?.localRefs?.has(tracked)) {
-            assert(forward, "forward should always be true when detached");
+            assert(forward, 0x3f6 /* forward should always be true when detached */);
             internalDriver.__mergeTreeRevertible.detachedReferences.localRefs.walkReferences(refHandler);
         }
 
@@ -353,7 +353,7 @@ function revertLocalAnnotate(
     while (revertible.trackingGroup.size > 0) {
         const tracked = revertible.trackingGroup.tracked[0];
         const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
-        assert(unlinked && tracked.isLeaf(), "annotates must track segments");
+        assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
         if (toRemovalInfo(tracked) === undefined) {
             const start = driver.getPosition(tracked);
             driver.annotateRange(

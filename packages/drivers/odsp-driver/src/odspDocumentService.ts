@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -176,6 +176,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 this.mc.logger,
+                true,
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
@@ -187,8 +188,6 @@ export class OdspDocumentService implements IDocumentService {
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
                 () => {
-                    assert(this.relayServiceTenantAndSessionId !== undefined,
-                        0x37b /* relayServiceTenantAndSessionId should be present */);
                     return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),

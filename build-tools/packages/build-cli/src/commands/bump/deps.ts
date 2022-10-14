@@ -14,6 +14,7 @@ import { BaseCommand } from "../../base";
 import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     indentString,
     isDependencyUpdateType,
     npmCheckUpdates,
@@ -199,7 +200,13 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
-                const commitMessage = stripAnsi(`Bump dependencies\n\n${changedVersionMessage}`);
+                const commitMessage = stripAnsi(
+                    `${generateBumpDepsCommitMessage(
+                        args.package_or_release_group,
+                        flags.updateType,
+                        flags.releaseGroup,
+                    )}\n\n${changedVersionMessage}`,
+                );
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
