@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "target": "es6",
+    "lib": [
+      "es2020",
+      "DOM"
+    ],
+    "module": "es2022",
+    "moduleResolution": "node",
+    "strict": false,
+    "allowJs": true,
+    "noImplicitOverride": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src"
+  ]
+}

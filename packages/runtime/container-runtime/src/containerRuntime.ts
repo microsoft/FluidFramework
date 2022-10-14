@@ -109,6 +109,7 @@ import {
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { compress, decompress } from "lz4js";
+import { compressSummaryTree } from "./summaryCompressor";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -2518,7 +2519,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             let handle: string;
+
             try {
+                const ackHandle = summaryContext.ackHandle ?? null;
+                const { snapshotTree } = await this.fetchSnapshotFromStorage(
+                    ackHandle,
+                    summaryLogger,
+                    {
+                        eventName: "GetPreviousSnapshot",
+                        fetchLatest: false,
+                    });
+
+                console.log(`Handle node count before: ${summarizeResult.stats.handleNodeCount}`);
+                console.log(`Blob node count before: ${summarizeResult.stats.blobNodeCount}`);
+                console.log(`Total blob size before: ${summarizeResult.stats.totalBlobSize} bytes`);
+                const totalBlobSizeBefore = summarizeResult.stats.totalBlobSize;
+                const handleNodeCountBefore = summarizeResult.stats.handleNodeCount;
+                // eslint-disable-next-line max-len
+                summarizeResult = await compressSummaryTree(summarizeResult, summaryContext.ackHandle, snapshotTree, this.storage.readBlob.bind(this.storage));
+                console.log(`Handle node count after: ${summarizeResult.stats.handleNodeCount}`);
+                console.log(`Blob node count after: ${summarizeResult.stats.blobNodeCount}`);
+                console.log(`Total blob size after: ${summarizeResult.stats.totalBlobSize} bytes`);
+                const totalBlobSizeAfter = summarizeResult.stats.totalBlobSize;
+                const handleNodeCountAfter = summarizeResult.stats.handleNodeCount;
+                console.log(`New handles ${handleNodeCountAfter - handleNodeCountBefore}`);
+                console.log(`Bytes reused ${totalBlobSizeBefore - totalBlobSizeAfter}`);
+                console.log(`Compression ratio ${(totalBlobSizeBefore / totalBlobSizeAfter).toFixed(1)}:1`);
+
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
                 return { stage: "generate", ...generateSummaryData, error };
@@ -2701,7 +2728,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.

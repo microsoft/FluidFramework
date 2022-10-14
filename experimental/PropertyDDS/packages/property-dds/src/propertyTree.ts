@@ -34,6 +34,13 @@ import { PropertyFactory, BaseProperty, NodeProperty } from "@fluid-experimental
 
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import {
+    IContentChunker,
+    IChunkingConfig,
+    ChunkingStrategyEnum,
+    createChunkingMethod,
+} from "@fluid-experimental/content-chunking";
+
 import { PropertyTreeFactory } from "./propertyTreeFactory";
 
 export type SerializedChangeSet = any;
@@ -496,16 +503,18 @@ export class SharedPropertyTree extends SharedObject {
 				remoteChanges: this.remoteChanges,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			let totalBlobsSize = 0;
-			const serializedSummary = this.encodeSummary(summary);
-			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				const summaryBlob = this.encodeSummaryBlob(serializedSummary.slice(pos, pos + chunkSize));
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				totalBlobsSize += summaryBlob["length"];
-				builder.addBlob(`summaryChunk_${i}`, summaryBlob);
-				snapshot.numChunks++;
-			}
+            // eslint-disable-next-line max-len
+            const chunkingConfig: IChunkingConfig = { avgChunkSize: 48 * 1024, chunkingStrategy: ChunkingStrategyEnum.ContentDefined };
+            const contentChunker: IContentChunker = createChunkingMethod(chunkingConfig);
+            let totalBlobsSize = 0;
+            const serializedSummary = this.encodeSummary(summary);
+            const chunks: Uint8Array[] = contentChunker.computeChunks(serializedSummary);
+            chunks.forEach((chunk, index) => {
+                const summaryBlob = this.encodeSummaryBlob(chunk);
+                totalBlobsSize += summaryBlob.byteLength;
+                builder.addBlob(`summaryChunk_${index}`, summaryBlob);
+                snapshot.numChunks++;
+            });
 			this.logIfEnabled(`Total blobs transfer size: ${totalBlobsSize}`);
 		}
 
