@@ -46,8 +46,8 @@ export interface TestOrchestratorConfig {
     version: string;
 }
 
-export type RunStatus = "notstarted" | "running" | "done";
-export type StageStatus = "notstarted" | "running" | "success" | "error";
+export type RunStatus = "notStarted" | "running" | "done";
+export type StageStatus = "notStarted" | "running" | "success" | "error";
 
 export interface IRunStatus {
     title: string;
