@@ -20,6 +20,6 @@ async function main() {
 }
 
 main().catch((error) => {
-    console.log("TestOrchestrator: error:", error);
+    console.error("TestOrchestrator error:", error);
     process.exit(-1);
 });
