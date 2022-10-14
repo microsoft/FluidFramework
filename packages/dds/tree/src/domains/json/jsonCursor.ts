@@ -71,7 +71,11 @@ const adapter: CursorAdapter<JsonCompatible> = {
 
         if (Object.prototype.hasOwnProperty.call(node, key)) {
             const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
-            return field === undefined ? [] : [field];
+            assert(
+                field !== undefined,
+                "explicit undefined fields should not be preserved in JSON",
+            );
+            return [field];
         }
 
         return [];
