@@ -109,7 +109,7 @@ steps:
 
             checkError=$(npx npm-return-error-msg)
 
-            if [[ $checkError =~ "NPM ERR! code ENOTFOUND"]]
+            if [[ $checkError =~ "NPM ERR! code ENOTFOUND"]];
             then
               echo "Check ERROR MSG! AFTER"
               if ! $i -eq $maximumRetryIfNetworkError
