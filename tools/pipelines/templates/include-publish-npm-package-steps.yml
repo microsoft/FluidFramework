@@ -129,7 +129,9 @@ steps:
                     if cmp -s "$f" "$local_f"
                     then
                       echo Continuing as published package matches the current one that was attempting to be released.
-                      continue
+                      rm "$f"
+                      mv "$local_f" "$f"
+                      break
                     else
                       echo ERROR: Published package does not match the current one attempting to be released for the same version.
                     fi
