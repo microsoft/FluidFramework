@@ -152,6 +152,7 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
+    EditableField,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,

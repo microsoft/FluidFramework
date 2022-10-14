@@ -22,9 +22,8 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:clean": "npm run clean",
-    "build:compile": "npm run build:clean && npm run tsc && npm run build:copy",
+    "build": "npm run build:genver && concurrently npm:clean:manifest npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "npm run tsc && npm run build:copy",
     "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
     "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:docs": "api-extractor run --local",
@@ -36,6 +35,7 @@
     "build:readme": "node \"./bin/dev\" generate readme --multi",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
+    "clean:manifest": "rimraf oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -92,9 +92,11 @@
     "oclif": "^3",
     "semver": "^7.3.7",
     "semver-utils": "^1.1.4",
+    "simple-git": "^3.14.1",
     "sort-json": "^2.0.1",
     "strip-ansi": "^6.0.0",
-    "table": "^6.8.0"
+    "table": "^6.8.0",
+    "type-fest": "^2.19.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
