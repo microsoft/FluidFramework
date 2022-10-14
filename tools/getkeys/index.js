@@ -1,18 +1,22 @@
+/* eslint-disable no-undef */
+/* eslint-disable no-constant-condition */
+/* eslint-disable no-return-await */
+
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const util = require("util");
-const { exec } = require('child_process');
-const msRestAzure = require("ms-rest-azure");
-const keyVault = require("azure-keyvault");
-const rcTools = require("@fluidframework/tool-utils");
+import { appendFile as _appendFile } from "fs";
+import { homedir } from "os";
+import { join, basename, extname } from "path";
+import { promisify } from "util";
+import { exec } from "child_process";
+import { interactiveLogin } from "ms-rest-azure";
+import { KeyVaultClient } from "azure-keyvault";
+import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
-const appendFile = util.promisify(fs.appendFile);
+const appendFile = promisify(_appendFile);
 
 // Wraps the given string in quotes, escaping any quotes already present in the string
 // with '\"', which is compatible with cmd, bash, and zsh.
@@ -23,7 +27,7 @@ function quote(str) {
 // Converts the given 'entries' [key, value][] array into export statements for bash
 // and zsh, appending the result to the given 'shellRc' file.
 async function exportToShellRc(shellRc, entries) {
-    const rcPath = path.join(os.homedir(), shellRc);
+    const rcPath = join(homedir(), shellRc);
     console.log(`Writing '${rcPath}'.`);
 
     const stmts = `\n# Fluid dev/test secrets\n${
@@ -43,7 +47,7 @@ async function saveEnv(env) {
     // However, the environment will be inherited when their preferred shell is
     // launched from the login shell.
     const shell = process.env.SHELL;
-    const shellName = shell && path.basename(shell, path.extname(shell));
+    const shellName = shell && basename(shell, extname(shell));
     switch (shellName) {
         // Gitbash on windows will appear as bash.exe
         case "bash":
@@ -61,7 +65,7 @@ async function saveEnv(env) {
             // For 'fish' we use 'set -xU', which dedupes and performs its own escaping.
             // Note that we must pass the 'shell' option, otherwise node will spawn '/bin/sh'.
             return Promise.all(
-                entries.map(([key, value]) => execAsync(`set -xU '${key}' '${value}'`, { shell }))
+                entries.map(async ([key, value]) => execAsync(`set -xU '${key}' '${value}'`, { shell })),
             );
         default:
             if (!process.platform === "win32") {
@@ -71,7 +75,7 @@ async function saveEnv(env) {
 
                 // On Windows, invoke 'setx' to update the user's persistent environment variables.
                 return Promise.all(
-                    entries.map(([key, value]) => execAsync(`setx ${key} ${quote(value)}`))
+                    entries.map(async ([key, value]) => execAsync(`setx ${key} ${quote(value)}`)),
                 );
             }
     }
@@ -83,15 +87,15 @@ async function getKeys(keyVaultClient, rc, vaultName) {
     const p = [];
     for (const secret of secretList) {
         if (secret.attributes.enabled) {
-            const secretName = secret.id.split('/').pop();
+            const secretName = secret.id.split("/").pop();
             // exclude secrets with automation prefix, which should only be used in automation
             if (!secretName.startsWith("automation")) {
                 p.push((async () => {
                     const response = await keyVaultClient.getSecret(vaultName, secretName);
-                    const envName = secretName.split('-').join('__'); // secret name can't contain underscores
+                    const envName = secretName.split("-").join("__"); // secret name can't contain underscores
                     console.log(`  ${envName}`);
                     rc.secrets[envName] = response.value;
-                })());;
+                })());
             }
         }
     }
@@ -116,7 +120,6 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
     static async get() {
-
         await execAsync("az ad signed-in-user show");
         return new AzCliKeyVaultClient();
 
@@ -137,16 +140,16 @@ class AzCliKeyVaultClient {
     async getSecret(vaultName, secretName) {
         return JSON.parse(await execAsync(`az keyvault secret show --vault-name ${vaultName} --name ${secretName}`));
     }
-};
+}
 
 class MsRestAzureKeyVaultClinet {
     static async get() {
-        const credentials = await msRestAzure.interactiveLogin();
+        const credentials = await interactiveLogin();
         return new MsRestAzureKeyVaultClinet(credentials);
     }
 
     constructor(credentials) {
-        this.client = new keyVault.KeyVaultClient(credentials);
+        this.client = new KeyVaultClient(credentials);
     }
 
     async getSecrets(vaultName) {
@@ -154,7 +157,7 @@ class MsRestAzureKeyVaultClinet {
     }
 
     async getSecret(vaultName, secretName) {
-        return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, '');
+        return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, "");
     }
 }
 
@@ -172,7 +175,7 @@ async function getClient() {
 }
 
 (async () => {
-    const rc = await rcTools.loadRC();
+    const rc = await loadRC();
 
     if (rc.secrets === undefined) {
         rc.secrets = {};
@@ -193,12 +196,12 @@ async function getClient() {
         } catch (e) { }
     }
 
-    console.log(`\nWriting '${path.join(os.homedir(), ".fluidtoolrc")}'.`);
-    await rcTools.saveRC(rc);
+    console.log(`\nWriting '${join(homedir(), ".fluidtoolrc")}'.`);
+    await saveRC(rc);
     await saveEnv(rc.secrets);
 
-    console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`)
-})().catch(e => {
+    console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`);
+})().catch((e) => {
     if (e.message.includes("'az' is not recognized as an internal or external command")) {
         console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
         exit(0);
