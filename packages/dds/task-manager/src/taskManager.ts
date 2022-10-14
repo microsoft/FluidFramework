@@ -54,7 +54,7 @@ const snapshotFileName = "header";
  *
  * @remarks
  *
- * For an in-depth overview, see [TaskManager](https://fluidframework.com/docs/data-structures/taskmanager/).
+ * For an in-depth overview, see [TaskManager](https://fluidframework.com/docs/data-structures/task-manager/).
  *
  * ### Creation
  *
