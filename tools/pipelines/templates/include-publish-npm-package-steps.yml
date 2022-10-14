@@ -111,7 +111,8 @@ steps:
 
             echo "CHECK ERROR : " $checkError
 
-            if [ "$checkError" =~ "npm ERR! code ENOTFOUND" ]; then
+            if [ "$checkError" == "npm ERR! code ENOTFOUND" ];
+            then
               echo "Check Error! After!"
               if ! $i -eq $maximumRetryIfNetworkError
               then
