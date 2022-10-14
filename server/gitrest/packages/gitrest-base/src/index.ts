@@ -3,9 +3,48 @@
  * Licensed under the MIT License.
  */
 
-export * from "./externalStorageManager";
-export * from "./logger";
-export * from "./routes";
-export * from "./runner";
-export * from "./runnerFactory";
-export * from "./utils";
+export { ExternalStorageManager, IExternalStorageManager } from "./externalStorageManager";
+export { configureGitRestLogging } from "./logger";
+export { create, IRoutes } from "./routes";
+export { GitrestRunner } from "./runner";
+export { GitrestResources, GitrestResourcesFactory, GitrestRunnerFactory } from "./runnerFactory";
+export {
+	BaseGitRestTelemetryProperties,
+	checkSoftDeleted,
+	Constants,
+	exists,
+	getExternalWriterParams,
+	getGitDirectory,
+	getLumberjackBasePropertiesFromRepoManagerParams,
+	getRepoManagerFromWriteAPI,
+	getRepoManagerParamsFromRequest,
+	getRepoPath,
+	getRequestPathCategory,
+	getSoftDeletedMarkerPath,
+	GitObjectType,
+	GitWholeSummaryManager,
+	IExternalWriterConfig,
+	IFileSystemManager,
+	IFileSystemManagerFactory,
+	IFileSystemManagerParams,
+	IFileSystemPromises,
+	IRepoManagerParams,
+	IRepositoryManager,
+	IRepositoryManagerFactory,
+	isChannelSummary,
+	isContainerSummary,
+	IsomorphicGitManagerFactory,
+	IsomorphicGitRepositoryManager,
+	IStorageDirectoryConfig,
+	IStorageRoutingId,
+	latestSummarySha,
+	logAndThrowApiError,
+	NodeFsManagerFactory,
+	NodegitRepositoryManager,
+	NodegitRepositoryManagerFactory,
+	parseStorageRoutingId,
+	persistLatestFullSummaryInStorage,
+	retrieveLatestFullSummaryFromStorage,
+	validateBlobContent,
+	validateBlobEncoding,
+} from "./utils";

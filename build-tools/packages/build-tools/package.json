@@ -49,7 +49,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
-    "tsc": "tsc -b"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluid-tools/version-tools": "^0.4.8000",

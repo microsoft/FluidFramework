@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluidToolRC";
-export * from "./odspTokenManager";
-export * from "./snapshotNormalizer";
+export { IAsyncCache, IResources, loadRC, lockRC, saveRC } from "./fluidToolRC";
+export {
+	getMicrosoftConfiguration,
+	IOdspTokenManagerCacheKey,
+	OdspTokenConfig,
+	OdspTokenManager,
+	odspTokensCache,
+} from "./odspTokenManager";
+export { gcBlobPrefix, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "./snapshotNormalizer";

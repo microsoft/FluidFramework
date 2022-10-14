@@ -209,7 +209,7 @@ export class ProxyTarget {
     ): NamedTreeSchema | TreeSchemaIdentifier | undefined {
         let typeName = this.cursor.type;
         if (key !== undefined) {
-            const fieldLength = this.cursor.length(key);
+            const fieldLength = this.cursor.childFieldLength(key);
             assert(fieldLength <= 1, 0x3c5 /* invalid non sequence */);
             typeName = mapCursorField(this.cursor, key, (c) => c.type)[0];
         }
@@ -253,7 +253,7 @@ export class ProxyTarget {
 
     public has(field: FieldKey): boolean {
         // Make fields present only if non-empty.
-        return this.cursor.length(field) !== 0;
+        return this.cursor.childFieldLength(field) !== 0;
     }
 
     /**

@@ -2,11 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { assert } from "chai";
 
-import { detectVersionScheme, getLatestReleaseFromList } from "../src/schemes";
+import { detectVersionScheme, getLatestReleaseFromList } from "../schemes";
 
 const pre1VersionList = [
     "0.59.1000-61898",
