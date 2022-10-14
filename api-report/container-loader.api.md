@@ -193,7 +193,6 @@ export interface IPendingContainerState {
     // (undocumented)
     pendingRuntimeState: unknown;
     savedOps: ISequencedDocumentMessage[];
-    // Warning: (ae-forgotten-export) The symbol "ISerializableBlobContents" needs to be exported by the entry point index.d.ts
     snapshotBlobs: ISerializableBlobContents;
     // (undocumented)
     term: number;
@@ -207,6 +206,12 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
+}
+
+// @public
+export interface ISerializableBlobContents {
+    // (undocumented)
+    [id: string]: string;
 }
 
 // @public
