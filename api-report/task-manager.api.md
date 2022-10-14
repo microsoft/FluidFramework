@@ -26,7 +26,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     volunteerForTask(taskId: string): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public
 export interface ITaskManagerEvents extends ISharedObjectEvents {
     (event: "assigned" | "completed" | "lost", listener: (taskId: string) => void): any;
 }

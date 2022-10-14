@@ -5,6 +5,9 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
+/**
+ * Events emitted by {@link TaskManager}.
+ */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
     /**
      * Notifies when the local client has reached the front of the queue, left the queue, or a task was completed.
@@ -16,45 +19,44 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 /**
  * Task manager interface
  */
-
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     /**
-     * Volunteer for the task.  Promise resolves true when the task is assigned to the local client. It rejects if the
-     * local client is removed from the queue without being assigned the task for any reason, such as disconnecting or
-     * abandoning the task while in queue.
+     * Volunteer for the task. Returns a promise that resolves `true` if the task is assigned to the local client and
+     * `false` if the task was completed by another client. It rejects if the local client abandoned the task or
+     * disconnected while in queue.
      * @param taskId - Identifier for the task
      */
     volunteerForTask(taskId: string): Promise<boolean>;
 
     /**
-     * Continuously volunteer to lock the task.  Watch the "assigned" event to determine if the task lock is assigned.
-     * We automatically re-enter the queue if the task lock is lost for any reason.
+     * Continuously volunteer for the task. Watch the "assigned" event to determine if the task is assigned.
+     * The local client will automatically re-enter the queue if the local client disconnects.
      * @param taskId - Identifier for the task
      */
     subscribeToTask(taskId: string): void;
 
     /**
-     * Exit the queue, releasing the task if currently locked.
+     * Exit the queue, releasing the task if currently assigned.
      * @param taskId - Identifier for the task
      */
     abandon(taskId: string): void;
 
     /**
      * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
-     * would release the lock.
+     * would abandon the assignment.
      * @param taskId - Identifier for the task
      */
     assigned(taskId: string): boolean;
 
     /**
-     * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
-     * will be in line after outstanding ops have been ack'd.
+     * Check whether this client is either the current assignee, in queue, or we expect they will be in queue after
+     * outstanding ops have been ack'd.
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
 
     /**
-     * Check whether this client is subscribed for the task.
+     * Check whether this client is currently subscribed to the task.
      * @param taskId - Identifier for the task
      */
     subscribed(taskId: string): boolean;
