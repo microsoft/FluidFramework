@@ -463,6 +463,7 @@ export class GarbageCollector implements IGarbageCollector {
             writeAtRoot: this._writeDataAtRoot,
             testMode: this.testMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
+            sweepTimeout: this.sweepTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             trackGCState: this.trackGCState,
             ...this.gcOptions,
@@ -505,10 +506,10 @@ export class GarbageCollector implements IGarbageCollector {
          * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
          */
         function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
-            const maxSnapshoCacheExpiryMs = 5 * oneDayMs;
+            const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
             const bufferMs = oneDayMs;
             return sessionExpiryTimeoutMs &&
-                (sessionExpiryTimeoutMs + maxSnapshoCacheExpiryMs + bufferMs);
+                (sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs);
         }
 
         /**
