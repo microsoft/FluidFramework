@@ -9,6 +9,7 @@ import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definit
 import {
     FetchSource,
     IDocumentService,
+    IDocumentServiceFactory,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -32,14 +33,16 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
     private readonly blobContents: { [id: string]: ArrayBufferLike; } = {};
     private _storageService: IDocumentStorageService & Partial<IDisposable>;
+    private readonly driverSupportsGarbageCollection?: boolean;
 
     constructor(
         detachedBlobStorage: IDetachedBlobStorage | undefined,
         private readonly logger: ITelemetryLogger,
-        private readonly defaultStoragePolicy?: IDocumentStorageServicePolicies,
+        serviceFactory: IDocumentServiceFactory,
         private readonly captureProtocolSummary?: () => ISummaryTree,
     ) {
         this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+        this.driverSupportsGarbageCollection = serviceFactory.supportsGarbageCollection;
     }
 
     disposed: boolean = false;
@@ -83,15 +86,19 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
         }
     }
 
-    public get policies(): IDocumentStorageServicePolicies | undefined {
+    public get policies(): IDocumentStorageServicePolicies {
         //* Is the try-catch necessary anymore?
         try {
             const policies = this._storageService.policies;
             if (policies !== undefined) {
+                assert(policies.supportsGarbageCollection === this.driverSupportsGarbageCollection, "policy mismatch");
+                if (policies.supportsGarbageCollection === true) {
+                    assert(policies.maximumCacheDurationMs !== undefined, "invalid policy");
+                }
                 return policies;
             }
         } catch (e) {}
-        return this.defaultStoragePolicy;
+        return { supportsGarbageCollection: this.driverSupportsGarbageCollection };
     }
 
     public get repositoryUrl(): string {

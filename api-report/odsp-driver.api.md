@@ -130,6 +130,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
+    // (undocumented)
+    readonly supportsGarbageCollection?: boolean | undefined;
 }
 
 // @public (undocumented)

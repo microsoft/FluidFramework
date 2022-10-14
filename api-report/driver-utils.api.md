@@ -351,6 +351,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         caching: LoaderCachingPolicy;
         minBlobSize?: number | undefined;
         maximumCacheDurationMs?: 432000000 | undefined;
+        supportsGarbageCollection?: boolean | undefined;
     } | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;

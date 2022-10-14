@@ -186,7 +186,8 @@ export interface IGarbageCollectorCreateParams {
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
     readonly getContainerDiagnosticId: () => string;
-    readonly snapshotCacheExpiryMs?: number;
+    readonly snapshotCacheExpiryMs?: number; //* Delete
+    readonly driverSupportsGC?: boolean;
 }
 
 /** The state of node that is unreferenced. */
@@ -510,7 +511,9 @@ export class GarbageCollector implements IGarbageCollector {
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            this.sweepEnabled = this.gcOptions.sweepAllowed === true;
+            this.sweepEnabled =
+                this.gcOptions.sweepAllowed === true
+                && createParams.driverSupportsGC === true;
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
@@ -534,7 +537,7 @@ export class GarbageCollector implements IGarbageCollector {
             // TEMPORARY: Hardcode a default of 5 days which will be >= the policy's value in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
             // This will be removed before sweep is fully implemented.
-            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 5 * 24 * 60 * 60 * 1000;
+            const snapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
 
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.

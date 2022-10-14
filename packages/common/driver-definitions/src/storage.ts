@@ -105,12 +105,19 @@ export interface IDocumentStorageServicePolicies {
     readonly minBlobSize?: number;
 
     /**
+     * This policy must either always be defined or always remained undefined.
      * If undefined, the driver makes no guarantees about the age of snapshots used for loading.
      * Otherwise, the driver will not use snapshots that were added to the cache more than 5 days ago (per client clock)
      * The value MUST be 5 days if defined. This fixed upper bound is necessary for the Garbage Collection feature
      * in the Runtime layer to reliably compute when an object will never be referenced again and can be deleted.
      */
     readonly maximumCacheDurationMs?: FiveDaysMs;
+
+    /**
+     * Must match IDocumentServiceFactory.supportsGarbageCollection.
+     * It must also be in sync with maximumCacheDurationMs: If this is true, that must be defined
+     */
+    readonly supportsGarbageCollection?: boolean;
 }
 
 /**
@@ -321,13 +328,13 @@ export interface IDocumentServiceFactory {
     protocolName: string;
 
     /**
-     * Some of these Storage Policies may be known before instantiating the storage service.
-     * Any such policy is exposed here for use immediately.
-     * Note: There's no guarantee the policy returned by the fully initialized storage service
-     * will match this; this is just the default policy. The final policy should be consulted when available.
+     * This must match @see IDocumentStorageServicePolicies.supportsGarbageCollection.
+     * The runtime needs to know immediately - even before the Storage Service is initialized -
+     * whether or not the driver implements the policies required to support Garbage Collection.
+     * Specifically, if the driver does not limit the age of snapshots it will use when loading,
+     * then the Garbage Collector can never guarantee that a particular object is safe to delete.
      */
-    defaultStoragePolicy?: Partial<IDocumentStorageServicePolicies>;
-
+    supportsGarbageCollection?: boolean;
     /**
      * Creates the document service after extracting different endpoints URLs from a resolved URL.
      *

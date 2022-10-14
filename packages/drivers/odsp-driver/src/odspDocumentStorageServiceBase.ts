@@ -145,6 +145,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
             // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
             minBlobSize: 2048,
             maximumCacheDurationMs: maximumCacheDurationMsInEffect,
+            supportsGarbageCollection: true,
         };
     }
     protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();

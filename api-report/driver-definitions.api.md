@@ -159,9 +159,8 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
-    defaultStoragePolicy?: IDocumentStorageServicePolicies;
     protocolName: string;
+    supportsGarbageCollection?: boolean;
 }
 
 // @public (undocumented)
@@ -188,6 +187,7 @@ export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
+    readonly supportsGarbageCollection?: boolean;
 }
 
 // @public
