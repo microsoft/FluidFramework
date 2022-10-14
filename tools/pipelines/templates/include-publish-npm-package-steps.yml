@@ -147,4 +147,4 @@ steps:
         fi
       done
       rm ~/.npmrc
-      exit 1
+      exit 0
