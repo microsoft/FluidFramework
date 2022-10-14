@@ -49,12 +49,12 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
+            existing,
             buildRuntimeRequestHandler(
                 mountableViewRequestHandler(MountableView, [viewRequestHandler]),
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
-            existing,
         );
 
         return runtime;

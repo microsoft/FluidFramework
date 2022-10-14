@@ -32,12 +32,12 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             registry,
+            existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
-            existing,
         );
 
         return runtime;
