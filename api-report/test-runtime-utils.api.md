@@ -376,6 +376,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly documentId: string;
     // (undocumented)
+    get entrypoint(): IFluidHandle<FluidObject> | undefined;
+    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAttachSnapshot(): ITreeEntry[];
@@ -387,8 +389,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     getBlob(blobId: string): Promise<any>;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
-    // (undocumented)
-    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
     // (undocumented)
     getGCData(): Promise<IGarbageCollectionData>;
     // (undocumented)

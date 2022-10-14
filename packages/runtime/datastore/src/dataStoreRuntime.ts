@@ -122,9 +122,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.getEntrypoint}
+     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entrypoint}
      */
-    public getEntrypoint(): IFluidHandle<FluidObject> | undefined {
+    public get entrypoint(): IFluidHandle<FluidObject> | undefined {
         return this.handle;
     }
 

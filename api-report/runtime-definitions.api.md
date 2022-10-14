@@ -264,7 +264,7 @@ export interface IGarbageCollectionState {
 
 // @public
 export interface IHaveEntrypoint {
-    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
+    readonly entrypoint?: IFluidHandle<FluidObject>;
 }
 
 // @public

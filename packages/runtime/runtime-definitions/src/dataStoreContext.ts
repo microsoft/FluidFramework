@@ -212,15 +212,15 @@ export enum BindState {
 export interface IHaveEntrypoint {
     /**
      * Exposes a handle to the root object / entrypoint of the component. Use this as the primary way of interacting
-     * with the component. If this method returns undefined (meaning that exposing the entrypoint hasn't been
-     * implemented in a particular scenario) fall back to the current approach of requesting the root object through
-     * the request pattern.
+     * with the component. If this property is undefined (meaning that exposing the entrypoint hasn't been implemented
+     * in a particular scenario) fall back to the current approach of requesting the root object through the request
+     * pattern.
      *
-     * @remarks The plan for this method is that eventually the component will stop providing IFluidRouter
-     * functionality, and this will just return an IFluidHandle (no undefined) and will become the only way to access
+     * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
+     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
      * the component's entrypoint.
      */
-    getEntrypoint(): IFluidHandle<FluidObject> | undefined;
+    readonly entrypoint?: IFluidHandle<FluidObject>;
 }
 
 /**

@@ -375,7 +375,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Load the handle to the data store's entrypoint to make sure that the entrypoint initialization function is
         // called and the entrypoint is fully initialized.
-        await channel.getEntrypoint()?.get();
+        await channel.entrypoint?.get();
     }
 
     /**
@@ -1002,7 +1002,7 @@ export class LocalDetachedFluidDataStoreContext
         // of data store factories tends to construct the data object (at least kick off an async method that returns
         // it); that code moved to the entrypoint initialization function, so we want to ensure it still executes
         // before the data store is attached.
-        await dataStoreChannel.getEntrypoint()?.get();
+        await dataStoreChannel.entrypoint?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();
