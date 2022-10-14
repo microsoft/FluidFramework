@@ -27,7 +27,7 @@ export interface AzureClientRunnerConfig {
 }
 
 export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    private status: RunnnerStatus = "notstarted";
+    private status: RunnnerStatus = "notStarted";
     constructor(private readonly c: AzureClientRunnerConfig) {
         super();
     }

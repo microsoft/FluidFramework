@@ -4,7 +4,7 @@
  */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
-export type RunnnerStatus = "notstarted" | "running" | "success" | "error";
+export type RunnnerStatus = "notStarted" | "running" | "success" | "error";
 export interface IRunnerStatus {
     status: RunnnerStatus;
     description?: string;

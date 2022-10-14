@@ -35,7 +35,7 @@ export interface MapTrafficRunnerConfig {
 }
 
 export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    private status: RunnnerStatus = "notstarted";
+    private status: RunnnerStatus = "notStarted";
     constructor(public readonly c: MapTrafficRunnerConfig) {
         super();
     }

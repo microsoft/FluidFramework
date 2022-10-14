@@ -24,7 +24,7 @@ export interface DocCreatorConfig {
 }
 
 export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    private status: RunnnerStatus = "notstarted";
+    private status: RunnnerStatus = "notStarted";
     constructor(private readonly c: DocCreatorConfig) {
         super();
     }

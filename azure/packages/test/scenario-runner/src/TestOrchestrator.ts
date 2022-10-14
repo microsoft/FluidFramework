@@ -65,7 +65,7 @@ export interface IStageStatus {
 
 export class TestOrchestrator {
     private readonly runId = uuid();
-    private runStatus: RunStatus = "notstarted";
+    private runStatus: RunStatus = "notStarted";
     private readonly doc: RunConfig;
     private readonly env = new Map<string, unknown>();
     private readonly stageStatus = new Map<number, IStageStatus>();
