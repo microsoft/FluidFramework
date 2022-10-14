@@ -111,7 +111,7 @@ steps:
 
             echo "CHECK ERROR : " $checkError
 
-            if [[ "$checkError" =~ "NPM ERR! code ENOTFOUND"]];
+            if [[ "$checkError" =~ "NPM ERR! code ENOTFOUND"]]
             then
               echo "Check ERROR MSG! AFTER"
               if ! $i -eq $maximumRetryIfNetworkError
