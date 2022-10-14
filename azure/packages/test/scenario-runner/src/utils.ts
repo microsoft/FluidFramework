@@ -63,7 +63,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
     let frsConfig;
     if (useAzure) {
         if (!configStr) {
-            throw new Error("Missing FRS env. configuration.");
+            throw new Error("Missing FRS env configuration.");
         }
 
         frsConfig = JSON.parse(configStr);
