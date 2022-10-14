@@ -151,7 +151,7 @@ export interface ChangeRebaser<TChangeset> {
      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
      * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeset): TChangeset;
+    invert(changes: ChangeWithMetadata<TChangeset>): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -167,12 +167,19 @@ export interface ChangeRebaser<TChangeset> {
      * - `rebase(a, compose([]))` is equal to `a`.
      * - `rebase(compose([]), a)` is equal to `a`.
      */
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: ChangeWithMetadata<TChangeset>): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+
+    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean): TChangeset;
+}
+
+export interface ChangeWithMetadata<TChangeset> {
+    revision: RevisionTag | undefined;
+    change: TChangeset;
 }
 
 export interface FinalChange {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ChangeWithMetadata, RevisionTag } from "../../rebase";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
@@ -14,6 +15,7 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    NodeChangeReferenceFilter,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -77,8 +79,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             return composed;
         },
-        invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
-            return change.map(
+        invert: (change: ChangeWithMetadata<GenericChangeset>, invertChild: NodeChangeInverter): GenericChangeset => {
+            return change.change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
                     index,
                     nodeChange: invertChild(nodeChange),
@@ -87,15 +89,15 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
         },
         rebase: (
             change: GenericChangeset,
-            over: GenericChangeset,
+            over: ChangeWithMetadata<GenericChangeset>,
             rebaseChild: NodeChangeRebaser,
         ): GenericChangeset => {
             const rebased: GenericChangeset = [];
             let iChange = 0;
             let iOver = 0;
-            while (iChange < change.length && iOver < over.length) {
+            while (iChange < change.length && iOver < over.change.length) {
                 const a = change[iChange];
-                const b = over[iOver];
+                const b = over.change[iOver];
                 if (a.index === b.index) {
                     rebased.push({
                         index: a.index,
@@ -112,6 +114,18 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             rebased.push(...change.slice(iChange));
             return rebased;
+        },
+        filterReferences: (
+            change: GenericChangeset,
+            _shouldRemoveReference: (revision: RevisionTag) => boolean,
+            filterChild: NodeChangeReferenceFilter,
+        ): GenericChangeset => {
+            return change.map(
+                (c: GenericChange): GenericChange => ({
+                    ...c,
+                    nodeChange: filterChild(c.nodeChange),
+                }),
+            );
         },
     },
     encoder: {

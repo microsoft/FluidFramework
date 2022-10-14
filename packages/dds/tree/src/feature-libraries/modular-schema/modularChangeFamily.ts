@@ -10,7 +10,7 @@ import {
     ProgressiveEditBuilder,
     ProgressiveEditBuilderBase,
 } from "../../change-family";
-import { ChangeRebaser } from "../../rebase";
+import { ChangeRebaser, ChangeWithMetadata, RevisionTag } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
@@ -140,15 +140,16 @@ export class ModularChangeFamily
         return composedNodeChange;
     }
 
-    invert(changes: FieldChangeMap): FieldChangeMap {
+    invert(changes: ChangeWithMetadata<FieldChangeMap>): FieldChangeMap {
         const invertedFields: FieldChangeMap = new Map();
 
-        for (const [field, fieldChange] of changes.entries()) {
+        for (const [field, fieldChange] of changes.change.entries()) {
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert(fieldChange.change, (childChanges) =>
-                this.invertNodeChange(childChanges),
+            ).rebaser.invert(
+                { ...changes, change: fieldChange.change },
+                (childChanges) => this.invertNodeChange({ ...changes, change: childChanges }),
             );
 
             invertedFields.set(field, {
@@ -160,20 +161,20 @@ export class ModularChangeFamily
         return invertedFields;
     }
 
-    private invertNodeChange(change: NodeChangeset): NodeChangeset {
+    private invertNodeChange(change: ChangeWithMetadata<NodeChangeset>): NodeChangeset {
         // TODO: Correctly invert `change.valueChange`
-        if (change.fieldChanges === undefined) {
+        if (change.change.fieldChanges === undefined) {
             return {};
         }
 
-        return { fieldChanges: this.invert(change.fieldChanges) };
+        return { fieldChanges: this.invert({ ...change, change: change.change.fieldChanges }) };
     }
 
-    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap {
+    rebase(change: FieldChangeMap, over: ChangeWithMetadata<FieldChangeMap>): FieldChangeMap {
         const rebasedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of change.entries()) {
-            const baseChanges = over.get(field);
+            const baseChanges = over.change.get(field);
             if (baseChanges === undefined) {
                 rebasedFields.set(field, fieldChange);
             } else {
@@ -183,8 +184,8 @@ export class ModularChangeFamily
                 } = this.normalizeFieldChanges([fieldChange, baseChanges]);
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
-                    baseChangeset,
-                    (child, baseChild) => this.rebaseNodeChange(child, baseChild),
+                    { ...over, change: baseChangeset },
+                    (child, baseChild) => this.rebaseNodeChange(child, { ...over, change: baseChild }),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -198,19 +199,49 @@ export class ModularChangeFamily
         return rebasedFields;
     }
 
-    private rebaseNodeChange(change: NodeChangeset, over: NodeChangeset): NodeChangeset {
-        if (change.fieldChanges === undefined || over.fieldChanges === undefined) {
+    private rebaseNodeChange(change: NodeChangeset, over: ChangeWithMetadata<NodeChangeset>): NodeChangeset {
+        if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
             return change;
         }
 
         return {
             ...change,
-            fieldChanges: this.rebase(change.fieldChanges, over.fieldChanges),
+            fieldChanges: this.rebase(change.fieldChanges, { ...over, change: over.change.fieldChanges }),
         };
     }
 
     rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void {
         anchors.applyDelta(this.intoDelta(over));
+    }
+
+    filterReferences(change: FieldChangeMap, shouldRemoveReference: (revision: RevisionTag) => boolean): FieldChangeMap {
+        const filteredFields: FieldChangeMap = new Map();
+
+        for (const [field, fieldChange] of change.entries()) {
+            const filteredChange = getChangeHandler(
+                this.fieldKinds,
+                fieldChange.fieldKind,
+            ).rebaser.filterReferences(
+                fieldChange.change,
+                shouldRemoveReference,
+                (childChanges: NodeChangeset) => {
+                    if (childChanges.fieldChanges === undefined) {
+                        return childChanges;
+                    }
+                    return {
+                        ...childChanges,
+                        fieldChanges: this.filterReferences(childChanges.fieldChanges, shouldRemoveReference),
+                    }
+                },
+            );
+
+            filteredFields.set(field, {
+                fieldKind: fieldChange.fieldKind,
+                change: brand(filteredChange),
+            });
+        }
+
+        return filteredFields;
     }
 
     intoDelta(change: FieldChangeMap): Delta.Root {

@@ -5,8 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
+import { ChangeWithMetadata, RevisionTag } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
-import { Brand, fail, RecursiveReadonly } from "../util";
+import { brand, Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -93,7 +94,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeset: newChangeFullyRebased,
         });
 
-        return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
+        return this.changeFamily.intoDelta(this.rebaseLocalBranch({
+            revision: brand(newCommit.seqNumber),
+            change: newChangeFullyRebased,
+        }));
     }
 
     /**
@@ -128,44 +132,65 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             return commitToRebase.changeset;
         }
 
+        let nextRevisionNum = -1;
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(
                     newChange,
-                    this.changeFamily.rebaser.invert(branchCommit.changeset),
+                    {
+                        revision: brand(nextRevisionNum--),
+                        change: this.changeFamily.rebaser.invert(changeWithMetadataFromCommit(branchCommit)),
+                    },
                 ),
             commitToRebase.changeset,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
+        const fullyRebasedChange = this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
+
+        const shouldRemoveReference = (revision: RevisionTag): boolean =>
+            isTemporaryRevision(revision) || isBranchLocalRevision(branch, revision);
+
+        return this.changeFamily.rebaser.filterReferences(
+            fullyRebasedChange,
+            shouldRemoveReference,
+        )
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
-    private rebaseLocalBranch(trunkChange: TChangeset): TChangeset {
-        const newBranchChanges: TChangeset[] = [];
-        const inverses: TChangeset[] = [];
+    private rebaseLocalBranch(trunkChange: ChangeWithMetadata<TChangeset>): TChangeset {
+        const newBranchChanges: ChangeWithMetadata<TChangeset>[] = [];
+        const inverses: ChangeWithMetadata<TChangeset>[] = [];
 
+        let nextTempRevision = -1;
         for (const localChange of this.localChanges) {
             let change = this.rebaseChange(localChange, inverses);
             change = this.changeFamily.rebaser.rebase(change, trunkChange);
             change = this.rebaseChange(change, newBranchChanges);
 
-            newBranchChanges.push(change);
+            newBranchChanges.push({ revision: brand(nextTempRevision--), change });
 
-            inverses.unshift(this.changeFamily.rebaser.invert(localChange));
+            const inverse = this.changeFamily.rebaser.invert({
+                revision: brand(nextTempRevision--),
+                change: localChange,
+            });
+
+            inverses.unshift({ revision: brand(nextTempRevision--), change: inverse });
         }
 
         const netChange = this.changeFamily.rebaser.compose([
-            ...inverses,
-            trunkChange,
-            ...newBranchChanges,
+            ...inverses.map(change => change.change),
+            trunkChange.change,
+            ...newBranchChanges.map(change => change.change),
         ]);
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
         }
 
-        this.localChanges = newBranchChanges;
+        this.localChanges = newBranchChanges.map(
+            (change) => this.changeFamily.rebaser.filterReferences(change.change, isTemporaryRevision),
+        );
+
         return netChange;
     }
 
@@ -185,8 +210,9 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             return;
         }
         const newBranchChanges: Commit<TChangeset>[] = [];
-        const inverses: TChangeset[] = [];
+        const inverses: ChangeWithMetadata<TChangeset>[] = [];
 
+        let nextTempRevision = -1;
         for (const commit of branch.localChanges) {
             if (commit.seqNumber > newRef) {
                 let change = this.rebaseChange(commit.changeset, inverses);
@@ -199,21 +225,32 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
                 });
             }
 
-            inverses.unshift(this.changeFamily.rebaser.invert(commit.changeset));
+            inverses.unshift({
+                revision: brand(nextTempRevision--),
+                change: this.changeFamily.rebaser.invert(changeWithMetadataFromCommit(commit)),
+            });
         }
 
-        branch.localChanges = newBranchChanges;
+        branch.localChanges = newBranchChanges.map(
+            (commit) => ({
+                ...commit,
+                changeset: this.changeFamily.rebaser.filterReferences(commit.changeset, isTemporaryRevision),
+            }),
+        );
         branch.refSeq = newRef;
     }
 
     private rebaseOverCommits(changeToRebase: TChangeset, commits: Commit<TChangeset>[]) {
         return this.rebaseChange(
             changeToRebase,
-            commits.map((commit) => commit.changeset),
+            commits.map((commit) => ({
+                revision: brand(commit.seqNumber),
+                change: commit.changeset,
+            })),
         );
     }
 
-    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: TChangeset[]) {
+    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: ChangeWithMetadata<TChangeset>[]) {
         return changesToRebaseOver.reduce(
             (a, b) => this.changeFamily.rebaser.rebase(a, b),
             changeToRebase,
@@ -270,6 +307,18 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
+}
+
+function changeWithMetadataFromCommit<T>(commit: Commit<T>): ChangeWithMetadata<T> {
+    return { revision: brand(commit.seqNumber), change: commit.changeset };
+}
+
+function isBranchLocalRevision<TChangeset>(branch: Branch<TChangeset>, revision: RevisionTag): boolean {
+    return branch.localChanges.find((x) => (x.seqNumber as number) === revision) !== undefined;
+}
+
+function isTemporaryRevision(revision: RevisionTag): boolean {
+    return revision as number < 0;
 }
 
 interface Branch<TChangeset> {
