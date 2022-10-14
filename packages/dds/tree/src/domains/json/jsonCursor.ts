@@ -117,7 +117,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             return result;
         }
         default: {
-            assert(type === jsonNull.name, 0x362 /* unexpected type */);
+            assert(type === jsonNull.name, "unexpected type");
             return null;
         }
     }
