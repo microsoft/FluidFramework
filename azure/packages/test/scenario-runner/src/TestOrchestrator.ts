@@ -138,7 +138,7 @@ export class TestOrchestrator {
                         description: error as string,
                         details: {},
                     });
-                    console.log("stage existed with error:", stage.name, error);
+                    console.log("Stage existed with error:", stage.name, error);
                     break;
                 }
             }
