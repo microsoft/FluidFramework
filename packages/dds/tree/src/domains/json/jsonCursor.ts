@@ -56,9 +56,12 @@ const adapter: CursorAdapter<JsonCompatible> = {
                 if (node === null) {
                     return [];
                 } else if (Array.isArray(node)) {
-                    return [EmptyKey];
+                    return node.length === 0 ? [] : [EmptyKey];
                 } else {
-                    return Object.keys(node) as FieldKey[];
+                    return (Object.keys(node) as FieldKey[]).filter((key) => {
+                        const value = node[key as LocalFieldKey];
+                        return !Array.isArray(value) || value.length !== 0;
+                    });
                 }
             default:
                 return [];

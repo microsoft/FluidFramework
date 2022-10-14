@@ -26,7 +26,7 @@ const testCases = [
                 b: true,
                 i: 0,
                 s: "",
-                a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }],
+                a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [0] }],
             },
             [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
         ],

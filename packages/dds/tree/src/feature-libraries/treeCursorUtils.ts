@@ -28,9 +28,21 @@ export function singleStackTreeCursor<TNode>(
  * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
  */
 export interface CursorAdapter<TNode> {
+    /**
+     * @returns the value of the given node.
+     */
     value(node: TNode): Value;
+    /**
+     * @returns the type of the given node.
+     */
     type(node: TNode): TreeType;
+    /**
+     * @returns the keys for non-empty fields on the given node.
+     */
     keysFromNode(node: TNode): readonly FieldKey[];
+    /**
+     * @returns the child nodes for the given node and key.
+     */
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
 }
 
@@ -178,12 +190,6 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
             this.exitField();
             return false;
         }
-
-        // Skip empty fields during iteration
-        if (this.getField().length === 0) {
-            return this.nextField();
-        }
-
         return true;
     }
 
@@ -197,12 +203,6 @@ class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchro
         this.indexStack.push(this.index);
         this.index = 0;
         this.siblings = fields;
-
-        // Skip empty fields during iteration
-        if (this.getField().length === 0) {
-            return this.nextField();
-        }
-
         return true;
     }
 

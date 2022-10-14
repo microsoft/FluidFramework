@@ -24,7 +24,18 @@ export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
 const adapter: CursorAdapter<MapTree> = {
     value: (node) => node.value,
     type: (node) => node.type,
-    keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
+    keysFromNode: (node) => {
+        const keys = [];
+        for (const key of node.fields.keys()) {
+            const value = node.fields.get(key);
+
+            // Only return keys for non-empty fields
+            if (!Array.isArray(value) || value.length !== 0) {
+                keys.push(key);
+            }
+        }
+        return keys;
+    }, // TODO: don't convert this to array here.
     getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
 };
 
