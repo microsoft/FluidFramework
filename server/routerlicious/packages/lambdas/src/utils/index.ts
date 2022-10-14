@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export * from "./clientIdGenerator";
-export * from "./messageGenerator";
-export * from "./noOpLambda";
-export * from "./random";
-export * from "./telemetryHelper";
-export * from "./validateDocument";
+export { generateClientId } from "./clientIdGenerator";
+export { createNackMessage, createRoomJoinMessage, createRoomLeaveMessage } from "./messageGenerator";
+export { NoOpLambda } from "./noOpLambda";
+export { getRandomInt } from "./random";
+export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
+export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";

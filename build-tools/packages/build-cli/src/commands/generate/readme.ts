@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import { default as BaseReadme } from "oclif/lib/commands/readme";

@@ -24,11 +24,16 @@ export const cases: {
     no_change: [],
     insert: [
         1,
-        { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
+        {
+            type: "Insert",
+            id: 1,
+            content: [
+                { type, value: 1 },
+                { type, value: 2 },
+            ],
+        },
     ],
-    modify: [
-        { type: "Modify", changes: TestChange.mint([], 1) },
-    ],
+    modify: [{ type: "Modify", changes: TestChange.mint([], 1) }],
     modify_insert: [
         1,
         {
@@ -38,12 +43,6 @@ export const cases: {
             changes: TestChange.mint([], 2),
         },
     ],
-    delete: [
-        1,
-        { type: "Delete", id: 1, count: 3 },
-    ],
-    revive: [
-        2,
-        { type: "Revive", id: 1, count: 2, tomb },
-    ],
+    delete: [1, { type: "Delete", id: 1, count: 3 }],
+    revive: [2, { type: "Revive", id: 1, count: 2, tomb }],
 };

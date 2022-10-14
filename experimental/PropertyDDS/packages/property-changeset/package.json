@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-changeset",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "property changeset definitions and related functionalities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,7 +61,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-experimental/property-common": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-common": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "ajv": "7.1.1",
     "ajv-keywords": "4.0.0",
     "async": "^3.2.0",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",

@@ -80,14 +80,8 @@ function compose(changes: TestChange[], verify: boolean = true): TestChange {
                 // The input context should match the output context of the previous change.
                 assert.deepEqual(change.inputContext, outputContext);
             }
-            outputContext = composeIntentions(
-                outputContext ?? inputContext,
-                change.intentions,
-            );
-            intentions = composeIntentions(
-                intentions,
-                change.intentions,
-            );
+            outputContext = composeIntentions(outputContext ?? inputContext, change.intentions);
+            intentions = composeIntentions(intentions, change.intentions);
         }
     }
     if (inputContext !== undefined) {
@@ -147,7 +141,10 @@ function rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
     }
 }
 
-function checkChangeList(changes: readonly RecursiveReadonly<TestChange>[], intentions: number[]): void {
+function checkChangeList(
+    changes: readonly RecursiveReadonly<TestChange>[],
+    intentions: number[],
+): void {
     const filtered = changes.filter(isNonEmptyChange);
     let intentionsSeen: number[] = [];
     let index = 0;

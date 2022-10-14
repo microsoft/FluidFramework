@@ -12,7 +12,6 @@ import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeConfigWithGC,
@@ -80,9 +79,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
     private usedRoutes: string[] = [""];
 
-    // If this node is marked as unreferenced, the time when it marked as such.
-    private unreferencedTimestampMs: number | undefined;
-
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
 
@@ -125,22 +121,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * @deprecated Renamed to {@link SummarizerNodeWithGC.getBaseGCDetails}.
-     */
-    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
-        return this.getBaseGCDetails();
-    }
-
-    // Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state.
-    public getBaseGCDetails(): IGarbageCollectionDetailsBase {
-        return {
-            gcData: this.gcData,
-            usedRoutes: this.usedRoutes,
-            unrefTimestamp: this.unreferencedTimestampMs,
-        };
-    }
-
-    /**
      * Loads state from this node's initial GC summary details. This contains the following data from the last summary
      * seen by the server for this client:
      * - usedRoutes: This is used to figure out if the used state of this node changed since last summary.
@@ -163,7 +143,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // Sort the used routes because we compare them with the current used routes to check if they changed between
         // summaries. Both are sorted so that the order of elements is the same.
         this.referenceUsedRoutes = baseGCDetails.usedRoutes?.sort();
-        this.unreferencedTimestampMs = baseGCDetails.unrefTimestamp;
     }
 
     public async summarize(
@@ -379,7 +358,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
         this.usedRoutes = usedRoutes.sort();
@@ -388,16 +367,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // be tracked for this summary.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
             this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
-        }
-
-        if (this.isReferenced()) {
-            this.unreferencedTimestampMs = undefined;
-            return;
-        }
-
-        // If this node just became unreferenced, update its unreferencedTimestampMs.
-        if (this.unreferencedTimestampMs === undefined) {
-            this.unreferencedTimestampMs = gcTimestamp;
         }
     }
 

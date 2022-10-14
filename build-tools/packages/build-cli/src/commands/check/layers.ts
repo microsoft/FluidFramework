@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import path from "path";
 import { Flags } from "@oclif/core";
+import path from "path";
+
 import { LayerGraph, Timer, writeFileAsync } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../../base";
 
 const packagesMdFileName = "PACKAGES.md";

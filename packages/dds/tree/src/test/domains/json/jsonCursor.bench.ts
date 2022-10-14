@@ -6,13 +6,15 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import {
-    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey,
-} from "../../..";
+import { ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey } from "../../..";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
+import {
+    jsonableTreeFromCursorNew,
+    mapTreeFromCursor,
+    singleMapTreeCursor,
+} from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
@@ -40,9 +42,7 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
 function clone<T>(value: Jsonable<T>): Jsonable<T> {
     // PERF: Separate clone vs. cloneObject yields an ~11% speedup in 'canada.json',
     //       likely due to inlining short-circuiting recursing at leaves (node 14 x64).
-    return typeof value !== "object" || value === null
-        ? value
-        : cloneObject(value);
+    return typeof value !== "object" || value === null ? value : cloneObject(value);
 }
 
 /**
@@ -64,10 +64,8 @@ function bench(
             title: `Direct: '${name}'`,
             before: () => {
                 const cloned = clone(json);
-                assert.deepEqual(cloned, json,
-                    "clone() must return an equivalent tree.");
-                assert.notEqual(cloned, json,
-                    "clone() must not return the same tree instance.");
+                assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
             },
             benchmarkFn: () => {
                 clone(json);
@@ -76,23 +74,30 @@ function bench(
 
         const cursorFactories: [string, () => ITreeCursorNew][] = [
             ["TextCursor", () => singleTextCursorNew(encodedTree)],
-            ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
+            [
+                "MapCursor",
+                () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree))),
+            ],
         ];
 
         const consumers: [
             string,
-            (cursor: ITreeCursorNew,
-                dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
+            (
+                cursor: ITreeCursorNew,
+                dataConsumer: (
+                    cursor: ITreeCursorNew,
+                    calculate: (...operands: any[]) => void,
+                ) => any,
             ) => void,
         ][] = [
-                // TODO: finish porting other cursor code and enable this.
-                // ["cursorToJsonObject", cursorToJsonObjectNew],
-                ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
-                ["mapTreeFromCursor", mapTreeFromCursor],
-                ["sum", sum],
-                ["sum-map", sumMap],
-                ["averageTwoValues", averageTwoValues],
-            ];
+            // TODO: finish porting other cursor code and enable this.
+            // ["cursorToJsonObject", cursorToJsonObjectNew],
+            ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+            ["mapTreeFromCursor", mapTreeFromCursor],
+            ["sum", sum],
+            ["sum-map", sumMap],
+            ["averageTwoValues", averageTwoValues],
+        ];
 
         for (const [consumerName, consumer] of consumers) {
             for (const [factoryName, factory] of cursorFactories) {
@@ -118,11 +123,13 @@ function bench(
 
 const canada = generateCanada(
     // Use the default (large) data set for benchmarking, otherwise use a small dataset.
-    isInPerformanceTestingMode
-        ? undefined
-        : [2, 10]);
+    isInPerformanceTestingMode ? undefined : [2, 10],
+);
 
-function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+function extractCoordinatesFromCanada(
+    cursor: ITreeCursorNew,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.enterField(Canada.FeatureKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
@@ -166,7 +173,10 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     cursor.exitField();
 }
 
-function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+function extractAvgValsFromTwitter(
+    cursor: ITreeCursorNew,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.enterField(TwitterStatus.statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,

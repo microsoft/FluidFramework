@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as semver from "semver";
-import { VersionBumpTypeExtended, VersionBumpType } from "./bumpTypes";
+
+import { VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
     bumpInternalVersion,
     fromInternalScheme,

@@ -72,6 +72,10 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
+running command...
+$ fluv (--version|-V)
+@fluid-tools/version-tools/0.4.8000
+$ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
@@ -148,6 +152,8 @@ EXAMPLES
 
     $ fluv version 2.0.0-internal.1.0.0 --type current
 ```
+
+_See code: [src/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/src/commands/version.ts)_
 
 ## `fluv version latest`
 

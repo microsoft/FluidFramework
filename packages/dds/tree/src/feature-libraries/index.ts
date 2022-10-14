@@ -5,13 +5,13 @@
 
 export * from "./object-forest";
 export * from "./editable-tree";
-export * from "./defaultRebaser";
+export * from "./defaultChangeFamily";
 export * from "./forestIndex";
-export { SchemaIndex } from "./schemaIndex";
+export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
-	singleTextCursor as singleTextCursorNew,
-	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+    singleTextCursor as singleTextCursorNew,
+    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
@@ -35,7 +35,6 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -45,6 +44,8 @@ export {
     Multiplicity,
     FullSchemaPolicy,
     allowsRepoSuperset,
+    GenericChangeset,
+    genericFieldKind,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

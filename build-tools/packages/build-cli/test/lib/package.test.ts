@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
-import { generateReleaseGitTagName, sortVersions, VersionDetails } from "../../src/lib/package";
+
+import { VersionDetails, generateReleaseGitTagName, sortVersions } from "../../src/lib/package";
 
 describe("VersionDetails sorting", async () => {
     const versions: VersionDetails[] = [

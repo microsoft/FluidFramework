@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import minimatch from "minimatch";
 import path from "path";
+
 import { IFluidRepoPackageEntry } from "../common/fluidRepo";
 import { getPackageManifest } from "../common/fluidUtils";
-import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild"
 import { getResolvedFluidRoot } from "../common/fluidUtils";
+import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild";
+import { getPackageDetails } from "./packageJson";
 import { BrokenTypes, validatePackage } from "./packageValidator";
 import { BreakingIncrement, log } from "./validatorUtils";
-import { getPackageDetails } from "./packageJson";
 
 /**
  * Groupings of packages that should be versioned in lockstep
@@ -24,9 +24,9 @@ import { getPackageDetails } from "./packageJson";
  * TODO: verify/fix this expectation
  */
 interface PackageGroup {
-    name: string,
-    directory: string,
-    ignoredDirs?: string[],
+    name: string;
+    directory: string;
+    ignoredDirs?: string[];
 }
 
 export interface IValidationOptions {
@@ -40,7 +40,7 @@ export interface IValidationOptions {
 /**
  * Package name: {break severity, package's group}
  */
-export type RepoValidationResult = Map<string, { level: BreakingIncrement, group?: string }>;
+export type RepoValidationResult = Map<string, { level: BreakingIncrement; group?: string }>;
 
 function buildPackageGroups(repoRoot: string): PackageGroup[] {
     const manifest = getPackageManifest(repoRoot);
@@ -54,7 +54,7 @@ function buildPackageGroups(repoRoot: string): PackageGroup[] {
         } else if (Array.isArray(entry)) {
             // This can create multiple groups with the same name but these are
             // tracked by name later and get combined
-            entry.map(subEntry => addGroup(name, subEntry));
+            entry.map((subEntry) => addGroup(name, subEntry));
         } else if (typeof entry === "string") {
             groups.push({ name, directory: path.join(entry, "**") });
         } else {
@@ -64,10 +64,12 @@ function buildPackageGroups(repoRoot: string): PackageGroup[] {
                 // rather than traversing these dirs for packages
                 directory: path.join(entry.directory, "**"),
                 // ignoredDirs are relative to the directory
-                ignoredDirs: entry.ignoredDirs?.map(relDir => path.join(entry.directory, relDir, "**")),
+                ignoredDirs: entry.ignoredDirs?.map((relDir) =>
+                    path.join(entry.directory, relDir, "**"),
+                ),
             });
         }
-    }
+    };
     for (const name in repoPackages) {
         addGroup(name, repoPackages[name]);
     }
@@ -119,13 +121,12 @@ function setPackageGroupIncrement(
     return pkgGroupName;
 }
 
-
 export async function validateRepo(options?: IValidationOptions): Promise<RepoValidationResult> {
     // Get all the repo packages in topological order
     const repoRoot = await getResolvedFluidRoot();
     const repo = new FluidRepoBuild(repoRoot, false);
-    repo.setMatched({all: true, match: [], dirs: [] } as any);
-    const buildGraph = repo.createBuildGraph({symlink: true, fullSymlink: false}, ["build"]);
+    repo.setMatched({ all: true, match: [], dirs: [] } as any);
+    const buildGraph = repo.createBuildGraph({ symlink: true, fullSymlink: false }, ["build"]);
     const packages = buildGraph.buildPackages;
 
     const packageGroups = buildPackageGroups(repoRoot);
@@ -140,8 +141,13 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
             const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
             const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
             const group = groupForPackage(packageGroups, pkgJsonRelativePath);
-            if (!(options.includeOnly?.has(pkgName) || (group !== undefined && options.includeOnly?.has(group)))) {
-                    packages.delete(pkgName);
+            if (
+                !(
+                    options.includeOnly?.has(pkgName) ||
+                    (group !== undefined && options.includeOnly?.has(group))
+                )
+            ) {
+                packages.delete(pkgName);
             }
         });
     }
@@ -155,13 +161,21 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
                 if (packageData.oldVersions.length > 0) {
                     log(`${pkgName}, ${buildPkg.level}`);
 
-                    const { increment, brokenTypes } = await validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
+                    const { increment, brokenTypes } = await validatePackage(
+                        packageData,
+                        buildPkg.pkg.directory,
+                        allBrokenTypes,
+                    );
 
                     brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
 
                     // Add to group breaks
                     const groupName = setPackageGroupIncrement(
-                        pkgJsonRelativePath, increment, packageGroups, groupBreaks);
+                        pkgJsonRelativePath,
+                        increment,
+                        packageGroups,
+                        groupBreaks,
+                    );
 
                     if (breakResult.has(packageData.pkg.name)) {
                         throw new Error("Encountered duplicated package name");
@@ -172,7 +186,7 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
 
                 packages.delete(pkgName);
             }
-        })
+        });
     }
 
     // Check for inherited group breaks
