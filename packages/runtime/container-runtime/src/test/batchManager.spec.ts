@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { BatchManager, BatchMessage } from "../batchManager";
+import { CompressionAlgorithms } from "..";
 
 describe("BatchManager", () => {
     beforeEach(() => {
@@ -122,5 +123,44 @@ describe("BatchManager", () => {
         // Pop and check batch
         const batch = batchManager.popBatch();
         assert.equal(batch.length, 1);
+    });
+
+    it("BatchManager: compresses when configured and criteria met", () => {
+        const batchManager = new BatchManager(new TelemetryUTLogger(),
+                                              undefined,
+                                              { minimumBatchSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 });
+        const message = { contents: generateStringOfSize(100) } as any as BatchMessage;
+        assert.equal(batchManager.push(message), true);
+        const batch = batchManager.popBatch();
+        assert.equal(batch.length, 1);
+        assert.equal(batch[0].compression, "lz4");
+        assert.equal(batch[0].metadata?.compressed, true);
+    });
+
+    it("BatchManager: doesn't compress when message too short", () => {
+        const batchManager = new BatchManager(new TelemetryUTLogger(),
+                                              undefined,
+                                              { minimumBatchSize: 200,
+                                                compressionAlgorithm: CompressionAlgorithms.lz4 });
+        const message = { contents: generateStringOfSize(10) } as any as BatchMessage;
+        assert.equal(batchManager.push(message), true);
+        const batch = batchManager.popBatch();
+        assert.equal(batch.length, 1);
+        assert.equal(batch[0].compression, undefined);
+        assert.equal(batch[0].metadata?.compressed, undefined);
+    });
+
+    it("BatchManager: doesn't compress when not configured", () => {
+        // When turned off, compression is configured with minimumBatchSize POSITIVE_INFINITY
+        const batchManager = new BatchManager(new TelemetryUTLogger(),
+                                              undefined,
+                                              { minimumBatchSize: Number.POSITIVE_INFINITY,
+                                                compressionAlgorithm: CompressionAlgorithms.lz4 });
+        const message = { contents: generateStringOfSize(10) } as any as BatchMessage;
+        assert.equal(batchManager.push(message), true);
+        const batch = batchManager.popBatch();
+        assert.equal(batch.length, 1);
+        assert.equal(batch[0].compression, undefined);
+        assert.equal(batch[0].metadata?.compressed, undefined);
     });
 });
