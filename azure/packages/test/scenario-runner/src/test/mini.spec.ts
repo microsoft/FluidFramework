@@ -17,8 +17,7 @@ describe("stress test", () => {
         const process = child_process.spawn(
             "node",
             childArgs,
-            { stdio: "inherit",
-        },
+            { stdio: "inherit" },
         );
         await new Promise((resolve) => process.once("close", resolve));
         assert.strictEqual(process.exitCode, 0, "exit code is not 0");
