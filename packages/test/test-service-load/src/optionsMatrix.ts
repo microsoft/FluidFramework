@@ -79,6 +79,7 @@ export function generateRuntimeOptions(
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
         compressionOptions: [{ minimumSize: 500 }],
+        maxBatchSizeInBytes: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
