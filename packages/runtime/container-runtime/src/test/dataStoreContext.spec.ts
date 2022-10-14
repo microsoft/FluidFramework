@@ -721,7 +721,11 @@ describe("Data Store Context Tests", () => {
                 updateReferencedStateTest();
             });
 
-            function setupTombStoneTest() {
+            it("can successfully tombstone a remote datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                 const snapshotTree: ISnapshotTree = {
@@ -739,14 +743,6 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                 });
-            }
-
-            it("can successfully tombstone a remote datastore", async () => {
-                dataStoreAttributes = {
-                    pkg: JSON.stringify(["TestDataStore1"]),
-                    isRootDataStore: false,
-                };
-                setupTombStoneTest();
                 assert.doesNotThrow(() => {
                     remoteDataStoreContext.tombstone();
                 }, `Should be able to tombstone a non-root remote datastore!`);

@@ -136,8 +136,13 @@
         "backCompat": false
       },
       "ClassDeclaration_ContainerRuntime": {
-        "backCompat": false,
-        "forwardCompat": false
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IConnectableRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerRuntime": {
+        "backCompat": false
       },
       "RemovedInterfaceDeclaration_IPendingFlushMode": {
         "backCompat": false,
@@ -167,9 +172,6 @@
       "RemovedClassDeclaration_ScheduleManager": {
         "forwardCompat": false,
         "backCompat": false
-      },
-      "InterfaceDeclaration_IGarbageCollectionRuntime": {
-        "forwardCompat": false
       }
     }
   }

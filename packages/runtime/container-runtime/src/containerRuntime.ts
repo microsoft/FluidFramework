@@ -160,6 +160,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
+    tombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -2259,6 +2260,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
+        /**
+         * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
+         * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
+         * external user, but the internal runtime does not delete it in summarizes, etc.
+         */
+        if (this.mc.config.getBoolean(tombstoneKey) === true) {
+            this.dataStores.tombstoneUnusedRoutes(unusedRoutes);
+            return;
+        }
+
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2271,16 +2282,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
         this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes);
-    }
-
-    /**
-     * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This enables
-     * testing scenarios without actually deleting content. The content acts as if it's deleted to the external user,
-     * but the internal runtime acts as if it exists - summarized, etc.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     */
-    public tombstoneUnusedRoutes(unusedRoutes: string[]) {
-        this.dataStores.tombstoneUnusedRoutes(unusedRoutes);
     }
 
     /**
