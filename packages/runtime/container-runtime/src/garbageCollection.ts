@@ -249,7 +249,6 @@ export class UnreferencedStateTracker {
         this.sweepTimer = new TimerWithNoDefaultTimeout(
             () => {
                 this._state = UnreferencedState.SweepReady;
-                //* Follow up on race condition here when timeouts are sub-second
                 assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
             },
         );
