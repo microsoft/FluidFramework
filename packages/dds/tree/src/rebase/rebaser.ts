@@ -182,6 +182,11 @@ export interface ChangeWithMetadata<TChangeset> {
     change: TChangeset;
 }
 
+export function makeAnonChange<T>(change: T): ChangeWithMetadata<T> {
+    return { revision: undefined, change };
+}
+
+
 export interface FinalChange {
     readonly status: FinalChangeStatus;
 }

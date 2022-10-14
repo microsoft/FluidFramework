@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser, ChangeWithMetadata } from ".";
+import { ChangeRebaser, makeAnonChange } from ".";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
 
@@ -376,8 +376,4 @@ export function verifyChangeRebaser<TChange>(
             };
         }
     }
-}
-
-function makeAnonChange<T>(change: T): ChangeWithMetadata<T> {
-    return { revision: undefined, change };
 }

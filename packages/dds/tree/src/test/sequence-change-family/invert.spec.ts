@@ -11,6 +11,7 @@ import {
     sequenceChangeRebaser,
     SequenceChangeset,
 } from "../../feature-libraries";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -19,7 +20,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: SequenceChangeset): SequenceChangeset {
     deepFreeze(change);
-    return sequenceChangeRebaser.invert(change);
+    return sequenceChangeRebaser.invert(makeAnonChange(change));
 }
 
 describe("SequenceChangeFamily - Invert", () => {
