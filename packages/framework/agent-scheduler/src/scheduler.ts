@@ -6,7 +6,6 @@
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
-    IFluidLoadable,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
@@ -53,7 +52,7 @@ const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
 
 const schedulerId = "scheduler";
 
-export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler, IFluidLoadable {
+export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
