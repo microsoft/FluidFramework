@@ -111,18 +111,18 @@ steps:
 
             echo "CHECK ERROR : " $checkError
 
-            if [[ "$checkError" =~ "NPM ERR! code ENOTFOUND"]]
-            then
-              echo "Check ERROR MSG! AFTER"
-              if ! $i -eq $maximumRetryIfNetworkError
-              then
-                echo "Network Error Detected"
-                continue
-              else
-                echo "Final Network Error"
-                exit 1
-              fi
-            fi
+            # if [[ "$checkError" =~ "NPM ERR! code ENOTFOUND"]]
+            # then
+            #   echo "Check ERROR MSG! AFTER"
+            #   if ! $i -eq $maximumRetryIfNetworkError
+            #   then
+            #     echo "Network Error Detected"
+            #     continue
+            #   else
+            #     echo "Final Network Error"
+            #     exit 1
+            #   fi
+            # fi
 
             # if grep -q "npm ERR!" "publish_log"
             # then
