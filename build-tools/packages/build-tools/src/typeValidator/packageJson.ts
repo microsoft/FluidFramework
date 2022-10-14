@@ -144,9 +144,9 @@ export async function getAndUpdatePackageDetails(
     }
 
     // TODO: Should we use a range instead?
-    previousVersion = isInternalVersionScheme(previousVersion)
-        ? getVersionRange(previousVersion, "^")
-        : `^${previousVersion}`;
+    // previousVersion = isInternalVersionScheme(previousVersion)
+    //     ? getVersionRange(previousVersion, "^")
+    //     : `^${previousVersion}`;
 
     // check that the version exists on npm before trying to add the
     // dev dep and bumping the typeValidation version
