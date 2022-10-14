@@ -71,7 +71,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
             throw new Error("Missing FRS env. configuration: Tenant ID.");
         }
         if (!frsConfig.fnUrl) {
-            throw new Error("Missing FRS env. configuration: Secret.");
+            throw new Error("Missing FRS env configuration: Secret.");
         }
     }
 
