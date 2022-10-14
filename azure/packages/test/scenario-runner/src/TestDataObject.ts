@@ -40,7 +40,7 @@ export class CounterTestDataObject extends DataObject {
         this._counter = await counterHandle?.get();
     }
 
-    public static get Name(): string {
+    public static get name(): string {
         return "@fluid-example/counter-test-data-object";
     }
 
