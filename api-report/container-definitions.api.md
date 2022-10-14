@@ -485,7 +485,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;

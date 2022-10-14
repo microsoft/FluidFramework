@@ -110,6 +110,14 @@
       },
       "ClassDeclaration_Container": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IContainerConfig": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IPendingContainerState": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

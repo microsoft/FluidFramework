@@ -12,6 +12,9 @@ export {
     waitContainerToCatchUp,
 } from "./container";
 export {
+    ISerializableBlobContents,
+} from "./containerStorageAdapter";
+export {
     ICodeDetailsLoader,
     IDetachedBlobStorage,
     IFluidModuleWithDetails,

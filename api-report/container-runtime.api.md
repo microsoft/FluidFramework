@@ -132,8 +132,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
-    getSnapshotBlobs(): Promise<void>;
-    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -149,6 +147,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly logger: ITelemetryLogger;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    // (undocumented)
+    notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
@@ -320,7 +320,6 @@ export interface IConnectableRuntime {
 // @public
 export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
-    readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;

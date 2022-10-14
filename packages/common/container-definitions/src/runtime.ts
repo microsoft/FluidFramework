@@ -25,7 +25,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -98,10 +98,10 @@ export interface IRuntime extends IDisposable {
     getPendingLocalState(): unknown;
 
     /**
-     * Notify runtime that container is moving to "Attaching" state
-     * @param snapshot - snapshot created at attach time
+     * Notify runtime that we have processed a saved message, so that it can do async work (applying
+     * stashed ops) after having processed it.
      */
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
 }
 
 /**

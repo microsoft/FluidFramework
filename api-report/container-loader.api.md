@@ -29,7 +29,6 @@ import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
-import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
@@ -38,6 +37,7 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -187,12 +187,14 @@ export interface ILoaderServices {
 
 // @public
 export interface IPendingContainerState {
+    baseSnapshot: ISnapshotTree;
     // (undocumented)
     clientId?: string;
     // (undocumented)
     pendingRuntimeState: unknown;
-    // (undocumented)
-    protocol: IProtocolState;
+    savedOps: ISequencedDocumentMessage[];
+    // Warning: (ae-forgotten-export) The symbol "ISerializableBlobContents" needs to be exported by the entry point index.d.ts
+    snapshotBlobs: ISerializableBlobContents;
     // (undocumented)
     term: number;
     // (undocumented)

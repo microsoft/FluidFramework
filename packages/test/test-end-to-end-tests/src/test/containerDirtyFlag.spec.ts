@@ -18,15 +18,20 @@ import {
     ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+
+const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+    getRawConfig: (name: string): ConfigTypes => settings[name],
+}));
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
-    runtimeOptions: {
-        enableOfflineLoad: true,
-    },
+    loaderProps: { configProvider: configProvider({
+        "Fluid.Container.enableOfflineLoad": true,
+    }) },
 };
 
 const lots = 30;

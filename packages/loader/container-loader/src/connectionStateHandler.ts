@@ -314,6 +314,11 @@ class ConnectionStateHandler implements IConnectionStateHandler {
             }
             this.applyForConnectedState("addMemberEvent");
         }
+
+        // Correctly handle seeing our own join op when replaying saved ops
+        if (clientId === this.clientId) {
+            this.prevClientLeftTimer.restart();
+        }
     }
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {

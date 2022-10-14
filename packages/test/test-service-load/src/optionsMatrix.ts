@@ -76,7 +76,6 @@ export function generateRuntimeOptions(
         gcOptions: [undefined, ...gcOptions],
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
-        enableOfflineLoad: [undefined],
         flushMode: [undefined],
         compressionOptions: [{ minimumSize: 500 }],
         maxBatchSizeInBytes: [undefined],

@@ -30,6 +30,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -41,11 +42,14 @@ const registry: ChannelFactoryRegistry = [
     [cellId, SharedCell.getFactory()],
     [counterId, SharedCounter.getFactory()]];
 
+const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+    getRawConfig: (name: string): ConfigTypes => settings[name],
+}));
+
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
     runtimeOptions: {
-        enableOfflineLoad: true,
         summaryOptions: {
             initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
             summaryConfigOverrides: {
@@ -59,6 +63,9 @@ const testContainerConfig: ITestContainerConfig = {
             },
         },
     },
+    loaderProps: { configProvider: configProvider({
+        "Fluid.Container.enableOfflineLoad": true,
+    }) },
 };
 
 const lots = 30;
@@ -143,7 +150,7 @@ async function loadOffline(provider: ITestObjectProvider, request: IRequest, pen
     };
     const loader = provider.createLoader(
         [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
-        { documentServiceFactory });
+        { ...testContainerConfig.loaderProps, documentServiceFactory });
     const container = await loader.resolve(request, pendingLocalState ?? await getPendingOps(provider, false));
     return { container, connect: () => p.resolve(undefined) };
 }
@@ -491,7 +498,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-        console.log(string2);
         await ensureContainerConnected(container2);
         await provider.ensureSynchronized();
         assert.strictEqual(string1.getText(), "hello world!");
