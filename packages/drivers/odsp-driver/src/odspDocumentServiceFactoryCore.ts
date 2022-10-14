@@ -7,6 +7,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentStorageServicePolicies,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -45,6 +46,7 @@ import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 
+const maximumCacheDurationMs = 5 * 24 * 60 * 60 * 1000;
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
@@ -54,6 +56,8 @@ import { createNewFluidFile } from "./createFile";
  */
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
+
+    public readonly defaultStoragePolicy: IDocumentStorageServicePolicies = { maximumCacheDurationMs };
 
     private readonly nonPersistentCache = new NonPersistentCache();
     private readonly socketReferenceKeyPrefix?: string;

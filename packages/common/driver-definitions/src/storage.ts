@@ -321,6 +321,14 @@ export interface IDocumentServiceFactory {
     protocolName: string;
 
     /**
+     * Some of these Storage Policies may be known before instantiating the storage service.
+     * Any such policy is exposed here for use immediately.
+     * Note: There's no guarantee the policy returned by the fully initialized storage service
+     * will match this; this is just the default policy. The final policy should be consulted when available.
+     */
+    defaultStoragePolicy?: Partial<IDocumentStorageServicePolicies>;
+
+    /**
      * Creates the document service after extracting different endpoints URLs from a resolved URL.
      *
      * @param resolvedUrl - Endpoint URL data. See {@link IResolvedUrl}.

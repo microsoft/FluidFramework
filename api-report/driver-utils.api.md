@@ -282,7 +282,7 @@ export enum MessageType2 {
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(documentServiceFactories: IDocumentServiceFactory[]);
     // (undocumented)
-    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
+    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory | MultiDocumentServiceFactory;
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)

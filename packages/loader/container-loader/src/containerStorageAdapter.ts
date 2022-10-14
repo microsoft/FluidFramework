@@ -36,6 +36,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
     constructor(
         detachedBlobStorage: IDetachedBlobStorage | undefined,
         private readonly logger: ITelemetryLogger,
+        private readonly defaultStoragePolicy?: IDocumentStorageServicePolicies,
         private readonly captureProtocolSummary?: () => ISummaryTree,
     ) {
         this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
@@ -83,12 +84,14 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
     }
 
     public get policies(): IDocumentStorageServicePolicies | undefined {
-        // back-compat 0.40 containerRuntime requests policies even in detached container if storage is present
-        // and storage is always present in >=0.41.
+        //* Is the try-catch necessary anymore?
         try {
-            return this._storageService.policies;
+            const policies = this._storageService.policies;
+            if (policies !== undefined) {
+                return policies;
+            }
         } catch (e) {}
-        return undefined;
+        return this.defaultStoragePolicy;
     }
 
     public get repositoryUrl(): string {

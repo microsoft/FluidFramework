@@ -666,6 +666,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storageService = new ContainerStorageAdapter(
             this.loader.services.detachedBlobStorage,
             this.mc.logger,
+            this.serviceFactory.defaultStoragePolicy,
             this.options.summarizeProtocolTree === true
                 ? () => this.captureProtocolSummary()
                 : undefined,
