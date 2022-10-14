@@ -84,6 +84,13 @@ const snapshotFileName = "header";
  * taskManager.subscribeToTask("NameOfTask");
  * ```
  *
+ * To check if the local client is currently subscribed to a task, use the `subscribed()` method.
+ * ```typescript
+ * if (taskManager.subscribed("NameOfTask")) {
+ *     console.log("This client is currently subscribed to the task.");
+ * }
+ * ```
+ *
  * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
  * rights to run the task.
  *
@@ -101,6 +108,13 @@ const snapshotFileName = "header";
  * if (taskManager.assigned("NameOfTask")) {
  *     console.log("This client currently has the rights to run the task");
  * }
+ * ```
+ *
+ * To signal to other connected clients that a task is completed, use the `complete()` method. This will release all
+ * clients from the queue and emit the "completed" event.
+ *
+ * ```typescript
+ * taskManager.complete("NameOfTask");
  * ```
  *
  * ### Eventing
