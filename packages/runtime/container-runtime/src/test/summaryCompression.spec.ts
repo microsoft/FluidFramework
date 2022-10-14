@@ -22,7 +22,6 @@ function genOptions(alg: SummaryCompressionAlgorithms | undefined) {
         summaryConfigOverrides: {
             compressionAlgorithm: alg,
             state: "enabled",
-            idleTime: 15 * 1000, // 15 secs.
             minIdleTime: 0,
             maxIdleTime: 30 * 1000, // 30 secs.
             maxTime: 60 * 1000, // 1 min.
