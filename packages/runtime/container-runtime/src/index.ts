@@ -24,8 +24,8 @@ export {
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
     SummaryCompressionAlgorithms,
+    ICompressionRuntimeOptions,
 } from "./containerRuntime";
-export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
     gcBlobPrefix,
@@ -35,12 +35,10 @@ export {
 } from "./garbageCollection";
 export {
     IPendingFlush,
-    IPendingFlushMode,
     IPendingLocalState,
     IPendingMessage,
     IPendingState,
 } from "./pendingStateManager";
-export { ScheduleManager } from "./scheduleManager";
 export { Summarizer } from "./summarizer";
 export {
     EnqueueSummarizeResult,
@@ -55,6 +53,7 @@ export {
     INackSummaryResult,
     IOnDemandSummarizeOptions,
     IProvideSummarizer,
+    IRefreshSummaryAckOptions,
     ISubmitSummaryOpResult,
     ISubmitSummaryOptions,
     ISummarizeOptions,

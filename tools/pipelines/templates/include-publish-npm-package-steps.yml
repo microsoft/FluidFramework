@@ -10,6 +10,9 @@ parameters:
 - name: feedName
   type: string
 
+- name: devFeedName
+  type: string
+
 - name: official
   type: string
 
@@ -36,7 +39,8 @@ steps:
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
@@ -52,6 +56,8 @@ steps:
 
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
+          echo Deleting @fluid-msinternal packages
+          rm -f fluid-msinternal-*
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:

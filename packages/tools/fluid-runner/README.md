@@ -31,10 +31,35 @@ fluidRunner({ /* IFluidFileConverter implementation here */ });
 The input file is expected to be an ODSP snapshot.
 For some examples, see the files in the [localOdspSnapshots folder](./src/test/localOdspSnapshots).
 
+### Telemetry format
+There is an optional command line option `telemetryFormat` that allows you to specify the telemetry output format. The naming provided to this option is strict and must match an option in [OutputFormat](./src/logger/fileLogger.ts).
+The default format is currently `JSON`
+
+### Additional telemetry properties
+There is an optional command line option `telemetryProp` that allows you to specify additional properties that will be added to every telemetry entry. The format follows these rules:
+- every key must be a string
+- values may be either a string or a number
+- a value may not be empty
+
+Example of valid usages:
+```
+--telemetryProp prop1 value1 --telemetryProp prop2 10.5
+--telemetryProp "  prop1 " "   value1 " prop2 value2
+--telemetryProp=prop1 value1 --telemetryProp prop2 value2
+--telemetryProp
+```
+
+Example of invalid usages:
+```
+--telemetryProp "10" value1
+--telemetryProp prop1
+--telemetryProp=             // this will be treated as ['']
+```
+
 ### Consumption
 The code around `exportFile` can be consumed in multiple different layers. It is not necessary to run all this code fully as is, and the following are some interesting code bits involved in this workflow:
-- [`createLogger(...)`](./src/logger/FileLogger.ts)
-    - Wraps a provided `FileLogger` and adds some useful telemetry data to every entry
+- [`createLogger(...)`](./src/logger/fileLogger.ts)
+    - Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 - [`createContainerAndExecute(...)`](./src/exportFile.ts)
     - This is the core logic for running some action based on a local ODSP snapshot
 - [`getSnapshotFileContent(...)`](./src/utils.ts)

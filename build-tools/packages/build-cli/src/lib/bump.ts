@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as semver from "semver";
 
-import { Context, exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
+import { Context, MonoRepo, Package, VersionBag, exec } from "@fluidframework/build-tools";
+
 import {
-    bumpVersionScheme,
-    bumpRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
     VersionChangeType,
     VersionScheme,
+    bumpRange,
+    bumpVersionScheme,
     getVersionRange,
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
-import * as semver from "semver";
 
 /**
  * A type representing the types of dependency updates that can be done. This type is intended to match the type
@@ -136,6 +137,7 @@ export async function bumpPackageDependencies(
 /**
  * Bumps a release group or standalone package by the bumpType.
  *
+ * @param context - The {@link Context}.
  * @param bumpType - The bump type.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
@@ -146,7 +148,7 @@ export async function bumpReleaseGroup(
     context: Context,
     bumpType: VersionChangeType,
     releaseGroupOrPackage: MonoRepo | Package,
-    scheme: VersionScheme,
+    scheme?: VersionScheme,
 ) {
     const translatedVersion = isVersionBumpType(bumpType)
         ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)

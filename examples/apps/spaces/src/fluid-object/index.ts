@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./spaces";
-export * from "./spacesItemMap";
-export * from "./spacesView";
-export * from "./storage";
+export { ISpacesItem, Spaces } from "./spaces";
+export { ISpacesItemEntry, spacesItemMap, spacesRegistryEntries, templateDefinitions } from "./spacesItemMap";
+export { SpacesView } from "./spacesView";
+export { ISpacesStorage, ISpacesStoredItem, SpacesStorage, SpacesStorageView } from "./storage";

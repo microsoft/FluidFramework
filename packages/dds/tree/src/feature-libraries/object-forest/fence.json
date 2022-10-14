@@ -1,5 +1,13 @@
 {
-    "tags": [ "object-forest" ],
-    "exports": [ "index"],
-    "imports": ["schema-stored","tree","dependency-tracking","forest","util","rebase","feature-libraries"]
+  "tags": ["object-forest"],
+  "exports": ["index"],
+  "imports": [
+    "schema-stored",
+    "tree",
+    "dependency-tracking",
+    "forest",
+    "util",
+    "rebase",
+    "feature-libraries"
+  ]
 }

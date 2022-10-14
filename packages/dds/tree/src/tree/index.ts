@@ -30,7 +30,9 @@ export {
     ITreeCursor as ITreeCursorNew,
     CursorLocationType,
     mapCursorField as mapCursorFieldNew,
+    mapCursorFields,
     forEachNode,
+    forEachField,
     ITreeCursorSynchronous,
 } from "./cursor";
 

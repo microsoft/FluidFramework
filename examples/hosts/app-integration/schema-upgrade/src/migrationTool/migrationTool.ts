@@ -98,12 +98,12 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         this.quorum.set(newVersionKey, newVersion);
     };
 
-    public async volunteerForMigration(): Promise<void> {
-        return this.taskManager.lockTask(migrateTaskName);
+    public async volunteerForMigration(): Promise<boolean> {
+        return this.taskManager.volunteerForTask(migrateTaskName);
     }
 
     public haveMigrationTask(): boolean {
-        return this.taskManager.haveTaskLock(migrateTaskName);
+        return this.taskManager.assigned(migrateTaskName);
     }
 
     protected async initializingFirstTime() {

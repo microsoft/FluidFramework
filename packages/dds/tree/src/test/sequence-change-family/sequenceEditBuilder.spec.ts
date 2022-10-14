@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
-import { SequenceEditBuilder, singleTextCursor, singleTextCursorNew } from "../../feature-libraries";
+import {
+    SequenceEditBuilder,
+    singleTextCursor,
+    singleTextCursorNew,
+} from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
 
 const rootKey = brand<FieldKey>("root");
@@ -91,44 +95,56 @@ describe("SequenceEditBuilder", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         builder.setValue(root, 42);
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                setValue: 42,
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        setValue: 42,
+                    },
+                ],
+            ],
+        ]);
         assert.deepEqual(deltas, [expected]);
     });
 
     it("Can set a child node value", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.Modify,
-                            fields: new Map([[
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
                                 fooKey,
                                 [
-                                    5,
+                                    2,
                                     {
                                         type: Delta.MarkType.Modify,
-                                        setValue: 42,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.Modify,
+                                                        setValue: 42,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
                                     },
                                 ],
-                            ]]),
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.setValue(root_foo2_foo5, 42);
         assert.deepEqual(deltas, [expected]);
     });
@@ -136,13 +152,17 @@ describe("SequenceEditBuilder", () => {
     it("Can insert a root node", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Insert,
-                content: [nodeXCursor],
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Insert,
+                        content: [nodeXCursor],
+                    },
+                ],
+            ],
+        ]);
         builder.insert(root, singleTextCursor(nodeX));
         assert.deepEqual(deltas, [expected]);
     });
@@ -150,31 +170,39 @@ describe("SequenceEditBuilder", () => {
     it("Can insert a child node", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.Modify,
-                            fields: new Map([[
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
                                 fooKey,
                                 [
-                                    5,
+                                    2,
                                     {
-                                        type: Delta.MarkType.Insert,
-                                        content: [nodeXCursor],
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.Insert,
+                                                        content: [nodeXCursor],
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
                                     },
                                 ],
-                            ]]),
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.insert(root_foo2_foo5, singleTextCursor(nodeX));
         assert.deepEqual(deltas, [expected]);
     });
@@ -182,13 +210,17 @@ describe("SequenceEditBuilder", () => {
     it("Can delete a root node", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Delete,
-                count: 1,
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Delete,
+                        count: 1,
+                    },
+                ],
+            ],
+        ]);
         builder.delete(root, 1);
         assert.deepEqual(deltas, [expected]);
     });
@@ -196,31 +228,39 @@ describe("SequenceEditBuilder", () => {
     it("Can delete child nodes", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.Modify,
-                            fields: new Map([[
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
                                 fooKey,
                                 [
-                                    5,
+                                    2,
                                     {
-                                        type: Delta.MarkType.Delete,
-                                        count: 10,
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.Delete,
+                                                        count: 10,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
                                     },
                                 ],
-                            ]]),
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.delete(root_foo2_foo5, 10);
         assert.deepEqual(deltas, [expected]);
     });
@@ -228,28 +268,34 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the right within a field", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.MoveOut,
-                            moveId,
-                            count: 10,
-                        },
-                        5,
-                        {
-                            type: Delta.MarkType.MoveIn,
-                            moveId,
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId,
+                                        count: 10,
+                                    },
+                                    5,
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId,
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2, 10, root_foo17);
         assert.deepEqual(deltas, [expected]);
     });
@@ -257,28 +303,34 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the left within a field", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.MoveIn,
-                            moveId,
-                        },
-                        15,
-                        {
-                            type: Delta.MarkType.MoveOut,
-                            moveId,
-                            count: 10,
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId,
+                                    },
+                                    15,
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId,
+                                        count: 10,
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo17, 10, root_foo2);
         assert.deepEqual(deltas, [expected]);
     });
@@ -286,36 +338,42 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes into their own midst", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        2,
-                        {
-                            type: Delta.MarkType.MoveOut,
-                            moveId,
-                            count: 15,
-                        },
-                        {
-                            type: Delta.MarkType.MoveIn,
-                            moveId,
-                        },
-                        {
-                            type: Delta.MarkType.MoveIn,
-                            moveId: moveId2,
-                        },
-                        {
-                            type: Delta.MarkType.MoveOut,
-                            moveId: moveId2,
-                            count: 5,
-                        },
-                    ],
-                ]]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId,
+                                        count: 15,
+                                    },
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId,
+                                    },
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId: moveId2,
+                                    },
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId: moveId2,
+                                        count: 5,
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2, 20, root_foo17);
         assert.deepEqual(deltas, [expected]);
     });
@@ -323,35 +381,39 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across fields of the same parent", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [
-                        fooKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.MoveOut,
-                                moveId,
-                                count: 10,
-                            },
-                        ],
-                    ],
-                    [
-                        barKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.MoveIn,
-                                moveId,
-                            },
-                        ],
-                    ],
-                ]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId,
+                                        count: 10,
+                                    },
+                                ],
+                            ],
+                            [
+                                barKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId,
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2, 10, root_bar2);
         assert.deepEqual(deltas, [expected]);
     });
@@ -359,52 +421,56 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the right across subtrees of the same field", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [
-                        fooKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveOut,
-                                                moveId,
-                                                count: 3,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                            14,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveIn,
-                                                moveId,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                ]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveOut,
+                                                        moveId,
+                                                        count: 3,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                    14,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveIn,
+                                                        moveId,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2_foo5, 3, root_foo17_foo5);
         assert.deepEqual(deltas, [expected]);
     });
@@ -412,52 +478,56 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes to the left across subtrees of the same field", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [
-                        fooKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveIn,
-                                                moveId,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                            14,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveOut,
-                                                moveId,
-                                                count: 3,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                ]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveIn,
+                                                        moveId,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                    14,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveOut,
+                                                        moveId,
+                                                        count: 3,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo17_foo5, 3, root_foo2_foo5);
         assert.deepEqual(deltas, [expected]);
     });
@@ -465,57 +535,61 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across subtrees of different fields", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [
-                        fooKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveOut,
-                                                moveId,
-                                                count: 3,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                    [
-                        barKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        barKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.MoveIn,
-                                                moveId,
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                ]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveOut,
+                                                        moveId,
+                                                        count: 3,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                            [
+                                barKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                barKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.MoveIn,
+                                                        moveId,
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2_foo5, 3, root_bar2_bar5);
         assert.deepEqual(deltas, [expected]);
     });
@@ -523,79 +597,84 @@ describe("SequenceEditBuilder", () => {
     it("Can move nodes across deep subtrees of different fields", () => {
         const deltas: Delta.Root[] = [];
         const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
-        const expected: Delta.Root = new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [
-                        fooKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        fooKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.Modify,
-                                                fields: new Map([
-                                                    [
-                                                        fooKey,
-                                                        [
-                                                            7,
-                                                            {
-                                                                type: Delta.MarkType.MoveOut,
-                                                                moveId,
-                                                                count: 3,
-                                                            },
-                                                        ],
-                                                    ],
-                                                ]),
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                    [
-                        barKey,
-                        [
-                            2,
-                            {
-                                type: Delta.MarkType.Modify,
-                                fields: new Map([
-                                    [
-                                        barKey,
-                                        [
-                                            5,
-                                            {
-                                                type: Delta.MarkType.Modify,
-                                                fields: new Map([
-                                                    [
-                                                        barKey,
-                                                        [
-                                                            7,
-                                                            {
-                                                                type: Delta.MarkType.MoveIn,
-                                                                moveId,
-                                                            },
-                                                        ],
-                                                    ],
-                                                ]),
-                                            },
-                                        ],
-                                    ],
-                                ]),
-                            },
-                        ],
-                    ],
-                ]),
-            }],
-        ]]);
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                fooKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.Modify,
+                                                        fields: new Map([
+                                                            [
+                                                                fooKey,
+                                                                [
+                                                                    7,
+                                                                    {
+                                                                        type: Delta.MarkType
+                                                                            .MoveOut,
+                                                                        moveId,
+                                                                        count: 3,
+                                                                    },
+                                                                ],
+                                                            ],
+                                                        ]),
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                            [
+                                barKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.Modify,
+                                        fields: new Map([
+                                            [
+                                                barKey,
+                                                [
+                                                    5,
+                                                    {
+                                                        type: Delta.MarkType.Modify,
+                                                        fields: new Map([
+                                                            [
+                                                                barKey,
+                                                                [
+                                                                    7,
+                                                                    {
+                                                                        type: Delta.MarkType.MoveIn,
+                                                                        moveId,
+                                                                    },
+                                                                ],
+                                                            ],
+                                                        ]),
+                                                    },
+                                                ],
+                                            ],
+                                        ]),
+                                    },
+                                ],
+                            ],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
         builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7);
         assert.deepEqual(deltas, [expected]);
     });
@@ -606,22 +685,24 @@ describe("SequenceEditBuilder", () => {
         const expected: Delta.Root = new Map([
             [
                 rootKey,
-                [{
-                    type: Delta.MarkType.Modify,
-                    fields: new Map([
-                        [
-                            fooKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
                             [
-                                2,
-                                {
-                                    type: Delta.MarkType.MoveOut,
-                                    moveId,
-                                    count: 10,
-                                },
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveOut,
+                                        moveId,
+                                        count: 10,
+                                    },
+                                ],
                             ],
-                        ],
-                    ]),
-                }],
+                        ]),
+                    },
+                ],
             ],
             [
                 detachedKey,
@@ -643,21 +724,23 @@ describe("SequenceEditBuilder", () => {
         const expected: Delta.Root = new Map([
             [
                 rootKey,
-                [{
-                    type: Delta.MarkType.Modify,
-                    fields: new Map([
-                        [
-                            fooKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
                             [
-                                2,
-                                {
-                                    type: Delta.MarkType.MoveIn,
-                                    moveId,
-                                },
+                                fooKey,
+                                [
+                                    2,
+                                    {
+                                        type: Delta.MarkType.MoveIn,
+                                        moveId,
+                                    },
+                                ],
                             ],
-                        ],
-                    ]),
-                }],
+                        ]),
+                    },
+                ],
             ],
             [
                 detachedKey,
@@ -680,33 +763,51 @@ describe("SequenceEditBuilder", () => {
         const expected: Delta.Root[] = [];
 
         builder.setValue(root, 42);
-        expected.push(new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                setValue: 42,
-            }],
-        ]]));
+        expected.push(
+            new Map([
+                [
+                    rootKey,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 42,
+                        },
+                    ],
+                ],
+            ]),
+        );
         assert.deepEqual(deltas, expected);
 
         builder.setValue(root, 43);
-        expected.push(new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                setValue: 43,
-            }],
-        ]]));
+        expected.push(
+            new Map([
+                [
+                    rootKey,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 43,
+                        },
+                    ],
+                ],
+            ]),
+        );
         assert.deepEqual(deltas, expected);
 
         builder.setValue(root, 44);
-        expected.push(new Map([[
-            rootKey,
-            [{
-                type: Delta.MarkType.Modify,
-                setValue: 44,
-            }],
-        ]]));
+        expected.push(
+            new Map([
+                [
+                    rootKey,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 44,
+                        },
+                    ],
+                ],
+            ]),
+        );
         assert.deepEqual(deltas, expected);
     });
 });

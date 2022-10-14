@@ -12,6 +12,7 @@ import { BaseSegment, Marker } from "../mergeTreeNodes";
 import { ICombiningOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
+import { insertSegments } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -26,22 +27,26 @@ describe("MergeTree", () => {
 
     beforeEach(() => {
         mergeTree = new MergeTree();
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make("hello world!")],
-            UniversalSequenceNumber,
-            LocalClientId,
-            UniversalSequenceNumber,
-            undefined as any);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("hello world!")],
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined as any,
+        });
 
         currentSequenceNumber = 0;
-        mergeTree.insertSegments(
-            markerPosition,
-            [Marker.make(ReferenceType.Tile)],
-            currentSequenceNumber,
-            remoteClientId,
-            ++currentSequenceNumber,
-            undefined as any);
+        insertSegments({
+            mergeTree,
+            pos: markerPosition,
+            segments: [Marker.make(ReferenceType.Tile)],
+            refSeq: currentSequenceNumber,
+            clientId: remoteClientId,
+            seq: ++currentSequenceNumber,
+            opArgs: undefined as any,
+        });
     });
 
     describe("annotateRange", () => {

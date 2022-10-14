@@ -1,5 +1,6 @@
 /api-report
 /dist
+/lib
 _api-extractor-temp/
 nyc/
 oclif.manifest.json

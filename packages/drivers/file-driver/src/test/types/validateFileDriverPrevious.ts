@@ -191,6 +191,7 @@ declare function get_old_InterfaceDeclaration_ISnapshotWriterStorage():
 declare function use_current_InterfaceDeclaration_ISnapshotWriterStorage(
     use: TypeOnly<current.ISnapshotWriterStorage>);
 use_current_InterfaceDeclaration_ISnapshotWriterStorage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISnapshotWriterStorage());
 
 /*

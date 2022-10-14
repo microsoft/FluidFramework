@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as semver from "semver";
-import { VersionBumpTypeExtended, VersionBumpType } from "./bumpTypes";
+
+import { VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
     bumpInternalVersion,
     fromInternalScheme,
@@ -118,12 +118,16 @@ export function detectBumpType(
         throw new Error(`Invalid version: ${v2}`);
     }
 
-    if (isInternalVersionScheme(v1, true)) {
+    const v1IsInternal = isInternalVersionScheme(v1, true);
+    const v2IsInternal = isInternalVersionScheme(v2, true);
+
+    if (v1IsInternal) {
         const [, internalVer] = fromInternalScheme(v1, true);
         v1Parsed = internalVer;
     }
 
-    if (isInternalVersionScheme(v2, true)) {
+    // Only convert if the versions are the same scheme.
+    if (v2IsInternal && v1IsInternal) {
         const [, internalVer] = fromInternalScheme(v2, true);
         v2Parsed = internalVer;
     }

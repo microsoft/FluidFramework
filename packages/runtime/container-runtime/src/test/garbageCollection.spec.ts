@@ -269,7 +269,7 @@ describe("Garbage Collection Tests", () => {
 
         describe("Session Expiry and Sweep Timeout", () => {
             const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
-            const defaultSnapshotCacheExpiryMs = 2 * 24 * 60 * 60 * 1000;
+            const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
