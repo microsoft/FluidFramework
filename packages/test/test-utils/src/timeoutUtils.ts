@@ -21,10 +21,7 @@ class TestTimeout {
     private readonly deferred: Deferred<void>;
     private rejected = false;
 
-    private static instance: TestTimeout;
-    public static initialize() {
-        TestTimeout.instance = new TestTimeout();
-    }
+    private static instance: TestTimeout = new TestTimeout();
     public static reset(runnable: Mocha.Runnable) {
         TestTimeout.clear();
         TestTimeout.instance.resetTimer(runnable);
@@ -83,8 +80,6 @@ class TestTimeout {
 
 // only register if we are running with mocha-test-setup loaded
 if (globalThis.getMochaModule !== undefined) {
-    TestTimeout.initialize();
-
     // patching resetTimeout and clearTimeout on the runnable object
     // so we can track when test timeout are enforced
     const mochaModule = globalThis.getMochaModule() as typeof Mocha;
@@ -104,17 +99,21 @@ if (globalThis.getMochaModule !== undefined) {
 }
 
 export interface TimeoutWithError {
-    // Timeout duration in milliseconds, if it is > 0 and not Infinity
-    // If it is undefined, then it will use test timeout if we are in side the test function
-    // Otherwise, there is no timeout
+    /**
+     * Timeout duration in milliseconds, if it is great than 0 and not Infinity
+     * If it is undefined, then it will use test timeout if we are in side the test function
+     * Otherwise, there is no timeout
+     */
     durationMs?: number;
     reject?: true;
     errorMsg?: string;
 }
 export interface TimeoutWithValue<T = void> {
-    // Timeout duration in milliseconds, if it is > 0 and not Infinity
-    // If it is undefined, then it will use test timeout if we are in side the test function
-    // Otherwise, there is no timeout
+    /**
+     * Timeout duration in milliseconds, if it is great than 0 and not Infinity
+     * If it is undefined, then it will use test timeout if we are in side the test function
+     * Otherwise, there is no timeout
+     */
     durationMs?: number;
     reject: false;
     value: T;
@@ -136,17 +135,13 @@ export async function ensureContainerConnected(container: Container): Promise<vo
 // Create a promise based on the timeout options
 async function getTimeoutPromise<T = void>(
     executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
-    timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
+    timeoutOptions: TimeoutWithError | TimeoutWithValue<T>,
+    err: Error | undefined,
 ) {
     const timeout = timeoutOptions.durationMs ?? 0;
     if (timeout <= 0 || !Number.isFinite(timeout)) {
         return new Promise(executor);
     }
-    // create the timeout error outside the async task, so its callstack includes
-    // the original call site, this makes it easier to debug
-    const err = timeoutOptions.reject === false
-        ? undefined
-        : new Error(`${timeoutOptions.errorMsg ?? "Timed out"} (${timeout}ms)`);
     return new Promise<T>((resolve, reject) => {
         const timer = setTimeout(
             () => timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
@@ -173,8 +168,8 @@ export async function timeoutPromise<T = void>(
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined
-        : new Error(timeoutOptions.errorMsg ?? "Test timed out");
-    const executorPromise = getTimeoutPromise(executor, timeoutOptions);
+        : new Error(timeoutOptions.errorMsg ?? "Timed out");
+    const executorPromise = getTimeoutPromise(executor, timeoutOptions, err);
 
     const currentTestTimeout = TestTimeout.getInstance();
     if (currentTestTimeout === undefined) { return executorPromise; }
