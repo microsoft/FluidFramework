@@ -70,11 +70,7 @@ export class BlobHeader {
      */
     public static skipHeader(buffer: IsoBuffer): IsoBuffer {
         const header = this.fromBinary(buffer);
-        if (!this.fromBinary(buffer)) {
-            return buffer;
-        } else {
-            return buffer.slice(header?.headerLength());
-        }
+        return !this.fromBinary(buffer) ? buffer : buffer.slice(header?.headerLength());
     }
 }
 
@@ -90,8 +86,8 @@ function toArrayBuffer(buf) {
 /**
  * This method writes the binary representation of the given header at the beginning of the given buffer.
  * @param header - The header to be written.
- * @param buffer -
- * @returns
+ * @param buffer - The buffer containing the binary blob
+ * @returns The buffer with header
  */
 export function writeBlobHeader(header: BlobHeader, buffer: ArrayBufferLike): ArrayBufferLike {
     const binaryHeader = header.toBinary();

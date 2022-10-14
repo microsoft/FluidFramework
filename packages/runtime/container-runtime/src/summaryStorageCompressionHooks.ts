@@ -30,12 +30,8 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     private readonly blobReplacer = (input: any, context: any) => {
         if (input.type === SummaryType.Blob) {
             const summaryBlob: ISummaryBlob = input;
-            let decompressed: Uint8Array;
-            if (typeof summaryBlob.content === "string") {
-                decompressed = new TextEncoder().encode(summaryBlob.content);
-            } else {
-                decompressed = summaryBlob.content;
-            }
+            const decompressed: Uint8Array = typeof summaryBlob.content === "string" ?
+            new TextEncoder().encode(summaryBlob.content) : summaryBlob.content;
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
             // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
             // fails on assertion at 2 different generations of the hash which do not lead to

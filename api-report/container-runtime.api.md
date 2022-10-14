@@ -785,8 +785,6 @@ export enum SummaryCompressionAlgorithms {
     None = 1
 }
 
-// @public (undocumented)
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
 // Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
