@@ -26,7 +26,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
@@ -49,9 +50,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_MockDocumentDeltaConnection": {
-        "backCompat": false
-      }
     }
   }
 }

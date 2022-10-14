@@ -60,13 +60,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_IntervalCollection": {
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceInterval": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
       "InterfaceDeclaration_ISharedIntervalCollection": {
         "backCompat": false
       },
@@ -103,9 +96,6 @@
       "ClassDeclaration_SharedSequence": {
         "backCompat": false,
         "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SharedStringSegment": {
-        "backCompat": false
       },
       "RemovedTypeAliasDeclaration_MatrixSegment": {
         "backCompat": false,
@@ -185,9 +175,6 @@
       },
       "RemovedClassDeclaration_SharedObjectSequenceFactory": {
         "backCompat": false,
-        "forwardCompat": false
-      },
-      "EnumDeclaration_ConnectionState": {
         "forwardCompat": false
       },
       "RemovedInterfaceDeclaration_IDirectoryClearOperation": {

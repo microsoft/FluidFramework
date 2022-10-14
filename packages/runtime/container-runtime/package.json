@@ -108,40 +108,11 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "VariableDeclaration_DefaultSummaryConfiguration": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_ISummaryConfiguration": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
+      "TypeAliasDeclaration_ISummaryConfiguration": {"backCompat": false},
       "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGeneratedSummaryStats": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISubmitSummaryOpResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IUploadSummaryResult": {
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_SubmitSummaryResult": {
         "backCompat": false
       },
       "ClassDeclaration_ContainerRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IConnectableRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummarizerRuntime": {
         "backCompat": false
       },
       "RemovedInterfaceDeclaration_IPendingFlushMode": {
@@ -172,7 +143,8 @@
       "RemovedClassDeclaration_ScheduleManager": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "VariableDeclaration_DefaultSummaryConfiguration": {"backCompat": false}
     }
   }
 }

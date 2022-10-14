@@ -98,12 +98,6 @@
       "RemovedFunctionDeclaration_originatedAsExternalError": {
         "forwardCompat": false,
         "backCompat": false
-      },
-      "EnumDeclaration_TelemetryDataTag": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MockLogger": {
-        "forwardCompat": false
       }
     }
   }

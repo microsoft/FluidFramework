@@ -91,7 +91,8 @@
       "RemovedInterfaceDeclaration_IFacetCodes": {
         "backCompat": false,
         "forwardCompat": false
-      }
+      },
+      "ClassDeclaration_OdspRedirectError": {"backCompat": false}
     }
   }
 }

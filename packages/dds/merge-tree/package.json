@@ -103,9 +103,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_Client": {
-        "backCompat": false
-      },
       "ClassDeclaration_LocalReference": {
         "forwardCompat": false
       },
@@ -117,7 +114,6 @@
         "backCompat": false
       },
       "ClassDeclaration_Marker": {
-        "backCompat": false,
         "forwardCompat": false
       },
       "ClassDeclaration_SnapshotLegacy": {
@@ -125,7 +121,6 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IConsensusInfo": {
-        "backCompat": false,
         "forwardCompat": false
       },
       "RemovedClassDeclaration_LocalReference": {
@@ -133,7 +128,6 @@
         "backCompat": false
       },
       "InterfaceDeclaration_LocalReferencePosition": {
-        "backCompat": false,
         "forwardCompat": false
       },
       "ClassDeclaration_MergeTree": {
@@ -264,15 +258,10 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "TypeAliasDeclaration_RangeStackMap": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ReferencePosition": {
-        "backCompat": false
-      },
       "ClassDeclaration_TrackingGroup": {
         "forwardCompat": false
-      }
+      },
+      "InterfaceDeclaration_IMergeTreeTextHelper": {"backCompat": false}
     }
   }
 }

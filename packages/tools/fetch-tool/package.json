@@ -26,7 +26,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
