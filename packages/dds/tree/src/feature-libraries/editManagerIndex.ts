@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IChannelStorageService, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
@@ -21,6 +21,7 @@ import {
 } from "../shared-tree-core";
 import { JsonCompatibleReadOnly } from "../util";
 import { Branch, Commit, EditManager, MutableSummaryData, ReadonlySummaryData, SessionId } from "../edit-manager";
+import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -42,10 +43,22 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
 
     private readonly commitEncoder: CommitEncoder<TChangeset>;
 
+    private readonly editDataBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
+
     public constructor(
+        private readonly runtime: IFluidDataStoreRuntime,
         private readonly editManager: EditManager<TChangeset, TChangeFamily>,
     ) {
         this.commitEncoder = commitEncoderFromFamily<TChangeset, TChangeFamily>(editManager.changeFamily);
+        this.editDataBlob = cachedValue(async (observer) => {
+            recordDependency(observer, this.editManager);
+            const dataString = encodeSummary(
+                this.editManager.getSummaryData(),
+                this.commitEncoder,
+            );
+            // For now we are not chunking the edit data, but still put it in a reusable blob:
+            return this.runtime.uploadBlob(IsoBuffer.from(dataString));
+        });
     }
 
     public getAttachSummary(
@@ -69,7 +82,10 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
+        const editDataBlobHandle = await this.editDataBlob.get();
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(blobKey, stringify(editDataBlobHandle));
+        return builder.getSummaryTree();
     }
 
     public getGCData(fullGC?: boolean): IGarbageCollectionData {

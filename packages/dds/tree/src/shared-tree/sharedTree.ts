@@ -118,7 +118,7 @@ class SharedTree
         const indexes: Index<DefaultChangeset>[] = [
             new SchemaIndex(runtime, schema),
             new ForestIndex(runtime, forest),
-            new EditManagerIndex(editManager),
+            new EditManagerIndex(runtime, editManager),
         ];
         super(
             indexes,
