@@ -26,9 +26,11 @@ import {
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelServices, Jsonable } from "@fluidframework/datastore-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { IAttributor, Attributor } from '../../attributor';
+import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../../sharedString";
 import { SharedStringFactory } from "../../sequenceFactory";
 import { assertConsistent, Client } from "../intervalUtils";
@@ -36,6 +38,9 @@ import { assertConsistent, Client } from "../intervalUtils";
 interface FuzzTestState extends BaseFuzzTestState {
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
     clients: Client[];
+	// Note: eventually each client will have an Attributor. While design/implementation is in flux, this test suite
+	// just stores a singleton attributor for the purposes of assessing its size.
+	attributor?: IAttributor;
 }
 
 interface ClientSpec {
@@ -166,21 +171,67 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     );
 }
 
+function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	clientIds.forEach((clientId, index) => {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email
+		};
+		clients.set(clientId, { 
+			mode: "write",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: []		
+		});
+	});
+	return {
+		getMember: (clientId: string): IClient | undefined => {
+			return clients.get(clientId);
+		}
+	} as IAudience
+}
+
 function createSharedString(
 	random: IRandom,
 	generator: Generator<Operation, FuzzTestState>,
+	makeAttributor?: (runtime: IFluidDataStoreRuntime) => IAttributor
 ): FuzzTestState {
 	const numClients = 3;
-
+	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
+	const audience = makeMockAudience(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	let attributor: IAttributor | undefined;
 	const initialState: FuzzTestState = {
-		clients: Array.from({ length: numClients }, (_, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: random.uuid4() });
+		clients: clientIds.map((clientId, index) => {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const { deltaManager } = dataStoreRuntime;
+			deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
+			if (index === 0) {
+				attributor = makeAttributor?.(dataStoreRuntime);
+			}
 			const sharedString = new SharedString(
 				dataStoreRuntime,
 				String.fromCharCode(index + 65),
 				SharedStringFactory.Attributes,
 			);
+			// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
+			// audience / op emission.
+			sharedString.on("op", (message) => {
+				if (message.timestamp === undefined) {
+					// TODO: Make this apples-to-apples comparison of timestamps.
+					message.timestamp = Date.now();
+				}
+				deltaManager.emit("op", message)
+			});
+			dataStoreRuntime.getAudience = () => audience;
+			
 			const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services: IChannelServices = {
 				deltaConnection: containerRuntime.createDeltaConnection(),
@@ -194,6 +245,7 @@ function createSharedString(
 		containerRuntimeFactory,
 		random,
 	};
+	initialState.attributor = attributor;
 
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
     // Also a reasonable point to inject logging of incremental state.
@@ -311,6 +363,11 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => {
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
+	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just add a property
+	// to the root so that its size is reported
+	if (state.attributor) {
+		(summary as any).attribution = state.attributor.serialize();
+	}
 	return summary;
 };
 
@@ -372,7 +429,7 @@ describe.only("SharedString Attribution", () => {
 
 	// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
 	// to do so.
-	it.skip("generate snapshot size impact report", async () => {
+	it.only("generate snapshot size impact report", async () => {
 		const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
 		const fieldPaddingLength = 12;
 		console.log(`${
@@ -380,13 +437,16 @@ describe.only("SharedString Attribution", () => {
 		}|${
 			"None ".padStart(fieldPaddingLength)
 		}|${
-			"Prop ".padStart(fieldPaddingLength)}`,
+			"Prop ".padStart(fieldPaddingLength)
+		}|${
+			"Attributor ".padStart(fieldPaddingLength)}`,
 		);
 		const logRow = ({
 			docName,
 			attributionlessSummary,
 			propAttributionSummary,
-		}: { docName: string; attributionlessSummary: ISummaryTree; propAttributionSummary: ISummaryTree; }) => {
+			attributorSummary,
+		}: { docName: string; attributionlessSummary: ISummaryTree; propAttributionSummary: ISummaryTree; attributorSummary: ISummaryTree }) => {
 			const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
 			console.log(`${
 				docName.padEnd(namePaddingLength)
@@ -394,6 +454,8 @@ describe.only("SharedString Attribution", () => {
 				getLength(attributionlessSummary).padStart(fieldPaddingLength - 1)
 			} |${
 				getLength(propAttributionSummary).padStart(fieldPaddingLength - 1)
+			} |${
+				getLength(attributorSummary).padStart(fieldPaddingLength - 1)
 			}`);
 		};
 		for (const docName of documents) {
@@ -405,7 +467,10 @@ describe.only("SharedString Attribution", () => {
 			const propAttributionSummary = await summaryFromState(
 				createSharedString(makeRandom(0), generatorFromArray(embedAttributionInProps(operations))),
 			);
-			logRow({ docName, attributionlessSummary, propAttributionSummary });
+			const attributorSummary = await summaryFromState(
+				createSharedString(makeRandom(0), generatorFromArray(operations), (runtime) => new Attributor(runtime)),
+			);
+			logRow({ docName, attributionlessSummary, propAttributionSummary, attributorSummary });
 		}
 	});
 });

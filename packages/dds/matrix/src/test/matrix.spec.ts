@@ -466,7 +466,7 @@ describe("Matrix", () => {
                 ]);
             });
 
-            it("insert col vs. remove row", async () => {
+            it.only("insert col vs. remove row", async () => {
                 matrix1.insertCols(0, 2);
                 matrix1.insertRows(0, 3);
                 matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [

@@ -137,7 +137,7 @@ describe("Big Matrix", function() {
             expectSize(matrix2, 0, 0);
         });
 
-        it("remove corners (populated)", async () => {
+        it.only("remove corners (populated)", async () => {
             matrix1.insertRows(0, Const.excelMaxRows);
             matrix1.insertCols(0, Const.excelMaxCols);
 

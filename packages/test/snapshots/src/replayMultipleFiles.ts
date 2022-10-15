@@ -155,6 +155,7 @@ export async function processContent(mode: Mode, concurrently = true) {
         if (!node.isDirectory()) {
             continue;
         }
+
         const folder = `${fileLocation}/${node.name}`;
         const messages = `${folder}/messages.json`;
         if (!fs.existsSync(messages)) {
