@@ -4,14 +4,16 @@
  */
 import * as semver from "semver";
 
-import { VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
+import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
     bumpInternalVersion,
     fromInternalScheme,
     getVersionRange,
     isInternalVersionScheme,
+    toInternalScheme,
 } from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
+import { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).
@@ -186,4 +188,51 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
     }
 
     return prerelease !== null && prerelease.length > 0;
+}
+
+export function previousVersion(
+    version: ReleaseVersion,
+): [ReleaseVersion | undefined, ReleaseVersion | undefined] {
+    const scheme = detectVersionScheme(version);
+    let previousMajorVersion: ReleaseVersion | undefined;
+    let previousMinorVersion: ReleaseVersion | undefined;
+
+    if (scheme === "internal") {
+        const [pubVer, intVer] = fromInternalScheme(version);
+        if (intVer.major === 0) {
+            throw new Error(`Internal major unexpectedly 0.`);
+        }
+
+        previousMajorVersion =
+            intVer.major === 1
+                ? "1.0.0"
+                : toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
+
+        previousMinorVersion =
+            intVer.minor === 0
+                ? toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`).version
+                : toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`)
+                      .version;
+    } else if (scheme === "virtualPatch") {
+        const ver = fromVirtualPatchScheme(version);
+        if (ver.major <= 1) {
+            throw new Error(`Virtual patch major unexpectedly <= 1.`);
+        }
+        previousMajorVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
+        previousMinorVersion = toVirtualPatchScheme(
+            `${ver.major}.${Math.max(0, ver.minor - 1)}.0`,
+        ).version;
+    } else {
+        const ver = semver.parse(version);
+        if (ver === null) {
+            throw new Error(`Couldn't parse version string: ${version}`);
+        }
+
+        previousMajorVersion = ver.major <= 1 ? undefined : `${ver.major - 1}.0.0`;
+        previousMinorVersion =
+            ver.minor === 0 && ver.major === 0 ? undefined
+                : `${ver.major}.${Math.max(0, ver.minor - 1)}.0`;
+    }
+
+    return [previousMajorVersion, previousMinorVersion];
 }
