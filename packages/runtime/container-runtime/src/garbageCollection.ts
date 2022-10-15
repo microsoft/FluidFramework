@@ -69,8 +69,6 @@ export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to disable expiring session after a set period of time, even if expiry value is present.
-export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
@@ -186,7 +184,6 @@ export interface IGarbageCollectorCreateParams {
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
     readonly getContainerDiagnosticId: () => string;
-    readonly snapshotCacheExpiryMs?: number;
 }
 
 /** The state of node that is unreferenced. */
@@ -452,6 +449,7 @@ export class GarbageCollector implements IGarbageCollector {
             runSweep: this.shouldRunSweep,
             testMode: this.testMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
+            sweepTimeout: this.sweepTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             trackGCState: this.trackGCState,
             ...this.gcOptions,
@@ -486,6 +484,21 @@ export class GarbageCollector implements IGarbageCollector {
         let prevSummaryGCVersion: number | undefined;
 
         /**
+         * Sweep timeout is the time after which unreferenced content can be swept.
+         * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
+         *
+         * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
+         * The buffer is added to account for any clock skew or other edge cases.
+         * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
+         */
+        function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined) {
+            const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
+            const bufferMs = oneDayMs;
+            return sessionExpiryTimeoutMs &&
+                (sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs);
+        }
+
+        /**
          * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
          * 1. Whether running GC mark phase is allowed or not.
          * 2. Whether running GC sweep phase is allowed or not.
@@ -499,6 +512,9 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+            this.sweepTimeoutMs =
+                metadata?.sweepTimeoutMs
+                ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -506,20 +522,28 @@ export class GarbageCollector implements IGarbageCollector {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
+            // This Test Override only applies for new containers
+            const testOverrideSweepTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepTimeoutMs");
+
             // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            this.sweepEnabled = this.gcOptions.sweepAllowed === true;
+            // ...unless we're using the TestOverride
+            this.sweepEnabled = this.gcOptions.sweepAllowed === true || testOverrideSweepTimeoutMs !== undefined;
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
+            this.sweepTimeoutMs =
+                testOverrideSweepTimeoutMs
+                ?? computeSweepTimeout(this.sessionExpiryTimeoutMs);
         }
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
-        if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
+        if (this.sessionExpiryTimeoutMs !== undefined) {
             // If Test Override config is set, override Session Expiry timeout.
             const overrideSessionExpiryTimeoutMs =
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
@@ -530,21 +554,6 @@ export class GarbageCollector implements IGarbageCollector {
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
             );
             this.sessionExpiryTimer.start();
-
-            // TEMPORARY: Hardcode a default of 5 days which will be >= the policy's value in the ODSP driver.
-            // This unblocks the Sweep Log (see logSweepEvents function).
-            // This will be removed before sweep is fully implemented.
-            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 5 * 24 * 60 * 60 * 1000;
-
-            /**
-             * Sweep timeout is the time after which unreferenced content can be swept.
-             * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer. The buffer is
-             * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
-             * but make it one day to be safe.
-             */
-            if (snapshotCacheExpiryMs !== undefined) {
-                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
-            }
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -571,16 +580,16 @@ export class GarbageCollector implements IGarbageCollector {
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
          *
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
-         *
          * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
-         *
-         * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
+         * 3. The driver must implement the policy limiting the age of snapshots used for loading. Otherwise
+         * the Sweep Timeout calculation is not valid. We use the persisted value to ensure consistency over time.
+         * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          * feature flag.
          */
-        this.shouldRunSweep = false; // disable while TEMPORARY measure hardcoding snapshotCacheExpiryMs is here
-            // this.shouldRunGC
-            // && this.sweepTimeoutMs !== undefined
-            // && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+        this.shouldRunSweep =
+            this.shouldRunGC
+            && this.sweepTimeoutMs !== undefined
+            && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
@@ -947,6 +956,7 @@ export class GarbageCollector implements IGarbageCollector {
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
+            sweepTimeoutMs: this.sweepTimeoutMs,
         };
     }
 
