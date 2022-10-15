@@ -2,18 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import {
-    findPackagesUnderPath,
-    generateTests,
-    getAndUpdatePackageDetails,
-} from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+
+import { generateTests, getAndUpdatePackageDetails } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../../base";
-import {
-    isDependencyUpdateType,
-} from "../../lib";
+import { releaseGroupFlag } from "../../flags";
 
 export default class GenerateTypeTestsCommand extends BaseCommand<
     typeof GenerateTypeTestsCommand.flags
@@ -22,21 +16,27 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         "Generates type tests based on the individual package settings in package.json.";
 
     static flags = {
-        packageDir: Flags.directory({
-            char: "d",
-            description: "The directory of the package to generate tests for.",
+        dir: Flags.directory({
+            description: "Run on the package in this directory.",
+            exclusive: ["packages", "releaseGroup"],
         }),
-        releaseGroupRootDir: Flags.directory({
-            char: "m",
-            description: "The root directory of the mono repo, under which there are packages.",
+        packages: Flags.boolean({
+            description: "Run on all independent packages in the repo.",
+            default: false,
+            exclusive: ["dir", "releaseGroup"],
+        }),
+        releaseGroup: releaseGroupFlag({
+            description: "Run on all packages within this release group.",
+            exclusive: ["dir", "packages"],
         }),
         prepare: Flags.boolean({
-            char: "p",
-            description: "Only prepares the package json. Doesn't generate tests. This should be done before npm install.",
+            description:
+                "Only prepares the package json. Doesn't generate tests. This should be done before npm install.",
+            exclusive: ["generate"],
         }),
         generate: Flags.boolean({
-            char: "g",
-            description: "This only generates the tests. If does not prepare the package.json",
+            description: "This only generates the tests. It does not prepare the package.json",
+            exclusive: ["prepare"],
         }),
         ...BaseCommand.flags,
     };
@@ -49,34 +49,50 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         },
     ];
 
-    /** An array of messages that will be shown after the command runs. */
-    private readonly finalMessages: string[] = [];
-
-    public async run(): Promise<boolean> {
-        const args = this.processedArgs;
+    public async run(): Promise<void> {
         const flags = this.processedFlags;
 
         const context = await this.getContext();
+        const releaseGroup = flags.releaseGroup;
+        const releaseGroupRepo =
+            releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+        const independentPackages = flags.packages;
+        const dir = flags.dir;
 
-        const packageDirs: string[] = [];
-        if (flags.releaseGroupRootDir !== undefined) {
-            this.info(`Finding packages in release group directory: ${flags.releaseGroupRootDir}`);
-            packageDirs.push(...(await findPackagesUnderPath(flags.releaseGroupRootDir)));
-        } else if (flags.packageDir !== undefined) {
-            this.info(flags.packageDir);
-            packageDirs.push(flags.packageDir);
+        if (dir === undefined && releaseGroup === undefined && independentPackages === undefined) {
+            this.error(`Must provide a --dir, --packages, or --releaseGroup argument.`);
         }
 
-        this.verbose(`prepare: ${flags.prepare}`);
-        this.verbose(`generateOnly: ${flags.generate}`);
+        this.logHr();
+        this.log(`prepare: ${flags.prepare}`);
+        this.log(`generateOnly: ${flags.generate}`);
+        this.logHr();
+
+        const packageDirs: string[] = [];
+        if (independentPackages) {
+            this.info(`Finding independent packages`);
+            packageDirs.push(...context.independentPackages.map((p) => p.directory));
+            // packageDirs.push(...context.packages.map(p=>p.directory));
+        }
+
+        if (releaseGroup !== undefined) {
+            this.info(`Finding packages for release group: ${releaseGroup}`);
+            packageDirs.push(
+                ...context.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+            );
+        }
+
+        if (dir !== undefined) {
+            this.info(`Finding package in directory: ${dir}`);
+            packageDirs.push(dir);
+        }
 
         const concurrency = 25;
         const runningGenerates: Promise<boolean>[] = [];
         // this loop incrementally builds up the runningGenerates promise list
         // each dir with an index greater than concurrency looks back the concurrency value
         // to determine when to run
-        // eslint-disable-next-line unicorn/no-array-for-each
-        packageDirs.forEach((packageDir, i) =>
+        for (const [i, packageDir] of packageDirs.entries()) {
             runningGenerates.push(
                 (async () => {
                     if (i >= concurrency) {
@@ -93,7 +109,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     try {
                         const start = Date.now();
                         const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-                            flags.generate ? undefined : { cwd: flags.releaseGroupRootDir };
+                            flags.generate ? undefined : { cwd: releaseGroupRepo?.repoPath };
 
                         const packageData = await getAndUpdatePackageDetails(
                             packageDir,
@@ -106,6 +122,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                             packageData.oldVersions.length > 0 &&
                             flags.prepare === undefined
                         ) {
+                            // eslint-disable-next-line @typescript-eslint/no-shadow
                             const start = Date.now();
                             await generateTests(packageData)
                                 .then((s) =>
@@ -134,11 +151,13 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
                     return true;
                 })(),
-            ),
-        );
+            );
+        }
 
         // eslint-disable-next-line unicorn/no-await-expression-member
         const results = (await Promise.all(runningGenerates)).every((v) => v);
-        return results;
+        if (!results) {
+            this.error(`Results were false.`);
+        }
     }
 }
