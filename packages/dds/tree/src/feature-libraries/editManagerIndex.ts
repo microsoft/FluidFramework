@@ -12,7 +12,7 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ChangeFamily } from "../change-family";
+import { ChangeEncoder, ChangeFamily } from "../change-family";
 import {
     Index,
     SummaryElement,
@@ -49,7 +49,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly editManager: EditManager<TChangeset, TChangeFamily>,
     ) {
-        this.commitEncoder = commitEncoderFromFamily<TChangeset, TChangeFamily>(editManager.changeFamily);
+        this.commitEncoder = commitEncoderFromChangeEncoder(editManager.changeFamily.encoder);
         this.editDataBlob = cachedValue(async (observer) => {
             recordDependency(observer, this.editManager);
             const dataString = encodeSummary(
@@ -146,18 +146,17 @@ export interface CommitEncoder<TChange> {
     readonly decode: (commit: Commit<JsonCompatibleReadOnly>) => Commit<TChange>;
 }
 
-export function commitEncoderFromFamily<
-    TChangeset,
-    TChangeFamily extends ChangeFamily<any, TChangeset>,
->(changeFamily: TChangeFamily): CommitEncoder<TChangeset> {
+export function commitEncoderFromChangeEncoder<TChangeset>(
+    changeEncoder: ChangeEncoder<TChangeset>,
+): CommitEncoder<TChangeset> {
     return {
         encode: (commit: Commit<TChangeset>): Commit<JsonCompatibleReadOnly> => ({
             ...commit,
-            changeset: changeFamily.encoder.encodeForJson(0, commit.changeset),
+            changeset: changeEncoder.encodeForJson(0, commit.changeset),
         }),
         decode: (commit: Commit<JsonCompatibleReadOnly>): Commit<TChangeset> => ({
             ...commit,
-            changeset: changeFamily.encoder.decodeJson(0, commit.changeset),
+            changeset: changeEncoder.decodeJson(0, commit.changeset),
         }),
     };
 }
