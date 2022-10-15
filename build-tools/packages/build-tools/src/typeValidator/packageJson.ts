@@ -111,7 +111,8 @@ export async function getAndUpdatePackageDetails(
 
     const version = packageDetails.pkg.version;
     const scheme = detectVersionScheme(version);
-    let previousVersion: ReleaseVersion;
+    let previousMajorVersion: ReleaseVersion;
+    let previousMinorVersion: ReleaseVersion;
 
     if (scheme === "internal") {
         const [pubVer, intVer] = fromInternalScheme(version);
@@ -120,28 +121,38 @@ export async function getAndUpdatePackageDetails(
         }
 
         if (intVer.major === 1) {
-            previousVersion = "1.0.0";
+            previousMajorVersion = "1.0.0";
         } else {
-            previousVersion = toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
+            previousMajorVersion = toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
         }
+
+        previousMinorVersion = toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor-1)}.0`).version;
     } else if (scheme === "virtualPatch") {
         const ver = fromVirtualPatchScheme(version);
         if (ver.major <= 1) {
             throw new Error(`Virtual patch major unexpectedly <= 1.`);
         }
-        previousVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
+        previousMajorVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
+        previousMinorVersion = toVirtualPatchScheme(`${ver.major}.${Math.max(0, ver.minor-1)}.0`).version;
     } else {
         const ver = semver.parse(version);
         if (ver === null) {
-            throw new Error(`COuldn't parse version string: ${version}`);
+            throw new Error(`Couldn't parse version string: ${version}`);
         }
 
         if (ver.major <= 1) {
             throw new Error(`Virtual patch major unexpectedly <= 1.`);
         }
 
-        previousVersion = `${ver.major}.0.0`;
+        previousMajorVersion = `${ver.major}.0.0`;
+        previousMinorVersion = `${ver.major}.${Math.max(0, ver.minor-1)}.0`
     }
+
+    // TODO: Should we use a range instead?
+    // previousVersion = isInternalVersionScheme(previousVersion)
+    //     ? getVersionRange(previousVersion, "^")
+    //     : `^${previousVersion}`;
+
 
     // TODO: Should we use a range instead?
     // previousVersion = isInternalVersionScheme(previousVersion)
@@ -151,7 +162,7 @@ export async function getAndUpdatePackageDetails(
     // check that the version exists on npm before trying to add the
     // dev dep and bumping the typeValidation version
     // if the version does not exist, we will defer updating the package
-    const packageDef = `${packageDetails.pkg.name}@${previousVersion}`;
+    const packageDef = `${packageDetails.pkg.name}@${previousMajorVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
     const result = child_process
         .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir })
