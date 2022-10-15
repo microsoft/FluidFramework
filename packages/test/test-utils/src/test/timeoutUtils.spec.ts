@@ -43,7 +43,7 @@ describe("TimeoutPromise", () => {
             await timeoutPromise(() => { });
             assert(false, "should have timed out");
         } catch (e: any) {
-            assert(e.message.startsWith("Test timed out ("), "expected timeout error message");
+            assert(e.message.startsWith("Test timed out ("), `expected timeout error message: got ${e.message}`);
         }
     }).timeout(25);
 
@@ -52,7 +52,7 @@ describe("TimeoutPromise", () => {
             await timeoutPromise(() => { }, {});
             assert(false, "should have timed out");
         } catch (e: any) {
-            assert(e.message.startsWith("Test timed out ("), "expected timeout error message");
+            assert(e.message.startsWith("Test timed out ("), `expected timeout error message: got ${e.message}`);
         }
     }).timeout(25);
 
@@ -61,7 +61,7 @@ describe("TimeoutPromise", () => {
             await timeoutPromise(() => { }, { durationMs: 1 });
             assert(false, "should have timed out");
         } catch (e: any) {
-            assert(e.message.startsWith("Timed out ("), "expected timeout error message");
+            assert(e.message.startsWith("Timed out ("), `expected timeout error message: got ${e.message}`);
         }
     }).timeout(25);
 
@@ -76,7 +76,7 @@ describe("TimeoutPromise", () => {
     }).timeout(25);
 
     it("No timeout with negative duration", async function() {
-        // The original 25 timeout will be used by timeoutPromise
+        // Make sure resetTimeout in the test works
         this.timeout(100);
         try {
             await timeoutPromise((resolve) => {
@@ -88,7 +88,7 @@ describe("TimeoutPromise", () => {
     }).timeout(25);
 
     it("No timeout with Infinity duration", async function() {
-        // The original 25 timeout will be used by timeoutPromise
+        // Make sure resetTimeout in the test works
         this.timeout(100);
         try {
             await timeoutPromise((resolve) => {
@@ -100,7 +100,7 @@ describe("TimeoutPromise", () => {
     }).timeout(25);
 
     it("No timeout with valid duration", async function() {
-        // The original 25 timeout will be used by timeoutPromise
+        // Make sure resetTimeout in the test works
         this.timeout(100);
         try {
             await timeoutPromise((resolve) => { setTimeout(resolve, 50); }, { durationMs: 75 });
@@ -110,7 +110,7 @@ describe("TimeoutPromise", () => {
     }).timeout(25);
 
     it("No timeout with throw", async function() {
-        // The original 25 timeout will be used by timeoutPromise
+        // Make sure resetTimeout in the test works
         this.timeout(100);
         try {
             await timeoutPromise((resolve, reject) => { reject(new Error("blah")); });
@@ -121,7 +121,7 @@ describe("TimeoutPromise", () => {
     }).timeout(25);
 
     it("Timeout with valid duration", async function() {
-        // The original 25 timeout will be used by timeoutPromise
+        // Make sure resetTimeout in the test works
         this.timeout(100);
         try {
             await timeoutPromise((resolve) => { setTimeout(resolve, 75); }, { durationMs: 50 });

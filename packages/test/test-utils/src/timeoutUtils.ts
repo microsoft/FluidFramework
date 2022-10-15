@@ -142,9 +142,16 @@ async function getTimeoutPromise<T = void>(
     if (timeout <= 0 || !Number.isFinite(timeout)) {
         return new Promise(executor);
     }
+
     return new Promise<T>((resolve, reject) => {
+        const timeoutRejections = () => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const errorObject = err!;
+            errorObject.message = `${errorObject.message} (${timeout}ms)`;
+            reject(err);
+        };
         const timer = setTimeout(
-            () => timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
+            () => timeoutOptions.reject === false ? resolve(timeoutOptions.value) : timeoutRejections(),
             timeout);
 
         executor(
@@ -180,7 +187,8 @@ export async function timeoutPromise<T = void>(
                 // If the rejection is because of the timeout then
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const errorObject = err!;
-                errorObject.message = `${errorObject.message} (${currentTestTimeout.getTimeout()}ms)`;
+                errorObject.message =
+                    `${timeoutOptions.errorMsg ?? "Test timed out"} (${currentTestTimeout.getTimeout()}ms)`;
                 throw errorObject;
             }
             return timeoutOptions.value;
