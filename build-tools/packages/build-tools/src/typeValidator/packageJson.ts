@@ -14,6 +14,7 @@ import {
     fromVirtualPatchScheme,
     getVersionRange,
     isInternalVersionScheme,
+    previousVersion,
     toInternalScheme,
     toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
@@ -83,6 +84,14 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
     };
 }
 
+type PreviousVersionStyle =
+    | "^previousMajor"
+    | "^previousMinor"
+    | "~previousMajor"
+    | "~previousMinor"
+    | "previousMajor"
+    | "previousMinor";
+
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
  * typetests against.
@@ -96,6 +105,7 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 export async function getAndUpdatePackageDetails(
     packageDir: string,
     updateOptions: { cwd?: string } | undefined,
+    previousVersionStyle: PreviousVersionStyle = "previousMinor",
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
 
@@ -110,59 +120,81 @@ export async function getAndUpdatePackageDetails(
     }
 
     const version = packageDetails.pkg.version;
-    const scheme = detectVersionScheme(version);
-    let previousMajorVersion: ReleaseVersion;
-    let previousMinorVersion: ReleaseVersion;
+    const [previousMajorVersion, previousMinorVersion] = previousVersion(version);
+    let prevVersion: string;
 
-    if (scheme === "internal") {
-        const [pubVer, intVer] = fromInternalScheme(version);
-        if (intVer.major === 0) {
-            throw new Error(`Internal major unexpectedly 0.`);
+    switch (previousVersionStyle) {
+        case "previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = previousMajorVersion;
+            break;
         }
 
-        if (intVer.major === 1) {
-            previousMajorVersion = "1.0.0";
-        } else {
-            previousMajorVersion = toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
+        case "previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = previousMinorVersion;
+            break;
         }
 
-        previousMinorVersion = toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor-1)}.0`).version;
-    } else if (scheme === "virtualPatch") {
-        const ver = fromVirtualPatchScheme(version);
-        if (ver.major <= 1) {
-            throw new Error(`Virtual patch major unexpectedly <= 1.`);
-        }
-        previousMajorVersion = toVirtualPatchScheme(`${ver.major - 1}.0.0`).version;
-        previousMinorVersion = toVirtualPatchScheme(`${ver.major}.${Math.max(0, ver.minor-1)}.0`).version;
-    } else {
-        const ver = semver.parse(version);
-        if (ver === null) {
-            throw new Error(`Couldn't parse version string: ${version}`);
+        case "^previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMajorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMajorVersion!, "^")
+                : `^${previousMajorVersion}`;
+            break;
         }
 
-        if (ver.major <= 1) {
-            throw new Error(`Virtual patch major unexpectedly <= 1.`);
+        case "^previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMinorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMinorVersion!, "^")
+                : `^${previousMinorVersion}`;
+            break;
         }
 
-        previousMajorVersion = `${ver.major}.0.0`;
-        previousMinorVersion = `${ver.major}.${Math.max(0, ver.minor-1)}.0`
+        case "~previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMajorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMajorVersion!, "~")
+                : `~${previousMajorVersion}`;
+            break;
+        }
+
+        case "~previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMinorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMinorVersion!, "~")
+                : `~${previousMinorVersion}`;
+            break;
+        }
     }
-
-    // TODO: Should we use a range instead?
-    // previousVersion = isInternalVersionScheme(previousVersion)
-    //     ? getVersionRange(previousVersion, "^")
-    //     : `^${previousVersion}`;
-
-
-    // TODO: Should we use a range instead?
-    // previousVersion = isInternalVersionScheme(previousVersion)
-    //     ? getVersionRange(previousVersion, "^")
-    //     : `^${previousVersion}`;
 
     // check that the version exists on npm before trying to add the
     // dev dep and bumping the typeValidation version
     // if the version does not exist, we will defer updating the package
-    const packageDef = `${packageDetails.pkg.name}@${previousMajorVersion}`;
+    const packageDef = `${packageDetails.pkg.name}@${prevVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
     const result = child_process
         .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir })

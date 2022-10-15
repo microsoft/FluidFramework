@@ -210,7 +210,8 @@ export function previousVersion(
 
         previousMinorVersion =
             intVer.minor === 0
-                ? toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`).version
+                ? toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`)
+                      .version
                 : toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`)
                       .version;
     } else if (scheme === "virtualPatch") {
@@ -230,7 +231,8 @@ export function previousVersion(
 
         previousMajorVersion = ver.major <= 1 ? undefined : `${ver.major - 1}.0.0`;
         previousMinorVersion =
-            ver.minor === 0 && ver.major === 0 ? undefined
+            ver.minor === 0 && ver.major === 0
+                ? undefined
                 : `${ver.major}.${Math.max(0, ver.minor - 1)}.0`;
     }
 

@@ -35,7 +35,7 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
-export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases?: boolean): boolean;
+export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean): boolean;
 
 // @public
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;
@@ -48,6 +48,9 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 
 // @public
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
+
+// @public (undocumented)
+export function previousVersion(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined];
 
 // @public
 export type ReleaseVersion = string;
