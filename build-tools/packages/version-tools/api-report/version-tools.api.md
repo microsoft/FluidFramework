@@ -32,6 +32,9 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases?: boolean): string;
 
 // @public
+export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined];
+
+// @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
@@ -48,9 +51,6 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 
 // @public
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
-
-// @public (undocumented)
-export function previousVersion(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined];
 
 // @public
 export type ReleaseVersion = string;

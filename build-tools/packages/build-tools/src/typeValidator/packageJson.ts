@@ -4,19 +4,12 @@
  */
 import child_process from "child_process";
 import * as fs from "fs";
-import * as semver from "semver";
 import * as util from "util";
 
 import {
-    ReleaseVersion,
-    detectVersionScheme,
-    fromInternalScheme,
-    fromVirtualPatchScheme,
+    getPreviousVersions,
     getVersionRange,
     isInternalVersionScheme,
-    previousVersion,
-    toInternalScheme,
-    toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
 export type PackageDetails = {
@@ -95,10 +88,16 @@ type PreviousVersionStyle =
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
  * typetests against.
- * *
- * @param packageDir - the path to the package.
- * @param updateOptions
- * @returns
+ *
+ * The version used for the previous version can be adjusted by passing different "style" values in via the
+ * previousVersionStyle parameter.
+ *
+ * @param packageDir - The path to the package.
+ * @param updateOptions - Update options.
+ * @param previousVersionStyle - The version style to use when determining the previous version. Can be the exact
+ * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions.
+ * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
+ * @returns package metadata or a reason the package was skipped.
  */
 export async function getAndUpdatePackageDetails(
     packageDir: string,
@@ -119,7 +118,7 @@ export async function getAndUpdatePackageDetails(
     }
 
     const version = packageDetails.pkg.version;
-    const [previousMajorVersion, previousMinorVersion] = previousVersion(version);
+    const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
     let prevVersion: string;
 
     if (exactPreviousVersionString === undefined) {
