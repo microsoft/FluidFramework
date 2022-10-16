@@ -95,9 +95,7 @@ type PreviousVersionStyle =
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
  * typetests against.
- *
- * This is always the latest patch release of the previous major version series, which is the caret-range or equivalent.
- *
+ * *
  * @param packageDir - the path to the package.
  * @param updateOptions
  * @returns
@@ -106,6 +104,7 @@ export async function getAndUpdatePackageDetails(
     packageDir: string,
     updateOptions: { cwd?: string } | undefined,
     previousVersionStyle: PreviousVersionStyle = "previousMinor",
+    exactPreviousVersionString?: string,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
 
@@ -123,72 +122,76 @@ export async function getAndUpdatePackageDetails(
     const [previousMajorVersion, previousMinorVersion] = previousVersion(version);
     let prevVersion: string;
 
-    switch (previousVersionStyle) {
-        case "previousMajor": {
-            if (previousMajorVersion === undefined) {
-                throw new Error(`Previous major version is undefined.`);
+    if (exactPreviousVersionString === undefined) {
+        switch (previousVersionStyle) {
+            case "previousMajor": {
+                if (previousMajorVersion === undefined) {
+                    throw new Error(`Previous major version is undefined.`);
+                }
+
+                prevVersion = previousMajorVersion;
+                break;
             }
 
-            prevVersion = previousMajorVersion;
-            break;
-        }
+            case "previousMinor": {
+                if (previousMinorVersion === undefined) {
+                    throw new Error(`Previous minor version is undefined.`);
+                }
 
-        case "previousMinor": {
-            if (previousMinorVersion === undefined) {
-                throw new Error(`Previous minor version is undefined.`);
+                prevVersion = previousMinorVersion;
+                break;
             }
 
-            prevVersion = previousMinorVersion;
-            break;
-        }
+            case "^previousMajor": {
+                if (previousMajorVersion === undefined) {
+                    throw new Error(`Previous major version is undefined.`);
+                }
 
-        case "^previousMajor": {
-            if (previousMajorVersion === undefined) {
-                throw new Error(`Previous major version is undefined.`);
+                prevVersion = isInternalVersionScheme(previousMajorVersion)
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      getVersionRange(previousMajorVersion!, "^")
+                    : `^${previousMajorVersion}`;
+                break;
             }
 
-            prevVersion = isInternalVersionScheme(previousMajorVersion)
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  getVersionRange(previousMajorVersion!, "^")
-                : `^${previousMajorVersion}`;
-            break;
-        }
+            case "^previousMinor": {
+                if (previousMinorVersion === undefined) {
+                    throw new Error(`Previous minor version is undefined.`);
+                }
 
-        case "^previousMinor": {
-            if (previousMinorVersion === undefined) {
-                throw new Error(`Previous minor version is undefined.`);
+                prevVersion = isInternalVersionScheme(previousMinorVersion)
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      getVersionRange(previousMinorVersion!, "^")
+                    : `^${previousMinorVersion}`;
+                break;
             }
 
-            prevVersion = isInternalVersionScheme(previousMinorVersion)
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  getVersionRange(previousMinorVersion!, "^")
-                : `^${previousMinorVersion}`;
-            break;
-        }
+            case "~previousMajor": {
+                if (previousMajorVersion === undefined) {
+                    throw new Error(`Previous major version is undefined.`);
+                }
 
-        case "~previousMajor": {
-            if (previousMajorVersion === undefined) {
-                throw new Error(`Previous major version is undefined.`);
+                prevVersion = isInternalVersionScheme(previousMajorVersion)
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      getVersionRange(previousMajorVersion!, "~")
+                    : `~${previousMajorVersion}`;
+                break;
             }
 
-            prevVersion = isInternalVersionScheme(previousMajorVersion)
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  getVersionRange(previousMajorVersion!, "~")
-                : `~${previousMajorVersion}`;
-            break;
-        }
+            case "~previousMinor": {
+                if (previousMinorVersion === undefined) {
+                    throw new Error(`Previous minor version is undefined.`);
+                }
 
-        case "~previousMinor": {
-            if (previousMinorVersion === undefined) {
-                throw new Error(`Previous minor version is undefined.`);
+                prevVersion = isInternalVersionScheme(previousMinorVersion)
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      getVersionRange(previousMinorVersion!, "~")
+                    : `~${previousMinorVersion}`;
+                break;
             }
-
-            prevVersion = isInternalVersionScheme(previousMinorVersion)
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  getVersionRange(previousMinorVersion!, "~")
-                : `~${previousMinorVersion}`;
-            break;
         }
+    } else {
+        prevVersion = exactPreviousVersionString;
     }
 
     // check that the version exists on npm before trying to add the

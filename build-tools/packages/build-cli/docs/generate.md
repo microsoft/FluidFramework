@@ -7,6 +7,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub generate readme`](#flub-generate-readme)
+* [`flub generate typetests`](#flub-generate-typetests)
 
 ## `flub generate buildVersion`
 
@@ -104,4 +105,38 @@ DESCRIPTION
   <!-- toc -->
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
+```
+
+## `flub generate typetests`
+
+Generates type tests based on the individual package settings in package.json.
+
+```
+USAGE
+  $ flub generate typetests [--dir <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
+    [--exact <value> | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor] [-v]
+
+FLAGS
+  -g, --releaseGroup=<option>       Run on all packages within this release group.
+                                    <options: client|server|azure|build-tools>
+  -s, --versionConstraint=<option>  <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
+                                    previousMinor>
+  -v, --verbose                     Verbose logging.
+  --dir=<value>                     Run on the package in this directory.
+  --exact=<value>
+  --generate                        Generates tests only. Doesn't prepare the package.json.
+  --packages                        Run on all independent packages in the repo.
+  --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
+                                    need to be run after preparation.
+
+DESCRIPTION
+  Generates type tests based on the individual package settings in package.json.
+
+  Generating type tests has two parts: preparing package.json and generating type tests. By default, both steps are run
+  for each package. This can be overridden using the --prepare and --generate flags.
+
+EXAMPLES
+
+
+    $ flub generate typetests
 ```

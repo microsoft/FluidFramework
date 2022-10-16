@@ -12,8 +12,10 @@ import { releaseGroupFlag } from "../../flags";
 export default class GenerateTypeTestsCommand extends BaseCommand<
     typeof GenerateTypeTestsCommand.flags
 > {
-    static description =
+    static summary =
         "Generates type tests based on the individual package settings in package.json.";
+
+    static description = `Generating type tests has two parts: preparing package.json and generating type tests. By default, both steps are run for each package. This can be overridden using the --prepare and --generate flags.`;
 
     static flags = {
         dir: Flags.directory({
@@ -31,21 +33,34 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         }),
         prepare: Flags.boolean({
             description:
-                "Only prepares the package json. Doesn't generate tests. This should be done before npm install.",
+                "Prepares the package.json only. Doesn't generate tests. Note that npm install may need to be run after preparation.",
             exclusive: ["generate"],
         }),
         generate: Flags.boolean({
-            description: "This only generates the tests. It does not prepare the package.json",
+            description: "Generates tests only. Doesn't prepare the package.json.",
             exclusive: ["prepare"],
+        }),
+        versionConstraint: Flags.string({
+            char: "s",
+            options: [
+                "^previousMajor",
+                "^previousMinor",
+                "~previousMajor",
+                "~previousMinor",
+                "previousMajor",
+                "previousMinor",
+            ],
+        }),
+        exact: Flags.string({
+            exclusive: ["versionConstraint"],
         }),
         ...BaseCommand.flags,
     };
 
     static examples = [
         {
-            description:
-                "Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
-            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
+            description: "",
+            command: "<%= config.bin %> <%= command.id %>",
         },
     ];
 
@@ -63,16 +78,22 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             this.error(`Must provide a --dir, --packages, or --releaseGroup argument.`);
         }
 
+        // if(flags.prepare === undefined && flags.generate === undefined) {
+        //     this.error(`Must pass --prepare or --generate.`);
+        // }
+
+        const prepareOnly = flags.prepare ?? false;
+        const generateOnly = flags.generate ?? false;
+
         this.logHr();
-        this.log(`prepare: ${flags.prepare}`);
-        this.log(`generateOnly: ${flags.generate}`);
+        this.log(`prepareOnly: ${prepareOnly}, ${flags.prepare}`);
+        this.log(`generateOnly: ${generateOnly}, ${flags.generate}`);
         this.logHr();
 
         const packageDirs: string[] = [];
         if (independentPackages) {
             this.info(`Finding independent packages`);
             packageDirs.push(...context.independentPackages.map((p) => p.directory));
-            // packageDirs.push(...context.packages.map(p=>p.directory));
         }
 
         if (releaseGroup !== undefined) {
@@ -108,19 +129,23 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     ];
                     try {
                         const start = Date.now();
-                        const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-                            flags.generate ? undefined : { cwd: releaseGroupRepo?.repoPath };
+                        // const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
+                        //     shouldGenerate ? undefined : { cwd: releaseGroupRepo?.repoPath };
 
                         const packageData = await getAndUpdatePackageDetails(
                             packageDir,
-                            updateOptions,
+                            // TODO: This logic doesn't make a lot of sense. Why does cwd need to be assed in sometimes?
+                            // It also seems weird that
+                            generateOnly ? undefined : { cwd: releaseGroupRepo?.repoPath },
+                            flags.versionConstraint as any,
+                            flags.exact,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {
                             output.push(packageData.skipReason);
                         } else if (
-                            packageData.oldVersions.length > 0 &&
-                            flags.prepare === undefined
+                            (prepareOnly ?? false) === false &&
+                            packageData.oldVersions.length > 0
                         ) {
                             // eslint-disable-next-line @typescript-eslint/no-shadow
                             const start = Date.now();
@@ -157,7 +182,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         // eslint-disable-next-line unicorn/no-await-expression-member
         const results = (await Promise.all(runningGenerates)).every((v) => v);
         if (!results) {
-            this.error(`Results were false.`);
+            this.error(`Some type test generation failed.`);
         }
     }
 }
