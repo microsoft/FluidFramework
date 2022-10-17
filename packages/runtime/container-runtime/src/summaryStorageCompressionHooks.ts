@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 // import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType, SummaryObject }
@@ -18,6 +17,7 @@ import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "
 import { SummaryCompressionAlgorithms } from "./containerRuntime";
 
 const algorithmKey = "ALG";
+const defaultMinSizeToCompress = 500;
 
 /**
  * This class implements the SummaryStorageHooks which can apply various kinds of compressions
@@ -31,7 +31,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         if (input.type === SummaryType.Blob) {
             const summaryBlob: ISummaryBlob = input;
             const decompressed: Uint8Array = typeof summaryBlob.content === "string" ?
-            new TextEncoder().encode(summaryBlob.content) : summaryBlob.content;
+                new TextEncoder().encode(summaryBlob.content) : summaryBlob.content;
+            if (this._minSizeToCompress !== undefined && decompressed.length < this._minSizeToCompress) {
+                return input;
+            }
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
             // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
             // fails on assertion at 2 different generations of the hash which do not lead to
@@ -46,7 +49,12 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             return input;
         }
     };
-    constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined) { }
+    constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined,
+        private readonly _minSizeToCompress: number | undefined) {
+            if (this._minSizeToCompress === undefined) {
+                this._minSizeToCompress = defaultMinSizeToCompress;
+            }
+        }
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
         return this.encodeBlob(file);
     }
@@ -64,7 +72,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
      * old blob is replaced by this new blob in the ISummaryTree.
      */
     public onPreUploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext):
-        { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
+    { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
         console.log("Using Summary Compression : UploadSummaryWithContext ");
         return { prepSummary: recursivelyReplace(summary, this.blobReplacer, context), prepContext: context };
     }
@@ -87,7 +95,8 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             return file;
         } else {
             if (this._algorithm === SummaryCompressionAlgorithms.Deflate) {
-                compressed = deflate(file) as ArrayBufferLike;
+                compressed = file;
+                this.throwDeflateUnsupported();
             } else {
                 if (this._algorithm === SummaryCompressionAlgorithms.LZ4) {
                     compressed = compress(file) as ArrayBufferLike;
@@ -99,6 +108,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         const headerBuilder: BlobHeaderBuilder = new BlobHeaderBuilder();
         headerBuilder.addField(algorithmKey, this._algorithm.toString(10));
         return writeBlobHeader(headerBuilder.build(), compressed);
+    }
+
+    private throwDeflateUnsupported() {
+        throw new Error("Deflate not supported");
     }
 
     private decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
@@ -120,7 +133,8 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         const input = skipHeader(compressedEncoded);
         const myAlgorithm = Number(header.getValue(algorithmKey));
         if (myAlgorithm === SummaryCompressionAlgorithms.Deflate) {
-            decompressed = inflate(input) as ArrayBufferLike;
+            decompressed = input;
+            this.throwDeflateUnsupported();
         } else
             if (myAlgorithm === SummaryCompressionAlgorithms.LZ4) {
                 decompressed = decompress(input) as ArrayBufferLike;

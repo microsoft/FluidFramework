@@ -241,6 +241,12 @@ export interface ISummaryBaseConfiguration {
      * Defines the compression algorithm which should be used for compression of summaries.
      */
     compressionAlgorithm?: SummaryCompressionAlgorithms;
+
+    /**
+     * The threshold value of the minimum number of bytes, the summary blob must have
+     * to apply the compression.
+     */
+    minSizeToCompress?: number;
 }
 
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
@@ -329,7 +335,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     nonRuntimeOpWeight: 0.1,
 
     runtimeOpWeight: 1.0,
-
 };
 
 export interface IGCRuntimeOptions {
@@ -708,7 +713,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
         if (summaryConfiguration?.compressionAlgorithm !== undefined) {
             storage = buildSummaryStorageAdapter(storage,
-                [new CompressionSummaryStorageHooks(summaryConfiguration.compressionAlgorithm)],
+                [new CompressionSummaryStorageHooks(summaryConfiguration.compressionAlgorithm,
+                    summaryConfiguration.minSizeToCompress)],
             );
             /*
             if (summaryConfiguration?.compressionAlgorithm === SummaryCompressionAlgorithms.None) {
