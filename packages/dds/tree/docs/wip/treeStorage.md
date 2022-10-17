@@ -32,23 +32,6 @@ Existing Fluid DDSs generally assume that their documents will fit in entirety o
 
 Allowing for partial checkouts of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it knows and cares about. Likewise, it must be able to update parts of the tree `incrementally` to minimize writes.
 
-
-[9/6 3:10 PM] Taylor Williams
-he asked today if it will cover:
-Virtualization
-Incrementality (chunking)
-
-Versioning ("how do you manage to have different revisions of state")
-and I said yes, to all three. seem fair?
-
-[9/6 3:11 PM] Taylor Williams
-specifically, it does describe how we'd make the SPICE tree (and others) copy-on-write, ya?
-
-[9/6 3:11 PM] Taylor Williams
-and it notes how it works with CAS/immutability?
-
-
-
 ## Blobs and Chunks
 
 In order to allow partial checkouts, clients split the tree into contiguous regions of nodes called `chunks` according to a chunking algorithm. For example:
@@ -89,11 +72,84 @@ graph TD;
 
 These chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The chunk size is not necessarily related to the blob size; multiple chunks might go into a blob, or perhaps a chunk might be split across multiple blobs (that must always be downloaded together).
 
-TODO: revisions and copy-on-write
-
 ## The Chunk Data Structure
 
-Subsequent portions of this document will explore how one might store and access chunks, but first some high-level requirements must be set forth for the data structure that supports such operations. One fundamental assumption is that
+This document will soon explore in detail how one might store and access chunks, but first, here are some high-level observations about a data structure that supports such operations.
+
+Because the chunks compose to form a tree, chunks contain references to the chunks below them in the tree. In the diagram below, Chunk 1 has a reference to Chunk 2, and Chunk 2 has a reference to Chunk 3:
+
+```mermaid
+graph TD;
+    subgraph Chunk 3
+    F-->G
+    F-->H
+    end
+    subgraph Chunk 2
+    D-->E
+    end
+    subgraph Chunk 1
+    A-->B-->C;
+    end
+    B-->D
+    D-->F
+```
+
+Node B recognizes that it has two children, C and D, but C is inlined and part of the same chunk as B whereas D is in a different chunk and is stored by reference. Walking from B to C is a synchronous operation; walking from B to D is at worst an asynchronous operation that requires downloading Chunk 2 first. This is the pattern of virtualization for walking down the tree; chunks are loaded only as necessary.
+
+We assume that blobs are immutable and `content-addressable`. Therefore, the data structure cannot update the content of a blob in place; it must instead make a new blob that has a new key to replace it. This has implications for writes to the tree. Suppose, in the diagram above, that each Chunk is stored in a different blob (Blob 1, 2 and 3). A client updates the value of `H` which changes the value of Blob 3 and it is reuploaded. The _key_ for Blob 3 also changes; so now the reference to Blob 3 in Blob 2 is incorrect. Blob 2 must therefore be replaced and reuploaded as well, which means the same for Blob 1, and so on... all the way to the top of the tree (the "root blob"). Every write to the tree results in serious back surgery; the whole `spine` of the tree is replaced.
+
+> Since blobs are immutable, chunks are too.
+
+> Not _every_ update to the tree needs to incur this cost. For example, one optimization could be to accumulate writes in a log that is shared across clients and only flushed to storage (incurring the spine update) every so often. Regardless, the blob updates need to happen eventually so this document will assume that they happen after every write for simplicity's sake.
+
+Even though chunks/blobs are being replaced as they are rewritten, we need not throw away the previous chunks/blobs entirely. In fact, by preserving them, a tree can remember its previous versions, called `revisions`, which make up its `history`. Consider a tree made up of three chunks:
+
+```mermaid
+graph TD;
+    A(Chunk A)
+    B(Chunk B)
+    C(Chunk C)
+    D(Chunk D)
+    A-->B
+    A-->C
+    C-->D
+```
+
+A client makes an edit to a node in Chunk B, so both Chunk B and Chunk A (the spine) are replaced:
+
+```mermaid
+graph TD;
+    A(Chunk A')
+    B(Chunk B')
+    C(Chunk C)
+    D(Chunk D)
+    A-->B
+    A-->C
+    C-->D
+```
+
+Next, Chunk D is written to:
+
+```mermaid
+graph TD;
+    A(Chunk A'')
+    B(Chunk B')
+    C(Chunk C')
+    D(Chunk D')
+    A-->B
+    A-->C
+    C-->D
+```
+
+Because a spine of the tree is always replaced, and a spine always contains the root, the root chunk of the tree is therefore replaced by every write. Since chunks are immutable, Chunk A and Chunk A' still remain the same (they point to Chunk B/C and Chunk B'/C, respectively) and thus contain the same tree state. This means that every revision is captured by a unique root chunk, and preserving the history of the tree is as simple as keeping around those chunks. The history of this tree is a list of references to the root chunks:
+
+Revision | Root Chunk Key
+---------|---------------
+0        | A
+1        | A'
+2        | A''
+
+This implicitly forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous version and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine).
 
 ## Node -> Chunk Lookup
 
@@ -591,6 +647,8 @@ This is a good place leverage decision encapsulation to minimize the impact if w
   > Note: Blobs may contain references to other blobs.
 - Chunk: a contiguous region of the tree. Every node in the tree belongs to a chunk. Chunks can be serialized into compact binary representations and stored in blobs; multiple chunks might fit in a single blob.
   > Note: The region of the tree captured by a chunk has a "shape". The shape of the chunk must be known to retrieve the nodes from within it. For extra efficient compaction when encoding, chunks with identical shapes can share the same shape metadata.
+- Content-addressable: data which can be referred to by a key derived from the data itself. For example, data in a store which hashes each value to produce its key.
+- [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
 - Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree shaped like a linked list
 - Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
 - History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
@@ -599,6 +657,7 @@ This is a good place leverage decision encapsulation to minimize the impact if w
   > Note: Partial checkout might be necessary for performance reasons (e.g. if the full tree is too large to fit into the client's memory), or for privacy/security reasons (e.g. multiple clients share a tree but each is only allowed access to some part of it)
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
 - Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
+- Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
 - Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
 - Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
 
