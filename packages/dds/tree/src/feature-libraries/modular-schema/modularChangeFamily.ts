@@ -10,7 +10,7 @@ import {
     ProgressiveEditBuilder,
     ProgressiveEditBuilderBase,
 } from "../../change-family";
-import { ChangeRebaser, ChangeWithMetadata, RevisionTag } from "../../rebase";
+import { ChangeRebaser, TaggedChange, RevisionTag } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
@@ -140,7 +140,7 @@ export class ModularChangeFamily
         return composedNodeChange;
     }
 
-    invert(changes: ChangeWithMetadata<FieldChangeMap>): FieldChangeMap {
+    invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap {
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change.entries()) {
@@ -161,7 +161,7 @@ export class ModularChangeFamily
         return invertedFields;
     }
 
-    private invertNodeChange(change: ChangeWithMetadata<NodeChangeset>): NodeChangeset {
+    private invertNodeChange(change: TaggedChange<NodeChangeset>): NodeChangeset {
         // TODO: Correctly invert `change.valueChange`
         if (change.change.fieldChanges === undefined) {
             return {};
@@ -170,7 +170,7 @@ export class ModularChangeFamily
         return { fieldChanges: this.invert({ ...change, change: change.change.fieldChanges }) };
     }
 
-    rebase(change: FieldChangeMap, over: ChangeWithMetadata<FieldChangeMap>): FieldChangeMap {
+    rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap {
         const rebasedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of change.entries()) {
@@ -199,7 +199,7 @@ export class ModularChangeFamily
         return rebasedFields;
     }
 
-    private rebaseNodeChange(change: NodeChangeset, over: ChangeWithMetadata<NodeChangeset>): NodeChangeset {
+    private rebaseNodeChange(change: NodeChangeset, over: TaggedChange<NodeChangeset>): NodeChangeset {
         if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
             return change;
         }

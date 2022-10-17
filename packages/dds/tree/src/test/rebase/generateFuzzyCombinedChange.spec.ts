@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, ChangeWithMetadata, RevisionTag } from "../../rebase";
+import { ChangeRebaser, TaggedChange, RevisionTag } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { generateFuzzyCombinedChange } from "./fuzz";
 
@@ -14,8 +14,8 @@ type TestChange = TestChange[] | { I: TestChange } | { C: TestChange; O: TestCha
 
 const testRebaser: ChangeRebaser<TestChange> = {
     compose: (changes: TestChange[]) => changes,
-    invert: (change: ChangeWithMetadata<TestChange>) => ({ I: change.change }),
-    rebase: (change: TestChange, over: ChangeWithMetadata<TestChange>) => ({ C: change, O: over.change }),
+    invert: (change: TaggedChange<TestChange>) => ({ I: change.change }),
+    rebase: (change: TestChange, over: TaggedChange<TestChange>) => ({ C: change, O: over.change }),
     rebaseAnchors: (anchor: AnchorSet, over: TestChange) => { },
     filterReferences: (change: TestChange, _filter: (revision: RevisionTag) => boolean) => change,
 };

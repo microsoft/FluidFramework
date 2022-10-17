@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeWithMetadata, RevisionTag } from "../../rebase";
+import { TaggedChange, RevisionTag } from "../../rebase";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
@@ -79,7 +79,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             return composed;
         },
-        invert: (change: ChangeWithMetadata<GenericChangeset>, invertChild: NodeChangeInverter): GenericChangeset => {
+        invert: (change: TaggedChange<GenericChangeset>, invertChild: NodeChangeInverter): GenericChangeset => {
             return change.change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
                     index,
@@ -89,7 +89,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
         },
         rebase: (
             change: GenericChangeset,
-            over: ChangeWithMetadata<GenericChangeset>,
+            over: TaggedChange<GenericChangeset>,
             rebaseChild: NodeChangeRebaser,
         ): GenericChangeset => {
             const rebased: GenericChangeset = [];

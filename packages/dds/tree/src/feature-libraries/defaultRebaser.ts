@@ -4,7 +4,7 @@
  */
 
 import { AnchorSet, Delta, UpPath, Value } from "../tree";
-import { ChangeRebaser, ChangeWithMetadata, RevisionTag } from "../rebase";
+import { ChangeRebaser, TaggedChange, RevisionTag } from "../rebase";
 import { Contravariant, Covariant, Invariant, JsonCompatible } from "../util";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
 
@@ -39,10 +39,10 @@ export class DefaultRebaser implements ChangeRebaser<DefaultChangeset> {
     compose(changes: DefaultChangeset[]): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
-    invert(changes: ChangeWithMetadata<DefaultChangeset>): DefaultChangeset {
+    invert(changes: TaggedChange<DefaultChangeset>): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
-    rebase(change: DefaultChangeset, over: ChangeWithMetadata<DefaultChangeset>): DefaultChangeset {
+    rebase(change: DefaultChangeset, over: TaggedChange<DefaultChangeset>): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
     filterReferences(change: DefaultChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean): DefaultChangeset {

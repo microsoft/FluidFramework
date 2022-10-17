@@ -5,7 +5,7 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
-import { ChangeRebaser, ChangeWithMetadata, RevisionTag } from "../rebase";
+import { ChangeRebaser, TaggedChange, RevisionTag } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 import { Invariant, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
@@ -195,11 +195,11 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
         return compose(changes);
     }
 
-    public invert(change: ChangeWithMetadata<TestChange>): TestChange {
+    public invert(change: TaggedChange<TestChange>): TestChange {
         return invert(change.change);
     }
 
-    public rebase(change: TestChange, over: ChangeWithMetadata<TestChange>): TestChange {
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         return rebase(change, over.change);
     }
 
@@ -213,7 +213,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-    public rebase(change: TestChange, over: ChangeWithMetadata<TestChange>): TestChange {
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         assert.fail("Unexpected call to rebase");
     }
 }

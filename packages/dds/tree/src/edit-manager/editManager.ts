@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
-import { ChangeWithMetadata, RevisionTag } from "../rebase";
+import { TaggedChange, RevisionTag } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 import { brand, Brand, fail, RecursiveReadonly } from "../util";
 
@@ -139,7 +139,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
                     newChange,
                     {
                         revision: brand(nextRevisionNum--),
-                        change: this.changeFamily.rebaser.invert(changeWithMetadataFromCommit(branchCommit)),
+                        change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(branchCommit)),
                     },
                 ),
             commitToRebase.changeset,
@@ -157,9 +157,9 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
-    private rebaseLocalBranch(trunkChange: ChangeWithMetadata<TChangeset>): TChangeset {
-        const newBranchChanges: ChangeWithMetadata<TChangeset>[] = [];
-        const inverses: ChangeWithMetadata<TChangeset>[] = [];
+    private rebaseLocalBranch(trunkChange: TaggedChange<TChangeset>): TChangeset {
+        const newBranchChanges: TaggedChange<TChangeset>[] = [];
+        const inverses: TaggedChange<TChangeset>[] = [];
 
         let nextTempRevision = -1;
         for (const localChange of this.localChanges) {
@@ -210,7 +210,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             return;
         }
         const newBranchChanges: Commit<TChangeset>[] = [];
-        const inverses: ChangeWithMetadata<TChangeset>[] = [];
+        const inverses: TaggedChange<TChangeset>[] = [];
 
         let nextTempRevision = -1;
         for (const commit of branch.localChanges) {
@@ -227,7 +227,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
             inverses.unshift({
                 revision: brand(nextTempRevision--),
-                change: this.changeFamily.rebaser.invert(changeWithMetadataFromCommit(commit)),
+                change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
             });
         }
 
@@ -243,14 +243,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private rebaseOverCommits(changeToRebase: TChangeset, commits: Commit<TChangeset>[]) {
         return this.rebaseChange(
             changeToRebase,
-            commits.map((commit) => ({
-                revision: brand(commit.seqNumber),
-                change: commit.changeset,
-            })),
+            commits.map(taggedChangeFromCommit),
         );
     }
 
-    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: ChangeWithMetadata<TChangeset>[]) {
+    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: TaggedChange<TChangeset>[]) {
         return changesToRebaseOver.reduce(
             (a, b) => this.changeFamily.rebaser.rebase(a, b),
             changeToRebase,
@@ -309,7 +306,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 }
 
-function changeWithMetadataFromCommit<T>(commit: Commit<T>): ChangeWithMetadata<T> {
+function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return { revision: brand(commit.seqNumber), change: commit.changeset };
 }
 

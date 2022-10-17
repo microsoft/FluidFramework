@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeWithMetadata } from "../../rebase";
+import { TaggedChange } from "../../rebase";
 import { fail } from "../../util";
 import { Changeset, ChangesetTag, Mark, MarkList, OpId } from "./format";
 import { isSkipMark } from "./utils";
@@ -28,7 +28,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  * - Support for slices is not implemented.
  */
 export function invert<TNodeChange>(
-    change: ChangeWithMetadata<Changeset<TNodeChange>>,
+    change: TaggedChange<Changeset<TNodeChange>>,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Changeset<TNodeChange> {
     // TODO: support the input change being a squash

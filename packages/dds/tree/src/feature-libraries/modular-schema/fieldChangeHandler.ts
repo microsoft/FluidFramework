@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeWithMetadata, RevisionTag } from "../../rebase";
+import { TaggedChange, RevisionTag } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { Delta, FieldKey, Value } from "../../tree";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
@@ -37,13 +37,13 @@ export interface FieldChangeRebaser<TChangeset> {
      * @returns the inverse of `changes`.
      * See {@link ChangeRebaser} for details.
      */
-    invert(change: ChangeWithMetadata<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
 
     /**
      * Rebase `change` over `over`.
      * See {@link ChangeRebaser} for details.
      */
-    rebase(change: TChangeset, over: ChangeWithMetadata<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
 
     filterReferences(
         change: TChangeset,
