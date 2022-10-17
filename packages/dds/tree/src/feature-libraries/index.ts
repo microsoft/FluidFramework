@@ -32,16 +32,6 @@ export {
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest, ObjectForest } from "./object-forest";
-export {
-    singleTextCursor as singleTextCursorNew,
-    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
-} from "./treeTextCursor";
-export {
-    jsonableTreeFromCursor,
-    RootedTextCursor,
-    singleTextCursor,
-    TextCursor,
-} from "./treeTextCursorLegacy";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export {
     ChangesetTag,
@@ -89,6 +79,17 @@ export {
     TreeRootPath,
     tryExtendMark,
 } from "./sequence-change-family";
+export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
+export {
+    singleTextCursor as singleTextCursorNew,
+    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+} from "./treeTextCursor";
+export {
+    jsonableTreeFromCursor,
+    RootedTextCursor,
+    singleTextCursor,
+    TextCursor,
+} from "./treeTextCursorLegacy";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";

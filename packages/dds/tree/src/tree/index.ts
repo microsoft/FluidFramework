@@ -49,6 +49,14 @@ export {
     setGenericTreeField,
 } from "./treeTextFormat";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
+    ITreeCursor as ITreeCursorNew,
+    CursorLocationType,
+    mapCursorField as mapCursorFieldNew,
+    mapCursorFields,
+    forEachNode,
+    forEachField,
+    ITreeCursorSynchronous,
+} from "./cursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";
