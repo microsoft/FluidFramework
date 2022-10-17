@@ -473,9 +473,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsSendType = (config.testConfig.opsSendType === "undefined") ?
         "staggeredReadWrite" : config.testConfig.opsSendType;
+        const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
+        const opsGapMs = cycleMs / opsPerCycle;
         if (opsSendType === "staggeredReadWrite") {
-            const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
-            const opsGapMs = cycleMs / opsPerCycle;
             try {
                 while (dataModel.counter.value < clientSendCount && !this.disposed) {
                     // this enables a quick ramp down. due to restart, some clients can lag
@@ -507,8 +507,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
         } else if (opsSendType === "allClientsConcurrentReadWrite") {
             try {
-                const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
-                const opsGapMs = cycleMs / opsPerCycle;
                 while (dataModel.counter.value < clientSendCount) {
                     dataModel.counter.increment(1);
                     // Random jitter of +- 50% of opWaitMs
