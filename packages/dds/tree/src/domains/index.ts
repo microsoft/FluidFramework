@@ -5,6 +5,7 @@
 
 export {
     cursorToJsonObject,
+    cursorToJsonObjectNew,
     jsonArray,
     jsonBoolean,
     JsonCursor,
@@ -14,4 +15,5 @@ export {
     jsonRoot,
     jsonSchemaData,
     jsonString,
+    singleJsonCursor,
 } from "./json";

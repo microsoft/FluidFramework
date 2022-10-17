@@ -10,6 +10,7 @@ export {
     mapCursorField as mapCursorFieldNew,
     mapCursorFields,
     forEachNode,
+    forEachField,
     ITreeCursorSynchronous,
 } from "./cursor";
 export {
@@ -20,6 +21,19 @@ export {
 } from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 export { clonePath, getDepth, UpPath } from "./pathTree";
+export {
+    FieldMapObject,
+    FieldScope,
+    GenericFieldsNode,
+    genericTreeDeleteIfEmpty,
+    genericTreeKeys,
+    GenericTreeNode,
+    getGenericTreeField,
+    isGlobalFieldKey,
+    JsonableTree,
+    scopeFromKey,
+    setGenericTreeField,
+} from "./treeTextFormat";
 export {
     EmptyKey,
     FieldKey,
@@ -35,28 +49,7 @@ export {
     rootFieldKey,
     NodeData,
 } from "./types";
-export {
-    FieldMapObject,
-    FieldScope,
-    GenericFieldsNode,
-    genericTreeDeleteIfEmpty,
-    genericTreeKeys,
-    GenericTreeNode,
-    getGenericTreeField,
-    isGlobalFieldKey,
-    JsonableTree,
-    scopeFromKey,
-    setGenericTreeField,
-} from "./treeTextFormat";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
-    ITreeCursor as ITreeCursorNew,
-    CursorLocationType,
-    mapCursorField as mapCursorFieldNew,
-    mapCursorFields,
-    forEachNode,
-    forEachField,
-    ITreeCursorSynchronous,
-} from "./cursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";
