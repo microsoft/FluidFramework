@@ -116,7 +116,7 @@
         "logLevel": "error"
       },
       "ae-forgotten-export": {
-        "logLevel": "warning"
+        "logLevel": "error"
       },
       // Disabled. We don't require that internal members be prefixed with an underscore.
       "ae-internal-missing-underscore": {
