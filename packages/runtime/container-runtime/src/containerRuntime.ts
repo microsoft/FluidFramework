@@ -1040,6 +1040,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
+        const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+        if (maxSnapshotCacheDurationMs !== undefined && maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000) {
+            // This is a runtime enforcement of what's already explicit in the policy's type itself,
+            // which dictates the value is either undefined or exactly 5 days in ms.
+            // As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
+            throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+        }
+
         this.garbageCollector = GarbageCollector.create({
             runtime: this,
             gcOptions: this.runtimeOptions.gcOptions,
@@ -1195,7 +1203,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
+                        this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary

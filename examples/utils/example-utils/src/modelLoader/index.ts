@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./modelContainerRuntimeFactory";
-export * from "./modelLoader";
-export * from "./sessionStorageModelLoader";
-export * from "./staticCodeLoader";
-export * from "./tinyliciousModelLoader";
+export { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
+export { ModelContainerRuntimeFactory } from "./modelContainerRuntimeFactory";
+export { makeModelRequestHandler, ModelLoader } from "./modelLoader";
+export { SessionStorageModelLoader } from "./sessionStorageModelLoader";
+export { StaticCodeLoader } from "./staticCodeLoader";
+export { TinyliciousModelLoader } from "./tinyliciousModelLoader";
