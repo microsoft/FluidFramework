@@ -749,15 +749,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channel.applyStashedOp(innerContents.content);
     }
 
-    private verifyNotClosed(methodName: string, checkTombstone = true) {
+    private verifyNotClosed(errorMessage: string, checkTombstone = true) {
         if (this._disposed) {
-            throw new Error("Context is closed");
+            throw new Error(`Context was closed during call of ${errorMessage}!`);
         }
 
         if (checkTombstone && this.tombstoned) {
-            throw new DataCorruptionError("Context is tombstoned!", {
-                methodName,
-                contextId: this.id,
+            throw new DataCorruptionError(`Context was tombstoned during call of ${errorMessage}!`, {
+                errorMessage,
             });
         }
     }

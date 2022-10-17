@@ -2273,8 +2273,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
          * external user, but the internal runtime does not delete it in summarizes, etc.
          */
-        if (this.mc.config.getBoolean(tombstoneKey) === true) {
-            this.dataStores.tombstoneUnusedRoutes(unusedRoutes);
+        const tombstone = this.mc.config.getBoolean(tombstoneKey) ?? false;
+        if (tombstone) {
+            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
             return;
         }
 

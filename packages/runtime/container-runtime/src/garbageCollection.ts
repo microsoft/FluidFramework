@@ -74,7 +74,7 @@ export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // Feature gate key to tombstone datastores.
-export const tombstoneKey = "Fluid.GarbageCollection.Tombstone";
+export const testTombstoneKey = "Fluid.GarbageCollection.Test.Tombstone";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -609,7 +609,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
-        this.tombstoneMode = this.gcOptions.tombstoneMode === true;
+        this.tombstoneMode = this.mc.config.getBoolean(testTombstoneKey) ?? false;
 
         // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
         // contain GC tree and GC is enabled.
@@ -892,18 +892,19 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If we are running in GC tombstone mode, tombstone objects for unused routes. This enables testing scenarios
         // involving access to "deleted" data without actually deleting the data from summaries.
-        if (this.tombstoneMode) {
-            const tombstoneableRoutes: string[] = [];
-            // Currently only tombstoning datastores
+        // Note: we will not tombstone in test mode
+        if (this.tombstoneMode && !this.testMode) {
+            const tombstoneRoutes: string[] = [];
+            // Currently only tombstone datastores
             for (const [key, value] of this.unreferencedNodesState.entries()) {
                 if (
                     value.state === UnreferencedState.SweepReady &&
                     this.runtime.getNodeType(key) === GCNodeType.DataStore
                 ) {
-                    tombstoneableRoutes.push(key);
+                    tombstoneRoutes.push(key);
                 }
             }
-            this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
+            this.runtime.deleteUnusedRoutes(tombstoneRoutes);
         }
 
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
