@@ -16,14 +16,16 @@
     "start": "node ./index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "eslint": "eslint ./index.js",
-    "eslint-fix": "eslint ./index.js --fix",
+    "eslint:fix": "eslint ./index.js --fix",
     "lint": "npm run eslint",
-    "lint-fix": "npm run eslint-fix"
+    "lint:fix": "npm run eslint:fix"
   },
   "dependencies": {
     "@fluidframework/tool-utils": "^0.35.0",
     "azure-keyvault": "^3.0.4",
-    "ms-rest-azure": "^2.6.0",
+    "ms-rest-azure": "^2.6.0"
+  },
+  "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@types/node": "^14.18.0",
     "eslint": "~8.6.0",

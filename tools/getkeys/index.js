@@ -7,13 +7,8 @@
  * Licensed under the MIT License.
  */
 
-import { appendFile as _appendFile } from "fs";
-import { homedir } from "os";
-import { join, basename, extname } from "path";
-import { promisify } from "util";
-import { exec } from "child_process";
-import { interactiveLogin } from "ms-rest-azure";
-import { KeyVaultClient } from "azure-keyvault";
+import interactiveLogin from "ms-rest-azure";
+import KeyVaultClient from "azure-keyvault";
 import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
 const appendFile = promisify(_appendFile);
