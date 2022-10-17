@@ -128,6 +128,26 @@
             "readWriteCycleMs":  30000,
             "faultInjectionMinMs":  900000,
             "faultInjectionMaxMs":  1800000
+        },
+        "custom_profile_6":  {
+            "opRatePerMin":  7,
+            "signalsPerMin":  46,
+            "totalSignalsSendCount":  420000,
+            "progressIntervalMs":  20000,
+            "numClients":  10,
+            "totalSendCount":  70000,
+            "readWriteCycleMs":  30000,
+            "faultInjectionMinMs":  900000,
+            "faultInjectionMaxMs":  1800000,
+            "optionOverrides":{
+              "odsp":{
+                  "configurations":{
+                      "Fluid.Container.summarizeProtocolTree": [true]
+                  }
+              }
+
+          },
+            "opsSendType":  "allClientsConcurrentReadWrite"
         }
     }
 }

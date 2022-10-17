@@ -471,36 +471,56 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
-        const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
-        const opsGapMs = cycleMs / opsPerCycle;
-        try {
-            while (dataModel.counter.value < clientSendCount && !this.disposed) {
-                // this enables a quick ramp down. due to restart, some clients can lag
-                // leading to a slow ramp down. so if there are less than half the clients
-                // and it's partner is done, return true to complete the runner.
-                if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
-                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
-                    return true;
-                }
-
-                if (dataModel.assigned()) {
-                    dataModel.counter.increment(1);
-                    if (dataModel.counter.value % opsPerCycle === 0) {
-                        await dataModel.blobFinish();
-                        dataModel.abandonTask();
-                        // give our partner a half cycle to get the task
-                        await delay(cycleMs / 2);
-                    } else {
-                        // Random jitter of +- 50% of opWaitMs
-                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+        const opsSendType = (config.testConfig.opsSendType === "undefined") ?
+        "staggeredReadWrite" : config.testConfig.opsSendType;
+        if (opsSendType === "staggeredReadWrite") {
+            const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
+            const opsGapMs = cycleMs / opsPerCycle;
+            try {
+                while (dataModel.counter.value < clientSendCount && !this.disposed) {
+                    // this enables a quick ramp down. due to restart, some clients can lag
+                    // leading to a slow ramp down. so if there are less than half the clients
+                    // and it's partner is done, return true to complete the runner.
+                    if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
+                        && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
+                        return true;
                     }
-                } else {
-                    await dataModel.volunteerForTask();
+
+                    if (dataModel.assigned()) {
+                        dataModel.counter.increment(1);
+                        if (dataModel.counter.value % opsPerCycle === 0) {
+                            await dataModel.blobFinish();
+                            dataModel.abandonTask();
+                            // give our partner a half cycle to get the task
+                            await delay(cycleMs / 2);
+                        } else {
+                            // Random jitter of +- 50% of opWaitMs
+                            await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+                        }
+                    } else {
+                        await dataModel.volunteerForTask();
+                    }
                 }
+                return !this.runtime.disposed;
+            } finally {
+                dataModel.printStatus();
             }
-            return !this.runtime.disposed;
-        } finally {
-            dataModel.printStatus();
+        } else if (opsSendType === "allClientsConcurrentReadWrite") {
+            try {
+                const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
+                const opsGapMs = cycleMs / opsPerCycle;
+                while (dataModel.counter.value < clientSendCount) {
+                    dataModel.counter.increment(1);
+                    // Random jitter of +- 50% of opWaitMs
+                    await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+                }
+                return true;
+            } finally {
+                dataModel.printStatus();
+            }
+        } else {
+            console.log(`${opsSendType} is not a supported opsSendType`);
+            return false;
         }
     }
 
