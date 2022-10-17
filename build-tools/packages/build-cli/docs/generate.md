@@ -115,20 +115,25 @@ Generates type tests based on the individual package settings in package.json.
 USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
     [--exact <value> |  | [-s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor |
-    ]] [-v]
+    ]] [--reset | ] [-v]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
+  -s, --versionConstraint=<option>  The type of version constraint to use for previous versions. Only applies to the
+                                    prepare phase.
+                                    <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
                                     previousMinor>
   -v, --verbose                     Verbose logging.
-  --exact=<value>
+  --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
+                                    as-is. Only applies to the prepare phase.
   --generate                        Generates tests only. Doesn't prepare the package.json.
   --packages                        Run on all independent packages in the repo.
   --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
                                     need to be run after preparation.
+  --reset                           Resets the broken type test settings in package.json. Only applies to the prepare
+                                    phase.
 
 DESCRIPTION
   Generates type tests based on the individual package settings in package.json.

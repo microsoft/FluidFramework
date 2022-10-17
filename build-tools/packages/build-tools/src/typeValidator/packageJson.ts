@@ -99,6 +99,8 @@ type PreviousVersionStyle =
  * @param previousVersionStyle - The version style to use when determining the previous version. Can be the exact
  * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions.
  * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
+ * @param resetBroken - If true, clears the "broken" section of the type validation, effectively clearing all known
+ * breaking changes.
  * @returns package metadata or a reason the package was skipped.
  */
 export async function getAndUpdatePackageDetails(
@@ -106,16 +108,20 @@ export async function getAndUpdatePackageDetails(
     writeUpdates: boolean | undefined,
     previousVersionStyle: PreviousVersionStyle = "previousMinor",
     exactPreviousVersionString?: string,
-    log?: Logger,
+    resetBroken?: boolean,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
 
     if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
-        return { skipReason: "Skipping package: @fluid-internal " };
+        return { skipReason: "Skipping package: @fluid-internal" };
     } else if (packageDetails.pkg.main?.endsWith("index.js") !== true) {
         return { skipReason: "Skipping package: no index.js in main property" };
     } else if (packageDetails.pkg.private === true) {
         return { skipReason: "Skipping package: private package" };
+    } else if (packageDetails.pkg.typeValidation === undefined) {
+        return {
+            skipReason: 'Skipping package: add "typeValidation: {}" to package.json to enable.',
+        };
     } else if (packageDetails.pkg.typeValidation?.disabled === true) {
         return { skipReason: "Skipping package: type validation disabled" };
     }
@@ -211,7 +217,9 @@ export async function getAndUpdatePackageDetails(
             ? maybeVersions
             : [];
 
-    if (versionsArray.length > 0) {
+    if (versionsArray.length === 0) {
+        return { skipReason: `Skipping package: ${packageDef} not found on npm` };
+    } else {
         packageDetails.pkg.devDependencies[
             `${packageDetails.pkg.name}-previous`
         ] = `npm:${packageDef}`;
@@ -221,7 +229,7 @@ export async function getAndUpdatePackageDetails(
 
         packageDetails.pkg.typeValidation = {
             version,
-            broken: packageDetails.pkg.typeValidation?.broken ?? {},
+            broken: resetBroken === true ? {} : packageDetails.pkg.typeValidation?.broken ?? {},
         };
 
         if (disabled !== undefined) {
@@ -235,6 +243,7 @@ export async function getAndUpdatePackageDetails(
             );
         }
     }
+
     const oldVersions = Object.keys(packageDetails.pkg.devDependencies ?? {}).filter((k) =>
         k.startsWith(packageDetails.pkg.name),
     );

@@ -44,6 +44,8 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         }),
         versionConstraint: Flags.string({
             char: "s",
+            description:
+                "The type of version constraint to use for previous versions. Only applies to the prepare phase.",
             exclusive: ["generate"],
             options: [
                 "^previousMajor",
@@ -55,7 +57,14 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             ],
         }),
         exact: Flags.string({
+            description:
+                "An exact string to use as the previous version constraint. The string will be used as-is. Only applies to the prepare phase.",
             exclusive: ["generate", "versionConstraint"],
+        }),
+        reset: Flags.boolean({
+            description:
+                "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
+            exclusive: ["generate"],
         }),
         ...BaseCommand.flags,
     };
@@ -148,7 +157,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                             /* writeUpdates */ runPrepare,
                             flags.versionConstraint as any,
                             flags.exact,
-                            this.logger,
+                            flags.reset,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {
