@@ -4,26 +4,50 @@
 
 ## Overview
 
-This document discusses plans and options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents on the order of terabytes are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible. The data that needs to be stored in order to fully capture the state of the tree is as follows:
+This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents on the order of terabytes are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible.
 
-1. The nodes in the tree. This includes any metadata or attributes associated with each node (e.g. schema type, identity label) as well as the data payload of the node (e.g. its "value", if it has one)
+The data that needs to be stored in order to fully capture the state of the tree is as follows:
+
+1. The nodes in the tree. This includes any metadata or attributes associated with each node (e.g. schema type, identity label) as well as the data payload of the node (i.e. its "value", if it has one)
 2. The child/parent relationships between the nodes in the tree.
 3. The schema of the tree
-4. Any indexes or accelerations structures that cannot be cheaply derived from the other serialized state.
 
 Optionally, some trees may store the following information depending on the needs of the clients and the strategy used for maintaining the tree's `history`:
 
-5. References to old summaries
-6. A log of operations
-7. History information that is localized to a particular part of the tree. The simplest way to store this information might be by including it on the nodes themselves.
+4. References to old summaries
+5. A log of operations
+6. History information that is localized to a particular part of the tree. The simplest way to store this information might be by including it on the nodes themselves.
 
-> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2 and 7 above).
+Finally,
 
-## Virtualization
+7. Any indexes or accelerations structures that, despite being derived from the state listed above, are cheaper to send across the network than to recompute on a client
 
-Clients accessing a very large document via a SharedTree may not be able to hold the entire contents of the tree in their memory (or even their disk!). Therefore, a SharedTree must be able to `virtualize` some regions of a tree to a client without downloading all the others. The part of the tree requested by a client is its `partial checkout`.
+> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, and 5).
 
-It is a goal of SharedTree to support `partial checkouts` of the tree. This constraint has implications on the layout of the storage data. For example, item 7 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it cares about. Likewise, it must be able to update parts of the tree `incrementally` to minimize writes.
+## Virtualization and Incrementality
+
+Existing Fluid DDSs generally assume that their documents will fit in entirety on each client's machine. SharedTree does not make this assumption and therefore requires additional architecture, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. The region of the tree that the client is holding in its memory is called its `partial checkout`.
+
+> As presented above, the maximum size of a partial checkout is limited by a client machine's random access memory, but an optimization might expand that size to the amount of _disk_ space available to a client by using indexedDB to cache tree data. But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ disk, either because the document is impressively huge or [the disk is already pretty full](https://www.digitaltrends.com/gaming/why-are-video-games-so-big/).
+
+Allowing for partial checkouts of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it knows and cares about. Likewise, it must be able to update parts of the tree `incrementally` to minimize writes.
+
+
+[9/6 3:10 PM] Taylor Williams
+he asked today if it will cover:
+Virtualization
+Incrementality (chunking)
+
+Versioning ("how do you manage to have different revisions of state")
+and I said yes, to all three. seem fair?
+
+[9/6 3:11 PM] Taylor Williams
+specifically, it does describe how we'd make the SPICE tree (and others) copy-on-write, ya?
+
+[9/6 3:11 PM] Taylor Williams
+and it notes how it works with CAS/immutability?
+
+
 
 ## Blobs and Chunks
 
@@ -57,11 +81,19 @@ graph TD;
 
 > In practice, chunks will likely contain many more nodes than in the illustration above
 
-> The chunking algorithm itself is outside the scope of this document. It has the constraint that chunks are contiguous and do not overlap.
+> The chunking algorithm itself is outside the scope of this document. It has the constraints that:
 
-These chunks are the smallest units of tree that can be read from storage or written to storage individually. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The chunk size is not necessarily equal to the blob size; multiple chunks might go into a blob, or perhaps a chunk might be split across two blobs (that must always be downloaded as a pair).
+* All nodes in a chunk are contiguous
+* No two chunks intersect/overlap
+* Every node in the tree belongs to a chunk
+
+These chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The chunk size is not necessarily related to the blob size; multiple chunks might go into a blob, or perhaps a chunk might be split across multiple blobs (that must always be downloaded together).
 
 TODO: revisions and copy-on-write
+
+## The Chunk Data Structure
+
+Subsequent portions of this document will explore how one might store and access chunks, but first some high-level requirements must be set forth for the data structure that supports such operations. One fundamental assumption is that
 
 ## Node -> Chunk Lookup
 
