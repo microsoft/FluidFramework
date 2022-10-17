@@ -148,7 +148,7 @@ class SharedTree
     }
 
     public get root(): UnwrappedEditableField {
-        return this.context.root;
+        return this.context.unwrappedRoot;
     }
 
     public runTransaction(

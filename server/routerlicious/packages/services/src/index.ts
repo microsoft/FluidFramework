@@ -3,19 +3,41 @@
  * Licensed under the MIT License.
  */
 
-export * from "./dbFactory";
-export * from "./kafkaProducerFactory";
-export * from "./messageReceiver";
-export * from "./messageSender";
-export * from "./metricClient";
-export * from "./mongodb";
-export * from "./nodeCodeLoader";
-export * from "./redis";
-export * from "./redisClientManager";
-export * from "./redisThrottleAndUsageStorageManager";
-export * from "./secretManager";
-export * from "./socketIoRedisPublisher";
-export * from "./tenant";
-export * from "./throttler";
-export * from "./throttlerHelper";
-export * from "@fluidframework/server-services-shared";
+export { getDbFactory } from "./dbFactory";
+export { createProducer } from "./kafkaProducerFactory";
+export { createMessageReceiver } from "./messageReceiver";
+export { createMessageSender } from "./messageSender";
+export { createMetricClient } from "./metricClient";
+export { MongoCollection, MongoDb, MongoDbFactory } from "./mongodb";
+export { NodeAllowList, NodeCodeLoader } from "./nodeCodeLoader";
+export { RedisCache } from "./redis";
+export { ClientManager } from "./redisClientManager";
+export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
+export { SecretManager } from "./secretManager";
+export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
+export { Tenant, TenantManager } from "./tenant";
+export { Throttler } from "./throttler";
+export { ThrottlerHelper } from "./throttlerHelper";
+export {
+	BasicWebServerFactory,
+	containsPathTraversal,
+	decodeHeader,
+	defaultErrorMessage,
+	DocumentStorage,
+	handleResponse,
+	HttpServer,
+	IHttpServerConfig,
+	ISocketIoRedisConnection,
+	ISocketIoRedisOptions,
+	ISocketIoRedisSubscriptionConnection,
+	RedisSocketIoAdapter,
+	RequestListener,
+	RestLessServer,
+	run,
+	runService,
+	SocketIoWebServerFactory,
+	validateRequestParams,
+	WebServer,
+	WholeSummaryReadGitManager,
+	WholeSummaryWriteGitManager,
+} from "@fluidframework/server-services-shared";
