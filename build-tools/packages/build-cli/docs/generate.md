@@ -114,17 +114,18 @@ Generates type tests based on the individual package settings in package.json.
 ```
 USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--exact <value> |  | [-s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor |
-    ]] [--reset | ] [-v]
+    [--exact <value> |  | [-s
+    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor | ]]
+    [--reset | ] [-v]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  The type of version constraint to use for previous versions. Only applies to the
-                                    prepare phase.
+  -s, --versionConstraint=<option>  [default: baseMinor] The type of version constraint to use for previous versions.
+                                    Only applies to the prepare phase.
                                     <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
-                                    previousMinor>
+                                    previousMinor|baseMinor|baseMajor>
   -v, --verbose                     Verbose logging.
   --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
                                     as-is. Only applies to the prepare phase.
@@ -142,7 +143,23 @@ DESCRIPTION
   for each package. This can be overridden using the --prepare and --generate flags.
 
 EXAMPLES
+  Prepare the package.json for all packages in the client release group.
 
+    $ flub generate typetests --prepare -g client
 
-    $ flub generate typetests
+  Reset all broken type tests across the client release group.
+
+    $ flub generate typetests --prepare -g client --reset
+
+  Pin the type tests to the previous major version.
+
+    $ flub generate typetests --prepare -s previousMajor
+
+  Pin the type tests to the current base major version.
+
+    $ flub generate typetests --prepare -s baseMajor
+
+  Regenerate type tests for the client release group.
+
+    $ flub generate typetests --generate -g client
 ```

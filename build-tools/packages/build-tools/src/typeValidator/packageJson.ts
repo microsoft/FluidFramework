@@ -4,15 +4,16 @@
  */
 import child_process from "child_process";
 import * as fs from "fs";
+import * as semver from "semver";
 import * as util from "util";
 
 import {
+    fromInternalScheme,
     getPreviousVersions,
     getVersionRange,
     isInternalVersionScheme,
+    toInternalScheme,
 } from "@fluid-tools/version-tools";
-
-import { Logger } from "../common/logging";
 
 export type PackageDetails = {
     readonly packageDir: string;
@@ -80,6 +81,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 }
 
 type PreviousVersionStyle =
+    | "baseMinor"
+    | "baseMajor"
     | "^previousMajor"
     | "^previousMinor"
     | "~previousMajor"
@@ -106,7 +109,7 @@ type PreviousVersionStyle =
 export async function getAndUpdatePackageDetails(
     packageDir: string,
     writeUpdates: boolean | undefined,
-    previousVersionStyle: PreviousVersionStyle = "previousMinor",
+    previousVersionStyle: PreviousVersionStyle = "baseMinor",
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
@@ -132,6 +135,40 @@ export async function getAndUpdatePackageDetails(
     if (exactPreviousVersionString === undefined) {
         const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
         switch (previousVersionStyle) {
+            case "baseMajor": {
+                const sv = semver.parse(version);
+                if (sv === null) {
+                    throw new Error(`Cannot parse current version: ${version}`);
+                }
+
+                if (isInternalVersionScheme(sv)) {
+                    const [pubVer, intVer] = fromInternalScheme(sv);
+                    prevVersion = toInternalScheme(pubVer, `${intVer.major}.0.0`).version;
+                } else {
+                    prevVersion = `${sv.major}.0.0`;
+                }
+                break;
+            }
+
+            case "baseMinor": {
+                const sv = semver.parse(version);
+                if (sv === null) {
+                    throw new Error(`Cannot parse current version: ${version}`);
+                }
+
+                if (isInternalVersionScheme(sv)) {
+                    const [pubVer, intVer] = fromInternalScheme(sv);
+                    prevVersion = toInternalScheme(
+                        pubVer,
+                        `${intVer.major}.${intVer.minor}.0`,
+                    ).version;
+                } else {
+                    prevVersion = `${sv.major}.${sv.minor}.0`;
+                }
+
+                break;
+            }
+
             case "previousMajor": {
                 if (previousMajorVersion === undefined) {
                     throw new Error(`Previous major version is undefined.`);

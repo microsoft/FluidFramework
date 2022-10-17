@@ -54,8 +54,10 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "~previousMinor",
                 "previousMajor",
                 "previousMinor",
+                "baseMinor",
+                "baseMajor",
             ],
-            default: "previousMinor",
+            default: "baseMinor",
         }),
         exact: Flags.string({
             description:
@@ -72,8 +74,24 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
     static examples = [
         {
-            description: "Prepare the package.json",
-            command: "<%= config.bin %> <%= command.id %>",
+            description: "Prepare the package.json for all packages in the client release group.",
+            command: "<%= config.bin %> <%= command.id %> --prepare -g client",
+        },
+        {
+            description: "Reset all broken type tests across the client release group.",
+            command: "<%= config.bin %> <%= command.id %> --prepare -g client --reset",
+        },
+        {
+            description: "Pin the type tests to the previous major version.",
+            command: "<%= config.bin %> <%= command.id %> --prepare -s previousMajor",
+        },
+        {
+            description: "Pin the type tests to the current base major version.",
+            command: "<%= config.bin %> <%= command.id %> --prepare -s baseMajor",
+        },
+        {
+            description: "Regenerate type tests for the client release group.",
+            command: "<%= config.bin %> <%= command.id %> --generate -g client",
         },
     ];
 
