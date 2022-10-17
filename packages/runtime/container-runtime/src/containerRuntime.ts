@@ -160,7 +160,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-    tombstoneKey,
+    testTombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -2273,7 +2273,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
          * external user, but the internal runtime does not delete it in summarizes, etc.
          */
-        const tombstone = this.mc.config.getBoolean(tombstoneKey) ?? false;
+        const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
         if (tombstone) {
             this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
             return;
