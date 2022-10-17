@@ -5,7 +5,7 @@
 
 export * from "./object-forest";
 export * from "./editable-tree";
-export * from "./defaultRebaser";
+export * from "./defaultChangeFamily";
 export * from "./forestIndex";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
@@ -15,6 +15,7 @@ export {
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
+export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";

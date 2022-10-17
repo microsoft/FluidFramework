@@ -2,9 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EmptyKey, Value } from "../../tree";
-import { brand, fail } from "../../util";
-import { TreeSchema, ValueSchema, FieldSchema, LocalFieldKey } from "../../schema-stored";
+
+import { assert } from "@fluidframework/common-utils";
+import { EmptyKey, FieldKey, isGlobalFieldKey, keyFromSymbol, Value } from "../../tree";
+import { fail } from "../../util";
+import {
+    TreeSchema,
+    ValueSchema,
+    FieldSchema,
+    LocalFieldKey,
+    SchemaDataAndPolicy,
+    lookupGlobalFieldSchema,
+} from "../../schema-stored";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -47,11 +56,16 @@ export function getPrimaryField(
 }
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
-export function getFieldSchema(schema: TreeSchema, name: string): FieldSchema {
-    // TODO: this assumes the name is a local field key.
-    // Eventually support for global field keys should be added somehow.
-    // (Maybe not use strings for them at this API level?)
-    return schema.localFields.get(brand(name)) ?? schema.extraLocalFields;
+export function getFieldSchema(
+    field: FieldKey,
+    schemaData: SchemaDataAndPolicy,
+    schema?: TreeSchema,
+): FieldSchema {
+    if (isGlobalFieldKey(field)) {
+        return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
+    }
+    assert(schema !== undefined, "The field is a local field, a parent schema is required.");
+    return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
 export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
