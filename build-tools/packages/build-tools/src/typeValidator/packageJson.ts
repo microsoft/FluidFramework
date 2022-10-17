@@ -12,6 +12,8 @@ import {
     isInternalVersionScheme,
 } from "@fluid-tools/version-tools";
 
+import { Logger } from "../common/logging";
+
 export type PackageDetails = {
     readonly packageDir: string;
     readonly oldVersions: readonly string[];
@@ -93,7 +95,7 @@ type PreviousVersionStyle =
  * previousVersionStyle parameter.
  *
  * @param packageDir - The path to the package.
- * @param updateOptions - Update options.
+ * @param writeUpdates - If true, will update the package.json with new previous versions.
  * @param previousVersionStyle - The version style to use when determining the previous version. Can be the exact
  * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions.
  * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
@@ -101,9 +103,10 @@ type PreviousVersionStyle =
  */
 export async function getAndUpdatePackageDetails(
     packageDir: string,
-    updateOptions: { cwd?: string } | undefined,
+    writeUpdates: boolean | undefined,
     previousVersionStyle: PreviousVersionStyle = "previousMinor",
     exactPreviousVersionString?: string,
+    log?: Logger,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
 
@@ -118,10 +121,10 @@ export async function getAndUpdatePackageDetails(
     }
 
     const version = packageDetails.pkg.version;
-    const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
     let prevVersion: string;
 
     if (exactPreviousVersionString === undefined) {
+        const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
         switch (previousVersionStyle) {
             case "previousMajor": {
                 if (previousMajorVersion === undefined) {
@@ -198,11 +201,8 @@ export async function getAndUpdatePackageDetails(
     // if the version does not exist, we will defer updating the package
     const packageDef = `${packageDetails.pkg.name}@${prevVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
-    const result = child_process
-        .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir })
-        .toString();
-    const maybeVersions =
-        result !== undefined && result.length > 0 ? safeParse(result, args.join(" ")) : undefined;
+    const result = child_process.execSync(`npm ${args.join(" ")}`, { cwd: packageDir }).toString();
+    const maybeVersions = result?.length > 0 ? safeParse(result, args.join(" ")) : undefined;
 
     const versionsArray =
         typeof maybeVersions === "string"
@@ -217,15 +217,23 @@ export async function getAndUpdatePackageDetails(
         ] = `npm:${packageDef}`;
 
         packageDetails.pkg.devDependencies = createSortedObject(packageDetails.pkg.devDependencies);
+        const disabled = packageDetails.pkg.typeValidation?.disabled;
 
         packageDetails.pkg.typeValidation = {
             version,
-            broken: {},
+            broken: packageDetails.pkg.typeValidation?.broken ?? {},
         };
-        await util.promisify(fs.writeFile)(
-            `${packageDir}/package.json`,
-            JSON.stringify(packageDetails.pkg, undefined, 2),
-        );
+
+        if (disabled !== undefined) {
+            packageDetails.pkg.typeValidation.disabled = disabled;
+        }
+
+        if ((writeUpdates ?? false) === true) {
+            await util.promisify(fs.writeFile)(
+                `${packageDir}/package.json`,
+                JSON.stringify(packageDetails.pkg, undefined, 2),
+            );
+        }
     }
     const oldVersions = Object.keys(packageDetails.pkg.devDependencies ?? {}).filter((k) =>
         k.startsWith(packageDetails.pkg.name),

@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
+import { CliUx, Flags } from "@oclif/core";
+import chalk from "chalk";
 
 import { generateTests, getAndUpdatePackageDetails } from "@fluidframework/build-tools";
 
@@ -19,6 +20,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
     static flags = {
         dir: Flags.directory({
+            char: "d",
             description: "Run on the package in this directory.",
             exclusive: ["packages", "releaseGroup"],
         }),
@@ -42,6 +44,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         }),
         versionConstraint: Flags.string({
             char: "s",
+            exclusive: ["generate"],
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -52,7 +55,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             ],
         }),
         exact: Flags.string({
-            exclusive: ["versionConstraint"],
+            exclusive: ["generate", "versionConstraint"],
         }),
         ...BaseCommand.flags,
     };
@@ -67,45 +70,57 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
     public async run(): Promise<void> {
         const flags = this.processedFlags;
 
-        const context = await this.getContext();
-        const releaseGroup = flags.releaseGroup;
-        const releaseGroupRepo =
-            releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
-        const independentPackages = flags.packages;
-        const dir = flags.dir;
-
-        if (dir === undefined && releaseGroup === undefined && independentPackages === undefined) {
+        if (
+            flags.dir === undefined &&
+            flags.releaseGroup === undefined &&
+            (flags.packages ?? false) === false
+        ) {
             this.error(`Must provide a --dir, --packages, or --releaseGroup argument.`);
         }
 
-        // if(flags.prepare === undefined && flags.generate === undefined) {
-        //     this.error(`Must pass --prepare or --generate.`);
-        // }
+        const releaseGroup = flags.releaseGroup;
+        const independentPackages = flags.packages;
+        const dir = flags.dir;
 
-        const prepareOnly = flags.prepare ?? false;
-        const generateOnly = flags.generate ?? false;
+        const runPrepare =
+            flags.prepare === undefined && flags.generate === undefined
+                ? true
+                : flags.prepare ?? false;
+        const runGenerate =
+            flags.prepare === undefined && flags.generate === undefined
+                ? true
+                : flags.generate ?? false;
 
         this.logHr();
-        this.log(`prepareOnly: ${prepareOnly}, ${flags.prepare}`);
-        this.log(`generateOnly: ${generateOnly}, ${flags.generate}`);
+        this.log(`prepareOnly: ${runPrepare}, ${flags.prepare}`);
+        this.log(`generateOnly: ${runGenerate}, ${flags.generate}`);
         this.logHr();
+
+        // const releaseGroupRepo =
+        //     releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
 
         const packageDirs: string[] = [];
-        if (independentPackages) {
-            this.info(`Finding independent packages`);
-            packageDirs.push(...context.independentPackages.map((p) => p.directory));
-        }
-
-        if (releaseGroup !== undefined) {
-            this.info(`Finding packages for release group: ${releaseGroup}`);
-            packageDirs.push(
-                ...context.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
-            );
-        }
-
+        // eslint-disable-next-line no-negated-condition
         if (dir !== undefined) {
             this.info(`Finding package in directory: ${dir}`);
             packageDirs.push(dir);
+        } else {
+            const context = await this.getContext();
+            if (independentPackages) {
+                this.info(`Finding independent packages`);
+                packageDirs.push(...context.independentPackages.map((p) => p.directory));
+            } else if (releaseGroup !== undefined) {
+                this.info(`Finding packages for release group: ${releaseGroup}`);
+                packageDirs.push(
+                    ...context.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+                );
+            }
+        }
+
+        if (!flags.verbose) {
+            CliUx.ux.action.start("Preparing/generating type tests...", "generating", {
+                stdout: true,
+            });
         }
 
         const concurrency = 25;
@@ -123,32 +138,28 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     const packageName = packageDir.slice(
                         Math.max(0, packageDir.lastIndexOf("/") + 1),
                     );
+
                     const output = [
                         `${(i + 1).toString()}/${packageDirs.length}`,
                         `${packageName}`,
                     ];
+
                     try {
                         const start = Date.now();
-                        // const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-                        //     shouldGenerate ? undefined : { cwd: releaseGroupRepo?.repoPath };
-
                         const packageData = await getAndUpdatePackageDetails(
                             packageDir,
-                            // TODO: This logic doesn't make a lot of sense. Why does cwd need to be assed in sometimes?
-                            // It also seems weird that
-                            generateOnly ? undefined : { cwd: releaseGroupRepo?.repoPath },
+                            /* writeUpdates */ runPrepare,
                             flags.versionConstraint as any,
                             flags.exact,
+                            this.logger,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {
                             output.push(packageData.skipReason);
-                        } else if (
-                            (prepareOnly ?? false) === false &&
-                            packageData.oldVersions.length > 0
-                        ) {
+                        } else if (runGenerate === true && packageData.oldVersions.length > 0) {
                             // eslint-disable-next-line @typescript-eslint/no-shadow
                             const start = Date.now();
+                            this.log(`Generating tests for ${packageData.pkg.name}`);
                             await generateTests(packageData)
                                 .then((s) =>
                                     output.push(
@@ -162,11 +173,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     } catch (error) {
                         output.push("Error");
                         if (typeof error === "string") {
-                            output.push(error);
+                            output.push(chalk.red(error));
                         } else if (error instanceof Error) {
-                            output.push(error.message, `\n ${error.stack}`);
+                            output.push(chalk.red(error.message), `\n ${error.stack}`);
                         } else {
-                            output.push(typeof error, `${error}`);
+                            output.push(typeof error, chalk.red(`${error}`));
                         }
 
                         return false;
@@ -181,6 +192,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
         // eslint-disable-next-line unicorn/no-await-expression-member
         const results = (await Promise.all(runningGenerates)).every((v) => v);
+
+        if (!flags.verbose) {
+            CliUx.ux.action.stop("Done");
+        }
+
         if (!results) {
             this.error(`Some type test generation failed.`);
         }

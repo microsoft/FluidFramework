@@ -113,16 +113,17 @@ Generates type tests based on the individual package settings in package.json.
 
 ```
 USAGE
-  $ flub generate typetests [--dir <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--exact <value> | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor] [-v]
+  $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
+    [--exact <value> |  | [-s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor |
+    ]] [-v]
 
 FLAGS
+  -d, --dir=<value>                 Run on the package in this directory.
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
   -s, --versionConstraint=<option>  <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
                                     previousMinor>
   -v, --verbose                     Verbose logging.
-  --dir=<value>                     Run on the package in this directory.
   --exact=<value>
   --generate                        Generates tests only. Doesn't prepare the package.json.
   --packages                        Run on all independent packages in the repo.
