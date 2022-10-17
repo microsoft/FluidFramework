@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta, FieldKey, Value } from "../../tree";
+import { FieldKindIdentifier, Delta, FieldKey, Value } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
