@@ -114,6 +114,30 @@ use_old_InterfaceDeclaration_DriverPreCheckInfo(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FetchSource": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_FetchSource():
+    TypeOnly<old.FetchSource>;
+declare function use_current_EnumDeclaration_FetchSource(
+    use: TypeOnly<current.FetchSource>);
+use_current_EnumDeclaration_FetchSource(
+    get_old_EnumDeclaration_FetchSource());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FetchSource": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_FetchSource():
+    TypeOnly<current.FetchSource>;
+declare function use_old_EnumDeclaration_FetchSource(
+    use: TypeOnly<old.FetchSource>);
+use_old_EnumDeclaration_FetchSource(
+    get_current_EnumDeclaration_FetchSource());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAuthorizationError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAuthorizationError():
@@ -230,7 +254,6 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*

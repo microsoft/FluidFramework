@@ -33,7 +33,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -63,7 +64,7 @@
     "@fluidframework/driver-definitions": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/sequence": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-loader-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",

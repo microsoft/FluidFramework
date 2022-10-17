@@ -26,19 +26,20 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957"
+    "@fluidframework/protocol-definitions": "^1.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@^1.0.0",
+    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
@@ -49,9 +50,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_MockDocumentDeltaConnection": {
-        "backCompat": false
-      }
     }
   }
 }

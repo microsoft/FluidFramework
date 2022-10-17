@@ -144,7 +144,6 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
 
 /*
@@ -398,6 +397,30 @@ declare function use_old_FunctionDeclaration_createAnnotateRangeOp(
     use: TypeOnly<typeof old.createAnnotateRangeOp>);
 use_old_FunctionDeclaration_createAnnotateRangeOp(
     get_current_FunctionDeclaration_createAnnotateRangeOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof old.createDetachedLocalReferencePosition>;
+declare function use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>);
+use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_old_FunctionDeclaration_createDetachedLocalReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof current.createDetachedLocalReferencePosition>;
+declare function use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>);
+use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_current_FunctionDeclaration_createDetachedLocalReferencePosition());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -674,7 +697,6 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -1249,6 +1271,31 @@ use_old_InterfaceDeclaration_IMergeTreeSegmentDelta(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeTextHelper": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMergeTreeTextHelper():
+    TypeOnly<old.IMergeTreeTextHelper>;
+declare function use_current_InterfaceDeclaration_IMergeTreeTextHelper(
+    use: TypeOnly<current.IMergeTreeTextHelper>);
+use_current_InterfaceDeclaration_IMergeTreeTextHelper(
+    get_old_InterfaceDeclaration_IMergeTreeTextHelper());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeTextHelper": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMergeTreeTextHelper():
+    TypeOnly<current.IMergeTreeTextHelper>;
+declare function use_old_InterfaceDeclaration_IMergeTreeTextHelper(
+    use: TypeOnly<old.IMergeTreeTextHelper>);
+use_old_InterfaceDeclaration_IMergeTreeTextHelper(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_IMergeTreeTextHelper());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IncrementalBlockAction": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IncrementalBlockAction():
@@ -1720,18 +1767,6 @@ use_old_VariableDeclaration_LocalClientId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_LocalReference": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_LocalReference": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalReferenceCollection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalReferenceCollection():
@@ -1757,18 +1792,6 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_LocalReferencePosition": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_LocalReferencePosition():
@@ -1789,7 +1812,6 @@ declare function get_current_InterfaceDeclaration_LocalReferencePosition():
 declare function use_old_InterfaceDeclaration_LocalReferencePosition(
     use: TypeOnly<old.LocalReferencePosition>);
 use_old_InterfaceDeclaration_LocalReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_LocalReferencePosition());
 
 /*
@@ -1851,7 +1873,6 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -2363,6 +2384,30 @@ use_old_ClassDeclaration_PropertiesManager(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_PropertiesRollback": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_PropertiesRollback():
+    TypeOnly<old.PropertiesRollback>;
+declare function use_current_EnumDeclaration_PropertiesRollback(
+    use: TypeOnly<current.PropertiesRollback>);
+use_current_EnumDeclaration_PropertiesRollback(
+    get_old_EnumDeclaration_PropertiesRollback());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_PropertiesRollback": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_PropertiesRollback():
+    TypeOnly<current.PropertiesRollback>;
+declare function use_old_EnumDeclaration_PropertiesRollback(
+    use: TypeOnly<old.PropertiesRollback>);
+use_old_EnumDeclaration_PropertiesRollback(
+    get_current_EnumDeclaration_PropertiesRollback());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_Property": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_Property():
@@ -2490,7 +2535,6 @@ declare function get_current_TypeAliasDeclaration_RangeStackMap():
 declare function use_old_TypeAliasDeclaration_RangeStackMap(
     use: TypeOnly<old.RangeStackMap>);
 use_old_TypeAliasDeclaration_RangeStackMap(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RangeStackMap());
 
 /*
@@ -2635,7 +2679,6 @@ declare function get_current_InterfaceDeclaration_ReferencePosition():
 declare function use_old_InterfaceDeclaration_ReferencePosition(
     use: TypeOnly<old.ReferencePosition>);
 use_old_InterfaceDeclaration_ReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ReferencePosition());
 
 /*

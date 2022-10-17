@@ -115,6 +115,30 @@ use_old_FunctionDeclaration_buildSnapshotTree(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_canBeCoalescedByService": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_canBeCoalescedByService():
+    TypeOnly<typeof old.canBeCoalescedByService>;
+declare function use_current_FunctionDeclaration_canBeCoalescedByService(
+    use: TypeOnly<typeof current.canBeCoalescedByService>);
+use_current_FunctionDeclaration_canBeCoalescedByService(
+    get_old_FunctionDeclaration_canBeCoalescedByService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_canBeCoalescedByService": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_canBeCoalescedByService():
+    TypeOnly<typeof current.canBeCoalescedByService>;
+declare function use_old_FunctionDeclaration_canBeCoalescedByService(
+    use: TypeOnly<typeof old.canBeCoalescedByService>);
+use_old_FunctionDeclaration_canBeCoalescedByService(
+    get_current_FunctionDeclaration_canBeCoalescedByService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_canRetryOnError": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_canRetryOnError():
@@ -754,6 +778,31 @@ use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_LocationRedirectionError():
+    TypeOnly<old.LocationRedirectionError>;
+declare function use_current_ClassDeclaration_LocationRedirectionError(
+    use: TypeOnly<current.LocationRedirectionError>);
+use_current_ClassDeclaration_LocationRedirectionError(
+    get_old_ClassDeclaration_LocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_LocationRedirectionError():
+    TypeOnly<current.LocationRedirectionError>;
+declare function use_old_ClassDeclaration_LocationRedirectionError(
+    use: TypeOnly<old.LocationRedirectionError>);
+use_old_ClassDeclaration_LocationRedirectionError(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_ClassDeclaration_LocationRedirectionError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_logNetworkFailure": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_logNetworkFailure():
@@ -774,6 +823,30 @@ declare function use_old_FunctionDeclaration_logNetworkFailure(
     use: TypeOnly<typeof old.logNetworkFailure>);
 use_old_FunctionDeclaration_logNetworkFailure(
     get_current_FunctionDeclaration_logNetworkFailure());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_MessageType2": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_MessageType2():
+    TypeOnly<old.MessageType2>;
+declare function use_current_EnumDeclaration_MessageType2(
+    use: TypeOnly<current.MessageType2>);
+use_current_EnumDeclaration_MessageType2(
+    get_old_EnumDeclaration_MessageType2());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_MessageType2": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_MessageType2():
+    TypeOnly<current.MessageType2>;
+declare function use_old_EnumDeclaration_MessageType2(
+    use: TypeOnly<old.MessageType2>);
+use_old_EnumDeclaration_MessageType2(
+    get_current_EnumDeclaration_MessageType2());
 
 /*
 * Validate forward compat by using old type in place of current type

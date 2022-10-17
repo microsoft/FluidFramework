@@ -30,7 +30,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
@@ -40,8 +41,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
-    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@^1.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0",
+    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/isomorphic-fetch": "^0.0.35",

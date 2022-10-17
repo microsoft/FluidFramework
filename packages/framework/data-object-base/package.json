@@ -36,7 +36,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -73,7 +74,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@^1.1.0",
+    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",

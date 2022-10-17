@@ -31,7 +31,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluid-experimental/sequence-deprecated": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
@@ -51,7 +52,7 @@
     "@fluidframework/map": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/matrix": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/ordered-collection": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/register-collection": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/replay-driver": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/request-handler": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",

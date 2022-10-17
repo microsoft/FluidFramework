@@ -34,7 +34,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,

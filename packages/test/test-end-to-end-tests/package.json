@@ -42,7 +42,8 @@
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
     "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -91,7 +92,7 @@
     "@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/ordered-collection": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/register-collection": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/request-handler": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
