@@ -96,9 +96,6 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         this.log(`generateOnly: ${runGenerate}, ${flags.generate}`);
         this.logHr();
 
-        // const releaseGroupRepo =
-        //     releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
-
         const packageDirs: string[] = [];
         // eslint-disable-next-line no-negated-condition
         if (dir !== undefined) {
