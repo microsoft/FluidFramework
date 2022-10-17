@@ -61,6 +61,7 @@ export class TestTreeProvider {
     private readonly provider: ITestObjectProvider;
     private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
+    private static summarizeOnDemand: boolean = false;
 
     public get trees(): readonly ISharedTree[] {
         return this._trees;
@@ -83,10 +84,13 @@ export class TestTreeProvider {
      * await trees.ensureSynchronized();
      * ```
      */
-    public static async create(trees = 0): Promise<ITestTreeProvider> {
+    public static async create(trees = 0, summarizeOnDemand = false): Promise<ITestTreeProvider> {
         const provider = new TestTreeProvider() as ITestTreeProvider;
         for (let i = 0; i < trees; i++) {
             await provider.createTree();
+        }
+        if (summarizeOnDemand && trees === 1) {
+            this.summarizeOnDemand = true;
         }
         return provider;
     }
@@ -107,6 +111,19 @@ export class TestTreeProvider {
         return (this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(
             TestTreeProvider.treeId,
         ));
+    }
+
+    /**
+     * Give this {@link TestTreeProvider} the ability to summarize on demand during a test by creating a summarizer
+     * client for the container at the given index.  This can only be called when the summarizeOnDemand field is
+     * set to true.
+     * @returns void after a summary has been resolved. May be called multiple times.
+     */
+    public async manualSummarize(): Promise<void> {
+        if (TestTreeProvider.summarizeOnDemand) {
+            const summarizer = await createSummarizer(this.provider, this.containers[0]);
+            await summarizeNow(summarizer, "TestTreeProvider");
+        }
     }
 
     /**
