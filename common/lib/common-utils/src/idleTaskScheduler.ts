@@ -14,13 +14,13 @@ export async function scheduleIdleTask<T>(callback: () => T, timeout: number): P
     // Check for the availability
     return typeof globalThis.requestIdleCallback === "function"
         ? new Promise<T>((resolve, reject) => {
-              const doLowPriorityTask = ():void => {
+              const doLowPriorityTask = (): void => {
                   try {
                       resolve(callback());
                   } catch (err: any) {
                       reject(err);
                   }
-              }
+              };
               requestIdleCallback(doLowPriorityTask, { timeout });
           })
         : new Promise<T>((resolve, reject) => {
