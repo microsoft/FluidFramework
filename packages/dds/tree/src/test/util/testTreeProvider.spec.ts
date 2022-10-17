@@ -48,5 +48,4 @@ describe("TestTreeProvider", () => {
         assert(summaryCount !== summaries + 1);
         unspy();
     });
-
 });
