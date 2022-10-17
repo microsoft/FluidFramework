@@ -55,6 +55,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "previousMajor",
                 "previousMinor",
             ],
+            default: "previousMinor",
         }),
         exact: Flags.string({
             description:
@@ -71,7 +72,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
 
     static examples = [
         {
-            description: "",
+            description: "Prepare the package.json",
             command: "<%= config.bin %> <%= command.id %>",
         },
     ];
@@ -165,7 +166,6 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                         } else if (runGenerate === true && packageData.oldVersions.length > 0) {
                             // eslint-disable-next-line @typescript-eslint/no-shadow
                             const start = Date.now();
-                            this.log(`Generating tests for ${packageData.pkg.name}`);
                             await generateTests(packageData)
                                 .then((s) =>
                                     output.push(
