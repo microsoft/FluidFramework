@@ -88,7 +88,7 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
     return [schema, proxy as PersonType];
 }
 
-describe.only("editable-tree", () => {
+describe("editable-tree", () => {
     it("proxified forest", () => {
         const [, proxy] = buildTestPerson();
         assert.ok(proxy);
@@ -464,7 +464,7 @@ describe.only("editable-tree", () => {
             proxy.address.phones.getType(undefined, false) as TreeSchema,
         );
         assert(primary !== undefined);
-        const forthNode = proxy.address.phones.getWithoutUnwraping(3);
+        const forthNode = proxy.address.phones.getWithoutUnwrapping(3);
         const simplePhones = forthNode[primary.key];
         const expectedPhones = ["112", "113"];
         assert(isEditableField(simplePhones));

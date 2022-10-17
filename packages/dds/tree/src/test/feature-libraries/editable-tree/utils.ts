@@ -120,7 +120,7 @@ export function expectFieldEquals(
         assert(field.length <= 1);
     }
     for (let index = 0; index < field.length; index++) {
-        expectNodeEquals(schemaData, field.getWithoutUnwraping(index), expected[index]);
+        expectNodeEquals(schemaData, field.getWithoutUnwrapping(index), expected[index]);
     }
 }
 

@@ -129,7 +129,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  *
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
- * Use `getWithoutUnwraping` to get the node without unwrapping.
+ * Use `getWithoutUnwrapping` to get the node without unwrapping.
  */
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
@@ -154,7 +154,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
      * Gets the non-unwrapped node of this field by its index.
      */
-    getWithoutUnwraping(index: number): EditableTree;
+    getWithoutUnwrapping(index: number): EditableTree;
 
     /**
      * Stores the target for the proxy which implements reading and writing for this sequence field.
@@ -552,7 +552,7 @@ class SequenceProxyTarget extends BaseProxyTarget implements ArrayLike<Unwrapped
     /**
      * Gets a node by its index without unwrapping.
      */
-    public getWithoutUnwraping(index: number): EditableTree {
+    public getWithoutUnwrapping(index: number): EditableTree {
         return this.proxifyNode(index, false) as EditableTree;
     }
 

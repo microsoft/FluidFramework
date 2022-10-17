@@ -239,7 +239,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
     getType(index?: number, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
-    getWithoutUnwraping(index: number): EditableTree;
+    getWithoutUnwrapping(index: number): EditableTree;
 }
 
 // @public
