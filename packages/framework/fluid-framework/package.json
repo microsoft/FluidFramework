@@ -37,6 +37,7 @@
   "dependencies": {
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/container-loader": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/fluid-static": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/map": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
