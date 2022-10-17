@@ -53,4 +53,11 @@ import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
 export * from "./deltaUtils";
-export * from "./editManagerIndex";
+
+export {
+    EditManagerIndex,
+    CommitEncoder,
+    commitEncoderFromChangeEncoder,
+    loadSummary,
+    encodeSummary,
+} from "./editManagerIndex";
