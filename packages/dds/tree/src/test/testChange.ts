@@ -7,7 +7,7 @@ import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
 import { ChangeRebaser, TaggedChange, RevisionTag } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
-import { Invariant, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -207,7 +207,10 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
         rebaseAnchors(anchors, over);
     }
 
-    public filterReferences(change: TestChange, _shouldRemoveReference: (revision: RevisionTag) => boolean): TestChange {
+    public filterReferences(
+        change: TestChange,
+        _shouldRemoveReference: (revision: RevisionTag) => boolean,
+    ): TestChange {
         return change;
     }
 }

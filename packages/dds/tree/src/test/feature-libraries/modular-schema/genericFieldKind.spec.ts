@@ -85,7 +85,11 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): NodeChangeset => {
     const valueChangeA = valueChangeFromNodeChange(nodeChangeA);
     const valueChangeB = valueChangeFromNodeChange(nodeChangeB);
-    const rebased = valueHandler.rebaser.rebase(valueChangeA, makeAnonChange(valueChangeB), unexpectedDelegate);
+    const rebased = valueHandler.rebaser.rebase(
+        valueChangeA,
+        makeAnonChange(valueChangeB),
+        unexpectedDelegate,
+    );
     return nodeChangeFromValueChange(rebased);
 };
 
@@ -302,7 +306,10 @@ describe("Generic FieldKind", () => {
                 nodeChange: nodeChange2To1,
             },
         ];
-        const actual = genericFieldKind.changeHandler.rebaser.invert(makeAnonChange(forward), childInverter);
+        const actual = genericFieldKind.changeHandler.rebaser.invert(
+            makeAnonChange(forward),
+            childInverter,
+        );
         assert.deepEqual(actual, expected);
     });
 

@@ -16,7 +16,7 @@ const testRebaser: ChangeRebaser<TestChange> = {
     compose: (changes: TestChange[]) => changes,
     invert: (change: TaggedChange<TestChange>) => ({ I: change.change }),
     rebase: (change: TestChange, over: TaggedChange<TestChange>) => ({ C: change, O: over.change }),
-    rebaseAnchors: (anchor: AnchorSet, over: TestChange) => { },
+    rebaseAnchors: (anchor: AnchorSet, over: TestChange) => {},
     filterReferences: (change: TestChange, _filter: (revision: RevisionTag) => boolean) => change,
 };
 

@@ -80,7 +80,7 @@ function commutativeRebaser<TChange>(data: {
     invert: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
     const rebase = (change: TChange, _over: TChange) => change;
-    return referenceFreeFieldChangeRebaser({ ...data, rebase })
+    return referenceFreeFieldChangeRebaser({ ...data, rebase });
 }
 
 /**
@@ -114,7 +114,11 @@ export type ReplaceOp<T> = Replacement<T> | 0;
  */
 export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
     return {
-        rebase: (change: ReplaceOp<T>, over: TaggedChange<ReplaceOp<T>>, rebaseChild: NodeChangeRebaser) => {
+        rebase: (
+            change: ReplaceOp<T>,
+            over: TaggedChange<ReplaceOp<T>>,
+            rebaseChild: NodeChangeRebaser,
+        ) => {
             if (change === 0) {
                 return 0;
             }
@@ -134,7 +138,7 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
             return { old: f[0].old, new: f[f.length - 1].new };
         },
         invert: (change: TaggedChange<ReplaceOp<T>>, invertChild: NodeChangeInverter) => {
-            const changes = change.change
+            const changes = change.change;
             return changes === 0 ? 0 : { old: changes.new, new: changes.old };
         },
         filterReferences: (change: ReplaceOp<T>, _shouldRemoveReference, _filterChild) => change,
@@ -406,105 +410,106 @@ export interface OptionalChangeset {
     childChange?: NodeChangeset;
 }
 
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = referenceFreeFieldChangeRebaser({
-    compose: (
-        changes: OptionalChangeset[],
-        composeChild: NodeChangeComposer,
-    ): OptionalChangeset => {
-        let fieldChange: OptionalFieldChange | undefined;
-        const childChanges: NodeChangeset[] = [];
-        for (const change of changes) {
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> =
+    referenceFreeFieldChangeRebaser({
+        compose: (
+            changes: OptionalChangeset[],
+            composeChild: NodeChangeComposer,
+        ): OptionalChangeset => {
+            let fieldChange: OptionalFieldChange | undefined;
+            const childChanges: NodeChangeset[] = [];
+            for (const change of changes) {
+                if (change.fieldChange !== undefined) {
+                    if (fieldChange === undefined) {
+                        fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+                    }
+
+                    if (change.fieldChange.newContent !== undefined) {
+                        fieldChange.newContent = change.fieldChange.newContent;
+                    } else {
+                        delete fieldChange.newContent;
+                    }
+
+                    // The previous changes applied to a different value, so we discard them.
+                    // TODO: Represent muted changes
+                    childChanges.length = 0;
+                }
+                if (change.childChange !== undefined) {
+                    childChanges.push(change.childChange);
+                }
+            }
+
+            const composed: OptionalChangeset = {};
+            if (fieldChange !== undefined) {
+                composed.fieldChange = fieldChange;
+            }
+
+            if (childChanges.length > 0) {
+                composed.childChange = composeChild(childChanges);
+            }
+
+            return composed;
+        },
+
+        invert: (change: OptionalChangeset, invertChild: NodeChangeInverter): OptionalChangeset => {
+            const inverse: OptionalChangeset = {};
+
             if (change.fieldChange !== undefined) {
-                if (fieldChange === undefined) {
-                    fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
-                }
-
-                if (change.fieldChange.newContent !== undefined) {
-                    fieldChange.newContent = change.fieldChange.newContent;
-                } else {
-                    delete fieldChange.newContent;
-                }
-
-                // The previous changes applied to a different value, so we discard them.
-                // TODO: Represent muted changes
-                childChanges.length = 0;
+                // TODO: Invert the content in the fieldChange
+                inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
             }
+
             if (change.childChange !== undefined) {
-                childChanges.push(change.childChange);
+                inverse.childChange = invertChild(change.childChange);
             }
-        }
 
-        const composed: OptionalChangeset = {};
-        if (fieldChange !== undefined) {
-            composed.fieldChange = fieldChange;
-        }
+            return inverse;
+        },
 
-        if (childChanges.length > 0) {
-            composed.childChange = composeChild(childChanges);
-        }
+        rebase: (
+            change: OptionalChangeset,
+            over: OptionalChangeset,
+            rebaseChild: NodeChangeRebaser,
+        ): OptionalChangeset => {
+            if (change.fieldChange !== undefined) {
+                if (over.fieldChange !== undefined) {
+                    const wasEmpty = over.fieldChange.newContent === undefined;
 
-        return composed;
-    },
+                    // We don't have to rebase the child changes, since the other child changes don't apply to the same node
+                    return {
+                        ...change,
+                        fieldChange: { ...change.fieldChange, wasEmpty },
+                    };
+                }
 
-    invert: (change: OptionalChangeset, invertChild: NodeChangeInverter): OptionalChangeset => {
-        const inverse: OptionalChangeset = {};
+                return change;
+            }
 
-        if (change.fieldChange !== undefined) {
-            // TODO: Invert the content in the fieldChange
-            inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
-        }
+            if (change.childChange !== undefined) {
+                if (over.fieldChange !== undefined) {
+                    // The node the child changes applied to no longer exists so we drop the changes.
+                    // TODO: Represent muted changes
+                    return {};
+                }
 
-        if (change.childChange !== undefined) {
-            inverse.childChange = invertChild(change.childChange);
-        }
-
-        return inverse;
-    },
-
-    rebase: (
-        change: OptionalChangeset,
-        over: OptionalChangeset,
-        rebaseChild: NodeChangeRebaser,
-    ): OptionalChangeset => {
-        if (change.fieldChange !== undefined) {
-            if (over.fieldChange !== undefined) {
-                const wasEmpty = over.fieldChange.newContent === undefined;
-
-                // We don't have to rebase the child changes, since the other child changes don't apply to the same node
-                return {
-                    ...change,
-                    fieldChange: { ...change.fieldChange, wasEmpty },
-                };
+                if (over.childChange !== undefined) {
+                    return { childChange: rebaseChild(change.childChange, over.childChange) };
+                }
             }
 
             return change;
-        }
+        },
 
-        if (change.childChange !== undefined) {
-            if (over.fieldChange !== undefined) {
-                // The node the child changes applied to no longer exists so we drop the changes.
-                // TODO: Represent muted changes
-                return {};
-            }
-
-            if (over.childChange !== undefined) {
-                return { childChange: rebaseChild(change.childChange, over.childChange) };
-            }
-        }
-
-        return change;
-    },
-
-    filterReferences: (
-        change: OptionalChangeset,
-        _shouldRemoveReference: (revision: RevisionTag) => boolean,
-        filterChild: NodeChangeReferenceFilter,
-    ): OptionalChangeset => {
-        return change.childChange === undefined
-            ? change
-            : { ...change, childChange: filterChild(change.childChange) };
-    },
-});
+        filterReferences: (
+            change: OptionalChangeset,
+            _shouldRemoveReference: (revision: RevisionTag) => boolean,
+            filterChild: NodeChangeReferenceFilter,
+        ): OptionalChangeset => {
+            return change.childChange === undefined
+                ? change
+                : { ...change, childChange: filterChild(change.childChange) };
+        },
+    });
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
     /**

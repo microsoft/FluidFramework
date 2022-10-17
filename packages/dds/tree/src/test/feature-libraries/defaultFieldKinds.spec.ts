@@ -112,7 +112,10 @@ describe("Value field changesets", () => {
             return nodeChange2;
         };
 
-        const inverted = fieldHandler.rebaser.invert(makeAnonChange(change1WithChildChange), childInverter);
+        const inverted = fieldHandler.rebaser.invert(
+            makeAnonChange(change1WithChildChange),
+            childInverter,
+        );
 
         assert.deepEqual(inverted.changes, nodeChange2);
     });
@@ -122,7 +125,11 @@ describe("Value field changesets", () => {
             assert.fail("Should not be called");
 
         assert.deepEqual(
-            fieldHandler.rebaser.rebase(change2, makeAnonChange(change1WithChildChange), childRebaser),
+            fieldHandler.rebaser.rebase(
+                change2,
+                makeAnonChange(change1WithChildChange),
+                childRebaser,
+            ),
             change2,
         );
     });
@@ -213,13 +220,19 @@ describe("Optional field changesets", () => {
             childChange: nodeChange2,
         };
 
-        assert.deepEqual(fieldHandler.rebaser.invert(makeAnonChange(change1), childInverter), expected);
+        assert.deepEqual(
+            fieldHandler.rebaser.invert(makeAnonChange(change1), childInverter),
+            expected,
+        );
     });
 
     it("can be rebased", () => {
         const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
             assert.fail("Should not be called");
-        assert.deepEqual(fieldHandler.rebaser.rebase(change3, makeAnonChange(change1), childRebaser), change2);
+        assert.deepEqual(
+            fieldHandler.rebaser.rebase(change3, makeAnonChange(change1), childRebaser),
+            change2,
+        );
     });
 
     it("can rebase child change", () => {

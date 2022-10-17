@@ -177,7 +177,10 @@ export interface ChangeRebaser<TChangeset> {
     /**
      * @returns a version of `change` stripped of any references to revisions for which `shouldRemoveReference` returns true.
      */
-    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean): TChangeset;
+    filterReferences(
+        change: TChangeset,
+        shouldRemoveReference: (revision: RevisionTag) => boolean,
+    ): TChangeset;
 }
 
 export interface TaggedChange<TChangeset> {
@@ -188,7 +191,6 @@ export interface TaggedChange<TChangeset> {
 export function makeAnonChange<T>(change: T): TaggedChange<T> {
     return { revision: undefined, change };
 }
-
 
 export interface FinalChange {
     readonly status: FinalChangeStatus;

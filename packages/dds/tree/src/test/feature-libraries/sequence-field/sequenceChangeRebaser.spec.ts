@@ -62,7 +62,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 const change1 = [offset1, mark1];
                                 const change2 = [offset2, mark2];
                                 const inv = SF.invert(makeAnonChange(change2), TestChange.invert);
-                                const r1 = SF.rebase(change1, makeAnonChange(change2), TestChange.rebase);
+                                const r1 = SF.rebase(
+                                    change1,
+                                    makeAnonChange(change2),
+                                    TestChange.rebase,
+                                );
                                 const r2 = SF.rebase(r1, makeAnonChange(inv), TestChange.rebase);
                                 assert.deepEqual(r2, change1);
                             }
@@ -90,7 +94,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                             const change1 = [offset1, mark1];
                             const change2 = [offset2, mark2];
                             const inverse2 = SF.invert(makeAnonChange(change2), TestChange.invert);
-                            const r1 = SF.rebase(change1, makeAnonChange(change2), TestChange.rebase);
+                            const r1 = SF.rebase(
+                                change1,
+                                makeAnonChange(change2),
+                                TestChange.rebase,
+                            );
                             const r2 = SF.rebase(r1, makeAnonChange(inverse2), TestChange.rebase);
                             const r3 = SF.rebase(r2, makeAnonChange(change2), TestChange.rebase);
                             assert.deepEqual(r3, r1);

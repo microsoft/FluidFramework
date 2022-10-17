@@ -360,15 +360,24 @@ describe("ModularChangeFamily", () => {
 
     describe("rebase", () => {
         it("rebase specific ↷ specific", () => {
-            assert.deepEqual(family.rebase(rootChange1b, makeAnonChange(rootChange1a)), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
+                rootChange2,
+            );
         });
 
         it("rebase specific ↷ generic", () => {
-            assert.deepEqual(family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
+                rootChange2,
+            );
         });
 
         it("rebase generic ↷ specific", () => {
-            assert.deepEqual(family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
+                rootChange2,
+            );
         });
 
         it("rebase generic ↷ generic", () => {

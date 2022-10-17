@@ -80,8 +80,10 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    invert(changes: TChangeset): TChangeset;
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean): TChangeset;
+    // (undocumented)
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
@@ -332,8 +334,10 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
-    invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
-    rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
+    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean, filterChild: NodeChangeReferenceFilter): TChangeset;
+    // (undocumented)
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
 }
 
 // @public (undocumented)
@@ -373,7 +377,7 @@ declare namespace FieldKinds {
         ValueEncoder,
         Replacement,
         ReplaceOp,
-        noChangeHandle,
+        noChangeHandler,
         counterHandle,
         counter,
         ValueChangeset,
@@ -555,7 +559,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @public
-function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
+function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -852,11 +856,13 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
+    filterReferences(change: FieldChangeMap, shouldRemoveReference: (revision: RevisionTag) => boolean): FieldChangeMap;
+    // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
-    invert(changes: FieldChangeMap): FieldChangeMap;
+    invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
-    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap;
+    rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void;
     // (undocumented)
@@ -938,7 +944,7 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export const neverTree: TreeSchema;
 
 // @public
-const noChangeHandle: FieldChangeHandler<0>;
+const noChangeHandler: FieldChangeHandler<0>;
 
 // @public (undocumented)
 export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
@@ -969,6 +975,9 @@ export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangese
 
 // @public (undocumented)
 type NodeChangeRebaser_2<TNodeChange> = (change: TNodeChange, baseChange: TNodeChange) => TNodeChange;
+
+// @public (undocumented)
+export type NodeChangeReferenceFilter = (change: NodeChangeset) => NodeChangeset;
 
 // @public (undocumented)
 export interface NodeChangeset {
@@ -1108,7 +1117,7 @@ interface Reattach extends HasOpId_2 {
 }
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: Changeset<TNodeChange>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public @sealed
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {

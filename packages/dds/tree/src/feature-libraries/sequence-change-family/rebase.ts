@@ -37,7 +37,10 @@ import { SequenceChangeset } from "./sequenceChangeset";
  *
  * - Support for slices is not implemented.
  */
-export function rebase(change: SequenceChangeset, base: TaggedChange<SequenceChangeset>): SequenceChangeset {
+export function rebase(
+    change: SequenceChangeset,
+    base: TaggedChange<SequenceChangeset>,
+): SequenceChangeset {
     const fields = rebaseFieldMarks(change.marks, base.change.marks);
     return {
         marks: fields,

@@ -69,7 +69,10 @@ describe("SequenceChangeFamily", () => {
                                 const change1 = asForest([offset1, mark1]);
                                 const change2 = asForest([offset2, mark2]);
                                 const inv = sequenceChangeRebaser.invert(makeAnonChange(change2));
-                                const r1 = sequenceChangeRebaser.rebase(change1, makeAnonChange(change2));
+                                const r1 = sequenceChangeRebaser.rebase(
+                                    change1,
+                                    makeAnonChange(change2),
+                                );
                                 const r2 = sequenceChangeRebaser.rebase(r1, makeAnonChange(inv));
                                 assert.deepEqual(r2, change1);
                             }
@@ -97,7 +100,10 @@ describe("SequenceChangeFamily", () => {
                             const change1 = asForest([offset1, mark1]);
                             const change2 = asForest([offset2, mark2]);
                             const inverse2 = sequenceChangeRebaser.invert(makeAnonChange(change2));
-                            const r1 = sequenceChangeRebaser.rebase(change1, makeAnonChange(change2));
+                            const r1 = sequenceChangeRebaser.rebase(
+                                change1,
+                                makeAnonChange(change2),
+                            );
                             const r2 = sequenceChangeRebaser.rebase(r1, makeAnonChange(inverse2));
                             const r3 = sequenceChangeRebaser.rebase(r2, makeAnonChange(change2));
                             assert.deepEqual(r3, r1);

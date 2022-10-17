@@ -41,7 +41,7 @@ function filterReferences<TNodeChange>(
     shouldRemoveReference: (revision: RevisionTag) => boolean,
     filterChild: NodeChangeReferenceFilter<TNodeChange>,
 ): Changeset<TNodeChange> {
-    return change.map(mark => filterMarkReferences(mark, shouldRemoveReference, filterChild));
+    return change.map((mark) => filterMarkReferences(mark, shouldRemoveReference, filterChild));
 }
 
 export const sequenceFieldChangeRebaser: SequenceChangeRebaser = {

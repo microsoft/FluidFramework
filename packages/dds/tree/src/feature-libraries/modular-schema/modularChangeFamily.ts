@@ -147,9 +147,8 @@ export class ModularChangeFamily
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert(
-                { ...changes, change: fieldChange.change },
-                (childChanges) => this.invertNodeChange({ ...changes, change: childChanges }),
+            ).rebaser.invert({ ...changes, change: fieldChange.change }, (childChanges) =>
+                this.invertNodeChange({ ...changes, change: childChanges }),
             );
 
             invertedFields.set(field, {
@@ -185,7 +184,8 @@ export class ModularChangeFamily
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
                     { ...over, change: baseChangeset },
-                    (child, baseChild) => this.rebaseNodeChange(child, { ...over, change: baseChild }),
+                    (child, baseChild) =>
+                        this.rebaseNodeChange(child, { ...over, change: baseChild }),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -199,14 +199,20 @@ export class ModularChangeFamily
         return rebasedFields;
     }
 
-    private rebaseNodeChange(change: NodeChangeset, over: TaggedChange<NodeChangeset>): NodeChangeset {
+    private rebaseNodeChange(
+        change: NodeChangeset,
+        over: TaggedChange<NodeChangeset>,
+    ): NodeChangeset {
         if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
             return change;
         }
 
         return {
             ...change,
-            fieldChanges: this.rebase(change.fieldChanges, { ...over, change: over.change.fieldChanges }),
+            fieldChanges: this.rebase(change.fieldChanges, {
+                ...over,
+                change: over.change.fieldChanges,
+            }),
         };
     }
 
@@ -214,7 +220,10 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    filterReferences(change: FieldChangeMap, shouldRemoveReference: (revision: RevisionTag) => boolean): FieldChangeMap {
+    filterReferences(
+        change: FieldChangeMap,
+        shouldRemoveReference: (revision: RevisionTag) => boolean,
+    ): FieldChangeMap {
         const filteredFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of change.entries()) {
@@ -230,8 +239,11 @@ export class ModularChangeFamily
                     }
                     return {
                         ...childChanges,
-                        fieldChanges: this.filterReferences(childChanges.fieldChanges, shouldRemoveReference),
-                    }
+                        fieldChanges: this.filterReferences(
+                            childChanges.fieldChanges,
+                            shouldRemoveReference,
+                        ),
+                    };
                 },
             );
 

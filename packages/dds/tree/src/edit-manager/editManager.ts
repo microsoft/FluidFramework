@@ -94,10 +94,12 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeset: newChangeFullyRebased,
         });
 
-        return this.changeFamily.intoDelta(this.rebaseLocalBranch({
-            revision: brand(newCommit.seqNumber),
-            change: newChangeFullyRebased,
-        }));
+        return this.changeFamily.intoDelta(
+            this.rebaseLocalBranch({
+                revision: brand(newCommit.seqNumber),
+                change: newChangeFullyRebased,
+            }),
+        );
     }
 
     /**
@@ -135,17 +137,17 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         let nextRevisionNum = -1;
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
-                this.changeFamily.rebaser.rebase(
-                    newChange,
-                    {
-                        revision: brand(nextRevisionNum--),
-                        change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(branchCommit)),
-                    },
-                ),
+                this.changeFamily.rebaser.rebase(newChange, {
+                    revision: brand(nextRevisionNum--),
+                    change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(branchCommit)),
+                }),
             commitToRebase.changeset,
         );
 
-        const fullyRebasedChange = this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
+        const fullyRebasedChange = this.rebaseOverCommits(
+            changeRebasedToRef,
+            this.getCommitsAfter(branch.refSeq),
+        );
 
         const shouldRemoveReference = (revision: RevisionTag): boolean =>
             isTemporaryRevision(revision) || isBranchLocalRevision(branch, revision);
@@ -153,7 +155,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.rebaser.filterReferences(
             fullyRebasedChange,
             shouldRemoveReference,
-        )
+        );
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -178,17 +180,17 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
 
         const netChange = this.changeFamily.rebaser.compose([
-            ...inverses.map(change => change.change),
+            ...inverses.map((change) => change.change),
             trunkChange.change,
-            ...newBranchChanges.map(change => change.change),
+            ...newBranchChanges.map((change) => change.change),
         ]);
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
         }
 
-        this.localChanges = newBranchChanges.map(
-            (change) => this.changeFamily.rebaser.filterReferences(change.change, isTemporaryRevision),
+        this.localChanges = newBranchChanges.map((change) =>
+            this.changeFamily.rebaser.filterReferences(change.change, isTemporaryRevision),
         );
 
         return netChange;
@@ -231,23 +233,24 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             });
         }
 
-        branch.localChanges = newBranchChanges.map(
-            (commit) => ({
-                ...commit,
-                changeset: this.changeFamily.rebaser.filterReferences(commit.changeset, isTemporaryRevision),
-            }),
-        );
+        branch.localChanges = newBranchChanges.map((commit) => ({
+            ...commit,
+            changeset: this.changeFamily.rebaser.filterReferences(
+                commit.changeset,
+                isTemporaryRevision,
+            ),
+        }));
         branch.refSeq = newRef;
     }
 
     private rebaseOverCommits(changeToRebase: TChangeset, commits: Commit<TChangeset>[]) {
-        return this.rebaseChange(
-            changeToRebase,
-            commits.map(taggedChangeFromCommit),
-        );
+        return this.rebaseChange(changeToRebase, commits.map(taggedChangeFromCommit));
     }
 
-    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: TaggedChange<TChangeset>[]) {
+    private rebaseChange(
+        changeToRebase: TChangeset,
+        changesToRebaseOver: TaggedChange<TChangeset>[],
+    ) {
         return changesToRebaseOver.reduce(
             (a, b) => this.changeFamily.rebaser.rebase(a, b),
             changeToRebase,
@@ -310,12 +313,15 @@ function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return { revision: brand(commit.seqNumber), change: commit.changeset };
 }
 
-function isBranchLocalRevision<TChangeset>(branch: Branch<TChangeset>, revision: RevisionTag): boolean {
+function isBranchLocalRevision<TChangeset>(
+    branch: Branch<TChangeset>,
+    revision: RevisionTag,
+): boolean {
     return branch.localChanges.find((x) => (x.seqNumber as number) === revision) !== undefined;
 }
 
 function isTemporaryRevision(revision: RevisionTag): boolean {
-    return revision as number < 0;
+    return (revision as number) < 0;
 }
 
 interface Branch<TChangeset> {

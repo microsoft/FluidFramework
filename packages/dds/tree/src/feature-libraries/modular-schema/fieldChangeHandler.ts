@@ -43,7 +43,11 @@ export interface FieldChangeRebaser<TChangeset> {
      * Rebase `change` over `over`.
      * See {@link ChangeRebaser} for details.
      */
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
+    rebase(
+        change: TChangeset,
+        over: TaggedChange<TChangeset>,
+        rebaseChild: NodeChangeRebaser,
+    ): TChangeset;
 
     /**
      * @returns a version of `change` stripped of any references to revisions for which `shouldRemoveReference` returns true.
@@ -61,21 +65,21 @@ export interface FieldChangeRebaser<TChangeset> {
  * which might contain references.
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
-    compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset,
-    invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset,
-    rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset,
+    compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset;
+    invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset;
+    rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset;
     filterReferences?: (
         change: TChangeset,
         shouldRemoveReference: (revision: RevisionTag) => boolean,
         filterChild: NodeChangeReferenceFilter,
-    ) => TChangeset,
+    ) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
     return {
         compose: data.compose,
         invert: (change, invertChild) => data.invert(change.change, invertChild),
         rebase: (change, over, rebaseChild) => data.rebase(change, over.change, rebaseChild),
         filterReferences: data.filterReferences ?? ((change, _filter, _filterChild) => change),
-    }
+    };
 }
 
 export interface FieldChangeEncoder<TChangeset> {

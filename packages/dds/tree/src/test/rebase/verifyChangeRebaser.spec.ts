@@ -4,14 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, TaggedChange, noFailure, RevisionTag, verifyChangeRebaser } from "../../rebase";
+import {
+    ChangeRebaser,
+    TaggedChange,
+    noFailure,
+    RevisionTag,
+    verifyChangeRebaser,
+} from "../../rebase";
 import { AnchorSet } from "../../tree";
 
 const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
     invert: (change: TaggedChange<number>) => -change.change,
     rebase: (change: number, over: TaggedChange<number>) => change,
-    rebaseAnchors: (anchor: AnchorSet, over: number) => { },
+    rebaseAnchors: (anchor: AnchorSet, over: number) => {},
     filterReferences: (change: number, _filter: (revision: RevisionTag) => boolean) => change,
 };
 
