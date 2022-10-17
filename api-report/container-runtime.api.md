@@ -555,6 +555,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 export interface ISummaryBaseConfiguration {
     compressionAlgorithm?: SummaryCompressionAlgorithms;
     initialSummarizerDelayMs: number;
+    isUseB64OnCompressed?: boolean;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
     minSizeToCompress?: number;

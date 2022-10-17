@@ -175,6 +175,7 @@ import { ScheduleManager } from "./scheduleManager";
 export enum SummaryCompressionAlgorithms {
     None = 1,
     LZ4 = 2,
+    // Deflate at present unsupported!
     Deflate = 3,
 }
 
@@ -247,6 +248,14 @@ export interface ISummaryBaseConfiguration {
      * to apply the compression.
      */
     minSizeToCompress?: number;
+
+    /**
+     * True enables the Base64 encoding of the compressed byte array. The default is false,
+     * because it adds additional processing to the blob content. At present, probably due
+     * to the bug, the upload of the blob which is not Base64 encoded fails.
+     * TODO: Cleanup and possibly remove this entry if the issue is fixed.
+     */
+    isUseB64OnCompressed?: boolean;
 }
 
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
@@ -713,8 +722,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
         if (summaryConfiguration?.compressionAlgorithm !== undefined) {
             storage = buildSummaryStorageAdapter(storage,
-                [new CompressionSummaryStorageHooks(summaryConfiguration.compressionAlgorithm,
-                    summaryConfiguration.minSizeToCompress)],
+                [new CompressionSummaryStorageHooks(
+                    summaryConfiguration.compressionAlgorithm,
+                    summaryConfiguration.minSizeToCompress,
+                    summaryConfiguration.isUseB64OnCompressed)],
             );
             /*
             if (summaryConfiguration?.compressionAlgorithm === SummaryCompressionAlgorithms.None) {

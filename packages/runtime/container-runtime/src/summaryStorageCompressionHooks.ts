@@ -36,21 +36,27 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
                 return input;
             }
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
-            // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
-            // fails on assertion at 2 different generations of the hash which do not lead to
-            // the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
-            const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
-            const compressedEncoded = new TextEncoder().encode(compressedString);
-            const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
+            let newSummaryBlob;
+            if (this._isUseB64OnCompressed !== undefined && this._isUseB64OnCompressed) {
+                // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
+                // fails on assertion at 2 different generations of the hash which do not lead to
+                // the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
+                const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
+                const compressedEncoded = new TextEncoder().encode(compressedString);
+                newSummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
+            } else {
             // This line will replace the 3 lines above when the bug is fixed.
             // const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed)};
+                newSummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed) };
+            }
             return newSummaryBlob;
         } else {
             return input;
         }
     };
     constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined,
-        private readonly _minSizeToCompress: number | undefined) {
+        private readonly _minSizeToCompress: number | undefined,
+        private readonly _isUseB64OnCompressed: boolean | undefined) {
             if (this._minSizeToCompress === undefined) {
                 this._minSizeToCompress = defaultMinSizeToCompress;
             }
