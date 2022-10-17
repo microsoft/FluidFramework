@@ -44,6 +44,12 @@ parameters:
   type: string
   default: null
 
+# Name of the Secure File that contains the self-signed cert for the R11s deployment.
+# If not blank, the pipeline will try to install it to the local cert store.
+- name: r11sSelfSignedCertSecureFile
+  type: string
+  default: ""
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -75,6 +81,27 @@ jobs:
       # Setup
       - checkout: none
         clean: true
+
+      # Install self-signed cert for R11s deployment in local cert store
+      - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
+        - task: DownloadSecureFile@1
+          displayName: 'Download r11s self-signed cert'
+          name: downloadCertTask
+          inputs:
+            secureFile: ${{ parameters.r11sSelfSignedCertSecureFile }}
+            retryCount: '2'
+
+        - task: Bash@3
+          displayName: 'Install r11s self-signed cert in local cert store'
+          inputs:
+            targetType: 'inline'
+            script: |
+
+              # Extract public part from cert
+              openssl x509 -in $(downloadCertTask.secureFilePath) -out cert.crt
+              # Install cert
+              sudo cp cert.crt /usr/local/share/ca-certificates/
+              sudo update-ca-certificates
 
       # Print parameters/Vars
       - task: Bash@3
