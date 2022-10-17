@@ -4,3 +4,4 @@
  */
 
 export * from "./rebaser";
+export * from "./verifyChangeRebaser";

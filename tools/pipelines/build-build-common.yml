@@ -72,4 +72,4 @@ extends:
     taskBuild: false
     taskBuildDocs: false
     taskLint: false
-    taskTest: false
+    taskTest: [] # no tests

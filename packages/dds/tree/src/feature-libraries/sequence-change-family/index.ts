@@ -8,3 +8,4 @@ export * from "./sequenceChangeRebaser";
 export * from "./sequenceChangeset";
 export * from "./sequenceEditBuilder";
 export { DUMMY_INVERSE_VALUE, DUMMY_INVERT_TAG } from "./invert";
+export * from "./changeset";

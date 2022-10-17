@@ -20,7 +20,9 @@ class CachedValue<T> extends SimpleObservingDependent implements ICachedValue<T>
         private readonly compute: (observer: ObservingDependent) => T,
         computationName: string,
     ) {
-        super(() => { this.cache = undefined; }, computationName);
+        super(() => {
+            this.cache = undefined;
+        }, computationName);
     }
 
     get(): T {

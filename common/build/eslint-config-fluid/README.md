@@ -27,9 +27,9 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-## Scripts
-
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+
+## Scripts
 
 | Script                     | Description                                                                                                   |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |

@@ -8,6 +8,8 @@ const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMEN
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Dom {
     public static removeAllChildren(parent: Node) {
+        // External library uses `null`
+        // eslint-disable-next-line @rushstack/no-new-null
         let firstChild: ChildNode | null;
         while ((firstChild = parent.firstChild) !== null) {
             firstChild.remove();

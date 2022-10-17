@@ -4,9 +4,9 @@
  */
 
 /**
- * The `map` package provides interfaces and implementing classes for map-like distributed data structures.
+ * The `map` library provides interfaces and implementing classes for map-like distributed data structures.
  *
- * @remarks The following distributed data structures are defined in this package:
+ * @remarks The following distributed data structures are defined in this library:
  *
  * - {@link SharedMap}
  *

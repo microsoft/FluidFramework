@@ -4,25 +4,31 @@
  */
 
 /**
- * An event emitted by a `SharedTree` to indicate a state change. See {@link ISharedTreeEvents} for event argument information.
+ * An event emitted by a `SharedTree` to indicate a state change. See {@link ISharedTreeEvents} for event
+ * argument information.
  * @public
  */
 export enum SharedTreeEvent {
 	/**
 	 * An edit has been committed to the log.
 	 * This happens when either:
-	 * 	1. A locally generated edit is added to the log.
-	 * 	2. A remotely generated edit is added to the log.
+	 *
+	 * 1. A locally generated edit is added to the log.
+	 *
+	 * 2. A remotely generated edit is added to the log.
+	 *
 	 * Note that, for locally generated edits, this event will not be emitted again when that edit is sequenced.
 	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
 	 */
 	EditCommitted = 'committedEdit',
+
 	/**
 	 * A sequenced edit has been applied.
 	 * This includes local edits though the callback is only invoked once the sequenced version is received.
-	 * For edits that were local (see {@link SequencedEditAppliedEventArguments.wasLocal}, this callback will only be called once.
-	 * For non-local edits, it may be called multiple times: the number of calls and when they occur depends on caching and is an
-	 * implementation detail.
+	 * For edits that were local (see {@link SequencedEditAppliedEventArguments.wasLocal}, this callback will only
+	 * be called once.
+	 * For non-local edits, it may be called multiple times: the number of calls and when they occur depends on caching
+	 * and is an implementation detail.
 	 * Supports callbacks of type {@link SequencedEditAppliedHandler}.
 	 */
 	SequencedEditApplied = 'sequencedEditApplied',

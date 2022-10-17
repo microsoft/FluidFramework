@@ -106,18 +106,16 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     /**
      * Return this object if someone requests it directly
      * We will return this object in two scenarios:
-     *  1. the request url is a "/"
-     *  2. the request url is empty
+     *
+     * 1. the request url is a "/"
+     *
+     * 2. the request url is empty
      */
     public async request(req: IRequest): Promise<IResponse> {
         return defaultFluidObjectRequestHandler(this, req);
     }
 
     // #endregion IFluidRouter
-
-    // #region IFluidLoadable
-
-    // #endregion IFluidLoadable
 
     /**
      * Call this API to ensure PureDataObject is fully initialized.

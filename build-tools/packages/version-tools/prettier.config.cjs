@@ -1,34 +1,18 @@
-// TODO: Use shared config in build-common once version with config has been published.
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 module.exports = {
-    printWidth: 100,
-    quoteProps: "consistent",
-    semi: true,
-    singleQuote: false,
-    trailingComma: "all",
-    overrides: [
-        {
-            files: "lerna.json",
-            options: {
-                printWidth: 50,
-                tabWidth: 2,
-            },
-        },
-        {
-            files: "tsconfig*.json",
-            options: {
-                parser: "json5",
-                tabWidth: 2,
-                trailingComma: "all",
-                quoteProps: "preserve",
-            },
-        },
-        {
-            files: "*.json",
-            options: {
-                tabWidth: 2,
-                trailingComma: "all",
-                quoteProps: "preserve",
-            },
-        },
+    ...require("@fluidframework/build-common/prettier.config.cjs"),
+    importOrder: [
+        "^node:(.*)$", // Special-case `node:` imports
+        "<THIRD_PARTY_MODULES>",
+        "^fluid-framework$", // Special match for `fluid-framework` package
+        "^@fluidframework/(.*)$", // Match all `@fluidframework/` packages
+        "^@fluid-(.*?)/(.*)$", // Match other `@fluid-` scoped packages (`@fluid-experimental/`, `@fluid-tools/`, etc.)
+        "^[./]", // Match package-local file imports
     ],
+    importOrderSeparation: true,
+    importOrderSortSpecifiers: true,
 };

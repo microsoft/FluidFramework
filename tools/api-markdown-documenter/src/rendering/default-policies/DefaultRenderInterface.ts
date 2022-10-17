@@ -14,47 +14,19 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { filterByKind, mergeSections } from "../../utilities";
-import { renderMemberTables } from "../helpers";
-import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
+import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for `Interface` items.
  *
  * @remarks Format:
  *
- * - Tables
+ * - Tables: constructor-signatures, event properties, properties, methods, call-signatures, index-signatures
  *
- *   - event properties
- *
- *   - constructor-signatures
- *
- *   - properties
- *
- *   - methods
- *
- *   - call-signatures
- *
- *   - index-signatures
- *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
- *
- *   - event properties
- *
- *   - constructor-signatures
- *
- *   - properties
- *
- *   - methods
- *
- *   - call-signatures
- *
- *   - index-signatures
- *
- * Note: this ordering was established to mirror existing fluidframework.com rendering.
- * The plan is to change this in a subsequent change (before public release).
+ * - Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries}):
+ * constructor-signatures, event properties, properties, methods, call-signatures, index-signatures
  */
 export function renderInterfaceSection(
     apiInterface: ApiInterface,
@@ -63,7 +35,7 @@ export function renderInterfaceSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiInterface.members.length !== 0;
+    const hasAnyChildren = apiInterface.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
@@ -97,14 +69,14 @@ export function renderInterfaceSection(
         const renderedMemberTables = renderMemberTables(
             [
                 {
-                    headingTitle: "Events",
-                    itemKind: ApiItemKind.PropertySignature,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Construct Signatures",
                     itemKind: ApiItemKind.ConstructSignature,
                     items: constructSignatures,
+                },
+                {
+                    headingTitle: "Events",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Properties",
@@ -138,14 +110,14 @@ export function renderInterfaceSection(
         const renderedDetailsSection = renderChildDetailsSection(
             [
                 {
-                    headingTitle: "Event Details",
-                    itemKind: ApiItemKind.PropertySignature,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Construct Signature Details",
                     itemKind: ApiItemKind.ConstructSignature,
                     items: constructSignatures,
+                },
+                {
+                    headingTitle: "Event Details",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Property Details",

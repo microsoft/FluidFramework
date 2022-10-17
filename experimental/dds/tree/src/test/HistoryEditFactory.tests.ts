@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { revert } from '../HistoryEditFactory';
 import { DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { ChangeInternal, DetachInternal, Side, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
+import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
 import { expectDefined } from './utilities/TestCommon';
 import { refreshTestTree } from './utilities/TestUtilities';
 
@@ -78,8 +78,8 @@ describe('revert', () => {
 	});
 
 	/** This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
-	 *  empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
-	 *  empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
+	 * empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
+	 * empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
 	 */
 	it('handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId', () => {
 		const emptyTraitNodeId = 0 as DetachedSequenceId;

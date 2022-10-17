@@ -43,9 +43,6 @@ module.exports = env => {
             }),
             // new CleanWebpackPlugin(),
         ],
-        resolve: {
-            extensions: [".ts", ".tsx", ".js"],
-        },
     }, isProduction
         ? require("./webpack.prod")
         : require("./webpack.dev"));

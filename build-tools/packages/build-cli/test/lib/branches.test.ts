@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from "chai";
 
 import { MonoRepoKind } from "@fluidframework/build-tools";
-import { assert } from "chai";
+
 import {
-    generateBumpVersionBranchName,
     generateBumpDepsBranchName,
+    generateBumpVersionBranchName,
     generateReleaseBranchName,
     getDefaultBumpTypeForBranch,
 } from "../../src/lib/branches";
@@ -112,6 +113,12 @@ describe("generateReleaseBranchName", () => {
     it("virtualPatch patch", () => {
         const actual = generateReleaseBranchName(MonoRepoKind.BuildTools, "0.4.2002");
         const expected = "release/build-tools/0.4.2000";
+        assert.equal(actual, expected);
+    });
+
+    it("client using semver", () => {
+        const actual = generateReleaseBranchName(MonoRepoKind.Client, "1.2.3");
+        const expected = "release/1.2";
         assert.equal(actual, expected);
     });
 

@@ -528,15 +528,18 @@ describe("Directory", () => {
         describe("Op processing", () => {
             /**
              * These tests test the scenario found in the following bug:
-             * https://github.com/microsoft/FluidFramework/issues/2400
+             * {@link https://github.com/microsoft/FluidFramework/issues/2400}.
              *
              * - A SharedDirectory in local state performs a set or directory operation.
+             *
              * - A second SharedDirectory is then created from the summarize of the first one.
+             *
              * - The second SharedDirectory performs the same operation as the first one but with a different value.
+             *
              * - The expected behavior is that the first SharedDirectory updates the key with the new value. But in the
-             *   bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
-             *   an op. So when it gets a remote op with the same key, it ignores it as it has a pending op with the
-             *   same key.
+             * bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
+             * an op. So when it gets a remote op with the same key, it ignores it as it has a pending op with the
+             * same key.
              */
             it("should correctly process a set operation sent in local state", async () => {
                 // Set a key in local state.

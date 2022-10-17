@@ -5,18 +5,6 @@
 $footerheight: 90px; //135px;
 $ctaHeight: 124.7px; //200px;
 
-body {
-  margin-bottom: $footerheight;
-}
-
-footer {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: $footerheight;
-  width: 100%;
-}
-
 footer {
   background-color: $darkgray;
   font-size: 12px;
@@ -90,15 +78,13 @@ footer {
 .ctas {
   min-height: $ctaHeight;
   width: 100%;
-  position: absolute;
-  bottom: $footerheight;
+  position: relative;
   left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   align-content: center;
-  flex-wrap: wrap;
-  flex-direction: row;
+  flex-direction: column;
 
   p a {
     color: $banner-link-color;

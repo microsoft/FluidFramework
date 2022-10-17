@@ -16,6 +16,11 @@ export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
 }
 
+export interface IFocusSignalPayload {
+    userId: string;
+    focus: boolean;
+}
+
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
     private static readonly focusRequestType = "focusRequest";
@@ -30,7 +35,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
      */
     private readonly focusMap = new Map<string, Map<string, boolean>>();
 
-    private readonly onFocusSignalFn = (clientId: string, payload: any) => {
+    private readonly onFocusSignalFn = (clientId: string, payload: IFocusSignalPayload) => {
         const userId: string = payload.userId;
         const hasFocus: boolean = payload.focus;
 
@@ -43,7 +48,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.emit("focusChanged");
     };
 
-    public constructor(
+    constructor(
         container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
         private readonly signaler: Signaler,
@@ -64,7 +69,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId: string,
+            local: boolean,
+            payload: IFocusSignalPayload) => {
             this.onFocusSignalFn(clientId, payload);
         });
 

@@ -37,7 +37,7 @@ interface IAcceptedQuorumValue<T> {
      * - The sequence number of the "accept" op from the final client we expected signoff from
      * - The sequence number of the ClientLeave of the final client we expected signoff from
      * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-     *   was connected when the op was sequenced)
+     * was connected when the op was sequenced)
      *
      * For values set in detached state, it will be 0.
      */
@@ -432,11 +432,13 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
      * @internal
      */
     protected initializeLocalCore(): void { }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
      * @internal
      */
     protected onDisconnect(): void {

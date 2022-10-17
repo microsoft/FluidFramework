@@ -27,7 +27,7 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 }
 
 /**
- * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
+ * Represents a list similar to an HTML `<ul>` element.
  */
 export class DocList extends DocNodeContainer {
     /**
@@ -35,7 +35,7 @@ export class DocList extends DocNodeContainer {
      */
     public readonly listKind: ListKind;
 
-    constructor(parameters: IDocListParameters, childNodes?: ReadonlyArray<DocNode>) {
+    constructor(parameters: IDocListParameters, childNodes?: readonly DocNode[]) {
         super(parameters, childNodes);
 
         this.listKind = parameters.listKind ?? ListKind.Unordered;

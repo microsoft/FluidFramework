@@ -68,11 +68,9 @@ class TestSharedDataObject2 extends DataObject {
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         const parsed = parse(url, true);
-        if (parsed?.pathname === "/") {
-            return { value: this, status: 200, mimeType: "fluid/object" };
-        } else {
-            return super.request(request);
-        }
+        return parsed?.pathname === "/"
+            ? { value: this, status: 200, mimeType: "fluid/object" }
+            : super.request(request);
     }
 }
 
@@ -83,11 +81,9 @@ class TestSharedDataObject2 extends DataObject {
 class TestDataObjectWithRequestHeaders extends DataObject {
     public async request(request: IRequest): Promise<IResponse> {
         // If the request has headers, return a specialized response with the headers in the request.
-        if (request.headers !== undefined) {
-            return { value: request.headers, status: 200, mimeType: "request/headers" };
-        } else {
-            return super.request(request);
-        }
+        return request.headers !== undefined
+            ? { value: request.headers, status: 200, mimeType: "request/headers" }
+            : super.request(request);
     }
 }
 

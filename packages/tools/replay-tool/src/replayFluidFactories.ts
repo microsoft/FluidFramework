@@ -29,20 +29,20 @@ import {
 import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
     SharedIntervalCollection,
-    SharedNumberSequence,
-    SharedObjectSequence,
     SharedString,
-    SparseMatrix,
 } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import {
+    SharedNumberSequence,
+    SharedObjectSequence,
+    SparseMatrix,
+} from "@fluid-experimental/sequence-deprecated";
 import { UnknownChannelFactory } from "./unknownChannel";
 
 async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-    if (request.url === "/containerRuntime") {
-        return { mimeType: "fluid/object", status: 200, value: runtime };
-    } else {
-        return create404Response(request);
-    }
+    return request.url === "/containerRuntime"
+        ? { mimeType: "fluid/object", status: 200, value: runtime }
+        : create404Response(request);
 }
 
 /** Simple runtime factory that creates a container runtime */

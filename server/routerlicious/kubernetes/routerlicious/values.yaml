@@ -17,6 +17,7 @@ alfred:
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
+  sessionStickinessDurationMs: 3600000
   throttling:
     restCalls:
         maxPerMs: 1000000

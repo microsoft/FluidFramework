@@ -19,7 +19,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @internal
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
     readonly package: string | Readonly<IFluidPackage>;
@@ -28,13 +28,13 @@ export interface IFluidCodeDetails {
 // @public @deprecated (undocumented)
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface IFluidCodeDetailsConfig {
     // (undocumented)
     readonly [key: string]: string;
@@ -79,7 +79,7 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 export interface IFluidObject {
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface IFluidPackage {
     [key: string]: unknown;
     fluid: {
@@ -88,7 +88,7 @@ export interface IFluidPackage {
     name: string;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface IFluidPackageEnvironment {
     [target: string]: undefined | {
         files: string[];
@@ -185,7 +185,7 @@ export interface IResponse {
 // @public @deprecated (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
 // (No @packageDocumentation comment for this package)

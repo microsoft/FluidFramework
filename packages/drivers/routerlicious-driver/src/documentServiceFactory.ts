@@ -26,7 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { InMemoryCache } from "./cache";
+import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
 
@@ -38,6 +38,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enableDiscovery: false,
     enableWholeSummaryUpload: false,
     enableRestLess: true,
+    enableInternalSummaryCaching: true,
 };
 
 /**
@@ -47,8 +48,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
+    private readonly blobCache: ICache<ArrayBufferLike>;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -58,6 +59,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        this.blobCache = new InMemoryCache<ArrayBufferLike>();
+        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>()
+            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -214,6 +219,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
         if (!ordererUrl || !deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
@@ -223,6 +229,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             fluidResolvedUrl,
             ordererUrl,
             deltaStorageUrl,
+            deltaStreamUrl,
             storageUrl,
             logger2,
             this.tokenProvider,

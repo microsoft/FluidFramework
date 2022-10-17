@@ -5,7 +5,7 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { filterByKind, mergeSections } from "../../utilities";
 import { renderChildrenUnderHeading, renderMemberTables } from "../helpers";
 
@@ -19,7 +19,7 @@ export function renderEnumSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiEnum.members.length !== 0;
+    const hasAnyChildren = apiEnum.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

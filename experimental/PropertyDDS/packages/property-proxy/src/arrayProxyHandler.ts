@@ -135,14 +135,12 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
      */
     getOwnPropertyDescriptor(target: ComponentArray, key: string | typeof proxySymbol) {
         if (key !== "length") {
-            if (key === proxySymbol) {
-                return { configurable: true, enumerable: true, value: key, writable: false };
-            } else {
-                return {
+            return key === proxySymbol
+                ? { configurable: true, enumerable: true, value: key, writable: false }
+                : {
                     configurable: true, enumerable: true,
                     value: PropertyProxy.proxify(target.getProperty())[key], writable: true,
                 };
-            }
         } else {
             return { configurable: false, enumerable: false, value: target.getProperty().getLength(), writable: true };
         }

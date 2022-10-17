@@ -117,5 +117,3 @@ export class SmdeFactory implements IFluidDataStoreFactory {
         return runtime;
     }
 }
-
-export const fluidExport = new SmdeFactory();

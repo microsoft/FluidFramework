@@ -22,7 +22,10 @@ import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 /**
  * Description of a task manager operation
  */
-type ITaskManagerOperation = ITaskManagerVolunteerOperation | ITaskManagerAbandonOperation;
+type ITaskManagerOperation =
+    ITaskManagerVolunteerOperation |
+    ITaskManagerAbandonOperation |
+    ITaskManagerCompletedOperation;
 
 interface ITaskManagerVolunteerOperation {
     type: "volunteer";
@@ -34,8 +37,13 @@ interface ITaskManagerAbandonOperation {
     taskId: string;
 }
 
+interface ITaskManagerCompletedOperation {
+    type: "complete";
+    taskId: string;
+}
+
 interface IPendingOp {
-    type: "volunteer" | "abandon";
+    type: "volunteer" | "abandon" | "complete";
     messageId: number;
 }
 
@@ -57,12 +65,12 @@ const snapshotFileName = "header";
  *
  * ### Usage
  *
- * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
- * has acquired exclusive rights to run the task, or reject if the client is removed from the queue without acquiring
- * the rights.
+ * To volunteer for a task, use the `volunteerForTask()` method.  This returns a Promise that will resolve once the
+ * client has acquired exclusive rights to run the task, or reject if the client is removed from the queue without
+ * acquiring the rights.
  *
  * ```typescript
- * taskManager.lockTask("NameOfTask")
+ * taskManager.volunteerForTask("NameOfTask")
  *     .then(() => { doTheTask(); })
  *     .catch((err) => { console.error(err); });
  * ```
@@ -74,7 +82,7 @@ const snapshotFileName = "header";
  * taskManager.abandon("NameOfTask");
  * ```
  *
- * To inspect your state in the queue, you can use the `queued()` and `haveTaskLock()` methods.
+ * To inspect your state in the queue, you can use the `queued()` and `assignedTask()` methods.
  *
  * ```typescript
  * if (taskManager.queued("NameOfTask")) {
@@ -137,14 +145,26 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly queueWatcher: EventEmitter = new EventEmitter();
     // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
-    // disconnectWatcher emits an event whenever we get disconnected.
-    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
+    // connectionWatcher emits an event whenever we get connected or disconnected.
+    private readonly connectionWatcher: EventEmitter = new EventEmitter();
+    // completedWatcher emits an event whenever the local client receives a completed op.
+    private readonly completedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
      * Tracks the most recent pending op for a given task
      */
     private readonly latestPendingOps: Map<string, IPendingOp> = new Map();
+
+    /**
+     * Tracks tasks that are this client is currently subscribed to.
+     */
+    private readonly subscribedTasks: Set<string> = new Set();
+
+    /**
+     * Map to track tasks that have pending complete ops.
+     */
+     private readonly pendingCompletedTasks: Map<string, number[]> = new Map();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -170,6 +190,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
+            const pendingIds = this.pendingCompletedTasks.get(taskId);
+            if (pendingIds !== undefined && pendingIds.length > 0) {
+                // Ignore the volunteer op if we know this task is about to be completed
+                return;
+            }
             this.addClientToQueue(taskId, clientId);
         });
 
@@ -186,6 +211,33 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
 
             this.removeClientFromQueue(taskId, clientId);
+        });
+
+        this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
+            if (runtime.connected && local) {
+                const pendingOp = this.latestPendingOps.get(taskId);
+                assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
+                // TODO: check below comment and stuff, see if applicable
+                // Need to check the id, since it's possible to complete multiple times before the acks
+                if (messageId === pendingOp.messageId) {
+                    assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
+                    // Delete the pending, because we no longer have an outstanding op
+                    this.latestPendingOps.delete(taskId);
+                }
+
+                // Remove complete op from this.pendingCompletedTasks
+                const pendingIds = this.pendingCompletedTasks.get(taskId);
+                assert(pendingIds !== undefined && pendingIds.length > 0, 0x402 /* pendingIds is empty */);
+                const removed = pendingIds.shift();
+                assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
+            }
+
+            // For clients in queue, we need to remove them from the queue and raise the proper events.
+            if (!local) {
+                this.taskQueues.delete(taskId);
+                this.completedWatcher.emit("completed", taskId);
+                this.emit("completed", taskId);
+            }
         });
 
         runtime.getQuorum().on("removeMember", (clientId: string) => {
@@ -205,13 +257,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
         });
 
-        this.disconnectWatcher.on("disconnect", () => {
+        this.connectionWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
 
             // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
             // After reconnect these will get cleaned up by observing the clientLeaves.
             // However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
-            // .haveTaskLock() are also connection-state-aware to be consistent.
+            // .assigned() are also connection-state-aware to be consistent.
             for (const [taskId, clientQueue] of this.taskQueues.entries()) {
                 if (clientQueue[0] === this.runtime.clientId) {
                     this.emit("lost", taskId);
@@ -254,10 +306,33 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
-    public async lockTask(taskId: string) {
+    private submitCompleteOp(taskId: string) {
+        const op: ITaskManagerCompletedOperation = {
+            type: "complete",
+            taskId,
+        };
+        const pendingOp: IPendingOp = {
+            type: "complete",
+            messageId: ++this.messageId,
+        };
+
+        if (this.pendingCompletedTasks.has(taskId)) {
+            this.pendingCompletedTasks.get(taskId)?.push(pendingOp.messageId);
+        } else {
+            this.pendingCompletedTasks.set(taskId, [pendingOp.messageId]);
+        }
+
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
+    }
+
+    /**
+     * {@inheritDoc ITaskManager.volunteerForTask}
+     */
+    public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
-        if (this.haveTaskLock(taskId)) {
-            return;
+        if (this.assigned(taskId)) {
+            return true;
         }
 
         if (!this.connected) {
@@ -265,7 +340,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((resolve, reject) => {
+        const lockAcquireP = new Promise<boolean>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -274,11 +349,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 // Also check pending ops here because it's possible we are currently in the queue from a previous
                 // lock attempt, but have an outstanding abandon AND the outstanding volunteer for this lock attempt.
                 // If we reach the head of the queue based on the previous lock attempt, we don't want to resolve.
-                if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
+                if (this.assigned(taskId) && !this.latestPendingOps.has(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
-                    this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    resolve();
+                    this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                    this.completedWatcher.off("completed", checkIfCompleted);
+                    resolve(true);
                 }
             };
 
@@ -289,20 +365,35 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
                 reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
                 reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
+            };
+
+            const checkIfCompleted = (eventTaskId: string) => {
+                if (eventTaskId !== taskId) {
+                    return;
+                }
+
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
+                resolve(false);
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
             this.abandonWatcher.on("abandon", checkIfAbandoned);
-            this.disconnectWatcher.on("disconnect", rejectOnDisconnect);
+            this.connectionWatcher.on("disconnect", rejectOnDisconnect);
+            this.completedWatcher.on("completed", checkIfCompleted);
         });
 
         if (!this.queued(taskId)) {
@@ -312,25 +403,90 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return lockAcquireP;
     }
 
-    public abandon(taskId: string) {
-        if (!this.connected) {
-            throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
-        }
-
-        // Nothing to do if we're not at least trying to get the lock.
-        if (!this.queued(taskId)) {
+    /**
+     * {@inheritDoc ITaskManager.subscribeToTask}
+     */
+    public subscribeToTask(taskId: string) {
+        if (this.subscribed(taskId)) {
             return;
         }
+
+        const submitVolunteerOp = () => {
+            this.submitVolunteerOp(taskId);
+        };
+
+        const disconnectHandler = () => {
+            // Wait to be connected again and then re-submit volunteer op
+            this.connectionWatcher.once("connect", submitVolunteerOp);
+        };
+
+        const checkIfAbandoned = (eventTaskId: string) => {
+            if (eventTaskId !== taskId) {
+                return;
+            }
+
+            this.abandonWatcher.off("abandon", checkIfAbandoned);
+            this.connectionWatcher.off("disconnect", disconnectHandler);
+            this.connectionWatcher.off("connect", submitVolunteerOp);
+            this.completedWatcher.off("completed", checkIfCompleted);
+
+            this.subscribedTasks.delete(taskId);
+        };
+
+        const checkIfCompleted = (eventTaskId: string) => {
+            if (eventTaskId !== taskId) {
+                return;
+            }
+
+            this.abandonWatcher.off("abandon", checkIfAbandoned);
+            this.connectionWatcher.off("disconnect", disconnectHandler);
+            this.connectionWatcher.off("connect", submitVolunteerOp);
+            this.completedWatcher.off("completed", checkIfCompleted);
+
+            this.subscribedTasks.delete(taskId);
+        };
+
+        this.abandonWatcher.on("abandon", checkIfAbandoned);
+        this.connectionWatcher.on("disconnect", disconnectHandler);
+        this.completedWatcher.on("completed", checkIfCompleted);
+
+        if (!this.connected) {
+            disconnectHandler();
+        } else if (!this.assigned(taskId) && !this.queued(taskId)) {
+            // TODO simulate auto-ack in detached scenario
+            submitVolunteerOp();
+        }
+        this.subscribedTasks.add(taskId);
+    }
+
+    /**
+     * {@inheritDoc ITaskManager.abandon}
+     */
+    public abandon(taskId: string) {
+        // Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
+        // Otherwise, we should check to make sure the client is both connected queued for the task before sending an
+        // abandon op.
+        if (!this.subscribed(taskId) && !this.queued(taskId)) {
+            // Nothing to do
+            return;
+        }
+
         // TODO simulate auto-ack in detached scenario
         if (!this.isAttached()) {
             return;
         }
 
-        this.submitAbandonOp(taskId);
+        // If we're subscribed but not queued, we don't need to submit an abandon op (probably offline)
+        if (this.queued(taskId)) {
+            this.submitAbandonOp(taskId);
+        }
         this.abandonWatcher.emit("abandon", taskId);
     }
 
-    public haveTaskLock(taskId: string) {
+    /**
+     * {@inheritDoc ITaskManager.assigned}
+     */
+    public assigned(taskId: string) {
         if (!this.connected) {
             return false;
         }
@@ -341,6 +497,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             && !this.latestPendingOps.has(taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.queued}
+     */
     public queued(taskId: string) {
         if (!this.connected) {
             return false;
@@ -356,6 +515,31 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             && !this.latestPendingOps.has(taskId)
         )
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
+    }
+
+    /**
+     * {@inheritDoc ITaskManager.subscribed}
+     */
+    public subscribed(taskId: string): boolean {
+        return this.subscribedTasks.has(taskId);
+    }
+
+    /**
+     * {@inheritDoc ITaskManager.complete}
+     */
+    public complete(taskId: string): void {
+        if (!this.assigned(taskId)) {
+            throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
+        }
+
+        if (!this.connected) {
+            throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
+        }
+
+        this.submitCompleteOp(taskId);
+        this.taskQueues.delete(taskId);
+        this.completedWatcher.emit("completed", taskId);
+        this.emit("completed", taskId);
     }
 
     /**
@@ -388,10 +572,19 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected initializeLocalCore() { }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
     protected onDisconnect() {
-        this.disconnectWatcher.emit("disconnect");
+        this.connectionWatcher.emit("disconnect");
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     * @internal
+     */
+    protected onConnect() {
+        this.connectionWatcher.emit("connect");
     }
 
     //
@@ -423,6 +616,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 case "abandon":
                     this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
+                    break;
+
+                case "complete":
+                    this.opWatcher.emit("complete", op.taskId, message.clientId, local, messageId);
                     break;
 
                 default:

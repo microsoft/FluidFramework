@@ -193,12 +193,10 @@ export class MapKernel {
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
-                if (nextVal.done) {
-                    return { value: undefined, done: true };
-                } else {
+                return nextVal.done
+                    ? { value: undefined, done: true }
                     // Unpack the stored value
-                    return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
-                }
+                    : { value: [nextVal.value[0], nextVal.value[1].value], done: false };
             },
             [Symbol.iterator]() {
                 return this;
@@ -216,12 +214,10 @@ export class MapKernel {
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
-                if (nextVal.done) {
-                    return { value: undefined, done: true };
-                } else {
+                return nextVal.done
+                    ? { value: undefined, done: true }
                     // Unpack the stored value
-                    return { value: nextVal.value.value, done: false };
-                }
+                    : { value: nextVal.value.value, done: false };
             },
             [Symbol.iterator]() {
                 return this;

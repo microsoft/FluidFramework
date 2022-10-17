@@ -20,7 +20,7 @@ import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
-import { tinyliciousUrls } from "./multiResolver";
+import { tinyliciousUrls } from "./getUrlResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -65,7 +65,7 @@ export const after = (
 ) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
-        .env({ parseValules: true, inputSeparator: "__" })
+        .env({ parseValues: true, separator: "__" })
         .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
@@ -99,29 +99,27 @@ export const after = (
     }
 
     if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
-        options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
+        options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
-            options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
+            options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
             options.enableWholeSummaryUpload =
                 options.enableWholeSummaryUpload ?? config.get("fluid:webpack:enableWholeSummaryUpload") ?? false;
             if (typeof options.enableWholeSummaryUpload === "string") {
                 options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
             }
-            if (options.mode === "docker") {
-                options.tenantSecret = options.tenantSecret
-                    || config.get("fluid:webpack:docker:tenantSecret")
-                    || "create-new-tenants-if-going-to-production";
-            } else {
-                options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
-            }
+            options.tenantSecret = options.mode === "docker"
+                ? options.tenantSecret
+                    ?? config.get("fluid:webpack:docker:tenantSecret")
+                    ?? "create-new-tenants-if-going-to-production"
+                : options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
             if (options.mode === "r11s") {
-                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
-                options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
+                options.discoveryEndpoint = options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");
+                options.fluidHost = options.fluidHost ?? config.get("fluid:webpack:fluidHost");
             }
         }
     }
 
-    options.npm = options.npm || config.get("fluid:webpack:npm");
+    options.npm = options.npm ?? config.get("fluid:webpack:npm");
 
     console.log(options);
 

@@ -9,13 +9,15 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    positionToRowCol,
-    rowColToPosition,
-    SharedNumberSequence,
-    SparseMatrix,
     IntervalType,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
+import {
+    positionToRowCol,
+    rowColToPosition,
+    SparseMatrix,
+    SharedNumberSequence,
+} from "@fluid-experimental/sequence-deprecated";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -31,8 +33,8 @@ export interface ITableDocumentEvents extends IEvent {
 }
 
 /**
- * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
- *               the IMatrixProducer/Consumer interfaces instead.
+ * @deprecated `TableDocument` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents; }> implements ITable {
     public static getFactory() { return TableDocument.factory; }

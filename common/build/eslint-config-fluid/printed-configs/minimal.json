@@ -468,6 +468,9 @@
         "import/no-named-as-default-member": [
             1
         ],
+        "import/no-nodejs-modules": [
+            "warn"
+        ],
         "import/no-unassigned-import": [
             "error"
         ],

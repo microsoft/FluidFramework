@@ -32,6 +32,7 @@ export interface IRunConfig {
 export interface ILoadTest {
     run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
     detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
+    getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
 const taskManagerKey = "taskManager";
@@ -280,7 +281,7 @@ export class LoadTestDataStoreModel {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return Date.now() - (this.haveTaskLock() ? this.taskStartTime : this.startTime);
+        return Date.now() - (this.assigned() ? this.taskStartTime : this.startTime);
     }
 
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
@@ -324,26 +325,26 @@ export class LoadTestDataStoreModel {
         return handle.get();
     }
 
-    public haveTaskLock() {
+    public assigned() {
         if (this.runtime.disposed) {
             return false;
         }
-        return this.taskManager.haveTaskLock(this.taskId);
+        return this.taskManager.assigned(this.taskId);
     }
 
     public abandonTask() {
-        if (this.haveTaskLock()) {
+        if (this.assigned()) {
             // We are becoming the reader. Remove the reference to the GC data store.
             this.runDir.delete(gcDataStoreKey);
             this.taskManager.abandon(this.taskId);
         }
     }
 
-    public async lockTask() {
+    public async volunteerForTask() {
         if (this.runtime.disposed) {
             return;
         }
-        if (!this.haveTaskLock()) {
+        if (!this.assigned()) {
             try {
                 if (!this.runtime.connected) {
                     await new Promise<void>((resolve, reject) => {
@@ -362,7 +363,7 @@ export class LoadTestDataStoreModel {
                         this.runtime.once("disconnected", rejAndClear);
                     });
                 }
-                await this.taskManager.lockTask(this.taskId);
+                await this.taskManager.volunteerForTask(this.taskId);
                 this.taskStartTime = Date.now();
 
                 // We just became the writer. Add a reference to the GC data store.
@@ -400,7 +401,7 @@ export class LoadTestDataStoreModel {
                 ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
                 ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
                 ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-                `hasTask: ${this.haveTaskLock().toString().padStart(5)}`,
+                `hasTask: ${this.assigned().toString().padStart(5)}`,
                 blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
                 blobsEnabled ? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}` : "",
                 !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
@@ -440,16 +441,35 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // To set that up we start each client in a staggered way, each will independently go thru write
         // and listen cycles
 
-        const cycleMs = config.testConfig.readWriteCycleMs;
-        let t: NodeJS.Timeout | undefined;
+        let timeout: NodeJS.Timeout | undefined;
         if (config.verbose) {
             const printProgress = () => {
                 dataModel.printStatus();
-                t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+                timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
             };
-            t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+            timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
+        let runResult: [boolean, void];
+        try {
+            const opsRun = this.sendOps(dataModel, config);
+            const signalsRun = this.sendSignals(config);
+            // runResult is of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+            runResult = await Promise.all([opsRun, signalsRun]);
+        } finally {
+            if (timeout !== undefined) {
+                clearTimeout(timeout);
+            }
+        }
+        return runResult[0];
+    }
+
+    async getRuntime() {
+        return this.runtime;
+    }
+
+    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
+        const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
@@ -463,7 +483,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                     return true;
                 }
 
-                if (dataModel.haveTaskLock()) {
+                if (dataModel.assigned()) {
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
@@ -475,15 +495,36 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                     }
                 } else {
-                    await dataModel.lockTask();
+                    await dataModel.volunteerForTask();
                 }
             }
             return !this.runtime.disposed;
         } finally {
-            if (t !== undefined) {
-                clearTimeout(t);
-            }
             dataModel.printStatus();
+        }
+    }
+
+    async sendSignals(config: IRunConfig) {
+        const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === "undefined") ?
+                                        0 : config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
+        const cycleMs = config.testConfig.readWriteCycleMs;
+        const signalsPerCycle = (typeof config.testConfig.signalsPerMin === "undefined") ?
+                                 0 : config.testConfig.signalsPerMin * cycleMs / 60000;
+        const signalsGapMs = cycleMs / signalsPerCycle;
+        let submittedSignals = 0;
+        try {
+            while (submittedSignals < clientSignalsSendCount && !this.runtime.disposed) {
+                // all the clients are sending signals;
+                // with signals, there is no particular need to have staggered writers and readers
+                if (this.runtime.connected) {
+                    this.runtime.submitSignal("generic-signal", true);
+                    submittedSignals++;
+                }
+                // Random jitter of +- 50% of signalGapMs
+                await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));
+            }
+        } catch (e) {
+            console.error("Error during submitting signals: ", e);
         }
     }
 }

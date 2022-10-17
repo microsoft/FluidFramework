@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable new-cap */
+
 /**
  * @fileoverview Definition of the Int*Property classes
  */
@@ -209,26 +209,23 @@ export class Integer64Property extends ValueProperty {
      * Serialize the property
      *
      * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
+     * Only include dirty entries in the serialization
      * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for value properties
+     * Include the typeid of the root of the hierarchy - has no effect for value properties
      * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE   * @return {*} The serialized representation of this property
+     * The type of dirtiness to use when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
      * @return {*} The serialized representation of this property
      * @private
      */
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return [this._data.getValueLow(), this._data.getValueHigh()];
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType)
+                ? [this._data.getValueLow(), this._data.getValueHigh()]
+                : {};
         } else {
             return [this._data.getValueLow(), this._data.getValueHigh()];
         }
@@ -238,7 +235,7 @@ export class Integer64Property extends ValueProperty {
      * The toString() method returns a string representing the specified Integer64 object.
      *
      * @param {number} [in_radix = 10] - An integer between 2 and 36 specifying
-     *      the base to use for representing numeric values.
+     * the base to use for representing numeric values.
      * @return {string} A string representing the specified Integer64 object.
      */
     toString(in_radix) {

@@ -208,11 +208,17 @@ export interface IOrderedClientElectionEvents extends IEvent {
 export interface ISerializedElection {
     /** Sequence number at the time of the latest election. */
     readonly electionSequenceNumber: number;
-    /** Most recently elected client id. This is either:
+
+    /**
+     * Most recently elected client id. This is either:
+     *
      * 1. the interactive elected parent client, in which case electedClientId === electedParentId,
-     *  and the SummaryManager on the elected client will spawn a summarizer client, or
-     * 2. the non-interactive summarizer client itself. */
+     * and the SummaryManager on the elected client will spawn a summarizer client, or
+     *
+     * 2. the non-interactive summarizer client itself.
+     */
     readonly electedClientId: string | undefined;
+
     /** Most recently elected parent client id. This is always an interactive client. */
     readonly electedParentId: string | undefined;
 }
@@ -221,10 +227,15 @@ export interface ISerializedElection {
 export interface IOrderedClientElection extends IEventProvider<IOrderedClientElectionEvents> {
     /** Count of eligible clients in the collection. */
     readonly eligibleCount: number;
-    /** Currently elected client. This is either:
+
+    /**
+     * Currently elected client. This is either:
+     *
      * 1. the interactive elected parent client, in which case electedClientId === electedParentId,
-     *  and the SummaryManager on the elected client will spawn a summarizer client, or
-     * 2. the non-interactive summarizer client itself. */
+     * and the SummaryManager on the elected client will spawn a summarizer client, or
+     *
+     * 2. the non-interactive summarizer client itself.
+     */
     readonly electedClient: ITrackedClient | undefined;
     /** Currently elected parent client. This is always an interactive client. */
     readonly electedParent: ITrackedClient | undefined;
@@ -283,13 +294,20 @@ export class OrderedClientElection
      * electedClient leaves the quorum.
      *
      * A typical sequence looks like this:
+     *
      * i. Begin by electing A. electedParent === A, electedClient === A.
+     *
      * ii. SummaryManager running on A spawns a summarizer client, A'. electedParent === A, electedClient === A'
+     *
      * iii. A' stops producing summaries. A new parent client, B, is elected. electedParent === B, electedClient === A'
+     *
      * iv. SummaryManager running on A detects the change to electedParent and tells the summarizer to stop, but A'
-     *      is in mid-summarization. No new summarizer is spawned, as electedParent !== electedClient.
+     * is in mid-summarization. No new summarizer is spawned, as electedParent !== electedClient.
+     *
      * v. A' completes its summary, and the summarizer and backing client are torn down.
+     *
      * vi. A' leaves the quorum, and B takes its place as electedClient. electedParent === B, electedClient === B
+     *
      * vii. SummaryManager running on B spawns a summarizer client, B'. electedParent === B, electedClient === B'
      */
     public get electedClient() {
@@ -357,7 +375,8 @@ export class OrderedClientElection
         }
     }
 
-    /** Tries changing the elected client, raising an event if it is different.
+    /**
+     * Tries changing the elected client, raising an event if it is different.
      * Note that this function does no eligibility or suitability checks. If we get here, then
      * we will set _electedClient, and we will set _electedParent if this is an interactive client.
      */
@@ -467,7 +486,8 @@ export class OrderedClientElection
         return this.orderedClientCollection.getAllClients().filter(this.isEligibleFn);
     }
 
-    /** Advance election to the next-oldest client. This is called if the current parent is leaving the quorum,
+    /**
+     * Advance election to the next-oldest client. This is called if the current parent is leaving the quorum,
      * or if the current summarizer is not responsive and we want to stop it and spawn a new one.
      */
     public incrementElectedClient(sequenceNumber: number): void {
@@ -482,7 +502,8 @@ export class OrderedClientElection
         }
     }
 
-    /** (Re-)start election with the oldest client in the quorum. This is called if we need to summarize
+    /**
+     * (Re-)start election with the oldest client in the quorum. This is called if we need to summarize
      * and no client has been elected.
      */
     public resetElectedClient(sequenceNumber: number): void {

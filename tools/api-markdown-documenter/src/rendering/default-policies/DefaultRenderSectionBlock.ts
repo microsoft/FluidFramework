@@ -5,14 +5,15 @@
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { doesItemRequireOwnDocument, mergeSections } from "../../utilities";
 import {
-    renderBetaWarning,
+    renderBetaAlert,
     renderDeprecationNoticeSection,
     renderExamplesSection,
     renderHeadingForApiItem,
     renderRemarksSection,
+    renderSeeAlso,
     renderSignature,
     renderSummarySection,
     renderThrowsSection,
@@ -31,6 +32,7 @@ import {
  * 1. Examples (if any)
  * 1. `innerSectionBody`
  * 1. Throws (if any)
+ * 1. See (if any)
  *
  * @param apiItem - The API item being rendered.
  * @param innerSectionBody - A doc section of contents to be written after the standard metadata content types.
@@ -46,9 +48,7 @@ export function renderChildrenSection(
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
         docSections.push(
-            new DocSection({ configuration: config.tsdocConfiguration }, [
-                renderBetaWarning(config),
-            ]),
+            new DocSection({ configuration: config.tsdocConfiguration }, [renderBetaAlert(config)]),
         );
     }
 
@@ -64,7 +64,7 @@ export function renderChildrenSection(
         docSections.push(renderedSummary);
     }
 
-    // Render signature
+    // Render signature (if any)
     const renderedSignature = renderSignature(apiItem, config);
     if (renderedSignature !== undefined) {
         docSections.push(renderedSignature);
@@ -91,6 +91,12 @@ export function renderChildrenSection(
     const renderedThrows = renderThrowsSection(apiItem, config);
     if (renderedThrows !== undefined) {
         docSections.push(renderedThrows);
+    }
+
+    // Render @see content (if any)
+    const renderedSeeAlso = renderSeeAlso(apiItem, config);
+    if (renderedSeeAlso !== undefined) {
+        docSections.push(renderedSeeAlso);
     }
 
     // Merge sections to reduce and simplify hierarchy

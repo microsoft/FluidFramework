@@ -11,11 +11,13 @@ import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { fluidExport as smde, ProseMirror, ProseMirrorView } from "./prosemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
 
 export { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
 
 const defaultComponentId = "default";
+
+const smde = new ProseMirrorFactory();
 
 const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
     if (request.pathParts.length === 0) {

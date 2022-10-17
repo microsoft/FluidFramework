@@ -521,6 +521,9 @@
         "import/no-named-as-default-member": [
             1
         ],
+        "import/no-nodejs-modules": [
+            "warn"
+        ],
         "import/no-unassigned-import": [
             "error"
         ],
@@ -571,7 +574,12 @@
             "error"
         ],
         "jsdoc/require-description": [
-            "error"
+            "error",
+            {
+                "checkConstructors": false,
+                "checkGetters": true,
+                "checkSetters": true
+            }
         ],
         "jsdoc/require-hyphen-before-param-description": [
             "error"

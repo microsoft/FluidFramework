@@ -8,8 +8,14 @@ export {
     TreeNavigationResult,
     mapCursorField,
     SynchronousNavigationResult,
-} from "./cursor";
+    reduceField,
+} from "./cursorLegacy";
 export * from "./forest";
 export {
-    IEditableForest, FieldLocation, TreeLocation, isFieldLocation, ForestLocation, initializeForest,
+    IEditableForest,
+    FieldLocation,
+    TreeLocation,
+    isFieldLocation,
+    ForestLocation,
+    initializeForest,
 } from "./editableForest";

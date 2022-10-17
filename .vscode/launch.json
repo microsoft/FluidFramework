@@ -5,17 +5,73 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "npm test build-cli",
+            "cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "test"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
             "args": [
-                "info",
+                "release",
                 "-g",
-                "build-tools",
+                "client",
+                "-v",
+                "--no-policyCheck",
+            ],
+        },
+        {
+            // Runs the `flub release report --all` command with a debugger attached.
+            "name": "flub release report",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "release",
+                "report",
+                "--all",
+                "-v",
+            ],
+        },
+        {
+            "name": "flub bump deps",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "bump",
+                "deps",
+                "server",
+                "-t",
+                "greatest",
+                "-p",
+                // "-g",
+                // "azure",
+                "--no-commit",
+                "--no-install"
             ],
         },
         {

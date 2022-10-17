@@ -65,9 +65,10 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: tools/benchmark
-    tagName:
+    tagName: benchmark
     taskBuild: build
     taskBuildDocs: true
     taskLint: true
-    taskTest: test
+    taskTest:
+    - test
     buildNumberInPatch: true

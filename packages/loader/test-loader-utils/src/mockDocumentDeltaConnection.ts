@@ -4,7 +4,11 @@
  */
 
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
+import {
+    IAnyDriverError,
+    IDocumentDeltaConnection,
+    IDocumentDeltaConnectionEvents,
+} from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClientConfiguration,
@@ -16,7 +20,6 @@ import {
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {

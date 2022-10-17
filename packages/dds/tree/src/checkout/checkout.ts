@@ -23,7 +23,8 @@ export interface ICheckout<TEditBuilder> {
      * and do this in a way where there is control over which ones intermediate versions are displayed.
      */
     runTransaction(
-        transaction: (forest: IForestSubscription, editor: TEditBuilder) => TransactionResult): TransactionResult;
+        transaction: (forest: IForestSubscription, editor: TEditBuilder) => TransactionResult,
+    ): TransactionResult;
 }
 
 export enum TransactionResult {

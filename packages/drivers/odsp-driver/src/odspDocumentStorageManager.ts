@@ -10,6 +10,7 @@ import {
     delay,
 } from "@fluidframework/common-utils";
 import {
+    loggerToMonitoringContext,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -93,10 +94,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
-        private readonly relayServiceTenantAndSessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string | undefined,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super();
+        super(loggerToMonitoringContext(logger).config);
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -324,9 +325,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 },
             );
 
-            // Successful call, make network calls only
+            // Don't override ops which were fetched during initial load, since we could still need them.
+            const id = this.initializeFromSnapshot(odspSnapshotCacheValue, this.firstVersionCall);
             this.firstVersionCall = false;
-            const id = this.initializeFromSnapshot(odspSnapshotCacheValue);
 
             return id ? [{ id, treeId: undefined! }] : [];
         }

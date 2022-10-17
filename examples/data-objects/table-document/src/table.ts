@@ -8,8 +8,8 @@ import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 export type TableDocumentItem = any;
 
 /**
- * @deprecated - ITable is an abandoned prototype.  Please use SharedMatrix with
- *               the IMatrixProducer/Consumer interfaces instead.
+ * @deprecated `ITable` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  */
 export interface ITable {
     readonly numRows: number;

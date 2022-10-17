@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder, JsonCompatible } from "../../change-family";
-import { Transposed as T } from "../../changeset";
+import { ChangeEncoder } from "../../change-family";
+import { JsonCompatible } from "../../util";
+import { Transposed as T } from "./changeset";
 
 export type SequenceChangeset = T.LocalChangeset;
 

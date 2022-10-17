@@ -5,7 +5,7 @@
 import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocEmphasisSpan } from "../../doc-nodes";
 import { renderTableWithHeading } from "../helpers";
 

@@ -32,7 +32,7 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        value: ISharedObject,
+        protected readonly value: ISharedObject,
         path: string,
         routeContext: IFluidHandleContext,
     ) {

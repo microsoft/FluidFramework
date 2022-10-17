@@ -185,10 +185,9 @@ The 0.50 release contains internal changes to the Framework.
 
 ### Other notable changes
 
-- {{< apiref IFluidContainer >}}s have a new property,
-  [isDirty]({{< relref "IFluidContainer.md#isdirty-PropertySignature" >}}), which will be true if
-  the container has outstanding operations that have not been acknowledged by the Fluid service. Using this property
-  correctly can help prevent data loss due to service connectivity issues ({{< issue 7891 >}}).
+- [IFluidContainer][]s have a new property,
+  [isDirty]({{< relref "ifluidcontainer-interface.md#isdirty-propertysignature" >}}), which will be true if the container has outstanding operations that have not been acknowledged by the Fluid service.
+  Using this property correctly can help prevent data loss due to service connectivity issues ({{< issue 7891 >}}).
 
   See [isDirty in the Fluid container documentation]({{< relref "containers.md#isdirty" >}}) for more information.
 
@@ -238,7 +237,33 @@ better reflect their experimental state. If you use these classes, you can add a
 
 ### Other notable changes
 
-- The published {{< apiref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
-- Various APIs in the {{< apiref "azure-client" >}} and {{< apiref "tinylicious-client" >}} now return {{< apiref
-  "IFluidContainer" >}}s instead of {{< apiref "FluidContainer" >}}s. This change should have no effect to developers
-  since the runtime object is the same ({{< issue 7457 >}}).
+- The published {{< packageref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
+- Various APIs in the {{< packageref "azure-client" >}} and {{< packageref "tinylicious-client" >}} now return [IFluidContainer][]s instead of [FluidContainer][]s. This change should have no effect to developers since the runtime object is the same ({{< issue 7457 >}}).
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

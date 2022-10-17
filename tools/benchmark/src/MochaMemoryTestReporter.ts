@@ -141,10 +141,12 @@ class MochaMemoryTestReporter {
                         table.newRow();
                     });
                     console.log(`${table.toString()}`);
-                    console.log("------------------------------------------------------", `\n${red("ERRORS:")}`);
-                    failedTests.forEach(([testName, testData]) => {
-                        console.log(`\n${red(testName)}`, "\n", testData.error);
-                    });
+                    if (failedTests.length > 0) {
+                        console.log("------------------------------------------------------", `\n${red("ERRORS:")}`);
+                        failedTests.forEach(([testName, testData]) => {
+                            console.log(`\n${red(testName)}`, "\n", testData.error);
+                        });
+                    }
                     this.writeCompletedBenchmarks(suiteName);
                     this.inProgressSuites.delete(suiteName);
                 }

@@ -512,7 +512,7 @@ describe("Routerlicious", () => {
                     });
                 });
             });
-        });        
+        });
     });
 
     describe("storage", () => {
@@ -554,7 +554,7 @@ describe("Routerlicious", () => {
                 commitSequenceNumber: 0,
                 sequenceNumber: 0,
             };
-            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, defaultHash, url, url, [["code", proposal]]);
+            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, defaultHash, url, url, url, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
             const deli: IDeliState = JSON.parse(docDetails.value.deli);

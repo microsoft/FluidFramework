@@ -87,7 +87,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
             verifyCounterValues(-13, -13, -13);
         });
 
-        it("fires incremented events in 3 containers correctly", async () => {
+        it("fires incremented events in 3 containers correctly", async function() {
             const incrementSteps: { incrementer: ISharedCounter; incrementAmount: number; }[] = [
                 { incrementer: sharedCounter3, incrementAmount: -1 },
                 { incrementer: sharedCounter1, incrementAmount: 3 },
@@ -127,7 +127,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await provider.ensureSynchronized();
+                await provider.ensureSynchronized(this.timeout() / 3);
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);

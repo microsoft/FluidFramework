@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as path from "path";
 import * as os from "os";
-import { commonOptionString, parseOption } from "../common/commonOptions"
+import * as path from "path";
+
+import { commonOptionString, parseOption } from "../common/commonOptions";
 import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
@@ -15,7 +15,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     lintonly: boolean;
     showExec: boolean;
     clean: boolean;
-    matchedOnly: boolean
+    matchedOnly: boolean;
     buildScriptNames: string[];
     build?: boolean;
     vscode: boolean;
@@ -23,7 +23,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     fullSymlink: boolean | undefined;
     depcheck: boolean;
     force: boolean;
-    install: boolean
+    install: boolean;
     nohoist: boolean;
     uninstall: boolean;
     concurrency: number;
@@ -91,7 +91,8 @@ Options:
        --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
        --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
-`);
+`,
+    );
 }
 
 function setClean(build: boolean) {
