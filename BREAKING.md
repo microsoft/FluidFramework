@@ -22,6 +22,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
 - [Remove iframe-driver](#remove-iframe-driver)
+- [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -31,6 +32,13 @@ be created for the first time or from an existing context.
 ### Remove iframe-driver
 The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
 
+### Remove Deprecated Fields from ISummaryRuntimeOptions
+The following fields are being removed from `ISummaryRuntimeOptions` as they became properties from `ISummaryConfiguration`:
+
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
@@ -1528,6 +1536,18 @@ The `logger` property of `ContainerContext` has been marked deprecated. Loggers 
 
 ### ContainerErrorType.clientSessionExpiredError added
 We have session expiry for GC purposes. Once the session has expired, we want to throw this new clientSessionExpiredError to clear out any stale in-memory data that may still be on the container.
+
+### Tagged telemetry props will be sent to ITelemetryBaseLogger.send
+As of the 0.40 release, [telemetry properties on logging events may be tagged](#itelemetryproperties-may-be-tagged-for-privacy-purposes),
+meaning the property value may have the shape `{ value: foo, tag: someString }` instead of merely a primitive value.
+Unwrapped/untagged values are still supported.
+See the updated type definition of `ITelemetryProperties` in @fluidframework/common-definitions v0.21 (and v0.20.1).
+This was a breaking change that requires an update to `ITelemetryBaseLogger.send` to handle these tagged values.
+
+The 0.45 release introduces some cases where tagged properties are logged, so before integrating that release
+hosts should take care to properly handle tagged properties by inspecting the tag and logging, hashing, or redacting the value.
+See [this code](https://github.com/microsoft/FluidFramework/blob/main/packages/utils/telemetry-utils/src/logger.ts#L79-L107)
+for an example of how to handle tags.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

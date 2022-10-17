@@ -147,7 +147,6 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -378,40 +377,6 @@ export interface ISummaryRuntimeOptions {
      * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
-
-    /**
-     * Flag that disables summaries if it is set to true.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @defaultValue 7000 operations (ops)
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
-     */
-    maxOpsSinceLastSummary?: number;
-
-    /**
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     *
-     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
-     */
-    summarizerClientElection?: boolean;
-
-    /**
-     * Options that control the running summarizer behavior.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
-     * */
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -457,6 +422,17 @@ export interface IContainerRuntimeOptions {
      * @experimental Not ready for use.
      */
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    /**
+     * If specified, when in FlushMode.TurnBased, if the size of the ops between JS turns exceeds this value,
+     * an error will be thrown and the container will close.
+     *
+     * If unspecified, the limit is 950 * 1024.
+     *
+     * 'Infinity' will disable any limit.
+     *
+     * @experimental This config should be driven by the connection with the service and will be moved in the future.
+     */
+    readonly maxBatchSizeInBytes?: number;
 }
 
 /**
@@ -528,6 +504,12 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 
 const defaultFlushMode = FlushMode.TurnBased;
 
+// The actual limit is 1Mb (socket.io and Kafka limits)
+// We can't estimate it fully, as we
+// - do not know what properties relay service will add
+// - we do not stringify final op, thus we do not know how much escaping will be added.
+const defaultMaxBatchSizeInBytes = 950 * 1024;
+
 /**
  * @deprecated - use ContainerRuntimeMessage instead
  */
@@ -551,7 +533,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 /**
  * Unpacks runtime messages
  *
- * @remarks This API makes no promises regarding backward-compatability. This is internal API.
+ * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
  *
@@ -657,6 +639,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
             compressionOptions = {},
+            maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -733,6 +716,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flushMode,
                 enableOfflineLoad,
                 compressionOptions,
+                maxBatchSizeInBytes,
             },
             containerScope,
             logger,
@@ -875,13 +859,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-
-    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth usage,
-    // but at the same time we want to send these ops sooner, to reduce overall latency of processing a batch.
-    // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-    // payloads. That number represents final (compressed) bits (once compression is implemented).
-    private readonly pendingAttachBatch = new BatchManager(64 * 1024);
-    private readonly pendingBatch = new BatchManager();
+    private readonly pendingAttachBatch: BatchManager;
+    private readonly pendingBatch: BatchManager;
 
     private readonly garbageCollector: IGarbageCollector;
 
@@ -904,21 +883,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summariesDisabled: boolean;
     private isSummariesDisabled(): boolean {
-        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disabled";
     }
 
     private readonly heuristicsDisabled: boolean;
     private isHeuristicsDisabled(): boolean {
-        // back-compat: disableHeuristics was moved from ISummarizerOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
@@ -927,22 +896,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
             return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
         }
-        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
-            return true;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.summarizerClientElection === true
             : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
-        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
-            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.maxOpsSinceLastSummary
             : 0;
@@ -1013,6 +972,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         this._flushMode = runtimeOptions.flushMode;
+
+        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression
+        // & bandwidth usage, but at the same time we want to send these ops sooner, to reduce overall
+        // latency of processing a batch.
+        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
+        // payloads. That number represents final (compressed) bits (once compression is implemented).
+        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
+        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes);
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -1172,7 +1139,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
+                        this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
@@ -2701,7 +2668,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.

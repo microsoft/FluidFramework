@@ -233,7 +233,10 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag_2;
 
 // @public
-export interface EditableTree {
+export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+
+// @public
+export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
     readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
@@ -245,7 +248,8 @@ export interface EditableTree {
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
-    readonly root: UnwrappedEditableField;
+    readonly root: EditableField;
+    readonly unwrappedRoot: UnwrappedEditableField;
 }
 
 // @public
@@ -577,11 +581,13 @@ function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
+    // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
     down(key: FieldKey, index: number): TResult;
     // (undocumented)
     keys: Iterable<FieldKey>;
-    // (undocumented)
-    length(key: FieldKey): number;
     seek(offset: number): TResult;
     readonly type: TreeType;
     up(): TResult;
@@ -672,11 +678,13 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: Jsonable<T>);
     // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
+    // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
-    // (undocumented)
-    length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
@@ -1346,6 +1354,10 @@ export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigati
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: JsonableTree[], index: number, field?: DetachedField);
     // (undocumented)
+    childFieldLength(key: FieldKey): number;
+    // (undocumented)
+    currentFieldLength(): number;
+    // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     protected getNode(): JsonableTree;
@@ -1359,8 +1371,6 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     protected readonly keyStack: FieldKey[];
-    // (undocumented)
-    length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
