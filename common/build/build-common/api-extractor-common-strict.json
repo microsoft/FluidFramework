@@ -50,6 +50,7 @@
       // Disabled. We don't require that all exported members have an explicit release tag. While being explicit
       // is preferred and is a best practice, enabling this requires that we have explicit release tags all the
       // way down, which makes it very tough to adopt this config for most of our packages.
+      // Packages may override this if they wish to enforce the presence of release tags.
       "ae-missing-release-tag": {
         "logLevel": "none",
         "addToApiReportFile": false

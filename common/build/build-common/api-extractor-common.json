@@ -91,7 +91,7 @@
          *
          * DEFAULT VALUE: false
          */
-        "addToApiReviewFile": true
+        // "addToApiReviewFile": false
       }
     },
 
@@ -104,7 +104,8 @@
      */
     "extractorMessageReporting": {
       "default": {
-        "logLevel": "error"
+        "logLevel": "error",
+        "addToApiReportFile": true
       },
       // Prevent cyclic `@inheritDoc` comments
       "ae-cyclic-inherit-doc": {
@@ -115,7 +116,7 @@
         "logLevel": "error"
       },
       "ae-forgotten-export": {
-        "logLevel": "error"
+        "logLevel": "warning"
       },
       // Disabled. We don't require that internal members be prefixed with an underscore.
       "ae-internal-missing-underscore": {
@@ -124,7 +125,19 @@
       "ae-missing-release-tag": {
         "logLevel": "none"
       },
+      // Require packages to include `@packageDocumentation` comment
+      "ae-misplaced-package-tag": {
+        "logLevel": "error"
+      },
+      // The @inheritDoc tag needs a TSDoc declaration reference.
+      "ae-unresolved-inheritdoc-base": {
+        "logLevel": "error"
+      },
       "ae-unresolved-inheritdoc-reference": {
+        "logLevel": "error"
+      },
+      // The @link tag needs a TSDoc declaration reference.
+      "ae-unresolved-link": {
         "logLevel": "error"
       }
     },
