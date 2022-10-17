@@ -218,6 +218,6 @@ export interface IMember {
 }
 
 /**
- * An extended member object that includes currentConnectionId
+ * An extended member object that includes currentConnection
  */
-export type IMyself<M extends IMember = IMember> = M & { currentConnectionId: string; };
+export type IMyself<M extends IMember = IMember> = M & { currentConnection: string; };

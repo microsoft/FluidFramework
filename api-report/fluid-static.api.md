@@ -88,7 +88,7 @@ export interface IMember {
 
 // @public
 export type IMyself<M extends IMember = IMember> = M & {
-    currentConnectionId: string;
+    currentConnection: string;
 };
 
 // @public

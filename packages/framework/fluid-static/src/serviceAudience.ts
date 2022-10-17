@@ -123,7 +123,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
         return undefined;
       }
 
-    const myself: IMyself<M> = { ...member, currentConnectionId: clientId };
+    const myself: IMyself<M> = { ...member, currentConnection: clientId };
 
     return myself;
   }
