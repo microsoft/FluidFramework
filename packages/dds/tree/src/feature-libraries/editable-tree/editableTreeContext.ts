@@ -6,9 +6,8 @@
 import { assert } from "@fluidframework/common-utils";
 import { IEditableForest, TreeNavigationResult } from "../../forest";
 import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { rootFieldKey } from "../../tree";
-import { proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
-import { getFieldKind } from "./utilities";
+import { rootFieldKey, symbolFromKey } from "../../tree";
+import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -29,7 +28,13 @@ export interface EditableTreeContext {
      *
      * Not (yet) supported: create properties, set values and delete properties.
      */
-    readonly root: UnwrappedEditableField;
+    readonly root: EditableField;
+
+    /**
+     * Same as `root`, but with unwrapped fields.
+     * See ${@link UnwrappedEditableField} for what is unwrapped.
+     */
+    readonly unwrappedRoot: UnwrappedEditableField;
 
     /**
      * Call before editing.
@@ -71,7 +76,16 @@ export class ProxyContext implements EditableTreeContext {
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
     }
 
-    public get root(): UnwrappedEditableField {
+    public get unwrappedRoot(): UnwrappedEditableField {
+        return this.getRoot(true) as UnwrappedEditableField;
+    }
+
+    public get root(): EditableField {
+        return this.getRoot(false) as EditableField;
+    }
+
+    private getRoot(unwrap: boolean) {
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
         const destination = this.forest.root(this.forest.rootField);
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
@@ -83,7 +97,6 @@ export class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
-        return proxifyField(getFieldKind(rootSchema), targets);
+        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
     }
 }

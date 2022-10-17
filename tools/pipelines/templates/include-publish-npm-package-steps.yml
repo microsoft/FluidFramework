@@ -53,7 +53,6 @@ steps:
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
           echo Deleting @fluid-msinternal packages
@@ -87,7 +86,7 @@ steps:
       fi
       echo Tag: $tag
       cp .npmrc ~/.npmrc
-      t1=0
+      maximumRetryIfNetworkError=3
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
         sorted=true
@@ -103,31 +102,51 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
-          if grep -q "npm ERR!" "publish_log"
-          then
-              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
-              then
-                let t1+=1
-              else
-                echo Package has already been published.
-                local_f="${f}_local"
-                mv "$f" "$local_f"
-                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                npm pack $package_name
-                if cmp -s "$f" "$local_f"
+          for i in $( seq 1 $maximumRetryIfNetworkError )
+          do
+            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+
+            if grep -q "npm ERR!" "publish_log"
+            then
+                if grep -q "code ENOTFOUND" "publish_log"
                 then
-                  echo Continuing as published package matches the current one that was attempting to be released.
+                  if ! $i -eq $maximumRetryIfNetworkError
+                  then
+                    echo "Network Error Detected"
+                    continue
+                  else
+                    echo "Final Network Error"
+                    exit 1
+                  fi
                 else
-                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                  let t1+=1
+                  if grep -q "You cannot publish over the previously published versions" "publish_log"
+                  then
+                    echo Package has already been published.
+                    local_f="${f}_local"
+                    mv "$f" "$local_f"
+                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                    npm pack $package_name
+                    if cmp -s "$f" "$local_f"
+                    then
+                      echo Continuing as published package matches the current one that was attempting to be released.
+                      rm "$f"
+                      mv "$local_f" "$f"
+                      break
+                    else
+                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                    fi
+                  fi
+                  rm "$f"
+                  mv "$local_f" "$f"
+                  exit 1
                 fi
-                rm "$f"
-                mv "$local_f" "$f"
-              fi
-          fi
-          rm publish_log
+            else
+              rm publish_log
+              break
+            fi
+            rm publish_log
+          done
         fi
       done
       rm ~/.npmrc
-      exit $t1
+      exit 0
