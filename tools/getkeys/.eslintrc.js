@@ -10,10 +10,13 @@ module.exports = {
     "parserOptions": {
         project: ["./tsconfig.json"],
     },
+<<<<<<< HEAD
     "env": {
         "browser": true,
         "node": true
     },
+=======
+>>>>>>> 15109ae46a344f09fb99c2b1bd63923df50cdc02
     "rules": {
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
