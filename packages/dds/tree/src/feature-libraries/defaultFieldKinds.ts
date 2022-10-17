@@ -27,6 +27,7 @@ import {
     NodeChangeEncoder,
     FieldEditor,
     NodeChangeReferenceFilter,
+    referenceFreeFieldChangeRebaser,
 } from "./modular-schema";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
@@ -76,17 +77,10 @@ export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncode
  */
 function commutativeRebaser<TChange>(data: {
     compose: (changes: TChange[]) => TChange;
-    invert: (changes: TaggedChange<TChange>) => TChange;
-    filterReferences(
-        change: TChange,
-        shouldRemoveReference: (revision: RevisionTag) => boolean,
-        filterChild: NodeChangeReferenceFilter,
-    ): TChange;
+    invert: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
-    return {
-        rebase: (change: TChange, over: TaggedChange<TChange>) => change,
-        ...data,
-    };
+    const rebase = (change: TChange, _over: TChange) => change;
+    return referenceFreeFieldChangeRebaser({ ...data, rebase })
 }
 
 /**
@@ -97,15 +91,13 @@ function commutativeRebaser<TChange>(data: {
  */
 export function lastWriteWinsRebaser<TChange>(data: {
     noop: TChange;
-    invert: (changes: TaggedChange<TChange>) => TChange;
+    invert: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
-    return {
-        rebase: (change: TChange, over: TaggedChange<TChange>) => change,
-        compose: (changes: TChange[]) =>
-            changes.length >= 0 ? changes[changes.length - 1] : data.noop,
-        invert: data.invert,
-        filterReferences: (change, _filter) => change,
-    };
+    const compose = (changes: TChange[]) =>
+        changes.length >= 0 ? changes[changes.length - 1] : data.noop;
+
+    const rebase = (change: TChange, _over: TChange) => change;
+    return referenceFreeFieldChangeRebaser({ ...data, compose, rebase });
 }
 
 export interface Replacement<T> {
@@ -152,13 +144,12 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 /**
  * ChangeHandler that only handles no-op / identity changes.
  */
-export const noChangeHandle: FieldChangeHandler<0> = {
-    rebaser: {
+export const noChangeHandler: FieldChangeHandler<0> = {
+    rebaser: referenceFreeFieldChangeRebaser({
         compose: (changes: 0[], composeChild: NodeChangeComposer) => 0,
-        invert: (changes: TaggedChange<0>, invertChild: NodeChangeInverter) => 0,
-        rebase: (change: 0, over: TaggedChange<0>, rebaseChild: NodeChangeRebaser) => 0,
-        filterReferences: (change: 0, _shouldRemoveReference, _filterChild) => 0,
-    },
+        invert: (changes: 0, invertChild: NodeChangeInverter) => 0,
+        rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
+    }),
     encoder: new UnitEncoder(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
     intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
@@ -176,8 +167,7 @@ export const noChangeHandle: FieldChangeHandler<0> = {
 export const counterHandle: FieldChangeHandler<number> = {
     rebaser: commutativeRebaser({
         compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-        invert: (change: TaggedChange<number>) => -change,
-        filterReferences: (change: number, _filter, _filterChild) => change,
+        invert: (change: number) => -change,
     }),
     encoder: new ValueEncoder<number>(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
@@ -220,7 +210,7 @@ export interface ValueChangeset {
     changes?: NodeChangeset;
 }
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = referenceFreeFieldChangeRebaser({
     compose: (changes: ValueChangeset[], composeChildren: NodeChangeComposer): ValueChangeset => {
         if (changes.length === 0) {
             return {};
@@ -253,24 +243,24 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
         return composed;
     },
 
-    invert: (change: TaggedChange<ValueChangeset>, invertChild: NodeChangeInverter): ValueChangeset => {
+    invert: (change: ValueChangeset, invertChild: NodeChangeInverter): ValueChangeset => {
         // TODO: Handle the value inverse
         const inverse: ValueChangeset = {};
-        if (change.change.changes !== undefined) {
-            inverse.changes = invertChild(change.change.changes);
+        if (change.changes !== undefined) {
+            inverse.changes = invertChild(change.changes);
         }
         return inverse;
     },
 
     rebase: (
         change: ValueChangeset,
-        over: TaggedChange<ValueChangeset>,
+        over: ValueChangeset,
         rebaseChild: NodeChangeRebaser,
     ): ValueChangeset => {
-        if (change.changes === undefined || over.change.changes === undefined) {
+        if (change.changes === undefined || over.changes === undefined) {
             return change;
         }
-        return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
+        return { ...change, changes: rebaseChild(change.changes, over.changes) };
     },
 
     filterReferences: (
@@ -282,7 +272,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
             ? change
             : { ...change, changes: filterChild(change.changes) };
     },
-};
+});
 
 interface EncodedValueChangeset {
     value?: JsonableTree;
@@ -416,7 +406,7 @@ export interface OptionalChangeset {
     childChange?: NodeChangeset;
 }
 
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = referenceFreeFieldChangeRebaser({
     compose: (
         changes: OptionalChangeset[],
         composeChild: NodeChangeComposer,
@@ -456,16 +446,16 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
         return composed;
     },
 
-    invert: (change: TaggedChange<OptionalChangeset>, invertChild: NodeChangeInverter): OptionalChangeset => {
+    invert: (change: OptionalChangeset, invertChild: NodeChangeInverter): OptionalChangeset => {
         const inverse: OptionalChangeset = {};
 
-        if (change.change.fieldChange !== undefined) {
+        if (change.fieldChange !== undefined) {
             // TODO: Invert the content in the fieldChange
-            inverse.fieldChange = { wasEmpty: change.change.fieldChange.newContent === undefined };
+            inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
         }
 
-        if (change.change.childChange !== undefined) {
-            inverse.childChange = invertChild(change.change.childChange);
+        if (change.childChange !== undefined) {
+            inverse.childChange = invertChild(change.childChange);
         }
 
         return inverse;
@@ -473,12 +463,12 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
     rebase: (
         change: OptionalChangeset,
-        over: TaggedChange<OptionalChangeset>,
+        over: OptionalChangeset,
         rebaseChild: NodeChangeRebaser,
     ): OptionalChangeset => {
         if (change.fieldChange !== undefined) {
-            if (over.change.fieldChange !== undefined) {
-                const wasEmpty = over.change.fieldChange.newContent === undefined;
+            if (over.fieldChange !== undefined) {
+                const wasEmpty = over.fieldChange.newContent === undefined;
 
                 // We don't have to rebase the child changes, since the other child changes don't apply to the same node
                 return {
@@ -491,14 +481,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
         }
 
         if (change.childChange !== undefined) {
-            if (over.change.fieldChange !== undefined) {
+            if (over.fieldChange !== undefined) {
                 // The node the child changes applied to no longer exists so we drop the changes.
                 // TODO: Represent muted changes
                 return {};
             }
 
-            if (over.change.childChange !== undefined) {
-                return { childChange: rebaseChild(change.childChange, over.change.childChange) };
+            if (over.childChange !== undefined) {
+                return { childChange: rebaseChild(change.childChange, over.childChange) };
             }
         }
 
@@ -514,7 +504,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
             ? change
             : { ...change, childChange: filterChild(change.childChange) };
     },
-};
+});
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
     /**
@@ -684,7 +674,7 @@ export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
 export const forbidden: FieldKind = new FieldKind(
     brand("Forbidden"),
     Multiplicity.Forbidden,
-    noChangeHandle,
+    noChangeHandler,
     // All multiplicities other than Value support empty.
     (types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Value,
     new Set(),

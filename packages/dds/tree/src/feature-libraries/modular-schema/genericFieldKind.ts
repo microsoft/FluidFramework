@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TaggedChange, RevisionTag } from "../../rebase";
+import { RevisionTag } from "../../rebase";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
@@ -16,6 +16,7 @@ import {
     NodeChangeInverter,
     NodeChangeRebaser,
     NodeChangeReferenceFilter,
+    referenceFreeFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -49,7 +50,7 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-    rebaser: {
+    rebaser: referenceFreeFieldChangeRebaser({
         compose: (
             changes: GenericChangeset[],
             composeChildren: NodeChangeComposer,
@@ -79,8 +80,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             return composed;
         },
-        invert: (change: TaggedChange<GenericChangeset>, invertChild: NodeChangeInverter): GenericChangeset => {
-            return change.change.map(
+        invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
+            return change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
                     index,
                     nodeChange: invertChild(nodeChange),
@@ -89,15 +90,15 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
         },
         rebase: (
             change: GenericChangeset,
-            over: TaggedChange<GenericChangeset>,
+            over: GenericChangeset,
             rebaseChild: NodeChangeRebaser,
         ): GenericChangeset => {
             const rebased: GenericChangeset = [];
             let iChange = 0;
             let iOver = 0;
-            while (iChange < change.length && iOver < over.change.length) {
+            while (iChange < change.length && iOver < over.length) {
                 const a = change[iChange];
-                const b = over.change[iOver];
+                const b = over[iOver];
                 if (a.index === b.index) {
                     rebased.push({
                         index: a.index,
@@ -127,7 +128,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 }),
             );
         },
-    },
+    }),
     encoder: {
         encodeForJson(
             formatVersion: number,
