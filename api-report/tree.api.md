@@ -1359,6 +1359,14 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 // @public
 export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
 
+// @public (undocumented)
+export interface TaggedChange<TChangeset> {
+    // (undocumented)
+    change: TChangeset;
+    // (undocumented)
+    revision: RevisionTag | undefined;
+}
+
 // @public
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: JsonableTree[], index: number, field?: DetachedField);
