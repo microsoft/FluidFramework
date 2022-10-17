@@ -1,3 +1,4 @@
+// Common base API-Extractor configuration.
 {
   "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 
@@ -63,7 +64,7 @@
      *
      * TypeScript message identifiers start with "TS" followed by an integer.  For example: "TS2551"
      *
-     * DEFAULT VALUE:  A single "default" entry with logLevel=warning.
+     * DEFAULT VALUE: A single "default" entry with logLevel=warning.
      */
     "compilerMessageReporting": {
       /**
@@ -82,7 +83,7 @@
          *
          * DEFAULT VALUE: "warning"
          */
-        "logLevel": "error"
+        "logLevel": "error",
         /**
          * When addToApiReviewFile is true:  If API Extractor is configured to write an API report file (.api.md),
          * then the message will be written inside that file; otherwise, the message is instead logged according to
@@ -90,15 +91,8 @@
          *
          * DEFAULT VALUE: false
          */
-        // "addToApiReviewFile": false
+        "addToApiReviewFile": true
       }
-
-      // "TS2551": {
-      //   "logLevel": "warning",
-      //   "addToApiReviewFile": true
-      // },
-      //
-      // . . .
     },
 
     /**
@@ -111,20 +105,29 @@
     "extractorMessageReporting": {
       "default": {
         "logLevel": "error"
-        // "addToApiReviewFile": false
       },
       "ae-forgotten-export": {
         "logLevel": "error"
       },
       "ae-extra-release-tag": {
-        "logLevel": "warning"
+        "logLevel": "error"
       },
       "ae-missing-release-tag": {
         "logLevel": "none"
       },
       "ae-unresolved-inheritdoc-reference": {
         "logLevel": "error"
-      }
+      },
+      // Disabled. We don't require that internal members be prefixed with an underscore.
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      // Prevent cyclic `@inheritDoc` comments
+      "ae-cyclic-inherit-doc": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
     },
 
     /**
@@ -138,13 +141,6 @@
       "default": {
         "logLevel": "error"
       }
-
-      // "tsdoc-link-tag-unescaped-text": {
-      //   "logLevel": "warning",
-      //   "addToApiReviewFile": true
-      // },
-      //
-      // . . .
     }
   }
 }
