@@ -15,7 +15,13 @@ import * as RenderingHelpers from "./helpers";
 export { DefaultRenderingPolicies };
 export { RenderingHelpers };
 
-export * from "./Rendering";
-export * from "./RenderingPolicy";
+export { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./Rendering";
+export {
+    defaultRenderingPolicies,
+    RenderApiItemWithChildren,
+    RenderApiItemWithoutChildren,
+    RenderingPolicies,
+    RenderSectionWithInnerContent,
+} from "./RenderingPolicy";
 
 /* eslint-enable unicorn/prefer-export-from */
