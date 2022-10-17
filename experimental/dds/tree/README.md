@@ -136,7 +136,7 @@ function getViewAfterEdit(sharedTree: SharedTree, editId: EditId): TreeView {
 
 ### Listening to changes to the tree
 
-SharedTree exposes an `EditCommitted` event which fires whenever local or remote edits are applied to the tree. Beware! This API has a severe pitfall. It is not guaranteed that the edit provided by `EditCommitted` is the most recent edit in the tree's edit log. This is because local edits are always considered to most recent in the log, but there might be remote edits from other clients which are _sequenced before_ but _discovered after_ the local edits. Therefore, code which is using the `EditId` of the edit provided by `EditCommitted` to query the `LogViewer` requires very careful attention and is prone to bugs.
+SharedTree exposes an `EditCommitted` event which fires whenever local or remote edits are applied to the tree. Beware! This API has a severe pitfall. It is not guaranteed that the edit provided by `EditCommitted` is the most recent edit in the tree's edit log. This is because local edits are always considered to be most recent in the log, but there might be remote edits from other clients which are _sequenced before_ but _discovered after_ the local edits. Therefore, code which is using the `EditId` of the edit provided by `EditCommitted` to query the `LogViewer` requires very careful attention and is prone to bugs.
 
 You are _strongly_ encouraged to use a `Checkout` instead which provides a cleaner and safer API for listening to changes to the tree. See "Use a Checkout" below for more information.
 
