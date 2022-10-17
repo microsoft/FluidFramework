@@ -144,6 +144,9 @@ export const enum CursorLocationType {
 // @public
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 
+// @public
+export function cursorToJsonObjectNew(reader: ITreeCursorNew): JsonCompatible;
+
 // @public (undocumented)
 function decodeJson<TNodeChange>(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder_2<TNodeChange>): Changeset<TNodeChange>;
 
@@ -1317,6 +1320,9 @@ export class SimpleDependee implements Dependee {
     // (undocumented)
     removeDependent(dependent: Dependent): void;
 }
+
+// @public
+export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
 
 // @public (undocumented)
 export function singleTextCursor(root: JsonableTree): TextCursor;

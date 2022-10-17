@@ -343,7 +343,9 @@ export function testJsonableTreeCursor(
                 cursor.enterField(key);
                 assert(
                     0 <= index && index < cursor.getFieldLength(),
-                    `.length() must include index of existing child '${String(key)}[${index}]'.`,
+                    `.getFieldLength() must include index of existing child '${String(
+                        key,
+                    )}[${index}]'.`,
                 );
 
                 assert.doesNotThrow(
@@ -359,7 +361,9 @@ export function testJsonableTreeCursor(
                 cursor.enterField(key);
                 assert(
                     !(index >= 0) || index >= cursor.getFieldLength(),
-                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
+                    `.getFieldLength() must exclude index of missing child '${String(
+                        key,
+                    )}[${index}]'.`,
                 );
 
                 assert.throws(
@@ -479,6 +483,23 @@ export function testJsonableTreeCursor(
                 });
             });
         });
+
+        for (const [name, data] of cursorTestCases) {
+            const restrictedKeys: FieldKey[] = [
+                brand("__proto__"),
+                brand("toString"),
+                brand("toFixed"),
+                brand("hasOwnProperty"),
+            ];
+
+            it(`returns no values for retricted keys on ${name} tree`, () => {
+                for (const key of restrictedKeys) {
+                    const cursor = factory(data);
+                    cursor.enterField(key);
+                    assert.equal(cursor.getFieldLength(), 0);
+                }
+            });
+        }
     });
 }
 
@@ -501,6 +522,7 @@ function traverseNode(cursor: ITreeCursor) {
 
         const firstNodeResult = cursor.firstNode();
         if (!firstNodeResult) {
+            cursor.exitField();
             break;
         }
 
