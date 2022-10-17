@@ -67,6 +67,18 @@ export class EditManager<
     }
 
     public getSummaryData(): ReadonlySummaryData<TChangeset> {
+        // The assert below is acceptable at present because summarization only ever occurs on a client with no
+        // local/in-flight changes.
+        // In the future we may wish to relax this constraint. For that to work, the current implementation of
+        // `EditManager` would have to be amended in one of two ways:
+        // A) Changes made by the local session should be represented by a branch in `EditManager.branches`.
+        // B) The contents of such a branch should be computed on demand based on the trunk.
+        // Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
+        // rebasing trunk changes over the inverse of trunk changes.
+        assert(
+            this.localChanges.length === 0,
+            "Clients with local changes cannot be used to generate summaries",
+        );
         return { trunk: this.trunk, branches: this.branches };
     }
 
