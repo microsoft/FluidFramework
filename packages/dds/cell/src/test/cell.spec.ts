@@ -179,6 +179,35 @@ describe("Cell", () => {
                 assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
             });
 
+            it("Shouldn't overwrite value if there is pending set", () => {
+                const value1 = "value1";
+                const pending1 = "pending1";
+                const pending2 = "pending2";
+                cell1.set(value1);
+                cell2.set(pending1);
+                cell2.set(pending2);
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell with processed message
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), value1, "could not get the set value");
+
+                // Verify the SharedCell with 2 pending messages
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell gets updated from remote
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), pending1, "could not get the set value");
+
+                // Verify the SharedCell with 1 pending message
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+            });
+
             it("Shouldn't delete value if there is pending set", () => {
                 const previousValues: any[] = [];
 
@@ -193,15 +222,13 @@ describe("Cell", () => {
 
                 containerRuntimeFactory.processSomeMessages(2);
 
-                assert.equal(previousValues.length, 3);
+                assert.equal(previousValues.length, 1);
                 assert.equal(previousValues[0], undefined);
-                assert.equal(previousValues[1], undefined);
-                assert.equal(previousValues[2], undefined);
                 assert.equal(cell1.get(), "value1");
 
                 containerRuntimeFactory.processSomeMessages(2);
 
-                assert.equal(previousValues.length, 3);
+                // assert.equal(previousValues.length, 3);
                 assert.equal(cell1.get(), undefined);
             });
         });
