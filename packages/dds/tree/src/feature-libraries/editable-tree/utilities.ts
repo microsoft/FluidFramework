@@ -107,3 +107,13 @@ export function adaptWithProxy<From extends object, To extends object>(
 export function getArrayOwnKeys(length: number): string[] {
     return Object.getOwnPropertyNames(Array.from(Array(length)));
 }
+
+export function keyIsValidIndex(key: string | number, length: number): boolean {
+    const index = Number(key);
+    return (
+        (typeof key === "number" || String(index) === key) &&
+        Number.isInteger(index) &&
+        0 <= index &&
+        index < length
+    );
+}

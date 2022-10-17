@@ -16,6 +16,7 @@ import {
     namedTreeSchema,
     ValueSchema,
     LocalFieldKey,
+    TreeSchema,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
 import {
@@ -37,11 +38,12 @@ import {
     proxyTargetSymbol,
     FieldKinds,
     valueSymbol,
-    EditableTreeOrPrimitive,
     isPrimitiveValue,
     singleTextCursorNew,
     isUnwrappedNode,
     emptyField,
+    isEditableField,
+    UnwrappedEditableTree,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -86,7 +88,7 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
     return [schema, proxy as PersonType];
 }
 
-describe("editable-tree", () => {
+describe.only("editable-tree", () => {
     it("proxified forest", () => {
         const [, proxy] = buildTestPerson();
         assert.ok(proxy);
@@ -162,13 +164,15 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, []);
             const context = getEditableTreeContext(forest);
-            assert.deepEqual(context.unwrappedRoot, []);
+            assert(isEditableField(context.unwrappedRoot));
+            assert.deepEqual([...context.unwrappedRoot], []);
             context.free();
         }
         // Test 1 item
         {
             const forest = setupForest(schemaData, [emptyNode]);
             const context = getEditableTreeContext(forest);
+            assert(isEditableField(context.unwrappedRoot));
             expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode]);
             context.free();
         }
@@ -176,6 +180,7 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, [emptyNode, emptyNode]);
             const context = getEditableTreeContext(forest);
+            assert(isEditableField(context.unwrappedRoot));
             expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode, emptyNode]);
             context.free();
         }
@@ -337,7 +342,9 @@ describe("editable-tree", () => {
             const data = { type: phonesSchema.name };
             const forest = setupForest(schemaData, [data]);
             const context = getEditableTreeContext(forest);
-            assert.deepEqual(context.unwrappedRoot, []);
+            assert(isEditableField(context.unwrappedRoot));
+            assert.equal(context.unwrappedRoot.length, 0);
+            assert.deepEqual([...context.unwrappedRoot], []);
             expectTreeEquals(forest.schema, context.unwrappedRoot, data);
             context.free();
         }
@@ -350,7 +357,9 @@ describe("editable-tree", () => {
                 },
             ]);
             const context = getEditableTreeContext(forest);
-            assert.deepEqual(context.unwrappedRoot, [1]);
+            assert(isEditableField(context.unwrappedRoot));
+            assert.equal(context.unwrappedRoot.length, 1);
+            assert.deepEqual([...context.unwrappedRoot], [1]);
             context.free();
         }
     });
@@ -380,12 +389,7 @@ describe("editable-tree", () => {
         assert.equal(proxy.salary, 10420.2);
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
-        assert.deepEqual(Object.keys(proxy.address!), [
-            "street",
-            "phones",
-            "simplePhones",
-            "sequencePhones",
-        ]);
+        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
         assert.equal(proxy.address.street, "treeStreet");
         assert.equal(proxy.address.phones?.[1], 123456879);
         assert.equal(proxy.address.zip, undefined);
@@ -393,12 +397,7 @@ describe("editable-tree", () => {
 
     it("read upwards", () => {
         const [, proxy] = buildTestPerson();
-        assert.deepEqual(Object.keys(proxy.address), [
-            "street",
-            "phones",
-            "simplePhones",
-            "sequencePhones",
-        ]);
+        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
         assert.equal(proxy.address.phones?.[1], 123456879);
         assert.equal(proxy.address.street, "treeStreet");
         assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
@@ -407,8 +406,10 @@ describe("editable-tree", () => {
 
     it("access array data", () => {
         const [, proxy] = buildTestPerson();
-        assert.equal(proxy.address.phones?.length, 3);
-        assert.equal(proxy.address.phones?.[1], 123456879);
+        assert(isEditableField(proxy.address.phones));
+        assert.equal(proxy.address.phones.length, 4);
+        assert.equal(proxy.address.phones[1], 123456879);
+        assert.equal(proxy.address.phones.fieldKey, "phones" as FieldKey);
         const expectedPhones: Value[] = [
             "+49123456778",
             123456879,
@@ -416,29 +417,37 @@ describe("editable-tree", () => {
                 number: "012345",
                 prefix: "0123",
             },
+            ["112", "113"],
         ];
         let i = 0;
         for (const phone of proxy.address.phones ?? []) {
             const expectedPhone: Value = expectedPhones[i++];
             if (isPrimitiveValue(phone)) {
                 assert.equal(phone, expectedPhone);
+            } else if (isEditableField(phone)) {
+                assert.deepEqual([...phone], expectedPhone);
             } else {
                 const cloned = clone(phone);
                 assert.deepEqual(cloned, expectedPhone);
             }
         }
         assert.equal(proxy.address.phones?.[0], "+49123456778");
-        assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1", "2"]);
+        assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1", "2", "3"]);
         assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), [
             "0",
             "1",
             "2",
+            "3",
             "length",
+            "fieldKey",
+            "fieldSchema",
         ]);
-        const act = proxy.address.phones?.map(
-            (phone: EditableTreeOrPrimitive): Value | UnwrappedEditableField => {
+        const act = [...proxy.address.phones].map(
+            (phone: UnwrappedEditableTree): Value | object => {
                 if (isPrimitiveValue(phone)) {
                     return phone;
+                } else if (isEditableField(phone)) {
+                    return [...phone];
                 } else {
                     const cloned = clone(phone);
                     return cloned;
@@ -446,6 +455,22 @@ describe("editable-tree", () => {
             },
         );
         assert.deepEqual(act, expectedPhones);
+    });
+
+    it("'getWithoutUnwraping' does not unwrap primary field", () => {
+        const [, proxy] = buildTestPerson();
+        assert(isEditableField(proxy.address.phones));
+        const primary = getPrimaryField(
+            proxy.address.phones.getType(undefined, false) as TreeSchema,
+        );
+        assert(primary !== undefined);
+        const forthNode = proxy.address.phones.getWithoutUnwraping(3);
+        const simplePhones = forthNode[primary.key];
+        const expectedPhones = ["112", "113"];
+        assert(isEditableField(simplePhones));
+        for (let i = 0; i < simplePhones.length; i++) {
+            assert.equal(simplePhones[i], expectedPhones[i]);
+        }
     });
 
     it("update property", () => {

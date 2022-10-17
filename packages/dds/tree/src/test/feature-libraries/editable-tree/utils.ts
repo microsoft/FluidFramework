@@ -17,6 +17,7 @@ import {
     Multiplicity,
     EditableField,
     EditableTree,
+    isEditableField,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -25,8 +26,6 @@ import {
     isPrimitive,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-// eslint-disable-next-line import/no-internal-modules
-import { isArrayField } from "../../../feature-libraries/editable-tree/editableTree";
 import { schemaMap } from "./mockData";
 
 /**
@@ -42,7 +41,8 @@ export function expectTreeEquals(
     const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
     const primary = getPrimaryField(expectedType);
     if (primary !== undefined) {
-        assert(isArrayField(inputField));
+        assert(isEditableField(inputField));
+        assert.equal(inputField.getType(), expectedType.name);
         // Handle inlined primary fields
         const expectedNodes = expected.fields?.[primary.key];
         if (expectedNodes === undefined) {
@@ -94,7 +94,7 @@ export function expectTreeSequence(
     field: UnwrappedEditableField,
     expected: JsonableTree[],
 ): void {
-    assert(isArrayField(field));
+    assert(isEditableField(field));
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
@@ -113,16 +113,14 @@ export function expectFieldEquals(
     field: EditableField,
     expected: JsonableTree[],
 ): void {
-    const [fieldSchema, , nodes] = field;
     assert(Array.isArray(expected));
-    assert(isArrayField(nodes));
-    assert.equal(nodes.length, expected.length);
-    const fieldKind = getFieldKind(fieldSchema);
+    assert.equal(field.length, expected.length);
+    const fieldKind = getFieldKind(field.fieldSchema);
     if (fieldKind.multiplicity !== Multiplicity.Sequence) {
-        assert(nodes.length <= 1);
+        assert(field.length <= 1);
     }
-    for (let i = 0; i < nodes.length; i++) {
-        expectNodeEquals(schemaData, nodes[i], expected[i]);
+    for (let index = 0; index < field.length; index++) {
+        expectNodeEquals(schemaData, field.getWithoutUnwraping(index), expected[index]);
     }
 }
 
@@ -146,9 +144,8 @@ export function expectNodeEquals(
     }
     const expectedFields = new Set(genericTreeKeys(expected));
     for (const field of node) {
-        const [, key] = field;
-        assert(expectedFields.delete(key));
-        const expectedField = getGenericTreeField(expected, key, false);
+        assert(expectedFields.delete(field.fieldKey));
+        const expectedField = getGenericTreeField(expected, field.fieldKey, false);
         expectFieldEquals(schemaData, field, expectedField);
     }
     assert(expectedFields.size === 0);
