@@ -16,7 +16,7 @@ describe("TestTreeProvider", () => {
 
         const provider = await TestTreeProvider.create(1, true);
         const summaries = summaryCount;
-        await provider.manualSummarize();
+        await provider.summarize();
 
         assert(summaryCount === summaries + 1);
         unspy();
@@ -30,12 +30,12 @@ describe("TestTreeProvider", () => {
 
         const provider = await TestTreeProvider.create(1);
         const summaries = summaryCount;
-        await provider.manualSummarize();
+        await provider.summarize();
         assert(summaryCount !== summaries + 1);
         unspy();
     });
 
-    it("cannot trigger summaries with multiple trees", async () => {
+    it("can trigger summaries with multiple trees", async () => {
         let summaryCount = 0;
         const unspy = spyOnMethod(SharedTreeCore, "summarizeCore", () => {
             summaryCount += 1;
@@ -44,8 +44,8 @@ describe("TestTreeProvider", () => {
         const provider = await TestTreeProvider.create(2, true);
 
         const summaries = summaryCount;
-        await provider.manualSummarize();
-        assert(summaryCount !== summaries + 1);
+        await provider.summarize();
+        assert(summaryCount === summaries + 1);
         unspy();
     });
 });

@@ -51,6 +51,8 @@ export class MockDependent extends SimpleObservingDependent {
  */
 export type ITestTreeProvider = TestTreeProvider & ITestObjectProvider;
 
+export type Summarizer = () => Promise<void>;
+
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link create} and satisfy the {@link ITestObjectProvider} interface.
@@ -61,7 +63,7 @@ export class TestTreeProvider {
     private readonly provider: ITestObjectProvider;
     private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
-    private static summarizeOnDemand: boolean = false;
+    public static summarizer: Summarizer;
 
     public get trees(): readonly ISharedTree[] {
         return this._trees;
@@ -88,10 +90,14 @@ export class TestTreeProvider {
         const provider = new TestTreeProvider() as ITestTreeProvider;
         for (let i = 0; i < trees; i++) {
             await provider.createTree();
+            if (summarizeOnDemand && i === 0) {
+                const summarizer = await createSummarizer(provider, provider.containers[0]);
+                this.summarizer = async () => {
+                    await summarizeNow(summarizer, "TestTreeProvider");
+                };
+            }
         }
-        if (summarizeOnDemand && trees === 1) {
-            this.summarizeOnDemand = true;
-        }
+
         return provider;
     }
 
@@ -119,10 +125,9 @@ export class TestTreeProvider {
      * set to true.
      * @returns void after a summary has been resolved. May be called multiple times.
      */
-    public async manualSummarize(): Promise<void> {
-        if (TestTreeProvider.summarizeOnDemand) {
-            const summarizer = await createSummarizer(this.provider, this.containers[0]);
-            await summarizeNow(summarizer, "TestTreeProvider");
+    public async summarize(): Promise<void> {
+        if (TestTreeProvider.summarizer !== undefined) {
+            await TestTreeProvider.summarizer();
         }
     }
 
