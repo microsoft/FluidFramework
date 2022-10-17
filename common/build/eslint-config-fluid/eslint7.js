@@ -18,7 +18,6 @@ module.exports = {
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript",
-        "prettier"
     ],
     globals: {
         Atomics: "readonly",
@@ -196,12 +195,9 @@ module.exports = {
         "max-len": [
             "error",
             {
+                ignoreRegExpLiterals: false,
+                ignoreStrings: false,
                 code: 120,
-                ignoreTrailingComments: true,
-                ignoreUrls: true,
-                ignoreStrings: true,
-                ignoreTemplateLiterals: true,
-                ignoreRegExpLiterals: true,
             },
         ],
         "max-lines": "off",
