@@ -5,7 +5,10 @@
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelStorageService, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+    IChannelStorageService,
+    IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
@@ -20,7 +23,14 @@ import {
     SummaryElementStringifier,
 } from "../shared-tree-core";
 import { JsonCompatibleReadOnly } from "../util";
-import { Branch, Commit, EditManager, MutableSummaryData, ReadonlySummaryData, SessionId } from "../edit-manager";
+import {
+    Branch,
+    Commit,
+    EditManager,
+    MutableSummaryData,
+    ReadonlySummaryData,
+    SessionId,
+} from "../edit-manager";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 
 /**
@@ -37,7 +47,9 @@ const stringKey = "EditManagerString";
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> implements Index<TChangeset>, SummaryElement {
+export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
+    implements Index<TChangeset>, SummaryElement
+{
     public readonly summaryElement?: SummaryElement = this;
     public readonly key = "EditManager";
 
@@ -52,10 +64,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         this.commitEncoder = commitEncoderFromChangeEncoder(editManager.changeFamily.encoder);
         this.editDataBlob = cachedValue(async (observer) => {
             recordDependency(observer, this.editManager);
-            const dataString = encodeSummary(
-                this.editManager.getSummaryData(),
-                this.commitEncoder,
-            );
+            const dataString = encodeSummary(this.editManager.getSummaryData(), this.commitEncoder);
             // For now we are not chunking the edit data, but still put it in a reusable blob:
             return this.runtime.uploadBlob(IsoBuffer.from(dataString));
         });
@@ -68,10 +77,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
-        const dataString = encodeSummary(
-            this.editManager.getSummaryData(),
-            this.commitEncoder,
-        );
+        const dataString = encodeSummary(this.editManager.getSummaryData(), this.commitEncoder);
         builder.addBlob(stringKey, dataString);
         return builder.getSummaryTree();
     }

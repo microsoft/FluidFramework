@@ -26,7 +26,10 @@ export type SessionId = string;
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> extends SimpleDependee {
+export class EditManager<
+    TChangeset,
+    TChangeFamily extends ChangeFamily<any, TChangeset>,
+> extends SimpleDependee {
     // The trunk represents the list of received sequenced changes.
     // The change in each commit is rebased onto the previous change in the list.
     private readonly trunk: Commit<TChangeset>[] = [];
@@ -58,7 +61,9 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public isEmpty(): boolean {
-        return this.trunk.length === 0 && this.branches.size === 0 && this.localChanges.length === 0;
+        return (
+            this.trunk.length === 0 && this.branches.size === 0 && this.localChanges.length === 0
+        );
     }
 
     public getSummaryData(): ReadonlySummaryData<TChangeset> {

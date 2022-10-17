@@ -92,7 +92,8 @@ export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObjec
  */
 class SharedTree
     extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
-    implements ISharedTree {
+    implements ISharedTree
+{
     public readonly context: EditableTreeContext;
     public readonly forest: IForestSubscription;
     public readonly storedSchema: SchemaEditor;

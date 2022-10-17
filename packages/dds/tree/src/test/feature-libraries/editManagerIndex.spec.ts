@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
-import { loadSummary, encodeSummary, commitEncoderFromChangeEncoder, } from "../../feature-libraries";
+import {
+    loadSummary,
+    encodeSummary,
+    commitEncoderFromChangeEncoder,
+} from "../../feature-libraries";
 
 import { MutableSummaryData, ReadonlySummaryData } from "../../edit-manager";
 import { TestChange } from "../testChange";
