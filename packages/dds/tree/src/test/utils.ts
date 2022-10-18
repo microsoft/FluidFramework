@@ -151,8 +151,8 @@ export class TestTreeProvider {
 
     /**
      * Give this {@link TestTreeProvider} the ability to summarize on demand during a test by creating a summarizer
-     * client for the container at the given index.  This can only be called when the summarizeOnDemand field is
-     * set to true.
+     * client for the container at the given index.  This can only be called when the summarizeOnDemand parameter
+     * was set to true when calling the create() method.
      * @returns void after a summary has been resolved. May be called multiple times.
      */
     public async summarize(): Promise<void> {
