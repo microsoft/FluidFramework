@@ -337,7 +337,6 @@ export function timeoutPromise<T = void>(executor: (resolve: (value: T | Promise
 
 // @public (undocumented)
 export interface TimeoutWithError {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     errorMsg?: string;
@@ -347,7 +346,6 @@ export interface TimeoutWithError {
 
 // @public (undocumented)
 export interface TimeoutWithValue<T = void> {
-    // (undocumented)
     durationMs?: number;
     // (undocumented)
     reject: false;

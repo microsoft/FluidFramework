@@ -40,5 +40,5 @@ describe("Binary WireFormat perf", () => {
 
         const parseTime = performance.now() - start;
         console.log("Binary Format medium snapshot parse time ", parseTime);
-    });
+    }).timeout(3000); // This can take more time if running in parallel
 });

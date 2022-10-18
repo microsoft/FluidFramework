@@ -107,6 +107,8 @@ export { ICheckout, TransactionResult } from "./checkout";
 export {
     cursorToJsonObject,
     JsonCursor,
+    cursorToJsonObjectNew,
+    singleJsonCursor,
     jsonArray,
     jsonBoolean,
     jsonNull,
@@ -150,6 +152,7 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
+    EditableField,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
