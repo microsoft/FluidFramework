@@ -11,7 +11,6 @@ export {
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
-    IHaveEntrypoint,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,

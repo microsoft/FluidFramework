@@ -71,7 +71,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    get entrypoint(): IFluidHandle<FluidObject> | undefined;
+    readonly entrypoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)

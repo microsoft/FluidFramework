@@ -108,12 +108,12 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
- * Exposs some functionality/features of a data store:
+ * Exposes some functionality/features of a data store:
  * - Handle to the data store's entrypoint
  * - Fluid router for the data store
  * - Can be assigned an alias
  */
-export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
+export interface IDataStore extends IFluidRouter {
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
@@ -122,6 +122,17 @@ export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
      * @param alias - Given alias for this datastore.
      */
     trySetAlias(alias: string): Promise<AliasResult>;
+
+    /**
+     * Exposes a handle to the root object / entrypoint of the data store. Use this as the primary way of interacting
+     * with it. If this property is undefined (meaning that exposing the entrypoint hasn't been implemented in a
+     * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
+     *
+     * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
+     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
+     * the data store's entrypoint.
+     */
+    readonly entrypoint?: IFluidHandle<FluidObject>;
 }
 
 /**
@@ -207,23 +218,6 @@ export enum BindState {
 }
 
 /**
- * Interface for components that expose an entrypoint, e.g. Data Stores.
- */
-export interface IHaveEntrypoint {
-    /**
-     * Exposes a handle to the root object / entrypoint of the component. Use this as the primary way of interacting
-     * with the component. If this property is undefined (meaning that exposing the entrypoint hasn't been implemented
-     * in a particular scenario) fall back to the current approach of requesting the root object through the request
-     * pattern.
-     *
-     * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
-     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-     * the component's entrypoint.
-     */
-    readonly entrypoint?: IFluidHandle<FluidObject>;
-}
-
-/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entrypoint,
@@ -231,7 +225,6 @@ export interface IHaveEntrypoint {
  */
 export interface IFluidDataStoreChannel extends
     IFluidRouter,
-    IHaveEntrypoint,
     IDisposable {
 
     readonly id: string;
@@ -321,6 +314,18 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
+
+    /**
+     * Exposes a handle to the root object / entrypoint of the component. Use this as the primary way of interacting
+     * with the component. If this property is undefined (meaning that exposing the entrypoint hasn't been implemented
+     * in a particular scenario) fall back to the current approach of requesting the root object through the request
+     * pattern.
+     *
+     * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
+     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
+     * the component's entrypoint.
+     */
+    readonly entrypoint?: IFluidHandle<FluidObject>;
 }
 
 export type CreateChildSummarizerNodeFn = (

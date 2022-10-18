@@ -125,7 +125,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter, IHaveEntrypoint {
+export interface IDataStore extends IFluidRouter {
+    readonly entrypoint?: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -136,12 +137,13 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, IHaveEntrypoint, IDisposable {
+export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
+    readonly entrypoint?: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -260,11 +262,6 @@ export interface IGarbageCollectionState {
     gcNodes: {
         [id: string]: IGarbageCollectionNodeData;
     };
-}
-
-// @public
-export interface IHaveEntrypoint {
-    readonly entrypoint?: IFluidHandle<FluidObject>;
 }
 
 // @public
