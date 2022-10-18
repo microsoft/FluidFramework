@@ -5,37 +5,6 @@
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 /**
- * Determines whether or not the message type is one of the following:
- *
- * - {@link @fluidframework/protocol-definitions#MessageType.Operation}
- *
- * - {@link @fluidframework/protocol-definitions#MessageType.Summarize}
- *
- * - {@link @fluidframework/protocol-definitions#MessageType.Propose}
- *
- * - {@link @fluidframework/protocol-definitions#MessageType.Reject}
- *
- * - {@link @fluidframework/protocol-definitions#MessageType2.Accept}
- *
- * - {@link @fluidframework/protocol-definitions#MessageType.NoOp}
- */
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
-    if (isRuntimeMessage(message)) {
-        return true;
-    }
-    switch (message.type) {
-        case MessageType.Propose:
-        case MessageType.Reject:
-        case MessageType.NoOp:
-        case MessageType2.Accept:
-        case MessageType.Summarize:
-            return true;
-        default:
-            return false;
-    }
-}
-
-/**
  * Tells if message was sent by container runtime
  * @privateRemarks ADO #1385: To be moved to container-definitions
  * @returns whether the message is a runtime message

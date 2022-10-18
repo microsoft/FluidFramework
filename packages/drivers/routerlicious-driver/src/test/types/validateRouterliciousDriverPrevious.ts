@@ -40,50 +40,26 @@ use_old_ClassDeclaration_DefaultTokenProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_DeltaStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DeltaStorageService():
-    TypeOnly<old.DeltaStorageService>;
-declare function use_current_ClassDeclaration_DeltaStorageService(
-    use: TypeOnly<current.DeltaStorageService>);
-use_current_ClassDeclaration_DeltaStorageService(
-    get_old_ClassDeclaration_DeltaStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_DeltaStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DeltaStorageService():
-    TypeOnly<current.DeltaStorageService>;
-declare function use_old_ClassDeclaration_DeltaStorageService(
-    use: TypeOnly<old.DeltaStorageService>);
-use_old_ClassDeclaration_DeltaStorageService(
-    get_current_ClassDeclaration_DeltaStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentDeltaStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_DocumentDeltaStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DocumentDeltaStorageService():
-    TypeOnly<old.DocumentDeltaStorageService>;
-declare function use_current_ClassDeclaration_DocumentDeltaStorageService(
-    use: TypeOnly<current.DocumentDeltaStorageService>);
-use_current_ClassDeclaration_DocumentDeltaStorageService(
-    get_old_ClassDeclaration_DocumentDeltaStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentDeltaStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_DocumentDeltaStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DocumentDeltaStorageService():
-    TypeOnly<current.DocumentDeltaStorageService>;
-declare function use_old_ClassDeclaration_DocumentDeltaStorageService(
-    use: TypeOnly<old.DocumentDeltaStorageService>);
-use_old_ClassDeclaration_DocumentDeltaStorageService(
-    get_current_ClassDeclaration_DocumentDeltaStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -112,50 +88,26 @@ use_old_ClassDeclaration_DocumentPostCreateError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentService": {"forwardCompat": false}
+* "RemovedClassDeclaration_DocumentService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DocumentService():
-    TypeOnly<old.DocumentService>;
-declare function use_current_ClassDeclaration_DocumentService(
-    use: TypeOnly<current.DocumentService>);
-use_current_ClassDeclaration_DocumentService(
-    get_old_ClassDeclaration_DocumentService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentService": {"backCompat": false}
+* "RemovedClassDeclaration_DocumentService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DocumentService():
-    TypeOnly<current.DocumentService>;
-declare function use_old_ClassDeclaration_DocumentService(
-    use: TypeOnly<old.DocumentService>);
-use_old_ClassDeclaration_DocumentService(
-    get_current_ClassDeclaration_DocumentService());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_DocumentStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DocumentStorageService():
-    TypeOnly<old.DocumentStorageService>;
-declare function use_current_ClassDeclaration_DocumentStorageService(
-    use: TypeOnly<current.DocumentStorageService>);
-use_current_ClassDeclaration_DocumentStorageService(
-    get_old_ClassDeclaration_DocumentStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_DocumentStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DocumentStorageService():
-    TypeOnly<current.DocumentStorageService>;
-declare function use_old_ClassDeclaration_DocumentStorageService(
-    use: TypeOnly<old.DocumentStorageService>);
-use_old_ClassDeclaration_DocumentStorageService(
-    get_current_ClassDeclaration_DocumentStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -257,26 +209,14 @@ use_old_InterfaceDeclaration_ITokenService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_NullBlobStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_NullBlobStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_NullBlobStorageService():
-    TypeOnly<old.NullBlobStorageService>;
-declare function use_current_ClassDeclaration_NullBlobStorageService(
-    use: TypeOnly<current.NullBlobStorageService>);
-use_current_ClassDeclaration_NullBlobStorageService(
-    get_old_ClassDeclaration_NullBlobStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_NullBlobStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_NullBlobStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_NullBlobStorageService():
-    TypeOnly<current.NullBlobStorageService>;
-declare function use_old_ClassDeclaration_NullBlobStorageService(
-    use: TypeOnly<old.NullBlobStorageService>);
-use_old_ClassDeclaration_NullBlobStorageService(
-    get_current_ClassDeclaration_NullBlobStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type

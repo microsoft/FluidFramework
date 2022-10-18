@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-urlresolver",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "Url Resolver for odsp urls.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,16 +37,16 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/odsp-driver": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/odsp-driver": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export * from "./bumpTypes";
+export {
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
+    ReleaseVersion,
+    VersionBumpType,
+    VersionBumpTypeExtended,
+    VersionChangeType,
+    VersionChangeTypeExtended,
+} from "./bumpTypes";
 export {
     changePreReleaseIdentifier,
     getVersionRange,

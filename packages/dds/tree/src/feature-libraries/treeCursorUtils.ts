@@ -8,32 +8,49 @@ import {
     FieldKey,
     TreeType,
     UpPath,
-    Value,
     CursorLocationType,
     ITreeCursorSynchronous,
-    NodeData,
+    Value,
 } from "../tree";
 import { fail } from "../util";
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  */
-export function singleStackTreeCursor<TNode extends NodeData>(
-        root: TNode,
-        adapter: CursorAdapter<TNode>): ITreeCursorSynchronous {
+export function singleStackTreeCursor<TNode>(
+    root: TNode,
+    adapter: CursorAdapter<TNode>,
+): ITreeCursorSynchronous {
     return new StackCursor(root, adapter);
 }
 
 /**
- * Provides functionality to allow `singleStackTreeCursor` to implement a cursor.
+ * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
  */
 export interface CursorAdapter<TNode> {
+    /**
+     * @returns the value of the given node.
+     */
+    value(node: TNode): Value;
+    /**
+     * @returns the type of the given node.
+     */
+    type(node: TNode): TreeType;
+    /**
+     * @returns the keys for non-empty fields on the given node.
+     */
     keysFromNode(node: TNode): readonly FieldKey[];
+    /**
+     * @returns the child nodes for the given node and key.
+     */
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
 }
 
 type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
 
+/**
+ * A class that satisfies part of the ITreeCursorSynchronous implementation.
+ */
 abstract class SynchronousCursor {
     public get pending(): false {
         return false;
@@ -49,7 +66,7 @@ abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  */
-class StackCursor<TNode extends NodeData> extends SynchronousCursor implements ITreeCursorSynchronous {
+class StackCursor<TNode> extends SynchronousCursor implements ITreeCursorSynchronous {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -105,7 +122,7 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     public enterNode(index: number): void {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
-        assert(index in siblings, "child must exist at index");
+        assert(index in siblings, 0x405 /* child must exist at index */);
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = index;
@@ -162,7 +179,9 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     }
 
     public get mode(): CursorLocationType {
-        return this.siblingStack.length % 2 === 0 ? CursorLocationType.Nodes : CursorLocationType.Fields;
+        return this.siblingStack.length % 2 === 0
+            ? CursorLocationType.Nodes
+            : CursorLocationType.Fields;
     }
 
     public nextField(): boolean {
@@ -193,8 +212,8 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
         if (this.index in this.siblings) {
             return true;
         }
-            this.exitNode();
-            return false;
+        this.exitNode();
+        return false;
     }
 
     public firstNode(): boolean {
@@ -210,7 +229,7 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     }
 
     public nextNode(): boolean {
-        assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
+        assert(this.mode === CursorLocationType.Nodes, 0x406 /* can only nextNode when in Nodes */);
         this.index++;
         if (this.index < (this.siblings as []).length) {
             return true;
@@ -244,12 +263,18 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
         return field;
     }
 
+    /**
+     * @returns the value of the current node
+     */
     public get value(): Value {
-        return this.getNode().value;
+        return this.adapter.value(this.getNode());
     }
 
+    /**
+     * @returns the type of the current node
+     */
     public get type(): TreeType {
-        return this.getNode().type;
+        return this.adapter.type(this.getNode());
     }
 
     public get fieldIndex(): number {

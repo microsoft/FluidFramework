@@ -8,11 +8,7 @@ import { cursorTestCases, testCursors, testJsonableTreeCursor } from "../cursor.
 // Tests for TextCursor and jsonableTreeFromCursor.
 // Checks to make sure singleTextCursor and test datasets are working properly,
 // since its used in the below test suite to test other formats.
-testJsonableTreeCursor(
-    "textTreeFormat",
-    singleTextCursorNew,
-    jsonableTreeFromCursorNew,
-);
+testJsonableTreeCursor("textTreeFormat", singleTextCursorNew, jsonableTreeFromCursorNew);
 
 // TODO make object forest cursor compatible with new API
 // TODO: put these in a better place / unify with object forest tests.

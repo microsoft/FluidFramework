@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, TreeSchemaIdentifier, SchemaPolicy, SchemaData, FieldSchema } from "../schema-stored";
+import {
+    GlobalFieldKey,
+    TreeSchemaIdentifier,
+    SchemaPolicy,
+    SchemaData,
+    FieldSchema,
+} from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -53,10 +59,7 @@ export interface Adapters {
  * A collection of View information for schema, including policy.
  */
 export abstract class ViewSchemaData<TPolicy extends SchemaPolicy = SchemaPolicy> {
-    public constructor(
-        public readonly policy: TPolicy,
-        public readonly adapters: Adapters,
-    ) {}
+    public constructor(public readonly policy: TPolicy, public readonly adapters: Adapters) {}
 
     /**
      * Determines the compatibility of a stored document
@@ -68,9 +71,7 @@ export abstract class ViewSchemaData<TPolicy extends SchemaPolicy = SchemaPolicy
      * TODO: this API violates the parse don't validate design philosophy.
      * It should be wrapped with (or replaced by) a parse style API.
      */
-    public abstract checkCompatibility(
-        stored: SchemaData,
-    ): {
+    public abstract checkCompatibility(stored: SchemaData): {
         read: Compatibility;
         write: Compatibility;
         writeAllowingStoredSchemaUpdates: Compatibility;
