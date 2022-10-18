@@ -26,7 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { ICache, InMemoryCache, NullCache } from "./cache";
+import { InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
 
@@ -48,8 +48,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache: ICache<ArrayBufferLike>;
-    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -59,10 +57,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
-        this.blobCache = new InMemoryCache<ArrayBufferLike>();
-        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>()
-            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -259,6 +253,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
+        // Each DocumentService instance should have its own cache to dispose without affecting other instances
+        const blobCache = new InMemoryCache<ArrayBufferLike>();
+        const snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>()
+            : new NullCache<ISnapshotTreeVersion>();
+
         return new DocumentService(
             fluidResolvedUrl,
             ordererUrl,
@@ -270,8 +270,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             tenantId,
             documentId,
             this.driverPolicies,
-            this.blobCache,
-            this.snapshotTreeCache,
+            blobCache,
+            snapshotTreeCache,
             discoverFluidResolvedUrl);
     }
 }
