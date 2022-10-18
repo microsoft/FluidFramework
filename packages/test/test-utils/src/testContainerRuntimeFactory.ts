@@ -62,14 +62,13 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                     ["default", Promise.resolve(this.dataStoreFactory)],
                     [this.type, Promise.resolve(this.dataStoreFactory)],
                 ],
-                existing,
                 buildRuntimeRequestHandler(
                     defaultRouteRequestHandler("default"),
                     ...this.requestHandlers,
                 ),
                 this.runtimeOptions,
                 undefined, // containerScope
-
+                existing,
             );
 
             return runtime;

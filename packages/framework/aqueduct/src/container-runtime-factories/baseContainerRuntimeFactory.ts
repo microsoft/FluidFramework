@@ -74,7 +74,7 @@ export class BaseContainerRuntimeFactory
             this.dependencyContainer, scope.IFluidDependencySynthesizer);
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             this.registryEntries,
             existing,

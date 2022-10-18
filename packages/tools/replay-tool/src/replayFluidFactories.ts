@@ -61,14 +61,13 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         return ContainerRuntime.load(
             context,
             this.registries,
-            existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 runtimeRequestHandler,
             ),
             this.runtimeOptions,
             undefined, // containerScope
-
+            existing,
         );
     }
 }

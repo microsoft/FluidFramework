@@ -40,10 +40,10 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            existing,
             makeModelRequestHandler(this.createModel.bind(this)),
             this.runtimeOptions,
             undefined, // scope
+            existing,
         );
 
         if (!fromExisting) {

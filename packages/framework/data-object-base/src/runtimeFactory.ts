@@ -46,7 +46,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             this.registry,
             existing,
