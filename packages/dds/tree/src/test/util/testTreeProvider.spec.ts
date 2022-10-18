@@ -30,7 +30,7 @@ describe("TestTreeProvider", () => {
         } catch (error) {
             summarizerError = error;
         }
-        assert.equal(summarizerError, undefined);
+        assert.notStrictEqual(summarizerError, undefined);
     });
 
     it("cannot manually trigger summaries with 0 trees", async () => {
@@ -41,7 +41,7 @@ describe("TestTreeProvider", () => {
         } catch (error) {
             summarizerError = error;
         }
-        assert.equal(summarizerError, undefined);
+        assert.notStrictEqual(summarizerError, undefined);
     });
 
     it("can trigger summaries with multiple trees", async () => {
