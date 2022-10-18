@@ -14,8 +14,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|none] [--patch <value>] [--base
-    <value>] [--tag <value>] [-i <value>] [-v]
+  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|prerelease|none] [--patch <value>]
+    [--base <value>] [--tag <value>] [-i <value>] [-v]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -25,7 +25,7 @@ FLAGS
   --build=<value>                        (required) The CI build number.
   --patch=<value>                        Indicates the build is a patch build.
   --release=<option>                     Indicates the build is a release build.
-                                         <options: release|none>
+                                         <options: release|prerelease|none>
   --tag=<value>                          The tag name to use.
   --testBuild=<value>                    Indicates the build is a test build.
 

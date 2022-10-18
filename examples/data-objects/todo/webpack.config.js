@@ -11,7 +11,7 @@ const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
 
 module.exports = env => {
-    const isProduction = env && env.production;
+    const isProduction = env?.production;
 
     return merge({
         entry: {
@@ -23,13 +23,13 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
+                loader: "ts-loader"
             },
             {
                 test: /\.css$/,
                 use: [
-                    require.resolve("style-loader"), // creates style nodes from JS strings
-                    require.resolve("css-loader"), // translates CSS into CommonJS
+                    "style-loader", // creates style nodes from JS strings
+                    "css-loader", // translates CSS into CommonJS
                 ]
             },
             {
