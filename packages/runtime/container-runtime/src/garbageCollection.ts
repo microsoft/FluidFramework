@@ -888,23 +888,23 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.testMode) {
             this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
-        }
-
-        // If we are running in GC tombstone mode, tombstone objects for unused routes. This enables testing scenarios
-        // involving access to "deleted" data without actually deleting the data from summaries.
-        // Note: we will not tombstone in test mode
-        if (this.tombstoneMode && !this.testMode) {
-            const tombstoneRoutes: string[] = [];
-            // Currently only tombstone datastores
-            for (const [key, value] of this.unreferencedNodesState.entries()) {
-                if (
-                    value.state === UnreferencedState.SweepReady &&
-                    this.runtime.getNodeType(key) === GCNodeType.DataStore
-                ) {
-                    tombstoneRoutes.push(key);
+        } else {
+            // If we are running in GC tombstone mode, tombstone objects for unused routes. This enables testing
+            // scenarios involving access to "deleted" data without actually deleting the data from summaries.
+            // Note: we will not tombstone in test mode
+            if (this.tombstoneMode) {
+                const tombstoneRoutes: string[] = [];
+                // Currently only tombstone datastores
+                for (const [key, value] of this.unreferencedNodesState.entries()) {
+                    if (
+                        value.state === UnreferencedState.SweepReady &&
+                        this.runtime.getNodeType(key) === GCNodeType.DataStore
+                    ) {
+                        tombstoneRoutes.push(key);
+                    }
                 }
+                this.runtime.deleteUnusedRoutes(tombstoneRoutes);
             }
-            this.runtime.deleteUnusedRoutes(tombstoneRoutes);
         }
 
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
