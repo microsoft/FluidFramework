@@ -120,8 +120,8 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-        const entrypoint = await dataStore.entrypoint?.get();
-        return entrypoint as unknown as T;
+        const entryPoint = await dataStore.entryPoint?.get();
+        return entryPoint as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(

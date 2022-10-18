@@ -181,8 +181,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
                 const maybeRouter: FluidObject<IProvideFluidRouter> | undefined
-                    = await rt.entrypoint?.get();
-                assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
+                    = await rt.entryPoint?.get();
+                assert(maybeRouter?.IFluidRouter !== undefined, "entryPoint should have been initialized by now");
                 return maybeRouter.IFluidRouter.request(request);
             });
 

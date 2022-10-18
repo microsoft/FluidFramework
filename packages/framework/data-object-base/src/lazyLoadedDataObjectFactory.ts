@@ -56,9 +56,9 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                const maybeRouter: FluidObject<IProvideFluidRouter> | undefined = await rt.entrypoint?.get();
-                assert(maybeRouter !== undefined, "Entrypoint should have been initialized by now");
-                assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
+                const maybeRouter: FluidObject<IProvideFluidRouter> | undefined = await rt.entryPoint?.get();
+                assert(maybeRouter !== undefined, "entryPoint should have been initialized by now");
+                assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entryPoint is not an IFluidRouter");
                 return maybeRouter.IFluidRouter.request(request);
             });
 
@@ -75,11 +75,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         const { containerRuntime, packagePath } = parentContext;
 
         const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
-        const entrypoint = await dataStore.entrypoint?.get();
-        // This data object factory should always be setting the entrypoint. Need the non-null assertion
-        // while we're plumbing it everywhere and entrypoint could still be undefined.
+        const entryPoint = await dataStore.entryPoint?.get();
+        // This data object factory should always be setting the entryPoint. Need the non-null assertion
+        // while we're plumbing it everywhere and entryPoint could still be undefined.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return entrypoint!;
+        return entryPoint!;
     }
 
     private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {

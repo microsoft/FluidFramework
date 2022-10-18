@@ -122,9 +122,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entrypoint}
+     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
      */
-    public readonly entrypoint?: IFluidHandle<FluidObject>;
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 
@@ -196,7 +196,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param dataStoreContext - Context object for the runtime.
      * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
      * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
-     * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime. The
+     * @param initializeEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
      * handle to this data store runtime will point to the object returned by this function. If this function is not
      * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
      * and the primary way of interacting with some Fluid objects, and should be used if possible.
@@ -205,7 +205,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
-        initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+        initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -290,9 +290,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             });
         }
 
-        if (initializeEntrypoint) {
-            this.entrypoint = new FluidObjectHandle<FluidObject>(
-                new LazyPromise(async () => initializeEntrypoint(this)),
+        if (initializeEntryPoint) {
+            this.entryPoint = new FluidObjectHandle<FluidObject>(
+                new LazyPromise(async () => initializeEntryPoint(this)),
                 "",
                 this.objectsRoutingContext,
                 );

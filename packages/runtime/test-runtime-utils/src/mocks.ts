@@ -381,7 +381,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         this.clientId = overrides?.clientId ?? uuid();
     }
 
-    public readonly entrypoint?: IFluidHandle<FluidObject> = new MockHandle(null, "", "");
+    public readonly entryPoint?: IFluidHandle<FluidObject> = new MockHandle(null, "", "");
 
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }

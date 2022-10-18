@@ -106,9 +106,9 @@ describe("FluidDataStoreRuntime Tests", () => {
                 && e.message === `Id cannot contain slashes: ${invalidId}`);
     });
 
-    it("entrypoint is initialized correctly", async () => {
+    it("entryPoint is initialized correctly", async () => {
         const myObj: FluidObject = { fakeProp: "fakeValue" };
         const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry, async (rt) => myObj);
-        assert((await dataStoreRuntime.entrypoint?.get()) === myObj, "Entrypoint was not initialized");
+        assert((await dataStoreRuntime.entryPoint?.get()) === myObj, "entryPoint was not initialized");
     });
 });

@@ -402,9 +402,9 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.entrypoint?.get();
+                const agentScheduler = await this.entryPoint?.get();
                 assert(agentScheduler !== undefined,
-                    "Entrypoint for AgentSchedulerRuntime should have been initialized by now");
+                    "entryPoint for AgentSchedulerRuntime should have been initialized by now");
 
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
@@ -426,12 +426,12 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
         const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
         const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-        const entrypoint: FluidObject<IAgentScheduler> | undefined = await dataStore.entrypoint?.get();
+        const entryPoint: FluidObject<IAgentScheduler> | undefined = await dataStore.entryPoint?.get();
 
-        // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entrypoint, but double-check
-        // while we plumb entrypoints correctly everywhere, so we can be sure the cast below is fine.
-        assert(entrypoint?.IAgentScheduler !== undefined, "The data store's entrypoint is not an AgentScheduler!");
-        return entrypoint as unknown as AgentScheduler;
+        // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
+        // while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
+        assert(entryPoint?.IAgentScheduler !== undefined, "The data store's entryPoint is not an AgentScheduler!");
+        return entryPoint as unknown as AgentScheduler;
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {

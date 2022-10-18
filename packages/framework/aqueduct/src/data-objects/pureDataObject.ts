@@ -73,7 +73,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-        const obj = await runtime.entrypoint?.get();
+        const obj = await runtime.entryPoint?.get();
         assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
         return obj as PureDataObject;
     }
