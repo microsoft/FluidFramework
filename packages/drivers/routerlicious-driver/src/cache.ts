@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import { MapWithExpiration } from "@fluidframework/driver-base";
 import { FiveDaysMs } from "@fluidframework/driver-definitions";
 
-export interface ICache<T> {
+export interface ICache<T> extends IDisposable {
     get(key: string): Promise<T | undefined>;
     put(key: string, value: T): Promise<void>;
 }
@@ -14,6 +15,9 @@ export interface ICache<T> {
 const fiveDaysMs: FiveDaysMs = 432000000;
 
 export class InMemoryCache<T> implements ICache<T> {
+    public readonly disposed: boolean = false;
+    public dispose() { this.cache.dispose(); }
+
     private readonly cache: MapWithExpiration<string, T> = new MapWithExpiration(fiveDaysMs);
 
     public async get(key: string): Promise<T | undefined> {
@@ -26,6 +30,9 @@ export class InMemoryCache<T> implements ICache<T> {
 }
 
 export class NullCache<T> implements ICache<T> {
+    public readonly disposed: boolean = false;
+    public dispose() {}
+
     public async get(key: string): Promise<T | undefined> {
         return undefined;
     }
