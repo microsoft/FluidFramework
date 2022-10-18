@@ -203,7 +203,6 @@ declare function get_current_ClassDeclaration_MockDeltaManager():
 declare function use_old_ClassDeclaration_MockDeltaManager(
     use: TypeOnly<old.MockDeltaManager>);
 use_old_ClassDeclaration_MockDeltaManager(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockDeltaManager());
 
 /*
@@ -264,7 +263,6 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreContext():
 declare function use_current_ClassDeclaration_MockFluidDataStoreContext(
     use: TypeOnly<current.MockFluidDataStoreContext>);
 use_current_ClassDeclaration_MockFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreContext());
 
 /*
@@ -277,7 +275,6 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreContext():
 declare function use_old_ClassDeclaration_MockFluidDataStoreContext(
     use: TypeOnly<old.MockFluidDataStoreContext>);
 use_old_ClassDeclaration_MockFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreContext());
 
 /*
@@ -290,7 +287,6 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<current.MockFluidDataStoreRuntime>);
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
@@ -303,7 +299,6 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_old_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<old.MockFluidDataStoreRuntime>);
 use_old_ClassDeclaration_MockFluidDataStoreRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
