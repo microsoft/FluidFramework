@@ -16,7 +16,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
     static summary =
         "Generates type tests based on the individual package settings in package.json.";
 
-    static description = `Generating type tests has two parts: preparing package.json and generating type tests. By default, both steps are run for each package. This can be overridden using the --prepare and --generate flags.`;
+    static description = `Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. This can be overridden using the --prepare and --generate flags.`;
 
     static flags = {
         dir: Flags.directory({
