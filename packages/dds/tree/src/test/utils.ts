@@ -165,7 +165,6 @@ export class TestTreeProvider {
     public [Symbol.iterator](): IterableIterator<ISharedTree> {
         return this.trees[Symbol.iterator]();
     }
-    //
 
     private constructor(
         provider: ITestObjectProvider,
