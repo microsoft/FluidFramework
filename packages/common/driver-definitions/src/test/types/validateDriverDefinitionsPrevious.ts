@@ -35,7 +35,6 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>);
 use_old_TypeAliasDeclaration_DriverError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -60,7 +59,6 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: TypeOnly<old.DriverErrorType>);
 use_old_EnumDeclaration_DriverErrorType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
 
 /*
@@ -138,6 +136,54 @@ use_old_EnumDeclaration_FetchSource(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FiveDaysMs": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FiveDaysMs():
+    TypeOnly<old.FiveDaysMs>;
+declare function use_current_TypeAliasDeclaration_FiveDaysMs(
+    use: TypeOnly<current.FiveDaysMs>);
+use_current_TypeAliasDeclaration_FiveDaysMs(
+    get_old_TypeAliasDeclaration_FiveDaysMs());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FiveDaysMs": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FiveDaysMs():
+    TypeOnly<current.FiveDaysMs>;
+declare function use_old_TypeAliasDeclaration_FiveDaysMs(
+    use: TypeOnly<old.FiveDaysMs>);
+use_old_TypeAliasDeclaration_FiveDaysMs(
+    get_current_TypeAliasDeclaration_FiveDaysMs());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAnyDriverError():
+    TypeOnly<old.IAnyDriverError>;
+declare function use_current_InterfaceDeclaration_IAnyDriverError(
+    use: TypeOnly<current.IAnyDriverError>);
+use_current_InterfaceDeclaration_IAnyDriverError(
+    get_old_InterfaceDeclaration_IAnyDriverError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAnyDriverError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAnyDriverError():
+    TypeOnly<current.IAnyDriverError>;
+declare function use_old_InterfaceDeclaration_IAnyDriverError(
+    use: TypeOnly<old.IAnyDriverError>);
+use_old_InterfaceDeclaration_IAnyDriverError(
+    get_current_InterfaceDeclaration_IAnyDriverError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAuthorizationError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAuthorizationError():
@@ -157,7 +203,6 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>);
 use_old_InterfaceDeclaration_IAuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -386,7 +431,6 @@ declare function get_old_InterfaceDeclaration_IDocumentStorageService():
 declare function use_current_InterfaceDeclaration_IDocumentStorageService(
     use: TypeOnly<current.IDocumentStorageService>);
 use_current_InterfaceDeclaration_IDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentStorageService());
 
 /*
@@ -411,7 +455,6 @@ declare function get_old_InterfaceDeclaration_IDocumentStorageServicePolicies():
 declare function use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
     use: TypeOnly<current.IDocumentStorageServicePolicies>);
 use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentStorageServicePolicies());
 
 /*
@@ -448,7 +491,6 @@ declare function get_current_InterfaceDeclaration_IDriverBasicError():
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: TypeOnly<old.IDriverBasicError>);
 use_old_InterfaceDeclaration_IDriverBasicError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
 
 /*
@@ -473,7 +515,6 @@ declare function get_current_InterfaceDeclaration_IDriverErrorBase():
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: TypeOnly<old.IDriverErrorBase>);
 use_old_InterfaceDeclaration_IDriverErrorBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
 /*
@@ -546,7 +587,6 @@ declare function get_current_InterfaceDeclaration_IGenericNetworkError():
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: TypeOnly<old.IGenericNetworkError>);
 use_old_InterfaceDeclaration_IGenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
 
 /*
@@ -571,7 +611,6 @@ declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
 declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
     use: TypeOnly<old.ILocationRedirectionError>);
 use_old_InterfaceDeclaration_ILocationRedirectionError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
@@ -716,7 +755,6 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*

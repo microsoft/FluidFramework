@@ -35,7 +35,6 @@ declare function get_current_ClassDeclaration_AuthorizationError():
 declare function use_old_ClassDeclaration_AuthorizationError(
     use: TypeOnly<old.AuthorizationError>);
 use_old_ClassDeclaration_AuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AuthorizationError());
 
 /*
@@ -48,7 +47,6 @@ declare function get_old_ClassDeclaration_BlobAggregationStorage():
 declare function use_current_ClassDeclaration_BlobAggregationStorage(
     use: TypeOnly<current.BlobAggregationStorage>);
 use_current_ClassDeclaration_BlobAggregationStorage(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BlobAggregationStorage());
 
 /*
@@ -73,7 +71,6 @@ declare function get_old_ClassDeclaration_BlobCacheStorageService():
 declare function use_current_ClassDeclaration_BlobCacheStorageService(
     use: TypeOnly<current.BlobCacheStorageService>);
 use_current_ClassDeclaration_BlobCacheStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BlobCacheStorageService());
 
 /*
@@ -314,7 +311,6 @@ declare function get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError():
 declare function use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     use: TypeOnly<current.DeltaStreamConnectionForbiddenError>);
 use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
 /*
@@ -339,7 +335,6 @@ declare function get_old_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_current_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<current.DocumentStorageServiceProxy>);
 use_current_ClassDeclaration_DocumentStorageServiceProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -453,6 +448,30 @@ use_old_FunctionDeclaration_ensureFluidResolvedUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidInvalidSchemaError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_FluidInvalidSchemaError():
+    TypeOnly<old.FluidInvalidSchemaError>;
+declare function use_current_ClassDeclaration_FluidInvalidSchemaError(
+    use: TypeOnly<current.FluidInvalidSchemaError>);
+use_current_ClassDeclaration_FluidInvalidSchemaError(
+    get_old_ClassDeclaration_FluidInvalidSchemaError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidInvalidSchemaError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_FluidInvalidSchemaError():
+    TypeOnly<current.FluidInvalidSchemaError>;
+declare function use_old_ClassDeclaration_FluidInvalidSchemaError(
+    use: TypeOnly<old.FluidInvalidSchemaError>);
+use_old_ClassDeclaration_FluidInvalidSchemaError(
+    get_current_ClassDeclaration_FluidInvalidSchemaError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_GenericNetworkError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_GenericNetworkError():
@@ -472,7 +491,6 @@ declare function get_current_ClassDeclaration_GenericNetworkError():
 declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericNetworkError());
 
 /*
@@ -646,18 +664,6 @@ use_old_InterfaceDeclaration_IProgress(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isClientMessage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isClientMessage": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidResolvedUrl():
@@ -797,7 +803,6 @@ declare function get_current_ClassDeclaration_LocationRedirectionError():
 declare function use_old_ClassDeclaration_LocationRedirectionError(
     use: TypeOnly<old.LocationRedirectionError>);
 use_old_ClassDeclaration_LocationRedirectionError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocationRedirectionError());
 
 /*
@@ -1002,7 +1007,6 @@ declare function get_old_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_current_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<current.PrefetchDocumentStorageService>);
 use_current_ClassDeclaration_PrefetchDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
@@ -1279,7 +1283,6 @@ declare function get_current_ClassDeclaration_ThrottlingError():
 declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingError());
 
 /*
@@ -1292,7 +1295,6 @@ declare function get_old_ClassDeclaration_UsageError():
 declare function use_current_ClassDeclaration_UsageError(
     use: TypeOnly<current.UsageError>);
 use_current_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_UsageError());
 
 /*
