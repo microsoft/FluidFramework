@@ -65,7 +65,10 @@ export class DocumentService implements api.IDocumentService {
 
     private documentStorageService: DocumentStorageService | undefined;
 
-    public dispose() { }
+    public dispose() {
+        this.blobCache.dispose();
+        this.snapshotTreeCache.dispose();
+    }
 
     /**
      * Connects to a storage endpoint for snapshot service.
