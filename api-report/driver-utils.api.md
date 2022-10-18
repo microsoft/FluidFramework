@@ -277,6 +277,8 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
 export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
     constructor(expiryMs: number);
     // (undocumented)
+    clear(): void;
+    // (undocumented)
     delete(key: TKey): boolean;
     // (undocumented)
     dispose(_error?: Error): void;
