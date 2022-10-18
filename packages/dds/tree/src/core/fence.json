@@ -15,6 +15,7 @@
     "schema-view",
     "shared-tree-core",
     "transaction",
-    "tree"
+    "tree",
+    "util"
   ]
 }
