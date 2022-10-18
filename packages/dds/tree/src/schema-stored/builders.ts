@@ -6,7 +6,13 @@
 import { brand } from "../util";
 import {
     FieldKindIdentifier,
-    FieldSchema, GlobalFieldKey, Named, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldSchema,
+    GlobalFieldKey,
+    Named,
+    NamedTreeSchema,
+    TreeSchema,
+    TreeSchemaIdentifier,
+    ValueSchema,
 } from "./schema";
 
 /**
@@ -30,7 +36,7 @@ export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
  * Helper for building {@link FieldSchema}.
  */
 export function fieldSchema(
-    kind: { identifier: FieldKindIdentifier; },
+    kind: { identifier: FieldKindIdentifier },
     types?: Iterable<TreeSchemaIdentifier>,
 ): FieldSchema {
     return {
@@ -45,7 +51,7 @@ const defaultExtraGlobalFields = false;
  * See {@link TreeSchema} for details.
  */
 export interface TreeSchemaBuilder {
-    readonly localFields?: { [key: string]: FieldSchema; };
+    readonly localFields?: { [key: string]: FieldSchema };
     readonly globalFields?: Iterable<GlobalFieldKey>;
     readonly extraLocalFields: FieldSchema;
     readonly extraGlobalFields?: boolean;
@@ -77,7 +83,9 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
 /**
  * Helper for building {@link NamedTreeSchema}.
  */
- export function namedTreeSchema(data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>): NamedTreeSchema {
+export function namedTreeSchema(
+    data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>,
+): NamedTreeSchema {
     return {
         name: data.name,
         ...treeSchema(data),

@@ -15,6 +15,7 @@ import { TextSegment } from "../textSegment";
 import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
@@ -167,4 +168,78 @@ export function countOperations(mergeTree: MergeTree) {
     mergeTree.mergeTreeMaintenanceCallback = fn;
 
     return counts;
+}
+
+function getPartialLengths(
+    clientId: number,
+    seq: number,
+    mergeTree: MergeTree,
+    localSeq?: number,
+    mergeBlock = mergeTree.root,
+) {
+    const partialLen = mergeBlock.partialLengths?.getPartialLength(
+        seq,
+        clientId,
+        localSeq,
+    );
+
+    let actualLen = 0;
+
+    const isInserted = (segment: ISegment) =>
+        segment.seq === undefined
+        || (segment.seq !== -1 && segment.seq <= seq)
+        || (localSeq !== undefined
+            && segment.seq === -1
+            && segment.localSeq !== undefined
+            && segment.localSeq <= localSeq);
+
+    const isRemoved = (segment: ISegment) =>
+        segment.removedSeq !== undefined
+        && ((localSeq !== undefined
+            && segment.removedSeq === -1
+            && segment.localRemovedSeq !== undefined
+            && segment.localRemovedSeq <= localSeq)
+        || (segment.removedSeq !== -1 && segment.removedSeq <= seq));
+
+    walkAllChildSegments(mergeBlock, (segment) => {
+        if (isInserted(segment) && !isRemoved(segment)) {
+            actualLen += segment.cachedLength;
+        }
+        return true;
+    });
+
+    return {
+        partialLen,
+        actualLen,
+    };
+}
+
+export function validatePartialLengths(
+    clientId: number,
+    mergeTree: MergeTree,
+    expectedValues?: { seq: number; len: number; localSeq?: number; }[],
+    localSeq?: number,
+    mergeBlock = mergeTree.root,
+): void {
+    mergeTree.computeLocalPartials(0);
+    for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {
+        const { partialLen, actualLen } = getPartialLengths(
+            clientId, i, mergeTree, localSeq, mergeBlock,
+        );
+
+        assert.equal(partialLen, actualLen);
+    }
+
+    if (!expectedValues) {
+        return;
+    }
+
+    for (const { seq, len, localSeq: expectedLocalSeq } of expectedValues) {
+        const { partialLen, actualLen } = getPartialLengths(
+            clientId, seq, mergeTree, expectedLocalSeq ?? localSeq, mergeBlock,
+        );
+
+        assert.equal(partialLen, len);
+        assert.equal(actualLen, len);
+    }
 }

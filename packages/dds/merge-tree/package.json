@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "2.0.0-internal.1.3.0",
+  "version": "2.0.0-internal.2.1.0",
   "description": "Merge tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -63,24 +63,24 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -133,7 +133,8 @@
         "backCompat": false
       },
       "InterfaceDeclaration_LocalReferencePosition": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_MergeTree": {
         "forwardCompat": false,
@@ -143,7 +144,8 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IHierBlock": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IMergeBlock": {
         "forwardCompat": false
@@ -176,6 +178,99 @@
         "forwardCompat": false
       },
       "ClassDeclaration_TextSegment": {
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_AugmentedIntervalNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ClientSeq": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_clientSeqComparer": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_Comparer": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_Heap": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IInterval": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_integerRangeToString": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IntervalConflictResolver": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IntervalNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_IntervalTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_List": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedFunctionDeclaration_ListMakeHead": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedFunctionDeclaration_ListRemoveEntry": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_LRUSegment": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_MergeTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_MergeTreeTextHelper": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ProxString": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_TST": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_TSTNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_TSTResult": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_SnapshotLegacy": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_RangeStackMap": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ReferencePosition": {
+        "backCompat": false
+      },
+      "ClassDeclaration_TrackingGroup": {
         "forwardCompat": false
       }
     }

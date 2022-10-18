@@ -242,18 +242,18 @@ so its implementation is broken up into several parts which have carefully contr
 The goal of this internal structuring is to make evolution and maintenance easy.
 Some of the principles used to guide this are:
 
-- Avoid cyclic dependencies:
+-   Avoid cyclic dependencies:
 
     Cyclic dependencies can make it hard to learn a codebase incrementally, as well as make it hard to update or replace parts of the codebase incrementally.
     Additionally they can cause runtime issues with initialization.
 
-- Minimize coupling:
+-   Minimize coupling:
 
     Reducing the number and complexity of edges in the dependency graph.
     This often involves approaches like making a component generic instead of depending on a concrete type directly,
     or combining related components that have a lot of coupling.
 
-- Reducing transitive dependencies:
+-   Reducing transitive dependencies:
 
     Try to keep the total number of dependencies of a given component small when possible.
     This applies both at the module level, but also for the actual object defined by those modules.
@@ -327,13 +327,14 @@ The design issues here all impact the architectural role of top-level modules in
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
 ## How should indexes relate to branches?
+
 Some possible options:
 
- - Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
- - Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
- - Keep multiple indexes, one at each branch head, updated via mutation.
- - Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
- - Something else?
+-   Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
+-   Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
+-   Keep multiple indexes, one at each branch head, updated via mutation.
+-   Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
+-   Something else?
 
 ## How should specialized sub-tree handling compose?
 

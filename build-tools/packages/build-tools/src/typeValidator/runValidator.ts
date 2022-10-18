@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import program from "commander";
+
+import { VersionChangeType } from "@fluid-tools/version-tools";
+
 import { bumpDependencies } from "../bumpVersion/bumpDependencies";
 import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
 import { Context } from "../bumpVersion/context";
 import { GitRepo } from "../bumpVersion/gitRepo";
-import { VersionChangeType } from "@fluid-tools/version-tools";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { validateRepo } from "./repoValidator";
 import { BreakingIncrement, enableLogging } from "./validatorUtils";
@@ -34,7 +35,9 @@ async function main() {
         .option("-d|--dep", "Bump consumers' dependencies on packages with breaking changes")
         .parse(process.argv);
 
-    const includeOnly: Set<string> | undefined = program.packages ? new Set(program.packages) : undefined;
+    const includeOnly: Set<string> | undefined = program.packages
+        ? new Set(program.packages)
+        : undefined;
     if (program.verbose !== undefined) {
         enableLogging(true);
     }
@@ -49,7 +52,11 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
-    const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", await gitRepo.getCurrentBranchName());
+    const context = new Context(
+        gitRepo,
+        "github.com/microsoft/FluidFramework",
+        await gitRepo.getCurrentBranchName(),
+    );
 
     // Bump versions for packages with breaking changes if specified
     if (program.bump === true) {
@@ -57,9 +64,11 @@ async function main() {
             const changeType = incrementToVersionChangeType(value.level);
             if (changeType !== undefined) {
                 bumpVersionCommand(context, key, changeType, false, false);
-                console.log(`Version for ${key} has been updated. Create a pre-release and update dependencies to consume it.`);
+                console.log(
+                    `Version for ${key} has been updated. Create a pre-release and update dependencies to consume it.`,
+                );
             }
-        })
+        });
     }
 
     // Bump consumers' dependencies on packages with breaking changes if specified
@@ -72,8 +81,8 @@ async function main() {
     }
 }
 
-main().catch(e => {
-    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
+main().catch((e) => {
+    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
     if (e.stack) {
         console.error(`Stack:\n${e.stack}`);
     }

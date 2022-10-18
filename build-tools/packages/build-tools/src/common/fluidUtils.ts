@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as fs from "fs";
-import { commonOptions } from "./commonOptions";
-import { existsSync, realpathAsync, readJsonAsync, lookUpDirAsync } from "./utils";
 import * as path from "path";
-import { defaultLogger } from "./logging";
-import { IPackageManifest } from "./fluidRepo";
 
-const {verbose} = defaultLogger;
+import { commonOptions } from "./commonOptions";
+import { IPackageManifest } from "./fluidRepo";
+import { defaultLogger } from "./logging";
+import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+
+const { verbose } = defaultLogger;
 
 async function isFluidRootLerna(dir: string) {
     const filename = path.join(dir, "lerna.json");
@@ -19,9 +19,15 @@ async function isFluidRootLerna(dir: string) {
         return false;
     }
     const rootPackageManifest = await getPackageManifest(dir);
-    if (rootPackageManifest.repoPackages.server !== undefined
-        && !existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))) {
-        verbose(`InferRoot: ${dir}/${rootPackageManifest.repoPackages.server as string}/lerna.json not found`);
+    if (
+        rootPackageManifest.repoPackages.server !== undefined &&
+        !existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
+    ) {
+        verbose(
+            `InferRoot: ${dir}/${
+                rootPackageManifest.repoPackages.server as string
+            }/lerna.json not found`,
+        );
         return false;
     }
 
@@ -44,7 +50,7 @@ async function isFluidRootPackage(dir: string) {
 }
 
 async function isFluidRoot(dir: string) {
-    return await isFluidRootLerna(dir) && await isFluidRootPackage(dir);
+    return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
 }
 
 async function inferRoot() {
@@ -54,9 +60,8 @@ async function inferRoot() {
             if (await isFluidRoot(curr)) {
                 return true;
             }
-        // eslint-disable-next-line no-empty
-        } catch {
-        }
+            // eslint-disable-next-line no-empty
+        } catch {}
         return false;
     });
 }
@@ -75,7 +80,9 @@ export async function getResolvedFluidRoot() {
             root = commonOptions.defaultRoot;
             verbose(`Using default root @ ${root}`);
         } else {
-            console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
+            console.error(
+                `ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
+            );
             process.exit(-101);
         }
     }

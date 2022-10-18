@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import { execSync } from "child_process";
-import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from "@oclif/core";
+import { execSync } from "child_process";
+import { copySync, existsSync, readJSONSync } from "fs-extra";
+import path from "path";
+
 import { BaseCommand } from "../../base";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats.flags> {

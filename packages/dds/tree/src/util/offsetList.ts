@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
+export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (
+    | TOffset
+    | TContent
+)[];
 
 /**
  * Helper class for constructing an offset list that...

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Shared prettier configuration for use in across the fluid-framework repository.
 // Individual packages may extend this and override rules as needed, though for consistent formatting, package-local
 // overrides should be avoided unless absolutely necessary.
