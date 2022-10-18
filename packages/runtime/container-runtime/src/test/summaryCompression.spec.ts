@@ -13,7 +13,9 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { ICreateBlobResponse, ISnapshotTree, ISummaryHandle, ISummaryTree, IVersion }
+    from "@fluidframework/protocol-definitions";
 import {
     ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
 } from "../containerRuntime";
@@ -66,22 +68,23 @@ describe("Compression", () => {
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
-            const myStorage: Partial<IDocumentStorageService> = {};
-            const getMockContext = ((): Partial<IContainerContext> => {
+            const myStorage = getMockupStorage(genBlobContent());
+            const buildMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
-                    storage: myStorage as IDocumentStorageService,
+                    storage: myStorage,
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
                     updateDirtyContainerState: (_dirty: boolean) => { },
                 };
             });
+            const mockContext = buildMockContext();
             it("LZ4 config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.LZ4);
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
+                    mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
                     { summaryOptions: summaryOpt }, // runtimeOptions
@@ -96,7 +99,7 @@ describe("Compression", () => {
             it("Deflate config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.Deflate);
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
+                    mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
                     { summaryOptions: summaryOpt }, // runtimeOptions
@@ -111,7 +114,7 @@ describe("Compression", () => {
             it("None config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.None);
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
+                    mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
                     { summaryOptions: summaryOpt }, // runtimeOptions
@@ -126,14 +129,14 @@ describe("Compression", () => {
             it("Empty config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(undefined);
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
+                    mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
                     { summaryOptions: summaryOpt }, // runtimeOptions
                 );
 
                 const wrapper = containerRuntime.storage as any;
-                assert.deepStrictEqual(wrapper, {});
+                assert.deepStrictEqual(wrapper, myStorage);
             });
         });
     });
@@ -143,4 +146,35 @@ function runEncDecAtHooks(hook: CompressionSummaryStorageHooks) {
     const compressed = hook.onPreCreateBlob(inputBlobContent);
     const outputBlobContent = IsoBuffer.from(hook.onPostReadBlob(compressed));
     assert.deepEqual(inputBlobContent, outputBlobContent);
+}
+
+function getMockupStorage(blobFromRead: ArrayBufferLike): IDocumentStorageService {
+    const storage: IDocumentStorageService = {
+        repositoryUrl: "http://localhost",
+        getSnapshotTree: async (version?: IVersion, scenarioName?: string):
+            Promise<ISnapshotTree | null> => { return null; },
+        getVersions: async (
+            versionId: string | null,
+            count: number,
+            scenarioName?: string,
+        ): Promise<IVersion[]> => { return []; },
+        createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => {
+            const obj: ICreateBlobResponse = { id: "abcd" };
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            obj["content"] = file;
+            return obj;
+        },
+        readBlob: async (id: string): Promise<ArrayBufferLike> => {
+            return blobFromRead;
+        },
+        uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext): Promise<string> => {
+            return "abcd";
+        },
+        downloadSummary: async (handle: ISummaryHandle): Promise<ISummaryTree> => {
+            const ret: any = {};
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return ret;
+        },
+    };
+    return storage;
 }
