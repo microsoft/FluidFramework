@@ -260,7 +260,7 @@ export function createOdspNetworkError(
     }
 
     if (innerMostErrorCode === "fluidInvalidSchema") {
-        error = new FluidInvalidSchemaError(errorMessage, false, driverProps);
+        error = new FluidInvalidSchemaError(errorMessage, driverProps);
     }
     enrichOdspError(error, response, facetCodes, undefined);
     return error;
