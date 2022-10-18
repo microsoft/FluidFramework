@@ -5,6 +5,7 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
+import { MapWithExpiration } from "@fluidframework/driver-base";
 import {
     IOdspResolvedUrl,
     IFileEntry,
@@ -13,6 +14,7 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
+
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  */
@@ -20,96 +22,6 @@ export interface IPersistedFileCache {
     get(entry: IEntry): Promise<any>;
     put(entry: IEntry, value: any): Promise<void>;
     removeEntries(): Promise<void>;
-}
-
-/**
- * Handles garbage collection of expiring cache entries.
- * Not exported.
- * (Based off of the same class in promiseCache.ts, could be consolidated)
- */
-// class GarbageCollector<TKey> {
-//     private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
-
-//     constructor(
-//         private readonly cleanup: (key: TKey) => void,
-//     ) { }
-
-//     /**
-//      * Schedule GC for the given key, as applicable
-//      */
-//     public schedule(key: TKey, durationMs: number) {
-//         this.gcTimeouts.set(
-//             key,
-//             setTimeout(
-//                 () => { this.cleanup(key); this.cancel(key); },
-//                 durationMs,
-//             ),
-//         );
-//     }
-
-//     /**
-//      * Cancel any pending GC for the given key
-//      */
-//     public cancel(key: TKey) {
-//         const timeout = this.gcTimeouts.get(key);
-//         if (timeout !== undefined) {
-//             clearTimeout(timeout);
-//             this.gcTimeouts.delete(key);
-//         }
-//     }
-// }
-
-class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
-    public disposed: boolean = false;
-    private readonly expirationTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
-
-    constructor(
-        private readonly expiryMs: number,
-    ) {
-        super();
-    }
-    private scheduleExpiration(key: TKey) {
-        this.expirationTimeouts.set(
-            key,
-            setTimeout(
-                () => { this.delete(key); },
-                this.expiryMs,
-            ),
-        );
-    }
-
-    private cancelExpiration(key: TKey) {
-        const timeout = this.expirationTimeouts.get(key);
-        if (timeout !== undefined) {
-            clearTimeout(timeout);
-            this.expirationTimeouts.delete(key);
-        }
-    }
-
-    get(key: TKey): TValue | undefined {
-        return super.get(key);
-    }
-
-    set(key: TKey, value: TValue): this {
-        // Sliding window expiration policy (on write)
-        this.cancelExpiration(key);
-        this.scheduleExpiration(key);
-
-        return super.set(key, value);
-    }
-
-    delete(key: TKey): boolean {
-        this.cancelExpiration(key);
-        return super.delete(key);
-    }
-
-    dispose(_error?: Error): void {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
-        Array.from(this).forEach(([key]) => this.cancelExpiration(key));
-    }
 }
 
 /**
