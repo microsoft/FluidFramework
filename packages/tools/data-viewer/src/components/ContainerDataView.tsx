@@ -5,12 +5,13 @@
 import { IStackItemStyles, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { getInnerContainer } from "../Utilities";
 import { DataObjectsView } from "./DataObjectsView";
 
 // TODOs:
@@ -47,13 +48,7 @@ export interface ContainerDataViewProps {
 export function ContainerDataView(props: ContainerDataViewProps): React.ReactElement {
     const { containerId, container } = props;
 
-    // Hack to get at container internals
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    const innerContainer = (container as any).container as IContainer;
-    if (innerContainer === undefined) {
-        throw new Error("Could not find inner IContainer under IFluidContainer.");
-    }
-
+    const innerContainer = getInnerContainer(container);
     const { deltaManager } = innerContainer;
 
     // State bound to outer container
@@ -123,7 +118,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 
             innerContainer.off("op", onOp);
         };
-    }, [container]);
+    }, [container, innerContainer]);
 
     let innerView: React.ReactElement;
     if (isDisposed) {
@@ -177,14 +172,11 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
     // TODO: styling
     return (
         <Stack className="container-data-view" styles={containerDataViewStyles}>
-            <h2>Container</h2>
-            <Stack>
-                <div>
-                    <b>Container ID: </b>
-                    {containerId}
-                </div>
-                {innerView}
-            </Stack>
+            <div>
+                <b>Container ID: </b>
+                {containerId}
+            </div>
+            {innerView}
         </Stack>
     );
 }

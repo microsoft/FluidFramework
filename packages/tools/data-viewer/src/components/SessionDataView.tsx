@@ -7,6 +7,7 @@ import React from "react";
 
 import { AudienceView, AudienceViewProps } from "./AudienceView";
 import { ContainerDataView, ContainerDataViewProps } from "./ContainerDataView";
+import { OpsStreamView } from "./OpsStreamView";
 
 /**
  * {@link SessionDataView} input props.
@@ -34,7 +35,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             view = <AudienceView audience={audience} />;
             break;
         case RootView.OpsStream:
-            view = <div>TODO</div>;
+            view = <OpsStreamView container={container} />;
             break;
         default:
             throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);

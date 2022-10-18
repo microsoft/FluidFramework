@@ -7,6 +7,9 @@ import React, { useEffect, useState } from "react";
 
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
+// TODOs:
+// - Special annotation for the member elected as the summarizer
+
 /**
  * {@link AudienceView} input props.
  */
@@ -53,14 +56,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     }
 
     return (
-        <div className="audience-view">
-            <h2>Audience</h2>
-            <Stack>
-                <MyselfView myself={myself} />
-                <AudienceCount audienceCount={allMembers.size} />
-                <ul>{renderedOthers}</ul>
-            </Stack>
-        </div>
+        <Stack>
+            <MyselfView myself={myself} />
+            <AudienceCount audienceCount={allMembers.size} />
+            <ul>{renderedOthers}</ul>
+        </Stack>
     );
 }
 
