@@ -2,6 +2,8 @@
 
 test 1
 
+test 2
+
 Notes on breaking, upcoming, and otherwise interesting changes go here. They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
 For instructions on how to communicate breaking changes please see our docs [here](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes).
