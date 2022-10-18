@@ -106,7 +106,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "2.0.0",
+    "version": "2.0.0-internal.2.1.0",
     "broken": {
       "VariableDeclaration_DefaultSummaryConfiguration": {
         "forwardCompat": false,
@@ -173,12 +173,33 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "InterfaceDeclaration_IAckedSummary": {"backCompat": false},
-      "InterfaceDeclaration_IAckSummaryResult": {"backCompat": false},
-      "InterfaceDeclaration_IChunkedOp": {"backCompat": false},
-      "InterfaceDeclaration_ISummaryNackMessage": {"backCompat": false},
-      "InterfaceDeclaration_INackSummaryResult": {"backCompat": false},
-      "InterfaceDeclaration_ISummaryOpMessage": {"backCompat": false}
+      "InterfaceDeclaration_IAckedSummary": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IAckSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IChunkedOp": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryNackMessage": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_INackSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryOpMessage": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IBroadcastSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryAckMessage": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_OpActionEventName": {
+        "backCompat": false
+      }
     }
   }
 }
