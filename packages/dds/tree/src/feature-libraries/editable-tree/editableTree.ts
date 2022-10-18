@@ -104,7 +104,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * Fields of this node, indexed by their field keys.
      *
      * This API exposes content in a way depending on the {@link Multiplicity} of the {@link FieldKind}.
-     * Sequences (including empty ones) are always exposed as arrays,
+     * Sequences (including empty ones) are always exposed as {@link EditableField},
      * and everything else is either a single EditableTree or undefined depending on if it's empty.
      */
     readonly [key: FieldKey]: UnwrappedEditableField;
@@ -152,7 +152,8 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     getType(index?: number, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
-     * Gets the non-unwrapped node of this field by its index.
+     * Gets a node of this field by its index without unwrapping.
+     * Note that if the node does not exist or this field is empty, it will throw an exception.
      */
     getWithoutUnwrapping(index: number): EditableTree;
 
@@ -184,13 +185,15 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
 /**
  * This is a base class for `ProxyTarget` and `SequenceProxyTarget`, which uniformly handles cursors and anchors.
  */
-export abstract class BaseProxyTarget {
+export class BaseProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
     constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
-        if (cursor === undefined || cursor.state !== ITreeSubscriptionCursorState.Current) {
-            // `neverAnchor` and `neverCursor` are used to indcate that and to not overlap with "alive" cursors and anchors.
+        if (cursor === undefined) {
+            // Undefined cursor means that this target is used to proxify an empty field/node.
+            // `neverAnchor` is used to indicate this, and `neverCursor` is just a placeholder for `lazyCursor`.
+            // They are used to not overlap with "alive" cursors and anchors of a non-empty target.
             // Note that in this context `undefined` anchor is just a not yet created anchor.
             this.anchor = context.neverAnchor;
             this.lazyCursor = context.neverCursor;
@@ -201,19 +204,20 @@ export abstract class BaseProxyTarget {
     }
 
     /**
-     * Indicates that the target is empty.
-     * This happens if a navigation with a cursor failed,
-     * and the cursor either stays in a clear state or at the parent node.
-     * Currently it is used in two cases:
-     * - to get a length of an empty field, as the cursor cannot be used;
-     * - to indicate that unwrapping should return `undefined` (just for a nicer code flow).
+     * Indicates that this target is used to proxify an empty field/node:
+     * - an empty node has no fields, type or value;
+     * - an empty field has no nodes.
+     * In all that cases the cursor may not be used.
+     *
+     * TODO: support of empty nodes in ProxyTarget is currently not implemented.
+     * It will be needed when implementing API to get fields of EditableTree without unwrapping.
      */
-    public get isEmptyTarget(): boolean {
+    public get isEmpty(): boolean {
         return this.anchor === this.context.neverAnchor;
     }
 
     public free(): void {
-        if (this.isEmptyTarget) return;
+        if (this.isEmpty) return;
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
@@ -232,6 +236,7 @@ export abstract class BaseProxyTarget {
     }
 
     public prepareForEdit(): void {
+        if (this.isEmpty) return;
         this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
@@ -260,7 +265,9 @@ export abstract class BaseProxyTarget {
  */
 export class ProxyTarget extends BaseProxyTarget {
     /**
-     * If there is no cursor or it's not in a current state, this will become an empty target.
+     * @param context - the common context of EditableTrees and EditableFields.
+     * @param cursor - the cursor must point to the first node of the field or be undefined.
+     * Undefined cursor means that this target is used to proxify an empty node.
      */
     constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
         super(context, cursor);
@@ -490,9 +497,9 @@ class SequenceProxyTarget extends BaseProxyTarget implements ArrayLike<Unwrapped
     private offset: number = 0;
 
     /**
-     * @param context - the common context of EditableTrees.
-     * @param cursor - the cursor must point either to the first node of the field or be undefined.
-     * If there is no cursor or it's not in a current state, this will become an empty field.
+     * @param context - the common context of EditableTrees and EditableFields.
+     * @param cursor - the cursor must point to the first node of the field or be undefined.
+     * Undefined cursor means that this target is used to proxify an empty field.
      * @param fieldKey - the key of the field being proxified.
      * @param fieldSchema - the schema of the field being proxified.
      * @param primaryType - the `TreeSchemaIdentifier` of the parent node having this primary field (see 'getPrimaryField').
@@ -511,7 +518,7 @@ class SequenceProxyTarget extends BaseProxyTarget implements ArrayLike<Unwrapped
     readonly [index: number]: UnwrappedEditableTree;
 
     public get length(): number {
-        return this.isEmptyTarget ? 0 : this.cursor.currentFieldLength();
+        return this.isEmpty ? 0 : this.cursor.currentFieldLength();
     }
 
     public getType(
@@ -538,13 +545,16 @@ class SequenceProxyTarget extends BaseProxyTarget implements ArrayLike<Unwrapped
 
     /**
      * Returns a node (unwrapped by default, see {@link UnwrappedEditableTree}) by its index.
-     * Make sure `keyIsValidIndex` is called before calling this,
-     * as this method checks indices only implicitly while navigating with a cursor.
+     * Make sure `keyIsValidIndex` is called before calling this to get `undefined` for non-existing nodes,
+     * as this method asserts indices while navigating with a cursor.
      */
     public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree {
         const offset = index - this.offset;
         const result = this.cursor.seek(offset);
-        assert(result === TreeNavigationResult.Ok, "Cannot navigate to the given index.");
+        assert(
+            result === TreeNavigationResult.Ok,
+            "Cannot get a node by its index. Maybe this field is empty?",
+        );
         this.offset = index;
         return inProxyOrUnwrap(new ProxyTarget(this.context, this.cursor), unwrap);
     }
@@ -746,7 +756,7 @@ export function proxifyField(
         );
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
-    return target.isEmptyTarget ? undefined : inProxyOrUnwrap(target, unwrap, fieldKey);
+    return target.isEmpty ? undefined : inProxyOrUnwrap(target, unwrap, fieldKey);
 }
 
 /**

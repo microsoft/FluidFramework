@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -32,6 +30,7 @@ import {
     defaultSchemaPolicy,
     getEditableTreeContext,
     EditableTree,
+    EditableField,
     buildForest,
     getTypeSymbol,
     UnwrappedEditableField,
@@ -166,6 +165,7 @@ describe("editable-tree", () => {
             const context = getEditableTreeContext(forest);
             assert(isEditableField(context.unwrappedRoot));
             assert.deepEqual([...context.unwrappedRoot], []);
+            expectFieldEquals(forest.schema, context.root, []);
             context.free();
         }
         // Test 1 item
@@ -174,6 +174,7 @@ describe("editable-tree", () => {
             const context = getEditableTreeContext(forest);
             assert(isEditableField(context.unwrappedRoot));
             expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode]);
+            expectFieldEquals(forest.schema, context.root, [emptyNode]);
             context.free();
         }
         // Test 2 items
@@ -182,6 +183,7 @@ describe("editable-tree", () => {
             const context = getEditableTreeContext(forest);
             assert(isEditableField(context.unwrappedRoot));
             expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode, emptyNode]);
+            expectFieldEquals(forest.schema, context.root, [emptyNode, emptyNode]);
             context.free();
         }
     });
@@ -210,6 +212,7 @@ describe("editable-tree", () => {
             const forest = setupForest(schemaData, []);
             const context = getEditableTreeContext(forest);
             assert.equal(context.unwrappedRoot, undefined);
+            expectFieldEquals(forest.schema, context.root, []);
             context.free();
         }
         // With value
@@ -217,6 +220,7 @@ describe("editable-tree", () => {
             const forest = setupForest(schemaData, [emptyNode]);
             const context = getEditableTreeContext(forest);
             expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
+            expectFieldEquals(forest.schema, context.root, [emptyNode]);
             context.free();
         }
     });
@@ -289,6 +293,7 @@ describe("editable-tree", () => {
         const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
         const context = getEditableTreeContext(forest);
         assert.equal(context.unwrappedRoot, 1);
+        expectFieldEquals(forest.schema, context.root, [{ type: int32Schema.name, value: 1 }]);
         context.free();
     });
 
@@ -305,7 +310,16 @@ describe("editable-tree", () => {
             },
         ]);
         const context = getEditableTreeContext(forest);
-        assert.equal((context.unwrappedRoot as EditableTree)["child" as FieldKey], 1);
+        assert(isUnwrappedNode(context.unwrappedRoot));
+        assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
+        // TODO: replace this with access to fields w/o unwrapping
+        for (const field of context.unwrappedRoot) {
+            assert.equal(field.fieldKey, "child" as FieldKey);
+            const child = field.getWithoutUnwrapping(0);
+            assert(isUnwrappedNode(child));
+            assert.equal(child[getTypeSymbol](undefined, true), int32Schema.name);
+            assert.equal(child[valueSymbol], 1);
+        }
         context.free();
     });
 
@@ -346,20 +360,32 @@ describe("editable-tree", () => {
             assert.equal(context.unwrappedRoot.length, 0);
             assert.deepEqual([...context.unwrappedRoot], []);
             expectTreeEquals(forest.schema, context.unwrappedRoot, data);
+            expectFieldEquals(forest.schema, context.unwrappedRoot, []);
+            assert.throws(
+                () => (context.unwrappedRoot as EditableField).getWithoutUnwrapping(0),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        "Cannot get a node by its index. Maybe this field is empty?",
+                    ),
+                "Expected exception was not thrown",
+            );
             context.free();
         }
         // Non-empty
         {
-            const forest = setupForest(schemaData, [
+            const data = [
                 {
                     type: phonesSchema.name,
                     fields: { [EmptyKey]: [{ type: int32Schema.name, value: 1 }] },
                 },
-            ]);
+            ];
+            const forest = setupForest(schemaData, data);
             const context = getEditableTreeContext(forest);
             assert(isEditableField(context.unwrappedRoot));
             assert.equal(context.unwrappedRoot.length, 1);
             assert.deepEqual([...context.unwrappedRoot], [1]);
+            expectFieldEquals(forest.schema, context.root, data);
             context.free();
         }
     });

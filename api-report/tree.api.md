@@ -590,6 +590,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
+export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
+
+// @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
     // (undocumented)
     childFieldLength(key: FieldKey): number;
