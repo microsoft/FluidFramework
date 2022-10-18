@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
 } from "../containerRuntime";
@@ -65,10 +66,12 @@ describe("Compression", () => {
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
+            const myStorage: Partial<IDocumentStorageService> = {};
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
+                    storage: myStorage as IDocumentStorageService,
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
@@ -130,7 +133,7 @@ describe("Compression", () => {
                 );
 
                 const wrapper = containerRuntime.storage as any;
-                assert.strictEqual(wrapper, undefined);
+                assert.deepStrictEqual(wrapper, {});
             });
         });
     });

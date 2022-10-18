@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FetchSource, IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext }
+import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext }
     from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle,
     ISummaryTree, IVersion, SummaryObject, SummaryType }
@@ -34,8 +34,8 @@ class SummaryStorageAdapter implements IDocumentStorageService {
         return this._hooks.onPostGetSnapshotTree(tree);
     }
     public async getVersions(versionId: string | null, count: number,
-        scenarioName?: string | undefined, fetchSource?: FetchSource | undefined): Promise<IVersion[]> {
-        return this._delegate.getVersions(versionId, count, scenarioName, fetchSource);
+        scenarioName?: string | undefined): Promise<IVersion[]> {
+        return this._delegate.getVersions(versionId, count, scenarioName);
     }
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const prepFile: ArrayBufferLike = this._hooks.onPreCreateBlob(file);
