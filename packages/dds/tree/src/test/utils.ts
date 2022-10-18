@@ -64,7 +64,7 @@ export class TestTreeProvider {
     private readonly provider: ITestObjectProvider;
     private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
-    public readonly summarizer: ISummarizer | undefined;
+    private readonly summarizer?: ISummarizer;
 
     public get trees(): readonly ISharedTree[] {
         return this._trees;
@@ -88,9 +88,10 @@ export class TestTreeProvider {
      * ```
      */
     public static async create(trees = 0, summarizeOnDemand = false): Promise<ITestTreeProvider> {
+        // The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
         assert(
             !(trees === 0 && summarizeOnDemand),
-            "can't summarize, because must create at least one tree.",
+            "trees must be >= 1 to allow summarization on demand",
         );
 
         const factory = new SharedTreeFactory();
@@ -176,7 +177,7 @@ export class TestTreeProvider {
         if (firstTreeParams !== undefined) {
             const [container, firstTree, summarizer] = firstTreeParams;
             this._containers.push(container);
-            this._trees[this.trees.length] = firstTree;
+            this._trees.push(firstTree);
             this.summarizer = summarizer;
         }
         return new Proxy(this, {

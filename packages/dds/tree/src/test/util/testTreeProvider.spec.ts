@@ -18,7 +18,7 @@ describe("TestTreeProvider", () => {
         const summaries = summaryCount;
         await provider.summarize();
 
-        assert(summaryCount === summaries + 1);
+        assert.equal(summaryCount, summaries + 1);
         unspy();
     });
 
@@ -30,7 +30,7 @@ describe("TestTreeProvider", () => {
         } catch (error) {
             summarizerError = error;
         }
-        assert(summarizerError !== undefined);
+        assert.equal(summarizerError, undefined);
     });
 
     it("cannot manually trigger summaries with 0 trees", async () => {
@@ -41,7 +41,7 @@ describe("TestTreeProvider", () => {
         } catch (error) {
             summarizerError = error;
         }
-        assert(summarizerError !== undefined);
+        assert.equal(summarizerError, undefined);
     });
 
     it("can trigger summaries with multiple trees", async () => {
@@ -54,7 +54,7 @@ describe("TestTreeProvider", () => {
 
         const summaries = summaryCount;
         await provider.summarize();
-        assert(summaryCount === summaries + 1);
+        assert.equal(summaryCount, summaries + 1);
         unspy();
     });
 });
