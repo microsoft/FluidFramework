@@ -486,11 +486,9 @@ describe("editable-tree", () => {
     it("'getWithoutUnwraping' does not unwrap primary field", () => {
         const [, proxy] = buildTestPerson();
         assert(isEditableField(proxy.address.phones));
-        const primary = getPrimaryField(
-            proxy.address.phones.getType(undefined, false) as TreeSchema,
-        );
-        assert(primary !== undefined);
         const forthNode = proxy.address.phones.getWithoutUnwrapping(3);
+        const primary = getPrimaryField(forthNode[getTypeSymbol](undefined, false) as TreeSchema);
+        assert(primary !== undefined);
         const simplePhones = forthNode[primary.key];
         const expectedPhones = ["112", "113"];
         assert(isEditableField(simplePhones));
