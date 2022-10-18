@@ -18,6 +18,7 @@ import {
     createSummarizer,
     summarizeNow,
 } from "@fluidframework/test-utils";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import { Delta } from "../tree";
@@ -63,7 +64,7 @@ export class TestTreeProvider {
     private readonly provider: ITestObjectProvider;
     private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
-    public readonly summarizer: any;
+    public readonly summarizer: ISummarizer | undefined;
 
     public get trees(): readonly ISharedTree[] {
         return this._trees;
@@ -87,10 +88,10 @@ export class TestTreeProvider {
      * ```
      */
     public static async create(trees = 0, summarizeOnDemand = false): Promise<ITestTreeProvider> {
-        /* assert(
-            trees === 0 && summarizeOnDemand,
-            "can't summarize, because must create at least one tree."
-        ) */
+        assert(
+            !(trees === 0 && summarizeOnDemand),
+            "can't summarize, because must create at least one tree.",
+        );
 
         const factory = new SharedTreeFactory();
         const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
@@ -106,26 +107,23 @@ export class TestTreeProvider {
         );
 
         if (summarizeOnDemand) {
-            const container = await objProvider.makeTestContainer()
+            const container = await objProvider.makeTestContainer();
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
             const firstTree = await dataObject.getSharedObject<ISharedTree>(
                 TestTreeProvider.treeId,
-            )
-            const summarizer = await createSummarizer(objProvider, container)
-            const provider = new TestTreeProvider(
-                objProvider,
+            );
+            const summarizer = await createSummarizer(objProvider, container);
+            const provider = new TestTreeProvider(objProvider, [
                 container,
                 firstTree,
                 summarizer,
-            ) as ITestTreeProvider;
+            ]) as ITestTreeProvider;
             for (let i = 1; i < trees; i++) {
                 await provider.createTree();
             }
             return provider;
         } else {
-            const provider = new TestTreeProvider(
-                objProvider,
-            ) as ITestTreeProvider;
+            const provider = new TestTreeProvider(objProvider) as ITestTreeProvider;
             for (let i = 0; i < trees; i++) {
                 await provider.createTree();
             }
@@ -158,10 +156,11 @@ export class TestTreeProvider {
      * @returns void after a summary has been resolved. May be called multiple times.
      */
     public async summarize(): Promise<void> {
-        if (this.summarizer !== undefined) {
-            await summarizeNow(this.summarizer, "TestTreeProvider")
-        }
-        // TODO: add assert for when summarize cannot be called
+        assert(
+            this.summarizer !== undefined,
+            "can't summarize because summarizeOnDemand was not set to true.",
+        );
+        await summarizeNow(this.summarizer, "TestTreeProvider");
     }
 
     /**
@@ -185,55 +184,18 @@ export class TestTreeProvider {
     public [Symbol.iterator](): IterableIterator<ISharedTree> {
         return this.trees[Symbol.iterator]();
     }
+    //
 
-    /* private constructor() {
-        const factory = new SharedTreeFactory();
-        const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
-        const driver = new LocalServerTestDriver();
-        this.provider = new TestObjectProvider(
-            Loader,
-            driver,
-            () =>
-                new TestContainerRuntimeFactory(
-                    "@fluid-example/test-dataStore",
-                    new TestFluidObjectFactory(registry),
-                ),
-        );
-
-        return new Proxy(this, {
-            get: (target, prop, receiver) => {
-                // Route all properties that are on the `TestTreeProvider` itself
-                if ((target as never)[prop] !== undefined) {
-                    return Reflect.get(target, prop, receiver) as unknown;
-                }
-
-                // Route all other properties to the `TestObjectProvider`
-                return Reflect.get(this.provider, prop, receiver) as unknown;
-            },
-        });
-    } */
-    /* private constructor(
-        factory: SharedTreeFactory,
-        registry: ChannelFactoryRegistry,
-        driver: LocalServerTestDriver,
-        provider: ITestObjectProvider,
-        tree?: ISharedTree,
-    ); */
     private constructor(
         provider: ITestObjectProvider,
-        container?: IContainer,
-        firstTree?: ISharedTree,
-        summarizer?: any,
+        firstTreeParams?: [IContainer, ISharedTree, ISummarizer],
     ) {
         this.provider = provider;
-        if (container !== undefined){
+        if (firstTreeParams !== undefined) {
+            const [container, firstTree, summarizer] = firstTreeParams;
             this._containers.push(container);
-        }
-        if (firstTree !== undefined) {
             this._trees[this.trees.length] = firstTree;
-        }
-        if (summarizer !== undefined) {
-            this.summarizer = summarizer
+            this.summarizer = summarizer;
         }
         return new Proxy(this, {
             get: (target, prop, receiver) => {

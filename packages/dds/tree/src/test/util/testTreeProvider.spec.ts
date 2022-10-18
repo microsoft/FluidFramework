@@ -23,16 +23,25 @@ describe("TestTreeProvider", () => {
     });
 
     it("cannot manually trigger summaries without setting summarizeOnDemand", async () => {
-        let summaryCount = 0;
-        const unspy = spyOnMethod(SharedTreeCore, "summarizeCore", () => {
-            summaryCount += 1;
-        });
+        let summarizerError;
+        try {
+            const provider = await TestTreeProvider.create(1);
+            await provider.summarize();
+        } catch (error) {
+            summarizerError = error;
+        }
+        assert(summarizerError !== undefined);
+    });
 
-        const provider = await TestTreeProvider.create(1);
-        const summaries = summaryCount;
-        await provider.summarize();
-        assert(summaryCount !== summaries + 1);
-        unspy();
+    it("cannot manually trigger summaries with 0 trees", async () => {
+        let summarizerError;
+        try {
+            const provider = await TestTreeProvider.create(0, true);
+            await provider.summarize();
+        } catch (error) {
+            summarizerError = error;
+        }
+        assert(summarizerError !== undefined);
     });
 
     it("can trigger summaries with multiple trees", async () => {
