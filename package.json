@@ -161,5 +161,7 @@
       }
     }
   },
-  "dependencies": {}
+  "dependencies": {
+    "eslint-config-prettier": "^8.5.0"
+  }
 }
