@@ -4,16 +4,17 @@
   // Depending on "shared-tree-core" so implementations of Indexes can be here.
   // Could move the index abstraction elsewhere instead.
   "imports": [
-    "schema-stored",
-    "schema-view",
-    "tree",
-    "util",
-    "rebase",
-    "forest",
-    "dependency-tracking",
-    "shared-tree-core",
     "change-family",
     "checkout",
-    "transaction"
+    "core",
+    "dependency-tracking",
+    "edit-manager",
+    "forest",
+    "rebase",
+    "schema-stored",
+    "schema-view",
+    "shared-tree-core",
+    "transaction",
+    "tree"
   ]
 }
