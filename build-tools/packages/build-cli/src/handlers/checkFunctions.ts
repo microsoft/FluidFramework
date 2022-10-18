@@ -11,7 +11,6 @@ import { MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
-// eslint-disable-next-line import/no-internal-modules
 import { CheckPolicy } from "../commands/check/policy";
 import {
     generateBumpDepsBranchName,
@@ -26,6 +25,7 @@ import {
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
+import { branchesRunDefaultPolicy } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -402,12 +402,15 @@ export const checkPolicy: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
 
     if (shouldCheckPolicy === true) {
-        if (context.originalBranchName !== "main") {
+        if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
             log.warning(
-                "WARNING: Policy check fixes are not expected outside of main branch!  Make sure you know what you are doing.",
+                `Policy check fixes are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
             );
         }
 
+        // oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
+        // but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
+        // expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
         await CheckPolicy.run([
             "--fix",
             "--exclusions",
@@ -430,6 +433,11 @@ export const checkPolicy: StateHandlerFunction = async (
             );
             BaseStateHandler.signalFailure(machine, state);
         }
+        // eslint-disable-next-line no-negated-condition
+    } else if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+        log.verbose(
+            `Skipping policy check because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+        );
     } else {
         log.warning("Skipping policy check.");
     }
