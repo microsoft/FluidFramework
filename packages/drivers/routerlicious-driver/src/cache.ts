@@ -3,40 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
-import { PromiseCache } from "@fluidframework/common-utils";
-//* import { MapWithExpiration } from "@fluidframework/driver-base";
+import { MapWithExpiration } from "@fluidframework/driver-base";
 import { FiveDaysMs } from "@fluidframework/driver-definitions";
 
-export interface ICache<T> extends IDisposable {
-    get(key: string): Promise<T> | undefined;
+export interface ICache<T> {
+    get(key: string): Promise<T | undefined>;
     put(key: string, value: T): Promise<void>;
 }
 
 const fiveDaysMs: FiveDaysMs = 432000000;
 
-export class InMemoryCache<T> extends PromiseCache<string, T> implements ICache<T> {
-    public readonly disposed: boolean = false;
-    constructor() {
-        super({ expiry: { durationMs: fiveDaysMs, policy: "sliding" } });
-    }
+export class InMemoryCache<T> implements ICache<T> {
+    private readonly cache: MapWithExpiration<string, T> = new MapWithExpiration(fiveDaysMs);
 
-    public get(key: string): Promise<T> | undefined {
-        return super.get(key);
+    public async get(key: string): Promise<T | undefined> {
+        return this.cache.get(key);
     }
 
     public async put(key: string, value: T): Promise<void> {
-        super.addValue(key, value);
-    }
-
-    public dispose() {
+        this.cache.set(key, value);
     }
 }
 
 export class NullCache<T> implements ICache<T> {
-    public readonly disposed: boolean = false;
-    public dispose() {}
-    public get(key: string): Promise<T> | undefined {
+    public async get(key: string): Promise<T | undefined> {
         return undefined;
     }
 
