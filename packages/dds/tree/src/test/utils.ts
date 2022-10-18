@@ -52,8 +52,6 @@ export class MockDependent extends SimpleObservingDependent {
  */
 export type ITestTreeProvider = TestTreeProvider & ITestObjectProvider;
 
-export type Summarizer = () => Promise<void>;
-
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link create} and satisfy the {@link ITestObjectProvider} interface.
