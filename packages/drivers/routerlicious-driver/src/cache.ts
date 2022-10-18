@@ -11,7 +11,7 @@ export interface ICache<T> extends IDisposable {
     put(key: string, value: T): Promise<void>;
 }
 
-/** A basic in-memory cache that expires entries after 5 days */
+/** A basic in-memory cache that optionally supports expiring entries after a period of inactivity */
 export class InMemoryCache<T> implements ICache<T> {
     public get disposed(): boolean { return this.cache.disposed ?? false; }
     public dispose() { this.cache.dispose?.(); }
