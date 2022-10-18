@@ -11,7 +11,6 @@ import { MonoRepoKind } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
-// eslint-disable-next-line import/no-internal-modules
 import { CheckPolicy } from "../commands/check/policy";
 import {
     generateBumpDepsBranchName,
