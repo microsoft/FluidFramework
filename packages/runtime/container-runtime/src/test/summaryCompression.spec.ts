@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { strict as assert } from "assert";
 import {
     IContainerContext,
@@ -12,7 +12,9 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
+import { IsoBuffer } from "@fluidframework/common-utils";
+import {
+    ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
 } from "../containerRuntime";
 import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
 // import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
@@ -38,7 +40,28 @@ function genOptions(alg: SummaryCompressionAlgorithms | undefined) {
     return summaryOptions;
 }
 
+function genBlobContent() {
+    const array: Uint8Array = new Uint8Array(600);
+    for (let i = 0; i < 600; i++) {
+        const b = i % 10;
+        array[i] = b;
+    }
+    return IsoBuffer.from(array);
+}
+
 describe("Compression", () => {
+    describe("Compression Symetrical Test", () => {
+        it("LZ4 enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+            runEncDecAtHooks(hook);
+        });
+        it("None enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+            runEncDecAtHooks(hook);
+        });
+    });
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
@@ -52,7 +75,6 @@ describe("Compression", () => {
                     updateDirtyContainerState: (_dirty: boolean) => { },
                 };
             });
-
             it("LZ4 config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.LZ4);
                 containerRuntime = await ContainerRuntime.load(
@@ -113,3 +135,9 @@ describe("Compression", () => {
         });
     });
 });
+function runEncDecAtHooks(hook: CompressionSummaryStorageHooks) {
+    const inputBlobContent = genBlobContent();
+    const compressed = hook.onPreCreateBlob(inputBlobContent);
+    const outputBlobContent = IsoBuffer.from(hook.onPostReadBlob(compressed));
+    assert.deepEqual(inputBlobContent, outputBlobContent);
+}
