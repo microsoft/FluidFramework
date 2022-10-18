@@ -114,9 +114,128 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.3.0.0",
-    "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "baselineVersion": "2.0.0-internal.2.1.1",
-    "broken": {}
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
+    "broken": {
+      "RemovedClassDeclaration_SharedNumberSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedNumberSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_MatrixSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCellPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCols": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRow": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRows": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_PaddingSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedFunctionDeclaration_positionToRowCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_rowColToPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_RunSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrix": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrixFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_SparseMatrixItem": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_IntervalCollection": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceInterval": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedNumberSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedObjectSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SparseMatrix": {
+        "backCompat": false
+      },
+      "ClassDeclaration_Interval": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISequenceDeltaRange": {
+        "backCompat": false
+      }
+    }
   }
 }

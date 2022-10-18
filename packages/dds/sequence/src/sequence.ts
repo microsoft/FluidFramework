@@ -39,6 +39,7 @@ import {
     ReferenceType,
     MergeTreeRevertibleDriver,
     SegmentGroup,
+    IMergeTreeObliterateMsg,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -155,6 +156,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     break;
                 }
 
+                case MergeTreeDeltaType.OBLITERATE: {
+                    throw new Error();
+                }
+
                 default:
             }
         }
@@ -224,6 +229,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         const removeOp = this.client.removeRangeLocal(start, end);
         this.submitSequenceMessage(removeOp);
         return removeOp;
+    }
+
+    /**
+     * @param start - The inclusive start of the range to remove
+     * @param end - The exclusive end of the range to remove
+     */
+    public obliterateRange(start: number, end: number): IMergeTreeObliterateMsg | undefined {
+        const obliterateOp = this.client.obliterateRangeLocal(start, end);
+        if (obliterateOp) {
+            this.submitSequenceMessage(obliterateOp);
+        }
+        return obliterateOp;
     }
 
     public groupOperation(groupOp: IMergeTreeGroupMsg) {

@@ -92,7 +92,7 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it.skip("deletes reconnected insert into obliterate range", () => {
+    it("deletes reconnected insert into obliterate range", () => {
         const helper = new ReconnectTestHelper();
 
         helper.insertText("B", 0, "ABCD");
@@ -105,7 +105,27 @@ describe("obliterate", () => {
         helper.submitDisconnectedOp("C", cOp);
         helper.processAllOps();
 
-        assert.equal(helper.clients.A.getText(), "D");
+        assert.equal(helper.clients.A.getText(), "aaaD");
+        assert.equal(helper.clients.C.getText(), "aaaD");
+
+        helper.logger.validate();
+    });
+
+    it("deletes reconnected insert into obliterate range when entire string deleted", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("B", 0, "ABCD");
+        helper.processAllOps();
+        helper.obliterateRange("B", 0, 4);
+        helper.disconnect(["C"]);
+        const cOp = helper.clients.C.insertTextLocal(2, "aaa");
+        assert(cOp);
+        helper.reconnect(["C"]);
+        helper.submitDisconnectedOp("C", cOp);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "aaa");
+        assert.equal(helper.clients.C.getText(), "aaa");
 
         helper.logger.validate();
     });

@@ -45,6 +45,7 @@ export const MergeTreeDeltaType = {
     REMOVE: 1,
     ANNOTATE: 2,
     GROUP: 3,
+    OBLITERATE: 4,
 } as const;
 
 export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
@@ -93,6 +94,14 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     relativePos2?: IRelativePosition;
 }
 
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    type: typeof MergeTreeDeltaType.OBLITERATE;
+    pos1?: number;
+    relativePos1?: IRelativePosition;
+    pos2?: number;
+    relativePos2?: IRelativePosition;
+}
+
 export interface ICombiningOp {
     name: string;
     defaultValue?: any;
@@ -119,6 +128,10 @@ export interface IJSONSegment {
     props?: Record<string, any>;
 }
 
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
+export type IMergeTreeDeltaOp =
+    IMergeTreeInsertMsg
+    | IMergeTreeRemoveMsg
+    | IMergeTreeAnnotateMsg
+    | IMergeTreeObliterateMsg;
 
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

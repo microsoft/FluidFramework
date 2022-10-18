@@ -9,7 +9,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { insertText } from "./testUtils";
 
-describe.skip("obliterate", () => {
+describe("obliterate", () => {
     let client: TestClient;
     let refSeq: number;
     const localClientId = 17;
@@ -54,7 +54,7 @@ describe.skip("obliterate", () => {
             });
             insertText({
                 mergeTree: client.mergeTree,
-                pos: 0,
+                pos: 1,
                 refSeq,
                 clientId: remoteClientId + 1,
                 seq: refSeq + 2,
@@ -64,10 +64,10 @@ describe.skip("obliterate", () => {
             });
             assert.equal(client.getText(), "");
         });
-        it("removes text for insert then obliterate", () => {
+        it("removes text for insert then obliterate when deleting entire string", () => {
             insertText({
                 mergeTree: client.mergeTree,
-                pos: 0,
+                pos: 1,
                 refSeq,
                 clientId: remoteClientId + 1,
                 seq: refSeq + 1,
@@ -86,13 +86,35 @@ describe.skip("obliterate", () => {
             });
             assert.equal(client.getText(), "");
         });
+        it("removes text for insert then obliterate", () => {
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 5,
+                refSeq,
+                clientId: remoteClientId + 1,
+                seq: refSeq + 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
+            client.obliterateRange({
+                start: 1,
+                end: "hello world".length,
+                refSeq,
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
+            assert.equal(client.getText(), "h");
+        });
     });
 
     describe("endpoint behavior", () => {
         it("does not expand to include text inserted at start", () => {
             client.obliterateRange({
                 start: 5,
-                end: client.getLength(),
+                end: "hello world".length,
                 refSeq,
                 clientId: remoteClientId,
                 seq: refSeq + 1,
@@ -105,16 +127,16 @@ describe.skip("obliterate", () => {
                 refSeq,
                 clientId: remoteClientId + 1,
                 seq: refSeq + 2,
-                text: " world",
+                text: "XXX",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
             });
-            assert.equal(client.getText(), "hello world");
+            assert.equal(client.getText(), "helloXXX");
         });
         it("does not expand to include text inserted at end", () => {
             client.obliterateRange({
                 start: 0,
-                end: 5,
+                end: "hello".length,
                 refSeq,
                 clientId: remoteClientId,
                 seq: refSeq + 1,
@@ -127,11 +149,11 @@ describe.skip("obliterate", () => {
                 refSeq,
                 clientId: remoteClientId + 1,
                 seq: refSeq + 2,
-                text: "hello",
+                text: "XXX",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
             });
-            assert.equal(client.getText(), "hello world");
+            assert.equal(client.getText(), "XXX world");
         });
     });
 
@@ -148,11 +170,11 @@ describe.skip("obliterate", () => {
             });
             insertText({
                 mergeTree: client.mergeTree,
-                pos: 0,
+                pos: 1,
                 refSeq,
                 clientId: remoteClientId,
                 seq: refSeq + 2,
-                text: "more ",
+                text: "XXX",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
             });

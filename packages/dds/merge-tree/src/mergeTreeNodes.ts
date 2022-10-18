@@ -158,10 +158,53 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 }
 
 /**
+ * Tracks information about when and where this segment was moved to.
+ * @example - Suppose a merge tree had 3 TextSegments "X", "A", and "B", and
+ * received the operation `move({ start: 0, end: 1 }, { dest: 3 }, { seq: 30 })`
+ * (moving the "X"
+ * after the "A" and the "B").
+ * After processing this operation, it would have the segments `[<moved "X" tombstone>, "A", "B", "X"]`.
+ * The moved "X" tombstone segment would have the following IMoveInfo:
+ * `{ movedSeq: 30, moveDst: <reference to living "X" segment>}`
+ */
+export interface IMoveInfo {
+    /**
+     * Local seq at which this segment was moved if the move is yet-to-be
+     * acked. Only set on the tombstone "source" segment of the move.
+     */
+    localMovedSeq?: number;
+    /**
+     * Seq at which this segment was moved. Only set on the tombstone "source"
+     * segment of the move.
+     */
+    movedSeq: number;
+    /**
+     * A reference to the inserted destination segment corresponding to this
+     * segment's move.
+     * If undefined, the move was an obliterate.
+     */
+    moveDst?: ReferencePosition;
+    /**
+     * List of client IDs that have moved this segment.
+     * The client that actually moved the segment (i.e. whose move op was sequenced first) is stored as the first
+     * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
+     */
+    movedClientIds: number[];
+}
+
+export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
+    if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
+        return maybe as IMoveInfo;
+    }
+    assert(maybe?.movedClientIds === undefined && maybe?.movedSeq === undefined,
+        0x2bf /* "both movedClientIds and movedSeq should be set or not set" */);
+}
+
+/**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
  */
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
@@ -411,6 +454,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public seq: number = UniversalSequenceNumber;
     public removedSeq?: number;
     public removedClientIds?: number[];
+    public movedSeq?: number;
+    public movedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     /**
@@ -423,6 +468,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public abstract readonly type: string;
     public localSeq?: number;
     public localRemovedSeq?: number;
+    public localMovedSeq?: number;
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
         collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
@@ -498,6 +544,16 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 }
                 return false;
 
+            case MergeTreeDeltaType.OBLITERATE:
+                const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
+                assert(moveInfo !== undefined, 0x046 /* "On obliterate ack, missing move info!" */);
+                this.localMovedSeq = undefined;
+                if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+                    moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+                    return true;
+                }
+                return false;
+
             default:
                 throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
         }
@@ -521,6 +577,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.seq = this.seq;
                 leafSegment.localSeq = this.localSeq;
                 leafSegment.clientId = this.clientId;
+                leafSegment.movedClientIds = this.movedClientIds?.slice();
+                leafSegment.movedSeq = this.movedSeq;
+                leafSegment.localMovedSeq = this.localMovedSeq;
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {

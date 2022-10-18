@@ -139,11 +139,7 @@ export class TestClient extends Client {
         overwrite?: boolean;
         opArgs: IMergeTreeDeltaOpArgs;
     }): void {
-        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
-    }
-
-    public obliterateRangeLocal(start: number, end: number) {
-        return this.removeRangeLocal(start, end);
+        this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
     }
 
     public getText(start?: number, end?: number): string {
@@ -372,7 +368,8 @@ export class TestClient extends Client {
         const isInsertedInView = (seg: ISegment) => seg.localSeq === undefined || seg.localSeq <= localSeq;
         const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) => removedSeq !== undefined &&
             (removedSeq !== UnassignedSequenceNumber || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-
+        const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegment) => movedSeq !== undefined &&
+            (movedSeq !== UnassignedSequenceNumber || (localMovedSeq !== undefined && localMovedSeq <= localSeq));
         /*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -389,14 +386,14 @@ export class TestClient extends Client {
             //
             // Note that all ACKed / remote ops are applied and we only need concern ourself with
             // determining if locally pending ops fall before/after the given 'localSeq'.
-            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+            if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
                 segmentPosition += seg.cachedLength;
             }
 
             return true;
         });
 
-        assert(fasterComputedPosition === segmentPosition,
+        assert.equal(fasterComputedPosition, segmentPosition,
             "Expected fast-path computation to match result from walk all segments");
         return segmentPosition;
     }

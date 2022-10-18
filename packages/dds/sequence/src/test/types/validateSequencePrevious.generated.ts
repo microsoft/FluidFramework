@@ -395,6 +395,7 @@ declare function get_current_InterfaceDeclaration_ISequenceDeltaRange():
 declare function use_old_InterfaceDeclaration_ISequenceDeltaRange(
     use: TypeOnly<old.ISequenceDeltaRange>);
 use_old_InterfaceDeclaration_ISequenceDeltaRange(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequenceDeltaRange());
 
 /*

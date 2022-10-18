@@ -32,6 +32,7 @@ import {
     createAnnotateRangeOp,
     createGroupOp,
     createInsertSegmentOp,
+    createObliterateRangeOp,
     createRemoveRangeOp,
 } from "./opBuilder";
 import {
@@ -46,6 +47,7 @@ import {
     IRelativePosition,
     MergeTreeDeltaType,
     ReferenceType,
+    IMergeTreeObliterateMsg,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -212,6 +214,21 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const removeOp = createRemoveRangeOp(start, end);
         this.applyRemoveRangeOp({ op: removeOp });
         return removeOp;
+    }
+
+    /**
+     * Removes the range
+     *
+     * @param start - The inclusive start of the range to remove
+     * @param end - The exclusive end of the range to remove
+     */
+    public obliterateRangeLocal(start: number, end: number) {
+        const obliterateOp = createObliterateRangeOp(start, end);
+
+        if (this.applyObliterateRangeOp({ op: obliterateOp })) {
+            return obliterateOp;
+        }
+        return undefined;
     }
 
     /**
@@ -402,6 +419,34 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
     }
 
+    private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+        assert(opArgs.op.type === MergeTreeDeltaType.OBLITERATE, 0x02d /* "Unexpected op type on range obliterate!" */);
+        const op = opArgs.op;
+        const clientArgs = this.getClientSequenceArgs(opArgs);
+        const range = this.getValidOpRange(op, clientArgs);
+        if (!range) {
+            return false;
+        }
+
+        let traceStart: Trace | undefined;
+        if (this.measureOps) {
+            traceStart = Trace.start();
+        }
+
+        this._mergeTree.obliterateRange(
+            range.start,
+            range.end,
+            clientArgs.referenceSequenceNumber,
+            clientArgs.clientId,
+            clientArgs.sequenceNumber,
+            false,
+            opArgs);
+
+        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+
+        return true;
+    }
+
     /**
      * Performs the remove based on the provided op
      * @param opArgs - The ops args for the op
@@ -545,7 +590,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      * @param clientArgs - The client args for the op
      */
     private getValidOpRange(
-        op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
+        op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeObliterateMsg,
         clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
         let start: number | undefined = op.pos1;
         if (start === undefined && op.relativePos1) {
@@ -744,11 +789,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                 case MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
-                    // if the segment has been removed, there's no need to send the annotate op
+                    // if the segment has been removed or obliterated, there's no need to send the annotate op
                     // unless the remove was local, in which case the annotate must have come
                     // before the remove
-                    if (segment.removedSeq === undefined ||
-                        (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber)) {
+                    if ((segment.removedSeq === undefined ||
+                        (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber))
+                        && (segment.movedSeq === undefined ||
+                        (segment.localMovedSeq !== undefined && segment.movedSeq === UnassignedSequenceNumber))) {
                         newOp = createAnnotateRangeOp(
                             segmentPosition,
                             segmentPosition + segment.cachedLength,
@@ -772,13 +819,29 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                     break;
 
                 case MergeTreeDeltaType.REMOVE:
-                    if (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber) {
+                    if (
+                        segment.localRemovedSeq !== undefined
+                        && segment.removedSeq === UnassignedSequenceNumber
+                        && (segment.movedSeq === undefined ||
+                            (segment.localMovedSeq !== undefined && segment.movedSeq === UnassignedSequenceNumber))
+                    ) {
                         newOp = createRemoveRangeOp(
                             segmentPosition,
                             segmentPosition + segment.cachedLength);
                     }
                     break;
-
+                case MergeTreeDeltaType.OBLITERATE:
+                    if (
+                        segment.localMovedSeq !== undefined
+                        && segment.movedSeq === UnassignedSequenceNumber
+                        && (segment.removedSeq === undefined ||
+                            (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber))
+                    ) {
+                        newOp = createObliterateRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength);
+                    }
+                    break;
                 default:
                     throw new Error(`Invalid op type`);
             }
@@ -812,6 +875,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             case MergeTreeDeltaType.ANNOTATE:
                 this.applyAnnotateRangeOp(opArgs);
                 break;
+            case MergeTreeDeltaType.OBLITERATE:
+                this.applyObliterateRangeOp(opArgs);
+                break;
             case MergeTreeDeltaType.GROUP: {
                 for (const memberOp of op.ops) {
                     this.applyRemoteOp({
@@ -843,6 +909,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                 break;
             case MergeTreeDeltaType.ANNOTATE:
                 this.applyAnnotateRangeOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.OBLITERATE:
+                this.applyObliterateRangeOp({ op });
                 metadata = this.peekPendingSegmentGroups();
                 break;
             case MergeTreeDeltaType.GROUP:
@@ -904,7 +974,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
     private lastNormalizationRefSeq = 0;
     /**
-     * Given an pending operation and segment group, regenerate the op, so it
+     * Given a pending operation and segment group, regenerate the op, so it
      * can be resubmitted
      * @param resetOp - The op to reset
      * @param segmentGroup - The segment group associated with the op
@@ -1021,6 +1091,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                     break;
                 case MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
+                    break;
+                case MergeTreeDeltaType.OBLITERATE:
+                    this.applyObliterateRangeOp(opArgs);
                     break;
                 default:
                     break;

@@ -39,7 +39,7 @@ describe("obliterate partial lengths", () => {
         assert.equal(client.getText(), "hello world");
         const localObliterateOp = client.obliterateRangeLocal(
             0,
-            client.getLength(),
+            "hello world".length,
         );
         assert.equal(client.getText(), "");
 
@@ -133,8 +133,8 @@ describe("obliterate partial lengths", () => {
             });
 
             validatePartialLengths(localClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
+                { seq: refSeq, len: "hello world".length, localSeq: refSeq },
+                { seq: refSeq + 1, len: "world".length, localSeq: refSeq + 1 },
             ]);
 
             client.applyMsg(client.makeOpMessage(localRemoveOp, refSeq + 1));
@@ -271,9 +271,9 @@ describe("obliterate partial lengths", () => {
         });
     });
 
-    describe.skip("obliterate with concurrent inserts", () => {
+    describe("obliterate with concurrent inserts", () => {
         it("obliterates when concurrent insert in middle of string", () => {
-            client.obliterateRangeLocal(
+            const localObliterateOp = client.obliterateRangeLocal(
                 0,
                 client.getLength(),
             );
@@ -282,7 +282,7 @@ describe("obliterate partial lengths", () => {
                 pos: "hello".length,
                 refSeq,
                 clientId: remoteClientId,
-                seq: refSeq + 2,
+                seq: refSeq + 1,
                 text: "more ",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
@@ -291,13 +291,21 @@ describe("obliterate partial lengths", () => {
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "".length },
-                { seq: refSeq + 2, len: "".length },
+                { seq: refSeq + 1, len: "hellomore  world".length },
+                { seq: refSeq + 1, len: "".length, localSeq: refSeq + 1 },
             ]);
+
+            client.applyMsg(client.makeOpMessage(localObliterateOp, refSeq + 2));
+
+            validatePartialLengths(remoteClientId, client.mergeTree, [
+                { seq: refSeq, len: "hello world".length },
+                { seq: refSeq + 1, len: "hellomore  world".length },
+                { seq: refSeq + 2, len: "".length, localSeq: refSeq + 2 },
+            ], refSeq);
         });
 
         it("obliterate does not affect concurrent insert at start of string", () => {
-            client.obliterateRangeLocal(
+            const localObliterateOp = client.obliterateRangeLocal(
                 0,
                 client.getLength(),
             );
@@ -306,22 +314,30 @@ describe("obliterate partial lengths", () => {
                 pos: 0,
                 refSeq,
                 clientId: remoteClientId,
-                seq: refSeq + 2,
+                seq: refSeq + 1,
                 text: "more ",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
             });
-            assert.equal(client.getText(), "");
+            assert.equal(client.getText(), "more ");
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "".length },
-                { seq: refSeq + 2, len: "more ".length },
+                { seq: refSeq + 1, len: "more hello world".length },
+                { seq: refSeq + 1, len: "more ".length, localSeq: refSeq + 1 },
             ]);
+
+            client.applyMsg(client.makeOpMessage(localObliterateOp, refSeq + 2));
+
+            validatePartialLengths(remoteClientId, client.mergeTree, [
+                { seq: refSeq, len: "hello world".length },
+                { seq: refSeq + 1, len: "more hello world".length },
+                { seq: refSeq + 2, len: "more ".length },
+            ], refSeq);
         });
 
         it("obliterate does not affect concurrent insert at end of string", () => {
-            client.obliterateRangeLocal(
+            const localObliterateOp = client.obliterateRangeLocal(
                 0,
                 client.getLength(),
             );
@@ -330,18 +346,26 @@ describe("obliterate partial lengths", () => {
                 pos: "hello world".length,
                 refSeq,
                 clientId: remoteClientId,
-                seq: refSeq + 2,
+                seq: refSeq + 1,
                 text: "more ",
                 props: undefined,
                 opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
             });
-            assert.equal(client.getText(), "");
+            assert.equal(client.getText(), "more ");
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "".length },
-                { seq: refSeq + 2, len: "more ".length },
+                { seq: refSeq + 1, len: "hello worldmore ".length },
+                { seq: refSeq + 1, len: "more ".length, localSeq: refSeq + 1 },
             ]);
+
+            client.applyMsg(client.makeOpMessage(localObliterateOp, refSeq + 2));
+
+            validatePartialLengths(remoteClientId, client.mergeTree, [
+                { seq: refSeq, len: "hello world".length },
+                { seq: refSeq + 1, len: "hello worldmore ".length },
+                { seq: refSeq + 2, len: "more ".length },
+            ], refSeq);
         });
     });
 });

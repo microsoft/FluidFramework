@@ -10,8 +10,10 @@ import {
     CollaborationWindow,
     compareNumbers,
     IMergeBlock,
+    IMoveInfo,
     IRemovalInfo,
     ISegment,
+    toMoveInfo,
     toRemovalInfo,
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
@@ -352,13 +354,17 @@ export class PartialSequenceLengths {
                     PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
                 }
                 const removalInfo = toRemovalInfo(segment);
-                if (seqLTE(removalInfo?.removedSeq, collabWindow.minSeq)) {
+                const moveInfo = toMoveInfo(segment);
+                if (seqLTE(removalInfo?.removedSeq, collabWindow.minSeq)
+                || seqLTE(moveInfo?.movedSeq, collabWindow.minSeq)) {
                     combinedPartialLengths.minLength -= segment.cachedLength;
-                } else if (removalInfo !== undefined) {
+                } else if (removalInfo !== undefined || moveInfo !== undefined) {
                     PartialSequenceLengths.insertSegment(
                         combinedPartialLengths,
                         segment,
-                        removalInfo);
+                        removalInfo,
+                        moveInfo,
+                    );
                 }
             }
         }
@@ -427,16 +433,40 @@ export class PartialSequenceLengths {
     private static insertSegment(
         combinedPartialLengths: PartialSequenceLengths,
         segment: ISegment,
-        removalInfo?: IRemovalInfo) {
-        const isLocal = (removalInfo === undefined && segment.seq === UnassignedSequenceNumber)
-            || (removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber);
+        removalInfo?: IRemovalInfo,
+        moveInfo?: IMoveInfo) {
+        const isLocal =
+            (removalInfo === undefined && moveInfo === undefined && segment.seq === UnassignedSequenceNumber)
+            || (removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber)
+            || (moveInfo !== undefined && segment.movedSeq === UnassignedSequenceNumber);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
         let removeClientOverlap: number[] | undefined;
 
-        if (removalInfo) {
+        if (removalInfo && moveInfo) {
+            const removalIsLocal = removalInfo.removedSeq === UnassignedSequenceNumber;
+            const moveIsLocal = moveInfo.movedSeq === UnassignedSequenceNumber;
+
+            assert(!moveIsLocal && !removalIsLocal || moveIsLocal !== removalIsLocal, "");
+
+            if (removalIsLocal) {
+                seqOrLocalSeq = moveInfo.movedSeq;
+                segmentLen = -segmentLen;
+                // The client who performed the move is always stored
+                // in the first position of removalInfo.
+                clientId = moveInfo.movedClientIds[0];
+            } else {
+                seqOrLocalSeq = removalInfo.removedSeq;
+                segmentLen = -segmentLen;
+                // The client who performed the remove is always stored
+                // in the first position of removalInfo.
+                clientId = removalInfo.removedClientIds[0];
+                const hasOverlap = removalInfo.removedClientIds.length > 1;
+                removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
+            }
+        } else if (removalInfo) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             seqOrLocalSeq = isLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
             segmentLen = -segmentLen;
@@ -445,6 +475,17 @@ export class PartialSequenceLengths {
             clientId = removalInfo.removedClientIds[0];
             const hasOverlap = removalInfo.removedClientIds.length > 1;
             removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
+        } else if (moveInfo) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            seqOrLocalSeq = isLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
+            segmentLen = -segmentLen;
+            // The client who performed the move is always stored
+            // in the first position of removalInfo.
+            clientId = moveInfo.movedClientIds[0];
+
+            // TODO: overlap?
+            // const hasOverlap = removalInfo.removedClientIds.length > 1;
+            // removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
         }
 
         const partials = isLocal
@@ -627,13 +668,14 @@ export class PartialSequenceLengths {
             } else {
                 const segment = child;
                 const removalInfo = toRemovalInfo(segment);
+                const moveInfo = toMoveInfo(segment);
 
                 if (segment.seq === seq) {
-                    if (removalInfo?.removedSeq !== seq) {
+                    if (removalInfo?.removedSeq !== seq && moveInfo?.movedSeq !== seq) {
                         seqSeglen += segment.cachedLength;
                     }
                 } else {
-                    if (removalInfo?.removedSeq === seq) {
+                    if (removalInfo?.removedSeq === seq || moveInfo?.movedSeq === seq) {
                         seqSeglen -= segment.cachedLength;
                     }
                 }
