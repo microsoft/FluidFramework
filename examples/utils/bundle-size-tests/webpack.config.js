@@ -66,9 +66,9 @@ module.exports = {
         instance.name === 'es-abstract'
     }),
     new BundleAnalyzerPlugin({
-      analyzerMode: 'static',
-      reportFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.html'),
-      openAnalyzer: false,
+      analyzerMode: 'json',
+      reportFilename: path.resolve(process.cwd(), 'bundleAnalysis/report1.json'),
+      openAnalyzer: true,
       generateStatsFile: true,
       statsFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.json')
     }),
