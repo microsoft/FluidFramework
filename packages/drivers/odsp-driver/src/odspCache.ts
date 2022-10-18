@@ -2,10 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { IDisposable } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
-import { MapWithExpiration } from "@fluidframework/driver-base";
 import {
     IOdspResolvedUrl,
     IFileEntry,
@@ -14,7 +11,6 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
-
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  */
@@ -28,20 +24,12 @@ export interface IPersistedFileCache {
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
-export class LocalPersistentCache implements IPersistedCache, IDisposable {
-    public get disposed(): boolean { return this.cache.disposed; }
-    private readonly cache: MapWithExpiration<string, any>;
-
+export class LocalPersistentCache implements IPersistedCache {
+    private readonly cache = new Map<string, any>();
     // For every document id there will be a single expiration entry inspite of the number of cache entries.
     private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
-    public constructor(snapshotExpiryPolicy = 30 * 1000) {
-        this.cache = new MapWithExpiration<string, any>(snapshotExpiryPolicy);
-    }
-
-    public dispose(error?: Error): void {
-        this.cache.dispose(error);
-    }
+    public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) { }
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
@@ -52,7 +40,6 @@ export class LocalPersistentCache implements IPersistedCache, IDisposable {
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
         this.cache.set(key, value);
-        //*
         this.updateExpirationEntry(entry.file.docId);
     }
 
