@@ -18,7 +18,7 @@ describe("TestTreeProvider", () => {
         const summaries = summaryCount;
         await provider.summarize();
 
-        assert.equal(summaryCount, summaries + 1);
+        assert.strictEqual(summaryCount, summaries + 1);
         unspy();
     });
 
@@ -54,7 +54,7 @@ describe("TestTreeProvider", () => {
 
         const summaries = summaryCount;
         await provider.summarize();
-        assert.equal(summaryCount, summaries + 1);
+        assert.strictEqual(summaryCount, summaries + 1);
         unspy();
     });
 });
