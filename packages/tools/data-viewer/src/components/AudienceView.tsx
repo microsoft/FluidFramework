@@ -5,7 +5,7 @@
 import { Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { IMember, IServiceAudience } from "fluid-framework";
+import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
 /**
  * {@link AudienceView} input props.
@@ -18,7 +18,7 @@ export interface AudienceViewProps {
 }
 
 /**
- * Displays information about the provided {@link fluid-framework#IServiceAudience | audience}.
+ * Displays information about the provided {@link @fluidframework/fluid-static#IServiceAudience | audience}.
  *
  * @param props - See {@link AudienceViewProps}.
  */

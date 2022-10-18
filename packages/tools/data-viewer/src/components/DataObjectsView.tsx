@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "office-ui-fabric-react";
+import { Stack } from "@fluentui/react";
 import React from "react";
 
-import { LoadableObjectRecord } from "fluid-framework";
-
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
 import { Accordion } from "./Accordion";
 

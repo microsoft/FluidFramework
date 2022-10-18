@@ -5,9 +5,17 @@
 import { Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { AttachState, ConnectionState, IFluidContainer } from "fluid-framework";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { DataObjectsView } from "./DataObjectsView";
+
+// TODOs:
+// - UI to generate and save to disk snapshot of current state
+// - UI to force disconnect / reconnect
 
 /**
  * {@link ContainerDataView} input props.
@@ -32,10 +40,30 @@ export interface ContainerDataViewProps {
 export function ContainerDataView(props: ContainerDataViewProps): React.ReactElement {
     const { containerId, container } = props;
 
+    // Hack to get at container internals
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    const innerContainer = (container as any).container as IContainer;
+    if (innerContainer === undefined) {
+        throw new Error("Could not find inner IContainer under IFluidContainer.");
+    }
+
+    const { deltaManager } = innerContainer;
+
+    // State bound to outer container
     const [isDirty, updateIsDirty] = useState<boolean>(container.isDirty);
     const [isDisposed, updateIsDisposed] = useState<boolean>(container.disposed);
     const [attachState, updateAttachState] = useState(container.attachState);
     const [connectionState, updateConnectionState] = useState(container.connectionState);
+
+    // State bound to inner container
+    const [resolvedUrl, updateResolvedUrl] = useState<IResolvedUrl | undefined>(
+        innerContainer.resolvedUrl,
+    );
+
+    // State bound to delta manager
+    const [minimumSequenceNumber, updateMinimumSequenceNumber] = useState<number>(
+        deltaManager.minimumSequenceNumber,
+    );
 
     // TODO: readonly toggle control
     const readOnlyDataViews =
@@ -49,14 +77,10 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         isDisposed;
 
     useEffect(() => {
-        function onConnected(): void {
+        function onConnectionChange(): void {
             updateConnectionState(container.connectionState); // Should be connected
             updateAttachState(container.attachState);
-        }
-
-        function onDisconnected(): void {
-            updateConnectionState(container.connectionState); // Should be disconnected
-            updateAttachState(container.attachState);
+            updateResolvedUrl(innerContainer.resolvedUrl);
         }
 
         function onDirty(): void {
@@ -71,18 +95,26 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             updateIsDisposed(true);
         }
 
-        container.on("connected", onConnected);
-        container.on("disconnected", onDisconnected);
+        function onOp(message: ISequencedDocumentMessage): void {
+            updateMinimumSequenceNumber(message.minimumSequenceNumber);
+        }
+
+        container.on("connected", onConnectionChange);
+        container.on("disconnected", onConnectionChange);
         container.on("dirty", onDirty);
         container.on("saved", onSaved);
-        container.on("dispose", onDispose);
+        container.on("disposed", onDispose);
+
+        innerContainer.on("op", onOp);
 
         return (): void => {
-            container.off("connected", onConnected);
-            container.off("disconnected", onDisconnected);
+            container.off("connected", onConnectionChange);
+            container.off("disconnected", onConnectionChange);
             container.off("dirty", onDirty);
             container.off("saved", onSaved);
-            container.off("dispose", onDispose);
+            container.off("disposed", onDispose);
+
+            innerContainer.off("op", onOp);
         };
     }, [container]);
 
@@ -94,7 +126,19 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             </div>
         );
     } else {
+        // TODO: confirm that this never gets updated during a container session.
         const initialObjects = container.initialObjects;
+
+        const maybeResolvedUrlDiv =
+            resolvedUrl === undefined ? (
+                <></>
+            ) : (
+                <div>
+                    <b>Resolved URL: </b>
+                    {resolvedUrlToString(resolvedUrl)}
+                </div>
+            );
+
         innerView = (
             <Stack>
                 <div>
@@ -105,6 +149,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                     <b>Attach state: </b>
                     {attachState}
                 </div>
+                {maybeResolvedUrlDiv}
                 <div>
                     <b>Mode: </b>
                     {readOnlyDataViews ? "Readonly" : "Read/Write"}
@@ -112,6 +157,10 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                 <div>
                     <b>Local edit state: </b>
                     {isDirty ? "Pending local edits" : "No pending local edits"}
+                </div>
+                <div>
+                    <b>Minimum sequence number: </b>
+                    {minimumSequenceNumber}
                 </div>
                 <DataObjectsView initialObjects={initialObjects} />
             </Stack>
@@ -145,5 +194,16 @@ function connectionStateToString(connectionState: ConnectionState): string {
             return "Establishing connection";
         default:
             throw new TypeError(`Unrecognized ConnectionState value: "${connectionState}".`);
+    }
+}
+
+function resolvedUrlToString(resolvedUrl: IResolvedUrl): string {
+    switch (resolvedUrl.type) {
+        case "fluid":
+            return resolvedUrl.url;
+        case "web":
+            return resolvedUrl.data;
+        default:
+            throw new Error("Unrecognized IResolvedUrl type.");
     }
 }

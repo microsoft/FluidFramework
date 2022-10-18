@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IFluidContainer } from 'fluid-framework';
-import { IMember } from 'fluid-framework';
-import { IServiceAudience } from 'fluid-framework';
+import { IFluidContainer } from '@fluidframework/fluid-static';
+import { IMember } from '@fluidframework/fluid-static';
+import { IServiceAudience } from '@fluidframework/fluid-static';
 import { default as React_2 } from 'react';
 
 // @public

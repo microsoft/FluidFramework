@@ -2,11 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Spinner, Stack, ThemeProvider, createTheme, StackItem, mergeStyles } from "@fluentui/react";
+import {
+    Spinner,
+    Stack,
+    StackItem,
+    ThemeProvider,
+    createTheme,
+    mergeStyles,
+} from "@fluentui/react";
 import React from "react";
 
-import { ConnectionState, ContainerSchema, IFluidContainer, SharedString } from "fluid-framework";
-
+import { ConnectionState } from "@fluidframework/container-loader";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedString } from "@fluidframework/sequence";
 import {
     ITinyliciousAudience,
     TinyliciousClient,
@@ -152,9 +160,9 @@ const rootStackStyles = mergeStyles({
 });
 
 const viewPaneStackStyles = mergeStyles({
-        padding: "5px",
-        height: "100%",
-    });
+    padding: "5px",
+    height: "100%",
+});
 
 export function App(): React.ReactElement {
     // Load the collaborative SharedString object
@@ -166,19 +174,19 @@ export function App(): React.ReactElement {
         const sharedString = container.initialObjects.sharedString as SharedString;
         return (
             <ThemeProvider theme={appTheme}>
-            <Stack horizontal className={rootStackStyles}>
-                <StackItem className={viewPaneStackStyles}>
-                    <CollaborativeTextView text={sharedString} />
-                </StackItem>
-                <StackItem className={viewPaneStackStyles}>
-                    <SessionDataView
+                <Stack horizontal className={rootStackStyles}>
+                    <StackItem className={viewPaneStackStyles}>
+                        <CollaborativeTextView text={sharedString} />
+                    </StackItem>
+                    <StackItem className={viewPaneStackStyles}>
+                        <SessionDataView
                             container={container}
                             containerId={containerId}
                             audience={audience}
                         />
-                </StackItem>
-            </Stack>
-                    </ThemeProvider>
+                    </StackItem>
+                </Stack>
+            </ThemeProvider>
         );
     } else {
         return (
