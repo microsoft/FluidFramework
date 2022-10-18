@@ -15,7 +15,7 @@
  *
  * @packageDocumentation
  */
-
+export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
 export {
     DeserializeCallback,
     IIntervalCollectionEvent,
@@ -33,14 +33,14 @@ export {
     CompressedSerializedInterval,
     SerializedIntervalDelta,
 } from "./intervalCollection";
-export {
-    IMapMessageLocalMetadata,
-    IValueOpEmitter,
-} from "./defaultMapInterfaces";
-export * from "./sharedString";
-export * from "./sequence";
-export * from "./sequenceFactory";
-export * from "./sequenceDeltaEvent";
-export * from "./sharedSequence";
-export * from "./sharedIntervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+export { ISequenceDeltaRange, SequenceDeltaEvent, SequenceEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
+export { SharedStringFactory } from "./sequenceFactory";
+export { getTextAndMarkers, ISharedString, SharedString, SharedStringSegment } from "./sharedString";
+export {
+	ISharedIntervalCollection,
+	SharedIntervalCollection,
+	SharedIntervalCollectionFactory,
+} from "./sharedIntervalCollection";
+export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence";
