@@ -712,27 +712,11 @@
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
           {
-            "mergeType": "squash",
+            "mergeType": "merge",
             "condition": {
               "placeholder": "labels",
-              "operator": "notContains",
+              "operator": "contains",
               "label_name": "do-not-squash-merge"
-            }
-          },
-          {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "notContains",
-              "label_name": "main-next-integrate"
-            }
-          },
-          {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "author",
-              "operator": "notEquals",
-              "value": "github-actions"
             }
           },
           {
@@ -1923,31 +1907,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "taskType": "trigger",
-      "capabilityId": "IssueResponder",
-      "subCapability": "PullRequestCommentResponder",
-      "version": "1.0",
-      "config": {
-        "conditions": {
-          "operator": "and",
-          "operands": []
-        },
-        "eventType": "pull_request",
-        "eventNames": [
-          "issue_comment"
-        ],
-        "actions": [
-          {
-            "name": "approvePullRequest",
-            "parameters": {
-              "comment": "#sign-off"
-            }
-          }
-        ],
-        "taskName": "Approve pull request by adding a comment"
       }
     }
   ],

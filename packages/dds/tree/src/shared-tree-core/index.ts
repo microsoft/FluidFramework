@@ -3,4 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sharedTreeCore";
+export {
+    Index,
+    ISharedTreeCoreEvents,
+    SharedTreeCore,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "./sharedTreeCore";

@@ -6,14 +6,17 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey } from "../../..";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { JsonCursor } from "../../../domains/json/jsonCursor";
 import {
+    ITreeCursorNew,
+    singleJsonCursor,
     jsonableTreeFromCursorNew,
+    EmptyKey,
+    cursorToJsonObjectNew,
+} from "../../..";
+import {
     mapTreeFromCursor,
     singleMapTreeCursor,
+    singleTextCursorNew,
 } from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
@@ -57,7 +60,7 @@ function bench(
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+        const encodedTree = jsonableTreeFromCursorNew(singleJsonCursor(json));
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -73,6 +76,7 @@ function bench(
         });
 
         const cursorFactories: [string, () => ITreeCursorNew][] = [
+            ["JsonCursor", () => singleJsonCursor(json)],
             ["TextCursor", () => singleTextCursorNew(encodedTree)],
             [
                 "MapCursor",
@@ -90,8 +94,7 @@ function bench(
                 ) => any,
             ) => void,
         ][] = [
-            // TODO: finish porting other cursor code and enable this.
-            // ["cursorToJsonObject", cursorToJsonObjectNew],
+            ["cursorToJsonObject", cursorToJsonObjectNew],
             ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
             ["mapTreeFromCursor", mapTreeFromCursor],
             ["sum", sum],
