@@ -251,6 +251,7 @@ declare function get_current_InterfaceDeclaration_IAckedSummary():
 declare function use_old_InterfaceDeclaration_IAckedSummary(
     use: TypeOnly<old.IAckedSummary>);
 use_old_InterfaceDeclaration_IAckedSummary(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAckedSummary());
 
 /*
@@ -275,6 +276,7 @@ declare function get_current_InterfaceDeclaration_IAckSummaryResult():
 declare function use_old_InterfaceDeclaration_IAckSummaryResult(
     use: TypeOnly<old.IAckSummaryResult>);
 use_old_InterfaceDeclaration_IAckSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAckSummaryResult());
 
 /*
@@ -323,6 +325,7 @@ declare function get_current_InterfaceDeclaration_IBroadcastSummaryResult():
 declare function use_old_InterfaceDeclaration_IBroadcastSummaryResult(
     use: TypeOnly<old.IBroadcastSummaryResult>);
 use_old_InterfaceDeclaration_IBroadcastSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBroadcastSummaryResult());
 
 /*
@@ -395,6 +398,7 @@ declare function get_current_InterfaceDeclaration_IChunkedOp():
 declare function use_old_InterfaceDeclaration_IChunkedOp(
     use: TypeOnly<old.IChunkedOp>);
 use_old_InterfaceDeclaration_IChunkedOp(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChunkedOp());
 
 /*
@@ -659,6 +663,7 @@ declare function get_current_InterfaceDeclaration_INackSummaryResult():
 declare function use_old_InterfaceDeclaration_INackSummaryResult(
     use: TypeOnly<old.INackSummaryResult>);
 use_old_InterfaceDeclaration_INackSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_INackSummaryResult());
 
 /*
@@ -1163,6 +1168,7 @@ declare function get_current_InterfaceDeclaration_ISummaryAckMessage():
 declare function use_old_InterfaceDeclaration_ISummaryAckMessage(
     use: TypeOnly<old.ISummaryAckMessage>);
 use_old_InterfaceDeclaration_ISummaryAckMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryAckMessage());
 
 /*
@@ -1355,6 +1361,7 @@ declare function get_current_InterfaceDeclaration_ISummaryNackMessage():
 declare function use_old_InterfaceDeclaration_ISummaryNackMessage(
     use: TypeOnly<old.ISummaryNackMessage>);
 use_old_InterfaceDeclaration_ISummaryNackMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryNackMessage());
 
 /*
@@ -1379,6 +1386,7 @@ declare function get_current_InterfaceDeclaration_ISummaryOpMessage():
 declare function use_old_InterfaceDeclaration_ISummaryOpMessage(
     use: TypeOnly<old.ISummaryOpMessage>);
 use_old_InterfaceDeclaration_ISummaryOpMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryOpMessage());
 
 /*
@@ -1499,6 +1507,7 @@ declare function get_current_TypeAliasDeclaration_OpActionEventName():
 declare function use_old_TypeAliasDeclaration_OpActionEventName(
     use: TypeOnly<old.OpActionEventName>);
 use_old_TypeAliasDeclaration_OpActionEventName(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_OpActionEventName());
 
 /*
