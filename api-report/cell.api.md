@@ -63,7 +63,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata): void;
-    rollback(op: any, localOpMetadata: unknown): void;
+    rollback(op: any, localOpMetadata: ICellLocalOpMetadata): void;
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }

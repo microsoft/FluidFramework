@@ -39,13 +39,6 @@ interface IDeleteCellOperation {
 
 const snapshotFileName = "header";
 
-function isCellLocalOpMetadata(metadata: any): metadata is ICellLocalOpMetadata {
-    /*
-    return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
-        metadata.type === "edit"; */
-    return true;
-}
-
 function createLocalOpMetadata(op: ICellOperation,
     pendingMessageId: number, previousValue?: any): ICellLocalOpMetadata {
     const localMetadata: ICellLocalOpMetadata = {
@@ -267,10 +260,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata) {
-        /*
-        if (!isCellLocalOpMetadata(localOpMetadata)) {
-            throw new Error("Invalid localOpMetadata");
-        } */
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
@@ -326,10 +315,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    public rollback(op: any, localOpMetadata: unknown) {
-        if (!isCellLocalOpMetadata(localOpMetadata)) {
-            throw new Error("Invalid localOpMetadata");
-        }
+    public rollback(op: any, localOpMetadata: ICellLocalOpMetadata) {
         if (op.type === "set" || op.type === "delete") {
             if (localOpMetadata.previousValue === undefined) {
                 this.deleteCore();
