@@ -54,11 +54,16 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
         return super.delete(key);
     }
 
+    clear(): void {
+        Array.from(this).forEach(([key]) => this.cancelExpiration(key));
+        super.clear();
+    }
+
     dispose(_error?: Error): void {
         if (this.disposed) {
             return;
         }
         this.disposed = true;
-        Array.from(this).forEach(([key]) => this.delete(key));
+        this.clear();
     }
 }
