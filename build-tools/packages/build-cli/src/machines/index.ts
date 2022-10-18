@@ -4,5 +4,4 @@
  */
 
 export { FluidReleaseMachine } from "./fluidReleaseMachine";
-export { StateMachineCommand } from "../stateMachineCommand";
 export type { MachineState } from "./types";

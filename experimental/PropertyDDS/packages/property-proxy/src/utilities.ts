@@ -33,6 +33,7 @@ export function forceType<T>(value: any | T): value is T {
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utilities {
     /**
     * Wraps a function with push/pophNotificationDelayScope.
@@ -77,11 +78,7 @@ export namespace Utilities {
             if (property.isPrimitiveType() &&
                 !PropertyFactory.instanceOf(property, "Reference", "array") &&
                 !PropertyFactory.instanceOf(property, "Reference", "map")) {
-                if (element.isPrimitiveType()) {
-                    return element.getValue();
-                } else {
-                    return element.getValues();
-                }
+                return element.isPrimitiveType() ? element.getValue() : element.getValues();
             } else {
                 // Some special cases to allow out of the box functionality for arrays
                 if (element.getParent() && property.getContext() === "array" && forceType<ArrayProperty>(property)) {
@@ -107,11 +104,9 @@ export namespace Utilities {
                 throw new Error(PropertyProxyErrors.ITERABLE_INSERTION);
             }
             if (property.getContext() === "array" || property.getContext() === "map") {
-                if (property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")) {
-                    return element;
-                } else {
-                    return PropertyFactory.create(property.getTypeid(), "single", element);
-                }
+                return property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")
+                    ? element
+                    : PropertyFactory.create(property.getTypeid(), "single", element);
             } else {
                 return element;
             }

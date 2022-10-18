@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
@@ -54,7 +55,7 @@ export function renderDocuments(
     const filteredPackages = apiModel.packages.filter(
         (apiPackage) => !config.packageFilterPolicy(apiPackage),
     );
-    if (filteredPackages.length !== 0) {
+    if (filteredPackages.length > 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document
         // per provided policy.
 
@@ -112,13 +113,13 @@ export async function renderFiles(
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
+    const resolvedMarkdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
     const documents = renderDocuments(config);
 
     await Promise.all(
         documents.map(async (document) => {
-            const emittedDocumentContents = markdownEmitter!.emit(
+            const emittedDocumentContents = resolvedMarkdownEmitter.emit(
                 new StringBuilder(),
                 document.contents,
                 {

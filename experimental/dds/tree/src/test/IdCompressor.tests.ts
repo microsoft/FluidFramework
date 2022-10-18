@@ -1256,6 +1256,37 @@ describe('IdCompressor', () => {
 				expect(compressor.normalizeToSessionSpace(opSpaceId1)).to.equal(localId1);
 				expect(compressor.normalizeToSessionSpace(opSpaceId2)).to.equal(localId2);
 			});
+
+			it('generates correct eager finals when there are outstanding locals after cluster expansion', () => {
+				const compressor = createCompressor(Client.Client1, 2);
+
+				// Before cluster expansion
+				expect(isLocalId(compressor.generateCompressedId())).to.be.true;
+				const rangeA = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(rangeA);
+				expect(isFinalId(compressor.generateCompressedId())).to.be.true;
+
+				// After cluster expansion
+				expect(isLocalId(compressor.generateCompressedId())).to.be.true;
+				const rangeB = compressor.takeNextCreationRange();
+				const localId = compressor.generateCompressedId();
+				expect(isLocalId(localId)).to.be.true;
+
+				// Take a range that won't be finalized in this test; the finalizing of range B should associate this range with finals
+				const rangeC = compressor.takeNextCreationRange();
+
+				compressor.finalizeCreationRange(rangeB);
+				const eagerId = compressor.generateCompressedId();
+				expect(isFinalId(eagerId)).to.be.true;
+
+				expect(compressor.recompress(compressor.decompress(localId))).to.equal(localId);
+				expect(compressor.recompress(compressor.decompress(eagerId))).to.equal(eagerId);
+
+				compressor.finalizeCreationRange(rangeC);
+
+				expect(compressor.recompress(compressor.decompress(localId))).to.equal(localId);
+				expect(compressor.recompress(compressor.decompress(eagerId))).to.equal(eagerId);
+			});
 		});
 
 		describe('Finalizing', () => {

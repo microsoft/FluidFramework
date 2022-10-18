@@ -22,10 +22,13 @@
  *
  * Note that `Jsonable<T>` does not protect against the following pitfalls when serializing with JSON.stringify():
  *
- *  - `undefined` properties on objects are omitted (i.e., properties become undefined instead of equal to undefined).
- *  - When `undefined` appears as the root object or as an array element it is coerced to `null`.
- *  - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
- *  - prototypes and non-enumerable properties are lost.
+ * - `undefined` properties on objects are omitted (i.e., properties become undefined instead of equal to undefined).
+ *
+ * - When `undefined` appears as the root object or as an array element it is coerced to `null`.
+ *
+ * - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
+ *
+ * - prototypes and non-enumerable properties are lost.
  *
  * Also, `Jsonable<T>` does not prevent the construction of circular references.
  *

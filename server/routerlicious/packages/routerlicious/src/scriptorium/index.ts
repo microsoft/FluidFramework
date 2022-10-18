@@ -59,16 +59,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     }
 
     if (mongoExpireAfterSeconds > 0) {
-        if (createCosmosDBIndexes) {
-            await opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
-        } else {
-            await opCollection.createTTLIndex(
-                {
-                    mongoTimestamp: 1,
-                },
-                mongoExpireAfterSeconds,
-            );
-        }
+        await (createCosmosDBIndexes
+            ? opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds)
+            : opCollection.createTTLIndex({ mongoTimestamp: 1 }, mongoExpireAfterSeconds));
     }
 
     executeOnInterval(

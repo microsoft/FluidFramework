@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @namespace property-properties
  */
+
 const { PathHelper } = require('@fluid-experimental/property-changeset');
 const { LazyLoadedProperties: Property } = require('./properties/lazyLoadedProperties');
 const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty');
@@ -83,8 +85,8 @@ export function serialize(in_psets, in_dirtyOnly) {
  * Deserialize the input document
  * @param {{}} in_data - The input JSON document data
  * @param {string|undefined} in_scope - The scope to construct the properties from
- * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] -
- *    The options to selectively create only a subset of a property. Creates all properties if undefined.
+ * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] - The options to selectively
+ * create only a subset of a property. Creates all properties if undefined.
  * @return {{}} an object of guid : pset
  * @alias property-properties.deserialize
  */

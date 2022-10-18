@@ -4,10 +4,10 @@
  */
 
 /**
- * @fileoverview
- * Declaration of the PropertyFactory class
+ * @fileoverview Declaration of the PropertyFactory class.
  * Responsible for creating property sets and registering property templates
  */
+
 const _ = require('lodash');
 const fastestJSONCopy = require('fastest-json-copy');
 const deepCopy = fastestJSONCopy.copy;
@@ -117,8 +117,7 @@ const { LazyLoadedProperties } = require('./properties/lazyLoadedProperties');
  * @constructor
  * @protected
  *
- * @param {bool} skipSemver - flag passed to the constructor of the
- * TemplateValidator. Skips semver validation
+ * @param {bool} skipSemver - Flag passed to the constructor of the TemplateValidator. Skips semver validation.
  *
  * @ignore
  */
@@ -398,11 +397,12 @@ class PropertyFactory {
         /** A cache of functions that create the properties */
         this._cachedCreationFunctions = new Map();
 
-        /** Usually we will  use the precompiled creation functions, but those all share the same constant properties.
-         *  Since it is allowed to overwrite constants via default values, we have to explicitly instantiate new
-         *  property instances for constants. Since the constants themselves may contain nested property instances,
-         *  we use this flag to indicate that for all nested properties, we do not want to use the precompiled
-         *  instantiation functions.
+        /**
+         * Usually we will  use the precompiled creation functions, but those all share the same constant properties.
+         * Since it is allowed to overwrite constants via default values, we have to explicitly instantiate new
+         * property instances for constants. Since the constants themselves may contain nested property instances,
+         * we use this flag to indicate that for all nested properties, we do not want to use the precompiled
+         * instantiation functions.
          */
         this._forceInstantion = false;
 
@@ -413,9 +413,9 @@ class PropertyFactory {
     * Add a listener for a given type of event.
     *
     * @param {string} eventName - A string representing the type of event upon which the
-    *   listener will be notified.
+    * listener will be notified.
     * @param {function} eventListener - The function to call when the "type" of event
-    *   is emitted.
+    * is emitted.
     * @public
     */
     addListener(eventName, eventListener) {
@@ -427,10 +427,10 @@ class PropertyFactory {
     * an event 'removeListener' will be emitted.
     *
     * @param {string} eventName - A string representing the type of event on which the
-    *   listener was attached.
+    * listener was attached.
     * @param {function} eventListener - The function to remove from the list of functions
     * @public
-    * */
+    */
     removeListener(eventName, eventListener) {
         this._eventEmitter.removeListener(eventName, eventListener);
     }
@@ -562,7 +562,7 @@ class PropertyFactory {
         } else if (_.isArray(in_input)) {
             input_array = in_input;
         } else {
-            throw (new Error(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
+            throw (new TypeError(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
         }
 
         if (!validateArray(input_array)) {
@@ -631,14 +631,21 @@ class PropertyFactory {
      * Here we compare the incoming template with its previous/next version in the
      * local and remote registry with the intent of detecting semver violations.
      * The semver rules for templates are as follows:
-     * - If the template structure has been altered (delete/modify existing field) then the MAJOR version should be bumped
-     * - If the template structure has been extended (add new fields) then the MINOR version should be bumped
-     * - If the annotation field has been updated then the PATCH version should be bumped
+     *
+     * - If the template structure has been altered (delete/modify existing field) then the MAJOR version should be
+     * bumped.
+     *
+     * - If the template structure has been extended (add new fields) then the MINOR version should be bumped.
+     *
+     * - If the annotation field has been updated then the PATCH version should be bumped.
+     *
      * If any of these rules have been broken then a warning message is printed onto the console.
-     * @param {object|property-properties.PropertyTemplate} in_template - the template to compare against
-     *  its previous or next versions
+     *
+     * @param {object|property-properties.PropertyTemplate} in_template - The template to compare against
+     * its previous or next versions.
      * @param {boolean} in_compareRemote - Flag indicating whether we want to compare the given
-     *  template against the remote registry
+     * template against the remote registry.
+     *
      * @private
      */
     _validateSemver(in_template, in_compareRemote) {
@@ -833,23 +840,29 @@ class PropertyFactory {
     }
 
     /**
-     * Validate a template
+     * Validate a template.
      * Check that the template is syntactically correct as well as semantically correct.
-     * @param {object|property-properties.PropertyTemplate} in_template - The template to check against
-     * @returns {object|undefined} map of key-value pairs
-     *  where the path of the invalid property is the key and the value is the error message
-     *  i.e.
-     *  <pre>
-     *    {
-     *      'isValid': true or false,
-     *      'typeid': 'The typeid of the object being parsed',
-     *      'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
-     *        'in the document', 'but not resolved from the local cache' ],
-     *      'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
-     *      'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
-     *      ...
-     *    }
-     *  </pre>
+     *
+     * @param {object|property-properties.PropertyTemplate} in_template - The template to check against.
+     *
+     * @returns {object|undefined} map of key-value pairs where the path of the invalid property is the key,
+     * and the value is the error message.
+     *
+     * i.e.
+     *
+     * ```
+     * <pre>
+     *   {
+     *     'isValid': true or false,
+     *     'typeid': 'The typeid of the object being parsed',
+     *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+     *       'in the document', 'but not resolved from the local cache' ],
+     *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+     *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+     *     ...
+     *   }
+     * </pre>
+     * ```
      */
     validate(in_template) {
         return this._templateValidator.validate(in_template);
@@ -863,7 +876,7 @@ class PropertyFactory {
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      *
      * @returns {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
-     *     Template/Property identified by the typeid.
+     * Template/Property identified by the typeid.
      */
     _get(in_typeid, in_context, in_scope = undefined) {
         var templateOrProperty = this._getWrapper(in_typeid, in_context, in_scope);
@@ -915,11 +928,9 @@ class PropertyFactory {
      * @returns {property-properties.PropertyTemplate|undefined} Template identified by the typeid.
      */
     getTemplate(in_typeid) {
-        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)) {
-            return this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate();
-        } else {
-            return undefined;
-        }
+        return this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)
+            ? this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate()
+            : undefined;
     }
 
     /**
@@ -1190,7 +1201,7 @@ class PropertyFactory {
                             } else if (_.isObject(initialValue)) {
                                 Object.assign(initialValue.value, filteredChangeSet);
                             } else {
-                                throw new Error('Invalid default values specified');
+                                throw new TypeError('Invalid default values specified');
                             }
                         } else if (filteredChangeSet !== undefined) {
                             if (initialValue === undefined) {
@@ -1251,15 +1262,13 @@ class PropertyFactory {
 
                 // Insert / append the property to the parent
                 if (currentEntry.parentVarName !== undefined) {
-                    if (currentEntry.def.optional) {
-                        creationFunctionSource += `${currentEntry.parentVarName}._insert(
+                    creationFunctionSource += currentEntry.def.optional
+                        ? `${currentEntry.parentVarName}._insert(
                             ${JSON.stringify(currentEntry.def.entry.id)}, ${currentPropertyVarName}, true
-                        );\n`;
-                    } else {
-                        creationFunctionSource += `${currentEntry.parentVarName}._append(
+                        );\n`
+                        : `${currentEntry.parentVarName}._append(
                             ${currentPropertyVarName}, ${currentEntry.def.allowChildMerges}
                         );\n`;
-                    }
                 } else {
                     resultVarName = currentPropertyVarName;
                 }
@@ -1308,19 +1317,15 @@ class PropertyFactory {
                     // This is a leaf property, so if there is a default value
                     // we directly assign it here
                     if (initialValue !== undefined) {
-                        if (!_.isObject(initialValue.value)) {
+                        creationFunctionSource += !_.isObject(initialValue.value)
                             // We have a primitive property and thus direclty invoke the setValue function
-                            creationFunctionSource +=
-                                `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)});\n`;
-                        } else {
+                            ? `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)})\n`
                             // For non primitive properties, we currently use the member on the property factory,
                             // probably we could further optimize this to directly call the correct function on the
                             // property
-                            creationFunctionSource +=
-                                `this._setInitialValue(${currentPropertyVarName},
+                            : `this._setInitialValue(${currentPropertyVarName},
                                                         ${JSON.stringify(initialValue)},
                                                         false);\n`;
-                        }
                     }
 
                     // If this property is constant, we assign the constant flag
@@ -1467,7 +1472,7 @@ class PropertyFactory {
      * @param {string} in_typeid - The type unique identifier
      * @param {string} in_id - The id of the property to create
      * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
-     *        the Template/Property for this in_typeid
+     * the Template/Property for this in_typeid
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
      *
      * @returns {property-properties.BaseProperty} The property that serves as parent for the properties in the template
@@ -1482,7 +1487,8 @@ class PropertyFactory {
         };
 
         if (this.inheritsFrom(in_typeid, 'NamedProperty', { scope: in_scope })) {
-            params.id = in_id || null; // An id of NULL means that the GUID of the property is used if it is a named property
+            // An id of NULL means that the GUID of the property is used if it is a named property
+            params.id = in_id || null;
         }
 
         const wrapper = this._getWrapper(in_typeid, undefined, in_scope);
@@ -1792,7 +1798,7 @@ class PropertyFactory {
      * @param {property-properties.PropertyTemplate} in_template - template for the property
      * @param {string} in_scope - The scope in which in_template is defined in
      * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
-     *                                        This is used for extending inherited properties.
+     * This is used for extending inherited properties.
      * @param {Object} out_propertyDef - The created property definition
      * @private
      */
@@ -1867,18 +1873,18 @@ class PropertyFactory {
      * Checks whether the template with typeid in_templateTypeid inherits from the template in in_baseTypeid
      *
      * Note: By default, this also returns true if in_templateTypeid === in_baseTypeid, since in most use cases
-     *       the user wants to check whether a given template has all members as another template and so this is
-     *       true for the template itself
+     * the user wants to check whether a given template has all members as another template and so this is
+     * true for the template itself
      *
      * @param {string} in_templateTypeid - Template for which we want to check, whether in_baseTypeid is a parent
      * @param {string} in_baseTypeid - The base template to check for
      * @param {object} [in_options] - Additional options
      * @param {boolean} [in_options.includeSelf=true] - Also return true if in_templateTypeid === in_baseTypeid
      * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against. If supplied,
-     *  the function will check against the schemas that have been registered within the workspace
+     * the function will check against the schemas that have been registered within the workspace
      * @throws if no template is found for in_templateTypeid
      * @returns {boolean} True if in_baseTypeid is a parent of in_templateTypeid or
-     *                   if (in_includeSelf == true and in_templateTypeid == in_baseTypeid)
+     * if (in_includeSelf == true and in_templateTypeid == in_baseTypeid)
      */
     inheritsFrom(in_templateTypeid, in_baseTypeid, in_options) {
         const cachedInheritance = this._inheritanceCache[in_templateTypeid];
@@ -1921,12 +1927,10 @@ class PropertyFactory {
      * @param {string} in_typeid - typeid of the template
      * @param {object} [in_options] - Additional options
      * @param {boolean} [in_options.includeBaseProperty=false] - Include BaseProperty as parent.
-     *                                                   Everything implicitly inherits
-     *                                                   from BaseProperty, but it is not explicitly listed in the
-     *                                                   template, so it is only included if explicitly requested
+     * Everything implicitly inherits from BaseProperty, but it is not explicitly listed in the template,
+     * so it is only included if explicitly requested.
      * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against.
-     *                                                   If supplied, the function will check against the
-     *                                                   schemas that have been registered within the workspace
+     * If supplied, the function will check against the schemas that have been registered within the workspace.
      * @throws if no template found for in_typeid. Make sure it is registered first.
      * @returns {Array.<string>} typeids of all inherited types (in unspecified order)
      */
@@ -2011,7 +2015,8 @@ class PropertyFactory {
      * sessions, when trying out different templates.
      *
      * @protected
-     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template - The template to reregister
+     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template -
+     * The template to reregister
      */
     _reregister(in_template) {
         var typeid = in_template.typeid;
@@ -2055,7 +2060,7 @@ class PropertyFactory {
     * @public
     * @param {Object} in_options - the store settings.
     * @param {getBearerTokenFn} in_options.getBearerToken - Function that accepts a callback.
-    *     Function that should be called with an error or the OAuth2 bearer token representing the user.
+    * Function that should be called with an error or the OAuth2 bearer token representing the user.
     * @param {string} in_options.url - The root of the url used in the request to retrieve PropertySet schemas.
     *
     * @returns {Promise} Return an empty promise when checkout resolve or reject with error.
@@ -2108,6 +2113,8 @@ class PropertyFactory {
      * @public
      *
      * @returns {Promise} A promise that resolves to an object with the following structure:
+     *
+     * ```json
      * {
      *  errors: {
      *    typeid1: errors,
@@ -2120,7 +2127,7 @@ class PropertyFactory {
      *    typeidn: []  array of templates
      *   }
      * }
-     *
+     * ```
      */
     async resolveSchemas() {
         // Only one queue at a time can be processed.

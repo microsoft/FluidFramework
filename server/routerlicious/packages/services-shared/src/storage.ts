@@ -92,23 +92,20 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
-        if (this.enableWholeSummaryUpload) {
-            return {
+        return this.enableWholeSummaryUpload
+            ? {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ".app": appTree,
                 },
-            };
-        } else {
-            return {
+            } : {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ...appTree.tree,
                 },
             };
-        }
     }
 
     public async createDocument(

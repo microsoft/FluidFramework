@@ -4,7 +4,7 @@
  */
 
 /**
- * This package contains the interfaces and types concerning the `Loader` and loading the `Container`.
+ * This library contains the interfaces and types concerning the `Loader` and loading the `Container`.
  *
  * @packageDocumentation
  */

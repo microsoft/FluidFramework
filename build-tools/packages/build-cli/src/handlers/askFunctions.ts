@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
-import { getDefaultBumpTypeForBranch, getPreReleaseDependencies } from "../lib";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+
+import { getDefaultBumpTypeForBranch } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+import { StateHandlerFunction } from "./stateHandlers";
 
 /**
  * Determines the release type based on context, or by asking the user if needed.
@@ -43,7 +44,9 @@ export const askForReleaseType: StateHandlerFunction = async (
 
     const questions: inquirer.Question[] = [];
 
-    let bumpType = getDefaultBumpTypeForBranch(currentBranch) ?? inputBumpType;
+    // If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch. If there's
+    // no default for the branch, ask the user.
+    let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
     if (inputBumpType === undefined) {
         const choices = [
             { value: "major", name: `major (${currentVersion} => ${bumpedMajor})` },

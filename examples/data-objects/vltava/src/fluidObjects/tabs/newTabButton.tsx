@@ -14,7 +14,7 @@ import {
     IIconProps,
     IContextualMenuItem,
 } from "office-ui-fabric-react";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { ProseMirrorFactory } from "@fluid-example/prosemirror";
 
 import { ITabsTypes } from "./dataModel";
 
@@ -41,6 +41,8 @@ const customSplitButtonStyles: IButtonStyles = {
 };
 
 const addIcon: IIconProps = { iconName: "Add" };
+
+const pmfe = new ProseMirrorFactory();
 
 export const NewTabButton: React.FC<IButtonExampleProps> =
     (props: IButtonExampleProps) => {

@@ -48,8 +48,8 @@ export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
 
-// Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
+// Must be less than policy of 5 days
+export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -74,7 +74,7 @@ export class EpochTracker implements IPersistedFileCache {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
 
-        // We need this for GC testing until we properly plumb through the snapshot expiration policy (see PR #11168)
+        // Matches the TestOverride logic for the policy defined in odspDocumentStorageServiceBase.ts
         this.snapshotCacheExpiryTimeoutMs =
             loggerToMonitoringContext(logger).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
                 ? 0

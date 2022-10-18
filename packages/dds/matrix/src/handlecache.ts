@@ -15,7 +15,7 @@ import { ensureRange } from "./range";
  * Used by PermutationVector to cache position -\> handle lookups.
  *
  * Perf: Possibly, this should eventually be inlined into PermutationVector itself, but
- *       so far there's no measurable perf penalty for being a separate object (node 12 x64)
+ * so far there's no measurable perf penalty for being a separate object (node 12 x64)
  */
 export class HandleCache implements IVectorConsumer<Handle> {
     private handles: Handle[] = [];

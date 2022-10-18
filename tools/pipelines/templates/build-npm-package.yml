@@ -207,6 +207,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
 
         # Build
@@ -305,6 +306,8 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
+                mkdir $(Build.ArtifactStagingDirectory)/logs/
+                mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
@@ -343,6 +346,13 @@ stages:
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
               ArtifactName: 'test-files'
+              publishLocation: 'Container'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - Tinylicious Log
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/logs'
+              ArtifactName: 'tinyliciousLog'
               publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis

@@ -14,11 +14,11 @@ import { GuidUtils } from "./guidUtils";
 import { calculateHash } from "./hashCalculator";
 
 /**
- * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID
+ * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID.
  *
- * Warning: This is a very straight forward implementation based on the hashCombine4xUint32 function. It probably
- *          doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
- *          efficient.
+ * @remarks Warning: This is a very straight forward implementation based on the hashCombine4xUint32 function.
+ * It probably doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
+ * efficient.
  */
 export class DeterministicRandomGenerator {
     _guid1: Uint32Array;
@@ -27,16 +27,13 @@ export class DeterministicRandomGenerator {
 
     /**
      * @param in_seed - The initial seed (it can be either a GUID or a number)
-     * which is used to initialize the random number generator
-     *
+     * which is used to initialize the random number generator.
      */
     constructor(in_seed: string | number) {
         // Initialize the internal state from the given initial guid
-        if (_.isString(in_seed)) {
-            this._guid1 = GuidUtils.guidToUint32x4(in_seed);
-        } else {
-            this._guid1 = GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
-        }
+        this._guid1 = _.isString(in_seed)
+            ? GuidUtils.guidToUint32x4(in_seed)
+            : GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
         this._guid2 = new Uint32Array(4);
         this._guid2[0] = (this._guid1[0] + 1) >>> 0;
         this._guid2[1] = (this._guid1[1] + 1) >>> 0;
@@ -47,11 +44,12 @@ export class DeterministicRandomGenerator {
     }
 
     /**
-     * Creates a floating point random number
+     * Creates a floating point random number.
      *
-     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
-     *                               in_max = 1 is assumed
-     * @returns The random number
+     * @param in_max - If supplied the returned number will be 0 \<= number \< `in_max`.
+     * If none is given, `in_max` = 1 is assumed.
+     *
+     * @returns The random number.
      */
     random(in_max = 1.0) {
         const randomInteger = this.irandom();
@@ -59,11 +57,12 @@ export class DeterministicRandomGenerator {
     }
 
     /**
-     * Creates an integer point random number
+     * Creates an integer point random number.
      *
-     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
-     *                                      in_max = 14294967296 (2^32) is assumed
-     * @returns The random number
+     * @param in_max - If supplied the returned number will be 0 \<= number \< `in_max`.
+     * If none is given, `in_max` = 14294967296 (2^32) is assumed.
+     *
+     * @returns The random number.
      */
     irandom(in_max?: number): number {
         // Create a new hash
@@ -78,15 +77,13 @@ export class DeterministicRandomGenerator {
         if (in_max === undefined) {
             return this._guid1[0];
         } else {
-            if (in_max < 16777619) {
+            return in_max < 16777619
                 // The random generator doesn't seem to be very good.
                 // It is quite biased (e.g. it generates too many even numbers)
                 // this is a hack to solve at least this problem, but we probably should
-                // instead use a different approach alltogether
-                return ((this._guid1[0]) % 16777619) % in_max;
-            } else {
-                return this._guid1[0] % in_max;
-            }
+                // instead use a different approach altogether
+                ? ((this._guid1[0]) % 16777619) % in_max
+                : this._guid1[0] % in_max;
         }
     }
 }

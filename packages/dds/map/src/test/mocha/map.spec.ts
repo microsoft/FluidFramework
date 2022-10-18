@@ -274,14 +274,17 @@ describe("Map", () => {
         describe("Op processing", () => {
             /**
              * These tests test the scenario found in the following bug:
-             * https://github.com/microsoft/FluidFramework/issues/2400
+             * {@link https://github.com/microsoft/FluidFramework/issues/2400}
              *
              * - A SharedMap in local state set a key.
+             *
              * - A second SharedMap is then created from the snapshot of the first one.
+             *
              * - The second SharedMap sets a new value to the same key.
+             *
              * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
-             *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
-             *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+             * the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+             * when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
              */
             it("should correctly process a set operation sent in local state", async () => {
                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();

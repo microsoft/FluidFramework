@@ -10,20 +10,27 @@ import { ITable, TableDocumentItem } from "../table";
 import { TableDocument } from "../document";
 
 /**
- * - Create a new object from the passed ITable object.
- * - Modify the methods that sets a cell value or annotates a cell to call the  propertyInterceptionCallback
- *   to get new properties.
- * - Use these new properties to call the underlying TableDocument.
- * - The propertyInterceptionCallback and the call to the underlying TableDocument are wrapped around an
- *   orderSequentially call to batch any operations that might happen in the callback.
- * - Modify the createSlice method for TableDocument object to return a wrapped object by calling
- *   createTableWithInterception on the created TableSlice object.
+ * Does the following:
  *
- * @param table - The underlying ITable object
- * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
- * @param propertyInterceptionCallback - The interception callback to be called
+ * - Create a new object from the passed {@link ITable} object.
  *
- * @returns A new ITable object that intercepts the methods modifying the properties of cells, rows or columns.
+ * - Modify the methods that sets a cell value or annotates a cell to call the `propertyInterceptionCallback`
+ * to get new properties.
+ *
+ * - Use these new properties to call the underlying {@link TableDocument}.
+ *
+ * - The `propertyInterceptionCallback` and the call to the underlying `TableDocument` are wrapped around an
+ * {@link IContainerRuntimeBase.orderSequentially} call to batch any operations that might happen in the callback.
+ *
+ * - Modify the `createSlice` method for `TableDocument` object to return a wrapped object by calling
+ * `createTableWithInterception` on the created `TableSlice` object.
+ *
+ * @param table - The underlying {@link ITable} object
+ * @param context - The {@link IFluidDataStoreContext} that will be used to call
+ * {@link IContainerRuntimeBase.orderSequentially}.
+ * @param propertyInterceptionCallback - The interception callback to be called.
+ *
+ * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.
  */
 export function createTableWithInterception<T extends ITable>(
     table: T,

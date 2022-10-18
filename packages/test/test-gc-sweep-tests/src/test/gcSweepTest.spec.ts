@@ -36,7 +36,7 @@ interface ITestAction {
     [key: string]: any;
 }
 
-describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
+describeNoCompat.skip("GC Sweep tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     // Summaries should run automatically
@@ -48,7 +48,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
                 summarizerClientElection: true,
                 maxAckWaitTime: 5000,
                 maxOpsSinceLastSummary: 100,
-                idleTime: 100,
                 minIdleTime: 0,
                 maxIdleTime: 300,
                 maxTime: 4000,

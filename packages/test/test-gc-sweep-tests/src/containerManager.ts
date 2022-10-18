@@ -34,11 +34,12 @@ export class ContainerManager {
         return container;
     }
 
-    public async loadContainer(): Promise<void> {
+    public async loadContainer(): Promise<IContainer> {
         const container = await this.provider.loadContainer(this.runtimeFactory, {
             configProvider: this.configProvider,
         });
         this.trackContainer(container);
+        return container;
     }
 
     private trackContainer(container: IContainer) {

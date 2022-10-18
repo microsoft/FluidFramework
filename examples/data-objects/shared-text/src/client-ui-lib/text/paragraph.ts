@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/*
-eslint-disable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import * as MergeTree from "@fluidframework/merge-tree";
 import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
@@ -529,9 +526,6 @@ export function segmentToItems(
     return true;
 }
 
-/*
-eslint-enable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
+/* eslint-enable @typescript-eslint/strict-boolean-expressions */

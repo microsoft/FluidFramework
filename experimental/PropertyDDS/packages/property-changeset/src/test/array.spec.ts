@@ -1039,11 +1039,9 @@ describe("Array Operations", function() {
                                 insertNames.push(`inside remove range in B (${removeInsideInsertB})`);
                             }
                             let title = "with ";
-                            if (insertNames.length === 0) {
-                                title += "no inserts";
-                            } else {
-                                title += `inserts ${insertNames.join(", ")}`;
-                            }
+                            title += insertNames.length === 0
+                                ? "no inserts"
+                                : `inserts ${insertNames.join(", ")}`;
                             it(title, () => {
                                 const insertsA = [];
                                 const insertsB = [];

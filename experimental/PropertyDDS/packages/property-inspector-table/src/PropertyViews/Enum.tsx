@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty } from "@fluid-experimental/property-properties";
+import { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/property-properties";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select, { SelectProps } from "@material-ui/core/Select";
 import * as React from "react";
@@ -24,15 +24,11 @@ type GetOptionsType = (
 ) => string[];
 
 const getOptions: GetOptionsType = (rowData) => {
-  let enumObj;
+  const enumObj: EnumArrayProperty = Utils.isEnumArrayProperty(rowData.parent!)
+    ? rowData.parent
+    : (rowData.parent! as ContainerProperty).get(rowData.name)!;
 
-  if (Utils.isEnumArrayProperty(rowData.parent!)) {
-    enumObj = rowData.parent;
-  } else {
-    enumObj = (rowData.parent! as ContainerProperty).get(rowData.name);
-  }
-
-  return Object.keys(enumObj._enumDictionary.enumEntriesById);
+  return Object.keys((enumObj as any)._enumDictionary.enumEntriesById);
 };
 
 export const EnumView: React.FunctionComponent<EnumProps> = (props) => {

@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { LayerGraph } from "./layerGraph";
-import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
-import { Timer } from "../common/timer";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { writeFileAsync } from "../common/utils";
-import { FluidRepo } from "../common/fluidRepo";
 import path from "path";
 
+import { commonOptionString, commonOptions, parseOption } from "../common/commonOptions";
+import { FluidRepo } from "../common/fluidRepo";
+import { getResolvedFluidRoot } from "../common/fluidUtils";
+import { Timer } from "../common/timer";
+import { writeFileAsync } from "../common/utils";
+import { LayerGraph } from "./layerGraph";
 
 // This string is duplicated in the readme: update readme if changing this.
 
@@ -23,7 +22,8 @@ Options:
      --info <path>    Path to the layer graph json file
      --md [<path>]    Generate PACKAGES.md file for human consumption at path relative to repo root (default: repo root)
 ${commonOptionString}
-`);
+`,
+    );
 }
 
 const packagesMdFileName: string = "PACKAGES.md";
@@ -111,8 +111,15 @@ async function main() {
 
         // Write human-readable package list organized by layer
         if (mdFilePath) {
-            const packagesMdFilePath: string = path.join(resolvedRoot, mdFilePath, packagesMdFileName);
-            await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayersMarkdown(resolvedRoot));
+            const packagesMdFilePath: string = path.join(
+                resolvedRoot,
+                mdFilePath,
+                packagesMdFileName,
+            );
+            await writeFileAsync(
+                packagesMdFilePath,
+                layerGraph.generatePackageLayersMarkdown(resolvedRoot),
+            );
         }
 
         // Write machine-readable dot file used to render a dependency graph
@@ -125,7 +132,7 @@ async function main() {
             process.exit(-1);
         }
 
-        console.log(`Layer check passed (${packages.packages.length} packages)`)
+        console.log(`Layer check passed (${packages.packages.length} packages)`);
     } catch (e: any) {
         console.error(e.message);
         process.exit(-2);

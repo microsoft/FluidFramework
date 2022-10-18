@@ -4,7 +4,7 @@
  */
 
 /**
- * The **tinylicious-client** package provides a simple and powerful way to consume collaborative Fluid data with the
+ * The **tinylicious-client** library provides a simple and powerful way to consume collaborative Fluid data with the
  * Tinylicious service.
  *
  * The Tinylicious service is a local, in-memory Fluid service intended for prototyping and development purposes.
@@ -16,8 +16,17 @@
 
 import { TinyliciousClient } from "./TinyliciousClient";
 
-export * from "./interfaces";
-export * from "./TinyliciousAudience";
-export * from "./TinyliciousClient";
+export {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITinyliciousAudience,
+	TinyliciousClientProps,
+	TinyliciousConnectionConfig,
+	TinyliciousContainerServices,
+	TinyliciousMember,
+	TinyliciousUser,
+} from "./interfaces";
+export { TinyliciousAudience } from "./TinyliciousAudience";
+export { TinyliciousClient } from "./TinyliciousClient";
 // eslint-disable-next-line import/no-default-export
 export default TinyliciousClient;

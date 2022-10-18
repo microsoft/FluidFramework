@@ -347,11 +347,9 @@ describe("JS-Object-like property accessing ", function() {
                     for (let i = 0; i < refArray.getLength(); ++i) {
                         const entry = refArray.get(i);
                         if (PropertyFactory.instanceOf(entry, "BaseProperty")) {
-                            if (PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")) {
-                                refArraySum += entry.get("x").getValue();
-                            } else {
-                                refArraySum += refArray.get(i).getValue();
-                            }
+                            refArraySum += PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")
+                                ? entry.get("x").getValue()
+                                : refArray.get(i).getValue();
                         } else {
                             refArraySum += entry;
                         }
@@ -463,11 +461,7 @@ describe("JS-Object-like property accessing ", function() {
                 it("for loop", function() {
                     let sum = 0;
                     for (const element of state.myTestProperty.myReferenceArray) {
-                        if (element.x) {
-                            sum += element.x;
-                        } else {
-                            sum += element;
-                        }
+                        sum += element.x ? element.x : element;
                     }
 
                     expect(refArraySum).toEqual(sum);
@@ -476,11 +470,7 @@ describe("JS-Object-like property accessing ", function() {
                 it("for-of loop", function() {
                     let sum = 0;
                     for (const entry of state.myTestProperty.myReferenceArray) {
-                        if (entry.x) {
-                            sum += entry.x;
-                        } else {
-                            sum += entry;
-                        }
+                        sum += entry.x ? entry.x : entry;
                     }
 
                     expect(refArraySum).toEqual(sum);
@@ -533,19 +523,11 @@ describe("JS-Object-like property accessing ", function() {
 
                 it("check .every() functionality", function() {
                     expect(state.myTestProperty.myReferenceArray.every((element) => {
-                        if (element.x) {
-                            return element.x <= 10;
-                        } else {
-                            return element <= 1111;
-                        }
+                        return element.x ? element.x <= 10 : element <= 1111;
                     })).toEqual(true);
 
                     expect(state.myTestProperty.myReferenceArray.every((element) => {
-                        if (element.x) {
-                            return element.x < 10;
-                        } else {
-                            return element < 1111;
-                        }
+                        return element.x ? element.x < 10 : element < 1111;
                     })).toEqual(false);
                 });
 
@@ -1031,11 +1013,9 @@ describe("JS-Object-like property accessing ", function() {
                     for (const id of refMapIds) {
                         const entry = refMap.get(id);
                         if (PropertyFactory.instanceOf(entry, "BaseProperty")) {
-                            if (PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")) {
-                                refMapSum += entry.get("x").getValue();
-                            } else {
-                                refMapSum += entry.getValue();
-                            }
+                            refMapSum += PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")
+                                ? entry.get("x").getValue()
+                                : entry.getValue();
                         } else {
                             refMapSum += entry;
                         }
@@ -1192,11 +1172,7 @@ describe("JS-Object-like property accessing ", function() {
                     next = entriesIterator.next();
                     let sum = 0;
                     while (next.done !== true) {
-                        if (next.value[1].x) {
-                            sum += next.value[1].x;
-                        } else {
-                            sum += next.value[1];
-                        }
+                        sum += next.value[1].x ? next.value[1].x : next.value[1];
                         next = entriesIterator.next();
                     }
                     sum += sum;
@@ -1206,11 +1182,7 @@ describe("JS-Object-like property accessing ", function() {
                 it("check .forEach() functionality", function() {
                     let sum = 0;
                     state.myTestProperty.myReferenceMap.forEach((el) => {
-                        if (el.x) {
-                            sum += el.x;
-                        } else {
-                            sum += el;
-                        }
+                        sum += el.x ? el.x : el;
                     });
                     expect(sum).toEqual(refMapSum);
                 });
@@ -1221,11 +1193,7 @@ describe("JS-Object-like property accessing ", function() {
 
                     let next = valuesIterator.next();
                     while (next.done !== true) {
-                        if (next.value.x) {
-                            sum += next.value.x;
-                        } else {
-                            sum += next.value;
-                        }
+                        sum += next.value.x ? next.value.x : next.value;
                         next = valuesIterator.next();
                     }
                     expect(sum).toEqual(refMapSum);

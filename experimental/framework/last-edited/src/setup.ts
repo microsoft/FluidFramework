@@ -8,15 +8,22 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 
-// Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
-// than "Alias", "Attach" and "Operation" type messages should be discarded.
+/**
+ * Default implementation of {@link setupLastEditedTrackerForContainer}'s `shouldDiscardMessageFn` parameter,
+ * which tells that all messages other than {@link @fluidframework/container-runtime#ContainerMessageType.Alias},
+ * {@link @fluidframework/container-runtime#ContainerMessageType.Attach}, and
+ * {@link @fluidframework/container-runtime#ContainerMessageType.FluidDataStoreOp} type messages should be
+ * discarded.
+ */
 const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage) =>
     message.type !== ContainerMessageType.Attach &&
     message.type !== ContainerMessageType.FluidDataStoreOp &&
     message.type !== ContainerMessageType.Alias;
 
-// Extracts the user information and timestamp from a message. Returns undefined if the user information for the
-// client who sent the message doesn't exist in the quorum.
+/**
+ * Extracts the user information and timestamp from a message. Returns undefined if the user information for the
+ * client who sent the message doesn't exist in the quorum.
+ */
 function getLastEditDetailsFromMessage(
     message: ISequencedDocumentMessage,
     quorum: IQuorumClients,
@@ -35,12 +42,15 @@ function getLastEditDetailsFromMessage(
 
 /**
  * Helper function to set up a data object that provides IFluidLastEditedTracker to track last edited in a Container.
+ *
  * It does the following:
+ *
  * - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check
- *   if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
- *   it passes the last edited information from the message to the last edited tracker.
+ * if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
+ * it passes the last edited information from the message to the last edited tracker.
+ *
  * - The last edited information from the last message received before the lastEditedTracker is
- *   loaded is stored and passed to the tracker once it loads.
+ * loaded is stored and passed to the tracker once it loads.
  * @param lastEditedTracker - The last edited tracker.
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.

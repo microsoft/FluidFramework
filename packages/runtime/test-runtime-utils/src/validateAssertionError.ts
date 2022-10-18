@@ -16,11 +16,11 @@ import { shortCodeMap } from "./assertionShortCodesMap";
  * it either returns true or throws an error (the behavior expected by NodeJS' `assert.throws()`).
  *
  * @param error - The error object thrown by our `assert()` function. Its `message` property could
- *                be a short code, or the original string message coded into the `asert()`.
+ * be a short code, or the original string message coded into the `asert()`.
  * @param expectedErrorMessage - The message that the error object should match (either explicitly,
- *                               or because it contains a short code which maps to that message).
- * @returns - `true` if the message in the error object that was passed in matches the expected
- *            message. Otherwise it throws an error.
+ * or because it contains a short code which maps to that message).
+ * @returns `true` if the message in the error object that was passed in matches the expected
+ * message. Otherwise it throws an error.
  */
 export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean {
     const mappedMsg = shortCodeMap[error.message] as string ?? error.message;

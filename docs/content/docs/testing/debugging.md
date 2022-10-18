@@ -2,6 +2,7 @@
 title: Debugging
 menuPosition: 4
 status: unwritten
+draft: true
 ---
 
 ## How to test your application

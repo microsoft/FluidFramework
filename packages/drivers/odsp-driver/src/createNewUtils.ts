@@ -4,11 +4,10 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
-import { ISnapshotTreeEx } from "./contracts";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -35,10 +34,9 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
     summary: ISummaryTree,
     blobs: Map<string, ArrayBuffer>,
 ) {
-    const treeNode: ISnapshotTreeEx = {
+    const treeNode: ISnapshotTree = {
         blobs: {},
         trees: {},
-        commits: {},
         unreferenced: summary.unreferenced,
     };
     const keys = Object.keys(summary.tree);

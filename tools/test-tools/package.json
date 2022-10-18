@@ -15,12 +15,24 @@
     "assign-test-ports": "bin/assign-test-ports"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "eslint": "eslint src",
+    "eslint:fix": "eslint src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {},
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@types/node": "^14.18.0",
+    "concurrently": "^6.2.0",
+    "eslint": "~8.6.0",
+    "rimraf": "^2.6.2",
     "typescript": "~4.5.5"
   }
 }

@@ -4,12 +4,33 @@
  */
 
 export {
-    FieldSchema, ValueSchema, GlobalFieldKey, TreeSchema,
-    TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema,
-    Named, TreeTypeSet, SchemaPolicy, FieldKindIdentifier,
-    SchemaDataReader,
+    FieldSchema,
+    ValueSchema,
+    GlobalFieldKey,
+    TreeSchema,
+    TreeSchemaIdentifier,
+    LocalFieldKey,
+    NamedTreeSchema,
+    Named,
+    TreeTypeSet,
+    SchemaPolicy,
+    FieldKindIdentifier,
+    SchemaData,
+    NamedFieldSchema,
 } from "./schema";
-export { StoredSchemaRepository, SchemaData } from "./storedSchemaRepository";
 export {
-    treeSchema, fieldSchema, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder, namedTreeSchema,
+    StoredSchemaRepository,
+    lookupGlobalFieldSchema,
+    lookupTreeSchema,
+    InMemoryStoredSchemaRepository,
+    schemaDataIsEmpty,
+    SchemaDataAndPolicy,
+} from "./storedSchemaRepository";
+export {
+    treeSchema,
+    fieldSchema,
+    emptyMap,
+    emptySet,
+    TreeSchemaBuilder,
+    namedTreeSchema,
 } from "./builders";

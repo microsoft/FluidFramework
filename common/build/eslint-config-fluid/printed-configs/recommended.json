@@ -556,7 +556,12 @@
             "error"
         ],
         "jsdoc/require-description": [
-            "error"
+            "error",
+            {
+                "checkConstructors": false,
+                "checkGetters": true,
+                "checkSetters": true
+            }
         ],
         "jsdoc/require-hyphen-before-param-description": [
             "error"
@@ -774,6 +779,10 @@
         ],
         "no-restricted-syntax": [
             "error",
+            {
+                "message": "Exporting * is not permitted. You should export only named items you intend to export.",
+                "selector": "ExportAllDeclaration"
+            },
             "ForInStatement"
         ],
         "no-return-await": [

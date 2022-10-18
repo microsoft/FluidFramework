@@ -78,11 +78,7 @@ export class ConsensusQueueHandler implements IHandleOpManager {
             return ConsensusResult.Complete;
         };
 
-        if (random.bool()) {
-            await this.channel.acquire(setValue);
-        } else {
-            await this.channel.waitAndAcquire(setValue);
-        }
+        await (random.bool() ? this.channel.acquire(setValue) : this.channel.waitAndAcquire(setValue));
         assert(result !== undefined, `ConsensusQueue removed nothing from the queue!`);
 
         return {

@@ -55,29 +55,23 @@ export class TestTenantManager implements ITenantManager {
         this.tenant = new TestTenant(url, historian, testDb);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createTenant(id?: string): Promise<ITenantConfig & { key: string; }> {
-        return Promise.resolve({
+    public async createTenant(id?: string): Promise<ITenantConfig & { key: string; }> {
+        return {
             id: "test-tenant",
             storage: this.tenant.storage,
             orderer: this.tenant.orderer,
             key: "test-tenant-key",
             customData: {},
-        });
+        };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public verifyToken(token: string): Promise<void> {
-        return Promise.resolve();
+    public async verifyToken(token: string): Promise<void> { }
+
+    public async getTenant(id: string): Promise<ITenant> {
+        return this.tenant;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getTenant(id: string): Promise<ITenant> {
-        return Promise.resolve(this.tenant);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getKey(tenantId: string): Promise<string> {
-        return Promise.resolve("test");
+    public async getKey(tenantId: string): Promise<string> {
+        return "test";
     }
 }

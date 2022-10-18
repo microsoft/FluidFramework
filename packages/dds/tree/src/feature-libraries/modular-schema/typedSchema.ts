@@ -5,12 +5,14 @@
 
 import { Invariant } from "../../util";
 import {
-    fieldSchema, treeSchema, TreeSchemaBuilder,
+    fieldSchema,
+    TreeSchemaBuilder,
     FieldSchema,
     LocalFieldKey,
-    TreeSchema,
     ValueSchema,
     TreeSchemaIdentifier,
+    namedTreeSchema,
+    NamedTreeSchema,
 } from "../../schema-stored";
 import { FieldKind } from "./fieldKind";
 
@@ -22,16 +24,17 @@ import { FieldKind } from "./fieldKind";
 /**
  * Type implemented by schema to allow compile time schema access via type checking.
  */
-interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
-    readonly local: { [key: string]: LabeledFieldSchema<any>; };
-    readonly global: { [key: string]: unknown; };
+export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
+    readonly name: TreeSchemaIdentifier;
+    readonly local: { [key: string]: LabeledFieldSchema<any> };
+    readonly global: { [key: string]: unknown };
     readonly extraLocalFields: LabeledFieldSchema<any>;
     readonly extraGlobalFields: boolean;
     readonly value: ValueSchema;
 }
 
 interface FieldSchemaTypeInfo {
-    types: { [key: string]: unknown; };
+    types: { [key: string]: unknown };
     kind: FieldKind;
 }
 
@@ -40,7 +43,7 @@ interface FieldSchemaTypeInfo {
  * typescript type to allow for deriving schema aware APIs.
  */
 export function typedTreeSchema<T extends TreeSchemaTypeInfo>(t: T): LabeledTreeSchema<T> {
-    return treeSchema(t) as LabeledTreeSchema<T>;
+    return namedTreeSchema(t) as LabeledTreeSchema<T>;
 }
 
 /**
@@ -51,25 +54,22 @@ export function typedFieldSchema<T extends FieldSchemaTypeInfo>(t: T): LabeledFi
     return fieldSchema(t.kind, [...Object.keys(t.types)] as TreeSchemaIdentifier[]);
 }
 
-export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<
-    infer R
->
+export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<infer R>
     ? R
     : unknown;
 
-export type FieldInfo<T extends LabeledFieldSchema<any>> =
-    T extends LabeledFieldSchema<infer R> ? R : unknown;
+export type FieldInfo<T extends LabeledFieldSchema<any>> = T extends LabeledFieldSchema<infer R>
+    ? R
+    : unknown;
 
-export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo>
-    extends TreeSchema {
+export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
     readonly typeCheck?: Invariant<T>;
 
     // Allow reading localFields through the normal map, but without losing type information.
     readonly localFields: ObjectToMap<T["local"], LocalFieldKey>;
 }
 
-export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo>
-    extends FieldSchema {
+export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo> extends FieldSchema {
     readonly typeCheck?: Invariant<T>;
 }
 

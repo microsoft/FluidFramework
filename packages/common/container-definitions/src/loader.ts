@@ -33,8 +33,11 @@ import {
  * Encapsulates a module entry point with corresponding code details.
  */
 export interface IFluidModuleWithDetails {
-    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    /**
+     * Fluid code module that implements the runtime factory needed to instantiate the container runtime.
+     */
     module: IFluidModule;
+
     /**
      * Code details associated with the module. Represents a document schema this module supports.
      * If the code loader implements the {@link @fluidframework/core-interfaces#(IFluidCodeDetailsComparer:interface)}
@@ -83,12 +86,10 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  */
 export interface IFluidCodeResolver {
     /**
-     * Resolves a Fluid code details into a form that can be loaded
-     * @param details - The Fluid code details to resolve
-     * @returns - A IResolvedFluidCodeDetails where the
-     *            resolvedPackage's Fluid file entries are absolute urls, and
-     *            an optional resolvedPackageCacheId if the loaded package should be
-     *            cached.
+     * Resolves a Fluid code details into a form that can be loaded.
+     * @param details - The Fluid code details to resolve.
+     * @returns - A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
+     * an optional resolvedPackageCacheId if the loaded package should be cached.
      */
     resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
@@ -119,17 +120,18 @@ export interface IContainerEvents extends IEvent {
  * Namespace for the different connection states a container can be in
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ConnectionState {
     /**
-     * The container is not connected to the delta server
+     * The container is not connected to the delta server.
      * Note - When in this state the container may be about to reconnect,
      * or may remain disconnected until explicitly told to connect.
      */
     export type Disconnected = 0;
 
     /**
-     * The container is disconnected but actively trying to establish a new connection
-     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
+     * The container is disconnected but actively trying to establish a new connection.
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state.
      */
     export type EstablishingConnection = 3;
 
@@ -139,13 +141,13 @@ export namespace ConnectionState {
     export type CatchingUp = 1;
 
     /**
-     * The container is fully connected and syncing
+     * The container is fully connected and syncing.
      */
     export type Connected = 2;
 }
 
 /**
- * Type defining the different states of connectivity a container can be in
+ * Type defining the different states of connectivity a container can be in.
  */
 export type ConnectionState =
     | ConnectionState.Disconnected

@@ -90,11 +90,11 @@ export function renderPackageDocument(
         docNodes.push(renderHeadingForApiItem(apiPackage, config));
     }
 
-    // Render breadcrumb
-    docNodes.push(renderBreadcrumb(apiPackage, config));
-
-    // Render body contents
     docNodes.push(
+        // Render breadcrumb
+        renderBreadcrumb(apiPackage, config),
+
+        // Render body contents
         config.renderPackageSection(apiPackage, config, (childItem) =>
             renderApiSection(childItem, config),
         ),
@@ -145,7 +145,8 @@ export function renderApiItemDocument(
 
     if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
         throw new Error(
-            `"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${apiItem.kind}".`,
+            `"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document.` +
+                ` Provided item kind: "${apiItem.kind}".`,
         );
     }
 

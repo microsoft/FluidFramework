@@ -4,6 +4,7 @@
     background-color: $header-background;
     color: white;
     padding: 0;
+    flex-grow: 1;
     a {
       color: $banner-link-color;
     }

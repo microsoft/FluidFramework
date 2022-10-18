@@ -137,11 +137,10 @@ export async function fetchHelper(
                 "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
 
-        //
         // WARNING: Do not log error object itself or any of its properties!
         // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
-        //
+        // eslint-disable-next-line unicorn/prefer-ternary
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
                 // pre-0.58 error message prefix: Offline

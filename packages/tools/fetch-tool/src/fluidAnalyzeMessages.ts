@@ -616,12 +616,7 @@ function processDataStoreAttachOp(
 
     // That's data store, and it brings a bunch of data structures.
     // Let's try to crack it.
-    let parsedAttachMessage: IAttachMessage;
-    if (typeof attachMessage === "string") {
-        parsedAttachMessage = JSON.parse(attachMessage);
-    } else {
-        parsedAttachMessage = attachMessage;
-    }
+    const parsedAttachMessage = typeof attachMessage === "string" ? JSON.parse(attachMessage) : attachMessage;
     for (const entry of parsedAttachMessage.snapshot.entries) {
         if (entry.type === TreeEntry.Tree) {
             for (const entry2 of entry.value.entries) {

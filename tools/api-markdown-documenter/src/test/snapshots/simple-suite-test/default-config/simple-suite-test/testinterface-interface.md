@@ -18,7 +18,7 @@ Here are some remarks about the interface
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
-|  [(new)()](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
+|  [new (): TestInterface](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
 
 ## Events
 
@@ -43,8 +43,8 @@ Here are some remarks about the interface
 
 |  CallSignature | Description |
 |  --- | --- |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
+|  [(event: 'testCallSignature', listener: (input: unknown) => void): any](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
+|  [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
 ## Construct Signature Details
 

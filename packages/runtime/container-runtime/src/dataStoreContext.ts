@@ -37,11 +37,11 @@ import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
+    BindState,
     channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
-    gcBlobKey,
     IAttachMessage,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -50,7 +50,6 @@ import {
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
@@ -116,7 +115,6 @@ export interface IFluidDataStoreContextProps {
     readonly storage: IDocumentStorageService;
     readonly scope: FluidObject;
     readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-    readonly writeGCDataAtRoot: boolean;
     readonly pkg?: Readonly<string[]>;
 }
 
@@ -134,7 +132,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-    readonly snapshotTree: ISnapshotTree | string | undefined;
+    readonly snapshotTree: ISnapshotTree | undefined;
     readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
@@ -224,9 +222,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    // back-compat (for tests) - can be removed in 2.0.0-alpha.2.0.0, or earlier if compat tests drop n/n-2 coverage
-    // @ts-expect-error - This shouldn't be referenced in the current version, but needs to be here for back-compat
-    private readonly bindToContext: () => void;
+    /** @deprecated - To be replaced by calling makeLocallyVisible directly  */
+    public readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -239,20 +236,20 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
-    // The used state of this node as per the last GC run. This is used to update the used state of the channel
+    // The used routes of this node as per the last GC run. This is used to update the used routes of the channel
     // if it realizes after GC is run.
-    private lastUsedState: { usedRoutes: string[]; gcTimestamp?: number; } | undefined;
+    private lastUsedRoutes: string[] | undefined;
 
     public readonly id: string;
     private readonly _containerRuntime: ContainerRuntime;
     public readonly storage: IDocumentStorageService;
     public readonly scope: FluidObject;
-    private readonly writeGCDataAtRoot: boolean;
     protected pkg?: readonly string[];
 
     constructor(
         props: IFluidDataStoreContextProps,
         private readonly existing: boolean,
+        private bindState: BindState,  // Used to assert for state tracking purposes
         public readonly isLocalDataStore: boolean,
         private readonly makeLocallyVisibleFn: () => void,
     ) {
@@ -262,7 +259,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.id = props.id;
         this.storage = props.storage;
         this.scope = props.scope;
-        this.writeGCDataAtRoot = props.writeGCDataAtRoot;
         this.pkg = props.pkg;
 
         // URIs use slashes as delimiters. Handles use URIs.
@@ -273,8 +269,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
+            assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
+            this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
             this.makeLocallyVisible();
+            this.bindState = BindState.Bound;
         };
 
         const thisSummarizeInternal =
@@ -470,11 +469,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const attributes = createAttributes(pkg, isRoot);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        // Add GC data to the summary if it's not written at the root.
-        if (!this.writeGCDataAtRoot) {
-            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
-        }
-
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
         // size in the summary stats with the blobs size of this data store.
         if (!this.summarizerNode.isReferenced()) {
@@ -515,28 +509,30 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     /**
      * After GC has run, called to notify the data store of routes used in it. These are used for the following:
+     *
      * 1. To identify if this data store is being referenced in the document or not.
+     *
      * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
+     *
      * 3. These are added to the summary generated by the data store.
-     * 4. To notify child contexts of their used routes. This is done immediately if the data store is loaded. Else,
-     *    it is done when realizing the data store.
+     *
+     * 4. To notify child contexts of their used routes. This is done immediately if the data store is loaded.
+     * Else, it is done when realizing the data store.
+     *
      * 5. To update the timestamp when this data store or any children are marked as unreferenced.
+     *
      * @param usedRoutes - The routes that are used in this data store.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Update the used routes in this data store's summarizer node.
-        this.summarizerNode.updateUsedRoutes(usedRoutes, gcTimestamp);
+        this.summarizerNode.updateUsedRoutes(usedRoutes);
 
         /**
-         * If the data store has not been realized yet, we need this used state to update the used state of the channel
-         * when it realizes. It's safe to keep only the last used state because if something changes because of this GC
-         * run, the data store will be immediately realized as part of the summary that follows GC. For example, if a
-         * child's reference state changes, the gcTimestamp has to be used to update its unreferencedTimestamp. Since
-         * it will result in a change in this data store's used routes, it will be realized to regenerate its summary.
+         * Store the used routes to update the channel if the data store is not loaded yet. If the used routes changed
+         * since the previous run, the data store will be loaded during summarize since the used state changed. So, it's
+         * safe to only store the last used routes.
          */
-        this.lastUsedState = { usedRoutes, gcTimestamp };
+        this.lastUsedRoutes = usedRoutes;
 
         // If we are loaded, call the channel so it can update the used routes of the child contexts.
         // If we are not loaded, we will update this when we are realized.
@@ -565,16 +561,16 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
         assert(this.channel !== undefined, 0x145 /* "Channel should be present when data store is loaded" */);
 
-        // If there is no lastUsedState, GC has not run up until this point.
-        if (this.lastUsedState === undefined) {
+        // If there is no lastUsedRoutes, GC has not run up until this point.
+        if (this.lastUsedRoutes === undefined) {
             return;
         }
 
         // Remove the route to this data store, if it exists.
-        const usedChannelRoutes = this.lastUsedState.usedRoutes.filter(
+        const usedChannelRoutes = this.lastUsedRoutes.filter(
             (id: string) => { return id !== "/" && id !== ""; },
         );
-        this.channel.updateUsedRoutes(usedChannelRoutes, this.lastUsedState.gcTimestamp);
+        this.channel.updateUsedRoutes(usedChannelRoutes);
     }
 
     /**
@@ -708,11 +704,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._isInMemoryRoot = true;
     }
 
-    /**
-     * @deprecated Renamed to `{@link FluidDataStoreContext.getBaseGCDetails}()`.
-     */
-    public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-
     public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
@@ -769,13 +760,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
-    private readonly initSnapshotValue: ISnapshotTree | string | undefined;
+    private readonly initSnapshotValue: ISnapshotTree | undefined;
     private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
     constructor(props: IRemoteFluidDataStoreContextProps) {
         super(
             props,
             true /* existing */,
+            BindState.Bound,
             false /* isLocalDataStore */,
             () => {
                 throw new Error("Already attached");
@@ -786,39 +778,29 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
             return (await props.getBaseGCDetails()) ?? {};
         });
+
+        if (props.snapshotTree !== undefined) {
+            this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+        }
     }
 
     private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
-        let tree: ISnapshotTree | undefined;
+        let tree = this.initSnapshotValue;
         let isRootDataStore = true;
-
-        if (typeof this.initSnapshotValue === "string") {
-            const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-            tree = await this.storage.getSnapshotTree(commit) ?? undefined;
-        } else {
-            tree = this.initSnapshotValue;
-        }
-
-        const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        if (tree) {
-            tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-        }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
-                await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
+                await readAndParse<ReadFluidDataStoreAttributes>(this.storage, tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
             // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
             const formatVersion = getAttributesFormatVersion(attributes);
             if (formatVersion < 1) {
-                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [attributes.pkg];
-                }
+                pkgFromSnapshot = attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")
+                    ? JSON.parse(attributes.pkg) as string[]
+                    : [attributes.pkg];
             } else {
                 pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
             }
@@ -850,13 +832,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    /**
-     * @deprecated Renamed to {@link RemoteFluidDataStoreContext.getBaseGCDetails}.
-     */
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        return this.getBaseGCDetails();
-    }
-
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
@@ -880,6 +855,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         super(
             props,
             props.snapshotTree !== undefined ? true : false /* existing */,
+            props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
             props.makeLocallyVisibleFn,
         );
@@ -962,14 +938,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             isRootDataStore,
             snapshot,
         };
-    }
-
-    /**
-     * @deprecated Renamed to {@link LocalFluidDataStoreContextBase.getBaseGCDetails}.
-     */
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        // Local data store does not have initial summary.
-        return {};
     }
 
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
