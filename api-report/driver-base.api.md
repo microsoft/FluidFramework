@@ -78,21 +78,6 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get version(): string;
 }
 
-// @public
-export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
-    constructor(expiryMs: number);
-    // (undocumented)
-    delete(key: TKey): boolean;
-    // (undocumented)
-    dispose(_error?: Error): void;
-    // (undocumented)
-    disposed: boolean;
-    // (undocumented)
-    get(key: TKey): TValue | undefined;
-    // (undocumented)
-    set(key: TKey, value: TValue): this;
-}
-
 // (No @packageDocumentation comment for this package)
 
 ```

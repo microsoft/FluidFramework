@@ -10,6 +10,7 @@ import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -271,6 +272,21 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
+
+// @public
+export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
+    constructor(expiryMs: number);
+    // (undocumented)
+    delete(key: TKey): boolean;
+    // (undocumented)
+    dispose(_error?: Error): void;
+    // (undocumented)
+    disposed: boolean;
+    // (undocumented)
+    get(key: TKey): TValue | undefined;
+    // (undocumented)
+    set(key: TKey, value: TValue): this;
+}
 
 // @public (undocumented)
 export enum MessageType2 {
