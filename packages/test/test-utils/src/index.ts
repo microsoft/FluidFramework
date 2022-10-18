@@ -25,6 +25,7 @@ export {
 export {
 	createSummarizer,
 	createSummarizerFromFactory,
+    createSummarizerWithContainer,
 	summarizeNow,
 	waitForContainerConnection,
 } from "./TestSummaryUtils";

@@ -5,8 +5,8 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainer, IFluidCodeDetails, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { ConnectionState, ILoaderProps } from "@fluidframework/container-loader";
 import {
     IGCRuntimeOptions,
     ISummarizer,
@@ -23,11 +23,11 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
+import { fluidEntryPoint } from "./localCodeLoader";
 
 const summarizerClientType = "summarizer";
 
-async function createSummarizerCore(container: IContainer, loader: IHostLoader, summaryVersion?: string) {
-    const absoluteUrl = await container.getAbsoluteUrl("");
+async function createSummarizerCore(absoluteUrl: string | undefined, loader: IHostLoader, summaryVersion?: string) {
     if (absoluteUrl === undefined) {
         throw new Error("URL could not be resolved");
     }
@@ -53,7 +53,11 @@ async function createSummarizerCore(container: IContainer, loader: IHostLoader, 
     if (fluidObject.ISummarizer === undefined) {
         throw new Error("Fluid object does not implement ISummarizer");
     }
-    return fluidObject.ISummarizer;
+
+    return {
+        container: summarizerContainer,
+        summarizer: fluidObject.ISummarizer,
+    };
 }
 
 const defaultSummaryOptions: ISummaryRuntimeOptions = {
@@ -91,8 +95,8 @@ export async function createSummarizerFromFactory(
         [[provider.defaultCodeDetails, runtimeFactory]],
         { configProvider: mockConfigProvider() },
     );
-
-    return createSummarizerCore(container, loader, summaryVersion);
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
 }
 
 export async function createSummarizer(
@@ -111,7 +115,23 @@ export async function createSummarizer(
     };
 
     const loader = provider.makeTestLoader(testContainerConfig);
-    return createSummarizerCore(container, loader, summaryVersion);
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
+}
+
+export async function createSummarizerWithContainer(
+    provider: ITestObjectProvider,
+    absoluteUrl: string | undefined,
+    entryPoint: fluidEntryPoint,
+    loaderProps?: Partial<ILoaderProps>,
+    summaryVersion?: string,
+): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
+    const defaultCodeDetails: IFluidCodeDetails = {
+        package: "defaultTestPackage",
+        config: {},
+    };
+    const loader = provider.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+    return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
 
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
