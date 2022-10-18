@@ -18,7 +18,7 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
+import { ICache, InMemoryCache, NullCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 
 /**
@@ -37,6 +37,9 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
+
+    private readonly blobCache: ICache<ArrayBufferLike>;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     private storageManager: GitManager | undefined;
     private noCacheStorageManager: GitManager | undefined;
@@ -57,10 +60,12 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
-        private readonly blobCache: ICache<ArrayBufferLike>,
-        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
         private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
+        this.blobCache = new InMemoryCache<ArrayBufferLike>();
+        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>()
+            : new NullCache<ISnapshotTreeVersion>();
     }
 
     private documentStorageService: DocumentStorageService | undefined;

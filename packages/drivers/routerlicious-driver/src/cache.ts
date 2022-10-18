@@ -12,8 +12,10 @@ export interface ICache<T> extends IDisposable {
     put(key: string, value: T): Promise<void>;
 }
 
+/** This is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy */
 const fiveDaysMs: FiveDaysMs = 432000000;
 
+/** A basic in-memory cache that expires entries after 5 days */
 export class InMemoryCache<T> implements ICache<T> {
     public get disposed(): boolean { return this.cache.disposed; }
     public dispose() { this.cache.dispose(); }
@@ -29,6 +31,7 @@ export class InMemoryCache<T> implements ICache<T> {
     }
 }
 
+/** This "cache" does nothing on get/put */
 export class NullCache<T> implements ICache<T> {
     public disposed: boolean = false;
     public dispose() { this.disposed = true; }

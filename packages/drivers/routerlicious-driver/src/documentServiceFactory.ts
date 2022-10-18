@@ -26,9 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -253,12 +251,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        // Each DocumentService instance should have its own cache to dispose without affecting other instances
-        const blobCache = new InMemoryCache<ArrayBufferLike>();
-        const snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>()
-            : new NullCache<ISnapshotTreeVersion>();
-
         return new DocumentService(
             fluidResolvedUrl,
             ordererUrl,
@@ -270,8 +262,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             tenantId,
             documentId,
             this.driverPolicies,
-            blobCache,
-            snapshotTreeCache,
             discoverFluidResolvedUrl);
     }
 }
