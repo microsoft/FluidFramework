@@ -119,6 +119,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public get idleTime(): number {
+        if (this.configuration.idleTime !== undefined) {
+            return this.configuration.idleTime;
+        }
         const maxIdleTime = this.configuration.maxIdleTime;
         const minIdleTime = this.configuration.minIdleTime;
         const weightedNumOfOps = getWeightedNumberOfOps(

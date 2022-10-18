@@ -233,7 +233,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * @deprecated Please move all implementations to {@link ISummaryConfigurationHeuristics.minIdleTime} and
      * {@link ISummaryConfigurationHeuristics.maxIdleTime} instead.
      */
-    idleTime: number;
+    idleTime?: number;
     /**
      * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
@@ -296,8 +296,6 @@ export type ISummaryConfiguration =
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
-
-    idleTime: 15 * 1000, // 15 secs.
 
     minIdleTime: 0,
 
