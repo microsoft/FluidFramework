@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
+    "build:compile": "npm run typetests:gen && concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -57,37 +57,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.0.1",
-    "broken": {
-      "TypeAliasDeclaration_DriverError": {
-        "backCompat": false
-      },
-      "EnumDeclaration_DriverErrorType": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDriverBasicError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGenericNetworkError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDriverErrorBase": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IThrottlingWarning": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IAuthorizationError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ILocationRedirectionError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDocumentStorageService": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IDocumentStorageServicePolicies": {
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }

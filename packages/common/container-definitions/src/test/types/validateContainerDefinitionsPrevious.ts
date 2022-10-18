@@ -251,7 +251,6 @@ declare function get_current_InterfaceDeclaration_IAudienceOwner():
 declare function use_old_InterfaceDeclaration_IAudienceOwner(
     use: TypeOnly<old.IAudienceOwner>);
 use_old_InterfaceDeclaration_IAudienceOwner(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAudienceOwner());
 
 /*

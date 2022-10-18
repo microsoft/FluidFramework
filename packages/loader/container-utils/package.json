@@ -87,10 +87,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.0.1",
-    "broken": {
-      "ClassDeclaration_UsageError": {
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }

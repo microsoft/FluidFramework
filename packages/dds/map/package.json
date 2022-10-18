@@ -99,43 +99,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.0.1",
-    "broken": {
-      "RemovedInterfaceDeclaration_IDirectoryClearOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectorySetOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_ILocalValue": {
-        "forwardCompat": false,
-        "backCompat": false
-      }
-    }
+    "broken": {}
   }
 }

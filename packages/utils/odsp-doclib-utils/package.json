@@ -87,14 +87,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.0.1",
-    "broken": {
-      "RemovedInterfaceDeclaration_IFacetCodes": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_OdspRedirectError": {
-        "backCompat": false
-      }
-    }
+    "broken": {}
   }
 }
