@@ -92,13 +92,6 @@
          */
         // "addToApiReviewFile": false
       }
-
-      // "TS2551": {
-      //   "logLevel": "warning",
-      //   "addToApiReviewFile": true
-      // },
-      //
-      // . . .
     },
 
     /**
@@ -111,17 +104,26 @@
     "extractorMessageReporting": {
       "default": {
         "logLevel": "error"
-        // "addToApiReviewFile": false
       },
-      "ae-forgotten-export": {
-        "logLevel": "error"
-      },
+      // A documentation comment should contain at most one release tag.
       "ae-extra-release-tag": {
         "logLevel": "warning"
       },
-      "ae-missing-release-tag": {
-        "logLevel": "none"
+      // Reported when an exported API refers to another declaration that is not exported.
+      "ae-forgotten-export": {
+        "logLevel": "error"
       },
+      // Disabled. We don't require that internal members be prefixed with an underscore.
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      // A type signature should not reference another types whose release tag is less visible.
+      "ae-missing-release-tag": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      // The @inheritDoc tag needs a TSDoc declaration reference.
       "ae-unresolved-inheritdoc-reference": {
         "logLevel": "error"
       }
@@ -138,13 +140,6 @@
       "default": {
         "logLevel": "error"
       }
-
-      // "tsdoc-link-tag-unescaped-text": {
-      //   "logLevel": "warning",
-      //   "addToApiReviewFile": true
-      // },
-      //
-      // . . .
     }
   }
 }
