@@ -30,7 +30,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 
     /**
      * Continuously volunteer for the task. Watch the "assigned" event to determine if the task is assigned.
-     * The local client will automatically re-enter the queue if the local client disconnects.
+     * The local client will automatically re-enter the queue if it disconnects.
      * @param taskId - Identifier for the task
      */
     subscribeToTask(taskId: string): void;
