@@ -155,11 +155,16 @@ const appTheme = createTheme({
 });
 
 const rootStackStyles = mergeStyles({
-    padding: "5px",
     height: "100vh",
 });
 
-const viewPaneStackStyles = mergeStyles({
+const appViewPaneStackStyles = mergeStyles({
+    padding: "5px",
+    height: "100%",
+    flex: 1,
+});
+
+const debuggerViewPaneStackStyles = mergeStyles({
     padding: "5px",
     height: "100%",
 });
@@ -168,31 +173,31 @@ export function App(): React.ReactElement {
     // Load the collaborative SharedString object
     const containerAndAudience = useContainerInfo();
 
-    // Create the view using CollaborativeTextArea
+    let view: React.ReactElement;
     if (containerAndAudience !== undefined) {
         const { container, containerId, audience } = containerAndAudience;
         const sharedString = container.initialObjects.sharedString as SharedString;
-        return (
-            <ThemeProvider theme={appTheme}>
-                <Stack horizontal className={rootStackStyles}>
-                    <StackItem className={viewPaneStackStyles}>
-                        <CollaborativeTextView text={sharedString} />
-                    </StackItem>
-                    <StackItem className={viewPaneStackStyles}>
-                        <SessionDataView
-                            container={container}
-                            containerId={containerId}
-                            audience={audience}
-                        />
-                    </StackItem>
-                </Stack>
-            </ThemeProvider>
+        view = (
+            <Stack horizontal className={rootStackStyles}>
+                <StackItem className={appViewPaneStackStyles}>
+                    <CollaborativeTextView text={sharedString} />
+                </StackItem>
+                <StackItem className={debuggerViewPaneStackStyles}>
+                    <SessionDataView
+                        container={container}
+                        containerId={containerId}
+                        audience={audience}
+                    />
+                </StackItem>
+            </Stack>
         );
     } else {
-        return (
+        view = (
             <div>
                 <Spinner /> Loading Fluid container...
             </div>
         );
     }
+
+    return <ThemeProvider theme={appTheme}>{view}</ThemeProvider>;
 }

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
 import React from "react";
 
 import { AudienceView, AudienceViewProps } from "./AudienceView";
@@ -21,13 +21,94 @@ export type SessionDataViewProps = AudienceViewProps & ContainerDataViewProps;
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
     const { containerId, container, audience } = props;
 
+    const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
+        RootView.Container,
+    );
+
+    let view: React.ReactElement;
+    switch (rootViewSelection) {
+        case RootView.Container:
+            view = <ContainerDataView containerId={containerId} container={container} />;
+            break;
+        case RootView.Audience:
+            view = <AudienceView audience={audience} />;
+            break;
+        case RootView.OpsStream:
+            view = <div>TODO</div>;
+            break;
+        default:
+            throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+    }
+
     return (
-        <div className="container-view">
-            <h1>Container View</h1>
-            <Stack horizontal wrap tokens={{ childrenGap: 25 }}>
-                <ContainerDataView containerId={containerId} container={container} />
-                <AudienceView audience={audience} />
+        <div>
+            <Stack wrap tokens={{ childrenGap: 25 }}>
+                <ViewSelectionMenu
+                    currentSelection={rootViewSelection}
+                    updateSelection={updateRootViewSelection}
+                />
+                <div style={{ width: "400px", height: "100%", overflowY: "auto" }}>{view}</div>
             </Stack>
         </div>
+    );
+}
+
+/**
+ * Root view options for the container visualizer.
+ */
+enum RootView {
+    Container = "Container",
+    Audience = "Audience",
+    OpsStream = "Ops Stream",
+}
+
+interface ViewSelectionMenuProps {
+    currentSelection: RootView;
+    updateSelection(newSelection: RootView): void;
+}
+
+function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const { currentSelection, updateSelection } = props;
+
+    const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([value, flag]) => ({
+        key: flag,
+        name: value,
+    }));
+
+    function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
+        return (
+            <Link
+                aria-label={item.key}
+                styles={{ root: { marginRight: 10 } }}
+                disabled={item.key === currentSelection}
+                onClick={(): void => updateSelection(item.key as RootView)}
+            >
+                {item.name}
+            </Link>
+        );
+    }
+
+    function onRenderOverflowButton(
+        overflowItems: IOverflowSetItemProps[] | undefined,
+    ): React.ReactElement {
+        return overflowItems === undefined ? (
+            <></>
+        ) : (
+            <IconButton
+                title="More options"
+                menuIconProps={{ iconName: "More" }}
+                menuProps={{ items: overflowItems }}
+            />
+        );
+    }
+
+    return (
+        <OverflowSet
+            aria-label="Debug root view selection"
+            items={options}
+            onRenderItem={onRenderItem}
+            onRenderOverflowButton={onRenderOverflowButton}
+        />
     );
 }
