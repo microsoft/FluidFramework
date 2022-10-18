@@ -43,15 +43,9 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 // @public (undocumented)
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (value: IValueChanged) => void): any;
+    (event: "valueChanged", listener: (value: Serializable<T>) => void): any;
     // (undocumented)
-    (event: "delete", listener: (value: Serializable<T>) => void): any;
-}
-
-// @public
-export interface IValueChanged {
-    previousValue: any;
-    value: any;
+    (event: "delete", listener: () => void): any;
 }
 
 // @public
@@ -68,7 +62,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata): void;
     rollback(op: any, localOpMetadata: unknown): void;
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;

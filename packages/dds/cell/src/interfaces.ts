@@ -8,6 +8,7 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
     (event: "valueChanged", listener: (value: Serializable<T>) => void);
+    (event: "delete", listener: () => void);
 }
 
 /**

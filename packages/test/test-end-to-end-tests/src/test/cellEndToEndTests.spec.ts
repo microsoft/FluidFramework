@@ -265,6 +265,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
     }));
+    const errorMessage = "callback failure";
 
     beforeEach(async () => {
         const configWithFeatureGates = {
@@ -279,6 +280,43 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
     });
 
+    it("Should rollback set", async () => {
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.set(0);
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedCell.get(), undefined);
+        // rollback
+    });
+
+    it("Should rollback delete", async () => {
+        sharedCell.set("old");
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.delete();
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedCell.get(), "old");
+        // rollback
+    });
+
     itExpects("Closes container when rollback fails",
     [
         {
@@ -288,7 +326,6 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         },
     ],
     async () => {
-        const errorMessage = "callback failure";
         let error: Error | undefined;
         try {
             containerRuntime.orderSequentially(() => {

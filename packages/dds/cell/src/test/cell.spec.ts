@@ -207,30 +207,6 @@ describe("Cell", () => {
                 assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
                 assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
             });
-
-            it("Shouldn't delete value if there is pending set", () => {
-                const previousValues: any[] = [];
-
-                cell1.on("valueChanged", (changed) => {
-                    previousValues.push(changed);
-                });
-
-                cell2.set("value2");
-                cell2.delete();
-                cell1.set("value1");
-                cell2.delete();
-
-                containerRuntimeFactory.processSomeMessages(2);
-
-                assert.equal(previousValues.length, 1);
-                assert.equal(previousValues[0], undefined);
-                assert.equal(cell1.get(), "value1");
-
-                containerRuntimeFactory.processSomeMessages(2);
-
-                // assert.equal(previousValues.length, 3);
-                assert.equal(cell1.get(), undefined);
-            });
         });
     });
 
