@@ -56,7 +56,7 @@ function editManagerFactory(options: {
     const family = changeFamilyFactory(options.rebaser);
     const anchors = new TestAnchorSet();
     const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
-    manager.setSessionId(options.sessionId ?? localSessionId);
+    manager.initSessionId(options.sessionId ?? localSessionId);
     return { manager, anchors };
 }
 

@@ -134,6 +134,6 @@ export {
     EditManagerIndex,
     CommitEncoder,
     commitEncoderFromChangeEncoder,
-    loadSummary,
-    encodeSummary,
+    parseSummary as loadSummary,
+    stringifySummary as encodeSummary,
 } from "./editManagerIndex";

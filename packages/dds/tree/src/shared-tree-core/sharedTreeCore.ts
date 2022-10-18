@@ -86,7 +86,7 @@ export class SharedTreeCore<
         super(id, runtime, attributes, telemetryContextPrefix);
 
         this.stableId = uuid();
-        editManager.setSessionId(this.stableId);
+        editManager.initSessionId(this.stableId);
         this.summaryElements = indexes
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);

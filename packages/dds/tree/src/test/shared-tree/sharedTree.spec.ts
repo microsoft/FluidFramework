@@ -130,7 +130,7 @@ describe("SharedTree", () => {
 
         await provider.ensureSynchronized();
 
-        // Stop the processing of incoming changes on tree2 so that it does not learn about the deletion of Z
+        // Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
         await provider.opProcessingController.pauseProcessing(container3);
 
         // Delete Z

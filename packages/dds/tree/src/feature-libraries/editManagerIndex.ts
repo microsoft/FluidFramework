@@ -14,7 +14,7 @@ import {
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
 import {
     Index,
@@ -36,9 +36,9 @@ import { cachedValue, ICachedValue, recordDependency } from "../dependency-track
 /**
  * The storage key for the blob in the summary containing EditManager data
  */
-const blobKey = "EditManagerBlob";
+const blobKey = "Blob";
 
-const stringKey = "EditManagerString";
+const stringKey = "String";
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
@@ -64,7 +64,10 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         this.commitEncoder = commitEncoderFromChangeEncoder(editManager.changeFamily.encoder);
         this.editDataBlob = cachedValue(async (observer) => {
             recordDependency(observer, this.editManager);
-            const dataString = encodeSummary(this.editManager.getSummaryData(), this.commitEncoder);
+            const dataString = stringifySummary(
+                this.editManager.getSummaryData(),
+                this.commitEncoder,
+            );
             // For now we are not chunking the edit data, but still put it in a reusable blob:
             return this.runtime.uploadBlob(IsoBuffer.from(dataString));
         });
@@ -76,10 +79,8 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        const builder = new SummaryTreeBuilder();
-        const dataString = encodeSummary(this.editManager.getSummaryData(), this.commitEncoder);
-        builder.addBlob(stringKey, dataString);
-        return builder.getSummaryTree();
+        const dataString = stringifySummary(this.editManager.getSummaryData(), this.commitEncoder);
+        return createSingleBlobSummary(stringKey, dataString);
     }
 
     public async summarize(
@@ -89,9 +90,8 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
         const editDataBlobHandle = await this.editDataBlob.get();
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(blobKey, stringify(editDataBlobHandle));
-        return builder.getSummaryTree();
+        const content = stringify(editDataBlobHandle);
+        return createSingleBlobSummary(blobKey, content);
     }
 
     public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -108,18 +108,14 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         services: IChannelStorageService,
         parse: SummaryElementParser,
     ): Promise<void> {
-        const [hasString, hasBlob] = await Promise.all([
-            services.contains(stringKey),
-            services.contains(blobKey),
-        ]);
-        assert(hasString || hasBlob, "EditManager data is required in summary");
         let schemaBuffer: ArrayBufferLike;
-        if (hasBlob) {
+        if (await services.contains(blobKey)) {
             const handleBuffer = await services.readBlob(blobKey);
             const handleString = bufferToString(handleBuffer, "utf-8");
             const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
             schemaBuffer = await handle.get();
         } else {
+            assert(await services.contains(stringKey), "EditManager data is required in summary");
             schemaBuffer = await services.readBlob(stringKey);
         }
 
@@ -133,14 +129,14 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
 
         const dataString = bufferToString(schemaBuffer, "utf-8");
         this.editManager.loadSummaryData((data: MutableSummaryData<TChangeset>) => {
-            loadSummary(dataString, this.commitEncoder, data);
+            parseSummary(dataString, this.commitEncoder, data);
         });
     }
 }
 
 /**
  * The in-memory data that summaries contain, in a JSON-compatible format.
- * Used as an implementation detail of {@link loadSummary} and {@link encodeSummary}.
+ * Used as an implementation detail of {@link parseSummary} and {@link stringifySummary}.
  */
 interface ReadonlyJsonSummaryData {
     readonly trunk: readonly Readonly<Commit<JsonCompatibleReadOnly>>[];
@@ -167,13 +163,13 @@ export function commitEncoderFromChangeEncoder<TChangeset>(
     };
 }
 
-export function loadSummary<TChange>(
+export function parseSummary<TChange>(
     summary: string,
     encoder: CommitEncoder<TChange>,
-    repo: MutableSummaryData<TChange>,
+    destination: MutableSummaryData<TChange>,
 ): void {
     const decode = (c: Commit<JsonCompatibleReadOnly>) => encoder.decode(c);
-    const { trunk, branches } = repo;
+    const { trunk, branches } = destination;
     const json: ReadonlyJsonSummaryData = JSON.parse(summary);
     for (const commit of json.trunk) {
         trunk.push(decode(commit));
@@ -184,7 +180,7 @@ export function loadSummary<TChange>(
     }
 }
 
-export function encodeSummary<TChange>(
+export function stringifySummary<TChange>(
     data: ReadonlySummaryData<TChange>,
     encoder: CommitEncoder<TChange>,
 ): string {

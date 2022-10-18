@@ -46,7 +46,7 @@ export class EditManager<
 
     private localSessionId?: SessionId;
 
-    readonly computationName: string = "EditManager";
+    public readonly computationName: string = "EditManager";
 
     public constructor(
         public readonly changeFamily: TChangeFamily,
@@ -55,7 +55,13 @@ export class EditManager<
         super();
     }
 
-    public setSessionId(id: SessionId): void {
+    /**
+     * Sets the ID that uniquely identifies the session for the document being edited.
+     * This function must be called before new changes (local or sequenced) are fed to this `EditManager`.
+     * This function must be called exactly once.
+     * @param id - The ID for the session associated with this `EditManager` instance.
+     */
+    public initSessionId(id: SessionId): void {
         assert(this.localSessionId === undefined, "The session ID should only be set once");
         this.localSessionId = id;
     }
