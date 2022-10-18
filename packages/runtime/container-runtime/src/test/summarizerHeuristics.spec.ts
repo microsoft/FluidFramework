@@ -23,7 +23,6 @@ describe("Runtime", () => {
 
             const defaultSummaryConfig: ISummaryConfigurationHeuristics = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
@@ -314,6 +313,18 @@ describe("Runtime", () => {
                 runner.run();
                 assertAttemptCount(1, "should run");
                 assert(getLastAttempt() === "maxOps");
+            });
+
+            it("idleTime should take precedence", () => {
+                const idleTime = 100;
+                const minIdleTime = 0;
+                const maxIdleTime = 200;
+                initialize({ idleTime, minIdleTime, maxIdleTime });
+
+                assert.strictEqual(runner.idleTime, 100, "expect idleTime to take precedence when provided");
+
+                initialize({ minIdleTime, maxIdleTime });
+                assert.strictEqual(runner.idleTime, 200, "expect maxIdleTime when idleTime is not provided");
             });
         });
     });
