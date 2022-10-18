@@ -139,8 +139,18 @@ FLAGS
 DESCRIPTION
   Generates type tests based on the individual package settings in package.json.
 
-  Generating type tests has two parts: preparing package.json and generating type tests. By default, both steps are run
-  for each package. This can be overridden using the --prepare and --generate flags.
+  Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are
+  run for each package. You can run only one part at a time using the --prepare and --generate flags.
+
+  Preparing package.json determines the baseline previous version to use, then sets that version in package.json. If the
+  previous version changes after running preparation, then npm install must be run before the generate step will run
+  correctly.
+
+  Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during
+  preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
+
+  Generating test modules takes the type test information from package.json, most notably any known broken type tests,
+  and generates an appropriate
 
 EXAMPLES
   Prepare the package.json for all packages in the client release group.

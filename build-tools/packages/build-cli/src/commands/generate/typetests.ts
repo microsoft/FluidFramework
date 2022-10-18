@@ -16,7 +16,13 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
     static summary =
         "Generates type tests based on the individual package settings in package.json.";
 
-    static description = `Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. This can be overridden using the --prepare and --generate flags.`;
+    static description = `Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
+
+    Preparing package.json determines the baseline previous version to use, then sets that version in package.json. If the previous version changes after running preparation, then npm install must be run before the generate step will run correctly.
+
+    Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
+
+    Generating test modules takes the type test information from package.json, most notably any known broken type tests, and generates an appropriate `;
 
     static flags = {
         dir: Flags.directory({
@@ -142,6 +148,8 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             }
         }
 
+        // In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
+        // spinner, so we only start the spinner if verbose is false.
         if (!flags.verbose) {
             CliUx.ux.action.start("Preparing/generating type tests...", "generating", {
                 stdout: true,
@@ -217,6 +225,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         // eslint-disable-next-line unicorn/no-await-expression-member
         const results = (await Promise.all(runningGenerates)).every((v) => v);
 
+        // Stop the spinner if needed.
         if (!flags.verbose) {
             CliUx.ux.action.stop("Done");
         }

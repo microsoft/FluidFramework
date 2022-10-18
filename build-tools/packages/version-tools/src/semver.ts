@@ -194,15 +194,17 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  * Calculates and returns the previous major and minor versions for the provided version, taking into account the Fluid
  * internal and virtualPatch version schemes.
  *
+ * @param version - The version to calculate previous versions for.
+ * @returns A tuple of previous major version and previous minor version.
+ *
+ * @remarks
+ *
  * This function does not consult any external sources to determine what versions are available. In other words, it
  * calculates the versions based on the input only. For this reason, the previous minor version does not "roll back" to
  * an earlier version series. In other words, for version 2.0.0, the previous minor version will be 2.0.0, while for
  * 2.1.0, the previous minor version will also be 2.0.0. In both cases, the previous major version will be 1.0.0.
  *
- * @param version - The version to calculate previous versions for.
- * @returns A tuple of previous major version and previous minor version.
- *
- * @remarks
+ * @throws
  *
  * This function will throw under any of the the following conditions:
  *

@@ -184,7 +184,7 @@ function validateVersionScheme(version: semver.SemVer | string | null, allowPrer
  * Checks if a version matches the Fluid internal version scheme. By default, prerelease Fluid internal versions are
  * excluded.
  *
- * @param version - The version to check.
+ * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns True if the version matches the Fluid internal version scheme.
  */

@@ -80,15 +80,47 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
     };
 }
 
-type PreviousVersionStyle =
-    | "baseMinor"
+/**
+ * A type representing the different version constraint styles we use when determining the previous version for type
+ * test generation.
+ *
+ * @example
+ *
+ * Given the version 2.0.0-internal.2.3.5:
+ *
+ * baseMajor: 2.0.0-internal.2.0.0
+ * baseMinor: 2.0.0-internal.2.3.0
+ * previousMajor: 2.0.0-internal.1.0.0
+ * previousMinor: 2.0.0-internal.2.2.0
+ * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
+ * ^previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0
+ * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
+ * ~previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.2.2.0
+ *
+ * @example
+ *
+ * Given the version 2.0.0-internal.2.0.0:
+ *
+ * baseMajor: 2.0.0-internal.2.0.0
+ * baseMinor: 2.0.0-internal.2.0.0
+ * previousMajor: 2.0.0-internal.1.0.0
+ * previousMinor: 2.0.0-internal.2.0.0
+ * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
+ * ^previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0
+ * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
+ * ~previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
+ *
+ * @internal
+ */
+export type PreviousVersionStyle =
     | "baseMajor"
+    | "baseMinor"
+    | "previousMinor"
+    | "previousMajor"
     | "^previousMajor"
     | "^previousMinor"
     | "~previousMajor"
-    | "~previousMinor"
-    | "previousMajor"
-    | "previousMinor";
+    | "~previousMinor";
 
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
@@ -105,6 +137,8 @@ type PreviousVersionStyle =
  * @param resetBroken - If true, clears the "broken" section of the type validation, effectively clearing all known
  * breaking changes.
  * @returns package metadata or a reason the package was skipped.
+ *
+ * @internal
  */
 export async function getAndUpdatePackageDetails(
     packageDir: string,
@@ -116,16 +150,17 @@ export async function getAndUpdatePackageDetails(
     const packageDetails = await getPackageDetails(packageDir);
 
     if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
+        // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
+        // compatibility promises for them, so they're excluded from type tests.
         return { skipReason: "Skipping package: @fluid-internal" };
     } else if (packageDetails.pkg.main?.endsWith("index.js") !== true) {
+        // An index.js main entrypoint is required for type tests to be enabled.
         return { skipReason: "Skipping package: no index.js in main property" };
     } else if (packageDetails.pkg.private === true) {
+        // Private packages aren't published, so no need to do type testing for them.
         return { skipReason: "Skipping package: private package" };
-    } else if (packageDetails.pkg.typeValidation === undefined) {
-        return {
-            skipReason: 'Skipping package: add "typeValidation: {}" to package.json to enable.',
-        };
     } else if (packageDetails.pkg.typeValidation?.disabled === true) {
+        // Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
         return { skipReason: "Skipping package: type validation disabled" };
     }
 
