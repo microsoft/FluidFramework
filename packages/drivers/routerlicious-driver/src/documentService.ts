@@ -62,9 +62,12 @@ export class DocumentService implements api.IDocumentService {
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
+        // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
+        const snapshotCacheExpiryMs: api.FiveDaysMs = 432000000;
+
         this.blobCache = new InMemoryCache<ArrayBufferLike>();
         this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>()
+            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
             : new NullCache<ISnapshotTreeVersion>();
     }
 
