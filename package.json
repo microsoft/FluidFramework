@@ -160,5 +160,11 @@
         ]
       }
     }
+<<<<<<< HEAD
+=======
+  },
+  "dependencies": {
+    "eslint-config-prettier": "^8.5.0"
+>>>>>>> parent of e8de1c4f4a (install eslint-config-prettier in eslint-config-fluid)
   }
 }
