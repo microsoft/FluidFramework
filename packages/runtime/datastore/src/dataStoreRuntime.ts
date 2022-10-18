@@ -124,11 +124,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entrypoint}
      */
-    public get entrypoint(): IFluidHandle<FluidObject> | undefined {
-        return this.handle;
-    }
-
-    private readonly handle?: IFluidHandle<FluidObject>;
+    public readonly entrypoint?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 
@@ -295,7 +291,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         if (initializeEntrypoint) {
-            this.handle = new FluidObjectHandle<FluidObject>(
+            this.entrypoint = new FluidObjectHandle<FluidObject>(
                 new LazyPromise(async () => initializeEntrypoint(this)),
                 "",
                 this.objectsRoutingContext,
