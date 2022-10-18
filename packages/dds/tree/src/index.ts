@@ -107,6 +107,8 @@ export { ICheckout, TransactionResult } from "./checkout";
 export {
     cursorToJsonObject,
     JsonCursor,
+    cursorToJsonObjectNew,
+    singleJsonCursor,
     jsonArray,
     jsonBoolean,
     jsonNull,

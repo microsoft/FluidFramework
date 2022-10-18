@@ -3,4 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerServices";
+export {
+	BaseContainerService,
+	ContainerServiceRegistryEntries,
+	generateContainerServicesRequestHandler,
+	serviceRoutePathRoot,
+} from "./containerServices";
