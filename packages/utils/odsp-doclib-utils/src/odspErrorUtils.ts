@@ -14,6 +14,7 @@ import {
     RetryableError,
     NonRetryableError,
     OnlineStatus,
+    FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
     OdspErrorType,
@@ -258,6 +259,9 @@ export function createOdspNetworkError(
             break;
     }
 
+    if (innerMostErrorCode === "fluidInvalidSchema") {
+        error = new FluidInvalidSchemaError(errorMessage, false, driverProps);
+    }
     enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }
