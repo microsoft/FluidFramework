@@ -787,7 +787,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (baseSnapshot && blobId) {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
+                assert(storage !== undefined, "Attached state should have storage");
                 return readAndParse<T>(storage, blobId);
             }
         };
@@ -805,7 +805,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async (id) => {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
+                assert(storage !== undefined, "storage undefined in attached container");
                 return readAndParse(storage, id);
             },
         );
