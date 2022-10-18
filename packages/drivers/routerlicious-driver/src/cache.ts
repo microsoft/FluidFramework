@@ -4,7 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/common-definitions";
-import { MapWithExpiration } from "@fluidframework/driver-base";
+import { MapWithExpiration } from "@fluidframework/driver-utils";
 import { FiveDaysMs } from "@fluidframework/driver-definitions";
 
 export interface ICache<T> extends IDisposable {

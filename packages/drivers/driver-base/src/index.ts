@@ -4,4 +4,3 @@
  */
 
 export { DocumentDeltaConnection } from "./documentDeltaConnection";
-export { MapWithExpiration } from "./mapWithExpiration";
