@@ -78,12 +78,11 @@ describe("SharedTree", () => {
     });
 
     it("can summarize and load", async () => {
-        const provider = await TestTreeProvider.create(1);
+        const provider = await TestTreeProvider.create(1, true);
         const [summarizingTree] = provider.trees;
-        const summarize = await provider.enableManualSummarization();
         const value = 42;
         initializeTestTreeWithValue(summarizingTree, value);
-        await summarize();
+        await provider.summarize();
         await provider.ensureSynchronized();
         const loadingTree = await provider.createTree();
         assert.equal(getTestValue(loadingTree), value);
