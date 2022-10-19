@@ -8,5 +8,10 @@ module.exports = {
     parserOptions: {
         project: ["./tsconfig.json"],
     },
-    rules: {},
+    rules: {
+        /**
+         * Disabled because it disagrees with React.useEffect best practices.
+         */
+        "unicorn/consistent-function-scoping": "off",
+    },
 };
