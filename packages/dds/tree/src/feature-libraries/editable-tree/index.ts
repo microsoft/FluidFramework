@@ -4,13 +4,17 @@
  */
 
 export {
+    anchorSymbol,
     getEditableTreeContext,
+    getTypeSymbol,
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
+    isArrayField,
+    isUnwrappedNode,
+    proxyTargetSymbol,
     UnwrappedEditableTree,
     UnwrappedEditableField,
-    getTypeSymbol,
     valueSymbol,
     anchorSymbol,
     proxyTargetSymbol,

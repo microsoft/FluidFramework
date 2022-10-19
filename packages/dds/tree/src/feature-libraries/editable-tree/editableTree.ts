@@ -4,23 +4,24 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, FieldKey, symbolIsFieldKey } from "../../tree";
 import {
+    Value,
+    Anchor,
+    FieldKey,
+    symbolIsFieldKey,
     IEditableForest,
     TreeNavigationResult,
     mapCursorField,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-} from "../../forest";
-import { brand } from "../../util";
-import {
     FieldSchema,
     LocalFieldKey,
     TreeSchemaIdentifier,
     NamedTreeSchema,
     ValueSchema,
     lookupTreeSchema,
-} from "../../schema-stored";
+} from "../../core";
+import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,

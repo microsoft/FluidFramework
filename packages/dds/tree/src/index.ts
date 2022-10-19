@@ -11,9 +11,6 @@ export {
     InvalidationToken,
     recordDependency,
     SimpleDependee,
-} from "./dependency-tracking";
-
-export {
     EmptyKey,
     FieldKey,
     TreeType,
@@ -41,9 +38,6 @@ export {
     ITreeCursorSynchronous,
     GenericFieldsNode,
     AnchorLocator,
-} from "./tree";
-
-export {
     ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
@@ -54,9 +48,6 @@ export {
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
-} from "./forest";
-
-export {
     LocalFieldKey,
     GlobalFieldKey,
     TreeSchemaIdentifier,
@@ -71,7 +62,17 @@ export {
     SchemaData,
     SchemaPolicy,
     SchemaDataAndPolicy,
-} from "./schema-stored";
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    ChangesetFromChangeRebaser,
+    ICheckout,
+    TransactionResult,
+} from "./core";
 
 export {
     Brand,
@@ -94,19 +95,10 @@ export {
 } from "./util";
 
 export {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
-    ProgressiveEditBuilderBase,
-} from "./change-family";
-
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
-
-export { ICheckout, TransactionResult } from "./checkout";
-
-export {
     cursorToJsonObject,
     JsonCursor,
+    cursorToJsonObjectNew,
+    singleJsonCursor,
     jsonArray,
     jsonBoolean,
     jsonNull,

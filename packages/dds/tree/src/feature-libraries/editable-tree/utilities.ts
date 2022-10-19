@@ -4,16 +4,20 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { EmptyKey, FieldKey, isGlobalFieldKey, keyFromSymbol, Value } from "../../tree";
 import { fail } from "../../util";
 import {
+    EmptyKey,
+    FieldKey,
+    isGlobalFieldKey,
+    keyFromSymbol,
+    Value,
     TreeSchema,
     ValueSchema,
     FieldSchema,
     LocalFieldKey,
     SchemaDataAndPolicy,
     lookupGlobalFieldSchema,
-} from "../../schema-stored";
+} from "../../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.

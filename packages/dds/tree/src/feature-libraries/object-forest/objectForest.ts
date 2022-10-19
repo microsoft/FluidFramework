@@ -11,15 +11,11 @@ import {
     recordDependency,
     SimpleDependee,
     SimpleObservingDependent,
-} from "../../dependency-tracking";
-import {
     ITreeSubscriptionCursor,
     IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-} from "../../forest";
-import { StoredSchemaRepository } from "../../schema-stored";
-import {
+    StoredSchemaRepository,
     FieldKey,
     DetachedField,
     AnchorSet,
@@ -33,7 +29,7 @@ import {
     Anchor,
     visitDelta,
     ITreeCursorNew,
-} from "../../tree";
+} from "../../core";
 import { brand, fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 
