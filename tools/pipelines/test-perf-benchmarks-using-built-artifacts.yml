@@ -54,9 +54,6 @@ parameters:
   type: string
   default: "@fluidframework/test-end-to-end-tests"
 
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
-
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -65,6 +62,8 @@ variables:
     value: 1
   - name: buildDirectory
     value: "."
+  - name: testWorkspace
+    value: $(Pipeline.Workspace)/test
 
 stages:
   # Install / Build / Test Stage
@@ -79,7 +78,7 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
-          testPackageDir: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+          testPackageDir: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
           testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
 
@@ -99,7 +98,6 @@ stages:
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
                 testPackage=${{ parameters.testPackage }}
-                testWorkspace=${{ parameters.testWorkspace }}
 
               Task Variables:
                 releaseBuild=$(releaseBuildVar)
@@ -112,6 +110,7 @@ stages:
               Pipeline Parameters:
                 BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
+                TestWorkspace=${{ variables.testWorkspace }}
               "
 
         # Install
@@ -140,14 +139,14 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              mkdir ${{ parameters.testWorkspace }}
+              mkdir ${{ variables.testWorkspace }}
 
         - task: Bash@3
           name: Initialize
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.testWorkspace }}
+            workingDirectory: ${{ variables.testWorkspace }}
             script: |
               echo Initialize package
               npm init --yes
@@ -173,7 +172,7 @@ stages:
           displayName: 'npm install'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
+            workingDir: ${{ variables.testWorkspace }}
             customCommand: 'install $(Initialize.testPackageTgz)'
             customRegistry: 'useNpmrc'
 
@@ -198,9 +197,9 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
@@ -229,19 +228,19 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: ${{ parameters.testWorkspace }}/.npmrc
+            workingFile: ${{ variables.testWorkspace }}/.npmrc
 
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: ${{ parameters.testWorkspace }}/.npmrc
+            workingFile: ${{ variables.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         - task: Npm@1
           displayName: 'Install @ff-internal/aria-logger'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
+            workingDir: ${{ variables.testWorkspace }}
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
@@ -249,7 +248,7 @@ stages:
           displayName: 'Run performance test - execution time'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
