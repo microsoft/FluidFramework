@@ -89,6 +89,18 @@ describe("Compression", () => {
             runEncDecAtAdapter(hook);
         });
     });
+    describe("Compression Summary Tree Upload Adapter Test", () => {
+        it("LZ4 enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+            runTreeUploadAndDecAtAdapter(hook);
+        });
+        it("None enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+                runTreeUploadAndDecAtAdapter(hook);
+        });
+    });
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
@@ -179,6 +191,22 @@ function runEncDecAtAdapter(hook: CompressionSummaryStorageHooks) {
             assert.deepEqual(inputBlobContent, IsoBuffer.from(outputBlobContent));
         });
     });
+}
+function runTreeUploadAndDecAtAdapter(hook: CompressionSummaryStorageHooks) {
+    const inputBlobContent = genBlobContent();
+    const inputSummary: ISummaryTree = buildSummary(inputBlobContent);
+    const memento: any = {};
+    const storage = getMockupStorage(inputBlobContent, memento);
+    const adapter: IDocumentStorageService = buildSummaryStorageAdapter(storage, [hook]);
+    void adapter.uploadSummaryWithContext(inputSummary,
+        { referenceSequenceNumber: 1, proposalHandle: undefined, ackHandle: undefined }).then((resp) => {
+            const compressed = memento.summaryTree.tree.myBlob.content;
+            const readStorage = getMockupStorage(compressed, memento);
+            const readAdapter: IDocumentStorageService = buildSummaryStorageAdapter(readStorage, [hook]);
+            void readAdapter.readBlob("abcd").then((outputBlobContent) => {
+                assert.deepEqual(inputBlobContent, IsoBuffer.from(outputBlobContent));
+            });
+        });
 }
 
 function runTreeUploadAndDecAtHooks(hook: CompressionSummaryStorageHooks) {
