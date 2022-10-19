@@ -46,6 +46,10 @@ parameters:
   type: string
   default: client
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -107,6 +111,7 @@ stages:
           parameters:
             buildDirectory: ${{ variables.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
 
         # Build
