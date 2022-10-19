@@ -15,19 +15,19 @@ resources:
       - main
       - next
       - lts
-      paths:
-        include:
-        - packages
-        - examples
-        - experimental
-        - package.json
-        - package-lock.json
-        - lerna.json
-        - lerna-package-lock.json
-        - tools/benchmark
-        - tools/telemetry-generator
-        - tools/pipelines/test-perf-benchmarks.yml
-        - tools/pipelines/templates/include-set-package-version.yml
+      # paths:
+      #   include:
+      #   - packages
+      #   - examples
+      #   - experimental
+      #   - package.json
+      #   - package-lock.json
+      #   - lerna.json
+      #   - lerna-package-lock.json
+      #   - tools/benchmark
+      #   - tools/telemetry-generator
+      #   - tools/pipelines/test-perf-benchmarks.yml
+      #   - tools/pipelines/templates/include-set-package-version.yml
 
 
 parameters:
