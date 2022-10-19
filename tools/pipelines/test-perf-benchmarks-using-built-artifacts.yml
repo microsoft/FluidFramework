@@ -31,9 +31,6 @@ resources:
 
 
 parameters:
-- name: testWorkspace
-  type: string
-
 - name: taskBuild
   type: string
   default: ci:build
