@@ -54,6 +54,16 @@ parameters:
   type: string
   default: client
 
+- name: testFileTarName
+  type: string
+  default: null
+
+# Name of the Secure File that contains the self-signed cert for the R11s deployment.
+# If not blank, the pipeline will try to install it to the local cert store.
+- name: r11sSelfSignedCertSecureFile
+  type: string
+  default: ""
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -76,7 +86,6 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
-          testPackageDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
 
@@ -142,21 +151,19 @@ stages:
         - task: Bash@3
           displayName: Unpack test files
           inputs:
-            workingDir: ${{ parameters.testWorkspace }}
             targetType: 'inline'
             script: |
-              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.buildDirector }}
 
         # Build
-        - ${{ if ne(parameters.taskBuild, 'false') }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskBuild }}
-            inputs:
-              command: 'custom'
-              workingDir: ${{ variables.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskBuild }}'
+        # - ${{ if ne(parameters.taskBuild, 'false') }}:
+        #   - task: Npm@1
+        #     displayName: npm run ${{ parameters.taskBuild }}
+        #     inputs:
+        #       command: 'custom'
+        #       workingDir: ${{ variables.buildDirectory }}
+        #       customCommand: 'run ${{ parameters.taskBuild }}'
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
