@@ -10,16 +10,12 @@ export {
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
-    isArrayField,
+    isEditableField,
     isUnwrappedNode,
     proxyTargetSymbol,
     UnwrappedEditableTree,
     UnwrappedEditableField,
     valueSymbol,
-    anchorSymbol,
-    proxyTargetSymbol,
-    isUnwrappedNode,
-    isEditableField,
 } from "./editableTree";
 
 export { EditableTreeContext } from "./editableTreeContext";

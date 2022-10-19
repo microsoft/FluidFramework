@@ -18,12 +18,12 @@ import {
     EditableField,
     EditableTree,
     isEditableField,
+    isPrimitive,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
     getFieldKind,
     getFieldSchema,
-    isPrimitive,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import { schemaMap } from "./mockData";

@@ -74,10 +74,10 @@ export interface EditableTree extends Iterable<EditableField> {
      * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
      * @param nameOnly - if true, returns only the type identifier
      */
-    readonly [getTypeSymbol]: (
+    [getTypeSymbol](
         key?: FieldKey,
         nameOnly?: boolean,
-    ) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    ): NamedTreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
      * Value stored on this node.
@@ -130,7 +130,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  *
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
- * Use `getWithoutUnwrapping` to get the node without unwrapping.
+ * Use `getWithoutUnwrapping` to get a node without unwrapping.
  */
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
@@ -730,14 +730,14 @@ function inProxyOrUnwrap(
  * @param fieldKey - the key of the field. Used to visualize the tree.
  * @param childTargets - targets for the children of the field.
  * @param unwrap - if true, the children of the field are unwrapped (see {@link UnwrappedEditableField}),
- * otherwise returns the field as {@link EditableField}.
+ * otherwise always returns the field as {@link EditableField}.
  */
 export function proxifyField(
     fieldSchema: FieldSchema,
     fieldKey: FieldKey,
     target: ProxyTarget,
     unwrap: boolean,
-): UnwrappedEditableField | EditableField {
+): UnwrappedEditableField {
     if (!unwrap) {
         const targetSequence = new SequenceProxyTarget(
             target.context,
@@ -745,7 +745,7 @@ export function proxifyField(
             fieldSchema,
             target.cursor,
         );
-        return inProxyOrUnwrap(targetSequence, unwrap) as EditableField;
+        return inProxyOrUnwrap(targetSequence, unwrap);
     }
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity === Multiplicity.Sequence) {
