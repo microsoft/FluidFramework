@@ -60,6 +60,13 @@ export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
 
 /**
+ * A symbol to get a field of a node without unwrapping in contexts where string keys are already in use for fields.
+ */
+export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
+    "editable-tree:getWithoutUnwrapping()",
+);
+
+/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
@@ -100,6 +107,11 @@ export interface EditableTree extends Iterable<EditableField> {
      * this should become an implementation detail and rbe removed from this API surface.
      */
     readonly [anchorSymbol]: Anchor;
+
+    /**
+     * Gets a field of this node by its key without unwrapping.
+     */
+    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
 
     /**
      * Fields of this node, indexed by their field keys.
@@ -365,6 +377,10 @@ export class ProxyTarget extends BaseProxyTarget {
         return proxifyField(fieldSchema, field, emptyTarget, unwrap);
     }
 
+    public getWithoutUnwrapping(fieldKey: FieldKey): EditableField {
+        return this.proxifyField(fieldKey, false) as EditableField;
+    }
+
     *[Symbol.iterator](): IterableIterator<EditableField> {
         const fields = this.getFieldKeys().map(
             (fieldKey) => this.proxifyField(fieldKey, false) as EditableField,
@@ -397,6 +413,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
                 return target.getAnchor();
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
+            case getWithoutUnwrappingSymbol:
+                return target.getWithoutUnwrapping.bind(target);
             default:
                 return undefined;
         }
@@ -423,6 +441,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             case getTypeSymbol:
             case anchorSymbol:
             case Symbol.iterator:
+            case getWithoutUnwrappingSymbol:
                 return true;
             case valueSymbol:
                 // Could do `target.value !== ValueSchema.Nothing`
@@ -482,6 +501,13 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
                     configurable: true,
                     enumerable: false,
                     value: target[Symbol.iterator].bind(target),
+                    writable: false,
+                };
+            case getWithoutUnwrappingSymbol:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.getWithoutUnwrapping.bind(target),
                     writable: false,
                 };
             default:

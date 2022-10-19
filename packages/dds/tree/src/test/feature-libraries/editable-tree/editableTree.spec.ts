@@ -43,6 +43,7 @@ import {
     emptyField,
     isEditableField,
     UnwrappedEditableTree,
+    getWithoutUnwrappingSymbol,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -126,6 +127,7 @@ describe("editable-tree", () => {
         // Check for expected symbols:
         assert(proxyTargetSymbol in personProxy);
         assert(getTypeSymbol in personProxy);
+        assert(getWithoutUnwrappingSymbol in personProxy);
         // Check fields show up:
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
@@ -312,14 +314,9 @@ describe("editable-tree", () => {
         const context = getEditableTreeContext(forest);
         assert(isUnwrappedNode(context.unwrappedRoot));
         assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
-        // TODO: replace this with access to fields w/o unwrapping
-        for (const field of context.unwrappedRoot) {
-            assert.equal(field.fieldKey, "child" as FieldKey);
-            const child = field.getWithoutUnwrapping(0);
-            assert(isUnwrappedNode(child));
-            assert.equal(child[getTypeSymbol](undefined, true), int32Schema.name);
-            assert.equal(child[valueSymbol], 1);
-        }
+        const child = context.unwrappedRoot[getWithoutUnwrappingSymbol]("child" as FieldKey);
+        assert(isEditableField(child));
+        expectFieldEquals(forest.schema, child, [{ type: int32Schema.name, value: 1 }]);
         context.free();
     });
 
@@ -485,10 +482,18 @@ describe("editable-tree", () => {
 
     it("'getWithoutUnwraping' does not unwrap primary field", () => {
         const [, proxy] = buildTestPerson();
-        assert(isEditableField(proxy.address.phones));
-        const forthNode = proxy.address.phones.getWithoutUnwrapping(3);
+        const phones = proxy.address[getWithoutUnwrappingSymbol]("phones" as FieldKey);
+        const phonesPrimary = getPrimaryField(
+            proxy.address[getTypeSymbol]("phones" as FieldKey, false) as TreeSchema,
+        );
+        assert(phonesPrimary !== undefined);
+        const nodeWithPrimaryField = phones.getWithoutUnwrapping(0);
+        assert.equal([...nodeWithPrimaryField].length, 1);
+        const primaryField = nodeWithPrimaryField[getWithoutUnwrappingSymbol](phonesPrimary.key);
+        const forthNode = primaryField.getWithoutUnwrapping(3);
         const primary = getPrimaryField(forthNode[getTypeSymbol](undefined, false) as TreeSchema);
         assert(primary !== undefined);
+        assert.equal([...forthNode].length, 1);
         const simplePhones = forthNode[primary.key];
         const expectedPhones = ["112", "113"];
         assert(isEditableField(simplePhones));

@@ -150,6 +150,7 @@ export {
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
+    getWithoutUnwrappingSymbol,
     defaultSchemaPolicy,
     singleTextCursorNew,
     jsonableTreeFromCursorNew,

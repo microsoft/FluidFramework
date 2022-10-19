@@ -249,6 +249,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
     [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
@@ -469,6 +470,9 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 
 // @public
 export const getTypeSymbol: unique symbol;
+
+// @public
+export const getWithoutUnwrappingSymbol: unique symbol;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
