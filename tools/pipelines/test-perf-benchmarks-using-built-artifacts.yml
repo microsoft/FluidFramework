@@ -5,16 +5,19 @@ name: $(Build.BuildId)
 
 pr: none
 
-resources:
-  pipelines:
-  - pipeline: client   # Name of the pipeline resource
-    source: Build - client packages
-    trigger:
-      branches:
-      - release/*
-      - main
-      - next
-      - lts
+trigger: none
+
+# Uncomment when we're done manually triggering
+# resources:
+#   pipelines:
+#   - pipeline: client   # Name of the pipeline resource
+#     source: Build - client packages
+#     trigger:
+#       branches:
+#       - release/*
+#       - main
+#       - next
+#       - lts
 
 # trigger:
 #   branches:
