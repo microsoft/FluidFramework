@@ -49,7 +49,6 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
     const { containerId, container } = props;
 
     const innerContainer = getInnerContainer(container);
-    const { deltaManager } = innerContainer;
 
     // State bound to outer container
     const [isDirty, updateIsDirty] = useState<boolean>(container.isDirty);
@@ -64,7 +63,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 
     // State bound to delta manager
     const [minimumSequenceNumber, updateMinimumSequenceNumber] = useState<number>(
-        deltaManager.minimumSequenceNumber,
+        innerContainer.deltaManager.minimumSequenceNumber,
     );
 
     // TODO: readonly toggle control

@@ -30,25 +30,26 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
     const { container } = props;
 
     const innerContainer = getInnerContainer(container);
-    const { deltaManager } = innerContainer;
 
     const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
-        deltaManager.minimumSequenceNumber,
+        innerContainer.deltaManager.minimumSequenceNumber,
     );
 
     const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
 
     React.useEffect(() => {
+        // eslint-disable-next-line unicorn/consistent-function-scoping
         function onOp(message: ISequencedDocumentMessage): void {
             updateMinimumSequenceNumber(message.minimumSequenceNumber);
+
             updateOps([...ops, message]);
         }
-        deltaManager.on("op", onOp);
+        innerContainer.on("op", onOp);
 
         return (): void => {
-            deltaManager.off("op", onOp);
+            innerContainer.off("op", onOp);
         };
-    }, [deltaManager]);
+    }, [innerContainer, ops]);
 
     return (
         <Stack>
