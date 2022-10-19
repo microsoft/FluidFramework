@@ -2,17 +2,48 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import {
+    IOverflowSetItemProps,
+    IStackItemStyles,
+    IconButton,
+    Link,
+    OverflowSet,
+    Stack,
+} from "@fluentui/react";
 import React from "react";
 
-import { AudienceView, AudienceViewProps } from "./AudienceView";
-import { ContainerDataView, ContainerDataViewProps } from "./ContainerDataView";
+import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
+
+import { AudienceView } from "./AudienceView";
+import { ContainerDataView } from "./ContainerDataView";
+import { ContainerSummaryView } from "./ContainerSummaryView";
 import { OpsStreamView } from "./OpsStreamView";
+
+const sessionDataViewStyles: IStackItemStyles = {
+    root: {
+        verticalFill: true,
+    },
+};
 
 /**
  * {@link SessionDataView} input props.
  */
-export type SessionDataViewProps = AudienceViewProps & ContainerDataViewProps;
+export interface SessionDataViewProps {
+    /**
+     * ID of {@link ContainerDataViewProps.container | the container}.
+     */
+    containerId: string;
+
+    /**
+     * The Fluid container for which data will be displayed.
+     */
+    container: IFluidContainer;
+
+    /**
+     * Audience information.
+     */
+    audience: IServiceAudience<IMember>;
+}
 
 /**
  * Displays information about the provided container and its audience.
@@ -22,28 +53,60 @@ export type SessionDataViewProps = AudienceViewProps & ContainerDataViewProps;
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
     const { containerId, container, audience } = props;
 
+    const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
+    const [isContainerDisposed, updateIsContainerDisposed] = React.useState<boolean>(
+        container.disposed,
+    );
+
+    React.useEffect(() => {
+        function onDispose(): void {
+            updateIsContainerDisposed(true);
+        }
+
+        function onUpdateAudienceMembers(): void {
+            updateMyself(audience.getMyself());
+        }
+
+        container.on("disposed", onDispose);
+        audience.on("membersChanged", onUpdateAudienceMembers);
+
+        return (): void => {
+            container.off("disposed", onDispose);
+            audience.off("membersChanged", onUpdateAudienceMembers);
+        };
+    }, [container, audience]);
+
     const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
         RootView.Container,
     );
 
     let view: React.ReactElement;
-    switch (rootViewSelection) {
-        case RootView.Container:
-            view = <ContainerDataView containerId={containerId} container={container} />;
-            break;
-        case RootView.Audience:
-            view = <AudienceView audience={audience} />;
-            break;
-        case RootView.OpsStream:
-            view = <OpsStreamView container={container} />;
-            break;
-        default:
-            throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+    if (isContainerDisposed) {
+        view = <div>The container has been disposed.</div>;
+    } else {
+        switch (rootViewSelection) {
+            case RootView.Container:
+                view = <ContainerDataView containerId={containerId} container={container} />;
+                break;
+            case RootView.Audience:
+                view = <AudienceView audience={audience} myself={myself} />;
+                break;
+            case RootView.OpsStream:
+                view = <OpsStreamView container={container} />;
+                break;
+            default:
+                throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+        }
     }
 
     return (
         <div>
-            <Stack wrap tokens={{ childrenGap: 25 }}>
+            <Stack tokens={{ childrenGap: 25 }} styles={sessionDataViewStyles}>
+                <ContainerSummaryView
+                    container={container}
+                    containerId={containerId}
+                    myself={myself}
+                />
                 <ViewSelectionMenu
                     currentSelection={rootViewSelection}
                     updateSelection={updateRootViewSelection}

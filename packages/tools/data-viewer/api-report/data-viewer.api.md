@@ -15,6 +15,7 @@ export function AudienceView(props: AudienceViewProps): React_2.ReactElement;
 // @public
 export interface AudienceViewProps {
     audience: IServiceAudience<IMember>;
+    myself: IMember | undefined;
 }
 
 // @public
@@ -30,6 +31,10 @@ export interface ContainerDataViewProps {
 export function SessionDataView(props: SessionDataViewProps): React_2.ReactElement;
 
 // @public
-export type SessionDataViewProps = AudienceViewProps & ContainerDataViewProps;
+export interface SessionDataViewProps {
+    audience: IServiceAudience<IMember>;
+    container: IFluidContainer;
+    containerId: string;
+}
 
 ```

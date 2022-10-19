@@ -40,7 +40,6 @@ function useContainerInfo(): ContainerInfo | undefined {
 
     // Get the Fluid Data data on app startup and store in the state
     React.useEffect(() => {
-        // eslint-disable-next-line unicorn/consistent-function-scoping
         async function getFluidData(): Promise<ContainerInfo> {
             /**
              * Type returned from when creating / loading the Container.

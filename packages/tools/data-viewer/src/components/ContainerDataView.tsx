@@ -5,16 +5,15 @@
 import { IStackItemStyles, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { getInnerContainer } from "../Utilities";
 import { DataObjectsView } from "./DataObjectsView";
 
 // TODOs:
+// - Container Read/Write permissions
 // - UI to generate and save to disk snapshot of current state
 // - UI to force disconnect / reconnect
 // - Tooltips on data labels to indicate what they mean (mode, minimal sequence number, etc.)
@@ -61,22 +60,6 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         innerContainer.resolvedUrl,
     );
 
-    // State bound to delta manager
-    const [minimumSequenceNumber, updateMinimumSequenceNumber] = useState<number>(
-        innerContainer.deltaManager.minimumSequenceNumber,
-    );
-
-    // TODO: readonly toggle control
-    const readOnlyDataViews =
-        // If we have not yet attached to the container, do not allow editing of underlying data.
-        attachState !== AttachState.Attached ||
-        // If we do not have an active connection, do not allow editing of underlying data.
-        [ConnectionState.Disconnected, ConnectionState.EstablishingConnection].includes(
-            connectionState,
-        ) ||
-        // If the container has been disposed, we can't make edits anyways.
-        isDisposed;
-
     useEffect(() => {
         function onConnectionChange(): void {
             updateConnectionState(container.connectionState); // Should be connected
@@ -96,17 +79,11 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             updateIsDisposed(true);
         }
 
-        function onOp(message: ISequencedDocumentMessage): void {
-            updateMinimumSequenceNumber(message.minimumSequenceNumber);
-        }
-
         container.on("connected", onConnectionChange);
         container.on("disconnected", onConnectionChange);
         container.on("dirty", onDirty);
         container.on("saved", onSaved);
         container.on("disposed", onDispose);
-
-        innerContainer.on("op", onOp);
 
         return (): void => {
             container.off("connected", onConnectionChange);
@@ -114,8 +91,6 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             container.off("dirty", onDirty);
             container.off("saved", onSaved);
             container.off("disposed", onDispose);
-
-            innerContainer.off("op", onOp);
         };
     }, [container, innerContainer]);
 
@@ -127,7 +102,6 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             </div>
         );
     } else {
-        // TODO: confirm that this never gets updated during a container session.
         const initialObjects = container.initialObjects;
 
         const maybeResolvedUrlDiv =
@@ -152,16 +126,8 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                 </div>
                 {maybeResolvedUrlDiv}
                 <div>
-                    <b>Mode: </b>
-                    {readOnlyDataViews ? "Readonly" : "Read/Write"}
-                </div>
-                <div>
                     <b>Local edit state: </b>
                     {isDirty ? "Pending local edits" : "No pending local edits"}
-                </div>
-                <div>
-                    <b>Minimum sequence number: </b>
-                    {minimumSequenceNumber}
                 </div>
                 <DataObjectsView initialObjects={initialObjects} />
             </Stack>

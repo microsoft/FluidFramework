@@ -40,7 +40,6 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
     const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
 
     React.useEffect(() => {
-        // eslint-disable-next-line unicorn/consistent-function-scoping
         function onOp(message: ISequencedDocumentMessage): void {
             updateMinimumSequenceNumber(message.minimumSequenceNumber);
 
