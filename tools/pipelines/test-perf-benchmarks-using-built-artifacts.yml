@@ -198,7 +198,7 @@ stages:
             targetType: 'inline'
             script: |
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Run performance tests
