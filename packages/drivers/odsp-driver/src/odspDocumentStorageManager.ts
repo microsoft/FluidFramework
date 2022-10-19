@@ -104,7 +104,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
         this.odspSummaryUploadManagerPromise = import("./getOdspSummaryUploadManager").then(
-            (m)=> m.getOdspSummaryUploadManager());
+            (m) => m.getOdspSummaryUploadManager());
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
