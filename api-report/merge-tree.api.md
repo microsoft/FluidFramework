@@ -84,7 +84,7 @@ export interface BlockUpdateActions {
     child: (block: IMergeBlock, index: number) => void;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "Client" is marked as @public, but its signature references "IClientEvents" which is marked as @internal
+// Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
@@ -305,11 +305,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
-
-// Warning: (ae-internal-missing-underscore) The name "IClientEvents" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
 
 // @public (undocumented)
 export interface ICombiningOp {
