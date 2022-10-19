@@ -68,7 +68,7 @@ export function getFieldSchema(
     if (isGlobalFieldKey(field)) {
         return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
     }
-    assert(schema !== undefined, 0x423 /* The field is a local field, a parent schema is required. */);
+    assert(schema !== undefined, "The field is a local field, a parent schema is required.");
     return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
