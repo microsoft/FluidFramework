@@ -186,7 +186,10 @@ describe("Optional field changesets", () => {
 
     it("can be created", () => {
         const actual: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
-        assert.deepEqual(actual, change1);
+        const expected: FieldKinds.OptionalChangeset = {
+            fieldChange: { newContent: tree1, wasEmpty: true },
+        };
+        assert.deepEqual(actual, expected);
     });
 
     it("can be composed", () => {
