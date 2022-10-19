@@ -6,7 +6,7 @@
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 
 /**
- * This function only exists to create an ESM wrapper around the socket.io client module
+ * This function only exists to create an ESM wrapper around the OdspSummaryUploadManager module
  * for compatibility with ESM dynamic imports
  */
 export function getOdspSummaryUploadManager(): typeof OdspSummaryUploadManager {
