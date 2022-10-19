@@ -13,7 +13,14 @@ import {
     getTypeSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
-import { detachedFieldAsKey, FieldKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
+import {
+    detachedFieldAsKey,
+    FieldKey,
+    JsonableTree,
+    rootFieldKey,
+    symbolFromKey,
+    TreeValue,
+} from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -23,7 +30,7 @@ import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
-describe.only("SharedTree", () => {
+describe("SharedTree", () => {
     it("reads only one node", async () => {
         // This is a regression test for a scenario in which a transaction would apply its delta twice,
         // inserting two nodes instead of just one
@@ -248,8 +255,6 @@ describe.only("SharedTree", () => {
         assert.equal(editable[valueSymbol], 2);
     });
 
-    // Here the transaction runs without issues and the first tree is properly updated,
-    // whereas the second tree is not properly synchronized.
     it("can insert optional child field", async () => {
         const childKey: FieldKey = brand("optionalChild");
         const value = "42";
@@ -277,9 +282,7 @@ describe.only("SharedTree", () => {
 
         await provider.ensureSynchronized();
         assert(isUnwrappedNode(tree2.root));
-        // the cursor has a key "optionalChild"
         assert(childKey in tree2.root);
-        // but the cursor's sibling contains only `{ type: undefined }`
         const child2 = tree2.root[childKey];
         assert(isUnwrappedNode(child2));
         assert.equal(child2[valueSymbol], value);
@@ -287,14 +290,43 @@ describe.only("SharedTree", () => {
         tree2.context.free();
     });
 
-    // Here insert fails already inside the transaction.
     it("can insert value child field", async () => {
         const childKey: FieldKey = brand("valueChild");
         const value = "42";
         const provider = await TestTreeProvider.create(2);
         const [tree1, tree2] = provider.trees;
 
-        initializeTestTreeWithValue(tree1, 1);
+        const hasNoFields = namedTreeSchema({
+            name: brand("HasNoFields"),
+            extraLocalFields: fieldSchema(FieldKinds.sequence),
+        });
+        const hasValueField = namedTreeSchema({
+            name: brand("HasValueField"),
+            localFields: {
+                valueChild: fieldSchema(FieldKinds.value, [hasNoFields.name]),
+            },
+            extraLocalFields: fieldSchema(FieldKinds.sequence),
+        });
+
+        const schema: SchemaData = {
+            treeSchema: new Map([
+                [hasNoFields.name, hasNoFields],
+                [hasValueField.name, hasValueField],
+            ]),
+            globalFieldSchema: new Map(),
+        };
+        const initialState = {
+            type: hasValueField.name,
+            fields: {
+                valueChild: [
+                    {
+                        type: hasNoFields.name,
+                        value: 1,
+                    },
+                ],
+            },
+        };
+        initializeTestTree(tree1, initialState, schema);
         await provider.ensureSynchronized();
 
         assert(isUnwrappedNode(tree1.root));
@@ -302,7 +334,7 @@ describe.only("SharedTree", () => {
         tree1.runTransaction((forest, editor) => {
             tree1.context.prepareForEdit();
             const field = editor.valueField(tree1.locate(anchor), childKey);
-            const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+            const writeCursor = singleTextCursor({ type: hasNoFields.name, value });
             field.set(writeCursor);
             return TransactionResult.Apply;
         });
@@ -311,7 +343,7 @@ describe.only("SharedTree", () => {
         const child = tree1.root[childKey];
         assert(isUnwrappedNode(child));
         assert.equal(child[valueSymbol], value);
-        assert.equal(child[getTypeSymbol](), "TestValue");
+        assert.equal(child[getTypeSymbol](), hasNoFields.name);
 
         await provider.ensureSynchronized();
         assert(isUnwrappedNode(tree2.root));
@@ -319,7 +351,7 @@ describe.only("SharedTree", () => {
         const child2 = tree2.root[childKey];
         assert(isUnwrappedNode(child2));
         assert.equal(child2[valueSymbol], value);
-        assert.equal(child2[getTypeSymbol](), "TestValue");
+        assert.equal(child2[getTypeSymbol](), hasNoFields.name);
 
         tree1.context.free();
         tree2.context.free();
@@ -332,7 +364,6 @@ const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
     localFields: {
         optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-        valueChild: fieldSchema(FieldKinds.value, [brand("TestValue")]),
     },
     extraLocalFields: fieldSchema(FieldKinds.sequence),
     globalFields: [globalFieldKey],
@@ -346,20 +377,31 @@ const testSchema: SchemaData = {
 };
 
 /**
- * Inserts a single node under the root of the tree with the given value.
- * Use {@link getTestValue} to read the value.
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
-function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-    tree.storedSchema.update(testSchema);
+function initializeTestTree(
+    tree: ISharedTree,
+    state: JsonableTree,
+    schema: SchemaData = testSchema,
+): void {
+    tree.storedSchema.update(schema);
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
-        const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+        const writeCursor = singleTextCursor(state);
         const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
         field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
     });
+}
+
+/**
+ * Inserts a single node under the root of the tree with the given value.
+ * Use {@link getTestValue} to read the value.
+ */
+function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
+    initializeTestTree(tree, { type: brand("TestValue"), value });
 }
 
 /**

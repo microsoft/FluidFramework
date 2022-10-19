@@ -53,7 +53,7 @@ const childComposer1_2 = (changes: NodeChangeset[]): NodeChangeset => {
 };
 
 describe("Value field changesets", () => {
-    const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset> =
+    const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset, FieldKinds.ValueFieldEditor> =
         FieldKinds.value.changeHandler;
 
     const change1WithChildChange: FieldKinds.ValueChangeset = {
@@ -64,17 +64,18 @@ describe("Value field changesets", () => {
     const childChange2: FieldKinds.ValueChangeset = { changes: nodeChange2 };
     const childChange3: FieldKinds.ValueChangeset = { changes: nodeChange3 };
 
-    const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(
-        singleTextCursor(tree1),
-    );
-    const change2 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(
-        singleTextCursor(tree2),
-    );
+    const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
+    const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
     const simpleChildComposer = (changes: NodeChangeset[]) => {
         assert.equal(changes.length, 1);
         return changes[0];
     };
+
+    it("can be created", () => {
+        const expected: FieldKinds.ValueChangeset = { value: tree1 };
+        assert.deepEqual(change1, expected);
+    });
 
     it("can be composed", () => {
         const composed = fieldHandler.rebaser.compose([change1, change2], simpleChildComposer);
@@ -182,6 +183,11 @@ describe("Optional field changesets", () => {
     const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
     const change3: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), true);
     const change4: FieldKinds.OptionalChangeset = editor.buildChildChange(0, nodeChange2);
+
+    it("can be created", () => {
+        const actual: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
+        assert.deepEqual(actual, change1);
+    });
 
     it("can be composed", () => {
         const childComposer = (_: NodeChangeset[]) => assert.fail("Should not be called");
