@@ -64,9 +64,11 @@ async function run(): Promise<boolean> {
                 const output = [`${(i + 1).toString()}/${packageDirs.length}`, `${packageName}`];
                 try {
                     const start = Date.now();
+                    const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
+                        program.generateOnly ? undefined : { cwd: program.monoRepoDir };
                     const packageData = await getAndUpdatePackageDetails(
                         packageDir,
-                        program.generateOnly === true,
+                        updateOptions,
                     ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
                     if (packageData.skipReason !== undefined) {
                         output.push(packageData.skipReason);
