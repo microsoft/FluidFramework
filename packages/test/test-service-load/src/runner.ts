@@ -212,19 +212,27 @@ async function runnerProcess(
 
             // Control fault injection period through config.
             // If undefined then no fault injection.
-            const minMax = checkConfig(runConfig);
-            const faultInjectionMinMax = minMax.get("faultInjection");
-            if (faultInjectionMinMax) {
-                scheduleContainerClose(container, runConfig, ...faultInjectionMinMax);
-                scheduleFaultInjection(documentServiceFactory, container, runConfig, ...faultInjectionMinMax);
+            const faultInjection = runConfig.testConfig.faultInjectionMs;
+            if (faultInjection) {
+                scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
+                scheduleFaultInjection(
+                    documentServiceFactory,
+                    container,
+                    runConfig,
+                    faultInjection.min,
+                    faultInjection.max);
             }
-            const offlineDelayMinMax = minMax.get("offlineDelay");
-            const offlineDurationMinMax = minMax.get("offlineDuration");
-            if (offlineDelayMinMax || offlineDurationMinMax) {
-                assert(!!offlineDelayMinMax && !!offlineDurationMinMax,
-                    "Must define both offlineDelay and offlineDuration");
-                scheduleOffline(documentServiceFactory,
-                    container, runConfig, ...offlineDelayMinMax, ...offlineDurationMinMax);
+            const offline = runConfig.testConfig.offline;
+            if (offline) {
+                scheduleOffline(
+                    documentServiceFactory,
+                    container,
+                    runConfig,
+                    offline.delayMs.min,
+                    offline.delayMs.max,
+                    offline.durationMs.min,
+                    offline.durationMs.max,
+                );
             }
 
             try {
@@ -507,26 +515,6 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             clearTimeout(t);
         }
     };
-}
-
-function checkConfig(runConfig): Map<string, [number, number]> {
-    const map = new Map<string, [number, number]>();
-    const min = (s: string) => `${s}MinMs`;
-    const max = (s: string) => `${s}MaxMs`;
-    for (const thing of ["faultInjection", "offlineDelay", "offlineDuration"]) {
-        if (runConfig.testConfig[min(thing)] === undefined) {
-            assert(runConfig.testConfig[max(thing)] === undefined, `Define ${min(thing)}`);
-        } else {
-            assert(runConfig.testConfig[max(thing)] !== undefined, `Define ${max(thing)}`);
-            assert(runConfig.testConfig[min(thing)] >= 0, `${min(thing)} must be greater than or equal to zero.`);
-            assert(runConfig.testConfig[max(thing)] > 0, `${max(thing)} must be greater than zero.`);
-            assert(runConfig.testConfig[max(thing)] >= runConfig.testConfig[min(thing)],
-                `${max(thing)} must be greater than or equal to ${min(thing)}`);
-            map.set(thing, [runConfig.testConfig[min(thing)], runConfig.testConfig[max(thing)]]);
-        }
-    }
-
-    return map;
 }
 
 main()

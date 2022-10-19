@@ -23,24 +23,29 @@ export interface ILoadTestConfig {
     totalSignalsSendCount?: number;
     readWriteCycleMs: number;
     signalsPerMin?: number;
-    faultInjectionMaxMs?: number;
-    faultInjectionMinMs?: number;
+    faultInjectionMs?: {
+        min: number;
+        max: number;
+    };
     /**
-     * Minimum amount of time to wait before going offline in milliseconds
+     * Simulate clients going offline
      */
-    offlineDelayMinMs?: number;
-    /**
-     * Maximum amount of time to wait before going offline in milliseconds
-     */
-    offlineDelayMaxMs?: number;
-    /**
-     * Minimum amount of time clients stay offline in milliseconds
-     */
-    offlineDurationMinMs?: number;
-    /**
-     * Maximum amount of time clients stay offline in milliseconds
-     */
-    offlineDurationMaxMs?: number;
+    offline?: {
+        /**
+         * Amount of time to wait before going offline in milliseconds
+         */
+        delayMs: {
+            min: number;
+            max: number;
+        };
+        /**
+         * Amount of time clients stay offline in milliseconds
+         */
+        durationMs: {
+            min: number;
+            max: number;
+        };
+    };
 
     /**
      * Number of "attachment" type blobs to upload over the course of the test run.
