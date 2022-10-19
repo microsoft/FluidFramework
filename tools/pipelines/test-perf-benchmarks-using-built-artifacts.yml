@@ -75,14 +75,10 @@ stages:
         variables:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
-          - name: artifactPipeline
-            value: Build - client packages
-          - name: testPackageDir
-            value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
-          - name: testPackageFilePattern
-            value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-          - name: testPackagePathPattern
-            value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
+          artifactPipeline: Build - client packages
+          testPackageDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+          testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+          testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
 
         steps:
         # Setup
