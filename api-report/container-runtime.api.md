@@ -110,6 +110,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    ensureNoDataModelChanges(callback: () => void): void;
     // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -162,7 +163,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
-    runWithoutOps(callback: () => void): void;
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
@@ -322,6 +322,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
+    readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
