@@ -67,6 +67,7 @@ async function run(): Promise<boolean> {
                     const packageData = await getAndUpdatePackageDetails(
                         packageDir,
                         program.generateOnly === true,
+                        "baseMinor",
                     ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
                     if (packageData.skipReason !== undefined) {
                         output.push(packageData.skipReason);
