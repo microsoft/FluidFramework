@@ -169,8 +169,9 @@ export async function ensureInstalled(requested: string, packageList: string[], 
 
     await ensureModulePath(version, modulePath);
 
+    const adjustedPackageList = [...packageList];
     if (versionHasMovedSparsedMatrix(version)) {
-        packageList.push("@fluid-experimental/sequence-deprecated");
+        adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
     }
 
     // Release the __dirname but lock the modulePath so we can do parallel installs
@@ -194,7 +195,7 @@ export async function ensureInstalled(requested: string, packageList: string[], 
             );
             await new Promise<void>((resolve, reject) =>
                 exec(
-                    `npm i --no-package-lock ${packageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
+                    `npm i --no-package-lock ${adjustedPackageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
