@@ -2530,13 +2530,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         fetchLatest: false,
                     });
 
+                console.log(JSON.stringify(snapshotTree, null, 2));
                 console.log(`Handle node count before: ${summarizeResult.stats.handleNodeCount}`);
                 console.log(`Blob node count before: ${summarizeResult.stats.blobNodeCount}`);
                 console.log(`Total blob size before: ${summarizeResult.stats.totalBlobSize} bytes`);
                 const totalBlobSizeBefore = summarizeResult.stats.totalBlobSize;
                 const handleNodeCountBefore = summarizeResult.stats.handleNodeCount;
+                console.log(JSON.stringify(summarizeResult.summary, null, 2));
                 // eslint-disable-next-line max-len
-                summarizeResult = await compressSummaryTree(summarizeResult, summaryContext.ackHandle, snapshotTree, this.storage.readBlob.bind(this.storage));
+                summarizeResult = await compressSummaryTree(summarizeResult, snapshotTree, this.storage.readBlob.bind(this.storage));
                 console.log(`Handle node count after: ${summarizeResult.stats.handleNodeCount}`);
                 console.log(`Blob node count after: ${summarizeResult.stats.blobNodeCount}`);
                 console.log(`Total blob size after: ${summarizeResult.stats.totalBlobSize} bytes`);
