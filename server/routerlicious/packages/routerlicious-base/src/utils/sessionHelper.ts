@@ -93,7 +93,7 @@ async function updateExistingSession(
                 ...lumberjackProperties,
                 isSessionSticky,
                 documentLastAccessTime: document.lastAccessTime,
-                dataTime: Date.now(),
+                dateTime: Date.now(),
                 sessionStickinessDurationMs,
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
