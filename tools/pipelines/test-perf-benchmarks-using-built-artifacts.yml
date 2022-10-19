@@ -51,10 +51,6 @@ parameters:
   type: string
   default: client
 
-- name: testFileTarName
-  type: string
-  default: null
-
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
 - name: r11sSelfSignedCertSecureFile
@@ -150,7 +146,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.buildDirector }}
 
         # Build
