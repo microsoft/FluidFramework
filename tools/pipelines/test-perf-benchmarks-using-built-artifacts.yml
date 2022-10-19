@@ -145,6 +145,25 @@ stages:
             patterns: "**/${{ variables.testPackageFilePattern }}"
             path: $(Pipeline.Workspace)/client/pack
 
+
+        # Download Test Files & Install Extra Dependencies
+        # These steps are intended to include extra dependencies that are not available as
+        # part of the normal package .tgz installed previously in the pipeline.
+        - ${{ if ne(parameters.testFileTarName, 'null') }}:
+          # Download Artifact - Test Files
+          - task: DownloadPipelineArtifact@2
+            displayName: Download test files
+            inputs:
+              source: specific
+              project: internal
+              pipeline: ${{ variables.artifactPipeline }}
+              preferTriggeringPipeline: true
+              allowPartiallySucceededBuilds: true
+              runVersion: latestFromBranch
+              runBranch: $(Build.SourceBranch)
+              artifact: test-files
+              path: $(Pipeline.Workspace)/test-files
+
         # Unpack test files
         - task: Bash@3
           displayName: Unpack test files
