@@ -37,7 +37,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Large
+  default: Small
 
 - name: checkoutSubmodules
   type: boolean
