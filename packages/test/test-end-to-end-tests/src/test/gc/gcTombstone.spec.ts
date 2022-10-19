@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions, IGCRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+    IGCRuntimeOptions,
+    ISummarizer,
+} from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -153,6 +158,11 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
 
         // The request pattern should fail!
         assert.throws(() => testDataObject2._root.set("send", "op"),
+            (error) => {
+                const correctErrorType = error.errorType = "dataCorruptionError";
+                const correctErrorMessage = error.errorMessage?.startsWith(`Context was tombstoned`) === true;
+                return correctErrorType && correctErrorMessage;
+            },
             `Should not be able to send ops for a tombstoned datastore.`);
     });
 });

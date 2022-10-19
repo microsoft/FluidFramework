@@ -755,8 +755,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
 
         if (checkTombstone && this.tombstoned) {
-            throw new DataCorruptionError(`Context was tombstoned during call of ${errorMessage}!`, {
-                errorMessage,
+            const messageString = `Context was tombstoned during call of ${errorMessage}!`;
+            throw new DataCorruptionError(messageString, {
+                errorMessage: messageString,
             });
         }
     }
