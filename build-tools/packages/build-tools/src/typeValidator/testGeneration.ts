@@ -109,7 +109,7 @@ export async function generateTests(packageDetails: PackageDetails) {
             `${testPath}/validate${oldVersionNameForFile
                 .split("-")
                 .map((p) => p[0].toUpperCase() + p.substring(1))
-                .join("")}.generated.ts`,
+                .join("")}.ts`,
             testString.join("\n"),
         );
     }
