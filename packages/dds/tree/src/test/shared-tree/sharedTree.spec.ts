@@ -10,9 +10,10 @@ import {
     isUnwrappedNode,
     valueSymbol,
     getSchemaString,
+    getTypeSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
-import { detachedFieldAsKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
+import { detachedFieldAsKey, FieldKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -22,7 +23,7 @@ import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
-describe("SharedTree", () => {
+describe.only("SharedTree", () => {
     it("reads only one node", async () => {
         // This is a regression test for a scenario in which a transaction would apply its delta twice,
         // inserting two nodes instead of just one
@@ -246,12 +247,93 @@ describe("SharedTree", () => {
         // Check that the edit is reflected in the EditableTree after the transaction.
         assert.equal(editable[valueSymbol], 2);
     });
+
+    // Here the transaction runs without issues and the first tree is properly updated,
+    // whereas the second tree is not properly synchronized.
+    it("can insert optional child field", async () => {
+        const childKey: FieldKey = brand("optionalChild");
+        const value = "42";
+        const provider = await TestTreeProvider.create(2);
+        const [tree1, tree2] = provider.trees;
+
+        initializeTestTreeWithValue(tree1, 1);
+        await provider.ensureSynchronized();
+
+        assert(isUnwrappedNode(tree1.root));
+        const anchor = tree1.root[anchorSymbol];
+        tree1.runTransaction((forest, editor) => {
+            tree1.context.prepareForEdit();
+            const field = editor.optionalField(tree1.locate(anchor), childKey);
+            const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+            field.set(writeCursor, true);
+            return TransactionResult.Apply;
+        });
+
+        assert(childKey in tree1.root);
+        const child = tree1.root[childKey];
+        assert(isUnwrappedNode(child));
+        assert.equal(child[valueSymbol], value);
+        assert.equal(child[getTypeSymbol](), "TestValue");
+
+        await provider.ensureSynchronized();
+        assert(isUnwrappedNode(tree2.root));
+        // the cursor has a key "optionalChild"
+        assert(childKey in tree2.root);
+        // but the cursor's sibling contains only `{ type: undefined }`
+        const child2 = tree2.root[childKey];
+        assert(isUnwrappedNode(child2));
+        assert.equal(child2[valueSymbol], value);
+        tree1.context.free();
+        tree2.context.free();
+    });
+
+    // Here insert fails already inside the transaction.
+    it("can insert value child field", async () => {
+        const childKey: FieldKey = brand("valueChild");
+        const value = "42";
+        const provider = await TestTreeProvider.create(2);
+        const [tree1, tree2] = provider.trees;
+
+        initializeTestTreeWithValue(tree1, 1);
+        await provider.ensureSynchronized();
+
+        assert(isUnwrappedNode(tree1.root));
+        const anchor = tree1.root[anchorSymbol];
+        tree1.runTransaction((forest, editor) => {
+            tree1.context.prepareForEdit();
+            const field = editor.valueField(tree1.locate(anchor), childKey);
+            const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+            field.set(writeCursor);
+            return TransactionResult.Apply;
+        });
+
+        assert(childKey in tree1.root);
+        const child = tree1.root[childKey];
+        assert(isUnwrappedNode(child));
+        assert.equal(child[valueSymbol], value);
+        assert.equal(child[getTypeSymbol](), "TestValue");
+
+        await provider.ensureSynchronized();
+        assert(isUnwrappedNode(tree2.root));
+        assert(childKey in tree2.root);
+        const child2 = tree2.root[childKey];
+        assert(isUnwrappedNode(child2));
+        assert.equal(child2[valueSymbol], value);
+        assert.equal(child2[getTypeSymbol](), "TestValue");
+
+        tree1.context.free();
+        tree2.context.free();
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
+    localFields: {
+        optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
+        valueChild: fieldSchema(FieldKinds.value, [brand("TestValue")]),
+    },
     extraLocalFields: fieldSchema(FieldKinds.sequence),
     globalFields: [globalFieldKey],
 });
