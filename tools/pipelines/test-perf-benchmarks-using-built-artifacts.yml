@@ -96,6 +96,10 @@ stages:
               # Show all task group conditions
 
               echo "
+              Pipeline Parameters:
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ parameters.testPackage }}
+
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
@@ -104,9 +108,6 @@ stages:
                 BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
 
-              Pipeline Parameters:
-                poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ parameters.testPackage }}
               "
 
         # Install
