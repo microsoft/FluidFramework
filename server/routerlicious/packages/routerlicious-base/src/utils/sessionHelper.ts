@@ -89,16 +89,16 @@ async function updateExistingSession(
         ) {
             // Previous session was in a different location. Move to current location.
             // Reset logOffset, ordererUrl, and historianUrl when moving session location.
-            Lumberjack.info(
+            Lumberjack.info("Moving session", {
+                ...lumberjackProperties,
+                isSessionSticky,
+                documentLastAccessTime: document.lastAccessTime,
+                dataTime: Date.now(),
+                sessionStickinessDurationMs,
                 // eslint-disable-next-line max-len
-                `isSessionSticky: ${JSON.stringify(isSessionSticky)}, document lastAccessTime: ${JSON.stringify(document.lastAccessTime)}, datetime now: ${JSON.stringify(Date.now())}, sessionStickinessDurationMs: ${JSON.stringify(sessionStickinessDurationMs)}.`,
-                lumberjackProperties,
-            );
-            Lumberjack.info(
-                // eslint-disable-next-line max-len
-                `Reset ordererUrl: ${existingSession.ordererUrl} to ${ordererUrl}, historianUrl: ${existingSession.historianUrl} to ${historianUrl}, deltaStreamUrl: ${existingSession.deltaStreamUrl} to ${deltaStreamUrl}`,
-                lumberjackProperties,
-            );
+                oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
+                newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
+              });
             updatedOrdererUrl = ordererUrl;
             updatedHistorianUrl = historianUrl;
             updatedDeltaStreamUrl = deltaStreamUrl;
