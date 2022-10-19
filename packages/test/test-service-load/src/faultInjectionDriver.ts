@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-import { IDisposable, IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     DriverErrorType,
@@ -133,40 +132,29 @@ export class FaultInjectionDocumentService implements IDocumentService {
     }
 }
 
-class SimpleEventForwarder<TEvent> extends TypedEventEmitter<TEvent> {
-    constructor(private readonly source: EventEmitter | IEventProvider<TEvent & IEvent>) {
-        super();
-        this.on("newListener", (event) => this.addEvent(event));
-    }
-
-    public forwarding = true;
-    private readonly events = new Map<string, () => void>();
-
-    private addEvent(event: string) {
-        const emitterEvents = ["newListener", "removeListener"];
-        if (!emitterEvents.includes(event) && !this.events.has(event)) {
-            const listener = (...args: any[]) => {
-                if (this.forwarding) {
-                    this.emit(event, ...args);
-                }
-            };
-            this.source.on(event, listener);
-            this.events.set(event, listener);
-        }
-    }
-
-    public dispose() {
-        this.events.forEach((listener, event) => this.source.off(event, listener));
-    }
-}
-
 export class FaultInjectionDocumentDeltaConnection
-extends SimpleEventForwarder<IDocumentDeltaConnectionEvents>
+extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 implements IDocumentDeltaConnection, IDisposable {
     private _disposed: boolean = false;
     constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
-        super(internal);
-        this.forwarding = online;
+        super();
+        this.on("newListener", (event) => this.forwardEvent(event));
+    }
+
+    private readonly events = new Map<any, () => void>();
+
+    // forward events from internal connection only if online
+    private forwardEvent(event: any) {
+        const emitterEvents = ["newListener", "removeListener"];
+        if (!emitterEvents.includes(event) && !this.events.has(event)) {
+            const listener = (...args: any[]) => {
+                if (this.online) {
+                    this.emit(event, ...args);
+                }
+            };
+            this.internal.on(event, listener);
+            this.events.set(event, listener);
+        }
     }
 
     public get disposed() { return this._disposed; }
@@ -210,8 +198,8 @@ implements IDocumentDeltaConnection, IDisposable {
      * Disconnects the given delta connection
      */
     public dispose(): void {
-        super.dispose();
         this._disposed = true;
+        this.events.forEach((listener, event) => this.internal.off(event, listener));
         this.internal.dispose();
     }
 
@@ -243,12 +231,10 @@ implements IDocumentDeltaConnection, IDisposable {
 
     public goOffline() {
         this.online = false;
-        this.forwarding = false;
     }
 
     public goOnline() {
         this.online = true;
-        this.forwarding = true;
     }
 }
 
