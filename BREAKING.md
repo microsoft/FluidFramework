@@ -48,7 +48,7 @@ sharedMap.on("valueChanged", (changed) => {
 sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
 ```
 
-Other clients will not be affected. The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck`, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+Other clients will not be affected. The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
 
 # 2.0.0-internal.2.0.0
 
