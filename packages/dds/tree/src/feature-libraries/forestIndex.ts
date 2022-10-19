@@ -20,15 +20,16 @@ import {
     initializeForest,
     ITreeSubscriptionCursor,
     TreeNavigationResult,
-} from "../forest";
-import {
     Index,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../shared-tree-core";
-import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { JsonableTree, Delta } from "../tree";
+    cachedValue,
+    ICachedValue,
+    recordDependency,
+    JsonableTree,
+    Delta,
+} from "../core";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { singleTextCursor } from "./treeTextCursor";
 
