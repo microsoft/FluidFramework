@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ProgressiveEditBuilderBase } from "../../change-family";
-import { ITreeCursor } from "../../forest";
-import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
+import {
+    ProgressiveEditBuilderBase,
+    ITreeCursor,
+    AnchorSet,
+    UpPath,
+    Value,
+    Delta,
+    getDepth,
+} from "../../core";
 import { fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
 import { Transposed as T } from "./changeset";
