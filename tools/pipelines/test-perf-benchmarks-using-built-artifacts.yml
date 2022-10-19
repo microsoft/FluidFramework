@@ -54,6 +54,9 @@ parameters:
   type: string
   default: "@fluidframework/test-end-to-end-tests"
 
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -76,6 +79,7 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
+          testPackageDir: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
           testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
 
@@ -83,14 +87,11 @@ stages:
         # Setup
         - checkout: self
           clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
-          submodules: ${{ parameters.checkoutSubmodules }}
 
         - task: Bash@3
           displayName: Parameters
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -98,15 +99,19 @@ stages:
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
                 testPackage=${{ parameters.testPackage }}
+                testWorkspace=${{ parameters.testWorkspace }}
 
-              Pipeline Variables:
+              Task Variables:
                 releaseBuild=$(releaseBuildVar)
-                testPackageFilePattern=${{ variables.testPackageFilePattern }}
+                toolAbsolutePath=$(toolAbsolutePath)
+                artifactPipeline=$(artifactPipeline)
+                testPackageDir=$(testPackageDir)
+                testPackageFilePattern=$(testPackageFilePattern)
+                testPackagePathPattern=$(testPackagePathPattern)
 
-              Tasks Parameters:
+              Pipeline Parameters:
                 BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
-
               "
 
         # Install
@@ -114,22 +119,8 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
 
-        # Set version
-        - template: templates/include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ variables.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            tagName: ${{ parameters.tagName }}
-
-        # Download artifact
+        # Download package artifacts
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
           inputs:
@@ -144,26 +135,62 @@ stages:
             patterns: "**/${{ variables.testPackageFilePattern }}"
             path: $(Pipeline.Workspace)/client/pack
 
+        - task: Bash@3
+          displayName: Create test directory
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir ${{ parameters.testWorkspace }}
 
-        # npm install from the packages file
+        - task: Bash@3
+          name: Initialize
+          displayName: Initialize
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.testWorkspace }}
+            script: |
+              echo Initialize package
+              npm init --yes
 
+              echo Generating .npmrc
+              echo "registry=https://registry.npmjs.org" >> ./.npmrc
+              echo "always-auth=false" >> ./.npmrc
 
-        # Download Test Files & Install Extra Dependencies
-        # These steps are intended to include extra dependencies that are not available as
-        # part of the normal package .tgz installed previously in the pipeline.
-          # Download Artifact - Test Files
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test files
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
-              artifact: test-files
-              path: $(Pipeline.Workspace)/test-files
+              echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+              echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+              echo "always-auth=true" >> ./.npmrc
+              cat .npmrc
+
+              if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
+                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+              else
+                ls -1 ${{ variables.testPackagePathPattern }}
+                echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+              fi
+
+        # Install test and logger package
+        - task: Npm@1
+          displayName: 'npm install'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install $(Initialize.testPackageTgz)'
+            customRegistry: 'useNpmrc'
+
+        # Download Test Files
+        # Download Artifact - Test Files
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test files
+          inputs:
+            source: specific
+            project: internal
+            pipeline: ${{ variables.artifactPipeline }}
+            preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: test-files
+            path: $(Pipeline.Workspace)/test-files
 
         # Unpack test files
         - task: Bash@3
@@ -171,17 +198,9 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.buildDirectory }}
-
-        # Build
-        # - ${{ if ne(parameters.taskBuild, 'false') }}:
-        #   - task: Npm@1
-        #     displayName: npm run ${{ parameters.taskBuild }}
-        #     inputs:
-        #       command: 'custom'
-        #       workingDir: ${{ variables.buildDirectory }}
-        #       customCommand: 'run ${{ parameters.taskBuild }}'
+              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
@@ -210,19 +229,19 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: $(toolAbsolutePath)/.npmrc
+            workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: $(toolAbsolutePath)/.npmrc
+            workingFile: ${{ parameters.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         - task: Npm@1
           displayName: 'Install @ff-internal/aria-logger'
           inputs:
             command: 'custom'
-            workingDir: $(toolAbsolutePath)
+            workingDir: ${{ parameters.testWorkspace }}
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
@@ -230,7 +249,7 @@ stages:
           displayName: 'Run performance test - execution time'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
+            workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
