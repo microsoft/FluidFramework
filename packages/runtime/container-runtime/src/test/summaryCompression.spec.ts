@@ -14,13 +14,13 @@ import {
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { ICreateBlobResponse, ISnapshotTree, ISummaryHandle, ISummaryTree, IVersion }
+import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle, ISummaryTree, IVersion, SummaryType }
     from "@fluidframework/protocol-definitions";
 import {
     ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
 } from "../containerRuntime";
 import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
-// import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
+import { buildSummaryStorageAdapter } from "../summaryStorageAdapter";
 
 function genOptions(alg: SummaryCompressionAlgorithms | undefined) {
     const summaryOptions: ISummaryRuntimeOptions = {
@@ -53,7 +53,7 @@ function genBlobContent() {
 }
 
 describe("Compression", () => {
-    describe("Compression Symetrical Test", () => {
+    describe("Compression Symetrical Hook Test", () => {
         it("LZ4 enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
                 new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
@@ -65,10 +65,34 @@ describe("Compression", () => {
             runEncDecAtHooks(hook);
         });
     });
+    describe("Compression Summary Tree Upload Hook Test", () => {
+        it("LZ4 upload / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+            runTreeUploadAndDecAtHooks(hook);
+        });
+        it("None upload / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+            runTreeUploadAndDecAtHooks(hook);
+        });
+    });
+    describe("Compression Symetrical Adapter Test", () => {
+        it("LZ4 enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+            runEncDecAtAdapter(hook);
+        });
+        it("None enc / dec", async () => {
+            const hook: CompressionSummaryStorageHooks =
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+            runEncDecAtAdapter(hook);
+        });
+    });
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
-            const myStorage = getMockupStorage(genBlobContent());
+            const myStorage = getMockupStorage(genBlobContent(), {});
             const buildMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
@@ -141,6 +165,39 @@ describe("Compression", () => {
         });
     });
 });
+function runEncDecAtAdapter(hook: CompressionSummaryStorageHooks) {
+    const inputBlobContent = genBlobContent();
+    const storage = getMockupStorage(inputBlobContent, {});
+    const adapter: IDocumentStorageService = buildSummaryStorageAdapter(storage, [hook]);
+    void adapter.createBlob(inputBlobContent).then((resp) => {
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        const compressed = resp["content"];
+        const memento = {};
+        const readStorage = getMockupStorage(compressed, memento);
+        const readAdapter: IDocumentStorageService = buildSummaryStorageAdapter(readStorage, [hook]);
+        void readAdapter.readBlob(resp.id).then((outputBlobContent) => {
+            assert.deepEqual(inputBlobContent, IsoBuffer.from(outputBlobContent));
+        });
+    });
+}
+
+function runTreeUploadAndDecAtHooks(hook: CompressionSummaryStorageHooks) {
+    const inputBlobContent = genBlobContent();
+    const inputSummary: ISummaryTree = buildSummary(inputBlobContent);
+    const { prepSummary } = hook.onPreUploadSummaryWithContext(inputSummary,
+        { referenceSequenceNumber: 1, proposalHandle: undefined, ackHandle: undefined });
+    const compressed = (prepSummary.tree.myBlob as ISummaryBlob).content;
+    const outputBlobContent = IsoBuffer.from(hook.onPostReadBlob(IsoBuffer.from(compressed)));
+    assert.deepEqual(inputBlobContent, outputBlobContent);
+}
+
+function buildSummary(inputBlobContent): ISummaryTree {
+    return {
+        type: SummaryType.Tree,
+        tree: { myBlob: { type: SummaryType.Blob, content: inputBlobContent } },
+    };
+}
+
 function runEncDecAtHooks(hook: CompressionSummaryStorageHooks) {
     const inputBlobContent = genBlobContent();
     const compressed = hook.onPreCreateBlob(inputBlobContent);
@@ -148,7 +205,7 @@ function runEncDecAtHooks(hook: CompressionSummaryStorageHooks) {
     assert.deepEqual(inputBlobContent, outputBlobContent);
 }
 
-function getMockupStorage(blobFromRead: ArrayBufferLike): IDocumentStorageService {
+function getMockupStorage(blobFromRead: ArrayBufferLike, memento: any): IDocumentStorageService {
     const storage: IDocumentStorageService = {
         repositoryUrl: "http://localhost",
         getSnapshotTree: async (version?: IVersion, scenarioName?: string):
@@ -168,6 +225,7 @@ function getMockupStorage(blobFromRead: ArrayBufferLike): IDocumentStorageServic
             return blobFromRead;
         },
         uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext): Promise<string> => {
+            memento.summaryTree = summary;
             return "abcd";
         },
         downloadSummary: async (handle: ISummaryHandle): Promise<ISummaryTree> => {
@@ -175,6 +233,7 @@ function getMockupStorage(blobFromRead: ArrayBufferLike): IDocumentStorageServic
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return ret;
         },
+
     };
     return storage;
 }
