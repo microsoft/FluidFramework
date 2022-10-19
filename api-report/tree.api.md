@@ -248,7 +248,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
