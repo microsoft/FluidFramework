@@ -4,10 +4,14 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder } from "../change-family";
-import { ITreeCursor } from "../forest";
-import { FieldKindIdentifier } from "../schema-stored";
-import { AnchorSet, Delta, JsonableTree } from "../tree";
+import {
+    ChangeEncoder,
+    ITreeCursor,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    JsonableTree,
+} from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor } from "./treeTextCursor";
 import {

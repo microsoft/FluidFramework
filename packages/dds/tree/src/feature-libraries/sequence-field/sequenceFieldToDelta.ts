@@ -5,8 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, brandOpaque, fail, makeArray, OffsetListFactory } from "../../util";
-import { TreeSchemaIdentifier } from "../../schema-stored";
-import { Delta } from "../../tree";
+import { TreeSchemaIdentifier, Delta } from "../../core";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";

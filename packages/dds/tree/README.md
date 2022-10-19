@@ -305,6 +305,7 @@ flowchart
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
+            editable-tree-->defaultFieldKinds
             defaultRebaser
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
