@@ -75,6 +75,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     public get IAgentScheduler() { return this; }
+    public get IFluidLoadable() { return this; }
 
     private get clientId(): string {
         if (this.runtime.attachState === AttachState.Detached) {

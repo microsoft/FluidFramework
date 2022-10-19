@@ -1499,7 +1499,6 @@ declare function get_current_EnumDeclaration_MessageType():
 declare function use_old_EnumDeclaration_MessageType(
     use: TypeOnly<old.MessageType>);
 use_old_EnumDeclaration_MessageType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_MessageType());
 
 /*
@@ -1549,6 +1548,30 @@ declare function use_old_EnumDeclaration_ScopeType(
     use: TypeOnly<old.ScopeType>);
 use_old_EnumDeclaration_ScopeType(
     get_current_EnumDeclaration_ScopeType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SignalType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SignalType():
+    TypeOnly<old.SignalType>;
+declare function use_current_EnumDeclaration_SignalType(
+    use: TypeOnly<current.SignalType>);
+use_current_EnumDeclaration_SignalType(
+    get_old_EnumDeclaration_SignalType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SignalType": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SignalType():
+    TypeOnly<current.SignalType>;
+declare function use_old_EnumDeclaration_SignalType(
+    use: TypeOnly<old.SignalType>);
+use_old_EnumDeclaration_SignalType(
+    get_current_EnumDeclaration_SignalType());
 
 /*
 * Validate forward compat by using old type in place of current type
