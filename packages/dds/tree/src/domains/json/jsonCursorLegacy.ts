@@ -5,15 +5,18 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { LocalFieldKey } from "../../schema-stored";
 import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
     ITreeCursor,
     mapCursorField,
     TreeNavigationResult,
     SynchronousNavigationResult,
-} from "../../forest";
-import { EmptyKey, FieldKey, TreeType, Value } from "../../tree";
+    LocalFieldKey,
+    EmptyKey,
+    FieldKey,
+    TreeType,
+    Value,
+} from "../../core";
 
 import {
     jsonArray,
