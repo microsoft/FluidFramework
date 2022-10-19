@@ -9,10 +9,14 @@ import {
     ChangeFamily,
     ProgressiveEditBuilder,
     ProgressiveEditBuilderBase,
-} from "../../change-family";
-import { ChangeRebaser } from "../../rebase";
-import { FieldKindIdentifier } from "../../schema-stored";
-import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";
+    ChangeRebaser,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    FieldKey,
+    UpPath,
+    Value,
+} from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,

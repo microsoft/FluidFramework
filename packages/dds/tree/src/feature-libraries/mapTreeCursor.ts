@@ -11,7 +11,7 @@ import {
     CursorLocationType,
     mapCursorFieldNew as mapCursorField,
     ITreeCursorSynchronous,
-} from "../tree";
+} from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**

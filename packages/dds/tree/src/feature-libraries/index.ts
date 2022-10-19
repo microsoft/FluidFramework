@@ -2,26 +2,101 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-export * from "./object-forest";
-export * from "./editable-tree";
-export * from "./defaultChangeFamily";
-export * from "./forestIndex";
+export {
+    DefaultChangeset,
+    DefaultChangeFamily,
+    defaultChangeFamily,
+    DefaultEditBuilder,
+    ValueFieldEditBuilder,
+    OptionalFieldEditBuilder,
+    SequenceFieldEditBuilder,
+} from "./defaultChangeFamily";
+export {
+    anchorSymbol,
+    EditableField,
+    EditableTree,
+    EditableTreeContext,
+    EditableTreeOrPrimitive,
+    getEditableTreeContext,
+    getTypeSymbol,
+    isArrayField,
+    isPrimitive,
+    isPrimitiveValue,
+    isUnwrappedNode,
+    PrimitiveValue,
+    proxyTargetSymbol,
+    UnwrappedEditableField,
+    UnwrappedEditableTree,
+    valueSymbol,
+} from "./editable-tree";
+export { ForestIndex } from "./forestIndex";
+export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { buildForest, ObjectForest } from "./object-forest";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
-export * from "./treeTextCursorLegacy";
+export {
+    ChangesetTag,
+    ClientId,
+    DUMMY_INVERSE_VALUE,
+    DUMMY_INVERT_TAG,
+    Effects,
+    GapCount,
+    getAttachLength,
+    getInputLength,
+    getOutputLength,
+    HasLength,
+    HasOpId,
+    isAttach,
+    isDetachMark,
+    isEqualGapEffect,
+    isEqualGaps,
+    isEqualPlace,
+    isGapEffectMark,
+    isObjMark,
+    isReattach,
+    isSkipMark,
+    isTomb,
+    MarkListFactory,
+    NodeCount,
+    NodePath,
+    OpId,
+    PlacePath,
+    ProtoNode,
+    RangeType,
+    sequenceChangeEncoder,
+    SequenceChangeFamily,
+    sequenceChangeFamily,
+    SequenceChangeRebaser,
+    sequenceChangeRebaser,
+    SequenceChangeset,
+    SequenceEditBuilder,
+    Skip,
+    splitMarkOnInput,
+    splitMarkOnOutput,
+    Tiebreak,
+    toDelta,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    tryExtendMark,
+} from "./sequence-change-family";
+export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
 export {
     singleTextCursor as singleTextCursorNew,
     jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
-export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
-export * from "./sequence-change-family";
-export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
+export {
+    jsonableTreeFromCursor,
+    RootedTextCursor,
+    singleTextCursor,
+    TextCursor,
+} from "./treeTextCursorLegacy";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export * from "./defaultSchema";
+export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
+
 export {
     isNeverField,
     ModularChangeFamily,
@@ -53,4 +128,4 @@ export {
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export * from "./deltaUtils";
+export { applyModifyToTree, mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";

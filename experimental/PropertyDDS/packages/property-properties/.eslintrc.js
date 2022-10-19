@@ -46,7 +46,6 @@ module.exports = {
         "no-new-func": "off",
         "no-param-reassign": "off",
         "no-prototype-builtins": "off",
-        "no-restricted-syntax": "off",
         "no-undef": "off",
         "no-undef-init": "off",
         "no-var": "off",
