@@ -191,6 +191,9 @@
       "EnumDeclaration_ConnectionState": {
         "forwardCompat": false
       },
+      "EnumDeclaration_DriverErrorType": {
+        "backCompat": false
+      },
       "RemovedInterfaceDeclaration_IDirectoryClearOperation": {
         "forwardCompat": false,
         "backCompat": false
