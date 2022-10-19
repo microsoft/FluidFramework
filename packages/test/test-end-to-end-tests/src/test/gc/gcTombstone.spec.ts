@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions, IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions, IGCRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -97,6 +97,10 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         const absoluteUrl = await mainContainer.getAbsoluteUrl("");
         return createSummarizerWithContainer(provider, absoluteUrl, runtimeFactory, { configProvider }, summaryVersion);
     };
+    const summarize = async (summarizer: ISummarizer) => {
+        await provider.ensureSynchronized();
+        return summarizeNow(summarizer);
+    };
 
     beforeEach(async () => {
         provider = getTestObjectProvider({ syncSummarizer: true });
@@ -124,11 +128,11 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         // Reference a datastore and summarize
         mainDataStore._root.set(handleKey, testDataObject.handle);
         const summarizer = (await loadSummarizerAndContainer()).summarizer;
-        await summarizeNow(summarizer);
+        await summarize(summarizer);
 
         // Unreference a datastore and summarize
         mainDataStore._root.delete(handleKey);
-        const summaryVersion = (await summarizeNow(summarizer)).summaryVersion;
+        const summaryVersion = (await summarize(summarizer)).summaryVersion;
 
         // Wait a sweep worthy amount of time (all containers should have closed by now)
         await delay(sweepTimeoutMs);
@@ -144,13 +148,9 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         const testDataObject2 = await requestFluidObject<TestDataObject>(container2, testDataObjectId);
 
         // The datastore should be tombstoned now
-        await summarizeNow(closingSummarizer);
+        await summarize(closingSummarizer);
 
         // The request pattern should fail!
-        // eslint-disable-next-line max-len
-        assert((testDataObject2.containerRuntime as any).garbageCollector.unreferencedNodesState.get(`/${testDataObject2.id}`).state === "SweepReady", "node not sweep ready!");
-        assert((testDataObject2._context as any).tombstone === true,
-        `Should not be able to send ops for a tombstoned datastore.`);
         assert.throws(() => testDataObject2._root.set("testValue2", "test"),
             `Should not be able to send ops for a tombstoned datastore.`);
     });
