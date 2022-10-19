@@ -228,19 +228,19 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: ${{ variables.testWorkspace }}/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
 
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: ${{ variables.testWorkspace }}/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         - task: Npm@1
           displayName: 'Install @ff-internal/aria-logger'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}
+            workingDir: $(toolAbsolutePath)
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
@@ -251,13 +251,27 @@ stages:
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run test:benchmark:report'
 
-        - task: Npm@1
-          displayName: 'Consolidate output files - execution time'
+        # Copy files
+        # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
+        - task: CopyFiles@2
           inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
-        # modification is probably "look at node_modules for blah"
+            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/**/benchmarkOutput/**\
+            #contents: '**'
+            targetFolder:  ${{ variables.buildDirectory }}/benchmarkOutput
+            #cleanTargetFolder: false # Optional
+            #overWrite: false # Optional
+            #flattenFolders: false # Optional
+            #preserveTimestamp: false # Optional
+            #retryCount: 0 # Optional
+            #ignoreMakeDirErrors: false # Optional
+
+        # - task: Npm@1
+        #   displayName: 'Consolidate output files - execution time'
+        #   inputs:
+        #     command: 'custom'
+        #     workingDir: ${{ variables.buildDirectory }}
+        #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
+        # # modification is probably "look at node_modules for blah"
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
