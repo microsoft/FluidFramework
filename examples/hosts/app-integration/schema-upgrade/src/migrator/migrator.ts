@@ -109,15 +109,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
         const doTheMigration = async () => {
             // doTheMigration() is called at the start of migration and should only resolve in two cases. First, is if
-            // we complete the migration. Second, is if we disconnect during the migration process. In both cases we
-            // should re-enter the state machine and take the appropriate action (see then() block below).
+            // either the local or another client successfully completes the migration. Second, is if we disconnect
+            // during the migration process. In both cases we should re-enter the state machine and take the
+            // appropriate action (see then() block below).
 
             const prepareTheMigration = async () => {
-                if (this._preparedDetachedModel !== undefined) {
-                    // If we already prepared the detached model then exit.
-                    return;
-                }
-
                 // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
                 // Currently this fails the migration gracefully and emits an event so the app developer can know
                 // they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
@@ -204,7 +200,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 this.currentModel.migrationTool.completeMigrationTask();
             };
 
-            await prepareTheMigration();
+            // Prepare the detached model if we haven't already.
+            if (this._preparedDetachedModel === undefined) {
+                await prepareTheMigration();
+            }
 
             // Ensure another client has not already completed the migration.
             if (this.migrationState !== "migrating") {
