@@ -501,7 +501,10 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
-        fieldChange: { newContent, wasEmpty },
+        fieldChange: {
+            newContent: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            wasEmpty,
+        },
     }),
 
     buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
