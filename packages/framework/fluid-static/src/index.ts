@@ -26,5 +26,4 @@ export {
 	LoadableObjectRecord,
 	MemberChangedListener,
 	SharedObjectClass,
-    IMyself,
 } from "./types";
