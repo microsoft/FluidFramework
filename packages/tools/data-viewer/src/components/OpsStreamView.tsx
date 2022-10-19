@@ -6,7 +6,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { Accordion } from "./Accordion";
 
 // TODOs:
-// - Why am I only seeing the most recent op?
 // - Show pending local ops (styled differently)
 //   - Set styling back to default once acknowledged.
 // - Differentiate my ops from others' ops
@@ -88,7 +87,14 @@ function OpView(props: OpViewProps): React.ReactElement {
     );
 
     return (
-        <Accordion header={header}>
+        <Accordion
+            header={header}
+            headerStyles={{
+                root: {
+                    backgroundColor: doesOpBelongToMe ? "lightblue" : "lightyellow",
+                },
+            }}
+        >
             <Stack>
                 <div>
                     <b>Date: </b>
