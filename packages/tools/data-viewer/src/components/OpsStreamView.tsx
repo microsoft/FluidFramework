@@ -20,7 +20,7 @@ export interface OpsStreamViewProps {
     /**
      * The list of ops to render.
      */
-    ops: ISequencedDocumentMessage[];
+    ops: readonly ISequencedDocumentMessage[];
 
     /**
      * Current minimum sequence number of the container.
@@ -34,6 +34,8 @@ export interface OpsStreamViewProps {
 export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
     const { ops, minimumSequenceNumber } = props;
 
+    const reversedOpsList = [...ops].reverse(); // Copy to avoid mutating input
+
     return (
         <Stack>
             <div>
@@ -42,7 +44,7 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
             </div>
             <h3>Ops</h3>
             <Stack>
-                {ops.map((message) => (
+                {reversedOpsList.map((message) => (
                     <OpView key={message.sequenceNumber} message={message} />
                 ))}
             </Stack>
