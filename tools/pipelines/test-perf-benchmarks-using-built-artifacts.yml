@@ -111,6 +111,8 @@ stages:
                 BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 TestWorkspace=${{ variables.testWorkspace }}
+
+              SourceBranch=$(Build.SourceBranch)
               "
 
         # Install
