@@ -12,9 +12,9 @@ yarn.lock                    merge=binary
 *.gif -text
 *.pdf -text
 
-# Set the language for these files to json5 to ensure GitHub doesn't show the comments as errors
-/.vscode/*.json              linguist-language=JSON5
-fence.json                   linguist-language=JSON5
+# Set the language for these files to JSON-with-Comments to ensure GitHub doesn't show the comments as errors
+/.vscode/*.json              linguist-language=JSON-with-Comments
+fence.json                   linguist-language=JSON-with-Comments
 
 # Hide docs from GitHub's language detection
 /docs/**                     linguist-documentation
