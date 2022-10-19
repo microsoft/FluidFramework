@@ -403,7 +403,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public
+// @public @deprecated
 export interface IPendingFlush {
     // (undocumented)
     type: "flush";

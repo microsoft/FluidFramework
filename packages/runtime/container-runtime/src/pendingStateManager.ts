@@ -31,7 +31,7 @@ export interface IPendingMessage {
 /**
  * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
  * to flush pending messages.
- * TODO: deprecate this
+ * @deprecated Use batch metadata on IPendingMessage instead. To be removed in 2.0.0-internal.4.0.0
  */
 export interface IPendingFlush {
     type: "flush";
@@ -46,11 +46,12 @@ export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-export interface IRuntimeStateHandler{
+export interface IRuntimeStateHandler {
     connected(): boolean;
     clientId(): string | undefined;
     close(error?: ICriticalContainerError): void;
     applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>;
+    /** @deprecated To be removed in 2.0.0-internal.4.0.0 */
     flush(): void;
     reSubmit(
         type: ContainerMessageType,
@@ -125,18 +126,26 @@ export class PendingStateManager implements IDisposable {
         private readonly stateHandler: IRuntimeStateHandler,
         initialLocalState: IPendingLocalState | undefined,
     ) {
-        // TODO: improve comment. for back-compat purposes where "batch: false" wasn't set here
+        /**
+         * Convert old local state format to the new format
+         * The old format contained "flush" messages as the indicator of batch ends
+         * The new format instead uses batch metadata on the last message to indicate batch ends
+         * ! TODO: Remove this conversion in "2.0.0-internal.4.0.0" as rollback from future version will be new format
+         */
         if (initialLocalState?.pendingStates) {
             const pendingStates = initialLocalState?.pendingStates;
             let currentlyBatching = false;
             for (let i = 0; i < pendingStates.length; i++) {
                 const initialState = pendingStates[i];
+
+                // Skip over "flush" messages
                 if (initialState.type === "message") {
                     if (initialState.opMetadata?.batch) {
                         currentlyBatching = true;
                     } else if (initialState.opMetadata?.batch === false) {
                         currentlyBatching = false;
                     } else if (
+                        // End of batch if we are currently batching and this is last message or next message is flush
                         currentlyBatching
                         && (i === pendingStates.length - 1 || pendingStates[i + 1].type === "flush")
                     ) {
@@ -182,10 +191,10 @@ export class PendingStateManager implements IDisposable {
     }
 
     /**
-     * Called when flush() is called on the ContainerRuntime to manually flush messages.
+     * @deprecated Use batch metadata to indicate end of batch. To be removed in 2.0.0-internal.4.0.0
      */
     public onFlush() {
-        // TODO: deprecate this method
+        // This method should not be called
     }
 
     /**
@@ -355,7 +364,6 @@ export class PendingStateManager implements IDisposable {
                             pendingMessage.localOpMetadata,
                             pendingMessage.opMetadata);
 
-                        // TODO: double check this logic actually works correctly when we don't have batch prop
                         if (pendingMessage.opMetadata?.batch === false) {
                             break;
                         }

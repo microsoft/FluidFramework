@@ -18,6 +18,13 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
+- [Flush concepts deprecated in PendingStateManager](#Flush-concepts-deprecated-in-PendingStateManager)
+
+### Flush concepts deprecated in PendingStateManager
+All flush concepts in `PendingStateManager` are deprecated and will be removed in a future version. Please make the following adjustments:
+- `IPendingFlush`: Use batch metadata on `IPendingMessage` instead to indicate the end of a batch
+- `PendingStateManager.onFlush`: Use batch metadata on `IPendingMessage` instead to indicate the end of a batch
+- `IRuntimeStateHandler.flush`: Use the `orderSequentially` method to indicate the end of a batch
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Remove iframe-driver](#remove-iframe-driver)
