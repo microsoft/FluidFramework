@@ -6,12 +6,11 @@
 /**
  * @deprecated Use the `flub generate packageJson` command in the @fluid-tools/build-cli package.
  */
-
+import { commonOptionString, commonOptions, parseOption } from "../common/commonOptions";
 import { FluidRepo } from "../common/fluidRepo";
+import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Timer } from "../common/timer";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { generateMonoRepoInstallPackageJson } from "./lib";
 
 function printUsage() {
@@ -23,7 +22,8 @@ ${commonOptionString}
      --server         Generate package lock for server mono repo (default: client)
      --azure          Generate package lock for azure mono repo (default: client)
      --build-tools    Generate package lock for build-tools mono repo (default: client)
-`);
+`,
+    );
 }
 
 let kind = MonoRepoKind.Client;
@@ -86,14 +86,14 @@ async function main() {
     timer.time("Package scan completed");
 
     const releaseGroup = repo.monoRepos.get(kind);
-    if(releaseGroup === undefined) {
+    if (releaseGroup === undefined) {
         throw new Error(`release group couldn't be found.`);
     }
 
     await generateMonoRepoInstallPackageJson(releaseGroup);
 }
 
-main().catch(error => {
+main().catch((error) => {
     console.error("ERROR: Unexpected error");
     console.error(error.stack);
 });

@@ -15,7 +15,7 @@ import { mapTreeFromCursor } from "./mapTreeCursor";
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
  * See {@link assertDeltaEqual}.
- * @param fields - The Map of fields to convert. Not mutated. 
+ * @param fields - The Map of fields to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
 export function mapFieldMarks<TIn, TOut>(
@@ -36,7 +36,7 @@ export function mapFieldMarks<TIn, TOut>(
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
  * See {@link assertMarkListEqual}.
- * @param list - The list of marks to convert. Not mutated. 
+ * @param list - The list of marks to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
 export function mapMarkList<TIn, TOut>(
@@ -53,7 +53,7 @@ export function mapMarkList<TIn, TOut>(
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
  * See {@link assertMarkListEqual}.
- * @param mark - The mark to convert. Not mutated. 
+ * @param mark - The mark to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
 export function mapMark<TIn, TOut>(
@@ -69,13 +69,15 @@ export function mapMark<TIn, TOut>(
             if (mark.fields === undefined && mark.setValue === undefined) {
                 return { type: Delta.MarkType.Modify };
             }
-            return mark.fields === undefined ? {
-                type: Delta.MarkType.Modify,
-                setValue: mark.setValue,
-            } : {
-                ...mark,
-                fields: mapFieldMarks(mark.fields, func),
-            };
+            return mark.fields === undefined
+                ? {
+                      type: Delta.MarkType.Modify,
+                      setValue: mark.setValue,
+                  }
+                : {
+                      ...mark,
+                      fields: mapFieldMarks(mark.fields, func),
+                  };
         }
         case Delta.MarkType.ModifyAndMoveOut: {
             if (mark.fields === undefined && mark.setValue === undefined) {
@@ -84,14 +86,16 @@ export function mapMark<TIn, TOut>(
                     moveId: mark.moveId,
                 };
             }
-            return mark.fields === undefined ? {
-                type: Delta.MarkType.ModifyAndMoveOut,
-                moveId: mark.moveId,
-                setValue: mark.setValue,
-            } : {
-                ...mark,
-                fields: mapFieldMarks(mark.fields, func),
-            };
+            return mark.fields === undefined
+                ? {
+                      type: Delta.MarkType.ModifyAndMoveOut,
+                      moveId: mark.moveId,
+                      setValue: mark.setValue,
+                  }
+                : {
+                      ...mark,
+                      fields: mapFieldMarks(mark.fields, func),
+                  };
         }
         case Delta.MarkType.MoveInAndModify:
         case Delta.MarkType.ModifyAndDelete: {
@@ -117,7 +121,8 @@ export function mapMark<TIn, TOut>(
         case Delta.MarkType.MoveIn:
         case Delta.MarkType.MoveOut:
             return mark;
-        default: unreachableCase(type);
+        default:
+            unreachableCase(type);
     }
 }
 
@@ -138,7 +143,7 @@ export function mapMark<TIn, TOut>(
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node.
  * May be empty if all modifications are applied by the function.
  */
- export function applyModifyToTree(
+export function applyModifyToTree(
     tree: MapTree,
     modify: Delta.Modify,
 ): Map<FieldKey, Delta.MarkList> {
@@ -208,7 +213,8 @@ export function mapMark<TIn, TOut>(
                         case Delta.MarkType.ModifyAndMoveOut:
                             // TODO: convert move-out of inserted content into insert at the destination
                             fail("Not implemented");
-                        default: unreachableCase(type);
+                        default:
+                            unreachableCase(type);
                     }
                 }
             }

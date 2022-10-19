@@ -6,7 +6,14 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { FieldKey, Value, Delta, genericTreeKeys, getGenericTreeField, genericTreeDeleteIfEmpty } from "../../../tree";
+import {
+    FieldKey,
+    Value,
+    Delta,
+    genericTreeKeys,
+    getGenericTreeField,
+    genericTreeDeleteIfEmpty,
+} from "../../../tree";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
 import { ProtoNode, Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
@@ -16,7 +23,7 @@ import { isSkipMark } from "./utils";
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
- export function toDelta(changeset: T.LocalChangeset): Delta.Root {
+export function toDelta(changeset: T.LocalChangeset): Delta.Root {
     // Save result to a constant to work around linter bug:
     // https://github.com/typescript-eslint/typescript-eslint/issues/5014
     const out: Delta.Root = convertFieldMarks(changeset.marks);
@@ -119,7 +126,9 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: makeArray(mark.count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE })),
+                        content: makeArray(mark.count, () =>
+                            singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        ),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -143,7 +152,8 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     // They have no impact on the current state.
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
@@ -197,10 +207,7 @@ interface DeltaInsertModification {
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
  * all modifications are applied by the function.
  */
-function applyOrCollectModifications(
-    node: ProtoNode,
-    modify: ChangesetMods,
-): Delta.FieldMarks {
+function applyOrCollectModifications(node: ProtoNode, modify: ChangesetMods): Delta.FieldMarks {
     const outFieldsMarks: Delta.FieldMarks = new Map();
     if (modify.value !== undefined) {
         node.value = modify.value.value;
@@ -289,7 +296,8 @@ function applyOrCollectModifications(
                     case "Return":
                     case "MReturn":
                         fail(ERR_RETURN_ON_INSERT);
-                    default: unreachableCase(type);
+                    default:
+                        unreachableCase(type);
                 }
             }
         }
@@ -319,7 +327,7 @@ interface ChangesetMods {
 /**
  * Modifications to a subtree as described by a Delta.
  */
- interface DeltaMods {
+interface DeltaMods {
     fields?: Delta.FieldMarks;
     setValue?: Value;
 }

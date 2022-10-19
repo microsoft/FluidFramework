@@ -34,7 +34,9 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(rebaser?: ChangeRebaser<TestChange>): ChangeFamily<unknown, TestChange> {
+function changeFamilyFactory(
+    rebaser?: ChangeRebaser<TestChange>,
+): ChangeFamily<unknown, TestChange> {
     const family = {
         rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
@@ -377,10 +379,11 @@ function runUnitTestScenario(
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        seq = iNextAck < acks.length
-                            ? acks[iNextAck].seq
-                            // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            : finalSequencedEdit + 1 + iNextAck - acks.length;
+                        seq =
+                            iNextAck < acks.length
+                                ? acks[iNextAck].seq
+                                : // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+                                  finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChange.mint(knownToLocal, seq);
@@ -402,7 +405,9 @@ function runUnitTestScenario(
                         fail("Invalid test scenario: no local commit to acknowledge");
                     }
                     if (commit.seqNumber !== seq) {
-                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
+                        fail(
+                            "Invalid test scenario: acknowledged commit does not mach oldest local change",
+                        );
                     }
                     // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
                     assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
@@ -421,7 +426,10 @@ function runUnitTestScenario(
                      * Filter that includes changes that were local to the issuer of this commit.
                      */
                     const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-                        s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
+                        s.type === "Pull" &&
+                        s.seq > step.ref &&
+                        s.seq < step.seq &&
+                        s.from === step.from;
                     /**
                      * Changes that were known to the peer at the time it authored this commit.
                      */
@@ -453,14 +461,12 @@ function runUnitTestScenario(
                         assert.deepEqual(step.expectedDelta, expected);
                     }
                     trunk.push(seq);
-                    knownToLocal = [
-                        ...trunk,
-                        ...localCommits.map((c) => c.seqNumber),
-                    ];
+                    knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
                     localRef = seq;
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
             // Anchors should be kept up to date with the known intentions
             assert.deepEqual(anchors.intentions, knownToLocal);
@@ -480,5 +486,8 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-    return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
+    return manager
+        .getTrunk()
+        .map((c) => c.changeset)
+        .concat(manager.getLocalChanges());
 }

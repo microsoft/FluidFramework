@@ -7,6 +7,7 @@ import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
+import { SharedCounter } from "@fluidframework/counter";
 import {
     ReferenceType,
     reservedMarkerIdKey,
@@ -33,10 +34,12 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
+const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [
     [mapId, SharedMap.getFactory()],
     [stringId, SharedString.getFactory()],
-    [cellId, SharedCell.getFactory()]];
+    [cellId, SharedCell.getFactory()],
+    [counterId, SharedCounter.getFactory()]];
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
@@ -48,7 +51,6 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 5000,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 120000,
                     maxOps: 1,
@@ -63,6 +65,7 @@ const lots = 30;
 const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";
+const testIncrementValue = 5;
 
 const ensureContainerConnected = async (container: IContainer) => {
     if (container.connectionState !== ConnectionState.Connected) {
@@ -155,6 +158,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let map1: SharedMap;
     let string1: SharedString;
     let cell1: SharedCell;
+    let counter1: SharedCounter;
     let waitForSummary: () => Promise<void>;
 
     beforeEach(async () => {
@@ -169,6 +173,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
         cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
+        counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
 
@@ -219,6 +224,22 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(cell2.get(), testValue);
     });
 
+    it("resends counter op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const counter = await d.getSharedObject<SharedCounter>(counterId);
+            counter.increment(testIncrementValue);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(counter1.value, testIncrementValue);
+        assert.strictEqual(counter2.value, testIncrementValue);
+    });
+
     it("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
@@ -254,6 +275,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert.strictEqual(cell1.get(), testValue);
         assert.strictEqual(cell2.get(), testValue);
+    });
+
+    it("doesn't resend successful counter op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const counter = await d.getSharedObject<SharedCounter>(counterId);
+            counter.increment(3);
+        });
+
+        counter1.increment(testIncrementValue);
+        await provider.ensureSynchronized();
+
+        // load with pending ops, which it should not resend because they were already sent successfully
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(counter1.value, testIncrementValue + 3);
+        assert.strictEqual(counter2.value, testIncrementValue + 3);
     });
 
     it("resends delete op and can set after", async function() {
@@ -555,18 +595,19 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const simpleMarker1 = string1.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker1.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker1.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker1.properties?.markerSimpleType, "markerKeyValue");
+
+        assert.strictEqual(simpleMarker1?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker1?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker1?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers1 = getTextAndMarkers(string1, "tileLabel");
         const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
         assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
 
         const simpleMarker2 = string2.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker2.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker2.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker2.properties?.markerSimpleType, "markerKeyValue");
+        assert.strictEqual(simpleMarker2?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker2?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker2?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers2 = getTextAndMarkers(string2, "tileLabel");
         const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
         assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");
@@ -621,6 +662,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const container2 = await loader.resolve({ url }, pendingOps);
         await ensureContainerConnected(container2);
+    });
+
+    it("cannot capture the pending local state during ordersequentially", async () => {
+        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+        dataStore1.context.containerRuntime.orderSequentially(() => {
+            map.set("key1", "value1");
+            map.set("key2", "value2");
+            assert.throws(() => {
+                container1.closeAndGetPendingLocalState();
+            }, "Should throw for incomplete batch");
+            map.set("key3", "value3");
+            map.set("key4", "value4");
+        });
     });
 
     itExpects("waits for previous container's leave message", [

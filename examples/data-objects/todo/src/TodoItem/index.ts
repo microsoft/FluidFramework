@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./TodoItem";
-export * from "./TodoItemView";
+export { ITodoItemInitialState, TodoItem, TodoItemFactory } from "./TodoItem";
+export { TodoItemView } from "./TodoItemView";

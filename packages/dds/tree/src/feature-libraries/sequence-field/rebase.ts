@@ -13,7 +13,7 @@ import {
     isSkipMark,
     splitMarkOnInput,
 } from "./utils";
-import * as F from "./format";
+import { Changeset, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 /**
@@ -32,28 +32,28 @@ import { MarkListFactory } from "./markListFactory";
  * - Support for slices is not implemented.
  */
 export function rebase<TNodeChange>(
-    change: F.Changeset<TNodeChange>,
-    base: F.Changeset<TNodeChange>,
+    change: Changeset<TNodeChange>,
+    base: Changeset<TNodeChange>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): F.Changeset<TNodeChange> {
+): Changeset<TNodeChange> {
     return rebaseMarkList(change, base, rebaseChild);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
     change: TNodeChange,
-    baseChange: TNodeChange
+    baseChange: TNodeChange,
 ) => TNodeChange;
 
 function rebaseMarkList<TNodeChange>(
-    currMarkList: F.MarkList<TNodeChange>,
-    baseMarkList: F.MarkList<TNodeChange>,
+    currMarkList: MarkList<TNodeChange>,
+    baseMarkList: MarkList<TNodeChange>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): F.MarkList<TNodeChange> {
+): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
     for (let baseMark of baseIter) {
-        let currMark: F.Mark<TNodeChange> | undefined = currIter.pop();
+        let currMark: Mark<TNodeChange> | undefined = currIter.pop();
         if (currMark === undefined) {
             break;
         }
@@ -123,10 +123,10 @@ function rebaseMarkList<TNodeChange>(
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: F.SizedMark<TNodeChange>,
-    baseMark: F.SizedMark<TNodeChange>,
+    currMark: SizedMark<TNodeChange>,
+    baseMark: SizedMark<TNodeChange>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): F.SizedMark<TNodeChange> {
+): SizedMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
     }
@@ -144,6 +144,7 @@ function rebaseMark<TNodeChange>(
             }
             return clone(currMark);
         }
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }

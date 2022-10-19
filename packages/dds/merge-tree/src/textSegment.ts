@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseSegment, ISegment, Marker } from "./mergeTreeNodes";
+import { BaseSegment, ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
@@ -121,12 +121,5 @@ export class TextSegment extends BaseSegment {
 }
 
 export interface IMergeTreeTextHelper{
-    /**
-     * @deprecated If consuming via sequence, use `getTextAndMarkers` exported from `\@fluidframework/sequence`.
-     * Otherwise, define your own accumulation model and use `Client.walkSegments`.
-     */
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[]; };
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }

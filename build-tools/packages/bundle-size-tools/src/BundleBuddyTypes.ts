@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { StatsCompilation } from 'webpack';
+import { StatsCompilation } from "webpack";
 
 /**
  * A map of bundles friendly names to their relevant metrics
@@ -20,16 +19,16 @@ export type BundleMetricSet = Map<string, BundleMetric>;
  * A description of the size of a particular part of a bundle
  */
 export interface BundleMetric {
-  parsedSize: number;
+    parsedSize: number;
 }
 
 /**
  * A comparison of two bundles
  */
 export interface BundleComparison {
-  bundleName: string;
+    bundleName: string;
 
-  commonBundleMetrics: { [key: string]: { baseline: BundleMetric; compare: BundleMetric } };
+    commonBundleMetrics: { [key: string]: { baseline: BundleMetric; compare: BundleMetric } };
 }
 
 /**
@@ -37,8 +36,8 @@ export interface BundleComparison {
  * comparison data itself
  */
 export type BundleComparisonResult = {
-  message: string,
-  comparison: BundleComparison[] | undefined,
+    message: string;
+    comparison: BundleComparison[] | undefined;
 };
 
 /**
@@ -47,23 +46,23 @@ export type BundleComparisonResult = {
  * may have one associated with them.
  */
 export type WebpackStatsProcessor = (
-  stats: StatsCompilation,
-  config: BundleBuddyConfig | undefined
+    stats: StatsCompilation,
+    config: BundleBuddyConfig | undefined,
 ) => BundleMetricSet | undefined;
 
 /**
  * Defines a specific chunk in a bundle to be analyzed by this tool.
  */
 export interface ChunkToAnalyze {
-  name: string;
+    name: string;
 }
 
 /**
  * A configuration file that can be used to run customized analysis for a bundle
  */
 export interface BundleBuddyConfig {
-  /**
-   * A array of chunk to be analyzed by bundle buddy
-   */
-  chunksToAnalyze: ChunkToAnalyze[];
+    /**
+     * A array of chunk to be analyzed by bundle buddy
+     */
+    chunksToAnalyze: ChunkToAnalyze[];
 }

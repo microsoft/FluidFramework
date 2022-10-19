@@ -32,7 +32,7 @@ export enum ContainerErrorType {
     /**
      * Error indicating an API is being used improperly resulting in an invalid operation.
      */
-     usageError = "usageError",
+    usageError = "usageError",
 
     /**
      * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
@@ -97,7 +97,7 @@ export interface IGenericError extends IErrorBase {
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
- export interface IUsageError extends IErrorBase {
+export interface IUsageError extends IErrorBase {
     readonly errorType: ContainerErrorType.usageError;
 }
 

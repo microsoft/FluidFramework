@@ -5,51 +5,89 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState, IContainer, ConnectionState } from "@fluidframework/container-definitions";
-import { LoadableObjectClass, LoadableObjectRecord } from "./types";
-import { RootDataObject } from "./rootDataObject";
+import {
+    AttachState,
+    IContainer,
+    ICriticalContainerError,
+    ConnectionState,
+} from "@fluidframework/container-definitions";
+import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ *
+ * @remarks
+ *
+ * The following is the list of events emitted.
+ *
+ * ### "connected"
+ *
+ * The "connected" event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "disposed"
+ *
+ * The "disposed" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "disconnected"
+ *
+ * The "disconnected" event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "saved"
+ *
+ * The "saved" event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
+ *
+ * ### "dirty"
+ *
+ * The "dirty" event is emitted when the `IFluidContainer` has local changes that have not yet
+ * been acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
  */
 export interface IFluidContainerEvents extends IEvent {
-    /* eslint-disable @typescript-eslint/unified-signatures */
     /**
-     * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
-     *
-     * @eventProperty
+     * **connected** & **disconnected** events reflect connection state changes against the (delta)
+     * service acknowledging ops/edits.
      */
-    (event: "connected", listener: () => void): void;
-
+    (event: "connected" | "disconnected", listener: () => void): void;
     /**
-     * Emitted when the {@link IFluidContainer} is disposed, which permanently disables it.
-     *
-     * @eventProperty
+     * **saved** event is raised when all local changes/edits have been acknowledged by the service.
+     * **dirty** event is raised when first local change has been made, following a "saved" state.
      */
-     (event: "dispose", listener: () => void): void;
-
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "saved" | "dirty", listener: () => void): void;
     /**
-     * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
-     *
-     * @eventProperty
+     * Disposed event is raised when container is closed. If container was closed due to error
+     * (vs explicit **dispose** action), optional argument contains further details about the error.
      */
-    (event: "disconnected", listener: () => void): void;
-
-    /**
-     * Emitted when all of the {@link IFluidContainer}'s local changes have been acknowledged by the service.
-     *
-     * @eventProperty
-     */
-     (event: "saved", listener: () => void): void;
-
-    /**
-     * Emitted when the {@link IFluidContainer} has local changes that have not yet been acknowledged by the service.
-     *
-     * @eventProperty
-     */
-    (event: "dirty", listener: () => void): void;
-
-    /* eslint-enable @typescript-eslint/unified-signatures */
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -178,13 +216,13 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = () => this.emit("disposed");
+    private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");
 
     public constructor(
         private readonly container: IContainer,
-        private readonly rootDataObject: RootDataObject,
+        private readonly rootDataObject: IRootDataObject,
     ) {
         super();
         container.on("connected", this.connectedHandler);
@@ -197,7 +235,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.isDirty}
      */
-     public get isDirty(): boolean {
+    public get isDirty(): boolean {
         return this.container.isDirty;
     }
 
@@ -218,7 +256,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.connectionState}
      */
-     public get connectionState(): ConnectionState {
+    public get connectionState(): ConnectionState {
         return this.container.connectionState;
     }
 
@@ -242,7 +280,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      * but internally this separation is not there.
      */
     public async attach(): Promise<string> {
-        throw new Error("Cannot attach container. Container is not in detached state");
+        if (this.container.attachState !== AttachState.Detached) {
+            throw new Error("Cannot attach container. Container is not in detached state.");
+        }
+        throw new Error("Cannot attach container. Attach method not provided.");
     }
 
     /**

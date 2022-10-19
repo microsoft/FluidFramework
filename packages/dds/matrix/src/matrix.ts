@@ -572,7 +572,6 @@ export class SharedMatrix<T = any>
                 assert(contents.type === MatrixOp.set,
                     0x021 /* "SharedMatrix message contents have unexpected type!" */);
 
-                const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
                 const { row, col } = contents;
 
                 if (local) {
@@ -585,12 +584,10 @@ export class SharedMatrix<T = any>
                         this.pending.setCell(rowHandle, colHandle, undefined);
                     }
                 } else {
-                    const rowClientId = this.rows.getOrAddShortClientId(clientId);
-                    const adjustedRow = this.rows.adjustPosition(row, refSeq, rowClientId);
+                    const adjustedRow = this.rows.adjustPosition(row, rawMessage);
 
                     if (adjustedRow !== undefined) {
-                        const colClientId = this.cols.getOrAddShortClientId(clientId);
-                        const adjustedCol = this.cols.adjustPosition(col, refSeq, colClientId);
+                        const adjustedCol = this.cols.adjustPosition(col, rawMessage);
 
                         if (adjustedCol !== undefined) {
                             const rowHandle = this.rows.getAllocatedHandle(adjustedRow);

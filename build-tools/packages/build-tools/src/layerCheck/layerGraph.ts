@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import assert from "assert";
-import { defaultLogger } from "../common/logging";
-import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";
 import * as path from "path";
 
-const {verbose} = defaultLogger;
+import { defaultLogger } from "../common/logging";
+import { Package, Packages } from "../common/npmPackage";
+
+const { verbose } = defaultLogger;
 
 interface ILayerInfo {
     deps?: string[];
@@ -24,15 +24,15 @@ interface ILayerGroupInfo {
     dot?: false;
     dotSameRank?: true;
     dotGroup?: false;
-    layers: { [key: string]: ILayerInfo }
+    layers: { [key: string]: ILayerInfo };
 }
 
 interface ILayerInfoFile {
-    [key: string]: ILayerGroupInfo
+    [key: string]: ILayerGroupInfo;
 }
 
 class BaseNode {
-    constructor(public readonly name: string) { }
+    constructor(public readonly name: string) {}
 
     public get dotName() {
         return this.name.replace(/-/g, "_").toLowerCase();
@@ -47,13 +47,15 @@ class LayerNode extends BaseNode {
     constructor(
         name: string,
         public readonly layerInfo: ILayerInfo,
-        private readonly groupNode: GroupNode
+        private readonly groupNode: GroupNode,
     ) {
         super(name);
     }
 
     public get doDot() {
-        if (this.layerInfo.dot !== undefined) { return this.layerInfo.dot; }
+        if (this.layerInfo.dot !== undefined) {
+            return this.layerInfo.dot;
+        }
         return !this.isDev && this.groupNode.doDot;
     }
 
@@ -89,12 +91,17 @@ class LayerNode extends BaseNode {
     }
 
     public generateDotSubgraph() {
-        if (!this.doDot) { return ""; }
-        const nodes = Array.from(this.packages.values(), packageNode => `"${packageNode.dotName}"`);
+        if (!this.doDot) {
+            return "";
+        }
+        const nodes = Array.from(
+            this.packages.values(),
+            (packageNode) => `"${packageNode.dotName}"`,
+        );
         if (this.packages.size < 2) {
             return `\n    ${nodes.join("\n    ")}`;
         }
-        const sameRank = this.dotSameRank ? "\n      rank=\"same\"" : "";
+        const sameRank = this.dotSameRank ? '\n      rank="same"' : "";
         return `
     subgraph cluster_${this.dotName} {
       label = "${this.dotName}"${sameRank}
@@ -126,7 +133,7 @@ class LayerNode extends BaseNode {
 }
 
 /** Used for traversing the layer dependency graph */
-type LayerDependencyNode = { node: LayerNode, orderedChildren: LayerNode[] };
+type LayerDependencyNode = { node: LayerNode; orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -157,8 +164,10 @@ class GroupNode extends BaseNode {
     }
 
     public generateDotSubgraph() {
-        const sameRank = this.dotSameRank ? "\n    rank=\"same\"" : "";
-        const subGraphs = this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("");
+        const sameRank = this.dotSameRank ? '\n    rank="same"' : "";
+        const subGraphs = this.layerNodes
+            .map((layerNode) => layerNode.generateDotSubgraph())
+            .join("");
         if (!this.dotGroup) {
             return subGraphs;
         }
@@ -202,12 +211,16 @@ class PackageNode extends BaseNode {
     }
 
     public get pkg() {
-        if (!this._pkg) { throw new Error(`ERROR: Package missing from PackageNode ${this.name}`); }
+        if (!this._pkg) {
+            throw new Error(`ERROR: Package missing from PackageNode ${this.name}`);
+        }
         return this._pkg;
     }
 
     public set pkg(pkg: Package) {
-        if (this._pkg) { throw new Error(`ERROR: Package assigned twice to a PackageNode ${this.name}`); }
+        if (this._pkg) {
+            throw new Error(`ERROR: Package assigned twice to a PackageNode ${this.name}`);
+        }
         this._pkg = pkg;
     }
 
@@ -230,11 +243,14 @@ class PackageNode extends BaseNode {
     public get indirectDependencies(): Set<PackageNode> {
         if (this._indirectDependencies === undefined) {
             // NOTE: recursive isn't great, but the graph should be small enough
-            this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>((accum, childPackage) => {
-                childPackage.childDependencies.forEach(pkg => accum.add(pkg));
-                childPackage.indirectDependencies.forEach(pkg => accum.add(pkg));
-                return accum;
-            }, new Set<PackageNode>());
+            this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>(
+                (accum, childPackage) => {
+                    childPackage.childDependencies.forEach((pkg) => accum.add(pkg));
+                    childPackage.indirectDependencies.forEach((pkg) => accum.add(pkg));
+                    return accum;
+                },
+                new Set<PackageNode>(),
+            );
         }
         return this._indirectDependencies;
     }
@@ -278,26 +294,28 @@ export class LayerGraph {
     private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
         // First pass get the layer nodes
         for (const groupName of Object.keys(layerInfo)) {
-
             const groupInfo = layerInfo[groupName];
             const groupNode = new GroupNode(groupName, groupInfo);
             this.groupNodes.push(groupNode);
 
             for (const layerName of Object.keys(groupInfo.layers)) {
-
                 const layerInfo = groupInfo.layers[layerName];
                 const layerNode = groupNode.createLayerNode(layerName, layerInfo);
                 this.layerNodeMap.set(layerName, layerNode);
 
                 if (layerInfo.dirs) {
-                    layerInfo.dirs.forEach(dir => this.dirMapping[path.resolve(root, dir)] = layerNode);
+                    layerInfo.dirs.forEach(
+                        (dir) => (this.dirMapping[path.resolve(root, dir)] = layerNode),
+                    );
                 }
                 if (layerInfo.packages) {
-                    layerInfo.packages.forEach(pkg => this.createPackageNode(pkg, layerNode));
+                    layerInfo.packages.forEach((pkg) => this.createPackageNode(pkg, layerNode));
                 }
 
                 if (layerInfo.dev && layerInfo.deps) {
-                    throw new Error(`ERROR: dev layers should not specify allowed deps since verification is skipped for dev layers (${layerName})`);
+                    throw new Error(
+                        `ERROR: dev layers should not specify allowed deps since verification is skipped for dev layers (${layerName})`,
+                    );
                 }
             }
         }
@@ -305,7 +323,9 @@ export class LayerGraph {
         // Wire up the allowed dependents
         for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes) {
-                if (!layerNode.layerInfo.deps) { continue; }
+                if (!layerNode.layerInfo.deps) {
+                    continue;
+                }
                 for (const depName of layerNode.layerInfo.deps) {
                     const depLayer = this.layerNodeMap.get(depName);
                     if (depLayer) {
@@ -313,7 +333,9 @@ export class LayerGraph {
                     } else {
                         const depPackage = this.packageNodeMap.get(depName);
                         if (depPackage === undefined) {
-                            throw new Error(`Missing package entry for dependency ${depName} in ${layerNode.name}`);
+                            throw new Error(
+                                `Missing package entry for dependency ${depName} in ${layerNode.name}`,
+                            );
                         }
                         layerNode.addAllowedDependentPackageNode(depPackage);
                     }
@@ -347,7 +369,9 @@ export class LayerGraph {
                 }
             }
             if (!matched) {
-                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check. Check that the package is listed in data/layerInfo.json.`);
+                throw new Error(
+                    `${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check. Check that the package is listed in data/layerInfo.json.`,
+                );
             }
         }
     }
@@ -378,13 +402,19 @@ export class LayerGraph {
             }
             let success = true;
             if (depPackageNode.isDev) {
-                console.error(`${packageNode.pkg.nameColored}: error: dev packages appearing in package dependencies instead of devDependencies - ${depPackageNode.name}, `);
+                console.error(
+                    `${packageNode.pkg.nameColored}: error: dev packages appearing in package dependencies instead of devDependencies - ${depPackageNode.name}, `,
+                );
                 success = false;
             }
 
-            verbose(`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`);
+            verbose(
+                `${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`,
+            );
             if (!packageNode.verifyDependent(depPackageNode)) {
-                console.error(`${packageNode.pkg.nameColored}: error: Dependency layer violation ${depPackageNode.name}, "${packageNode.layerName}" -> "${depPackageNode.layerName}"`);
+                console.error(
+                    `${packageNode.pkg.nameColored}: error: Dependency layer violation ${depPackageNode.name}, "${packageNode.layerName}" -> "${depPackageNode.layerName}"`,
+                );
                 success = false;
             }
             return success;
@@ -395,14 +425,19 @@ export class LayerGraph {
         const dotEdges: string[] = [];
         this.forEachDependencies((packageNode, depPackageNode) => {
             if (packageNode.doDot && !packageNode.indirectDependencies.has(depPackageNode)) {
-                const suffix = packageNode.indirectDependencies.has(depPackageNode) ? " [constraint=false color=lightgrey]" :
-                    (packageNode.layerNode != depPackageNode.layerNode && packageNode.level - depPackageNode.level > 3) ? " [constraint=false]" : "";
+                const suffix = packageNode.indirectDependencies.has(depPackageNode)
+                    ? " [constraint=false color=lightgrey]"
+                    : packageNode.layerNode != depPackageNode.layerNode &&
+                      packageNode.level - depPackageNode.level > 3
+                    ? " [constraint=false]"
+                    : "";
                 dotEdges.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
             }
             return true;
         });
-        const dotGraph =
-            `strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
+        const dotGraph = `strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes
+            .map((group) => group.generateDotSubgraph())
+            .join("")}
   ${dotEdges.join("\n  ")}
 }`;
         return dotGraph;
@@ -412,13 +447,11 @@ export class LayerGraph {
         while (a.length !== b.length) {
             if (a.length < b.length) {
                 a.push(val);
-            }
-            else {
+            } else {
                 b.push(val);
             }
         }
     }
-
 
     /**
      * Walk the layers in order such that a layer's dependencies are visited before that layer.
@@ -426,7 +459,7 @@ export class LayerGraph {
      */
     private traverseLayerDependencyGraph() {
         // Walk all packages, grouping by layers and which layers contain dependencies of that layer
-        const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = []
+        const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = [];
         for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes) {
                 const childLayers: Set<LayerNode> = new Set();
@@ -443,8 +476,8 @@ export class LayerGraph {
 
         // Traverse the layers in order of least dependencies.
         // OrderedLayers, and orderedChildren for each layer, will reflect that ordering
-        for(let
-            nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0);
+        for (
+            let nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0);
             nextIndex >= 0;
             nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0)
         ) {
@@ -454,7 +487,9 @@ export class LayerGraph {
 
             // Update all dependent layers. After this at least one layer will have no more children to visit.
             layers.forEach((l) => {
-                const foundIdx = l.childrenToVisit.findIndex((child) => child.name === childDepNode.node.name);
+                const foundIdx = l.childrenToVisit.findIndex(
+                    (child) => child.name === childDepNode.node.name,
+                );
                 if (foundIdx >= 0) {
                     // Move this child node to orderedChildren for each dependent layer
                     const [childNode] = l.childrenToVisit.splice(foundIdx, 1);
@@ -466,7 +501,9 @@ export class LayerGraph {
         // When we exit the loop above, layers will be empty... unless the layer dependency graph has cycles.
         // If that's the case, throw an error showing the remaining layers and dependencies to highlight the cycle.
         if (layers.length > 0) {
-            const remainingLayers = layers.map((l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`);
+            const remainingLayers = layers.map(
+                (l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`,
+            );
             const errorMessage = `
 ERROR: Circular dependency detected between layers!
 Please inspect these layers and their dependencies to find the cycle:
@@ -475,7 +512,7 @@ ${remainingLayers.join(newline)}
 
 Note that the dependency may not be explicit in the layer info JSON,
 and doesn't indicate a strict circular dependency between packages.
-But some packages in layer A depend on packages in layer B, and likewise some in B depend on some in A.`
+But some packages in layer A depend on packages in layer B, and likewise some in B depend on some in A.`;
             throw new Error(errorMessage);
         }
     }
@@ -492,7 +529,8 @@ But some packages in layer A depend on packages in layer B, and likewise some in
             const packagesInCell: string[] = [];
             for (const packageNode of [...layerNode.packages]) {
                 ++packageCount;
-                const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
+                const dirRelativePath =
+                    "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
                 const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
                 packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
             }
@@ -505,13 +543,17 @@ But some packages in layer A depend on packages in layer B, and likewise some in
             this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
             lines.push(`| Packages | Layer Dependencies |`);
             lines.push(`| --- | --- |`);
-            lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
+            lines.push(
+                `| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
+            );
         }
 
-        assert(packageCount === this.packageNodeMap.size, "ERROR: Did not find all packages while traversing layers");
+        assert(
+            packageCount === this.packageNodeMap.size,
+            "ERROR: Did not find all packages while traversing layers",
+        );
 
-        const packagesMdContents: string =
-            `# Package Layers
+        const packagesMdContents: string = `# Package Layers
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
@@ -524,7 +566,8 @@ ${lines.join(newline)}
     }
 
     public static load(root: string, packages: Packages, info?: string): LayerGraph {
-        const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
+        const layerInfoFile = require(info ??
+            path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
 }

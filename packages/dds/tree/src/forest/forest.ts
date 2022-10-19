@@ -65,7 +65,7 @@ export interface IForestSubscription extends Dependee {
     tryMoveCursorTo(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent
+        observer?: ObservingDependent,
     ): TreeNavigationResult;
 }
 

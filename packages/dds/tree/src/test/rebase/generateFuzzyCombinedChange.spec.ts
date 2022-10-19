@@ -10,7 +10,7 @@ import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;
 
-type TestChange = TestChange[] | { I: TestChange; } | { C: TestChange; O: TestChange; } | number;
+type TestChange = TestChange[] | { I: TestChange } | { C: TestChange; O: TestChange } | number;
 
 const testRebaser: ChangeRebaser<TestChange> = {
     compose: (changes: TestChange[]) => changes,

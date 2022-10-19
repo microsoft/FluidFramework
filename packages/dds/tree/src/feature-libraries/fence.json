@@ -1,7 +1,17 @@
 {
-    "tags": [ "feature-libraries" ],
-    "exports": [ "index"],
-    // Depending on "shared-tree-core" so implementations of Indexes can be here.
-    // Could move the index abstraction elsewhere instead.
-    "imports": ["schema-stored","schema-view","tree","util","rebase","forest","dependency-tracking","shared-tree-core","change-family"]
+  "tags": ["feature-libraries"],
+  "exports": ["index"],
+  // Depending on "shared-tree-core" so implementations of Indexes can be here.
+  // Could move the index abstraction elsewhere instead.
+  "imports": [
+    "schema-stored",
+    "schema-view",
+    "tree",
+    "util",
+    "rebase",
+    "forest",
+    "dependency-tracking",
+    "shared-tree-core",
+    "change-family"
+  ]
 }
