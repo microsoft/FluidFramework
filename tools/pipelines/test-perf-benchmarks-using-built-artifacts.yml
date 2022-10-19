@@ -15,20 +15,19 @@ resources:
       - main
       - next
       - lts
-      # paths:
-      #   include:
-      #   - packages
-      #   - examples
-      #   - experimental
-      #   - package.json
-      #   - package-lock.json
-      #   - lerna.json
-      #   - lerna-package-lock.json
-      #   - tools/benchmark
-      #   - tools/telemetry-generator
-      #   - tools/pipelines/test-perf-benchmarks.yml
-      #   - tools/pipelines/templates/include-set-package-version.yml
 
+trigger:
+  branches:
+    include:
+    - release/*
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - tools/benchmark
+    - tools/telemetry-generator
+    - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
 
 parameters:
 - name: taskBuild
@@ -146,10 +145,12 @@ stages:
             path: $(Pipeline.Workspace)/client/pack
 
 
+        # npm install from the packages file
+
+
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
         # part of the normal package .tgz installed previously in the pipeline.
-        - ${{ if ne(parameters.testFileTarName, 'null') }}:
           # Download Artifact - Test Files
           - task: DownloadPipelineArtifact@2
             displayName: Download test files
@@ -171,7 +172,7 @@ stages:
             targetType: 'inline'
             script: |
               tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.buildDirector }}
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.buildDirectory }}
 
         # Build
         # - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -237,8 +238,8 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'run test:benchmark:copyresults'
-
+            customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
+        # modification is probably "look at node_modules for blah"
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
