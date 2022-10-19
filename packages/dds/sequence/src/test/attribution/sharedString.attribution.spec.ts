@@ -26,14 +26,14 @@ import {
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { IAudience } from "@fluidframework/container-definitions";
-import { IAttributor, Attributor } from '../../attributor';
+import { IAttributor, Attributor, gzipEncoder } from '../../attributor';
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../../sharedString";
 import { SharedStringFactory } from "../../sequenceFactory";
 import { assertConsistent, Client } from "../intervalUtils";
+import { makeMockAudience } from "./utils";
 
 interface FuzzTestState extends BaseFuzzTestState {
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -171,33 +171,6 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     );
 }
 
-function makeMockAudience(clientIds: string[]): IAudience {
-	const clients = new Map<string, IClient>();
-	clientIds.forEach((clientId, index) => {
-		const stringId = String.fromCharCode(index + 65);
-		const name = stringId.repeat(10);
-		const userId = `${name}@microsoft.com`;
-		const email = userId;
-		const user = {
-			id: userId,
-			name,
-			email
-		};
-		clients.set(clientId, { 
-			mode: "write",
-			details: { capabilities: { interactive: true } },
-			permission: [],
-			user,
-			scopes: []		
-		});
-	});
-	return {
-		getMember: (clientId: string): IClient | undefined => {
-			return clients.get(clientId);
-		}
-	} as IAudience
-}
-
 function createSharedString(
 	random: IRandom,
 	generator: Generator<Operation, FuzzTestState>,
@@ -286,17 +259,15 @@ function createSharedString(
 const directory = path.join(__dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
+	directory: string;
 	operations: string;
-	attributionlessSnapshot: string;
-	propAttributionSnapshot: string;
 }
 
 function getDocumentPaths(docName: string): TestPaths {
 	mkdirSync(path.join(directory, docName), { recursive: true });
 	return {
+		directory: path.join(directory, docName),
 		operations: path.join(directory, docName, "operations.json"),
-		attributionlessSnapshot: path.join(directory, docName, "no-attribution-snap.json"),
-		propAttributionSnapshot: path.join(directory, docName, "prop-attribution-snap.json"),
 	};
 }
 
@@ -371,7 +342,62 @@ const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => 
 	return summary;
 };
 
+const noopEncoder = {
+	encode: x => x,
+	decode: x => x
+};
+
 describe.only("SharedString Attribution", () => {
+	// Entries of this list produce documents which should contain the same attribution information but
+	// stored in different formats. The "None" factory is an exception in that it contains no attribution
+	// information, and is useful as a baseline for comparison.
+	const dataGenerators: {
+		name: string;
+		factory: (operations: Operation[]) => FuzzTestState;
+		filename: string;
+	}[] = [
+		{ 
+			name: "None",
+			factory: (operations: Operation[]) => createSharedString(
+				makeRandom(0),
+				generatorFromArray(operations),
+			),
+			filename: "no-attribution-snap.json"
+		},
+		{ 
+			name: "Prop",
+			factory: (operations: Operation[]) => createSharedString(
+				makeRandom(0),
+				generatorFromArray(embedAttributionInProps(operations)),
+			),
+			filename: "prop-attribution-snap.json"
+		},
+		{ 
+			name: "Attributor without any compression",
+			factory: (operations: Operation[]) => createSharedString(
+				makeRandom(0),
+				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined, { summary: noopEncoder, timestamps: noopEncoder }),
+			),
+			filename: "compressed-attribution-snap.json"
+		},
+		{ 
+			name: "Attributor without delta encoding",
+			factory: (operations: Operation[]) => createSharedString(
+				makeRandom(0),
+				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined, { summary: gzipEncoder, timestamps: noopEncoder }),
+			),
+			filename: "compressed-attribution-snap.json"
+		},
+		{ 
+			name: "Attributor",
+			factory: (operations: Operation[]) => createSharedString(
+				makeRandom(0),
+				generatorFromArray(operations), (runtime) => new Attributor(runtime),
+			),
+			filename: "compressed-attribution-snap.json"
+		},
+	]
+
 	/**
 	 * This test suite is aimed at assessing the overhead of storing attribution information in a document.
 	 * See 'documents/README.md' for more details.
@@ -387,15 +413,15 @@ describe.only("SharedString Attribution", () => {
 		);
 
 		const { generator, operations } = spyOnOperations(attributionlessGenerator);
-		const finalState = createSharedString(makeRandom(0), generator);
-		const attributionFinalState = createSharedString(
-			makeRandom(0),
-			generatorFromArray(embedAttributionInProps(operations)),
-		);
-
-		writeJson(paths.attributionlessSnapshot, await summaryFromState(finalState));
-		writeJson(paths.propAttributionSnapshot, await summaryFromState(attributionFinalState));
+		createSharedString(makeRandom(0), generator);
 		writeJson(paths.operations, operations);
+
+		await Promise.all(
+			dataGenerators.map(async ({ filename, factory }) => {
+				const summary = await summaryFromState(factory(operations));
+				writeJson(path.join(paths.directory, filename), summary);
+			})
+		)
 	});
 
 	const documents = getDocuments();
@@ -408,22 +434,13 @@ describe.only("SharedString Attribution", () => {
 				operations = readJson(paths.operations);
 			});
 
-			it("attributionless snapshot", async () => {
-				const expected = readJson(paths.attributionlessSnapshot);
-				const finalState = createSharedString(makeRandom(0), generatorFromArray(operations));
-				const actual = await summaryFromState(finalState);
-				assert.deepEqual(actual, expected);
-			});
-
-			it("prop-embedded attribution snapshot", async () => {
-				const expected = readJson(paths.propAttributionSnapshot);
-				const finalState = createSharedString(
-					makeRandom(0),
-					generatorFromArray(embedAttributionInProps(operations)),
-				);
-				const actual = await summaryFromState(finalState);
-				assert.deepEqual(actual, expected);
-			});
+			for (const { filename, factory } of dataGenerators) {
+				it(`Snapshot at ${filename}`, async () => {
+					const expected = readJson(path.join(paths.directory, filename));
+					const actual = await summaryFromState(factory(operations));
+					assert.deepEqual(actual, expected);
+				});
+			}
 		});
 	}
 
@@ -432,45 +449,36 @@ describe.only("SharedString Attribution", () => {
 	it.only("generate snapshot size impact report", async () => {
 		const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
 		const fieldPaddingLength = 12;
-		console.log(`${
-			"Name".padEnd(namePaddingLength)
-		}|${
-			"None ".padStart(fieldPaddingLength)
-		}|${
-			"Prop ".padStart(fieldPaddingLength)
-		}|${
-			"Attributor ".padStart(fieldPaddingLength)}`,
+		console.log(
+			[
+				`${"Name".padEnd(namePaddingLength)}`,
+				...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
+			].join("|")
 		);
+
 		const logRow = ({
 			docName,
-			attributionlessSummary,
-			propAttributionSummary,
-			attributorSummary,
-		}: { docName: string; attributionlessSummary: ISummaryTree; propAttributionSummary: ISummaryTree; attributorSummary: ISummaryTree }) => {
+			data
+		}: { docName: string; data: ISummaryTree[] }) => {
 			const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
 			console.log(`${
 				docName.padEnd(namePaddingLength)
 			}|${
-				getLength(attributionlessSummary).padStart(fieldPaddingLength - 1)
-			} |${
-				getLength(propAttributionSummary).padStart(fieldPaddingLength - 1)
-			} |${
-				getLength(attributorSummary).padStart(fieldPaddingLength - 1)
+				data
+					.map((summary, i) => getLength(summary).padStart(
+						Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
+					))
+					.join(' |')
 			}`);
 		};
+
 		for (const docName of documents) {
 			const paths = getDocumentPaths(docName);
 			const operations: Operation[] = readJson(paths.operations);
-			const attributionlessSummary = await summaryFromState(
-				createSharedString(makeRandom(0), generatorFromArray(operations)),
+			const data = await Promise.all(
+				dataGenerators.map(({ factory }) => summaryFromState(factory(operations)))
 			);
-			const propAttributionSummary = await summaryFromState(
-				createSharedString(makeRandom(0), generatorFromArray(embedAttributionInProps(operations))),
-			);
-			const attributorSummary = await summaryFromState(
-				createSharedString(makeRandom(0), generatorFromArray(operations), (runtime) => new Attributor(runtime)),
-			);
-			logRow({ docName, attributionlessSummary, propAttributionSummary, attributorSummary });
+			logRow({ docName, data });
 		}
 	});
 });

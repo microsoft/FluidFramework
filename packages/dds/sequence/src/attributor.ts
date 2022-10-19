@@ -1,68 +1,53 @@
 import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { InternedStringId, MutableStringInterner } from "./stringInterner";
 import { gzip, ungzip } from 'pako';
 import { UsageError } from "@fluidframework/container-utils";
 
-// Concrete types for a particular `Attributor` implementation
-interface SerializedAttributor {
-	interner: readonly string[]; /* result of calling getSerializable() on an ObjectInterner */
-	seqs: number[]
-	timestamps: number[];
-	attributionRefs: InternedStringId[];
+export interface Encoder<TDecoded, TEncoded> {
+	encode(decoded: TDecoded): TEncoded;
+
+	decode(encoded: TEncoded): TDecoded;
 }
 
-interface AttributionInfo {
+// TODO: Usage of Jsonable here isn't typesafe.
+export type SummaryEncoder = Encoder<Jsonable, string>;
+
+export type TimestampEncoder = Encoder<number[], Jsonable>;
+
+export interface AttributionInfo {
 	user: IUser;
 	timestamp: number;
 }
 
-// TODO: Make constructor and serialize take in an encoder/decoder in which we can swap out different 
-// compression strategies.
 export interface IAttributor {
 	getAttributionInfo(seq: number): AttributionInfo;
 
 	serialize(): string;
 }
 
-// encode: (change: IPropertyTreeMessage) => {
-// 	const changeSetStr = JSON.stringify(change.changeSet);
-// 	const unzipped = new TextEncoder().encode(changeSetStr);
-// 	const zipped: Buffer = encodeFn(unzipped);
-// 	const zippedStr = bufferToString(zipped, "base64");
-// 	if (zippedStr.length < changeSetStr.length) {
-// 		// eslint-disable-next-line @typescript-eslint/dot-notation
-// 		change["isZipped"] = "1";
-// 		change.changeSet = zippedStr;
-// 	}
-// 	return change;
-// },
-// decode: (transferChange: IPropertyTreeMessage) => {
-// 	// eslint-disable-next-line @typescript-eslint/dot-notation
-// 	if (transferChange["isZipped"]) {
-// 		const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
-// 		const unzipped = decodeFn(zipped);
-// 		const changeSetStr = new TextDecoder().decode(unzipped);
-// 		transferChange.changeSet = JSON.parse(changeSetStr);
-// 	}
-// 	return transferChange;
-// },
+// Concrete types for a particular `Attributor` implementation
+interface SerializedAttributor {
+	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
+	seqs: number[]
+	timestamps: number[];
+	attributionRefs: InternedStringId[];
+}
 
 export class Attributor implements IAttributor {
 	private seqToInfo: Map<number, AttributionInfo> = new Map();
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
-		serializedString?: string,
+		serialized?: string,
+		private readonly encoders: { summary: SummaryEncoder, timestamps: TimestampEncoder } = { summary: gzipEncoder, timestamps: deltaEncoder },
 	) {
-		// look at propertyTreeExtFactories
-		if (serializedString) {
-			const zipped = new Uint8Array(stringToBuffer(serializedString, "base64"));
-			const unzipped = ungzip(zipped);
-			const serialized: SerializedAttributor = JSON.parse(new TextDecoder().decode(unzipped));
-			const interner = new MutableStringInterner(serialized.interner);
-			const { seqs, timestamps, attributionRefs } = serialized;
+		if (serialized) {
+			const serializedAttributor: SerializedAttributor = this.encoders.summary.decode(serialized);
+			const interner = new MutableStringInterner(serializedAttributor.interner);
+			const { seqs, timestamps: encodedTimestamps, attributionRefs } = serializedAttributor;
+			const timestamps = this.encoders.timestamps.decode(encodedTimestamps);
 			assert(seqs.length === timestamps.length && timestamps.length === attributionRefs.length, "serialized attribution columns should have the same length");
 			for (let i = 0; i < seqs.length; i++) {
 				const seq = seqs[i];
@@ -96,7 +81,6 @@ export class Attributor implements IAttributor {
 		const seqs: number[] = []
 		const timestamps: number[] = [];
 		const attributionRefs: InternedStringId[] = [];
-		const deltaTimestamps = new Array(timestamps.length);
 		for (const [seq, { user, timestamp }] of this.seqToInfo.entries()) {
 			seqs.push(seq);
 			timestamps.push(timestamp);
@@ -104,25 +88,51 @@ export class Attributor implements IAttributor {
 			attributionRefs.push(ref);
 		}
 
+		const serialized: SerializedAttributor = {
+			interner: interner.getSerializable(),
+			seqs,
+			timestamps: this.encoders.timestamps.encode(timestamps),
+			attributionRefs
+		};
+
+		return this.encoders.summary.encode(serialized);
+	}
+
+	// Unpictured:
+	// - GC (there are several ways to hook this up, though one can check the data structure should support it in O(n))
+}
+
+export const gzipEncoder: SummaryEncoder = {
+	encode: (summary: Jsonable) => {
+		const unzipped = new TextEncoder().encode(JSON.stringify(summary));
+		const zipped = gzip(unzipped);
+		return bufferToString(zipped, "base64");
+	},
+	decode: (serializedSummary: string) => {
+		const zipped = new Uint8Array(stringToBuffer(serializedSummary, "base64"));
+		const unzipped = ungzip(zipped);
+		return JSON.parse(new TextDecoder().decode(unzipped));
+	}
+}
+
+export const deltaEncoder: TimestampEncoder = {
+	encode: (timestamps: number[]) => {
+		const deltaTimestamps = new Array(timestamps.length);
 		let prev = 0;
 		for (let i = 0; i < timestamps.length; i++) {
 			deltaTimestamps[i] = timestamps[i] - prev;
 			prev = timestamps[i];
 		}
-
-		const serialized: SerializedAttributor = {
-			interner: interner.getSerializable(),
-			seqs,
-			timestamps: deltaTimestamps,
-			attributionRefs
-		};
-
-		const unzipped = new TextEncoder().encode(JSON.stringify(serialized));
-		const zipped = gzip(unzipped);
-		const zippedStr = bufferToString(zipped, "base64");
-		return zippedStr;
+		return deltaTimestamps;
+	},
+	decode: (encoded: Jsonable) => {
+		assert(Array.isArray(encoded), "Encoded timestamps should be an array of nummbers");
+		const timestamps: number[] = new Array(encoded.length);
+		let cumulativeSum = 0;
+		for (let i = 0; i < encoded.length; i++) {
+			cumulativeSum += encoded[i];
+			timestamps[i] = cumulativeSum;
+		}
+		return timestamps;
 	}
-
-	// Unpictured:
-	// - GC (there are several ways to hook this up, though one can check the data structure should support it in O(n))
 }
