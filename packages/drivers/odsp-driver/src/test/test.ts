@@ -12,7 +12,7 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 
 describe("Binary WireFormat perf", () => {
-    it("Conversion test json", async () => {
+    it("Conversion test json", () => {
         const jsonSnapshot = fs.readFileSync(
             `${__dirname}/../../src/test/SamplePerfFilesforFluid/mediumJson.fluid.json`,
             { encoding: "utf8" },
@@ -26,7 +26,7 @@ describe("Binary WireFormat perf", () => {
         assert(result.blobs !== undefined, "snapshot blobs should exist");
     });
 
-    it("Conversion test binary format", async () => {
+    it("Conversion test binary format", () => {
         const binarySnapshot = fs.readFileSync(
             `${__dirname}/../../src/test/SamplePerfFilesforFluid/medium.fluid.wireformat`,
         );
@@ -40,5 +40,5 @@ describe("Binary WireFormat perf", () => {
 
         const parseTime = performance.now() - start;
         console.log("Binary Format medium snapshot parse time ", parseTime);
-    }).timeout(3000); // This can take more time if running in parallel
+    }).timeout(4000); // This can take more time if running mocha tests in parallel. Set it to 4s for coverage runs as well.
 });
