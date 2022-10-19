@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeCursor } from "../../forest";
+import { ITreeCursor } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
 import { Changeset, Mark, NodeChangeType } from "./format";

@@ -21,16 +21,12 @@ import {
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../shared-tree-core";
-import {
     cachedValue,
     Dependee,
     Dependent,
     ICachedValue,
     recordDependency,
-} from "../dependency-tracking";
-import { Delta } from "../tree";
-import {
+    Delta,
     FieldKindIdentifier,
     FieldSchema,
     GlobalFieldKey,
@@ -43,7 +39,7 @@ import {
     TreeSchemaIdentifier,
     ValueSchema,
     schemaDataIsEmpty,
-} from "../schema-stored";
+} from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
 
 /**

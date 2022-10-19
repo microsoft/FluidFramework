@@ -44,7 +44,6 @@ module.exports = {
         "no-multi-spaces": "off",
         "no-param-reassign": "off",
         "no-prototype-builtins": "off",
-        "no-restricted-syntax": "off",
         "no-useless-escape": "off",
         "no-var": "off",
         "prefer-arrow-callback": "off",

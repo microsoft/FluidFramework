@@ -15,6 +15,7 @@ module.exports = {
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript",
+        "prettier"
     ],
     globals: {
         Atomics: "readonly",
@@ -85,9 +86,12 @@ module.exports = {
         "max-len": [
             "error",
             {
-                ignoreRegExpLiterals: false,
-                ignoreStrings: false,
                 code: 120,
+                ignoreTrailingComments: true,
+                ignoreUrls: true,
+                ignoreStrings: true,
+                ignoreTemplateLiterals: true,
+                ignoreRegExpLiterals: true,
             },
         ],
         "no-multi-spaces": [
@@ -295,7 +299,7 @@ module.exports = {
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
+            files: ["**/types/*validate*Previous*.ts"],
             rules: {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",

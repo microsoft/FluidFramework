@@ -180,7 +180,11 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
             }
         }
         if (event.category === "error") {
-            this.unexpectedErrors.push(event);
+            if (this.allowedErrors.includes(event.eventName)) {
+                event.category = "generic";
+            } else {
+                this.unexpectedErrors.push(event);
+            }
         }
 
         this.baseLogger.send(event);
@@ -191,7 +195,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
         return {
             expectedNotFound,
-            unexpectedErrors: unexpectedErrors.filter((event) => !this.allowedErrors.includes(event.eventName)),
+            unexpectedErrors,
         };
     }
 }
