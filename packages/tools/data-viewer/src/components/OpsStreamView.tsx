@@ -12,6 +12,8 @@ import { Accordion } from "./Accordion";
 // - Show pending local ops (styled differently)
 //   - Set styling back to default once acknowledged.
 // - Differentiate my ops from others' ops
+// - Option to hide ops prior to snapshot
+// - Show snapshot
 
 /**
  * {@link OpsStreamView} input props.
