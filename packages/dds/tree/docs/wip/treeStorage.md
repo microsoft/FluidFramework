@@ -151,7 +151,7 @@ Revision | Root Chunk Key
 
 This implicitly forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous version and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine).
 
-## Node -> Chunk Lookup
+### Node -> Chunk Lookup
 
 While some applications will want to begin at the root node in the tree and walk down/around to read data, many others will already know the shape and schema of the tree, already know where in the tree their data is, and want to access it as quickly as possible. The SharedTree will support such an operation by accepting a `path`: a route from the root of the tree that ends at a node. Every node in a given revision of the tree has a unique path.
 
@@ -165,7 +165,9 @@ The next sections will explore some ways of organizing the tree data such that b
 
 ### Path-Based B-Tree
 
-Every node in the tree can be identified uniquely by its path:
+This approach simply puts all the nodes in a B-tree (or similar data structure), using the path of each node as its key.
+
+Consider a tree and the paths of each of its nodes:
 
 ```mermaid
 graph TD;
@@ -173,35 +175,142 @@ graph TD;
     A--edge 2-->C--edge 3-->D;
 ```
 
- Node | path
+ Node | Path
 ------|-----
-   A  | "/"
-   B  | "/1"
-   C  | "/2"
-   D  | "/2/3"
+   A  | ""
+   B  | "1"
+   C  | "2"
+   D  | "2/3"
 
-Paths may be encoded as strings, and are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D]` (an in-order traversal of the tree).
+Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D]` (an in-order traversal of the tree).
 
-The path for each node and the data stored at each node can then be used as keys and values, respectively, in a B-Tree or similar data structure. It is then easy to break the nodes up into chunks; Every _n_ paths in sorted order create a chunk, where _n_ depends on the maximum allowed chunk size and the branching factor of the B-tree.
+> Other sorts are possible too, but this one allows for some helpful optimizations in the B-tree itself (see Potential Optimizations below).
 
-> Other sorts are possible too, but this one allows for some helpful optimizations in the B-Tree itself (see Potential Optimizations below).
+The path for each node and the data stored at each node can then be used as keys and values, respectively, in a key-value data structure optimized for sorted keys, like a B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk:
+
+Chunk | Nodes
+------|------
+1     | [A]
+2     | [B, C]
+3     | [D]
+
+> Chunk 2 has more nodes than Chunks 1 and 3 because the contents of nodes A and D are larger than those of B and C.
+
+TODO: How do the chunks re-balance if a node's payload increases in size and now the chunk is too full? Does data spill over into adjacent chunks (and spill over repeatedly, if necessary?)
 
 Advantages:
 
 * The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries.
-* The lookup of any node is `O(log(n))`.
-* A suboptimal implementation could use an off-the-shelf B-Tree library for quick prototyping. However, an production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see below).
+* The lookup of any node by path is `O(log(n))`.
+* A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see below).
 
 Drawbacks:
 
-* The chunking algorithm is inflexible. Some shapes of trees will need to walk the B-Tree sporadically even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of any shape.
+* The chunking algorithm is inflexible. Some shapes of trees will need to jump around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape.
 
 Potential Optimizations:
 
 * Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Eliminate this redundant shared prefix from all paths to greatly reduce the storage needed for the keys, especially for very deep trees (which will have very long paths).
 * Deduplicate/intern sections of paths within a B-Tree node that are repeated to save additional storage. This can be done with a prefix tree on each B-Tree node.
-* Store large paths out of line TODO
-*
+
+### SPICE Tree
+
+The Spatially Partitioned, Ideally Chunked Entity tree allows the tree to be chunked arbitrarily and then organizes those chunks in a tree that allows efficient lookup of any chunk.
+
+The design is best illustrated by example. Consider a tree:
+
+```mermaid
+graph TD;
+    A--0-->B--0-->C--0-->D--0-->E
+    C--1-->F--0-->G
+    B--1-->H--0-->I--0-->J
+    H--1-->K--0-->L
+    A--1-->M--0-->N--0-->O--0-->P
+    N--1-->Q--0-->R
+    M--1-->S--0-->T--0-->U
+    S--1-->V--0-->W
+```
+
+Now suppose a chunking algorithm examines the shape and contents of tree and chunks it like so:
+
+```mermaid
+graph TD;
+    A--0-->B--0-->C--0-->D--0-->E
+    C--1-->F--0-->G
+    B--1-->H--0-->I--0-->J
+    H--1-->K--0-->L
+    A--1-->M--0-->N--0-->O--0-->P
+    N--1-->Q--0-->R
+    M--1-->S--0-->T--0-->U
+    S--1-->V--0-->W
+    subgraph Chunk 11
+    S
+    T
+    V
+    end
+    subgraph Chunk 13
+    W
+    end
+    subgraph Chunk 12
+    U
+    end
+    subgraph Chunk 8
+    N
+    O
+    Q
+    end
+    subgraph Chunk 10
+    R
+    end
+    subgraph Chunk 9
+    P
+    end
+    subgraph Chunk 1
+    A
+    B
+    M
+    end
+    subgraph Chunk 5
+    H
+    I
+    K
+    end
+    subgraph Chunk 7
+    L
+    end
+    subgraph Chunk 6
+    J
+    end
+    subgraph Chunk 2
+    C
+    D
+    F
+    end
+    subgraph Chunk 4
+    G
+    end
+    subgraph Chunk 3
+    E
+    end
+```
+
+Each chunk is labelled with the path to the root of the chunk:
+
+Chunk | Path
+------|-----
+1     | ""
+2     | "0/0"
+3     | "0/0/0/0"
+4     | "0/0/1/0"
+5     | "0/1"
+6     | "0/1/0/0"
+7     | "0/1/1/0"
+8     | "1/0"
+9     | "1/0/0/0"
+10    | "1/0/0/0"
+11    | "1/1"
+12    | "1/1/0/0"
+13    | "1/1/0/0"
 
 ### Logical Node Tree
 
