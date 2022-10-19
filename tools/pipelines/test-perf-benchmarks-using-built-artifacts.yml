@@ -98,10 +98,16 @@ stages:
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
+                testPackageFilePattern=${{ variables.testPackageFilePattern }}
 
               Tasks Parameters:
                 BuildDir=${{ variables.buildDirectory }}
-                Build=${{ parameters.taskBuild }}"
+                Build=${{ parameters.taskBuild }}
+
+              Pipeline Parameters:
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ parameters.testPackage }}
+              "
 
         # Install
         - task: UseNode@1
