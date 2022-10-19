@@ -74,8 +74,9 @@ async function updateExistingSession(
     // that ops are backed up to a global location before a session is allowed to move.
     // Otherwise, a moved session could end up without access to ops that still only exist in a location's
     // non-global storage.
+    const sessionStickyCalculationTimestamp = Date.now();
     const isSessionSticky = document.lastAccessTime !== undefined
-        ? Date.now() - document.lastAccessTime < sessionStickinessDurationMs
+        ? sessionStickyCalculationTimestamp - document.lastAccessTime < sessionStickinessDurationMs
         : false; // If no session end has been recorded, allow session to move.
     // Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
     const sessionHasLocation: boolean =
@@ -93,7 +94,7 @@ async function updateExistingSession(
                 ...lumberjackProperties,
                 isSessionSticky,
                 documentLastAccessTime: document.lastAccessTime,
-                dateTime: Date.now(),
+                sessionStickyCalculationTimestamp,
                 sessionStickinessDurationMs,
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
