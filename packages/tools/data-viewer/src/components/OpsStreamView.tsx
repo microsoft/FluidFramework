@@ -1,10 +1,8 @@
 import { Stack } from "@fluentui/react";
 import React from "react";
 
-import { IFluidContainer } from "@fluidframework/fluid-static";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { getInnerContainer } from "../Utilities";
 import { Accordion } from "./Accordion";
 
 // TODOs:
@@ -20,37 +18,21 @@ import { Accordion } from "./Accordion";
  */
 export interface OpsStreamViewProps {
     /**
-     * The Fluid container for which ops data will be displayed.
+     * The list of ops to render.
      */
-    container: IFluidContainer;
+    ops: ISequencedDocumentMessage[];
+
+    /**
+     * Current minimum sequence number of the container.
+     */
+    minimumSequenceNumber: number;
 }
 
 /**
  * Displays information about the ops stream for the current container.
  */
 export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
-    const { container } = props;
-
-    const innerContainer = getInnerContainer(container);
-
-    const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
-        innerContainer.deltaManager.minimumSequenceNumber,
-    );
-
-    const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
-
-    React.useEffect(() => {
-        function onOp(message: ISequencedDocumentMessage): void {
-            updateMinimumSequenceNumber(message.minimumSequenceNumber);
-
-            updateOps([...ops, message]);
-        }
-        innerContainer.on("op", onOp);
-
-        return (): void => {
-            innerContainer.off("op", onOp);
-        };
-    }, [innerContainer, ops]);
+    const { ops, minimumSequenceNumber } = props;
 
     return (
         <Stack>

@@ -13,7 +13,9 @@ import {
 import React from "react";
 
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { getInnerContainer } from "../Utilities";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -53,10 +55,16 @@ export interface SessionDataViewProps {
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
     const { containerId, container, audience } = props;
 
+    const innerContainer = getInnerContainer(container);
+
     const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
     const [isContainerDisposed, updateIsContainerDisposed] = React.useState<boolean>(
         container.disposed,
     );
+    const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
+        innerContainer.deltaManager.minimumSequenceNumber,
+    );
+    const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
 
     React.useEffect(() => {
         function onDispose(): void {
@@ -67,14 +75,21 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             updateMyself(audience.getMyself());
         }
 
+        function onOp(message: ISequencedDocumentMessage): void {
+            updateMinimumSequenceNumber(message.minimumSequenceNumber);
+            updateOps([...ops, message]);
+        }
+
         container.on("disposed", onDispose);
         audience.on("membersChanged", onUpdateAudienceMembers);
+        innerContainer.on("op", onOp);
 
         return (): void => {
             container.off("disposed", onDispose);
             audience.off("membersChanged", onUpdateAudienceMembers);
+            innerContainer.off("op", onOp);
         };
-    }, [container, audience]);
+    }, [container, innerContainer, audience, ops]);
 
     const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
         RootView.Container,
@@ -92,7 +107,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                 view = <AudienceView audience={audience} myself={myself} />;
                 break;
             case RootView.OpsStream:
-                view = <OpsStreamView container={container} />;
+                view = <OpsStreamView ops={ops} minimumSequenceNumber={minimumSequenceNumber} />;
                 break;
             default:
                 throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
