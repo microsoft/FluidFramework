@@ -141,6 +141,18 @@
       "RemovedInterfaceDeclaration_ILocalValue": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedEnumDeclaration_ContainerErrorType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedEnumDeclaration_DriverErrorType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_ICriticalContainerError": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

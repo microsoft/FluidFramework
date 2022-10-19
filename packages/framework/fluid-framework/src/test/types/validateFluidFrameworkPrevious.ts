@@ -89,6 +89,18 @@ use_old_EnumDeclaration_ConnectionState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_ContainerErrorType": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ContainerSchema": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerSchema():
@@ -209,6 +221,18 @@ use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_DriverErrorType": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_DriverErrorType": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidContainer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidContainer():
@@ -253,6 +277,18 @@ declare function use_old_InterfaceDeclaration_IConnection(
     use: TypeOnly<old.IConnection>);
 use_old_InterfaceDeclaration_IConnection(
     get_current_InterfaceDeclaration_IConnection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_ICriticalContainerError": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_ICriticalContainerError": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
