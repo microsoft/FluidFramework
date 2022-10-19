@@ -322,6 +322,33 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
     });
 
+    it("resends all shared directory ops", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+            const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+            directory.set("key1", "value1");
+            directory.set("key2", "value2");
+            directory.createSubDirectory("subdir1");
+            directory.createSubDirectory("subdir2");
+            directory.delete("key2");
+            directory.deleteSubDirectory("subdir2");
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(directory1.get("key1"), "value1");
+        assert.strictEqual(directory2.get("key1"), "value1");
+        assert.strictEqual(directory1.get("key2"), undefined);
+        assert.strictEqual(directory2.get("key2"), undefined);
+        assert.strictEqual(directory1.getSubDirectory("subdir1")?.absolutePath, "/subdir1");
+        assert.strictEqual(directory2.getSubDirectory("subdir1")?.absolutePath, "/subdir1");
+        assert.strictEqual(directory1.getSubDirectory("subdir2"), undefined);
+        assert.strictEqual(directory2.getSubDirectory("subdir2"), undefined);
+    });
+
     it("resends batched ops", async function() {
         const pendingOps = await getPendingOps(provider, false, async (c, d) => {
             const map = await d.getSharedObject<SharedMap>(mapId);
