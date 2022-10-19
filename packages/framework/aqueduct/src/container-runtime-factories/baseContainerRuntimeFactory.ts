@@ -74,14 +74,14 @@ export class BaseContainerRuntimeFactory
             this.dependencyContainer, scope.IFluidDependencySynthesizer);
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime: ContainerRuntime = await ContainerRuntime.load2(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers),
             this.runtimeOptions,
             scope,
+            existing,
         );
 
         // we register the runtime so developers of providers can use it in the factory pattern.
