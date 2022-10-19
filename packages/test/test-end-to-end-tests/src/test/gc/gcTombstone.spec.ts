@@ -46,8 +46,8 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         [],
     );
     const inactiveTimeoutMs = 1;
-    const sessionExpiryTimeoutMs = 1000;
-    const sweepTimeoutMs = sessionExpiryTimeoutMs + 1000;
+    const sessionExpiryTimeoutMs = 200;
+    const sweepTimeoutMs = sessionExpiryTimeoutMs + 10;
 
     const gcOptions: IGCRuntimeOptions = {
         gcAllowed: true,
@@ -83,9 +83,6 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    let mainContainer: IContainer;
-    let mainDataStore: TestDataObject;
-
     const settings = {
         "Fluid.GarbageCollection.RunSessionExpiry": "true",
         "Fluid.GarbageCollection.Test.Tombstone": "true",
@@ -102,6 +99,9 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         return summarizeNow(summarizer);
     };
 
+    let mainContainer: IContainer;
+    let mainDataStore: TestDataObject;
+
     beforeEach(async () => {
         provider = getTestObjectProvider({ syncSummarizer: true });
         mainContainer = await createContainer();
@@ -109,6 +109,7 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         await waitForContainerConnection(mainContainer);
     });
 
+    // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
     itExpects("GC tombstones datastores when they are sweep ready.",
     [
         {
@@ -151,7 +152,7 @@ describeNoCompat("GC DataStore Tombstoned", (getTestObjectProvider) => {
         await summarize(closingSummarizer);
 
         // The request pattern should fail!
-        assert.throws(() => testDataObject2._root.set("testValue2", "test"),
+        assert.throws(() => testDataObject2._root.set("send", "op"),
             `Should not be able to send ops for a tombstoned datastore.`);
     });
 });
