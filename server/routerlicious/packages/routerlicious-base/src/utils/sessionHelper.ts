@@ -90,7 +90,13 @@ async function updateExistingSession(
             // Previous session was in a different location. Move to current location.
             // Reset logOffset, ordererUrl, and historianUrl when moving session location.
             Lumberjack.info(
-                `Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
+                // eslint-disable-next-line max-len
+                `isSessionSticky: ${JSON.stringify(isSessionSticky)}, document lastAccessTime: ${JSON.stringify(document.lastAccessTime)}, datetime now: ${JSON.stringify(Date.now())}, sessionStickinessDurationMs: ${JSON.stringify(sessionStickinessDurationMs)}.`,
+                lumberjackProperties,
+            );
+            Lumberjack.info(
+                // eslint-disable-next-line max-len
+                `Reset ordererUrl: ${existingSession.ordererUrl} to ${ordererUrl}, historianUrl: ${existingSession.historianUrl} to ${historianUrl}, deltaStreamUrl: ${existingSession.deltaStreamUrl} to ${deltaStreamUrl}`,
                 lumberjackProperties,
             );
             updatedOrdererUrl = ordererUrl;
@@ -100,11 +106,13 @@ async function updateExistingSession(
                 const deli = JSON.parse(document.deli);
                 deli.logOffset = -1;
                 updatedDeli = JSON.stringify(deli);
+                Lumberjack.info(`Reset deli logOffset as -1`, lumberjackProperties);
             }
             if (document.scribe !== "") {
                 const scribe = JSON.parse(document.scribe);
                 scribe.logOffset = -1;
                 updatedScribe = JSON.stringify(scribe);
+                Lumberjack.info(`Reset scribe logOffset as -1`, lumberjackProperties);
             }
         }
     }
@@ -129,6 +137,10 @@ async function updateExistingSession(
                 session: updatedSession,
             },
             null);
+        Lumberjack.info(
+            `The Session ${JSON.stringify(updatedSession)} was updated into the document collection`,
+            lumberjackProperties,
+        );
     } catch (error) {
         Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
         throw new NetworkError(500, "Failed to persist update to document session");
