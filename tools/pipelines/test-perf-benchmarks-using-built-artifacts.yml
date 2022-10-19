@@ -16,18 +16,18 @@ resources:
       - next
       - lts
 
-trigger:
-  branches:
-    include:
-    - release/*
-    - main
-    - next
-    - lts
-  paths:
-    include:
-    - tools/benchmark
-    - tools/telemetry-generator
-    - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
+# trigger:
+#   branches:
+#     include:
+#     - release/*
+#     - main
+#     - next
+#     - lts
+#   paths:
+#     include:
+#     - tools/benchmark
+#     - tools/telemetry-generator
+#     - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
 
 parameters:
 - name: taskBuild
