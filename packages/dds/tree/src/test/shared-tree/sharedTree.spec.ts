@@ -303,7 +303,7 @@ describe("SharedTree", () => {
         const hasValueField = namedTreeSchema({
             name: brand("HasValueField"),
             localFields: {
-                valueChild: fieldSchema(FieldKinds.value, [hasNoFields.name]),
+                [childKey]: fieldSchema(FieldKinds.value, [hasNoFields.name]),
             },
             extraLocalFields: fieldSchema(FieldKinds.sequence),
         });
@@ -318,7 +318,7 @@ describe("SharedTree", () => {
         const initialState = {
             type: hasValueField.name,
             fields: {
-                valueChild: [
+                [childKey]: [
                     {
                         type: hasNoFields.name,
                         value: 1,
