@@ -7,7 +7,6 @@ import React from "react";
 
 import { IFluidContainer, IMember } from "@fluidframework/fluid-static";
 
-import { getInnerContainer } from "../Utilities";
 import { ContainerStateView } from "./ContainerStateView";
 
 /**
@@ -18,6 +17,11 @@ export interface ContainerSummaryViewProps {
      * ID of {@link ContainerSummaryViewProps.container | the container}.
      */
     containerId: string;
+
+    /**
+     * The client ID for the session.
+     */
+    clientId: string | undefined;
 
     /**
      * The Fluid container for which data will be displayed.
@@ -36,25 +40,7 @@ export interface ContainerSummaryViewProps {
  * @param props - See {@link ContainerSummaryViewProps}.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-    const { containerId, container, myself } = props;
-
-    const innerContainer = getInnerContainer(container);
-
-    const [clientId, updateClientId] = React.useState<string | undefined>(innerContainer.clientId);
-
-    React.useEffect(() => {
-        function onConnectionChange(): void {
-            updateClientId(innerContainer.clientId);
-        }
-
-        container.on("connected", onConnectionChange);
-        container.on("disconnected", onConnectionChange);
-
-        return (): void => {
-            container.off("connected", onConnectionChange);
-            container.off("disconnected", onConnectionChange);
-        };
-    }, [container, innerContainer]);
+    const { containerId, clientId, container, myself } = props;
 
     const maybeClientIdView =
         clientId === undefined ? (

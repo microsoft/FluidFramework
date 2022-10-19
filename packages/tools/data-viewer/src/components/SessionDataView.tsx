@@ -57,6 +57,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
 
     const innerContainer = getInnerContainer(container);
 
+    const [clientId, updateClientId] = React.useState<string | undefined>(innerContainer.clientId);
     const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
     const [isContainerDisposed, updateIsContainerDisposed] = React.useState<boolean>(
         container.disposed,
@@ -67,6 +68,10 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
     const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
 
     React.useEffect(() => {
+        function onConnectionChange(): void {
+            updateClientId(innerContainer.clientId);
+        }
+
         function onDispose(): void {
             updateIsContainerDisposed(true);
         }
@@ -80,13 +85,21 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             updateOps([...ops, message]);
         }
 
+        container.on("connected", onConnectionChange);
+        container.on("disconnected", onConnectionChange);
         container.on("disposed", onDispose);
+
         audience.on("membersChanged", onUpdateAudienceMembers);
+
         innerContainer.on("op", onOp);
 
         return (): void => {
+            container.off("connected", onConnectionChange);
+            container.off("disconnected", onConnectionChange);
             container.off("disposed", onDispose);
+
             audience.off("membersChanged", onUpdateAudienceMembers);
+
             innerContainer.off("op", onOp);
         };
     }, [container, innerContainer, audience, ops]);
@@ -107,7 +120,13 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                 view = <AudienceView audience={audience} myself={myself} />;
                 break;
             case RootView.OpsStream:
-                view = <OpsStreamView ops={ops} minimumSequenceNumber={minimumSequenceNumber} />;
+                view = (
+                    <OpsStreamView
+                        ops={ops}
+                        minimumSequenceNumber={minimumSequenceNumber}
+                        clientId={clientId}
+                    />
+                );
                 break;
             default:
                 throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
@@ -120,6 +139,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                 <ContainerSummaryView
                     container={container}
                     containerId={containerId}
+                    clientId={clientId}
                     myself={myself}
                 />
                 <ViewSelectionMenu

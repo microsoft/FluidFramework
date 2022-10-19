@@ -26,13 +26,18 @@ export interface OpsStreamViewProps {
      * Current minimum sequence number of the container.
      */
     minimumSequenceNumber: number;
+
+    /**
+     * The client ID for the session.
+     */
+    clientId: string | undefined;
 }
 
 /**
  * Displays information about the ops stream for the current container.
  */
 export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
-    const { ops, minimumSequenceNumber } = props;
+    const { ops, minimumSequenceNumber, clientId } = props;
 
     const reversedOpsList = [...ops].reverse(); // Copy to avoid mutating input
 
@@ -45,7 +50,7 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
             <h3>Ops</h3>
             <Stack>
                 {reversedOpsList.map((message) => (
-                    <OpView key={message.sequenceNumber} message={message} />
+                    <OpView key={message.sequenceNumber} message={message} clientId={clientId} />
                 ))}
             </Stack>
         </Stack>
@@ -53,16 +58,25 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
 }
 
 interface OpViewProps {
+    /**
+     * The op (message) to render.
+     */
     message: ISequencedDocumentMessage;
+
+    /**
+     * The client ID for the session.
+     */
+    clientId: string | undefined;
 }
 
 function OpView(props: OpViewProps): React.ReactElement {
-    const { message } = props;
+    const { message, clientId } = props;
 
     const opTimeStamp = new Date(message.timestamp);
     const nowTimeStamp = new Date();
 
     const wasOpToday = nowTimeStamp.getDate() === opTimeStamp.getDate();
+    const doesOpBelongToMe = message.clientId === clientId;
 
     const header = (
         <Stack>
@@ -86,7 +100,7 @@ function OpView(props: OpViewProps): React.ReactElement {
                 </div>
                 <div>
                     <b>Client: </b>
-                    {message.clientId}
+                    {`${message.clientId}${doesOpBelongToMe ? " (me)" : ""}`}
                 </div>
                 <div>
                     <b>Type: </b>
