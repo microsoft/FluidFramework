@@ -10,6 +10,7 @@ import {
     IconButton,
     Stack,
     initializeIcons,
+    mergeStyleSets,
 } from "@fluentui/react";
 import React from "react";
 
@@ -58,37 +59,38 @@ export type AccordionProps = React.PropsWithChildren<{
      * @defaultValue `true`
      */
     initiallyCollapsed?: boolean;
+
+    headerStyles?: IStackStyles;
+    contentStyles?: IStackStyles;
 }>;
 
 export function Accordion(props: AccordionProps): React.ReactElement {
-    const { header, children, initiallyCollapsed } = props;
+    const { header, children, initiallyCollapsed, headerStyles, contentStyles } = props;
 
     const [collapsed, setCollapsed] = React.useState<boolean>(initiallyCollapsed ?? true);
 
     return (
-        <>
-            <Stack horizontal={false} styles={accordionStyles}>
-                <Stack.Item styles={accordionHeaderStyles}>
-                    <Stack horizontal={true} onClick={(): void => setCollapsed(!collapsed)}>
-                        <Stack.Item>
-                            <IconButton
-                                iconProps={{
-                                    iconName: collapsed ? "ChevronRight" : "ChevronDown",
-                                }}
-                            />
-                        </Stack.Item>
-                        <Stack.Item align="center">{header}</Stack.Item>
-                    </Stack>
-                </Stack.Item>
-                {!collapsed && (
-                    <Stack.Item
-                        className={AnimationClassNames.slideDownIn20}
-                        styles={accordionConentStyles}
-                    >
-                        {children}
+        <Stack horizontal={false} styles={accordionStyles}>
+            <Stack.Item styles={mergeStyleSets(accordionHeaderStyles, headerStyles)}>
+                <Stack horizontal={true} onClick={(): void => setCollapsed(!collapsed)}>
+                    <Stack.Item>
+                        <IconButton
+                            iconProps={{
+                                iconName: collapsed ? "ChevronRight" : "ChevronDown",
+                            }}
+                        />
                     </Stack.Item>
-                )}
-            </Stack>
-        </>
+                    <Stack.Item align="center">{header}</Stack.Item>
+                </Stack>
+            </Stack.Item>
+            {!collapsed && (
+                <Stack.Item
+                    className={AnimationClassNames.slideDownIn20}
+                    styles={mergeStyleSets(contentStyles, accordionConentStyles)}
+                >
+                    {children}
+                </Stack.Item>
+            )}
+        </Stack>
     );
 }
