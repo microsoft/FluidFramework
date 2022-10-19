@@ -40,6 +40,7 @@ import {
     MergeTreeRevertibleDriver,
     SegmentGroup,
     IMergeTreeObliterateMsg,
+    createObliterateRangeOp,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -157,7 +158,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 }
 
                 case MergeTreeDeltaType.OBLITERATE: {
-                    throw new Error();
+                    const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
+                    if (lastRem?.pos1 === r.position) {
+                        assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
+                        lastRem.pos2 += r.segment.cachedLength;
+                    } else {
+                        ops.push(createObliterateRangeOp(
+                            r.position,
+                            r.position + r.segment.cachedLength));
+                    }
+                    break;
                 }
 
                 default:

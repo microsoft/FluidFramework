@@ -60,6 +60,10 @@ interface RemoveRange extends ClientSpec, RangeSpec {
     type: "removeRange";
 }
 
+interface ObliterateRange extends ClientSpec, RangeSpec {
+    type: "obliterateRange";
+}
+
 // For non-interval collection fuzzing, annotating text would also be useful.
 
 interface AddInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
@@ -97,7 +101,7 @@ interface Synchronize {
 
 type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
 
-type TextOperation = AddText | RemoveRange;
+type TextOperation = AddText | RemoveRange | ObliterateRange;
 
 type ClientOperation = IntervalOperation | TextOperation | ChangeConnectionState;
 
@@ -206,6 +210,10 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return { type: "removeRange", ...exclusiveRange(state), stringId: state.sharedString.id };
     }
 
+    function obliterateRange(state: ClientOpState): ObliterateRange {
+        return { type: "obliterateRange", ...exclusiveRange(state), stringId: state.sharedString.id };
+    }
+
     function addInterval(state: ClientOpState): AddInterval {
         return {
             type: "addInterval",
@@ -285,7 +293,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
-        // [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
+        [obliterateRange, 1, hasNonzeroLength],
         [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
         [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
@@ -367,6 +375,11 @@ function runIntervalCollectionFuzz(
                 const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
                 assert(sharedString);
                 sharedString.removeRange(start, end);
+            }),
+            obliterateRange: statefully(({ clients }, { stringId, start, end }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
+                sharedString.obliterateRange(start, end);
             }),
             addInterval: statefully(({ clients }, { stringId, start, end, collectionName, id }) => {
                 const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
