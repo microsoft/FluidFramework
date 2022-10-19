@@ -41,7 +41,7 @@ import {
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
-import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
@@ -65,7 +65,7 @@ interface GetVersionsTelemetryProps {
 }
 
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
-    private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
+    private readonly odspSummaryUploadManagerPromise: Promise<typeof OdspSummaryUploadManager>;
 
     private firstVersionCall = true;
 
@@ -103,15 +103,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(
-            this.snapshotUrl,
-            getStorageToken,
-            logger,
-            epochTracker,
-            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-            this.relayServiceTenantAndSessionId,
-        );
+        this.odspSummaryUploadManagerPromise = import("./getOdspSummaryUploadManager").then(
+            (m)=> m.getOdspSummaryUploadManager());
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -501,7 +494,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             }
         }
 
-        const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
+        const uploadManager = await this.odspSummaryUploadManagerPromise.then((m) => new m(
+            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+            this.getStorageToken,
+            this.logger,
+            this.epochTracker,
+            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            this.relayServiceTenantAndSessionId,
+        ));
+
+        const id = await uploadManager.writeSummaryTree(summary, context);
         return id;
     }
 
