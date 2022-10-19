@@ -84,7 +84,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public runWithoutOps(callback: () => void) {
+    public ensureNoDataModelChanges(callback: () => void) {
         callback();
     }
 

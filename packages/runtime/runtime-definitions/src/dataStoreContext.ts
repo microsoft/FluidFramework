@@ -376,7 +376,7 @@ export interface IFluidDataStoreContext extends
      *
      * @param callback - the callback to be invoked
      */
-    runWithoutOps(callback: () => void): void;
+    ensureNoDataModelChanges(callback: () => void): void;
 
     /**
      * Submits the message to be sent to other clients.

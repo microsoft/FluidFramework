@@ -433,6 +433,17 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -640,6 +651,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOfflineLoad = false,
             compressionOptions = {},
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -717,6 +729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 enableOfflineLoad,
                 compressionOptions,
                 maxBatchSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -826,7 +839,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
-    private runWithoutOpsCalls = 0;
+    private ensureNoDataModelChangesCalls = 0;
 
     /**
      * Invokes the given callback and expects that no ops are submitted
@@ -836,10 +849,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      *
      * @param callback - the callback to be invoked
      */
-    public runWithoutOps(callback: () => void): void {
-        this.runWithoutOpsCalls++;
-        callback();
-        this.runWithoutOpsCalls--;
+    public ensureNoDataModelChanges(callback: () => void): void {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
     }
 
     public get connected(): boolean {
@@ -856,6 +872,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -977,6 +994,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
+
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
 
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -2760,12 +2781,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private verifyCanSubmitOps() {
-        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") === true) {
+        if (!this.enableOpReentryCheck) {
             return;
         }
 
-        if (this.runWithoutOpsCalls > 0) {
-            throw new UsageError("Op was submitted from within a `runWithoutOps` callback");
+        if (this.ensureNoDataModelChangesCalls > 0) {
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
         }
     }
 

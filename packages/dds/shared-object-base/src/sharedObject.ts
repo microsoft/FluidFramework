@@ -527,10 +527,18 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             let result = false;
 
             // Creating ops while handling a DDS event can lead
-            // to undefined behavior. The runtime must enforce op
-            // coherence by not allowing any ops to be created at
-            // this time.
-            this.runtime.runWithoutOps(() => {
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing any ops to be created during
+            // the event handler
+            this.runtime.ensureNoDataModelChanges(() => {
                 result = super.emit(event, ...args);
             });
             return result;

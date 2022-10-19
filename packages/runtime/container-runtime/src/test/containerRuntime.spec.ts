@@ -213,7 +213,7 @@ describe("Runtime", () => {
                 });
             }));
 
-        describe("Run callback without ops", () => {
+        describe("Op reentry enforcement", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((settings: Record<string, ConfigTypes>): Partial<IContainerContext> => ({
                 attachState: AttachState.Attached,
@@ -226,7 +226,7 @@ describe("Runtime", () => {
                 updateDirtyContainerState: (_dirty: boolean) => { },
             }));
 
-            it("By default, enforce the op reentrancy check via the `runWithoutOps` callback", async () => {
+            it("By default, enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext({}) as IContainerContext,
                     [],
@@ -234,42 +234,64 @@ describe("Runtime", () => {
                     {}, // runtimeOptions
                 );
 
-                assert.throws(() => containerRuntime.runWithoutOps(() =>
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                );
+
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ));
+            });
+
+            it("If option enabled, enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
+
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
                     containerRuntime.submitDataStoreOp("id", "test"),
                 ));
 
-                assert.throws(() => containerRuntime.runWithoutOps(() =>
-                    containerRuntime.runWithoutOps(() =>
-                        containerRuntime.runWithoutOps(() =>
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
                             containerRuntime.submitDataStoreOp("id", "test"),
                         ),
                     ),
                 ));
             });
 
-            it(
-                "If feature disabled, don't enforce the op reentrancy check via the `runWithoutOps` callback",
-                async () => {
-                    containerRuntime = await ContainerRuntime.load(
-                        getMockContext({
-                            "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-                        }) as IContainerContext,
-                        [],
-                        undefined, // requestHandler
-                        {}, // runtimeOptions
-                    );
+            it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({
+                        "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+                    }) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
 
-                    containerRuntime.runWithoutOps(() =>
-                        containerRuntime.submitDataStoreOp("id", "test"),
-                    );
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                );
 
-                    containerRuntime.runWithoutOps(() =>
-                        containerRuntime.runWithoutOps(() =>
-                            containerRuntime.runWithoutOps(() =>
-                                containerRuntime.submitDataStoreOp("id", "test"),
-                            ),
-                        ));
-                });
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ));
+            });
         });
 
         describe("orderSequentially with rollback", () =>

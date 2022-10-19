@@ -229,6 +229,9 @@
       },
       "ClassDeclaration_Interval": {
         "backCompat": false
+      },
+      "EnumDeclaration_DriverErrorType": {
+        "backCompat": false
       }
     }
   }

@@ -184,12 +184,12 @@ export class FluidDataStoreRuntime extends
      *
      * @param callback - the callback to be invoked
      */
-    public runWithoutOps(callback: () => void): void {
+    public ensureNoDataModelChanges(callback: () => void): void {
         // back-compat
-        if (this.dataStoreContext.runWithoutOps === undefined) {
+        if (this.dataStoreContext.ensureNoDataModelChanges === undefined) {
             callback();
         } else {
-            this.dataStoreContext.runWithoutOps(callback);
+            this.dataStoreContext.ensureNoDataModelChanges(callback);
         }
     }
 

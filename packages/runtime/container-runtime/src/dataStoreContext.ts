@@ -179,8 +179,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime;
     }
 
-    public runWithoutOps(callback: () => void): void {
-        this._containerRuntime.runWithoutOps(callback);
+    public ensureNoDataModelChanges(callback: () => void): void {
+        this._containerRuntime.ensureNoDataModelChanges(callback);
     }
 
     public get isLoaded(): boolean {

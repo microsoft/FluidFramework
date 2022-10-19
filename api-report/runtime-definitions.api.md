@@ -178,6 +178,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges(callback: () => void): void;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
@@ -195,7 +196,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
-    runWithoutOps(callback: () => void): void;
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)

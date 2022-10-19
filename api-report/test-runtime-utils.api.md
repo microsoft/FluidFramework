@@ -291,6 +291,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
+    ensureNoDataModelChanges(callback: () => void): void;
+    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -324,8 +326,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     options: ILoaderOptions;
     // (undocumented)
     packagePath: readonly string[];
-    // (undocumented)
-    runWithoutOps(callback: () => void): void;
     // (undocumented)
     scope: FluidObject;
     // (undocumented)
@@ -377,6 +377,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
+    // (undocumented)
+    ensureNoDataModelChanges(callback: () => void): void;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -434,8 +436,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): IFluidHandleContext;
-    // (undocumented)
-    runWithoutOps(callback: () => void): void;
     // (undocumented)
     save(message: string): void;
     // (undocumented)
