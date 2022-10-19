@@ -18,12 +18,6 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 {{< /callout >}}
 
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
-
 ## Create the project
 
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `/My Microsoft Teams Projects`.
@@ -48,6 +42,12 @@ You may need to install an additional dependency to make this demo compatible wi
     ```dotnetcli
     npm install @fluidframework/azure-client fluid-framework @fluidframework/test-client-utils
     ```
+
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
 
 ## Code the project
 
