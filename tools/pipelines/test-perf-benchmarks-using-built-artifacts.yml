@@ -51,6 +51,10 @@ parameters:
   type: string
   default: client
 
+- name: testPackage
+  type: string
+  default: "@fluidframework/test-end-to-end-tests"
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
