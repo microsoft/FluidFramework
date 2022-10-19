@@ -3,6 +3,7 @@
   "exports": ["index"],
   // Depending on "shared-tree-core" so implementations of Indexes can be here.
   // Could move the index abstraction elsewhere instead.
+  // See file://./README.md for more details.
   "imports": [
     "change-family",
     "checkout",

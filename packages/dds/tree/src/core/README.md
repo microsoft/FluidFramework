@@ -7,3 +7,5 @@ This mainly exists to simplify imports (and `fence.json` files) for code like [f
 
 The core libraries could be nested inside this directory (as is done with [feature-libraries](../feature-libraries/README.md));
 for now this was avoided to keep the nesting levels lower and avoid having to move a lot of code.
+
+See the [Package Readme](../../README.md) for more details about `core` fits into the larger dependency graph.
