@@ -44,6 +44,12 @@ function makeRoot(): MapTree {
     };
 }
 
+/**
+ * Reference implementation of IEditableForest.
+ *
+ * This implementation focuses on correctness and simplicity, not performance.
+ * It does not use compressed chunks: instead nodes are implemented using objects.
+ */
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
