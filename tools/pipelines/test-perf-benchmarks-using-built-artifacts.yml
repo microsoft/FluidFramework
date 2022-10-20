@@ -227,6 +227,22 @@ stages:
         #       tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
         #       mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
+
+        - task: Bash@3
+          name: Initialize
+          displayName: Initialize
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}
+            script: |
+              echo Initialize package
+              echo ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+              echo ls -la ${{ variables.testWorkspace }}/node_modules/
+              ls -la ${{ variables.testWorkspace }}/node_modules/
+              echo ls -la ${{ variables.testWorkspace }}/
+              ls -la ${{ variables.testWorkspace }}/
+
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
         # - Authenticate to the custom npm feeds
