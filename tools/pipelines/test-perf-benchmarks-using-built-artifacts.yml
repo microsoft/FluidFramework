@@ -239,7 +239,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run test:benchmark:report'
+            customCommand: 'run test:realsvc:odsp:report'
 
         # Copy files
         # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
