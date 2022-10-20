@@ -180,16 +180,17 @@ describe("SharedTree", () => {
 
         // Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
         // in summaries or not.
-        validateTree(tree1, ["A", "B", "C"]);
-        validateTree(tree2, ["A", "B", "C"]);
-        validateTree(tree3, ["A", "B", "C"]);
-        // tree4 should only get the correct end state if was able to get the adequate
+        const expectedValues = ["A", "B", "C"];
+        validateTree(tree1, expectedValues);
+        validateTree(tree2, expectedValues);
+        validateTree(tree3, expectedValues);
+        // tree4 should only get the correct end state if it was able to get the adequate
         // EditManager state from the summary. Specifically, in order to correctly rebase the insert
         // of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
         // rebase the insertion of  B over that edit.
         // Without that, it will interpret the insertion of B based on the current state, yielding
         // the order ACB.
-        validateTree(tree4, ["A", "B", "C"]);
+        validateTree(tree4, expectedValues);
     });
 
     describe("Editing", () => {
