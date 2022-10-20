@@ -229,8 +229,8 @@ stages:
 
 
         - task: Bash@3
-          name: Initialize
-          displayName: Initialize
+          name: Print dir
+          displayName: Print dir
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}
