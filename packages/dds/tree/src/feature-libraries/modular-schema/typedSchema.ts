@@ -13,7 +13,7 @@ import {
     TreeSchemaIdentifier,
     namedTreeSchema,
     NamedTreeSchema,
-} from "../../schema-stored";
+} from "../../core";
 import { FieldKind } from "./fieldKind";
 
 /**

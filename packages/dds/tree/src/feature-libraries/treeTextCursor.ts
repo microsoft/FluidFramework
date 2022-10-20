@@ -13,7 +13,7 @@ import {
     mapCursorFieldNew as mapCursorField,
     ITreeCursorSynchronous,
     setGenericTreeField,
-} from "../tree";
+} from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**

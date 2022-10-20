@@ -20,8 +20,8 @@ import {
     fieldSchema,
     namedTreeSchema,
     SchemaData,
-} from "../../schema-stored";
-import { EmptyKey } from "../../tree";
+    EmptyKey,
+} from "../../core";
 import { brand } from "../../util";
 
 const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
