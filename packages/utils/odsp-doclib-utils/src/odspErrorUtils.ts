@@ -178,6 +178,10 @@ export function createOdspNetworkError(
 
     switch (statusCode) {
         case 400:
+            if (innerMostErrorCode === "fluidInvalidSchema") {
+                error = new FluidInvalidSchemaError(errorMessage, driverProps);
+                break;
+            }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.genericNetworkError, driverProps);
             break;
@@ -259,9 +263,6 @@ export function createOdspNetworkError(
             break;
     }
 
-    if (innerMostErrorCode === "fluidInvalidSchema" && error.errorType === DriverErrorType.genericNetworkError) {
-        error = new FluidInvalidSchemaError(errorMessage, driverProps);
-    }
     enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }
