@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { IStackItemStyles, IconButton, Stack, TooltipHost } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
 import React, { useEffect, useState } from "react";
 
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -10,7 +11,6 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 
 import { getInnerContainer } from "../Utilities";
-import { DataObjectsView } from "./DataObjectsView";
 
 // TODOs:
 // - Container Read/Write permissions
@@ -96,34 +96,39 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             </div>
         );
     } else {
-        const initialObjects = container.initialObjects;
-
-        const maybeResolvedUrlDiv =
+        const maybeResolvedUrlView =
             resolvedUrl === undefined ? (
                 <></>
             ) : (
-                <div>
+                <Stack.Item>
                     <b>Resolved URL: </b>
                     {resolvedUrlToString(resolvedUrl)}
-                </div>
+                </Stack.Item>
             );
 
         innerView = (
             <Stack>
-                <div>
-                    <b>Connection state: </b>
-                    {connectionStateToString(connectionState)}
-                </div>
-                <div>
+                <Stack.Item>
                     <b>Attach state: </b>
                     {attachState}
-                </div>
-                {maybeResolvedUrlDiv}
-                <div>
+                </Stack.Item>
+                <Stack.Item>
+                    <b>Connection state: </b>
+                    {connectionStateToString(connectionState)}
+                </Stack.Item>
+                {maybeResolvedUrlView}
+                <Stack.Item>
                     <b>Local edit state: </b>
                     {isDirty ? "Pending local edits" : "No pending local edits"}
-                </div>
-                <DataObjectsView initialObjects={initialObjects} />
+                </Stack.Item>
+                <Stack.Item align="end">
+                    <ActionsBar
+                        connectionState={connectionState}
+                        tryConnect={(): void => container.connect()}
+                        forceDisconnect={(): void => container.disconnect()}
+                        disposeContainer={(): void => container.dispose()}
+                    />
+                </Stack.Item>
             </Stack>
         );
     }
@@ -142,6 +147,63 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                 {containerId}
             </div>
             {innerView}
+        </Stack>
+    );
+}
+
+interface ActionsBarProps {
+    connectionState: ConnectionState;
+    tryConnect(): void;
+    forceDisconnect(): void;
+    disposeContainer(): void;
+}
+
+function ActionsBar(props: ActionsBarProps): React.ReactElement {
+    const { connectionState, tryConnect, forceDisconnect, disposeContainer } = props;
+
+    const connectButtonTooltipId = useId("connect-button-tooltip");
+    const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
+    const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
+
+    const changeConnectionStateButton =
+        connectionState === ConnectionState.Disconnected ? (
+            <TooltipHost content="Connect" id={connectButtonTooltipId}>
+                <IconButton
+                    onClick={tryConnect}
+                    menuIconProps={{ iconName: "PlugConnected" }}
+                    aria-describedby={connectButtonTooltipId}
+                ></IconButton>
+            </TooltipHost>
+        ) : (
+            <TooltipHost content="Disconnect" id={disconnectButtonTooltipId}>
+                <IconButton
+                    onClick={forceDisconnect}
+                    menuIconProps={{ iconName: "PlugDisconnected" }}
+                    aria-describedby={disconnectButtonTooltipId}
+                ></IconButton>
+            </TooltipHost>
+        );
+
+    const disposeContainerButton = (
+        <TooltipHost content="Dispose container" id={disposeContainerButtonTooltipId}>
+            <IconButton
+                onClick={disposeContainer}
+                menuIconProps={{ iconName: "Delete" }}
+                aria-describedby={disposeContainerButtonTooltipId}
+            ></IconButton>
+        </TooltipHost>
+    );
+
+    const itemStyles: IStackItemStyles = {
+        root: {
+            padding: "5px",
+        },
+    };
+
+    return (
+        <Stack horizontal>
+            <Stack.Item styles={itemStyles}>{changeConnectionStateButton}</Stack.Item>
+            <Stack.Item styles={itemStyles}>{disposeContainerButton}</Stack.Item>
         </Stack>
     );
 }

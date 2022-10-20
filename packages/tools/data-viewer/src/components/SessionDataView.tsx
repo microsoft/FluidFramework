@@ -66,6 +66,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
         innerContainer.deltaManager.minimumSequenceNumber,
     );
     const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
+    // const [pendingLocalOps, updatePendingLocalOps] = React.useState(innerContainer.deltaManager.)
 
     React.useEffect(() => {
         function onConnectionChange(): void {
@@ -112,15 +113,16 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
     if (isContainerDisposed) {
         view = <div>The container has been disposed.</div>;
     } else {
+        let innerView: React.ReactElement;
         switch (rootViewSelection) {
             case RootView.Container:
-                view = <ContainerDataView containerId={containerId} container={container} />;
+                innerView = <ContainerDataView containerId={containerId} container={container} />;
                 break;
             case RootView.Audience:
-                view = <AudienceView audience={audience} myself={myself} />;
+                innerView = <AudienceView audience={audience} myself={myself} />;
                 break;
             case RootView.OpsStream:
-                view = (
+                innerView = (
                     <OpsStreamView
                         ops={ops}
                         minimumSequenceNumber={minimumSequenceNumber}
@@ -131,6 +133,15 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             default:
                 throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
         }
+        view = (
+            <Stack>
+                <ViewSelectionMenu
+                    currentSelection={rootViewSelection}
+                    updateSelection={updateRootViewSelection}
+                />
+                {innerView}
+            </Stack>
+        );
     }
 
     return (
@@ -140,10 +151,6 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                 containerId={containerId}
                 clientId={clientId}
                 myself={myself}
-            />
-            <ViewSelectionMenu
-                currentSelection={rootViewSelection}
-                updateSelection={updateRootViewSelection}
             />
             <div style={{ width: "400px", height: "100%", overflowY: "auto" }}>{view}</div>
         </Stack>
@@ -165,7 +172,6 @@ interface ViewSelectionMenuProps {
 }
 
 function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     const { currentSelection, updateSelection } = props;
 
     const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([value, flag]) => ({
