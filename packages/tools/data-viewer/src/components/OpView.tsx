@@ -1,9 +1,14 @@
 import { Stack } from "@fluentui/react";
 import React from "react";
+import ReactJson from "react-json-view";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { Accordion } from "./Accordion";
+
+// TODOs:
+// - Copy raw data to clipboard button (outside of json viewer)
+// - Raw data as modal dialogue rather than drop-down
 
 /**
  * {@link OpView} input props.
@@ -41,6 +46,18 @@ export function OpView(props: OpViewProps): React.ReactElement {
         </Stack>
     );
 
+    let dataView: React.ReactElement = <></>;
+    if (message.data !== undefined) {
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+        const json = JSON.parse(message.data);
+        dataView = (
+            <Accordion header={<b>Raw Data</b>}>
+                <ReactJson src={json} />
+            </Accordion>
+        );
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment */
+    }
+
     const headerBackgroundColor = !message.clientId
         ? "lightyellow"
         : doesOpBelongToMe
@@ -77,8 +94,9 @@ export function OpView(props: OpViewProps): React.ReactElement {
                     <b>Reference sequence number: </b>
                     {message.referenceSequenceNumber}
                 </div>
+                {dataView}
                 <div>
-                    <b></b>TODO: what else?
+                    <b>TODO: what else?</b>
                 </div>
             </Stack>
         </Accordion>

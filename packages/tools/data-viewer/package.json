@@ -52,9 +52,9 @@
     "@fluidframework/fluid-static": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/tinylicious-client": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
-    "css-loader": "^1.0.0",
-    "react": "^17.0.1"
+    "@fluidframework/protocol-definitions": "^1.1.0",
+    "react": "^17.0.1",
+    "react-json-view": "^1.21.3"
   },
   "devDependencies": {
     "@fluid-example/collaborative-textarea": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
