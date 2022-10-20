@@ -123,7 +123,8 @@ module.exports = {
         "unicorn/prefer-ternary": "error",
         "unicorn/prefer-type-error": "error",
 
-        // DISABLED INTENTIONALLY
+        // #region DISABLED INTENTIONALLY
+
         // Disabled because we don't require that all variable declarations be explicitly typed.
         "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
@@ -142,14 +143,13 @@ module.exports = {
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
         "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
 
-        // FORMATTING RULES
-        "@typescript-eslint/brace-style": [
-            "error",
-            "1tbs",
-            {
-                allowSingleLine: true,
-            },
-        ],
+        // Disabled because they conflict with prettier
+        "unicorn/no-nested-ternary": "off",
+
+        // #endregion
+
+        // #region Formatting Rules
+        "@typescript-eslint/brace-style": "off",
         "@typescript-eslint/comma-spacing": "error",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/keyword-spacing": "error",
@@ -187,6 +187,8 @@ module.exports = {
         "key-spacing": "error",
         "space-unary-ops": "error",
         "switch-colon-spacing": "error",
+
+        // #endregion
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
