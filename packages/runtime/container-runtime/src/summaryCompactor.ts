@@ -19,14 +19,16 @@ import {
 import { getBlobSize } from "@fluidframework/runtime-utils";
 
 /**
- * Compress {@link ISummaryTreeWithStats} summaries by replacing elements of type {@link SummaryTree.Blob}
- * with references (elements of type {@link SummaryTree.Handle}) to the blobs stored in the previous summary snapshot.
+ * Compact {@link ISummaryTreeWithStats} summaries by reusing data fragments from previous snapshots.
+ * The algorithm replaces elements of type {@link SummaryTree.Blob} with references, which are elements
+ * of type {@link SummaryTree.Handle}, to the blobs stored in the previous summary snapshot.
+ * Compaction is only possible when the summarization process produces stable results.
  * @param summaryWithStats - The summary with stats to compress. Stays immutable.
  * @param previousSnapshot - The previous summary snapshot
  * @param readBlob - Function to access blob contents by blob id
  * @returns A logically compressed `summaryWithStats`. The stats are updated according to the compression choices.
  */
-export async function compressSummaryTree(
+export async function compactSummaryTree(
     summaryWithStats: ISummaryTreeWithStats,
     previousSnapshot: ISnapshotTree | undefined,
     readBlob: (id: string) => Promise<ArrayBufferLike>,
@@ -38,7 +40,7 @@ export async function compressSummaryTree(
         );
         const stats: ISummaryStats = fastCloneStats(summaryWithStats.stats);
         const summary: ISummaryTree = fastCloneTree(summaryWithStats.summary);
-        await compressTree(stats, summary, parentPaths);
+        await compactTree(stats, summary, parentPaths);
         return { stats, summary };
     } else {
         return summaryWithStats;
@@ -70,7 +72,7 @@ async function sha256(content: string | Uint8Array): Promise<string> {
  * @param summaryTree - The {@link ISummaryTree} to compress
  * @param parentPaths - The blob-path-by-hash lookup table available for reuse (eg. from a previous summary)
  */
-async function compressTree(
+async function compactTree(
     stats: ISummaryStats,
     summaryTree: ISummaryTree,
     parentPaths: Map<string, string>,
@@ -98,7 +100,7 @@ async function compressTree(
                 break;
             }
             case SummaryType.Tree: {
-                await compressTree(stats, value, parentPaths);
+                await compactTree(stats, value, parentPaths);
                 break;
             }
             default: {

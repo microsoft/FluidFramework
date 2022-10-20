@@ -22,16 +22,16 @@ import {
 import { IsoBuffer } from "@fluidframework/common-utils";
 
 import {
-    compressSummaryTree,
+    compactSummaryTree,
     fastCloneStats,
     fastCloneTree,
-} from "../summaryCompressor";
+} from "../summaryCompactor";
 
 describe("Runtime", () => {
     describe("Summarization", () => {
-        describe("Summary Logical Compressor", () => {
+        describe("Summary Compactor", () => {
             describe("Fast cloning", () => {
-                it("should accurately clone stats", () => {
+                it("Should accurately clone stats", () => {
                     const orig: ISummaryStats = {
                         treeNodeCount: 1,
                         blobNodeCount: 2,
@@ -52,7 +52,7 @@ describe("Runtime", () => {
                         orig.unreferencedBlobSize
                     );
                 });
-                it("should accurately clone handles from the summary tree", () => {
+                it("Should accurately clone handles from the summary tree", () => {
                     const orig: ISummaryTree = testDataSummaryTree();
                     const copy: ISummaryTree = fastCloneTree(orig);
                     const origHandlePath =
@@ -74,7 +74,7 @@ describe("Runtime", () => {
                     );
                     assert.deepStrictEqual(origHandlePath, copyHandlePath);
                 });
-                it("should accurately reference blobs from the summary tree", () => {
+                it("Should accurately reference blobs from the summary tree", () => {
                     const orig: ISummaryTree = testDataSummaryTree();
                     const copy: ISummaryTree = fastCloneTree(orig);
                     const origBlob =
@@ -96,14 +96,14 @@ describe("Runtime", () => {
                     );
                     assert.deepStrictEqual(origBlob, copyBlob);
                 });
-                it("should accurately clone full summary trees", () => {
+                it("Should accurately clone full summary trees", () => {
                     const orig: ISummaryTree = testDataSummaryTree();
                     const copy: ISummaryTree = fastCloneTree(orig);
                     assert.deepStrictEqual(copy, orig);
                 });
             });
-            describe("Logical compression", () => {
-                it("should reduce summary size", async () => {
+            describe("Compaction", () => {
+                it("Should reduce summary size", async () => {
                     const previousSnapshot: ISnapshotTree =
                         testDataSnapshotTree();
                     const originalStats: ISummaryStats = {
@@ -118,18 +118,10 @@ describe("Runtime", () => {
                         stats: originalStats,
                         summary: originalSummary,
                     };
-                    const compressedSummary = await compressSummaryTree(
+                    const compressedSummary = await compactSummaryTree(
                         originalSummaryWithStats,
                         previousSnapshot,
                         readBlob
-                    );
-                    assert.strictEqual(
-                        compressedSummary.stats.blobNodeCount,
-                        originalStats.blobNodeCount - 6
-                    );
-                    assert.strictEqual(
-                        compressedSummary.stats.handleNodeCount,
-                        originalStats.handleNodeCount + 6
                     );
 
                     const expectedSizeReduction =
@@ -145,7 +137,32 @@ describe("Runtime", () => {
                         originalStats.totalBlobSize - expectedSizeReduction
                     );
                 });
-                it("should create handles to blobs from the previous snapshot", async () => {
+                it("Should reduce the number of blobs and increment the number of handles correspondingly", async () => {
+                    const previousSnapshot: ISnapshotTree =
+                        testDataSnapshotTree();
+                    const originalStats: ISummaryStats = {
+                        treeNodeCount: 5,
+                        blobNodeCount: 13,
+                        handleNodeCount: 1,
+                        totalBlobSize: 12345,
+                        unreferencedBlobSize: 0,
+                    };
+                    const originalSummary: ISummaryTree = testDataSummaryTree();
+                    const originalSummaryWithStats: ISummaryTreeWithStats = {
+                        stats: originalStats,
+                        summary: originalSummary,
+                    };
+                    const compressedSummary = await compactSummaryTree(
+                        originalSummaryWithStats,
+                        previousSnapshot,
+                        readBlob
+                    );
+                    const blobCountDecrease = originalStats.blobNodeCount - compressedSummary.stats.blobNodeCount;
+                    const blobHandleIncrease = compressedSummary.stats.handleNodeCount - originalStats.handleNodeCount;
+                    assert.strictEqual(blobCountDecrease, 6);
+                    assert.strictEqual(blobHandleIncrease, blobCountDecrease);
+                });
+                it("Should create handles to the blobs from the previous snapshot", async () => {
                     const previousSnapshot: ISnapshotTree =
                         testDataSnapshotTree();
                     const originalStats: ISummaryStats = {
@@ -192,7 +209,7 @@ describe("Runtime", () => {
                         SummaryType.Blob
                     );
 
-                    const compressedSummary = await compressSummaryTree(
+                    const compressedSummary = await compactSummaryTree(
                         originalSummaryWithStats,
                         previousSnapshot,
                         readBlob

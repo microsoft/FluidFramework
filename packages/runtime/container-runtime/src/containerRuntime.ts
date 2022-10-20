@@ -109,7 +109,7 @@ import {
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { compress, decompress } from "lz4js";
-import { compressSummaryTree } from "./summaryCompressor";
+import { compactSummaryTree } from "./summaryCompactor";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -2538,7 +2538,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const handleNodeCountBefore = summarizeResult.stats.handleNodeCount;
                 console.log(JSON.stringify(summarizeResult.summary, null, 2));
                 // eslint-disable-next-line max-len
-                summarizeResult = await compressSummaryTree(summarizeResult, snapshotTree, this.storage.readBlob.bind(this.storage));
+                summarizeResult = await compactSummaryTree(summarizeResult, snapshotTree, this.storage.readBlob.bind(this.storage));
                 console.log(`Handle node count after: ${summarizeResult.stats.handleNodeCount}`);
                 console.log(`Blob node count after: ${summarizeResult.stats.blobNodeCount}`);
                 console.log(`Total blob size after: ${summarizeResult.stats.totalBlobSize} bytes`);
