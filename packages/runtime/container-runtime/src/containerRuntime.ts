@@ -745,7 +745,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
-     public static async load2(
+     public static async loadRuntime(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         existing: boolean,
