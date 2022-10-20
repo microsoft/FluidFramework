@@ -105,8 +105,11 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
         mainContainer = await createContainer();
         mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
