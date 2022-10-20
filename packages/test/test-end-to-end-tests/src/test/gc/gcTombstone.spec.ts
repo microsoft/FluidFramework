@@ -51,8 +51,8 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         [],
     );
     const inactiveTimeoutMs = 0;
-    const wait = 250;
-    const sweepTimeoutMs = 500;
+    const wait = 100;
+    const sweepTimeoutMs = 200;
 
     const gcOptions: IGCRuntimeOptions = {
         gcAllowed: true,
