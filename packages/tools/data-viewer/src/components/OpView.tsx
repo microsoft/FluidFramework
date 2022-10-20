@@ -91,6 +91,10 @@ export function OpView(props: OpViewProps): React.ReactElement {
                     {message.type}
                 </div>
                 <div>
+                    <b>Client sequence number: </b>
+                    {message.clientSequenceNumber}
+                </div>
+                <div>
                     <b>Reference sequence number: </b>
                     {message.referenceSequenceNumber}
                 </div>
