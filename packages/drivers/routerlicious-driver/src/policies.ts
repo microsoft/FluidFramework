@@ -48,4 +48,10 @@ export interface IRouterliciousDriverPolicies {
      * Default: true
      */
     enableInternalSummaryCaching: boolean;
+
+    /**
+     * Enable write mode by default
+     * Default: true
+     */
+    enableWriteModeByDefault: boolean;
 }
