@@ -191,8 +191,11 @@ export class BaseProxyTarget {
     private anchor?: Anchor;
 
     constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
-        if (cursor === undefined) {
-            // Undefined cursor means that this target is used to proxify an empty field/node.
+        // Letting the non-current cursor to be forked currently has no issues
+        // and can't be tested yet, but will become an issue e.g. in getting wrapped nodes directly.
+        // TODO: test
+        if (cursor === undefined || cursor.state !== ITreeSubscriptionCursorState.Current) {
+            // Undefined or not current cursor means that this target is used to proxify an empty field/node.
             // `neverAnchor` is used to indicate this, and `neverCursor` is just a placeholder for `lazyCursor`.
             // They are used to not overlap with "alive" cursors and anchors of a non-empty target.
             // Note that in this context `undefined` anchor is just a not yet created anchor.
@@ -268,7 +271,7 @@ export class ProxyTarget extends BaseProxyTarget {
     /**
      * @param context - the common context of EditableTrees and EditableFields.
      * @param cursor - the cursor must point to the first node of the field or be undefined.
-     * Undefined cursor means that this target is used to proxify an empty node.
+     * Undefined or not current cursor means that this target is used to proxify an empty node.
      */
     constructor(public readonly context: ProxyContext, cursor?: ITreeSubscriptionCursor) {
         super(context, cursor);
@@ -500,7 +503,7 @@ class SequenceProxyTarget extends BaseProxyTarget implements ArrayLike<Unwrapped
     /**
      * @param context - the common context of EditableTrees and EditableFields.
      * @param cursor - the cursor must point to the first node of the field or be undefined.
-     * Undefined cursor means that this target is used to proxify an empty field.
+     * Undefined or not current cursor means that this target is used to proxify an empty field.
      * @param fieldKey - the key of the field being proxified.
      * @param fieldSchema - the schema of the field being proxified.
      * @param primaryType - the `TreeSchemaIdentifier` of the parent node having this primary field (see 'getPrimaryField').

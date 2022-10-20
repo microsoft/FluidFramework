@@ -114,10 +114,6 @@ export function getArrayOwnKeys(length: number): string[] {
 
 export function keyIsValidIndex(key: string | number, length: number): boolean {
     const index = Number(key);
-    return (
-        (typeof key === "number" || String(index) === key) &&
-        Number.isInteger(index) &&
-        0 <= index &&
-        index < length
-    );
+    if (typeof key === "string" && String(index) !== key) return false;
+    return Number.isInteger(index) && 0 <= index && index < length;
 }

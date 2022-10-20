@@ -153,7 +153,7 @@ describe("editable-tree", () => {
         assert(valueSymbol in hasValue);
     });
 
-    it("sequence roots are arrays", () => {
+    it("sequence roots are sequence fields", () => {
         const rootSchema = fieldSchema(FieldKinds.sequence, [optionalChildSchema.name]);
         const schemaData: SchemaData = {
             treeSchema: schemaMap,
