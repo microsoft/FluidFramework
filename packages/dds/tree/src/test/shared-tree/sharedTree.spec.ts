@@ -48,7 +48,7 @@ describe("SharedTree", () => {
         const destination = forest.root(provider.trees[0].forest.rootField);
         const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
         assert.equal(cursorResult, TreeNavigationResult.Ok);
-        assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+        assert.equal(readCursor.nextNode(), false);
         readCursor.free();
         forest.forgetAnchor(destination);
     });
@@ -150,8 +150,8 @@ describe("SharedTree", () => {
                 const destination = tree2.forest.root(tree2.forest.rootField);
                 const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult1, TreeNavigationResult.Ok);
-                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
-                assert.equal(cursorResult2, TreeNavigationResult.Ok);
+                readCursor.enterField(globalFieldKeySymbol);
+                assert(readCursor.firstNode());
                 const { value } = readCursor;
                 assert.equal(value, 43);
                 readCursor.free();
@@ -180,8 +180,8 @@ describe("SharedTree", () => {
                 const destination = tree2.forest.root(tree2.forest.rootField);
                 const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult1, TreeNavigationResult.Ok);
-                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
-                assert.equal(cursorResult2, TreeNavigationResult.NotFound);
+                readCursor.enterField(globalFieldKeySymbol);
+                assert(!readCursor.firstNode());
             }
         });
 
@@ -211,9 +211,9 @@ describe("SharedTree", () => {
                 const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult, TreeNavigationResult.Ok);
                 assert.equal(readCursor.value, 1);
-                assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+                assert.equal(readCursor.nextNode(), true);
                 assert.equal(readCursor.value, 2);
-                assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+                assert.equal(readCursor.nextNode(), false);
                 readCursor.free();
                 tree2.forest.forgetAnchor(destination);
             }

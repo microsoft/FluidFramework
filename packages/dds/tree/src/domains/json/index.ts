@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { singleJsonCursor, cursorToJsonObject as cursorToJsonObjectNew } from "./jsonCursor";
-export { JsonCursor, cursorToJsonObject } from "./jsonCursorLegacy";
+export { singleJsonCursor, cursorToJsonObject } from "./jsonCursor";
 export * from "./jsonDomainSchema";

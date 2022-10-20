@@ -7,7 +7,6 @@ import {
     ChangeEncoder,
     ChangeFamily,
     ProgressiveEditBuilder,
-    ITreeCursor,
     ChangeRebaser,
     FieldKindIdentifier,
     AnchorSet,
@@ -16,6 +15,7 @@ import {
     ITreeCursorSynchronous,
     UpPath,
     Value,
+    ITreeCursor,
 } from "../core";
 import { brand } from "../util";
 import {
