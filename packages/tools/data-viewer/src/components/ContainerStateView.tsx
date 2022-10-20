@@ -60,8 +60,10 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 
     return (
         <Stack horizontal>
-            {children.map((child) => (
-                <Stack.Item styles={{ root: { paddingRight: 5 } }}>{child}</Stack.Item>
+            {children.map((child, index) => (
+                <Stack.Item key={`state-child-${index}`} styles={{ root: { paddingRight: 5 } }}>
+                    {child}
+                </Stack.Item>
             ))}
         </Stack>
     );
