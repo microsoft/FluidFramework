@@ -48,6 +48,7 @@ export {
     keyAsDetachedField,
     rootFieldKey,
     NodeData,
+    rootFieldKeySymbol,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 

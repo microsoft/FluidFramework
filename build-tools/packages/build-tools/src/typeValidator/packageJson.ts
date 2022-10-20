@@ -143,7 +143,7 @@ export type PreviousVersionStyle =
 export async function getAndUpdatePackageDetails(
     packageDir: string,
     writeUpdates: boolean | undefined,
-    previousVersionStyle: PreviousVersionStyle = "baseMinor",
+    previousVersionStyle: PreviousVersionStyle,
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {

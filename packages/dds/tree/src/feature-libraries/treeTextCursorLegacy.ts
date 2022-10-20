@@ -9,8 +9,6 @@ import {
     TreeNavigationResult,
     mapCursorField,
     SynchronousNavigationResult,
-} from "../forest";
-import {
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
@@ -21,7 +19,7 @@ import {
     TreeType,
     UpPath,
     Value,
-} from "../tree";
+} from "../core";
 import { fail } from "../util";
 
 /**

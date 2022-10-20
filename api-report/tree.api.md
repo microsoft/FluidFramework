@@ -631,7 +631,7 @@ export interface ITreeCursorSynchronous extends ITreeCursorNew {
 }
 
 // @public
-export interface ITreeSubscriptionCursor extends ITreeCursor {
+export interface ITreeSubscriptionCursor extends ITreeCursorNew {
     buildAnchor(): Anchor;
     clear(): void;
     // (undocumented)

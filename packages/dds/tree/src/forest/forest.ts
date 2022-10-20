@@ -5,8 +5,8 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
-import { Anchor, DetachedField } from "../tree";
-import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
+import { Anchor, DetachedField, ITreeCursorNew } from "../tree";
+import { TreeNavigationResult } from "./cursorLegacy";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -72,7 +72,7 @@ export interface IForestSubscription extends Dependee {
 /**
  * ITreeCursor supporting IForestSubscription and its changes over time.
  */
-export interface ITreeSubscriptionCursor extends ITreeCursor {
+export interface ITreeSubscriptionCursor extends ITreeCursorNew {
     /**
      * Where observations get recorded for invalidation.
      * When modified, future observations will count toward the new one.

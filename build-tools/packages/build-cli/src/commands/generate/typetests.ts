@@ -52,7 +52,6 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             char: "s",
             description:
                 "The type of version constraint to use for previous versions. Only applies to the prepare phase.",
-            exclusive: ["generate"],
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -63,7 +62,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "baseMinor",
                 "baseMajor",
             ],
-            default: "baseMinor",
+            required: true,
         }),
         exact: Flags.string({
             description:
