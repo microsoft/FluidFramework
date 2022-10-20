@@ -76,13 +76,13 @@ describe("Garbage Collection Tests", () => {
             });
             it("setting does not contain 'interactiveClient' - do not close the container", () => {
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "summarizer or whatever";
-                createHandler().usageDetectedInInteractiveClient({});
+                createHandler().usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'interactiveClient'");
             });
             it("NoopStorage - close the container back-to-back", () => {
                 const handler = createHandler("key1", true /* forceNoopStorage */);
-                handler.usageDetectedInInteractiveClient({});
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Should have closed back-to-back with noopStorage defined. errors:\n${closeErrors}`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
                 mockLogger.assertMatch([{ eventName: "SweepReadyUsageDetectionHandlerNoopStorage" }]);
@@ -90,8 +90,8 @@ describe("Garbage Collection Tests", () => {
             it("SkipClosure Period undefined - close the container back-to-back", () => {
                 mockLocalStorage[skipClosureForXDaysKey] = undefined;
                 const handler = createHandler();
-                handler.usageDetectedInInteractiveClient({});
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Should have closed back-to-back with no Skip Closure Period defined. errors:\n${closeErrors}`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
@@ -99,17 +99,17 @@ describe("Garbage Collection Tests", () => {
                 const handler = createHandler();
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
@@ -119,23 +119,23 @@ describe("Garbage Collection Tests", () => {
                 const handler2 = createHandler("key2");
 
                 clock.tick(10);
-                handler1a.usageDetectedInInteractiveClient({});
+                handler1a.usageDetectedInInteractiveClient("Changed", {});
                 assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
                 // The other handler on key1 should be blocked
                 clock.tick(10);
-                handler1b.usageDetectedInInteractiveClient({});
+                handler1b.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 // But the handler on key2 should NOT be blocked
-                handler2.usageDetectedInInteractiveClient({});
+                handler2.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Should have closed other container for the first time. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs + 10);
-                handler1b.usageDetectedInInteractiveClient({});
-                handler2.usageDetectedInInteractiveClient({});
+                handler1b.usageDetectedInInteractiveClient("Changed", {});
+                handler2.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
@@ -144,17 +144,17 @@ describe("Garbage Collection Tests", () => {
                 mockLocalStorage[closuresMapLocalStorageKey] = "} Invalid JSON";
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
@@ -163,17 +163,17 @@ describe("Garbage Collection Tests", () => {
                 mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify("Not an object");
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
@@ -182,17 +182,17 @@ describe("Garbage Collection Tests", () => {
                 mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify({ key1: { wrongSchema: "no lastCloseTime member" } });
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
                 clock.tick(10);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
-                handler.usageDetectedInInteractiveClient({});
+                handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });

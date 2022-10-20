@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
     IConfigProvider,
@@ -17,7 +18,7 @@ import { oneDayMs } from "./garbageCollection";
  * Feature Gate Key -
  * How many days between closing the container from this error (avoids locking user out of their file altogether)
  */
-export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipClosureForXDays";
+export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipForXDays";
 
 /**
  * LocalStorage key (NOT via feature gate / monitoring context)
@@ -25,20 +26,38 @@ export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepRead
  */
 export const closuresMapLocalStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
 
+// interface SweepReadyUsageAction {
+//     action: "crashOnLoad" | "close";
+//     skipForXDays?: number;
+// }
+// interface SweepReadyUsageDetectionConfig {
+//     interactiveClient?: SweepReadyUsageAction;
+//     summarizer?: SweepReadyUsageAction;
+// }
+
+interface SweepReadyUsageDetectionConfig {
+    interactiveClient?: "close" | "crashOnLoadOnly";
+    summarizer?: "close";
+}
+
 /**
  * Feature gate key to enable closing the container if SweepReady objects are used.
  * Value should contain keywords "interactiveClient" and/or "summarizer" to enable detection in each container type
  */
-const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider) {
+ const sweepReadyUsageDetectionSetting = {
+    read(config: IConfigProvider): SweepReadyUsageDetectionConfig {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
         if (value === undefined) {
-            return { interactiveClient: false, summarizer: false };
+            return { };
         }
         return {
-            interactiveClient: value.includes("interactiveClient"),
-            summarizer: value.includes("summarizer"),
+            interactiveClient: value.includes("interactiveClientClose")
+                ? "close"
+                : value.includes("interactiveClientCrashOnLoad")
+                    ? "crashOnLoadOnly"
+                    : undefined,
+            summarizer: value.includes("summarizer") ? "close" : undefined,
         };
     },
 };
@@ -98,8 +117,18 @@ export class SweepReadyUsageDetectionHandler {
       * Once Sweep is fully implemented, this will be removed since the objects will be gone
       * and errors will arise elsewhere in the runtime
      */
-    public usageDetectedInInteractiveClient(errorProps: ITelemetryProperties) {
-        if (!sweepReadyUsageDetectionSetting.read(this.mc.config).interactiveClient) {
+    public usageDetectedInInteractiveClient(
+        usageType: "Changed" | "Loaded" | "Revived",
+        errorProps: ITelemetryProperties,
+    ) {
+        const config = sweepReadyUsageDetectionSetting.read(this.mc.config).interactiveClient;
+        if (config === undefined) {
+            return;
+        }
+
+        if (config === "crashOnLoadOnly" && usageType !== "Loaded") {
+            // If we're only wanting to detect on Load, then silently leave.
+            // The Changed/Revived events will be logged by the Summarizer anyway.
             return;
         }
 
@@ -130,7 +159,7 @@ export class SweepReadyUsageDetectionHandler {
 
         const error = new SweepReadyUsageError(
             "SweepReady object used in Non-Summarizer Client",
-            { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, skipClosureForXDays }) },
+            { errorDetails: JSON.stringify({ ...errorProps, config, usageType, lastCloseTime, skipClosureForXDays }) },
         );
         if (shouldClose) {
             // Update closures map in localStorage before closing
@@ -139,7 +168,15 @@ export class SweepReadyUsageDetectionHandler {
             pastClosuresMap[this.uniqueContainerKey] = { lastCloseTime: Date.now() };
             this.localStorage.setItem(closuresMapLocalStorageKey, JSON.stringify(pastClosuresMap));
 
-            this.closeFn(error);
+            if (config === "close") {
+                this.closeFn(error);
+            } else {
+                assert(config === "crashOnLoadOnly" && usageType === "Loaded", "unexpected config");
+                this.mc.logger.sendErrorEvent({ eventName: "SweepReadyObject_FailToLoad" }, error);
+
+                // This will result in a non-200 response on the request for the object but the session will continue
+                throw error;
+            }
         } else {
             this.mc.logger.sendErrorEvent({ eventName: "SweepReadyObject_UsageAllowed" }, error);
         }

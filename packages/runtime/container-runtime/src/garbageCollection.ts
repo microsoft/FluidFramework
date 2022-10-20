@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    generateStack,
     loggerToMonitoringContext,
     MonitoringContext,
     PerformanceEvent,
@@ -1430,6 +1431,7 @@ export class GarbageCollector implements IGarbageCollector {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                    stack: generateStack(),
                 });
             }
 
@@ -1437,7 +1439,7 @@ export class GarbageCollector implements IGarbageCollector {
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
             if (state === UnreferencedState.SweepReady) {
-                this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
+                this.sweepReadyUsageHandler.usageDetectedInInteractiveClient(usageType, propsToLog);
             }
         }
     }
