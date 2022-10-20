@@ -17,7 +17,7 @@ import {
 } from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
+import { generateTwitterJsonByByteSize, TwitterJson, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -45,6 +45,18 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
     return typeof value !== "object" || value === null ? value : cloneObject(value);
 }
 
+function sumDirect(jsonObj: Jsonable): number {
+    let total = 0;
+    for (const value of Object.values(jsonObj)) {
+        if (typeof value === "object" && value !== null) {
+            total += sumDirect(value);
+        } else if (typeof value === "number") {
+            total += value;
+        }
+    }
+    return total;
+}
+
 /**
  * Performance test suite that measures a variety of access patterns using ITreeCursor.
  */
@@ -61,7 +73,7 @@ function bench(
 
         benchmark({
             type: BenchmarkType.Measurement,
-            title: `Direct: '${name}'`,
+            title: `clone JS Object: '${name}'`,
             before: () => {
                 const cloned = clone(json);
                 assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
@@ -118,6 +130,53 @@ function bench(
                 });
             }
         }
+    }
+}
+
+function jsObjectBench(
+    data: {
+        name: string;
+        getJson: () => any;
+        dataConsumer: (directObj: any, calculate: (...operands: any[]) => void) => any;
+    }[],
+) {
+    for (const { name, getJson, dataConsumer } of data) {
+        const json = getJson();
+
+        benchmark({
+            type: BenchmarkType.Measurement,
+            title: `clone JS Object: '${name}'`,
+            before: () => {
+                const cloned = clone(json);
+                assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+            },
+            benchmarkFn: () => {
+                clone(json);
+            },
+        });
+
+        benchmark({
+            type: BenchmarkType.Measurement,
+            title: `sum JS Object: '${name}'`,
+            before: () => {
+                // TODO: add checks before running
+            },
+            benchmarkFn: () => {
+                sumDirect(json);
+            },
+        });
+
+        benchmark({
+            type: BenchmarkType.Measurement,
+            title: `averageTwoValues JS Object: '${name}'`,
+            before: () => {
+                // TODO: add checks before running
+            },
+            benchmarkFn: () => {
+                averageTwoValues(json, dataConsumer);
+            },
+        });
     }
 }
 
@@ -202,9 +261,41 @@ function extractAvgValsFromTwitter(
     cursor.exitField();
 }
 
+function extractCoordinatesFromCanadaDirect(
+    // TODO: export Canada type and use instead of any.
+    directObj: any,
+    calculate: (x: number, y: number) => void,
+): void {
+    for (const feature of directObj.features) {
+        for (const coordinates of feature.geometry.coordinates) {
+            for (const [x, y] of coordinates) {
+                calculate(x, y);
+            }
+        }
+    }
+}
+
+function extractAvgValsFromTwitterDirect(
+    directObj: TwitterJson,
+    calculate: (x: number, y: number) => void,
+): void {
+    for (const status of directObj.statuses) {
+        calculate(status.retweet_count, status.favorite_count);
+    }
+}
+
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
+});
+
+describe("Direct Object", () => {
+    jsObjectBench([
+        { name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
+    ]);
+    jsObjectBench([
+        { name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },
+    ]);
 });
