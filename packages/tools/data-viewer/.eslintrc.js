@@ -13,5 +13,10 @@ module.exports = {
          * Disabled because it disagrees with React.useEffect best practices.
          */
         "unicorn/consistent-function-scoping": "off",
+
+        /**
+         * Disabled because it conflicts with Prettier.
+         */
+        "unicorn/no-nested-ternary": "off",
     },
 };
