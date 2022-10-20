@@ -19,7 +19,6 @@ import { CellFactory } from "./cellFactory";
 import {
     ISharedCell,
     ISharedCellEvents,
-    ICellValue,
     ICellLocalOpMetadata,
 } from "./interfaces";
 
@@ -37,12 +36,17 @@ interface IDeleteCellOperation {
     type: "deleteCell";
 }
 
+interface ICellValue {
+    // The actual value contained in the cell which needs to be wrapped to handle undefined
+    value: any;
+}
+
 const snapshotFileName = "header";
 
 function createLocalOpMetadata(op: ICellOperation,
     pendingMessageId: number, previousValue?: any): ICellLocalOpMetadata {
     const localMetadata: ICellLocalOpMetadata = {
-        type: "edit", pendingMessageId, previousValue,
+        pendingMessageId, previousValue,
     };
     return localMetadata;
 }
@@ -315,7 +319,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    public rollback(op: any, localOpMetadata: ICellLocalOpMetadata) {
+    protected rollback(op: any, localOpMetadata: ICellLocalOpMetadata) {
         if (op.type === "set" || op.type === "delete") {
             if (localOpMetadata.previousValue === undefined) {
                 this.deleteCore();

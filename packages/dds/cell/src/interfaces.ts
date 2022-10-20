@@ -42,13 +42,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
      */
     delete(): void;
 }
-
-export interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
-    value: any;
-}
 export interface ICellLocalOpMetadata {
-    type: "edit";
     pendingMessageId: number;
     previousValue?: any;
 }
