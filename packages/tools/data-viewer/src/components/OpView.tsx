@@ -41,12 +41,18 @@ export function OpView(props: OpViewProps): React.ReactElement {
         </Stack>
     );
 
+    const headerBackgroundColor = !message.clientId
+        ? "lightyellow"
+        : doesOpBelongToMe
+        ? "lightgreen"
+        : "lightblue";
+
     return (
         <Accordion
             header={header}
             headerStyles={{
                 root: {
-                    backgroundColor: doesOpBelongToMe ? "lightblue" : "lightyellow",
+                    backgroundColor: headerBackgroundColor,
                 },
             }}
         >
