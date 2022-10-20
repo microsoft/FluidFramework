@@ -5,16 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { LocalFieldKey } from "../../schema-stored";
-import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
+    LocalFieldKey,
     ITreeCursorNew as ITreeCursor,
     EmptyKey,
     FieldKey,
     mapCursorFieldNew,
     mapCursorFields,
     ITreeCursorSynchronous,
-} from "../../tree";
+} from "../../core";
+import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray,
