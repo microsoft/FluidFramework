@@ -184,13 +184,13 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: ${{ parameters.testWorkspace }}/.npmrc
+            workingFile: ${{ variables.testWorkspace }}/.npmrc
 
         # Auth to Office feed
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: ${{ parameters.testWorkspace }}/.npmrc
+            workingFile: ${{ variables.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         # Install test and logger package
@@ -198,7 +198,7 @@ stages:
           displayName: 'npm install'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
+            workingDir: ${{ variables.testWorkspace }}
             customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
