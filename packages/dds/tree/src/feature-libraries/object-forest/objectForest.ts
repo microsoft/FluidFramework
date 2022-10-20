@@ -24,7 +24,7 @@ import {
     UpPath,
     Anchor,
     visitDelta,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     TreeSchemaIdentifier,
     TreeValue,
@@ -183,7 +183,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return range;
     }
 
-    private add(nodes: Iterable<ITreeCursorNew>): DetachedField {
+    private add(nodes: Iterable<ITreeCursor>): DetachedField {
         const field: ObjectField = Array.from(nodes, mapTreeFromCursor);
         return this.addFieldAsDetached(field);
     }

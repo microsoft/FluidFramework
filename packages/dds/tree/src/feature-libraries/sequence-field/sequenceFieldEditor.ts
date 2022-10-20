@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor } from "../../core";
 import { FieldEditor } from "../modular-schema";
-import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
 import { Changeset, Mark, NodeChangeType } from "./format";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {

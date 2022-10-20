@@ -6,14 +6,14 @@
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import {
     ChangeEncoder,
-    ITreeCursor,
     FieldKindIdentifier,
     AnchorSet,
     Delta,
     JsonableTree,
+    ITreeCursor,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
-import { singleTextCursor } from "./treeTextCursor";
+import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -30,7 +30,6 @@ import {
     NodeChangeEncoder,
     FieldEditor,
 } from "./modular-schema";
-import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";

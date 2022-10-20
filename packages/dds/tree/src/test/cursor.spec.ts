@@ -9,7 +9,7 @@ import {
     EmptyKey,
     FieldKey,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     mapCursorFields,
     CursorLocationType,
     rootFieldKey,
