@@ -17,7 +17,7 @@ import {
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import {
     JsonCursor,
-    cursorToJsonObject,
+    cursorToJsonObjectNew,
     jsonNumber,
     jsonObject,
     jsonSchemaData,
@@ -77,7 +77,7 @@ function testForest(
                     );
 
                     // copy data from reader into json object and compare to data.
-                    const copy = cursorToJsonObject(reader);
+                    const copy = cursorToJsonObjectNew(reader);
                     reader.free();
                     assert.deepEqual(copy, data);
                 });
@@ -140,7 +140,7 @@ function testForest(
             const reader = forest.allocateCursor();
             assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
-            assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
+            assert.equal(reader.nextNode(), false);
         });
 
         it("anchors creation and use", () => {
@@ -166,12 +166,14 @@ function testForest(
             const cursor = forest.allocateCursor();
             assert.equal(forest.tryMoveCursorTo(rootAnchor, cursor), TreeNavigationResult.Ok);
             const parentAnchor = cursor.buildAnchor();
-            assert.equal(cursor.down(brand("data"), 0), TreeNavigationResult.Ok);
+            cursor.enterField(brand("data"));
+            cursor.enterNode(0);
             assert.equal(cursor.value, 1);
             const childAnchor1 = cursor.buildAnchor();
-            assert.equal(cursor.seek(1), TreeNavigationResult.Ok);
+            assert(cursor.nextNode());
             const childAnchor2 = cursor.buildAnchor();
-            assert.equal(cursor.up(), TreeNavigationResult.Ok);
+            cursor.exitNode();
+            cursor.exitField();
             const parentAnchor2 = cursor.buildAnchor();
 
             const rootPath = clonePath(forest.anchors.locate(rootAnchor));
