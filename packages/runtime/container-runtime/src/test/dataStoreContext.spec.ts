@@ -351,7 +351,7 @@ describe("Data Store Context Tests", () => {
 
                 assert.doesNotThrow(() => {
                     localDataStoreContext.tombstone();
-                }, `Local dataStores should throw on tombstone`);
+                }, `Local dataStores should not throw on tombstone`);
             });
         });
     });
