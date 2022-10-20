@@ -12,12 +12,20 @@ import {
     jsonableTreeFromCursorNew,
     EmptyKey,
     cursorToJsonObjectNew,
+    jsonSchemaData,
 } from "../../..";
 import {
+    buildForest,
+    defaultSchemaPolicy,
     mapTreeFromCursor,
     singleMapTreeCursor,
     singleTextCursorNew,
 } from "../../../feature-libraries";
+import {
+    initializeForest,
+    TreeNavigationResult,
+    InMemoryStoredSchemaRepository,
+} from "../../../core";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
@@ -61,6 +69,7 @@ function bench(
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
         const encodedTree = jsonableTreeFromCursorNew(singleJsonCursor(json));
+        const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -81,6 +90,19 @@ function bench(
             [
                 "MapCursor",
                 () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree))),
+            ],
+            [
+                "object-forest Cursor",
+                () => {
+                    const forest = buildForest(schema);
+                    initializeForest(forest, [singleTextCursorNew(encodedTree)]);
+                    const cursor = forest.allocateCursor();
+                    assert.equal(
+                        forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
+                        TreeNavigationResult.Ok,
+                    );
+                    return cursor;
+                },
             ],
         ];
 

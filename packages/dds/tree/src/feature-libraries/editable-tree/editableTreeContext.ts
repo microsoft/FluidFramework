@@ -10,6 +10,7 @@ import {
     lookupGlobalFieldSchema,
     rootFieldKey,
     symbolFromKey,
+    mapCursorFieldNew,
 } from "../../core";
 import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
@@ -91,13 +92,13 @@ export class ProxyContext implements EditableTreeContext {
     private getRoot(unwrap: boolean) {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
+        // TODO: support anchors for fields, and use them here to avoid using first node of root field.
         const destination = this.forest.root(this.forest.rootField);
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
+        let targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
-            do {
-                targets.push(new ProxyTarget(this, cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
+            cursor.exitNode();
+            targets = mapCursorFieldNew(cursor, (c) => new ProxyTarget(this, c));
         }
         cursor.free();
         this.forest.anchors.forget(destination);

@@ -59,6 +59,7 @@ export {
     keyAsDetachedField,
     visitDelta,
     setGenericTreeField,
+    rootFieldKeySymbol,
 } from "../tree";
 
 export {
