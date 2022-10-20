@@ -57,7 +57,13 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     }
 
     return (
-        <Stack>
+        <Stack
+            styles={{
+                root: {
+                    height: "100%",
+                },
+            }}
+        >
             <AudienceCount audienceCount={allMembers.size} />
             <ul>{renderedOthers}</ul>
         </Stack>

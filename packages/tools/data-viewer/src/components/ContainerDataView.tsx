@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IStackItemStyles, Stack } from "@fluentui/react";
+import { Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -17,12 +17,6 @@ import { DataObjectsView } from "./DataObjectsView";
 // - UI to generate and save to disk snapshot of current state
 // - UI to force disconnect / reconnect
 // - Tooltips on data labels to indicate what they mean (mode, minimal sequence number, etc.)
-
-const containerDataViewStyles: IStackItemStyles = {
-    root: {
-        verticalFill: true,
-    },
-};
 
 /**
  * {@link ContainerDataView} input props.
@@ -136,7 +130,13 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 
     // TODO: styling
     return (
-        <Stack className="container-data-view" styles={containerDataViewStyles}>
+        <Stack
+            styles={{
+                root: {
+                    height: "100%",
+                },
+            }}
+        >
             <div>
                 <b>Container ID: </b>
                 {containerId}
