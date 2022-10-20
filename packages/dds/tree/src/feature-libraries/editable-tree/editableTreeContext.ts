@@ -4,9 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IEditableForest, TreeNavigationResult } from "../../forest";
-import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { rootFieldKey, symbolFromKey } from "../../tree";
+import {
+    IEditableForest,
+    TreeNavigationResult,
+    lookupGlobalFieldSchema,
+    rootFieldKey,
+    symbolFromKey,
+} from "../../core";
 import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
 /**

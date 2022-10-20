@@ -64,18 +64,6 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BatchManager": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BatchManager": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Buffer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Buffer():
@@ -240,18 +228,6 @@ declare function use_old_ClassDeclaration_EventForwarder(
     use: TypeOnly<old.EventForwarder>);
 use_old_ClassDeclaration_EventForwarder(
     get_current_ClassDeclaration_EventForwarder());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -900,6 +876,30 @@ declare function use_old_FunctionDeclaration_safelyParseJSON(
     use: TypeOnly<typeof old.safelyParseJSON>);
 use_old_FunctionDeclaration_safelyParseJSON(
     get_current_FunctionDeclaration_safelyParseJSON());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_setLongTimeout": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_setLongTimeout():
+    TypeOnly<typeof old.setLongTimeout>;
+declare function use_current_FunctionDeclaration_setLongTimeout(
+    use: TypeOnly<typeof current.setLongTimeout>);
+use_current_FunctionDeclaration_setLongTimeout(
+    get_old_FunctionDeclaration_setLongTimeout());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_setLongTimeout": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_setLongTimeout():
+    TypeOnly<typeof current.setLongTimeout>;
+declare function use_old_FunctionDeclaration_setLongTimeout(
+    use: TypeOnly<typeof old.setLongTimeout>);
+use_old_FunctionDeclaration_setLongTimeout(
+    get_current_FunctionDeclaration_setLongTimeout());
 
 /*
 * Validate forward compat by using old type in place of current type

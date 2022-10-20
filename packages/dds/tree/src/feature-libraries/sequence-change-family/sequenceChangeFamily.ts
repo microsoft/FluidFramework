@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily } from "../../change-family";
-import { AnchorSet, Delta } from "../../tree";
+import { ChangeFamily, AnchorSet, Delta } from "../../core";
 import { toDelta } from "./changeset";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
 import { sequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";

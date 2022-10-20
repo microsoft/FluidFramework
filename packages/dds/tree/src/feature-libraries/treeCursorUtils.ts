@@ -11,7 +11,7 @@ import {
     CursorLocationType,
     ITreeCursorSynchronous,
     Value,
-} from "../tree";
+} from "../core";
 import { fail } from "../util";
 
 /**
