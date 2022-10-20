@@ -67,7 +67,13 @@ export function OpView(props: OpViewProps): React.ReactElement {
                     <b>Type: </b>
                     {message.type}
                 </div>
-                <div>TODO: other op details</div>
+                <div>
+                    <b>Reference sequence number: </b>
+                    {message.referenceSequenceNumber}
+                </div>
+                <div>
+                    <b></b>TODO: what else?
+                </div>
             </Stack>
         </Accordion>
     );
