@@ -113,7 +113,7 @@ describe("SharedTree", () => {
                 assert.equal(readCursor.value, value);
                 hasNode = readCursor.nextNode();
             }
-            assert.equal(cursorResult, TreeNavigationResult.NotFound);
+            assert.equal(hasNode, false);
             readCursor.free();
             tree.forest.forgetAnchor(destination);
         }

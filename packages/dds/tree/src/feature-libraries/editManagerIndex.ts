@@ -15,13 +15,6 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ChangeEncoder, ChangeFamily } from "../change-family";
-import {
-    Index,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
-} from "../shared-tree-core";
 import { JsonCompatibleReadOnly } from "../util";
 import {
     Branch,
@@ -31,7 +24,17 @@ import {
     ReadonlySummaryData,
     SessionId,
 } from "../edit-manager";
-import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
+import {
+    cachedValue,
+    ChangeEncoder,
+    ChangeFamily,
+    ICachedValue,
+    Index,
+    recordDependency,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../core";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
