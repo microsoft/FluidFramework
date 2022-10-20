@@ -238,10 +238,12 @@ stages:
               echo Initialize package
               echo ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-              echo ls -la ${{ variables.testWorkspace }}/node_modules/
-              ls -la ${{ variables.testWorkspace }}/node_modules/
+
+              echo cat
+              cat ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
               echo ls -la ${{ variables.testWorkspace }}/
               ls -la ${{ variables.testWorkspace }}/
+
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
