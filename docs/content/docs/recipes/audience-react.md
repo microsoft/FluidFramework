@@ -112,21 +112,18 @@ Note that the objects imported from the Fluid Framework library are required for
 
 ```js
   const tryGetAudienceObject = async (userId, userName, containerId) => {
-    // TODO 1: Configure the client and container
-    // TODO 2: Configure the container
-    // TODO 3: Get the container and services from the Fluid service.
-    // TODO 4: Return the Audience object.
+    // TODO 1: Create container and return audience object
   }
 
   export const AudienceDisplay = (props) => {
-    //TODO 5: Configure user ID, user name, and state variables
-    //TODO 6: Set state variables and set event listener on component mount
-    //TODO 7: Return list view
+    //TODO 2: Configure user ID, user name, and state variables
+    //TODO 3: Set state variables and set event listener on component mount
+    //TODO 4: Return list view
   }
 
   const AudienceList = (data) => {
-    //TODO 8: Append view elements to list array for each member
-    //TODO 9: Return list of member elements
+    //TODO 5: Append view elements to list array for each member
+    //TODO 6: Return list of member elements
   }
 ```
 
@@ -136,42 +133,32 @@ Note that the `AudienceDisplay` and `AudienceList` are functional components whi
 
 You can use a helper function to get the Fluid data, from the Audience object, into the view layer (the React state). The `tryGetAudienceObject` method is called when the view component loads after a user ID is selected. The returned value is assigned to a React state property.
 
-1. Replace `TODO 1` with the following code. Note that the values for `userId` `userName` `containerId` will be passed in from the `App` component. If there is no `containerId`, a new container is created. To create an instance of the `AzureClient`, an `AzureClientProps` configuration object will need to be passed into the constructor. This configuration object defines the type of connection the client will be using. Think of the `serviceConfig` as the properties required to connect to the service. Note that the local mode of Azure Client is used here.
+1. Replace `TODO 1` with the following code. Note that the values for `userId` `userName` `containerId` will be passed in from the `App` component. If there is no `containerId`, a new container is created. Also, note that the `containerId` is stored on the URL hash. A user entering a session from a new browser may copy the URL from an existing session browser or navigate to `localhost:3000` and manually input the container ID. With this implementation, we want to wrap the `getContainer` call in a try catch in the case that the user inputs a container ID which does not exist. Visit the [React]({{< relref "react.md" >}}) demo and [Containers]({{< relref "../../../build/audience.md" >}}) documentation for more information.
 
 ```js
   const userConfig = {
-    id: userId,
-    name: userName,
-    additionalDetails: {
-        "email": userName.replace(/\s/g, '') + "@example.com",
-        "date": new Date().toLocaleDateString("en-US")
-    }
+      id: userId,
+      name: userName,
+      additionalDetails: {
+          email: userName.replace(/\s/g, "") + "@example.com",
+          date: new Date().toLocaleDateString("en-US"),
+      },
   };
 
   const serviceConfig = {
-    connection: {
-        type: "local",
-        tokenProvider: new InsecureTokenProvider("" , userConfig),
-        endpoint: "http://localhost:7070",
-    }
+      connection: {
+          type: "local",
+          tokenProvider: new InsecureTokenProvider("", userConfig),
+          endpoint: "http://localhost:7070",
+      },
   };
 
   const client = new AzureClient(serviceConfig);
-```
 
-1. Replace `TODO 2` with the following code. Note, before a client can create any containers, it needs a schema that will define the shared objects in this application. Although this example does not require any shared objects to demonstrate the audience object, a schema will still be provided so that the client can create a container.
-
-```js
   const containerSchema = {
-      initialObjects: { myMap: SharedMap }
+      initialObjects: { myMap: SharedMap },
   };
-```
 
-With the `client` and `containerSchema` defined, we have everything we need to create a container object along with the audience.
-
-1. Replace `TODO 3` with the following code. Note, the `containerId` is stored on the URL hash. A user entering a session from a new browser may copy the URL from an existing session browser or navigate to `localhost:3000` and manually input the container ID. With this implementation, we want to wrap the `getContainer` call in a try catch in the case that the user inputs a container ID which does not exist.
-
-```js
   let container;
   let services;
   if (!containerId) {
@@ -181,15 +168,10 @@ With the `client` and `containerSchema` defined, we have everything we need to c
   } else {
       try {
           ({ container, services } = await client.getContainer(containerId, containerSchema));
-      } catch(e) {
+      } catch (e) {
           return;
       }
   }
-```
-
-1. Replace `TODO 4` with the following code.
-
-```js
   return services.audience;
 ```
 
@@ -197,7 +179,7 @@ With the `client` and `containerSchema` defined, we have everything we need to c
 
 Now that we've defined how to get the Fluid audience, we need to tell React to call `tryGetAudienceObject` when the Audience Display component is mounted.
 
-1. Replace `TODO 5` with the following code. Note that the user ID will come from the parent component as either `user1` `user2` or `random`. If the ID is `random` we use `Math.random()` to generate a random number as the ID. Additionally, a name will be mapped to the user based on their ID as specified in `userNameList`. Lastly, we define the state variables which will store the connected members as well as the current user. `fluidMembers` will store a list of all members connected to the container whereas `currentMember` will contain the member object representing the current user viewing the browser context.
+1. Replace `TODO 2` with the following code. Note that the user ID will come from the parent component as either `user1` `user2` or `random`. If the ID is `random` we use `Math.random()` to generate a random number as the ID. Additionally, a name will be mapped to the user based on their ID as specified in `userNameList`. Lastly, we define the state variables which will store the connected members as well as the current user. `fluidMembers` will store a list of all members connected to the container whereas `currentMember` will contain the member object representing the current user viewing the browser context.
 
 ```js
   const userId = props.userId == "random" ? Math.random() : props.userId;
@@ -212,7 +194,7 @@ Now that we've defined how to get the Fluid audience, we need to tell React to c
   const [currentMember, setCurrentMember] = useState();
 ```
 
-1. Replace `TODO 6` with the following code. This will call the `tryGetAudienceObject` when the component is mounted and set the returned audience members to `fluidMembers` and `currentMember`. Note, we check if an audience object is returned in case  a user inputs a containerId which does not exist and we need to return them to the `UserIdSelection` view (`props.onContainerNotFound()` will handle switching the view). Also, it is good practice to deregister event handlers when the React component dismounts by returning `audience.off`.
+1. Replace `TODO 3` with the following code. This will call the `tryGetAudienceObject` when the component is mounted and set the returned audience members to `fluidMembers` and `currentMember`. Note, we check if an audience object is returned in case  a user inputs a containerId which does not exist and we need to return them to the `UserIdSelection` view (`props.onContainerNotFound()` will handle switching the view). Also, it is good practice to deregister event handlers when the React component dismounts by returning `audience.off`.
 
 ```js
   useEffect(() => {
@@ -237,15 +219,13 @@ Now that we've defined how to get the Fluid audience, we need to tell React to c
   }, []);
 ```
 
-1. Replace `TODO 7` with the following code. Note, if the `fluidMembers` or `currentMember` has not been initialized, a blank screen is rendered. The `AudienceList` component will render the member data with styling (to be implemented in the next section).
+1. Replace `TODO 4` with the following code. Note, if the `fluidMembers` or `currentMember` has not been initialized, a blank screen is rendered. The `AudienceList` component will render the member data with styling (to be implemented in the next section).
 
 ```js
   if (!fluidMembers || !currentMember) return (<div/>);
 
   return (
-      <div>
-        <AudienceList fluidMembers={fluidMembers} currentMember={currentMember}/>
-      </div>
+      <AudienceList fluidMembers={fluidMembers} currentMember={currentMember}/>
   )
 ```
 
@@ -257,7 +237,7 @@ Connection transitions can result in short timing windows where `getMyself` retu
 
 ### Create the view
 
-1. Replace `TODO 8` with the following code. Note we are rendering a list component for each member passed from the `AudienceDisplay` component. For each member, we first compare `member.userId` to `currentMember.userId` to check if that member `isSelf`. This way, we can differentiate the client user from the other users and display the component with a different color. We then push the list component to a `list` array. Each component will display member data such as `userId` `userName` and `additionalDetails`.
+1. Replace `TODO 5` with the following code. Note we are rendering a list component for each member passed from the `AudienceDisplay` component. For each member, we first compare `member.userId` to `currentMember.userId` to check if that member `isSelf`. This way, we can differentiate the client user from the other users and display the component with a different color. We then push the list component to a `list` array. Each component will display member data such as `userId` `userName` and `additionalDetails`.
 
 ```js
   const currentMember = data.currentMember;
@@ -299,7 +279,7 @@ Connection transitions can result in short timing windows where `getMyself` retu
   });
 ```
 
-1. Replace `TODO 9` with the following code. This will render all each of the member elements we pushed into the `list` array.
+1. Replace `TODO 6` with the following code. This will render all each of the member elements we pushed into the `list` array.
 
 ```js
   return (
