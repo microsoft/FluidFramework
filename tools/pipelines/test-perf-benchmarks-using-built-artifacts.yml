@@ -85,9 +85,9 @@ stages:
           testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-          feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+            feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
           ${{ else }}:
-          feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+            feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
         steps:
         # Setup
