@@ -27,8 +27,8 @@ import {
     AnchorLocator,
     AnchorSet,
     UpPath,
+    EditManager,
 } from "../core";
-import { EditManager } from "../edit-manager";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,

@@ -18,19 +18,17 @@ import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { JsonCompatibleReadOnly } from "../util";
 import {
     Branch,
-    Commit,
-    EditManager,
-    MutableSummaryData,
-    ReadonlySummaryData,
-    SessionId,
-} from "../edit-manager";
-import {
     cachedValue,
     ChangeEncoder,
     ChangeFamily,
+    Commit,
+    EditManager,
     ICachedValue,
     Index,
+    MutableSummaryData,
+    ReadonlySummaryData,
     recordDependency,
+    SessionId,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,

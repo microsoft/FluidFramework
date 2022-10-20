@@ -1,5 +1,5 @@
 {
   "tags": ["shared-tree"],
   "exports": ["index"],
-  "imports": ["util", "core", "edit-manager", "feature-libraries"]
+  "imports": ["util", "core", "feature-libraries"]
 }
