@@ -87,11 +87,6 @@ export interface IMember {
 }
 
 // @public
-export type IMyself<M extends IMember = IMember> = M & {
-    currentConnection: string;
-};
-
-// @public
 export interface IRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     readonly initialObjects: LoadableObjectRecord;
@@ -100,7 +95,7 @@ export interface IRootDataObject {
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
-    getMyself(): IMyself<M> | undefined;
+    getMyself(): Myself<M> | undefined;
 }
 
 // @public
@@ -129,6 +124,11 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
+export type Myself<M extends IMember = IMember> = M & {
+    currentConnection: string;
+};
+
+// @public
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
 }> implements IRootDataObject {
@@ -151,7 +151,7 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
     protected readonly container: IContainer;
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
-    getMyself(): IMyself<M> | undefined;
+    getMyself(): Myself<M> | undefined;
     protected lastMembers: Map<string, M>;
     protected shouldIncludeAsMember(member: IClient): boolean;
 }

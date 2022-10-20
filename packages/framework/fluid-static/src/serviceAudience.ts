@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IServiceAudience, IServiceAudienceEvents, IMember, IMyself } from "./types";
+import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
 /**
  * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
@@ -112,7 +112,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   /**
    * {@inheritDoc IServiceAudience.getMyself}
    */
-  public getMyself(): IMyself<M> | undefined {
+  public getMyself(): Myself<M> | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;
@@ -123,7 +123,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
         return undefined;
       }
 
-    const myself: IMyself<M> = { ...member, currentConnection: clientId };
+    const myself: Myself<M> = { ...member, currentConnection: clientId };
 
     return myself;
   }

@@ -180,7 +180,7 @@ export interface IServiceAudience<M extends IMember>
     /**
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
-    getMyself(): IMyself<M> | undefined;
+    getMyself(): Myself<M> | undefined;
 }
 
 /**
@@ -220,4 +220,4 @@ export interface IMember {
 /**
  * An extended member object that includes currentConnection
  */
-export type IMyself<M extends IMember = IMember> = M & { currentConnection: string; };
+export type Myself<M extends IMember = IMember> = M & { currentConnection: string; };
