@@ -394,7 +394,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     /**
-     * Move this cursor the special dummy node above the detached sequences.
+     * Move this cursor to the special dummy node above the detached sequences.
      * Can be used when cleared (but not freed).
      */
     public setToAboveDetachedSequences(): void {
