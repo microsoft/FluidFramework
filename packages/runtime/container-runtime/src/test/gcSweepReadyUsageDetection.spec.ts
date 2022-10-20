@@ -71,13 +71,13 @@ describe("Garbage Collection Tests", () => {
         describe("usageDetectedIninteractiveClient", () => {
             beforeEach(() => {
                 // For these tests, enable these by default
-                mockLocalStorage[sweepReadyUsageDetectionKey] = "blah interactiveClient blah";
+                mockLocalStorage[sweepReadyUsageDetectionKey] = "blah interactiveClientClose blah";
                 mockLocalStorage[skipClosureForXDaysKey] = 1;
             });
-            it("setting does not contain 'interactiveClient' - do not close the container", () => {
+            it("setting does not contain 'interactiveClientClose' - do not close the container", () => {
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "summarizer or whatever";
                 createHandler().usageDetectedInInteractiveClient("Changed", {});
-                assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'interactiveClient'");
+                assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'interactiveClientClose'");
             });
             it("NoopStorage - close the container back-to-back", () => {
                 const handler = createHandler("key1", true /* forceNoopStorage */);
@@ -195,6 +195,27 @@ describe("Garbage Collection Tests", () => {
                 handler.usageDetectedInInteractiveClient("Changed", {});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
+            });
+            describe("interactiveClientCrashOnLoad", () => {
+                beforeEach(() => {
+                    mockLocalStorage[sweepReadyUsageDetectionKey] = "blah interactiveClientCrashOnLoad blah";
+                });
+                it("setting contains 'interactiveClientCrashOnLoad' - no-op for Changed/Revived usage", () => {
+                    createHandler().usageDetectedInInteractiveClient("Changed", {});
+                    createHandler().usageDetectedInInteractiveClient("Revived", {});
+                    assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'interactiveClientClose'");
+                });
+                it("setting contains 'interactiveClientCrashOnLoad' - throws with Loaded usage just once (due to skip)", () => {
+                    assert.throws(
+                        () => createHandler().usageDetectedInInteractiveClient("Loaded", {}),
+                        (e) => e.errorType === "unreferencedObjectUsedAfterGarbageCollected",
+                        "Expected the proper error to be thrown");
+                    mockLogger.assertMatch([{ eventName: "SweepReadyObject_FailToLoad" }], "expected error log");
+                    assert.equal(closeErrors.length, 0, "Shouldn't close the whole container when failing load");
+
+                    createHandler().usageDetectedInInteractiveClient("Loaded", {});
+                    mockLogger.assertMatch([{ eventName: "SweepReadyObject_UsageAllowed" }], "expected error log");
+                });
             });
         });
     });

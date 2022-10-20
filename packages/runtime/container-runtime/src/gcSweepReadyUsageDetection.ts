@@ -26,18 +26,8 @@ export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepRead
  */
 export const closuresMapLocalStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
 
-// interface SweepReadyUsageAction {
-//     action: "crashOnLoad" | "close";
-//     skipForXDays?: number;
-// }
-// interface SweepReadyUsageDetectionConfig {
-//     interactiveClient?: SweepReadyUsageAction;
-//     summarizer?: SweepReadyUsageAction;
-// }
-
 interface SweepReadyUsageDetectionConfig {
     interactiveClient?: "close" | "crashOnLoadOnly";
-    summarizer?: "close";
 }
 
 /**
@@ -57,7 +47,6 @@ interface SweepReadyUsageDetectionConfig {
                 : value.includes("interactiveClientCrashOnLoad")
                     ? "crashOnLoadOnly"
                     : undefined,
-            summarizer: value.includes("summarizer") ? "close" : undefined,
         };
     },
 };
