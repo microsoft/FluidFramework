@@ -36,7 +36,11 @@ The following fields are being removed from `ISummaryRuntimeOptions` as they bec
 `ISummaryRuntimeOptions.summarizerOptions`
 
 ### Op reentry will no longer be supported
-Submitting an op while processing an op will no longer be supported as it can lead to inconsistencies in the document and to DDS change events observing out-of-order changes. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS. If the runtime detects an op which was submitted in this manner, an error will be thrown and current container will close.
+Submitting an op while processing an op will no longer be supported as it can lead to inconsistencies in the document and to DDS change events observing out-of-order changes. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS.
+
+The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+
+With the feature enabled, If the runtime detects an op which was submitted in this manner, an error will be thrown and the current container will close.
 
 ```ts
 sharedMap.on("valueChanged", (changed) => {
@@ -48,7 +52,7 @@ sharedMap.on("valueChanged", (changed) => {
 sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
 ```
 
-Other clients will not be affected. The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+Other clients will not be affected.
 
 # 2.0.0-internal.2.0.0
 
