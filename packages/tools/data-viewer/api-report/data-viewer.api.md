@@ -6,6 +6,7 @@
 
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { default as React_2 } from 'react';
 
@@ -25,6 +26,33 @@ export function ContainerDataView(props: ContainerDataViewProps): React_2.ReactE
 export interface ContainerDataViewProps {
     container: IFluidContainer;
     containerId: string;
+}
+
+// @public
+export function ContainerStateView(props: ContainerStateViewProps): React_2.ReactElement;
+
+// @public (undocumented)
+export interface ContainerStateViewProps {
+    container: IFluidContainer;
+}
+
+// @public
+export function OpsStreamView(props: OpsStreamViewProps): React_2.ReactElement;
+
+// @public
+export interface OpsStreamViewProps {
+    clientId: string | undefined;
+    minimumSequenceNumber: number;
+    ops: readonly ISequencedDocumentMessage[];
+}
+
+// @public
+export function OpView(props: OpViewProps): React_2.ReactElement;
+
+// @public
+export interface OpViewProps {
+    clientId: string | undefined;
+    message: ISequencedDocumentMessage;
 }
 
 // @public

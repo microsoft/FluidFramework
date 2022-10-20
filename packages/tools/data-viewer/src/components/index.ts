@@ -6,3 +6,6 @@
 export * from "./AudienceView";
 export * from "./ContainerDataView";
 export * from "./SessionDataView";
+export * from "./OpsStreamView";
+export * from "./ContainerStateView";
+export * from "./OpView";
