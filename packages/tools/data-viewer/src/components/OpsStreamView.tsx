@@ -53,7 +53,14 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
                 {minimumSequenceNumber}
             </div>
             <h3>Ops</h3>
-            <Stack>
+            <Stack
+                styles={{
+                    root: {
+                        height: "100%",
+                        overflowY: "auto",
+                    },
+                }}
+            >
                 {reversedOpsList.map((message) => (
                     <OpView key={message.sequenceNumber} message={message} clientId={clientId} />
                 ))}

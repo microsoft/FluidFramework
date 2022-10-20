@@ -23,7 +23,7 @@ import { OpsStreamView } from "./OpsStreamView";
 
 const sessionDataViewStyles: IStackItemStyles = {
     root: {
-        verticalFill: true,
+        height: "100%",
     },
 };
 
@@ -134,21 +134,19 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
     }
 
     return (
-        <div>
-            <Stack tokens={{ childrenGap: 25 }} styles={sessionDataViewStyles}>
-                <ContainerSummaryView
-                    container={container}
-                    containerId={containerId}
-                    clientId={clientId}
-                    myself={myself}
-                />
-                <ViewSelectionMenu
-                    currentSelection={rootViewSelection}
-                    updateSelection={updateRootViewSelection}
-                />
-                <div style={{ width: "400px", height: "100%", overflowY: "auto" }}>{view}</div>
-            </Stack>
-        </div>
+        <Stack tokens={{ childrenGap: 25 }} styles={sessionDataViewStyles}>
+            <ContainerSummaryView
+                container={container}
+                containerId={containerId}
+                clientId={clientId}
+                myself={myself}
+            />
+            <ViewSelectionMenu
+                currentSelection={rootViewSelection}
+                updateSelection={updateRootViewSelection}
+            />
+            <div style={{ width: "400px", height: "100%", overflowY: "auto" }}>{view}</div>
+        </Stack>
     );
 }
 
