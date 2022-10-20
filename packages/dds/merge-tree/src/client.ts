@@ -420,7 +420,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
-        assert(opArgs.op.type === MergeTreeDeltaType.OBLITERATE, 0x02d /* "Unexpected op type on range obliterate!" */);
+        assert(opArgs.op.type === MergeTreeDeltaType.OBLITERATE, "Unexpected op type on range obliterate!");
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
