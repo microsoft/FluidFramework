@@ -609,7 +609,7 @@ export class DataStores implements IDisposable {
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - set a route to tombstone mode.
+     * @param tombstone - set the objects corresponding to routes as tombstones.
      */
     public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
         for (const route of unusedRoutes) {
