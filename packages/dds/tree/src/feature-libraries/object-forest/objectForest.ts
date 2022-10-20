@@ -107,10 +107,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             }
 
             const [parent, key] = cursor.getParent();
-            const dstField = getMapTreeField(parent, key, true);
-            assertValidIndex(index, dstField, true);
+            const destinationField = getMapTreeField(parent, key, true);
+            assertValidIndex(index, destinationField, true);
             // TODO: this will fail for very large moves due to argument limits.
-            dstField.splice(index, 0, ...children);
+            destinationField.splice(index, 0, ...children);
 
             return children.length;
         };
@@ -124,8 +124,8 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
                 const [parent, key] = cursor.getParent();
-                const srcField = getMapTreeField(parent, key, false);
-                const field = this.detachRangeOfChildren(srcField, index, index + count);
+                const sourceField = getMapTreeField(parent, key, false);
+                const field = this.detachRangeOfChildren(sourceField, index, index + count);
                 if (id !== undefined) {
                     moves.set(id, field);
                 } else {
