@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../../tree";
+import { Delta } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,

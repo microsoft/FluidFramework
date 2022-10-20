@@ -71,8 +71,8 @@
     "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/garbage-collector": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-base": "^0.1038.2000-98212",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-base": "^0.1038.2000",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
@@ -106,7 +106,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "2.0.0",
+    "version": "2.0.0-internal.2.1.0",
     "broken": {
       "VariableDeclaration_DefaultSummaryConfiguration": {
         "forwardCompat": false,
@@ -171,6 +171,33 @@
       },
       "RemovedClassDeclaration_ScheduleManager": {
         "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IAckedSummary": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IAckSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IChunkedOp": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryNackMessage": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_INackSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryOpMessage": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IBroadcastSummaryResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryAckMessage": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_OpActionEventName": {
         "backCompat": false
       }
     }

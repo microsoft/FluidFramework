@@ -13,7 +13,21 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { ICheckout, TransactionResult } from "../checkout";
+import {
+    ICheckout,
+    TransactionResult,
+    IForestSubscription,
+    StoredSchemaRepository,
+    InMemoryStoredSchemaRepository,
+    Index,
+    SharedTreeCore,
+    Checkout as TransactionCheckout,
+    runSynchronousTransaction,
+    Anchor,
+    AnchorLocator,
+    AnchorSet,
+    UpPath,
+} from "../core";
 import { EditManager } from "../edit-manager";
 import {
     defaultSchemaPolicy,
@@ -31,11 +45,6 @@ import {
     DefaultChangeset,
     EditManagerIndex,
 } from "../feature-libraries";
-import { IForestSubscription } from "../forest";
-import { StoredSchemaRepository, InMemoryStoredSchemaRepository } from "../schema-stored";
-import { Index, SharedTreeCore } from "../shared-tree-core";
-import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../transaction";
-import { Anchor, AnchorLocator, AnchorSet, UpPath } from "../tree";
 
 /**
  * Collaboratively editable tree distributed data-structure,

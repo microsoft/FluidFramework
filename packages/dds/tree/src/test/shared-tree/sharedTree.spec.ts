@@ -10,9 +10,18 @@ import {
     isUnwrappedNode,
     valueSymbol,
     getSchemaString,
+    getTypeSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
-import { detachedFieldAsKey, rootFieldKey, symbolFromKey, TreeValue, Value } from "../../tree";
+import {
+    detachedFieldAsKey,
+    FieldKey,
+    JsonableTree,
+    rootFieldKey,
+    symbolFromKey,
+    TreeValue,
+    Value,
+} from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -40,7 +49,7 @@ describe("SharedTree", () => {
         const destination = forest.root(provider.trees[0].forest.rootField);
         const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
         assert.equal(cursorResult, TreeNavigationResult.Ok);
-        assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+        assert.equal(readCursor.nextNode(), false);
         readCursor.free();
         forest.forgetAnchor(destination);
     });
@@ -72,12 +81,11 @@ describe("SharedTree", () => {
     });
 
     it("can summarize and load", async () => {
-        const provider = await TestTreeProvider.create(1);
+        const provider = await TestTreeProvider.create(1, true);
         const [summarizingTree] = provider.trees;
-        const summarize = await provider.enableManualSummarization();
         const value = 42;
         initializeTestTreeWithValue(summarizingTree, value);
-        await summarize();
+        await provider.summarize();
         await provider.ensureSynchronized();
         const loadingTree = await provider.createTree();
         assert.equal(getTestValue(loadingTree), value);
@@ -97,19 +105,20 @@ describe("SharedTree", () => {
         function validateTree(tree: ISharedTree, expected: Value[]): void {
             const readCursor = tree.forest.allocateCursor();
             const destination = tree.forest.root(tree.forest.rootField);
-            let cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            assert.equal(cursorResult, TreeNavigationResult.Ok);
+            let hasNode = true;
             for (const value of expected) {
-                assert.equal(cursorResult, TreeNavigationResult.Ok);
+                assert(hasNode);
                 assert.equal(readCursor.value, value);
-                cursorResult = readCursor.seek(1);
+                hasNode = readCursor.nextNode();
             }
             assert.equal(cursorResult, TreeNavigationResult.NotFound);
             readCursor.free();
             tree.forest.forgetAnchor(destination);
         }
 
-        const provider = await TestTreeProvider.create(1);
-        const summarize = await provider.enableManualSummarization();
+        const provider = await TestTreeProvider.create(1, true);
         const tree1 = provider.trees[0];
         const tree2 = await provider.createTree();
         const tree3 = await provider.createTree();
@@ -149,7 +158,7 @@ describe("SharedTree", () => {
 
         // Have tree1 make a summary
         // Summarized state: A C
-        await summarize();
+        await provider.summarize();
 
         // Insert B between A and C (without knowing of Z being deleted)
         insert(tree3, 2, "B");
@@ -242,8 +251,8 @@ describe("SharedTree", () => {
                 const destination = tree2.forest.root(tree2.forest.rootField);
                 const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult1, TreeNavigationResult.Ok);
-                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
-                assert.equal(cursorResult2, TreeNavigationResult.Ok);
+                readCursor.enterField(globalFieldKeySymbol);
+                assert(readCursor.firstNode());
                 const { value } = readCursor;
                 assert.equal(value, 43);
                 readCursor.free();
@@ -272,8 +281,8 @@ describe("SharedTree", () => {
                 const destination = tree2.forest.root(tree2.forest.rootField);
                 const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult1, TreeNavigationResult.Ok);
-                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
-                assert.equal(cursorResult2, TreeNavigationResult.NotFound);
+                readCursor.enterField(globalFieldKeySymbol);
+                assert(!readCursor.firstNode());
             }
         });
 
@@ -303,9 +312,9 @@ describe("SharedTree", () => {
                 const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
                 assert.equal(cursorResult, TreeNavigationResult.Ok);
                 assert.equal(readCursor.value, 1);
-                assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+                assert.equal(readCursor.nextNode(), true);
                 assert.equal(readCursor.value, 2);
-                assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+                assert.equal(readCursor.nextNode(), false);
                 readCursor.free();
                 tree2.forest.forgetAnchor(destination);
             }
@@ -346,12 +355,117 @@ describe("SharedTree", () => {
         // Check that the edit is reflected in the EditableTree after the transaction.
         assert.equal(editable[valueSymbol], 2);
     });
+
+    it("can insert optional child field", async () => {
+        const childKey: FieldKey = brand("optionalChild");
+        const value = "42";
+        const provider = await TestTreeProvider.create(2);
+        const [tree1, tree2] = provider.trees;
+
+        initializeTestTreeWithValue(tree1, 1);
+        await provider.ensureSynchronized();
+
+        assert(isUnwrappedNode(tree1.root));
+        const anchor = tree1.root[anchorSymbol];
+        tree1.runTransaction((forest, editor) => {
+            tree1.context.prepareForEdit();
+            const field = editor.optionalField(tree1.locate(anchor), childKey);
+            const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+            field.set(writeCursor, true);
+            return TransactionResult.Apply;
+        });
+
+        assert(childKey in tree1.root);
+        const child = tree1.root[childKey];
+        assert(isUnwrappedNode(child));
+        assert.equal(child[valueSymbol], value);
+        assert.equal(child[getTypeSymbol](), "TestValue");
+
+        await provider.ensureSynchronized();
+        assert(isUnwrappedNode(tree2.root));
+        assert(childKey in tree2.root);
+        const child2 = tree2.root[childKey];
+        assert(isUnwrappedNode(child2));
+        assert.equal(child2[valueSymbol], value);
+        tree1.context.free();
+        tree2.context.free();
+    });
+
+    it("can insert value child field", async () => {
+        const childKey: FieldKey = brand("valueChild");
+        const value = "42";
+        const provider = await TestTreeProvider.create(2);
+        const [tree1, tree2] = provider.trees;
+
+        const hasNoFields = namedTreeSchema({
+            name: brand("HasNoFields"),
+            extraLocalFields: fieldSchema(FieldKinds.sequence),
+        });
+        const hasValueField = namedTreeSchema({
+            name: brand("HasValueField"),
+            localFields: {
+                [childKey]: fieldSchema(FieldKinds.value, [hasNoFields.name]),
+            },
+            extraLocalFields: fieldSchema(FieldKinds.sequence),
+        });
+
+        const schema: SchemaData = {
+            treeSchema: new Map([
+                [hasNoFields.name, hasNoFields],
+                [hasValueField.name, hasValueField],
+            ]),
+            globalFieldSchema: new Map(),
+        };
+        const initialState = {
+            type: hasValueField.name,
+            fields: {
+                [childKey]: [
+                    {
+                        type: hasNoFields.name,
+                        value: 1,
+                    },
+                ],
+            },
+        };
+        initializeTestTree(tree1, initialState, schema);
+        await provider.ensureSynchronized();
+
+        assert(isUnwrappedNode(tree1.root));
+        const anchor = tree1.root[anchorSymbol];
+        tree1.runTransaction((forest, editor) => {
+            tree1.context.prepareForEdit();
+            const field = editor.valueField(tree1.locate(anchor), childKey);
+            const writeCursor = singleTextCursor({ type: hasNoFields.name, value });
+            field.set(writeCursor);
+            return TransactionResult.Apply;
+        });
+
+        assert(childKey in tree1.root);
+        const child = tree1.root[childKey];
+        assert(isUnwrappedNode(child));
+        assert.equal(child[valueSymbol], value);
+        assert.equal(child[getTypeSymbol](), hasNoFields.name);
+
+        await provider.ensureSynchronized();
+        assert(isUnwrappedNode(tree2.root));
+        assert(childKey in tree2.root);
+        const child2 = tree2.root[childKey];
+        assert(isUnwrappedNode(child2));
+        assert.equal(child2[valueSymbol], value);
+        assert.equal(child2[getTypeSymbol](), hasNoFields.name);
+
+        tree1.context.free();
+        tree2.context.free();
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
+    localFields: {
+        optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
+    },
     extraLocalFields: fieldSchema(FieldKinds.sequence),
     globalFields: [globalFieldKey],
 });
@@ -364,20 +478,31 @@ const testSchema: SchemaData = {
 };
 
 /**
- * Inserts a single node under the root of the tree with the given value.
- * Use {@link getTestValue} to read the value.
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
-function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-    tree.storedSchema.update(testSchema);
+function initializeTestTree(
+    tree: ISharedTree,
+    state: JsonableTree,
+    schema: SchemaData = testSchema,
+): void {
+    tree.storedSchema.update(schema);
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
-        const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+        const writeCursor = singleTextCursor(state);
         const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
         field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
     });
+}
+
+/**
+ * Inserts a single node under the root of the tree with the given value.
+ * Use {@link getTestValue} to read the value.
+ */
+function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
+    initializeTestTree(tree, { type: brand("TestValue"), value });
 }
 
 /**

@@ -1,17 +1,5 @@
 {
   "tags": ["shared-tree"],
   "exports": ["index"],
-  "imports": [
-    "schema-stored",
-    "tree",
-    "dependency-tracking",
-    "edit-manager",
-    "util",
-    "rebase",
-    "forest",
-    "shared-tree-core",
-    "feature-libraries",
-    "transaction",
-    "checkout"
-  ]
+  "imports": ["util", "core", "feature-libraries"]
 }

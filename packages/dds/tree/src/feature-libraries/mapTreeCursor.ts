@@ -10,14 +10,13 @@ import {
     ITreeCursorNew as ITreeCursor,
     CursorLocationType,
     mapCursorFieldNew as mapCursorField,
-    ITreeCursorSynchronous,
-} from "../tree";
-import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
+} from "../core";
+import { CursorAdapter, CursorWithNode, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
  * @returns an ITreeCursorSynchronous for a single MapTree.
  */
-export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
+export function singleMapTreeCursor(root: MapTree): CursorWithNode<MapTree> {
     return singleStackTreeCursor(root, adapter);
 }
 
