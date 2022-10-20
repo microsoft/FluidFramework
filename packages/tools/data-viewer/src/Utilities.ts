@@ -11,6 +11,11 @@ import { IFluidContainer } from "@fluidframework/fluid-static";
 /**
  * Gets the inner IContainer from within the {@link @fluidframework/fluid-static#IFluidContainer} via some hackery.
  *
+ * @privateRemarks
+ *
+ * TODO: expose more details as internal only on the IFluidContainer, or expose the inner
+ * container as internal only?
+ *
  * @internal
  */
 export function getInnerContainer(container: IFluidContainer): IContainer {
