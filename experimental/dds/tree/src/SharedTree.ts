@@ -120,14 +120,28 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
 export type SharedTreeOptions<
 	WF extends WriteFormat,
 	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'
-> = Omit<
-	WF extends WriteFormat.v0_0_2
-		? SharedTreeOptions_0_0_2
-		: WF extends WriteFormat.v0_1_1
-		? SharedTreeOptions_0_1_1
-		: never,
-	HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
->;
+> = SharedTreeBaseOptions &
+	Omit<
+		WF extends WriteFormat.v0_0_2
+			? SharedTreeOptions_0_0_2
+			: WF extends WriteFormat.v0_1_1
+			? SharedTreeOptions_0_1_1
+			: never,
+		HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
+	>;
+
+/**
+ * Configuration options for a SharedTree independent of its write format.
+ * @public
+ */
+export interface SharedTreeBaseOptions {
+	/**
+	 * Dictates whether or not an entire revert should fail if any edits in the transaction cannot be reverted. If true, any edits
+	 * that can be reverted will be. If false, any edits that cannot be reverted will cause the function to log telemetry
+	 * and return undefined.
+	 */
+	revertPartialTransactions?: boolean;
+}
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
@@ -471,6 +485,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
 
+	/** Dictates whether reverts can be partially successful. */
+	private readonly revertPartialTransactions: boolean;
+
 	private readonly processEditResult = (editResult: EditStatus, editId: EditId): void => {
 		// TODO:#44859: Invalid results should be handled by the app
 		this.emit(SharedTree.eventFromEditResult(editResult), editId);
@@ -534,6 +551,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 		this.uploadEditChunks = historyPolicy.uploadEditChunks;
+		this.revertPartialTransactions = options.revertPartialTransactions ?? false;
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
@@ -1519,7 +1537,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger);
+		return revert(
+			changes as unknown as readonly ChangeInternal[],
+			before,
+			this.revertPartialTransactions,
+			this.logger
+		);
 	}
 
 	/**

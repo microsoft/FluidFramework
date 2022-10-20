@@ -6,7 +6,13 @@
 import { expect } from 'chai';
 import { revert } from '../HistoryEditFactory';
 import { DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
+import {
+	ChangeInternal,
+	DetachInternal,
+	SetValueInternal,
+	StablePlaceInternal,
+	StableRangeInternal,
+} from '../persisted-types';
 import { expectDefined } from './utilities/TestCommon';
 import { refreshTestTree } from './utilities/TestUtilities';
 
@@ -120,6 +126,31 @@ describe('revert', () => {
 		);
 		const result = expectDefined(revert([emptyTraitBuild, emptyTraitInsert], testTree.view));
 		expect(result).to.have.lengthOf(0);
+	});
+
+	it.only('can revert part of a transaction when the rest cannot be reverted', () => {
+		// Build and insert a node to set
+		const node = testTree.buildLeafInternal();
+		const insertedNodeId = 1 as DetachedSequenceId;
+		const build = ChangeInternal.build([node], insertedNodeId);
+		const insert = ChangeInternal.insert(
+			insertedNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
+
+		// Detach of a node that doesn't get inserted into the tree
+		const nodeNotInTree = testTree.buildLeafInternal();
+		const detach = ChangeInternal.detach(StableRangeInternal.only(nodeNotInTree));
+
+		const set = ChangeInternal.setPayload(node, '42');
+
+		const result = expectDefined(revert([build, insert, detach, set], testTree.view, true));
+		expect(result).to.have.lengthOf(2);
+		const revertedSet = result[0] as SetValueInternal;
+		expect(revertedSet.payload).to.be.undefined;
+		const revertedInsert = result[1] as DetachInternal;
+		expect(revertedInsert.source.start.referenceSibling).to.deep.equal(node.identifier);
+		expect(revertedInsert.source.end.referenceSibling).to.deep.equal(node.identifier);
 	});
 
 	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {

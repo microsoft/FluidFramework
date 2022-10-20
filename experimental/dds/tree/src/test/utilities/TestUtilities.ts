@@ -59,7 +59,7 @@ import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree, SharedTreeFactory } from '../../SharedTree';
+import { SharedTree, SharedTreeBaseOptions, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
 import { OrderedEditSet } from '../../EditLog';
@@ -113,6 +113,8 @@ export interface SharedTreeTestingOptions {
 	 * Optional attribution ID to give to the new tree
 	 */
 	attributionId?: AttributionId;
+	/** Iff true, transactions can be reverted partially even if some of their edits cannot be reverted. */
+	revertPartialTransactions?: boolean;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -145,6 +147,7 @@ export function setUpTestSharedTree(
 		summarizeHistory,
 		writeFormat,
 		attributionId,
+		revertPartialTransactions,
 	} = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
@@ -164,9 +167,14 @@ export function setUpTestSharedTree(
 	// Enable expensiveValidation
 	let factory: SharedTreeFactory;
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		const options: SharedTreeBaseOptions & SharedTreeOptions_0_0_2 = {
+			revertPartialTransactions,
+			summarizeHistory: summarizeHistory ?? true,
+		};
+		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
+			revertPartialTransactions,
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
 			attributionId,
 		};
@@ -230,41 +238,17 @@ export interface LocalServerSharedTreeTestingComponents {
 }
 
 /** Options used to customize setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingOptions {
+export interface LocalServerSharedTreeTestingOptions extends SharedTreeTestingOptions {
 	/** Contents of blobs that should be uploaded to the runtime upon creation. Handles to these blobs will be returned. */
 	blobs?: ArrayBufferLike[];
 	/** Headers to include on the container load request. */
 	headers?: IRequestHeader;
-	/**
-	 * Id for the SharedTree to be created.
-	 * If two SharedTrees have the same id and the same testObjectProvider,
-	 * they will collaborate (send edits to each other)
-	 */
-	id?: string;
-	/** Node to initialize the SharedTree with. */
-	initialTree?: BuildNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
 	testObjectProvider?: TestObjectProvider;
-	/**
-	 * If not set, full history will be preserved.
-	 */
-	summarizeHistory?: boolean;
-	/**
-	 * If not set, summaries will be written in format 0.0.2.
-	 */
-	writeFormat?: WriteFormat;
-	/**
-	 * Optional attribution ID to give to the new tree
-	 */
-	attributionId?: AttributionId;
 	/**
 	 * If not set, will upload edit chunks when they are full.
 	 */
 	uploadEditChunks?: boolean;
-	/**
-	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
-	 */
-	setupEditId?: EditId;
 	/**
 	 * If set, will be passed to the container on load
 	 */
@@ -300,14 +284,20 @@ export async function setUpLocalServerTestSharedTree(
 		uploadEditChunks,
 		attributionId,
 		pendingLocalState,
+		revertPartialTransactions,
 	} = options;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		const options: SharedTreeBaseOptions & SharedTreeOptions_0_0_2 = {
+			revertPartialTransactions,
+			summarizeHistory: summarizeHistory ?? true,
+		};
+		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
+			revertPartialTransactions,
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
 			attributionId,
 		};
