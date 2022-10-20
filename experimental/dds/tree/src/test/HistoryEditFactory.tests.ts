@@ -128,7 +128,7 @@ describe('revert', () => {
 		expect(result).to.have.lengthOf(0);
 	});
 
-	it.only('can revert part of a transaction when the rest cannot be reverted', () => {
+	it('can revert part of a transaction when the rest cannot be reverted', () => {
 		// Build and insert a node to set
 		const node = testTree.buildLeafInternal();
 		const insertedNodeId = 1 as DetachedSequenceId;

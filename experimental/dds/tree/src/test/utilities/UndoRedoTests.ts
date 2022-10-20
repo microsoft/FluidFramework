@@ -286,85 +286,86 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			expect(traitAfterUndo.length).equals(1);
 		});
 
-		// if (!localMode) {
-		// 	it.only('can revert part of a transaction when the rest cannot be reverted', () => {
-		// 		// Set up the trees with revertPartialTransactions turned on
-		// 		const setupResult = setUpTestSharedTree({ revertPartialTransactions: true, ...treeOptions });
-		// 		sharedTree = setupResult.tree;
-		// 		testTree = setUpTestTree(sharedTree);
-		// 		containerRuntimeFactory = setupResult.containerRuntimeFactory;
-		// 		const secondTree = localMode
-		// 			? undefined
-		// 			: setUpTestSharedTree({
-		// 					containerRuntimeFactory,
-		// 					revertPartialTransactions: true,
-		// 					...secondTreeOptions,
-		// 			  }).tree;
-		// 		undoSharedTree = secondTree ?? sharedTree;
+		if (!localMode) {
+            // TODO: unskip or delete once a regression scenario has been identified
+			it.skip('can revert part of a transaction when the rest cannot be reverted', () => {
+				// Set up the trees with revertPartialTransactions turned on
+				const setupResult = setUpTestSharedTree({ revertPartialTransactions: true, ...treeOptions });
+				sharedTree = setupResult.tree;
+				testTree = setUpTestTree(sharedTree);
+				containerRuntimeFactory = setupResult.containerRuntimeFactory;
+				const secondTree = localMode
+					? undefined
+					: setUpTestSharedTree({
+							containerRuntimeFactory,
+							revertPartialTransactions: true,
+							...secondTreeOptions,
+					  }).tree;
+				undoSharedTree = secondTree ?? sharedTree;
 
-		// 		if (additionalSetup !== undefined) {
-		// 			if (secondTree !== undefined) {
-		// 				additionalSetup([sharedTree, undoSharedTree]);
-		// 			} else {
-		// 				additionalSetup([sharedTree]);
-		// 			}
-		// 		}
+				if (additionalSetup !== undefined) {
+					if (secondTree !== undefined) {
+						additionalSetup([sharedTree, undoSharedTree]);
+					} else {
+						additionalSetup([sharedTree]);
+					}
+				}
 
-		// 		// Build and insert two nodes, one to set and the other to detach
-		// 		const newNode = buildLeaf(sharedTree.generateNodeId());
-		// 		sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.atStartOf(testTree.left.traitLocation)));
-		// 		expect(sharedTree.edits.length).to.equal(2);
-		// 		afterEdit();
+				// Build and insert two nodes, one to set and the other to detach
+				const newNode = buildLeaf(sharedTree.generateNodeId());
+				sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.atStartOf(testTree.left.traitLocation)));
+				expect(sharedTree.edits.length).to.equal(2);
+				afterEdit();
 
-		// 		const set = Change.setPayload(newNode.identifier, '42');
-		// 		const detachedNodeId = sharedTree.generateNodeId();
-		// 		const detachedNode = buildLeaf(detachedNodeId);
-		// 		const insert = Change.insertTree(detachedNode, StablePlace.atStartOf(testTree.left.traitLocation));
-		// 		const { id } = sharedTree.applyEdit(set, ...insert);
-		// 		expect(sharedTree.edits.length).to.equal(3);
-		// 		afterEdit();
+				const set = Change.setPayload(newNode.identifier, '42');
+				const detachedNodeId = sharedTree.generateNodeId();
+				const detachedNode = buildLeaf(detachedNodeId);
+				const insert = Change.insertTree(detachedNode, StablePlace.atStartOf(testTree.left.traitLocation));
+				const { id } = sharedTree.applyEdit(set, ...insert);
+				expect(sharedTree.edits.length).to.equal(3);
+				afterEdit();
 
-		// 		containerRuntimeFactory.processAllMessages();
+				containerRuntimeFactory.processAllMessages();
 
-		// 		// Check the size of the trait before detaching
-		// 		const traitBeforeDetach = sharedTree.currentView.getTrait(testTree.left.traitLocation);
-		// 		expect(traitBeforeDetach.length).equals(3);
-		// 		const nodeBeforeDetach = sharedTree.currentView.getViewNode(traitBeforeDetach[1]);
-		// 		expect(nodeBeforeDetach.payload).to.equal('42');
+				// Check the size of the trait before detaching
+				const traitBeforeDetach = sharedTree.currentView.getTrait(testTree.left.traitLocation);
+				expect(traitBeforeDetach.length).equals(3);
+				const nodeBeforeDetach = sharedTree.currentView.getViewNode(traitBeforeDetach[1]);
+				expect(nodeBeforeDetach.payload).to.equal('42');
 
-		// 		// Detach the second node
-		// 		const translatedNodeId = translateId(detachedNodeId, sharedTree, undoSharedTree);
-		// 		undoSharedTree.applyEdit(Change.detach(StableRange.only(translatedNodeId)));
-		// 		afterEdit();
+				// Detach the second node
+				const translatedNodeId = translateId(detachedNodeId, sharedTree, undoSharedTree);
+				undoSharedTree.applyEdit(Change.detach(StableRange.only(translatedNodeId)));
+				afterEdit();
 
-		// 		containerRuntimeFactory.processAllMessages();
+				containerRuntimeFactory.processAllMessages();
 
-		// 		// Check that the second node has been detached
-		// 		const traitAfterDetach = sharedTree.currentView.getTrait(testTree.left.traitLocation);
-		// 		expect(traitAfterDetach.length).equals(2);
+				// Check that the second node has been detached
+				const traitAfterDetach = sharedTree.currentView.getTrait(testTree.left.traitLocation);
+				expect(traitAfterDetach.length).equals(2);
 
-		// 		// The undo should succeed and the set should be reverted
-		// 		const undoId = expectDefined(undo(sharedTree, id));
+				// The undo should succeed and the set should be reverted
+				const undoId = expectDefined(undo(sharedTree, id));
 
-		// 		containerRuntimeFactory.processAllMessages();
+				containerRuntimeFactory.processAllMessages();
 
-		// 		// Check that undoing the second insert has no effect and the node whose value was set now has an empty payload
-		// 		const traitAfterUndo = sharedTree.currentView.getTrait(testTree.left.traitLocation);
-		// 		expect(traitAfterUndo.length).equals(2);
-		// 		const nodeAfterUndo = sharedTree.currentView.getViewNode(traitAfterUndo[0]);
-		// 		expect(nodeAfterUndo.payload).to.be.undefined;
+				// Check that undoing the second insert has no effect and the node whose value was set now has an empty payload
+				const traitAfterUndo = sharedTree.currentView.getTrait(testTree.left.traitLocation);
+				expect(traitAfterUndo.length).equals(2);
+				const nodeAfterUndo = sharedTree.currentView.getViewNode(traitAfterUndo[0]);
+				expect(nodeAfterUndo.payload).to.be.undefined;
 
-		// 		redo(sharedTree, undoId);
+				redo(sharedTree, undoId);
 
-		// 		containerRuntimeFactory.processAllMessages();
+				containerRuntimeFactory.processAllMessages();
 
-		// 		// Check that redoing only includes a set to 42
-		// 		const traitAfterRedo = sharedTree.currentView.getTrait(testTree.left.traitLocation);
-		// 		expect(traitAfterRedo.length).equals(2);
-		// 		const nodeAfterRedo = sharedTree.currentView.getViewNode(traitAfterRedo[0]);
-		// 		expect(nodeAfterRedo.payload).to.equal('42');
-		// 	});
-		// }
+				// Check that redoing only includes a set to 42
+				const traitAfterRedo = sharedTree.currentView.getTrait(testTree.left.traitLocation);
+				expect(traitAfterRedo.length).equals(2);
+				const nodeAfterRedo = sharedTree.currentView.getViewNode(traitAfterRedo[0]);
+				expect(nodeAfterRedo.payload).to.equal('42');
+			});
+		}
 
 		if (testOutOfOrderRevert === true) {
 			it('works for out-of-order Insert', () => {
