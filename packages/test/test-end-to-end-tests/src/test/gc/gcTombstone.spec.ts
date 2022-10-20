@@ -166,7 +166,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert.throws(() => testDataObject2._root.set("send", "op"),
             (error) => {
                 const correctErrorType = error.errorType = "dataCorruptionError";
-                const correctErrorMessage = error.errorMessage?.startsWith(`Context was tombstoned`) === true;
+                const correctErrorMessage = error.errorMessage?.startsWith(`Context was tombstoned`);
                 return correctErrorType && correctErrorMessage;
             },
             `Should not be able to send ops for a tombstoned datastore.`);
