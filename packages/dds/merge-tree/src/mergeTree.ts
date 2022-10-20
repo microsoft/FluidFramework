@@ -144,6 +144,11 @@ function isRemovedAndAcked(segment: ISegment): boolean {
     return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
+function isMovedAndAcked(segment: ISegment): boolean {
+    const moveInfo = toMoveInfo(segment);
+    return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
+}
+
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
     if (!node.isLeaf()) {
         return node.cachedLength;
@@ -946,12 +951,12 @@ export class MergeTree {
      * @internal
      */
     public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
-        if (!segment || !isRemovedAndAcked(segment)) {
+        if (!segment || !(isRemovedAndAcked(segment) || isMovedAndAcked(segment))) {
             return segment;
         }
         let slideToSegment: ISegment | undefined;
         const goFurtherToFindSlideToSegment = (seg) => {
-            if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
+            if (seg.seq !== UnassignedSequenceNumber && !(isRemovedAndAcked(seg) || isMovedAndAcked(seg))) {
                 slideToSegment = seg;
                 return false;
             }
@@ -975,7 +980,7 @@ export class MergeTree {
      */
     private slideAckedRemovedSegmentReferences(segment: ISegment) {
         assert(
-            isRemovedAndAcked(segment),
+            isRemovedAndAcked(segment) || isMovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
         if (segment.localRefs?.empty !== false) {
             return;
@@ -2098,6 +2103,10 @@ export class MergeTree {
             seq !== UnassignedSequenceNumber ? seq : undefined,
         );
 
+        localOverlapWithRefs.forEach(
+            (s) => this.slideAckedRemovedSegmentReferences(s),
+        );
+
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && movedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
@@ -2106,6 +2115,12 @@ export class MergeTree {
                     operation: MergeTreeDeltaType.OBLITERATE,
                     deltaSegments: movedSegments,
                 });
+        }
+
+        if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
+            movedSegments.forEach((rSeg) => {
+                this.slideAckedRemovedSegmentReferences(rSeg.segment);
+            });
         }
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
@@ -2661,9 +2676,10 @@ export class MergeTree {
                 }
                 const len = this.nodeLength(node, lenSeq, clientId, localSeq);
 
-                // const isUnacked = (node.isLeaf() && node.seq === UnassignedSequenceNumber);
+                const isUnackedAndInObliterate =
+                    node.isLeaf() && node.seq === UnassignedSequenceNumber && lenSeq !== refSeq;
 
-                if (len === undefined || len === 0) {
+                if (len === undefined || (len === 0 && !isUnackedAndInObliterate)) {
                     return NodeAction.Skip;
                 }
 

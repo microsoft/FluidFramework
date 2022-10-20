@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IMergeTreeDeltaOp } from "../ops";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
@@ -144,6 +145,7 @@ describe("obliterate", () => {
         helper.processAllOps();
 
         assert.equal(helper.clients.A.getText(), "aaaD");
+        assert.equal(helper.clients.C.getText(), "aaaD");
 
         helper.logger.validate();
     });
@@ -164,5 +166,82 @@ describe("obliterate", () => {
         assert.equal(helper.clients.A.getText(), "aaaD");
 
         helper.logger.validate();
+    });
+
+    it("deletes concurrent insert that occurs after obliterate", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("B", 0, "ABCD");
+        helper.processAllOps();
+        helper.obliterateRange("B", 0, 4);
+        helper.insertText("C", 2, "X");
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "");
+        assert.equal(helper.clients.C.getText(), "");
+
+        helper.logger.validate();
+    });
+
+    it("deletes concurrent insert that occurs before obliterate", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("B", 0, "ABCD");
+        helper.processAllOps();
+        helper.insertText("C", 2, "X");
+        helper.obliterateRange("B", 0, 4);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "");
+        assert.equal(helper.clients.C.getText(), "");
+
+        helper.logger.validate();
+    });
+
+    it.skip("deletes concurrent insert that occurs before obliterate", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("C", 0, "ABCDE");
+        helper.obliterateRange("C", 0, 5);
+        helper.insertText("B", 0, "W");
+        helper.insertText("C", 0, "D");
+        helper.obliterateRange("C", 0, 1);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "W");
+        assert.equal(helper.clients.B.getText(), "W");
+        assert.equal(helper.clients.C.getText(), "W");
+
+        helper.logger.validate();
+    });
+
+    it("does not delete unacked segment at start of string", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("C", 0, "ABC");
+        helper.obliterateRange("C", 2, 3);
+        helper.insertText("B", 0, "X");
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "XAB");
+        assert.equal(helper.clients.B.getText(), "XAB");
+        assert.equal(helper.clients.C.getText(), "XAB");
+
+        helper.logger.validate();
+    });
+
+    it("throws when local obliterate has range end outside length of local string", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("B", 0, "A");
+        helper.insertText("C", 0, "B");
+
+        try {
+            helper.obliterateRange("C", 0, 2);
+            assert.fail("should not be possible to obliterate outside local range");
+        } catch (e) {
+            assert(e instanceof LoggingError);
+            assert.equal(e.message, "RangeOutOfBounds");
+        }
     });
 });

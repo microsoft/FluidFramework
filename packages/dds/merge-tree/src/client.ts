@@ -21,6 +21,7 @@ import {
     CollaborationWindow,
     compareStrings,
     IConsensusInfo,
+    IMoveInfo,
     ISegment,
     ISegmentAction,
     Marker,
@@ -65,6 +66,12 @@ import {
 
 function elapsedMicroseconds(trace: Trace) {
     return trace.trace().duration * 1000;
+}
+
+function removeMoveInfo(segment: Partial<IMoveInfo>): void {
+    delete segment.movedSeq;
+    delete segment.localMovedSeq;
+    delete segment.movedClientIds;
 }
 
 /**
@@ -424,9 +431,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-        if (!range) {
-            return false;
-        }
 
         let traceStart: Trace | undefined;
         if (this.measureOps) {
@@ -630,6 +634,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                 }
             }
 
+            if (
+                op.type === MergeTreeDeltaType.OBLITERATE
+                && end !== undefined
+                && end > length
+            ) {
+                invalidPositions.push("end");
+            }
+
             if (invalidPositions.length > 0) {
                 throw new LoggingError(
                     "RangeOutOfBounds",
@@ -812,6 +824,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                         segInsertOp = segment.clone();
                         segInsertOp.properties = resetOp.seg.props;
                     }
+                    removeMoveInfo(segment);
                     newOp = createInsertSegmentOp(
                         segmentPosition,
                         segInsertOp,
