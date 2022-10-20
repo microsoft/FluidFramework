@@ -1021,7 +1021,7 @@ describe("Garbage Collection Tests", () => {
 
             it("SweepReady object used - generates events and closes container (SweepReadyUsageDetection enabled)", async () => {
                 const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
-                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClient";
+                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClientClose";
 
                 await interactiveClientTestCode(
                     sweepTimeoutMs,
