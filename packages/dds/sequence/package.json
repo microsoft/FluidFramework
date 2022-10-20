@@ -235,6 +235,12 @@
       },
       "InterfaceDeclaration_ISequenceDeltaRange": {
         "backCompat": false
+      },
+      "ClassDeclaration_SharedIntervalCollection": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedIntervalCollection": {
+        "backCompat": false
       }
     }
   }
