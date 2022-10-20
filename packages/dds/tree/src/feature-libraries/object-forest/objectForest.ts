@@ -103,7 +103,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
         const moves: Map<Delta.MoveId, DetachedField> = new Map();
         const cursor: Cursor = this.allocateCursor();
-        cursor.set(); // Init to above detached fields.
+        cursor.setToAboveDetachedSequences();
         const moveIn = (index: number, toAttach: DetachedField): number => {
             const detachedKey = detachedFieldAsKey(toAttach);
             const children = getMapTreeField(this.roots, detachedKey, false);
@@ -267,7 +267,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             keyStack.push(path.parentField);
             path = path.parent;
         }
-        cursorToMove.set();
+        cursorToMove.setToAboveDetachedSequences();
         while (keyStack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             cursorToMove.enterField(keyStack.pop()!);
@@ -393,7 +393,11 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         this.forest.currentCursors.delete(this);
     }
 
-    public set(): void {
+    /**
+     * Move this cursor the special dummy node above the detached sequences.
+     * Can be used when cleared (but not freed).
+     */
+    public setToAboveDetachedSequences(): void {
         assert(
             this.state !== ITreeSubscriptionCursorState.Freed,
             0x33c /* Cursor must not be freed */,
