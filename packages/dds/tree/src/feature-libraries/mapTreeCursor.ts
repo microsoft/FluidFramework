@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    FieldKey,
-    MapTree,
-    ITreeCursorNew as ITreeCursor,
-    CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
-} from "../core";
+import { FieldKey, MapTree, ITreeCursor, CursorLocationType, mapCursorField } from "../core";
 import { CursorAdapter, CursorWithNode, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**

@@ -10,7 +10,7 @@ import {
     lookupGlobalFieldSchema,
     rootFieldKey,
     symbolFromKey,
-    mapCursorFieldNew,
+    mapCursorField,
 } from "../../core";
 import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
@@ -98,7 +98,7 @@ export class ProxyContext implements EditableTreeContext {
         let targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
             cursor.exitNode();
-            targets = mapCursorFieldNew(cursor, (c) => new ProxyTarget(this, c));
+            targets = mapCursorField(cursor, (c) => new ProxyTarget(this, c));
         }
         cursor.free();
         this.forest.anchors.forget(destination);

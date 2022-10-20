@@ -29,10 +29,10 @@ import {
     recordDependency,
     JsonableTree,
     Delta,
-    mapCursorFieldNew,
+    mapCursorField,
 } from "../core";
 import { singleTextCursor } from "./treeTextCursor";
-import { jsonableTreeFromCursorNew } from ".";
+import { jsonableTreeFromCursor } from ".";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -92,7 +92,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
         const roots =
             result === TreeNavigationResult.Ok
-                ? mapCursorFieldNew(this.cursor, jsonableTreeFromCursorNew)
+                ? mapCursorField(this.cursor, jsonableTreeFromCursor)
                 : [];
         this.cursor.clear();
 
