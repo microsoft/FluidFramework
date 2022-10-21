@@ -72,6 +72,7 @@ export {
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     initializeForest,
+    afterChangeToken,
 } from "../forest";
 
 export {
