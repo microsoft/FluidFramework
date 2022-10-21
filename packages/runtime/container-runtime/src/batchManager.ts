@@ -91,11 +91,8 @@ export class BatchManager {
     }
 
     private checkReferenceSequenceNumber(message: BatchMessage) {
-        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") === true) {
-            return;
-        }
-
-        if (this.pendingBatch.length > 0
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true
+            && this.pendingBatch.length > 0
             && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
             throw new GenericError(
                 "Submission of an out of order message",
