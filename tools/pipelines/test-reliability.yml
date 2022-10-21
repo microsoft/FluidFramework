@@ -1,0 +1,52 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-reliability pipeline (for the purpose of detecting flaky tests)
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "00 03 * * 5-7"
+    displayName: Scheduled Tests on Weekend Nights (For internal testing purpose)
+    branches:
+      include:
+      - main
+      - next
+    always: true
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  - ${{ each stageName in parameters.stageNames }}:
+    - stage:
+      displayName: ${{ stageName }}
+      dependsOn: []
+      jobs:
+      - template: templates/include-test-real-service.yml
+        parameters:
+          testPackage: "@fluid-internal/local-server-tests"
+          testWorkspace: ${{ variables.testWorkspace }}
+          testCommand: test:mocha
+          env:
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+parameters:
+  - name: stageNames
+    type: object
+    default:
+    - Run 1
+    - Run 2
+    - Run 3
+    - Run 4
+    - Run 5
+    - Run 6
+    - Run 7
+    - Run 8
+    - Run 9
+    - Run 10
