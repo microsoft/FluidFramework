@@ -10,20 +10,12 @@ import type {
 } from "@fluidframework/container-definitions";
 
 import {
-    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
-} from "./modelVersion1";
-import {
-    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
-} from "./modelVersion2";
+    InventoryListContainerRuntimeFactory,
+} from "./model";
 
-const v1ModuleWithDetails: IFluidModuleWithDetails = {
-    module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
+const moduleWithDetails: IFluidModuleWithDetails = {
+    module: { fluidExport: new InventoryListContainerRuntimeFactory() },
     details: { package: "one" },
-};
-
-const v2ModuleWithDetails: IFluidModuleWithDetails = {
-    module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
-    details: { package: "two" },
 };
 
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
@@ -35,8 +27,7 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
             throw new TypeError("Unexpected code detail format");
         }
         switch (version) {
-            case "one": return v1ModuleWithDetails;
-            case "two": return v2ModuleWithDetails;
+            case "one": return moduleWithDetails;
             default: throw new Error("Unknown version");
         }
     }

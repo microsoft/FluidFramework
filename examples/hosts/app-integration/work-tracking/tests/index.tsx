@@ -9,7 +9,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListView } from "../src/view/inventoryView";
-import { InventoryListContainerRuntimeFactory } from "../src/modelVersion1";
+import { InventoryListContainerRuntimeFactory } from "../src/model";
 import type { IInventoryListAppModel } from "../src/modelInterfaces";
 
 /**
