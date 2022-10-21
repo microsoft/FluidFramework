@@ -144,9 +144,6 @@ export const enum CursorLocationType {
 // @public
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 
-// @public
-export function cursorToJsonObjectNew(reader: ITreeCursorNew): JsonCompatible;
-
 // @public (undocumented)
 function decodeJson<TNodeChange>(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder_2<TNodeChange>): Changeset<TNodeChange>;
 
@@ -583,22 +580,7 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
-export interface ITreeCursor<TResult = TreeNavigationResult> {
-    // (undocumented)
-    childFieldLength(key: FieldKey): number;
-    // (undocumented)
-    currentFieldLength(): number;
-    down(key: FieldKey, index: number): TResult;
-    // (undocumented)
-    keys: Iterable<FieldKey>;
-    seek(offset: number): TResult;
-    readonly type: TreeType;
-    up(): TResult;
-    readonly value: Value;
-}
-
-// @public
-export interface ITreeCursorNew {
+export interface ITreeCursor {
     readonly chunkLength: number;
     readonly chunkStart: number;
     enterField(key: FieldKey): void;
@@ -625,7 +607,7 @@ export interface ITreeCursorNew {
 }
 
 // @public
-export interface ITreeCursorSynchronous extends ITreeCursorNew {
+export interface ITreeCursorSynchronous extends ITreeCursor {
     // (undocumented)
     readonly pending: false;
 }
@@ -655,9 +637,6 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 // @public
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
-// @public
-export function jsonableTreeFromCursorNew(cursor: ITreeCursorNew): JsonableTree;
-
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
 
@@ -676,27 +655,6 @@ export type JsonCompatibleObject = {
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
     readonly [P in string]: JsonCompatibleReadOnly | undefined;
 };
-
-// @public @sealed
-export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
-    constructor(root: Jsonable<T>);
-    // (undocumented)
-    childFieldLength(key: FieldKey): number;
-    // (undocumented)
-    currentFieldLength(): number;
-    // (undocumented)
-    down(key: FieldKey, index: number): SynchronousNavigationResult;
-    // (undocumented)
-    get keys(): Iterable<FieldKey>;
-    // (undocumented)
-    seek(offset: number): SynchronousNavigationResult;
-    // (undocumented)
-    get type(): TreeType;
-    // (undocumented)
-    up(): SynchronousNavigationResult;
-    // (undocumented)
-    get value(): Value;
-}
 
 // @public (undocumented)
 export const jsonNull: NamedTreeSchema;
@@ -1202,60 +1160,60 @@ export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChan
 
 declare namespace SequenceField {
     export {
-        NodeChangeType,
-        Changeset,
-        MarkList_2 as MarkList,
-        Mark_2 as Mark,
-        ObjectMark,
-        SizedMark,
-        SizedObjectMark,
-        Tomb,
-        Modify_2 as Modify,
-        HasPlaceFields,
-        Insert_2 as Insert,
-        ModifyInsert,
-        MoveIn_2 as MoveIn,
-        ModifyMoveIn,
         Attach,
-        NodeMark,
-        Detach,
-        ModifyDetach,
-        Reattach,
-        ModifyReattach,
-        Tombstones,
-        PriorOp,
-        HasLength,
-        TreeForestPath_2 as TreeForestPath,
-        TreeRootPath_2 as TreeRootPath,
-        RangeType,
-        OpId_2 as OpId,
-        HasOpId_2 as HasOpId,
-        ProtoNode_3 as ProtoNode,
-        NodeCount_2 as NodeCount,
-        GapCount_2 as GapCount,
-        Skip_3 as Skip,
+        Changeset,
         ChangesetTag_2 as ChangesetTag,
         ClientId,
-        Tiebreak_2 as Tiebreak,
+        Detach,
         Effects_2 as Effects,
+        GapCount_2 as GapCount,
+        HasOpId_2 as HasOpId,
+        HasLength,
+        HasPlaceFields,
+        Insert_2 as Insert,
+        Mark_2 as Mark,
+        MarkList_2 as MarkList,
+        Modify_2 as Modify,
+        ModifyDetach,
+        ModifyInsert,
+        ModifyMoveIn,
+        ModifyReattach,
+        MoveIn_2 as MoveIn,
+        NodeChangeType,
+        NodeCount_2 as NodeCount,
+        NodeMark,
+        OpId_2 as OpId,
+        ObjectMark,
+        PriorOp,
+        ProtoNode_3 as ProtoNode,
+        RangeType,
+        Reattach,
+        SizedMark,
+        SizedObjectMark,
+        Tiebreak_2 as Tiebreak,
+        Tomb,
+        Tombstones,
+        TreeForestPath_2 as TreeForestPath,
+        TreeRootPath_2 as TreeRootPath,
+        Skip_3 as Skip,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
         sequenceFieldChangeRebaser,
-        encodeForJson,
         decodeJson,
-        sequenceFieldChangeEncoder,
-        NodeChangeEncoder_2 as NodeChangeEncoder,
+        encodeForJson,
         NodeChangeDecoder_2 as NodeChangeDecoder,
+        NodeChangeEncoder_2 as NodeChangeEncoder,
+        sequenceFieldChangeEncoder,
         sequenceFieldToDelta,
         ToDelta_2 as ToDelta,
         SequenceFieldEditor,
         sequenceFieldEditor,
         MarkListFactory,
-        rebase,
         NodeChangeRebaser_2 as NodeChangeRebaser,
-        invert,
+        rebase,
         DUMMY_INVERT_TAG,
+        invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
         NodeChangeComposer_2 as NodeChangeComposer
@@ -1325,12 +1283,6 @@ export class SimpleDependee implements Dependee {
 export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
 
 // @public (undocumented)
-export function singleTextCursor(root: JsonableTree): TextCursor;
-
-// @public (undocumented)
-export function singleTextCursorNew(root: JsonableTree): ITreeCursorSynchronous;
-
-// @public (undocumented)
 type SizedMark<TNodeChange = NodeChangeType> = Skip_3 | SizedObjectMark<TNodeChange>;
 
 // @public (undocumented)
@@ -1352,44 +1304,6 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
 
 // @public (undocumented)
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
-
-// @public
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
-
-// @public
-export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
-    constructor(root: JsonableTree[], index: number, field?: DetachedField);
-    // (undocumented)
-    childFieldLength(key: FieldKey): number;
-    // (undocumented)
-    currentFieldLength(): number;
-    // (undocumented)
-    down(key: FieldKey, index: number): SynchronousNavigationResult;
-    // (undocumented)
-    protected getNode(): JsonableTree;
-    // (undocumented)
-    protected index: number;
-    // (undocumented)
-    protected readonly indexStack: number[];
-    // (undocumented)
-    isRooted(): boolean;
-    // (undocumented)
-    get keys(): Iterable<FieldKey>;
-    // (undocumented)
-    protected readonly keyStack: FieldKey[];
-    // (undocumented)
-    seek(offset: number): SynchronousNavigationResult;
-    // (undocumented)
-    protected siblings: JsonableTree[];
-    // (undocumented)
-    protected readonly siblingStack: JsonableTree[][];
-    // (undocumented)
-    get type(): TreeType;
-    // (undocumented)
-    up(): SynchronousNavigationResult;
-    // (undocumented)
-    get value(): Value;
-}
 
 // @public (undocumented)
 export enum Tiebreak {

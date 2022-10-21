@@ -4,12 +4,16 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder } from "../change-family";
-import { ITreeCursor } from "../forest";
-import { FieldKindIdentifier } from "../schema-stored";
-import { AnchorSet, Delta, JsonableTree } from "../tree";
+import {
+    ChangeEncoder,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    JsonableTree,
+    ITreeCursor,
+} from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
-import { singleTextCursor } from "./treeTextCursor";
+import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -26,7 +30,6 @@ import {
     NodeChangeEncoder,
     FieldEditor,
 } from "./modular-schema";
-import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
@@ -497,7 +500,10 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
-        fieldChange: { newContent, wasEmpty },
+        fieldChange: {
+            newContent: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            wasEmpty,
+        },
     }),
 
     buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {

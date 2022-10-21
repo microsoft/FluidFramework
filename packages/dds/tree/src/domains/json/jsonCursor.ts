@@ -5,16 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { LocalFieldKey } from "../../schema-stored";
-import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
-    ITreeCursorNew as ITreeCursor,
+    LocalFieldKey,
+    ITreeCursor,
     EmptyKey,
     FieldKey,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     ITreeCursorSynchronous,
-} from "../../tree";
+} from "../../core";
+import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray,
@@ -109,7 +109,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             return reader.value as JsonCompatible;
         case jsonArray.name: {
             reader.enterField(EmptyKey);
-            const result = mapCursorFieldNew(reader, cursorToJsonObject);
+            const result = mapCursorField(reader, cursorToJsonObject);
             reader.exitField();
             return result;
         }
