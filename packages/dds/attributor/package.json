@@ -8,6 +8,7 @@
     "url": "https://github.com/microsoft/FluidFramework.git",
     "directory": "packages/dds/attributor"
   },
+  "private": true,
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
