@@ -732,6 +732,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler.quorum;
     }
 
+    public dispose() {
+        // TODO
+        this._deltaManager.dispose();
+    }
+
     public close(error?: ICriticalContainerError) {
         // 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
         // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
@@ -744,7 +749,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
     }
 
-    private closeCore(error?: ICriticalContainerError) {
+    private closeCore(error?: ICriticalContainerError, disposeCall?: boolean) {
         assert(!this.closed, 0x315 /* re-entrancy */);
 
         try {
@@ -766,7 +771,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 this.connectionStateHandler.dispose();
 
-                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+                // TODO
+                const errorForContext = error !== undefined ? new Error(error.message) : undefined;
+                if (disposeCall === true) {
+                    this._context?.dispose(errorForContext);
+                } else {
+                    this._context?.close(errorForContext);
+                }
 
                 this.storageService.dispose();
 
@@ -1537,7 +1548,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("closed", (error?: ICriticalContainerError) => {
+            // TODO: Don't send dispose events
             this.closeCore(error);
+        });
+
+        deltaManager.on("dispose", () => {
+            // TODO: Send dispose events
+            this.closeCore(undefined, true);
         });
 
         return deltaManager;

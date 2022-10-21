@@ -83,6 +83,9 @@
       },
       "InterfaceDeclaration_IContainerContext": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IRuntime": {
+        "forwardCompat": false
       }
     }
   }

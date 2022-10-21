@@ -1295,7 +1295,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         BindBatchTracker(this, this.logger);
     }
 
-    public dispose(error?: Error): void {
+    public dispose(error?: Error, skipEmitDisposed?: boolean): void {
         if (this._disposed) {
             return;
         }
@@ -1315,8 +1315,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
-        this.emit("dispose");
+        if (skipEmitDisposed !== true) {
+            this.emit("dispose");
+        }
         this.removeAllListeners();
+    }
+
+    public close(error?: Error): void {
+        this.dispose(error, true);
     }
 
     public get IFluidTokenProvider() {

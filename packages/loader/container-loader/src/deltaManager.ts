@@ -105,7 +105,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     public get active(): boolean { return this._active(); }
 
-    public get disposed() { return this.closed; }
+    public get disposed() { return this._closed; }
 
     public get IDeltaSender() { return this; }
 
@@ -152,7 +152,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
 
-    private closed = false;
+    private _closed = false;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorage: IDocumentDeltaStorageService | undefined;
@@ -418,10 +418,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
     }
 
-    public dispose() {
-        throw new Error("Not implemented.");
-    }
-
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
@@ -452,7 +448,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
         assert(this.fetchReason === undefined, 0x268 /* "There can't be pending fetch that early in boot sequence!" */);
 
-        if (this.closed) {
+        if (this._closed) {
             return;
         }
 
@@ -596,16 +592,44 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     /**
+     * TODO
+     */
+    public dispose(): void {
+        if (this._closed) {
+            return;
+        }
+        this._closed = true;
+
+        this.connectionManager.dispose();
+        this.clearQueues();
+
+        this.emit("dispose");
+        this.removeAllListeners();
+    }
+
+    /**
      * Closes the connection and clears inbound & outbound queues.
      */
     public close(error?: ICriticalContainerError): void {
-        if (this.closed) {
+        if (this._closed) {
             return;
         }
-        this.closed = true;
+        this._closed = true;
 
-        this.connectionManager.dispose(error);
+        this.connectionManager.close(error);
+        this.clearQueues();
 
+        // This needs to be the last thing we do (before removing listeners), as it causes
+        // Container to dispose context and break ability of data stores / runtime to "hear"
+        // from delta manager, including notification (above) about readonly state.
+        this.emit("closed", error);
+        this.removeAllListeners();
+    }
+
+    /**
+     * TODO
+     */
+    private clearQueues(): void {
         this.closeAbortController.abort();
 
         this._inbound.clear();
@@ -618,13 +642,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
-
-        // This needs to be the last thing we do (before removing listeners), as it causes
-        // Container to dispose context and break ability of data stores / runtime to "hear"
-        // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error);
-
-        this.removeAllListeners();
     }
 
     public refreshDelayInfo(id: string) {
@@ -911,7 +928,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return;
         }
 
-        if (this.closed) {
+        if (this._closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
             return;
         }
@@ -963,7 +980,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.closed) {
+        if (this._closed) {
             return;
         }
 

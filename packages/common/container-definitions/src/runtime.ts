@@ -102,6 +102,9 @@ export interface IRuntime extends IDisposable {
      * @param snapshot - snapshot created at attach time
      */
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+
+    // TODO
+    close(error?: Error): void;
 }
 
 /**

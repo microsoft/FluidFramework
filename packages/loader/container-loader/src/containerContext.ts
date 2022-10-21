@@ -207,6 +207,17 @@ export class ContainerContext implements IContainerContext {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
+    public close(error?: Error): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.runtime.close(error);
+        this._quorum.dispose();
+        this.deltaManager.dispose();
+    }
+
     public dispose(error?: Error): void {
         if (this._disposed) {
             return;

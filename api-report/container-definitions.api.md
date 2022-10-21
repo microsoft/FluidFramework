@@ -483,6 +483,8 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 
 // @public
 export interface IRuntime extends IDisposable {
+    // (undocumented)
+    close(error?: Error): void;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
