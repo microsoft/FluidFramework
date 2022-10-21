@@ -5,15 +5,15 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import {
+    TreeSchemaIdentifier,
     FieldKey,
     Value,
     Delta,
     genericTreeKeys,
     getGenericTreeField,
     genericTreeDeleteIfEmpty,
-} from "../../../tree";
+} from "../../../core";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
 import { ProtoNode, Transposed as T } from "./format";
 import { isSkipMark } from "./utils";

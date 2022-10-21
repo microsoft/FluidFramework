@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IFluidDataStoreRuntime,
@@ -20,17 +20,19 @@ import {
     initializeForest,
     ITreeSubscriptionCursor,
     TreeNavigationResult,
-} from "../forest";
-import {
     Index,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../shared-tree-core";
-import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { JsonableTree, Delta } from "../tree";
-import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
+    cachedValue,
+    ICachedValue,
+    recordDependency,
+    JsonableTree,
+    Delta,
+    mapCursorField,
+} from "../core";
 import { singleTextCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor } from ".";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -87,14 +89,12 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: JsonableTree[] = [];
-        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        while (result === TreeNavigationResult.Ok) {
-            roots.push(jsonableTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1);
-        }
+        const result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
+        const roots =
+            result === TreeNavigationResult.Ok
+                ? mapCursorField(this.cursor, jsonableTreeFromCursor)
+                : [];
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, 0x34b /* Unsupported navigation result */);
 
         return JSON.stringify(roots);
     }
