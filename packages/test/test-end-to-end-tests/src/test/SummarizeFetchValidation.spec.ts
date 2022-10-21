@@ -13,6 +13,7 @@ import {
     ContainerRuntime,
     IContainerRuntimeOptions,
     ISummarizer,
+    ISummarizeResults,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -25,8 +26,9 @@ import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-v
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { FetchSource } from "@fluidframework/driver-definitions";
+import { FetchSource, ISummaryContext } from "@fluidframework/driver-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "../packageVersion";
 
 // Note GC needs to be disabled.
@@ -203,7 +205,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         summarizer1.close();
     });
 
-    it("Summarizer multiple consecutive times does not fetch", async () => {
+    it("Summarizing consecutive times should not fetch", async () => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         let versionWrap = await incrementCellValueAndRunSummary(summarizer1, 1 /* expectedMatrixCellValue */);
@@ -245,7 +247,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         assert(value === 3, "Value matches expected");
 
         const summarizer2 = await createSummarizer(provider, mainContainer);
-        versionWrap = await incrementCellValueAndRunSummary(summarizer2, 3 /* expectedMatrixCellValue */);
+        versionWrap = await incrementCellValueAndRunSummary(summarizer2, 4 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "There should be one fetch after second summary");
 
         versionWrap = await incrementCellValueAndRunSummary(summarizer2, 5 /* expectedMatrixCellValue */);
@@ -276,5 +278,37 @@ describeNoCompat("Summarizer fetches expected number of times",
          assert(versionWrap.fetchCount === 1, "Single fetch should have happened once");
          assert(versionWrap.summaryVersion, "Summarizer should have happened");
          newSummarizerClient.close();
+     });
+
+     it("Summarizer succeeds after Summarizer fails", async () => {
+        // Create new summarizer
+        const summarizer = await createSummarizer(provider, mainContainer);
+
+        // Second summary should be discarded
+        const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+        let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+        const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+            uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
+            const response = await uploadSummaryUploaderFunc(summary, context);
+            // Close summarizer so that it does not submit SummaryOp
+            summarizer.close();
+            return response;
+        };
+        containerRuntime.storage.uploadSummaryWithContext = func;
+
+        const result2: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test2" });
+        assert((await result2.summarySubmitted).success === false, "Summary should fail");
+        await provider.ensureSynchronized();
+
+        const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
+        assert(value === 1, "Value matches expected");
+
+        const secondSummarizer = await createSummarizer(provider, mainContainer);
+        let versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
+        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 3 /* expectedMatrixCellValue */);
+        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        await provider.ensureSynchronized();
+        secondSummarizer.close();
      });
 });
