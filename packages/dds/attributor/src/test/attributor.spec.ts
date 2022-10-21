@@ -32,7 +32,7 @@ function makeMockRuntime(clientId: string, audience: IAudience = defaultAudience
 	return runtime;
 }
 
-describe.only("Attributor", () => {
+describe("Attributor", () => {
 	let opFactory: OpFactory;
 	beforeEach(() => {
 		opFactory = new OpFactory();
@@ -65,5 +65,14 @@ describe.only("Attributor", () => {
 				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp },
 			);
 		});
+	});
+
+	it("Throws on attempt to retrieve user information for an invalid key", () => {
+		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
+		assert.throws(
+			() => attributor.getAttributionInfo(42),
+			/No attribution info associated/,
+			"invalid key should throw",
+		);
 	});
 });

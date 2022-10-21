@@ -2,23 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { gzip, ungzip } from "pako";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { InternedStringId, MutableStringInterner } from "./stringInterner";
-
-export interface Encoder<TDecoded, TEncoded> {
-	encode(decoded: TDecoded): TEncoded;
-
-	decode(encoded: TEncoded): TDecoded;
-}
-
-// TODO: Usage of Jsonable here isn't typesafe.
-export type SummaryEncoder = Encoder<SerializedAttributor, string>;
-
-export type TimestampEncoder = Encoder<number[], Jsonable>;
+import { deltaEncoder, Encoder, makeGzipEncoder, TimestampEncoder } from "./encoders";
 
 export interface AttributionInfo {
 	user: IUser;
@@ -30,6 +19,8 @@ export interface IAttributor {
 
 	serialize(): string;
 }
+
+export type SummaryEncoder = Encoder<SerializedAttributor, string>;
 
 /**
  * @internal
@@ -50,7 +41,7 @@ export class Attributor implements IAttributor {
 		private readonly encoders: {
 			summary: SummaryEncoder;
 			timestamps: TimestampEncoder;
-		} = { summary: gzipEncoder, timestamps: deltaEncoder },
+		} = { summary: makeGzipEncoder(), timestamps: deltaEncoder },
 	) {
 		if (serialized !== undefined) {
 			const serializedAttributor: SerializedAttributor = this.encoders.summary.decode(serialized);
@@ -81,7 +72,7 @@ export class Attributor implements IAttributor {
 		const result = this.seqToInfo.get(seq);
 		// TODO: This error handling is awkward; this message doesn't make it clear what went wrong.
 		if (!result) {
-			throw new UsageError("Requested attribution information for a seq not stored.");
+			throw new UsageError(`No attribution info associated with key ${seq}.`);
 		}
 		return result;
 	}
@@ -111,39 +102,3 @@ export class Attributor implements IAttributor {
 	// Unpictured:
 	// - GC (there are several ways to hook this up, though one can check the data structure should support it in O(n))
 }
-
-export const gzipEncoder: SummaryEncoder = {
-	encode: (summary: Jsonable) => {
-		const unzipped = new TextEncoder().encode(JSON.stringify(summary));
-		const zipped = gzip(unzipped);
-		return bufferToString(zipped, "base64");
-	},
-	decode: (serializedSummary: string) => {
-		const zipped = new Uint8Array(stringToBuffer(serializedSummary, "base64"));
-		const unzipped = ungzip(zipped);
-		const attributor: SerializedAttributor = JSON.parse(new TextDecoder().decode(unzipped));
-		return attributor;
-	},
-};
-
-export const deltaEncoder: TimestampEncoder = {
-	encode: (timestamps: number[]) => {
-		const deltaTimestamps: number[] = new Array(timestamps.length);
-		let prev = 0;
-		for (let i = 0; i < timestamps.length; i++) {
-			deltaTimestamps[i] = timestamps[i] - prev;
-			prev = timestamps[i];
-		}
-		return deltaTimestamps;
-	},
-	decode: (encoded: Jsonable) => {
-		assert(Array.isArray(encoded), "Encoded timestamps should be an array of nummbers");
-		const timestamps: number[] = new Array(encoded.length);
-		let cumulativeSum = 0;
-		for (let i = 0; i < encoded.length; i++) {
-			cumulativeSum += encoded[i];
-			timestamps[i] = cumulativeSum;
-		}
-		return timestamps;
-	},
-};
