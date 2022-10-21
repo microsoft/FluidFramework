@@ -248,7 +248,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
-    itExpects("Container loaded before sweep timeout expires can't receive ops for tombstoned datastores",
+    itExpects("Container loaded before sweep timeout expires closes on receiving ops for tombstoned datastores",
     [
         {
             eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
