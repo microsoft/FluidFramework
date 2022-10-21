@@ -70,6 +70,7 @@ export {
     ChangesetFromChangeRebaser,
     ICheckout,
     TransactionResult,
+    FieldAnchor,
 } from "./core";
 
 export {

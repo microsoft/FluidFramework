@@ -72,6 +72,8 @@ export {
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     initializeForest,
+    FieldAnchor,
+    moveToDetachedField,
 } from "../forest";
 
 export {

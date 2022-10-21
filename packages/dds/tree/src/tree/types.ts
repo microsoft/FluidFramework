@@ -45,6 +45,7 @@ export const EmptyKey: LocalFieldKey = brand("");
  */
 export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
 export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
+export const rootField = keyAsDetachedField(rootFieldKeySymbol);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
