@@ -4,7 +4,6 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import type { IMigrationTool } from "./migrationTool";
 
 export interface IVersionedModel {
     /**
@@ -41,11 +40,6 @@ export interface IMigratableModelEvents extends IEvent {
 // importData() is called with valid data).
 export interface IMigratableModel
     extends IVersionedModel, IImportExportModel<unknown, unknown>, IEventProvider<IMigratableModelEvents> {
-    /**
-     * The tool that will be used to facilitate the migration.
-     */
-    readonly migrationTool: IMigrationTool;
-
     /**
      * Close the model, rendering it inoperable and closing connections.
      * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.

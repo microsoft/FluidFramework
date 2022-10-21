@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListView } from "./inventoryView";
@@ -22,26 +22,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> =
     (props: IInventoryListAppViewProps) => {
     const { model } = props;
 
-    const [disableInput, setDisableInput] = useState<boolean>(
-        model.migrationTool.migrationState !== "collaborating",
-    );
-
-    useEffect(() => {
-        const migrationStateChangedHandler = () => {
-            setDisableInput(model.migrationTool.migrationState !== "collaborating");
-        };
-        model.migrationTool.on("stopping", migrationStateChangedHandler);
-        model.migrationTool.on("migrating", migrationStateChangedHandler);
-        model.migrationTool.on("migrated", migrationStateChangedHandler);
-        migrationStateChangedHandler();
-        return () => {
-            model.migrationTool.off("stopping", migrationStateChangedHandler);
-            model.migrationTool.off("migrating", migrationStateChangedHandler);
-            model.migrationTool.off("migrated", migrationStateChangedHandler);
-        };
-    }, [model]);
-
     return (
-        <InventoryListView inventoryList={ model.inventoryList } disabled={ disableInput } />
+        <InventoryListView inventoryList={ model.inventoryList } />
     );
 };

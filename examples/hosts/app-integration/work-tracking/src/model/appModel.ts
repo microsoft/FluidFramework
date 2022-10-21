@@ -7,7 +7,6 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
-import type { IMigrationTool } from "../migrationInterfaces";
 import type {
     IInventoryListAppModel,
     IInventoryListAppModelEvents,
@@ -30,7 +29,6 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
 
     public constructor(
         public readonly inventoryList: IInventoryList,
-        public readonly migrationTool: IMigrationTool,
         private readonly container: IContainer,
     ) {
         super();
