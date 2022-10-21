@@ -233,13 +233,21 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag_2;
 
 // @public
-export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+    readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    readonly fieldKey: FieldKey;
+    readonly fieldSchema: FieldSchema;
+    getType(index?: number, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    getWithoutUnwrapping(index: number): EditableTree;
+}
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }
@@ -561,6 +569,9 @@ function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeCh
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
+export function isEditableField(field: UnwrappedEditableField): field is EditableField;
+
+// @public
 export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
     readonly root: UnwrappedEditableField;
@@ -578,6 +589,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
+
+// @public
+export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
 
 // @public
 export interface ITreeCursor {
@@ -1637,10 +1651,10 @@ class UnitEncoder extends ChangeEncoder<0> {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 // @public
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 // @public
 export interface UpPath {
