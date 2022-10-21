@@ -20,6 +20,7 @@ import {
     rootFieldKey,
     symbolFromKey,
     TreeValue,
+    Value,
 } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
@@ -89,6 +90,107 @@ describe("SharedTree", () => {
         const loadingTree = await provider.createTree();
         assert.equal(getTestValue(loadingTree), value);
         assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
+    });
+
+    it("can process ops after loading from summary", async () => {
+        function insert(tree: ISharedTree, index: number, value: string): void {
+            tree.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                field.insert(index, singleTextCursor({ type: brand("Node"), value }));
+                return TransactionResult.Apply;
+            });
+        }
+
+        // Validate that the given tree is made up of nodes with the expected value
+        function validateTree(tree: ISharedTree, expected: Value[]): void {
+            const readCursor = tree.forest.allocateCursor();
+            const destination = tree.forest.root(tree.forest.rootField);
+            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            assert.equal(cursorResult, TreeNavigationResult.Ok);
+            let hasNode = true;
+            for (const value of expected) {
+                assert(hasNode);
+                assert.equal(readCursor.value, value);
+                hasNode = readCursor.nextNode();
+            }
+            assert.equal(hasNode, false);
+            readCursor.free();
+            tree.forest.forgetAnchor(destination);
+        }
+
+        const provider = await TestTreeProvider.create(1, true);
+        const tree1 = provider.trees[0];
+        const tree2 = await provider.createTree();
+        const tree3 = await provider.createTree();
+        const [container1, container2, container3] = provider.containers;
+
+        const schema: SchemaData = {
+            treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+            globalFieldSchema: new Map([
+                // This test requires the use of a sequence field
+                [rootFieldKey, fieldSchema(FieldKinds.sequence)],
+            ]),
+        };
+        tree1.storedSchema.update(schema);
+
+        insert(tree1, 0, "Z");
+        insert(tree1, 1, "A");
+        insert(tree1, 2, "C");
+
+        await provider.ensureSynchronized();
+
+        // Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
+        await provider.opProcessingController.pauseProcessing(container3);
+
+        // Delete Z
+        tree2.runTransaction((forest, editor) => {
+            const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+            field.delete(0, 1);
+            return TransactionResult.Apply;
+        });
+
+        // Ensure tree2 has a chance to send deletion of Z
+        await provider.opProcessingController.processOutgoing(container2);
+
+        // Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
+        await provider.opProcessingController.processIncoming(container1);
+        validateTree(tree1, ["A", "C"]);
+
+        // Have tree1 make a summary
+        // Summarized state: A C
+        await provider.summarize();
+
+        // Insert B between A and C (without knowing of Z being deleted)
+        insert(tree3, 2, "B");
+
+        // Ensure the insertion of B is sent for processing by tree3 before tree3 receives the deletion of Z
+        await provider.opProcessingController.processOutgoing(container3);
+
+        // Allow tree3 to receive further changes (i.e., the deletion of Z)
+        provider.opProcessingController.resumeProcessing(container3);
+
+        // Ensure all trees are now caught up
+        await provider.ensureSynchronized();
+
+        // Load the last summary (state: "AC") and process the deletion of Z and insertion of B
+        const tree4 = await provider.createTree();
+
+        // Ensure tree4 has a chance to process trailing ops.
+        await provider.ensureSynchronized();
+
+        // Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
+        // in summaries or not.
+        const expectedValues = ["A", "B", "C"];
+        validateTree(tree1, expectedValues);
+        validateTree(tree2, expectedValues);
+        validateTree(tree3, expectedValues);
+        // tree4 should only get the correct end state if it was able to get the adequate
+        // EditManager state from the summary. Specifically, in order to correctly rebase the insert
+        // of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
+        // rebase the insertion of  B over that edit.
+        // Without that, it will interpret the insertion of B based on the current state, yielding
+        // the order ACB.
+        validateTree(tree4, expectedValues);
     });
 
     describe("Editing", () => {

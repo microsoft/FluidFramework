@@ -30,6 +30,7 @@ import {
     defaultChangeFamily,
     DefaultChangeset,
 } from "../../feature-libraries";
+import { EditManager } from "../../edit-manager";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -150,11 +151,17 @@ describe("SharedTreeCore", () => {
             snapshotFormatVersion: "0.0.0",
             packageVersion: "0.0.0",
         };
+        const anchors = new AnchorSet();
+        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
+            defaultChangeFamily,
+            anchors,
+        );
 
         return new SharedTreeCore(
             indexes ?? [],
             defaultChangeFamily,
-            new AnchorSet(),
+            editManager,
+            anchors,
             "TestSharedTree",
             runtime,
             attributes,
