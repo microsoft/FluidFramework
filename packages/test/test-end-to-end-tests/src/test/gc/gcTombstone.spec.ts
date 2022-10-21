@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
     IContainerRuntimeOptions,
@@ -40,7 +39,7 @@ class TestDataObject extends DataObject {
 }
 
 /**
- * Validates this scenario: When a datastore should be tombstoned that tombstoned and unable to send ops
+ * When a datastore is tombstoned it should be unable to send and receive ops
  */
 describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -50,15 +49,13 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         [],
         [],
     );
-    const inactiveTimeoutMs = 0;
-    const wait = 100;
+    const waitLessThanSweepTimeoutMs = 100;
     const sweepTimeoutMs = 200;
+    assert(waitLessThanSweepTimeoutMs < sweepTimeoutMs, "waitLessThanSweepTimeoutMs should be < sweepTimeoutMs");
 
     const gcOptions: IGCRuntimeOptions = {
         gcAllowed: true,
-        sweepAllowed: true,
-        snapshotCacheExpiryMs: 0,
-        inactiveTimeoutMs,
+        inactiveTimeoutMs: 0,
     };
 
     const runtimeOptions: IContainerRuntimeOptions = {
@@ -92,48 +89,57 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
     };
     const configProvider = mockConfigProvider(settings);
-    const createContainer = async () => provider.createContainer(runtimeFactory, { configProvider });
+    let documentAbsoluteUrl: string | undefined;
+
+    const createContainer = async () => {
+        const container = await provider.createContainer(runtimeFactory, { configProvider });
+        documentAbsoluteUrl = await container.getAbsoluteUrl("");
+        return container;
+    };
     const loadSummarizerAndContainer = async (summaryVersion?: string) => {
-        const absoluteUrl = await mainContainer.getAbsoluteUrl("");
-        return createSummarizerWithContainer(provider, absoluteUrl, runtimeFactory, { configProvider }, summaryVersion);
+        return createSummarizerWithContainer(
+            provider,
+            documentAbsoluteUrl,
+            runtimeFactory,
+            { configProvider },
+            summaryVersion);
     };
     const summarize = async (summarizer: ISummarizer) => {
         await provider.ensureSynchronized();
         return summarizeNow(summarizer);
     };
 
-    let mainContainer: IContainer;
-    let mainDataStore: TestDataObject;
-
     beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
         if (provider.driver.type !== "local") {
             this.skip();
         }
-        mainContainer = await createContainer();
-        mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        await waitForContainerConnection(mainContainer);
     });
 
-    const createUnreferencedDataStore = async () => {
+    // This function creates an unreferenced datastore and returns the datastore's id and the summary version that
+    // datastore was unreferenced in.
+    const getUnreferencedDataStoreIdAndSummaryVersion = async () => {
+        const container = await createContainer();
+        const defaultDataObject = await requestFluidObject<TestDataObject>(container, "default");
+        await waitForContainerConnection(container);
+
         const handleKey = "handle";
-        const testDataObject = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        const testDataObject = await dataObjectFactory.createInstance(defaultDataObject.containerRuntime);
         const testDataObjectId = testDataObject.id;
 
         // Reference a datastore and summarize
-        mainDataStore._root.set(handleKey, testDataObject.handle);
+        defaultDataObject._root.set(handleKey, testDataObject.handle);
         const {
             container: summarizingContainer1,
             summarizer: summarizer1,
         } = await loadSummarizerAndContainer();
-        await summarize(summarizer1);
 
         // Unreference a datastore and summarize
-        mainDataStore._root.delete(handleKey);
+        defaultDataObject._root.delete(handleKey);
         const summaryVersion = (await summarize(summarizer1)).summaryVersion;
         testDataObject._root.set("send while unreferenced", "op");
         await provider.ensureSynchronized();
-        mainContainer.close();
+        container.close();
         summarizingContainer1.close();
 
         return {
@@ -142,9 +148,9 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         };
     };
 
-    // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     it("Container loaded after sweep timeout expires can't send ops for tombstoned datastores", async () => {
-        const { testDataObjectId, summaryVersion } = await createUnreferencedDataStore();
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
 
         // Wait a sweep worthy amount of time (all containers should have closed by now)
         await delay(sweepTimeoutMs);
@@ -162,11 +168,11 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // The datastore should be tombstoned now
         await summarize(summarizer2);
 
-        // The request pattern should fail!
+        // Modifying a testDataObject substantiated from the request pattern should fail!
         assert.throws(() => testDataObject2._root.set("send", "op"),
             (error) => {
                 const correctErrorType = error.errorType = "dataCorruptionError";
-                const correctErrorMessage = error.errorMessage?.startsWith(`Context was tombstoned`);
+                const correctErrorMessage = error.errorMessage?.startsWith(`Context was tombstoned`) === true;
                 return correctErrorType && correctErrorMessage;
             },
             `Should not be able to send ops for a tombstoned datastore.`);
@@ -174,10 +180,10 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
     it("Container loaded before sweep timeout expires can't send ops for tombstoned datastores", async () => {
-        const { testDataObjectId, summaryVersion } = await createUnreferencedDataStore();
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
 
         // Wait some time, the datastore should not be sweep ready after this wait
-        await delay(sweepTimeoutMs - wait);
+        await delay(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
 
         // Load a new container and summarizer based on the latest summary, summarize
         const {
@@ -188,9 +194,10 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application.
         const testDataObject2 = await requestFluidObject<TestDataObject>(summarizingContainer2, testDataObjectId);
+        testDataObject2._root.set("send a", "op via unreferenced content");
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(wait);
+        await delay(waitLessThanSweepTimeoutMs);
 
         // Send an op to update the currentTimestampMs to now
         const mainDataStore2 = await requestFluidObject<TestDataObject>(summarizingContainer2, "default");
@@ -199,7 +206,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // The datastore should be tombstoned now
         await summarize(summarizer2);
 
-        // The request pattern should fail!
+        // Sending an op from a datastore substantiated from the request pattern should fail!
         assert.throws(() => testDataObject2._root.set("send", "op"),
             (error) => {
                 const correctErrorType = error.errorType = "dataCorruptionError";
@@ -222,7 +229,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         },
     ],
     async () => {
-        const { testDataObjectId, summaryVersion } = await createUnreferencedDataStore();
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
 
         // Wait a sweep worthy amount of time (all containers should have closed by now)
         await delay(sweepTimeoutMs);
@@ -260,10 +267,10 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         },
     ],
     async () => {
-        const { testDataObjectId, summaryVersion } = await createUnreferencedDataStore();
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
 
         // Wait some time, the datastore should not be sweep ready after this wait
-        await delay(sweepTimeoutMs - wait);
+        await delay(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
 
         // Load a new container and summarizer based on the latest summary, summarize
         const {
@@ -277,7 +284,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         const testDataObject2 = await requestFluidObject<TestDataObject>(container2, testDataObjectId);
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(wait);
+        await delay(waitLessThanSweepTimeoutMs);
 
         // Send an op to update the currentTimestampMs to now
         const mainDataStore2 = await requestFluidObject<TestDataObject>(summarizingContainer2, "default");

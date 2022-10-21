@@ -2275,6 +2275,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          */
         const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
         if (tombstone) {
+            // If blob routes are passed in here, tombstone will fail and hit an assert
             this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
             return;
         }

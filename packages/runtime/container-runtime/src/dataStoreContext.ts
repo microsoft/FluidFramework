@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     FluidObject,
     IRequest,
@@ -65,7 +65,11 @@ import {
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import { DataCorruptionError, DataProcessingError } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    DataProcessingError,
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -411,7 +415,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        this.verifyNotClosed("process");
+        this.verifyNotClosed("process", true, extractSafePropertiesFromMessage(messageArg));
 
         const innerContents = messageArg.contents as FluidDataStoreMessage;
         const message = {
@@ -749,15 +753,16 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channel.applyStashedOp(innerContents.content);
     }
 
-    private verifyNotClosed(errorMessage: string, checkTombstone = true) {
+    private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
         if (this._disposed) {
-            throw new Error(`Context was closed during call of ${errorMessage}!`);
+            throw new Error(`Context is closed: Call site - ${callSite}!`);
         }
 
         if (checkTombstone && this.tombstoned) {
-            const messageString = `Context was tombstoned during call of ${errorMessage}!`;
+            const messageString = `Context is tombstoned: Call site -  ${callSite}!`;
             throw new DataCorruptionError(messageString, {
                 errorMessage: messageString,
+                ...safeTelemetryProps,
             });
         }
     }
