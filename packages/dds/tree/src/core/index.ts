@@ -130,3 +130,12 @@ export {
     Compatibility,
     FieldAdapter,
 } from "../schema-view";
+
+export {
+    Branch,
+    Commit,
+    EditManager,
+    MutableSummaryData,
+    ReadonlySummaryData,
+    SessionId,
+} from "../edit-manager";
