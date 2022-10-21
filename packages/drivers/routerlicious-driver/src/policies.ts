@@ -53,5 +53,5 @@ export interface IRouterliciousDriverPolicies {
      * Enable write mode by default
      * Default: true
      */
-    enableWriteModeByDefault: boolean;
+    enableWriteModeByDefault?: boolean;
 }

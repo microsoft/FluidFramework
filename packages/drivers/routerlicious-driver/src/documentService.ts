@@ -189,7 +189,9 @@ export class DocumentService implements api.IDocumentService {
                 await this.refreshDiscovery();
             }
 
-            client.mode = this.driverPolicies.enableWriteModeByDefault ? "write" : "read";
+            if (this.driverPolicies?.enableWriteModeByDefault) {
+                client.mode = "write";
+            }
 
             const ordererToken = await this.tokenProvider.fetchOrdererToken(
                 this.tenantId,
