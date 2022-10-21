@@ -4,7 +4,7 @@
  */
 
 import { compareSets, fail } from "../../util";
-import { TreeSchema, ValueSchema, FieldSchema, TreeTypeSet, SchemaData } from "../../schema-stored";
+import { TreeSchema, ValueSchema, FieldSchema, TreeTypeSet, SchemaData } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
 /**

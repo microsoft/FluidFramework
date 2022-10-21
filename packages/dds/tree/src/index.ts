@@ -11,9 +11,6 @@ export {
     InvalidationToken,
     recordDependency,
     SimpleDependee,
-} from "./dependency-tracking";
-
-export {
     EmptyKey,
     FieldKey,
     TreeType,
@@ -36,15 +33,11 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
     AnchorLocator,
-} from "./tree";
-
-export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -53,10 +46,6 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-} from "./forest";
-
-export {
     LocalFieldKey,
     GlobalFieldKey,
     TreeSchemaIdentifier,
@@ -71,7 +60,17 @@ export {
     SchemaData,
     SchemaPolicy,
     SchemaDataAndPolicy,
-} from "./schema-stored";
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    ChangesetFromChangeRebaser,
+    ICheckout,
+    TransactionResult,
+} from "./core";
 
 export {
     Brand,
@@ -94,19 +93,8 @@ export {
 } from "./util";
 
 export {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
-    ProgressiveEditBuilderBase,
-} from "./change-family";
-
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
-
-export { ICheckout, TransactionResult } from "./checkout";
-
-export {
     cursorToJsonObject,
-    JsonCursor,
+    singleJsonCursor,
     jsonArray,
     jsonBoolean,
     jsonNull,
@@ -118,9 +106,6 @@ export {
 
 export {
     buildForest,
-    TextCursor,
-    jsonableTreeFromCursor,
-    singleTextCursor,
     emptyField,
     neverTree,
     FieldKinds,
@@ -150,14 +135,14 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
+    EditableField,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
     defaultSchemaPolicy,
-    singleTextCursorNew,
-    jsonableTreeFromCursorNew,
+    jsonableTreeFromCursor,
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,

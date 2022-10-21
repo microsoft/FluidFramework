@@ -13,10 +13,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
-        ...(additionalRequiredModules ? additionalRequiredModules : []),
-        // General mocha setup e.g. suppresses console.log
-        // Moved to last in required modules, so that aria logger will be ready to access in mochaHooks.ts
+        // General mocha setup e.g. suppresses console.log,
+        // This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
         `@fluidframework/mocha-test-setup`,
+        ...(additionalRequiredModules ? additionalRequiredModules : []),
     ];
 
     // mocha install node_modules directory might not be the same as the module required because of hoisting
@@ -32,7 +32,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
     });
 
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
-        // Inject implementation of getTestLogger
+        // Inject implementation of getTestLogger, put it first before mocha-test-setup
         requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
     }
 

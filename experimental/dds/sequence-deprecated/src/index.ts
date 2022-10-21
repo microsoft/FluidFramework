@@ -3,6 +3,20 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sharedNumberSequence";
-export * from "./sharedObjectSequence";
-export * from "./sparsematrix";
+export { SharedNumberSequence } from "./sharedNumberSequence";
+export { SharedObjectSequence } from "./sharedObjectSequence";
+export {
+	MatrixSegment,
+	maxCellPosition,
+	maxCol,
+	maxCols,
+	maxRow,
+	maxRows,
+	PaddingSegment,
+	positionToRowCol,
+	rowColToPosition,
+	RunSegment,
+	SparseMatrix,
+	SparseMatrixFactory,
+	SparseMatrixItem,
+} from "./sparsematrix";

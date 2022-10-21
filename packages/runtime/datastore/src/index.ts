@@ -3,5 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export * from "./dataStoreRuntime";
-export * from "./fluidHandle";
+export { FluidObjectHandle } from "./fluidHandle";
+export {
+	DataStoreMessageType,
+	FluidDataStoreRuntime,
+	ISharedObjectRegistry,
+	mixinRequestHandler,
+	mixinSummaryHandler,
+} from "./dataStoreRuntime";

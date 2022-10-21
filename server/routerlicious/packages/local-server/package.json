@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-local-server",
-  "version": "0.1038.2000",
+  "version": "0.1038.3000",
   "description": "Fluid local server implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -56,13 +56,13 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
-    "@fluidframework/server-lambdas": "^0.1038.2000",
-    "@fluidframework/server-memory-orderer": "^0.1038.2000",
-    "@fluidframework/server-services-client": "^0.1038.2000",
-    "@fluidframework/server-services-core": "^0.1038.2000",
-    "@fluidframework/server-services-telemetry": "^0.1038.2000",
-    "@fluidframework/server-test-utils": "^0.1038.2000",
+    "@fluidframework/protocol-definitions": "^1.1.0",
+    "@fluidframework/server-lambdas": "^0.1038.3000",
+    "@fluidframework/server-memory-orderer": "^0.1038.3000",
+    "@fluidframework/server-services-client": "^0.1038.3000",
+    "@fluidframework/server-services-core": "^0.1038.3000",
+    "@fluidframework/server-services-telemetry": "^0.1038.3000",
+    "@fluidframework/server-test-utils": "^0.1038.3000",
     "debug": "^4.1.1",
     "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"

@@ -101,7 +101,7 @@ export function resolveVersion(requested: string, installed: boolean) {
     }
 
     if (installed) {
-        // Check the install directory instad of asking NPM for it.
+        // Check the install directory instead of asking NPM for it.
         const files = readdirSync(baseModulePath, { withFileTypes: true });
         let found: string | undefined;
         files.map((dirent) => {
@@ -122,7 +122,7 @@ export function resolveVersion(requested: string, installed: boolean) {
         );
         // if we are requesting an x.x.0-0 prerelease and failed the first try, try
         // again using the virtualPatch schema
-        if (result === "") {
+        if (result === "" && !requested.includes("internal")) {
             const requestedVersion = new semver.SemVer(requested.substring(requested.indexOf("^") + 1));
             if (requestedVersion.patch === 0 && requestedVersion.prerelease.length > 0) {
                 const retryVersion = `^${requestedVersion.major}.${requestedVersion.minor}.1000-0`;
@@ -134,14 +134,17 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
 
         try {
-            const versions: string | string[] = JSON.parse(result);
+            const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-            if (!version) { throw new Error(`No version found for ${requested}`); }
-            resolutionCache.set(requested, version);
-            return version;
+            if (version) {
+                resolutionCache.set(requested, version);
+                return version;
+            }
         } catch (e) {
             throw new Error(`Error parsing versions for ${requested}`);
         }
+
+        throw new Error(`No version found for ${requested}`);
     }
 }
 
@@ -169,6 +172,11 @@ export async function ensureInstalled(requested: string, packageList: string[], 
 
     await ensureModulePath(version, modulePath);
 
+    const adjustedPackageList = [...packageList];
+    if (versionHasMovedSparsedMatrix(version)) {
+        adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
+    }
+
     // Release the __dirname but lock the modulePath so we can do parallel installs
     const release = await lock(modulePath, { retries: { forever: true } });
     try {
@@ -190,7 +198,7 @@ export async function ensureInstalled(requested: string, packageList: string[], 
             );
             await new Promise<void>((resolve, reject) =>
                 exec(
-                    `npm i --no-package-lock ${packageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
+                    `npm i --no-package-lock ${adjustedPackageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
@@ -296,4 +304,9 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
 
     // eslint-disable-next-line max-len
     return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
+}
+
+export function versionHasMovedSparsedMatrix(version: string): boolean {
+    // SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
+    return version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0");
 }
