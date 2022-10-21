@@ -39,7 +39,6 @@ import {
     getOwnArrayKeys,
 } from "./utilities";
 import { EditableTreeContext, ProxyContext } from "./editableTreeContext";
-// import { forEachNode } from "../../tree";
 
 /**
  * A symbol for extracting target from editable-tree proxies.
