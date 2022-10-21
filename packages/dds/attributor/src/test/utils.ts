@@ -15,19 +15,20 @@ export function makeMockAudience(clientIds: string[]): IAudience {
 		const user = {
 			id: userId,
 			name,
-			email
+			email,
 		};
-		clients.set(clientId, { 
+		clients.set(clientId, {
 			mode: "write",
 			details: { capabilities: { interactive: true } },
 			permission: [],
 			user,
-			scopes: []		
+			scopes: [],
 		});
 	});
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return {
 		getMember: (clientId: string): IClient | undefined => {
 			return clients.get(clientId);
-		}
-	} as IAudience
+		},
+	} as IAudience;
 }

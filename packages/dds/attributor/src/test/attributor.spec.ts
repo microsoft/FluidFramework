@@ -6,22 +6,22 @@ import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Attributor } from "../../attributor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { Attributor } from "../attributor";
 import { makeMockAudience } from "./utils";
 
 const clientIds = ["A", "B", "C"];
 const defaultAudience = makeMockAudience(clientIds);
 
-
 class OpFactory {
 	private seq = 0;
 
-	public makeOp({ timestamp, clientId }: { timestamp: number; clientId: string }): ISequencedDocumentMessage {
+	public makeOp({ timestamp, clientId }: { timestamp: number; clientId: string; }): ISequencedDocumentMessage {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		return {
 			timestamp,
 			clientId,
-			sequenceNumber: this.seq++
+			sequenceNumber: this.seq++,
 		} as ISequencedDocumentMessage;
 	}
 }
@@ -38,7 +38,6 @@ describe.only("Attributor", () => {
 		opFactory = new OpFactory();
 	});
 
-
 	describe("can retrieve user information", () => {
 		it("from ops submitted during the current session", () => {
 			const runtime = makeMockRuntime(clientIds[0]);
@@ -49,7 +48,7 @@ describe.only("Attributor", () => {
 			(runtime.deltaManager as any).emit("op", op);
 			assert.deepEqual(
 				attributor.getAttributionInfo(op.sequenceNumber),
-				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp }
+				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp },
 			);
 		});
 
@@ -63,7 +62,7 @@ describe.only("Attributor", () => {
 			const attributor = new Attributor(makeMockRuntime(clientIds[0]), originalAttributor.serialize());
 			assert.deepEqual(
 				attributor.getAttributionInfo(op.sequenceNumber),
-				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp }
+				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp },
 			);
 		});
 	});

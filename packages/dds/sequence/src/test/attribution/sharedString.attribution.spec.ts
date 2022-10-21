@@ -26,14 +26,43 @@ import {
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { IAttributor, Attributor, gzipEncoder } from '../../attributor';
+import { IAttributor, Attributor, gzipEncoder } from "@fluidframework/attributor';
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../../sharedString";
 import { SharedStringFactory } from "../../sequenceFactory";
 import { assertConsistent, Client } from "../intervalUtils";
-import { makeMockAudience } from "./utils";
+
+
+function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	clientIds.forEach((clientId, index) => {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email
+		};
+		clients.set(clientId, { 
+			mode: "write",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: []		
+		});
+	});
+	return {
+		getMember: (clientId: string): IClient | undefined => {
+			return clients.get(clientId);
+		}
+	} as IAudience
+}
 
 interface FuzzTestState extends BaseFuzzTestState {
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -347,7 +376,7 @@ const noopEncoder = {
 	decode: x => x
 };
 
-describe.only("SharedString Attribution", () => {
+describe("SharedString Attribution", () => {
 	// Entries of this list produce documents which should contain the same attribution information but
 	// stored in different formats. The "None" factory is an exception in that it contains no attribution
 	// information, and is useful as a baseline for comparison.
@@ -405,80 +434,316 @@ describe.only("SharedString Attribution", () => {
 	 * TODO: Convert test document into one that can be used here
 	 */
 
-	it.skip("Generate a new document", async () => {
-		const paths = getDocumentPaths("basic");
-		const attributionlessGenerator = chain(
-			take(100, makeOperationGenerator({ validateInterval })),
-			generatorFromArray<Operation, FuzzTestState>([{ type: "synchronize" }]),
-		);
+	describe("using randomly generated documents", () => {
 
-		const { generator, operations } = spyOnOperations(attributionlessGenerator);
-		createSharedString(makeRandom(0), generator);
-		writeJson(paths.operations, operations);
-
-		await Promise.all(
-			dataGenerators.map(async ({ filename, factory }) => {
-				const summary = await summaryFromState(factory(operations));
-				writeJson(path.join(paths.directory, filename), summary);
-			})
-		)
-	});
-
-	const documents = getDocuments();
-	for (const document of documents) {
-		describe(`document name: ${document} has up-to-date`, () => {
-			let paths: TestPaths;
-			let operations: Operation[];
-			before(() => {
-				paths = getDocumentPaths(document);
-				operations = readJson(paths.operations);
-			});
-
-			for (const { filename, factory } of dataGenerators) {
-				it(`Snapshot at ${filename}`, async () => {
-					const expected = readJson(path.join(paths.directory, filename));
-					const actual = await summaryFromState(factory(operations));
-					assert.deepEqual(actual, expected);
+		it.skip("Generate a new document", async () => {
+			const paths = getDocumentPaths("basic");
+			const attributionlessGenerator = chain(
+				take(100, makeOperationGenerator({ validateInterval })),
+				generatorFromArray<Operation, FuzzTestState>([{ type: "synchronize" }]),
+			);
+	
+			const { generator, operations } = spyOnOperations(attributionlessGenerator);
+			createSharedString(makeRandom(0), generator);
+			writeJson(paths.operations, operations);
+	
+			await Promise.all(
+				dataGenerators.map(async ({ filename, factory }) => {
+					const summary = await summaryFromState(factory(operations));
+					writeJson(path.join(paths.directory, filename), summary);
+				})
+			)
+		});
+	
+		const documents = getDocuments();
+		for (const document of documents) {
+			describe(`document name: ${document} has up-to-date`, () => {
+				let paths: TestPaths;
+				let operations: Operation[];
+				before(() => {
+					paths = getDocumentPaths(document);
+					operations = readJson(paths.operations);
 				});
+	
+				for (const { filename, factory } of dataGenerators) {
+					it(`Snapshot at ${filename}`, async () => {
+						const expected = readJson(path.join(paths.directory, filename));
+						const actual = await summaryFromState(factory(operations));
+						assert.deepEqual(actual, expected);
+					});
+				}
+			});
+		}
+	
+		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
+		// to do so.
+		it("generate snapshot size impact report", async () => {
+			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
+			const fieldPaddingLength = 12;
+			console.log(
+				[
+					`${"Name".padEnd(namePaddingLength)}`,
+					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
+				].join("|")
+			);
+	
+			const logRow = ({
+				docName,
+				data
+			}: { docName: string; data: ISummaryTree[] }) => {
+				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+				console.log(`${
+					docName.padEnd(namePaddingLength)
+				}|${
+					data
+						.map((summary, i) => getLength(summary).padStart(
+							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
+						))
+						.join(' |')
+				}`);
+			};
+	
+			for (const docName of documents) {
+				const paths = getDocumentPaths(docName);
+				const operations: Operation[] = readJson(paths.operations);
+				const data = await Promise.all(
+					dataGenerators.map(({ factory }) => summaryFromState(factory(operations)))
+				);
+				logRow({ docName, data });
 			}
 		});
-	}
+	});
 
-	// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
-	// to do so.
-	it.only("generate snapshot size impact report", async () => {
-		const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
-		const fieldPaddingLength = 12;
-		console.log(
-			[
-				`${"Name".padEnd(namePaddingLength)}`,
-				...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
-			].join("|")
-		);
-
-		const logRow = ({
-			docName,
-			data
-		}: { docName: string; data: ISummaryTree[] }) => {
-			const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
-			console.log(`${
-				docName.padEnd(namePaddingLength)
-			}|${
-				data
-					.map((summary, i) => getLength(summary).padStart(
-						Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
-					))
-					.join(' |')
-			}`);
-		};
-
-		for (const docName of documents) {
-			const paths = getDocumentPaths(docName);
-			const operations: Operation[] = readJson(paths.operations);
-			const data = await Promise.all(
-				dataGenerators.map(({ factory }) => summaryFromState(factory(operations)))
-			);
-			logRow({ docName, data });
+	describe("using sample real documents", () => {
+		class MockContainerRuntimeFactoryForReplay extends MockContainerRuntimeFactoryForReconnection {
+			public processOneMessage() {
+				if (this.messages.length === 0) {
+					throw new Error("Tried to process a message that did not exist");
+				}
+		
+				let msg = this.messages.shift();
+				// Explicitly JSON clone the value to match the behavior of going thru the wire.
+				msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+		
+				for (const runtime of this.runtimes) {
+					runtime.process(msg);
+				}
+			}			
 		}
+
+		const messages: any[] = readJson(path.join(__dirname, "../../../src/test/attribution/messages.json"));
+		const documents = ["fhl-demos"];
+		const dataGenerators: {
+			name: string;
+			factory: (messages: ISequencedDocumentMessage[]) => FuzzTestState;
+			filename: string;
+		}[] = [
+			{ 
+				name: "None",
+				factory: (messages: ISequencedDocumentMessage[]) => {
+					const random = makeRandom(0);
+					const clientId = random.uuid4();
+					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+					// const { deltaManager } = dataStoreRuntime;
+					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
+					// if (index === 0) {
+					// 	attributor = makeAttributor?.(dataStoreRuntime);
+					// }
+					const sharedString = new SharedString(
+						dataStoreRuntime,
+						"mock observer client",
+						SharedStringFactory.Attributes,
+					);
+					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
+					// // audience / op emission.
+					// sharedString.on("op", (message) => {
+					// 	if (message.timestamp === undefined) {
+					// 		// TODO: Make this apples-to-apples comparison of timestamps.
+					// 		message.timestamp = Date.now();
+					// 	}
+					// 	deltaManager.emit("op", message)
+					// });
+					// dataStoreRuntime.getAudience = () => audience;
+					
+					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+					const services: IChannelServices = {
+						deltaConnection: containerRuntime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					};
+		
+					sharedString.initializeLocal();
+					sharedString.connect(services);
+
+					for (const message of messages) {
+						const mergeTreeMessage = extractMergeTreeOp(message);
+						if (mergeTreeMessage) {
+							containerRuntimeFactory.pushMessage(stripAttributionInfo(message));
+							containerRuntimeFactory.processOneMessage();
+						}
+					}
+
+					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
+				},
+				filename: "no-attribution-snap.json"
+			},
+			{ 
+				name: "Prop",
+				factory: (messages: ISequencedDocumentMessage[]) => {
+					const random = makeRandom(0);
+					const clientId = random.uuid4();
+					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+					// const { deltaManager } = dataStoreRuntime;
+					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
+					// if (index === 0) {
+					// 	attributor = makeAttributor?.(dataStoreRuntime);
+					// }
+					const sharedString = new SharedString(
+						dataStoreRuntime,
+						"mock observer client",
+						SharedStringFactory.Attributes,
+					);
+					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
+					// // audience / op emission.
+					// sharedString.on("op", (message) => {
+					// 	if (message.timestamp === undefined) {
+					// 		// TODO: Make this apples-to-apples comparison of timestamps.
+					// 		message.timestamp = Date.now();
+					// 	}
+					// 	deltaManager.emit("op", message)
+					// });
+					// dataStoreRuntime.getAudience = () => audience;
+					
+					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+					const services: IChannelServices = {
+						deltaConnection: containerRuntime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					};
+		
+					sharedString.initializeLocal();
+					sharedString.connect(services);
+
+					for (const message of messages) {
+						const mergeTreeMessage = extractMergeTreeOp(message);
+						if (mergeTreeMessage) {
+							containerRuntimeFactory.pushMessage(message);
+							containerRuntimeFactory.processOneMessage();
+						}
+					}
+	
+					// const initialState: FuzzTestState = {
+					// 	clients: clientIds.map((clientId, index) => {
+					// 		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+					// 		const { deltaManager } = dataStoreRuntime;
+					// 		deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
+					// 		// if (index === 0) {
+					// 		// 	attributor = makeAttributor?.(dataStoreRuntime);
+					// 		// }
+					// 		const sharedString = new SharedString(
+					// 			dataStoreRuntime,
+					// 			String.fromCharCode(index + 65),
+					// 			SharedStringFactory.Attributes,
+					// 		);
+					// 		// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
+					// 		// audience / op emission.
+					// 		sharedString.on("op", (message) => {
+					// 			if (message.timestamp === undefined) {
+					// 				// TODO: Make this apples-to-apples comparison of timestamps.
+					// 				message.timestamp = Date.now();
+					// 			}
+					// 			deltaManager.emit("op", message)
+					// 		});
+					// 		dataStoreRuntime.getAudience = () => audience;
+							
+					// 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+					// 		const services: IChannelServices = {
+					// 			deltaConnection: containerRuntime.createDeltaConnection(),
+					// 			objectStorage: new MockStorage(),
+					// 		};
+				
+					// 		sharedString.initializeLocal();
+					// 		sharedString.connect(services);
+					// 		return { containerRuntime, sharedString };
+					// 	}),
+					// 	containerRuntimeFactory,
+					// 	random,
+					// };
+					// initialState.attributor = attributor;
+					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
+				},
+				filename: "prop-attribution-snap.json"
+			}
+		]
+
+		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
+		// to do so.
+		it("generate snapshot size impact report", async () => {
+			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
+			const fieldPaddingLength = 12;
+			console.log(
+				[
+					`${"Name".padEnd(namePaddingLength)}`,
+					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
+				].join("|")
+			);
+	
+			const logRow = ({
+				docName,
+				data
+			}: { docName: string; data: ISummaryTree[] }) => {
+				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+				console.log(`${
+					docName.padEnd(namePaddingLength)
+				}|${
+					data
+						.map((summary, i) => getLength(summary).padStart(
+							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
+						))
+						.join(' |')
+				}`);
+			};
+	
+			// TODO: This should look more like operations above. should be able to unify.
+			for (const docName of documents) {
+				const data = await Promise.all(
+					dataGenerators.map(({ factory }) => summaryFromState(factory(messages)))
+				);
+				logRow({ docName, data });
+			}
+		});
 	});
 });
+
+function extractMergeTreeOp(originalMessage: ISequencedDocumentMessage): ISequencedDocumentMessage | undefined {
+	const messageClone = JSON.parse(JSON.stringify(originalMessage));
+	let mergeTreeOpContents = messageClone;
+	while (mergeTreeOpContents && typeof mergeTreeOpContents.type !== 'number') {
+		mergeTreeOpContents = mergeTreeOpContents.contents ?? mergeTreeOpContents.content;
+	}
+
+	if (mergeTreeOpContents && typeof mergeTreeOpContents.type === 'number') {
+		messageClone.contents = mergeTreeOpContents;
+		return messageClone;
+	}
+
+	return undefined;
+}
+
+function stripAttributionInfo(originalMessage: any) {
+	const messageClone = JSON.parse(JSON.stringify(originalMessage));
+	let mergeTreeOpContents = messageClone;
+	while (mergeTreeOpContents && mergeTreeOpContents.seg === undefined) {
+		mergeTreeOpContents = mergeTreeOpContents.contents ?? mergeTreeOpContents.content;
+	}
+
+	const props = mergeTreeOpContents?.seg?.props;
+	if (props) {
+		delete props.attribution;
+		if (Object.keys(props).length === 0) {
+			delete mergeTreeOpContents.seg.props;
+		}
+	}
+
+	return messageClone;
+}

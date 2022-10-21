@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from '@fluidframework/container-utils';
+import { UsageError } from "@fluidframework/container-utils";
 
 /**
- * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the original string.
+ * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the
+ * original string.
  * @public
  */
-export type InternedStringId = number & { readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c' };
+export type InternedStringId = number & { readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c"; };
 
 /**
  * Interns strings as integers.
@@ -22,7 +23,8 @@ export interface StringInterner {
 
 /**
  * Interns strings as integers.
- * Given a string, this class will produce a unique integer associated with that string that can then be used to retrieve the string.
+ * Given a string, this class will produce a unique integer associated with that string that can then be used to
+ * retrieve the string.
  */
 export class MutableStringInterner implements StringInterner {
 	private readonly stringToInternedIdMap = new Map<string, InternedStringId>();
