@@ -42,6 +42,11 @@ export interface IProtocolHandler extends IBaseProtocolHandler {
     processSignal(message: ISignalMessage);
 }
 
+// Extended interface just for this file.
+// Adding lastClientSequenceNumber for tracking client sequence number
+interface ILocalSequencedClientWithSeqNum extends ILocalSequencedClient {
+    lastClientSequenceNumber?: number;
+}
 export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {
     constructor(
         attributes: IDocumentAttributes,
@@ -68,7 +73,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
+        const client: ILocalSequencedClientWithSeqNum | undefined = this.quorum.getMember(message.clientId);
 
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
@@ -84,11 +89,13 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
             }
         }
 
-        const currentSeqNum = message.clientSequenceNumber;
-        if (client?.lastSequenceNumber !== undefined && !canBeCoalescedByService(message)) {
-            assert(client?.lastSequenceNumber + 1 === currentSeqNum, "gap in sequence number");
+        const currentClientSeqNum = message.clientSequenceNumber;
+        if (client?.lastClientSequenceNumber !== undefined && !canBeCoalescedByService(message)) {
+            assert(client?.lastClientSequenceNumber + 1 === currentClientSeqNum, "gap in sequence number");
         }
-        client?.lastSequenceNumber = currentSeqNum;
+        if (client !== undefined) {
+            client.lastClientSequenceNumber = currentClientSeqNum;
+        }
 
         return super.processMessage(message, local);
     }
