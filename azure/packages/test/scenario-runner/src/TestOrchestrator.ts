@@ -10,7 +10,7 @@ import { v4 as uuid } from "uuid";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
-import { DocCreatorConfig, DocCreatorRunner } from "./DocCreatorRunner";
+import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 import { getLogger } from "./logger";
@@ -175,7 +175,7 @@ export class TestOrchestrator {
                 return new AzureClientRunner(stage.params as unknown as AzureClientRunnerConfig);
             }
             case "doc-creator": {
-                return new DocCreatorRunner(stage.params as unknown as DocCreatorConfig);
+                return new DocCreatorRunner(stage.params as unknown as DocCreatorRunnerConfig);
             }
             case "shared-map-traffic": {
                 return new MapTrafficRunner(stage.params as unknown as MapTrafficRunnerConfig);

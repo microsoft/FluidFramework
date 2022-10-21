@@ -2,34 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AzureClient } from "@fluidframework/azure-client";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import child_process from "child_process";
+
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
-import {
-    ContainerFactorySchema,
-    IRunConfig,
-    IRunner,
-    IRunnerEvents,
-    IRunnerStatus,
-    RunnnerStatus,
-} from "./interface";
+import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { getLogger } from "./logger";
+import { delay } from "./utils";
 
-export interface DocCreatorConfig {
-    client: AzureClient;
-    schema: ContainerFactorySchema;
+export interface AzureClientConfig {
+    type: "remote" | "local";
+    endpoint: string;
+    key?: string;
+    tenantId?: string;
+}
+
+export interface ContainerTrafficSchema {
+    initialObjects: { [key: string]: string };
+    dynamicObjects?: { [key: string]: string };
+}
+
+export interface DocCreatorRunnerConfig {
+    connectionConfig: AzureClientConfig;
+    schema: ContainerTrafficSchema;
+    numDocs: number;
+    clientStartDelayMs: number;
 }
 
 export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
     private status: RunnnerStatus = "notStarted";
-    constructor(private readonly c: DocCreatorConfig) {
+    private readonly docIds: string[] = [];
+    constructor(public readonly c: DocCreatorRunnerConfig) {
         super();
     }
 
-    public async run(config: IRunConfig): Promise<string | undefined> {
+    public async run(config: IRunConfig): Promise<string | string[] | undefined> {
         const logger = await getLogger({
             runId: config.runId,
             scenarioName: config.scenarioName,
@@ -37,45 +49,61 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         });
         this.status = "running";
 
-        const id = await PerformanceEvent.timedExecAsync(
+        const r = PerformanceEvent.timedExecAsync(
             logger,
             { eventName: "RunStage" },
             async () => {
-                return this.execRun();
+                return this.execRun(config);
             },
             { start: true, end: true, cancel: "generic" },
         );
         this.status = "success";
-        return id;
+        return r;
     }
 
-    private async execRun(): Promise<string | undefined> {
+    public async execRun(config: IRunConfig): Promise<string | string[] | undefined> {
         this.status = "running";
-        const schema: ContainerSchema = {
-            initialObjects: {},
-        };
-
-        try {
-            this.loadInitialObjSchema(schema);
-        } catch {
-            throw new Error("Invalid schema provided.");
+        const runnerArgs: string[][] = [];
+        for (let i = 0; i < this.c.numDocs; i++) {
+            const connection = this.c.connectionConfig;
+            const childArgs: string[] = [
+                "./dist/docCreatorRunnerClient.js",
+                "--runId",
+                config.runId,
+                "--scenarioName",
+                config.scenarioName,
+                "--childId",
+                i.toString(),
+                "--schema",
+                JSON.stringify(this.c.schema),
+                "--connType",
+                connection.type,
+                "--connEndpoint",
+                connection.endpoint,
+            ];
+            childArgs.push("--verbose");
+            runnerArgs.push(childArgs);
         }
 
-        const ac = this.c.client;
-        let container: IFluidContainer;
-        try {
-            ({ container } = await ac.createContainer(schema));
-        } catch {
-            throw new Error("Unable to create container.");
+        const children: Promise<boolean>[] = [];
+        for (const runnerArg of runnerArgs) {
+            try {
+                children.push(this.createChild(runnerArg));
+            } catch {
+                throw new Error("Failed to spawn child");
+            }
+            await delay(this.c.clientStartDelayMs);
         }
 
-        let id: string;
         try {
-            id = await container.attach();
+            await Promise.all(children);
         } catch {
-            throw new Error("Unable to attach container.");
+            throw new Error("Not all clients closed sucesfully.");
         }
-        return id;
+
+        if(this.docIds.length > 0) {
+            return this.docIds.length === 1 ? this.docIds[0] : this.docIds;
+        }
     }
 
     public stop(): void {}
@@ -92,11 +120,29 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         return `This stage creates empty document for the given schema.`;
     }
 
-    private loadInitialObjSchema(schema: ContainerSchema): void {
-        for (const k of Object.keys(this.c.schema.initialObjects)) {
-            if (this.c.schema.initialObjects[k] === "SharedMap") {
-                schema.initialObjects[k] = SharedMap;
-            }
-        }
+    private async createChild(childArgs: string[]): Promise<boolean> {
+        const envVar = { ...process.env };
+        const runnerProcess = child_process.spawn("node", childArgs, {
+            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            env: envVar,
+        });
+
+        runnerProcess.stdout?.once("data", (data) => {
+            this.docIds.push(String(data))
+        });
+
+        runnerProcess.on('message', (id) => {
+            this.docIds.push(String(id))
+        });
+
+        return new Promise((resolve, reject) =>
+            runnerProcess.once("close", (status) => {
+                if (status === 0) {
+                    resolve(true);
+                } else {
+                    reject(new Error("Client failed to complete the tests sucesfully."));
+                }
+            }),
+        );
     }
 }
