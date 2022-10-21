@@ -8,9 +8,9 @@ import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
 import type {
-    IInventoryListAppModel,
-    IInventoryListAppModelEvents,
-    IInventoryList,
+    IAppModel,
+    IAppModelEvents,
+    ITaskList,
 } from "../modelInterfaces";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
@@ -22,13 +22,13 @@ export type InventoryListAppModelExportFormat1 = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppModelEvents>
-    implements IInventoryListAppModel {
+export class AppModel extends TypedEventEmitter<IAppModelEvents>
+    implements IAppModel {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "one";
 
     public constructor(
-        public readonly inventoryList: IInventoryList,
+        public readonly inventoryList: ITaskList,
         private readonly container: IContainer,
     ) {
         super();
@@ -51,15 +51,15 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         // Applies string data in version:one format.
         const parsedInventoryItemData = parseStringDataVersionOne(initialData);
         for (const { name, quantity } of parsedInventoryItemData) {
-            this.inventoryList.addItem(name, quantity);
+            this.inventoryList.addTask(name, quantity);
         }
     };
 
     public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
         // Exports in version:one format (using ':' delimiter between name/quantity)
-        const inventoryItems = this.inventoryList.getItems();
+        const inventoryItems = this.inventoryList.getTasks();
         const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-            return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
+            return `${ inventoryItem.name.getText() }:${ inventoryItem.priority.toString() }`;
         });
         return `version:one\n${inventoryItemStrings.join("\n")}`;
     };

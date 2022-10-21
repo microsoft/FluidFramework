@@ -8,21 +8,21 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListView } from "../src/view/inventoryView";
-import { InventoryListContainerRuntimeFactory } from "../src/model";
-import type { IInventoryListAppModel } from "../src/modelInterfaces";
+import { TaskListView } from "../src/view/taskListView";
+import { TaskListContainerRuntimeFactory } from "../src/model";
+import type { IAppModel } from "../src/modelInterfaces";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-    const sessionStorageModelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
-        new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
+    const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
+        new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
     );
 
     let id: string;
-    let model: IInventoryListAppModel;
+    let model: IAppModel;
 
     if (location.hash.length === 0) {
         // Normally our code loader is expected to match up with the version passed here.
@@ -32,7 +32,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
         model = createResponse.model;
 
         // Add a test item so we can see something.
-        model.inventoryList.addItem("testName", 3);
+        model.inventoryList.addTask("testName", 3);
 
         id = await createResponse.attach();
     } else {
@@ -45,7 +45,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
     document.title = id;
 
     // Render it
-    ReactDOM.render(<InventoryListView inventoryList={ model.inventoryList } />, element);
+    ReactDOM.render(<TaskListView inventoryList={ model.inventoryList } />, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

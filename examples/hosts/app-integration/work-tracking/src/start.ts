@@ -11,9 +11,9 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 
 import { DemoCodeLoader } from "./demoCodeLoader";
 import { externalDataSource } from "./externalData";
-import type { IInventoryListAppModel } from "./modelInterfaces";
+import type { IAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
-import { DebugView, InventoryListAppView } from "./view";
+import { DebugView, TaskListAppView } from "./view";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -23,11 +23,11 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const render = (model: IInventoryListAppModel) => {
+const render = (model: IAppModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
-        React.createElement(InventoryListAppView, { model }),
+        React.createElement(TaskListAppView, { model }),
         appDiv,
     );
 
@@ -47,7 +47,7 @@ async function start(): Promise<void> {
     // in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
     // (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
     // (e.g. container.request({ url: "mode" })) looks like.
-    const modelLoader = new ModelLoader<IInventoryListAppModel>({
+    const modelLoader = new ModelLoader<IAppModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader: new DemoCodeLoader(),
@@ -55,7 +55,7 @@ async function start(): Promise<void> {
     });
 
     let id: string;
-    let model: IInventoryListAppModel;
+    let model: IAppModel;
 
     if (location.hash.length === 0) {
         // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.

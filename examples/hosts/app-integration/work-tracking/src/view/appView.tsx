@@ -5,11 +5,11 @@
 
 import React from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces";
-import { InventoryListView } from "./inventoryView";
+import type { IAppModel } from "../modelInterfaces";
+import { TaskListView } from "./taskListView";
 
-export interface IInventoryListAppViewProps {
-    model: IInventoryListAppModel;
+export interface ITaskListAppViewProps {
+    model: IAppModel;
 }
 
 /**
@@ -18,11 +18,11 @@ export interface IInventoryListAppViewProps {
  * of appropriately disabling the view during migration.  It would also be what triggers any other migration UI we
  * might want, progress wheels, etc.
  */
-export const InventoryListAppView: React.FC<IInventoryListAppViewProps> =
-    (props: IInventoryListAppViewProps) => {
+export const TaskListAppView: React.FC<ITaskListAppViewProps> =
+    (props: ITaskListAppViewProps) => {
     const { model } = props;
 
     return (
-        <InventoryListView inventoryList={ model.inventoryList } />
+        <TaskListView inventoryList={ model.inventoryList } />
     );
 };

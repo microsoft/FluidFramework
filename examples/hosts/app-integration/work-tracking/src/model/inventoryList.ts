@@ -9,9 +9,9 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { ITask, ITaskList } from "../modelInterfaces";
 
-class InventoryItem extends EventEmitter implements IInventoryItem {
+class InventoryItem extends EventEmitter implements ITask {
     public get id() {
         return this._id;
     }
@@ -19,14 +19,14 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
     public get name() {
         return this._name;
     }
-    public get quantity() {
+    public get priority() {
         const cellValue = this._quantity.get();
         if (cellValue === undefined) {
             throw new Error("Expected a valid quantity");
         }
         return cellValue;
     }
-    public set quantity(newValue: number) {
+    public set priority(newValue: number) {
         this._quantity.set(newValue);
     }
     public constructor(
@@ -49,10 +49,10 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
  */
-export class InventoryList extends DataObject implements IInventoryList {
+export class TaskList extends DataObject implements ITaskList {
     private readonly inventoryItems = new Map<string, InventoryItem>();
 
-    public readonly addItem = (name: string, quantity: number) => {
+    public readonly addTask = (name: string, quantity: number) => {
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
         const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
@@ -61,11 +61,11 @@ export class InventoryList extends DataObject implements IInventoryList {
         this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
     };
 
-    public readonly getItems = () => {
+    public readonly getTasks = () => {
         return [...this.inventoryItems.values()];
     };
 
-    public readonly getItem = (id: string) => {
+    public readonly getTask = (id: string) => {
         return this.inventoryItems.get(id);
     };
 
@@ -126,9 +126,9 @@ export class InventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
-    "inventory-list",
-    InventoryList,
+export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
+    "task-list",
+    TaskList,
     [
         SharedCell.getFactory(),
         SharedString.getFactory(),

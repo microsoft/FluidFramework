@@ -9,36 +9,36 @@ import { SharedString } from "@fluidframework/sequence";
 import type { IMigratableModel, IMigratableModelEvents } from "./migrationInterfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IInventoryListAppModelEvents extends IMigratableModelEvents { }
+export interface IAppModelEvents extends IMigratableModelEvents { }
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IInventoryListAppModel extends IMigratableModel, IEventProvider<IInventoryListAppModelEvents> {
+export interface IAppModel extends IMigratableModel, IEventProvider<IAppModelEvents> {
     /**
      * An inventory tracker list.
      */
-    readonly inventoryList: IInventoryList;
+    readonly inventoryList: ITaskList;
 }
 
-export interface IInventoryItem extends EventEmitter {
+export interface ITask extends EventEmitter {
     readonly id: string;
     readonly name: SharedString;
-    quantity: number;
+    priority: number;
 }
 
 /**
  * IInventoryList describes the public API surface for our inventory list object.
  */
-export interface IInventoryList extends EventEmitter {
-    readonly addItem: (name: string, quantity: number) => void;
+export interface ITaskList extends EventEmitter {
+    readonly addTask: (name: string, quantity: number) => void;
 
-    readonly getItems: () => IInventoryItem[];
-    readonly getItem: (id: string) => IInventoryItem | undefined;
+    readonly getTasks: () => ITask[];
+    readonly getTask: (id: string) => ITask | undefined;
 
     /**
      * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
      */
-    on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
+    on(event: "itemAdded" | "itemDeleted", listener: (item: ITask) => void): this;
 }

@@ -10,11 +10,11 @@ import type {
 } from "@fluidframework/container-definitions";
 
 import {
-    InventoryListContainerRuntimeFactory,
+    TaskListContainerRuntimeFactory,
 } from "./model";
 
 const moduleWithDetails: IFluidModuleWithDetails = {
-    module: { fluidExport: new InventoryListContainerRuntimeFactory() },
+    module: { fluidExport: new TaskListContainerRuntimeFactory() },
     details: { package: "one" },
 };
 

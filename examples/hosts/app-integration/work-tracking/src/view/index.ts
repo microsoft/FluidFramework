@@ -4,4 +4,4 @@
  */
 
 export { IDebugViewProps, DebugView } from "./debugView";
-export { IInventoryListAppViewProps, InventoryListAppView } from "./appView";
+export { ITaskListAppViewProps, TaskListAppView } from "./appView";

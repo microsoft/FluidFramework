@@ -7,38 +7,38 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { ITask, ITaskList } from "../modelInterfaces";
 
-export interface IInventoryItemViewProps {
-    inventoryItem: IInventoryItem;
+export interface ITaskViewProps {
+    task: ITask;
     disabled?: boolean;
 }
 
-export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInventoryItemViewProps) => {
-    const { inventoryItem, disabled } = props;
+export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
+    const { task, disabled } = props;
     const quantityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemoteQuantity = () => {
             if (quantityRef.current !== null) {
-                quantityRef.current.value = inventoryItem.quantity.toString();
+                quantityRef.current.value = task.priority.toString();
             }
         };
-        inventoryItem.on("quantityChanged", updateFromRemoteQuantity);
+        task.on("quantityChanged", updateFromRemoteQuantity);
         updateFromRemoteQuantity();
         return () => {
-            inventoryItem.off("quantityChanged", updateFromRemoteQuantity);
+            task.off("quantityChanged", updateFromRemoteQuantity);
         };
-    }, [inventoryItem]);
+    }, [task]);
 
     const inputHandler = (e) => {
         const newValue = parseInt(e.target.value, 10);
-        inventoryItem.quantity = newValue;
+        task.priority = newValue;
     };
 
     return (
         <div>
             <CollaborativeInput
-                sharedString={ inventoryItem.name }
+                sharedString={ task.name }
                 style={{ width: "200px" }}
                 disabled={ disabled }
             ></CollaborativeInput>
@@ -53,18 +53,18 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
     );
 };
 
-export interface IInventoryListViewProps {
-    inventoryList: IInventoryList;
+export interface ITaskListViewProps {
+    inventoryList: ITaskList;
     disabled?: boolean;
 }
 
-export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInventoryListViewProps) => {
+export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
     const { inventoryList, disabled } = props;
 
-    const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(inventoryList.getItems());
+    const [inventoryItems, setInventoryItems] = useState<ITask[]>(inventoryList.getTasks());
     useEffect(() => {
         const updateItems = () => {
-            setInventoryItems(inventoryList.getItems());
+            setInventoryItems(inventoryList.getTasks());
         };
         inventoryList.on("itemAdded", updateItems);
         inventoryList.on("itemDeleted", updateItems);
@@ -76,7 +76,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
     }, [inventoryList]);
 
     const inventoryItemViews = inventoryItems.map((inventoryItem) => (
-        <InventoryItemView key={ inventoryItem.id } inventoryItem={ inventoryItem } disabled={ disabled } />
+        <TaskView key={ inventoryItem.id } task={ inventoryItem } disabled={ disabled } />
     ));
 
     return (

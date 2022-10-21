@@ -10,17 +10,17 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
-import { InventoryListAppModel } from "./appModel";
-import { InventoryListInstantiationFactory } from "./inventoryList";
+import type { ITaskList, IAppModel } from "../modelInterfaces";
+import { AppModel } from "./appModel";
+import { TaskListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
 
-export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
+export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
     constructor() {
         super(
             new Map([
-                InventoryListInstantiationFactory.registryEntry,
+                TaskListInstantiationFactory.registryEntry,
             ]), // registryEntries
         );
     }
@@ -29,7 +29,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
+        const inventoryList = await runtime.createDataStore(TaskListInstantiationFactory.type);
         await inventoryList.trySetAlias(inventoryListId);
     }
 
@@ -43,10 +43,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
      protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const inventoryList = await requestFluidObject<IInventoryList>(
+        const inventoryList = await requestFluidObject<ITaskList>(
             await runtime.getRootDataStore(inventoryListId),
             "",
         );
-        return new InventoryListAppModel(inventoryList, container);
+        return new AppModel(inventoryList, container);
     }
 }
