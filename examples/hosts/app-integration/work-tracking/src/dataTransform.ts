@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { DataTransformationCallback } from "./migrationInterfaces";
-
 /**
  * Read the version of the string data, to understand how to parse it.  This is shared between versions.
  * This format is just one example of how you might distinguish between multiple export formats, other approaches
@@ -58,54 +56,3 @@ export function parseStringDataVersionTwo(stringData: string) {
         return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
     });
 }
-
-function parseStringData(stringData: string) {
-    const version = readVersion(stringData);
-    if (version === "one") {
-        return parseStringDataVersionOne(stringData);
-    } else if (version === "two") {
-        return parseStringDataVersionTwo(stringData);
-    } else {
-        throw new Error(`Don't know how to parse version ${version}`);
-    }
-}
-
-function transformToOne(stringData: string) {
-    const inventoryItems = parseStringData(stringData);
-    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-        return `${ inventoryItem.name }:${ inventoryItem.quantity.toString() }`;
-    });
-    return `version:one\n${inventoryItemStrings.join("\n")}`;
-}
-
-function transformToTwo(stringData: string) {
-    const inventoryItems = parseStringData(stringData);
-    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-        return `${ inventoryItem.name }\t${ inventoryItem.quantity.toString() }`;
-    });
-    return `version:two\n${inventoryItemStrings.join("\n")}`;
-}
-
-/**
- * In this example, we can transform back and forth between versions one and two for demo purposes.  This way the
- * example can show migration multiple times.  However, in production scenarios it is not required to permit
- * backwards transformation -- more likely you'll want to take a daisy-chaining approach to convert data forwards
- * (1-\>2, 2-\>3, 3-\>4, etc.).  This way only one new transform function needs to be produced and tested for each new
- * format used.
- */
-export const inventoryListDataTransformationCallback: DataTransformationCallback = async (
-    exportedData: unknown,
-    modelVersion: string,
-) => {
-    if (typeof exportedData !== "string") {
-        throw new TypeError("Unexpected data format");
-    }
-
-    if (modelVersion === "one") {
-        return transformToOne(exportedData);
-    } else if (modelVersion === "two") {
-        return transformToTwo(exportedData);
-    } else {
-        throw new Error(`Don't know how to transform for target version ${modelVersion}`);
-    }
-};
