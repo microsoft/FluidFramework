@@ -110,7 +110,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
-    ensureNoDataModelChanges(callback: () => void): void;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)

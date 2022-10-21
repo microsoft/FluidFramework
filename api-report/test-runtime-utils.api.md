@@ -291,7 +291,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    ensureNoDataModelChanges(callback: () => void): void;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -378,7 +378,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly documentId: string;
     // (undocumented)
-    ensureNoDataModelChanges(callback: () => void): void;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)

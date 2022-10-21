@@ -70,7 +70,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    ensureNoDataModelChanges(callback: () => void): void;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
