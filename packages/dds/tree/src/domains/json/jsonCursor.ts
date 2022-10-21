@@ -7,10 +7,10 @@ import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     LocalFieldKey,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     EmptyKey,
     FieldKey,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     ITreeCursorSynchronous,
 } from "../../core";
@@ -109,7 +109,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             return reader.value as JsonCompatible;
         case jsonArray.name: {
             reader.enterField(EmptyKey);
-            const result = mapCursorFieldNew(reader, cursorToJsonObject);
+            const result = mapCursorField(reader, cursorToJsonObject);
             reader.exitField();
             return result;
         }
