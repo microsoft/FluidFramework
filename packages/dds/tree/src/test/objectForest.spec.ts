@@ -31,7 +31,6 @@ import {
     FieldKinds,
     isNeverField,
     singleTextCursor,
-    jsonableTreeFromCursor,
 } from "../feature-libraries";
 import { MockDependent } from "./utils";
 
@@ -65,10 +64,7 @@ function testForest(
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
                     assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
-                    // TODO: use new JsonCursor directly when ready instead of converting.
-                    const insertCursor = singleJsonCursor(data);
-                    const content: JsonableTree = jsonableTreeFromCursor(insertCursor);
-                    initializeForest(forest, [singleTextCursor(content)]);
+                    initializeForest(forest, [singleJsonCursor(data)]);
 
                     const reader = forest.allocateCursor();
                     assert.equal(
