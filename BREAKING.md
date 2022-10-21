@@ -54,6 +54,8 @@ sharedMap.set("key1", "1"); // executing this statement will cause an exception 
 
 Other clients will not be affected.
 
+**As we are planning to enable this feature by default, we are advising our partners to use the `IContainerRuntimeOptions.enableOpReentryCheck` option to identify existing code using this pattern and to let us know in case the proposed API behavior is problematic.**
+
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes

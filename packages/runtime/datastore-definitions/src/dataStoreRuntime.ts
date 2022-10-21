@@ -79,7 +79,7 @@ export interface IFluidDataStoreRuntime extends
      *
      * @param callback - the callback to be invoked
      */
-    ensureNoDataModelChanges(callback: () => void): void;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
 
     /**
      * Creates a new channel of the given type.

@@ -849,10 +849,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      *
      * @param callback - the callback to be invoked
      */
-    public ensureNoDataModelChanges(callback: () => void): void {
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
         this.ensureNoDataModelChangesCalls++;
         try {
-            callback();
+            return callback();
         } finally {
             this.ensureNoDataModelChangesCalls--;
         }
@@ -2781,11 +2781,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private verifyCanSubmitOps() {
-        if (!this.enableOpReentryCheck) {
-            return;
-        }
-
-        if (this.ensureNoDataModelChangesCalls > 0) {
+        if (this.enableOpReentryCheck && this.ensureNoDataModelChangesCalls > 0) {
             // Creating ops while processing ops can lead
             // to undefined behavior and events observed in the wrong order.
             // For example, we have two callbacks registered for a DDS, A and B.

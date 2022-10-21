@@ -184,13 +184,11 @@ export class FluidDataStoreRuntime extends
      *
      * @param callback - the callback to be invoked
      */
-    public ensureNoDataModelChanges(callback: () => void): void {
-        // back-compat
-        if (this.dataStoreContext.ensureNoDataModelChanges === undefined) {
-            callback();
-        } else {
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        // back-compat ADO:2309
+        return this.dataStoreContext.ensureNoDataModelChanges === undefined ?
+            callback() :
             this.dataStoreContext.ensureNoDataModelChanges(callback);
-        }
     }
 
     public constructor(

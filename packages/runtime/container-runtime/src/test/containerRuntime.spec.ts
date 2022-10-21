@@ -226,7 +226,7 @@ describe("Runtime", () => {
                 updateDirtyContainerState: (_dirty: boolean) => { },
             }));
 
-            it("By default, enforce the op reentry check", async () => {
+            it("By default, don't enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext({}) as IContainerContext,
                     [],
@@ -234,16 +234,18 @@ describe("Runtime", () => {
                     {}, // runtimeOptions
                 );
 
-                containerRuntime.ensureNoDataModelChanges(() =>
-                    containerRuntime.submitDataStoreOp("id", "test"),
-                );
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() => {
+                    containerRuntime.submitDataStoreOp("id", "test");
+                    return true;
+                }));
 
-                containerRuntime.ensureNoDataModelChanges(() =>
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() =>
                     containerRuntime.ensureNoDataModelChanges(() =>
-                        containerRuntime.ensureNoDataModelChanges(() =>
-                            containerRuntime.submitDataStoreOp("id", "test"),
-                        ),
-                    ));
+                        containerRuntime.ensureNoDataModelChanges(() => {
+                            containerRuntime.submitDataStoreOp("id", "test");
+                            return true;
+                        }),
+                    )));
             });
 
             it("If option enabled, enforce the op reentry check", async () => {

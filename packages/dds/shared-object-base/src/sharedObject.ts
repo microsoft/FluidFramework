@@ -524,8 +524,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
         return this.callbacksHelper.measure(() => {
-            let result = false;
-
             // Creating ops while handling a DDS event can lead
             // to undefined behavior and events observed in the wrong order.
             // For example, we have two callbacks registered for a DDS, A and B.
@@ -538,10 +536,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             //
             // The runtime must enforce op coherence by not allowing any ops to be created during
             // the event handler
-            this.runtime.ensureNoDataModelChanges(() => {
-                result = super.emit(event, ...args);
-            });
-            return result;
+            return this.runtime.ensureNoDataModelChanges(() => super.emit(event, ...args));
         });
     }
 

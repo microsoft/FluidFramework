@@ -84,8 +84,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public ensureNoDataModelChanges(callback: () => void) {
-        callback();
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        return callback();
     }
 
     public getQuorum(): IQuorumClients {
