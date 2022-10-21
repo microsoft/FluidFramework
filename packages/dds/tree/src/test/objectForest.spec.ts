@@ -16,22 +16,21 @@ import {
 } from "../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import {
-    JsonCursor,
-    cursorToJsonObjectNew,
     jsonNumber,
     jsonObject,
     jsonSchemaData,
     jsonRoot,
+    singleJsonCursor,
+    cursorToJsonObject,
 } from "../domains";
 import { recordDependency } from "../dependency-tracking";
 import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath, rootFieldKey } from "../tree";
-import { jsonableTreeFromCursor } from "..";
 import { brand } from "../util";
 import {
     defaultSchemaPolicy,
     FieldKinds,
     isNeverField,
-    singleTextCursorNew,
+    singleTextCursor,
 } from "../feature-libraries";
 import { MockDependent } from "./utils";
 
@@ -65,10 +64,7 @@ function testForest(
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
                     assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
-                    // TODO: use new JsonCursor directly when ready instead of converting.
-                    const insertCursor = new JsonCursor(data);
-                    const content: JsonableTree = jsonableTreeFromCursor(insertCursor);
-                    initializeForest(forest, [singleTextCursorNew(content)]);
+                    initializeForest(forest, [singleJsonCursor(data)]);
 
                     const reader = forest.allocateCursor();
                     assert.equal(
@@ -77,7 +73,7 @@ function testForest(
                     );
 
                     // copy data from reader into json object and compare to data.
-                    const copy = cursorToJsonObjectNew(reader);
+                    const copy = cursorToJsonObject(reader);
                     reader.free();
                     assert.deepEqual(copy, data);
                 });
@@ -87,7 +83,7 @@ function testForest(
         it("setValue", () => {
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree = { type: jsonNumber.name, value: 1 };
-            initializeForest(forest, [singleTextCursorNew(content)]);
+            initializeForest(forest, [singleTextCursor(content)]);
             const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
@@ -105,7 +101,7 @@ function testForest(
         it("clear value", () => {
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree = { type: jsonNumber.name, value: 1 };
-            initializeForest(forest, [singleTextCursorNew(content)]);
+            initializeForest(forest, [singleTextCursor(content)]);
             const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
@@ -126,7 +122,7 @@ function testForest(
                 { type: jsonNumber.name, value: 1 },
                 { type: jsonNumber.name, value: 2 },
             ];
-            initializeForest(forest, content.map(singleTextCursorNew));
+            initializeForest(forest, content.map(singleTextCursor));
             const anchor = forest.root(forest.rootField);
 
             // TODO: does does this select what to delete?
@@ -159,7 +155,7 @@ function testForest(
                     },
                 },
             ];
-            initializeForest(forest, content.map(singleTextCursorNew));
+            initializeForest(forest, content.map(singleTextCursor));
 
             const rootAnchor = forest.root(forest.rootField);
 
@@ -235,7 +231,7 @@ function testForest(
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
                 const insert: Delta.Insert = {
                     type: Delta.MarkType.Insert,
-                    content: content.map(singleTextCursorNew),
+                    content: content.map(singleTextCursor),
                 };
                 // TODO: make type-safe
                 const rootField = detachedFieldAsKey(forest.rootField);

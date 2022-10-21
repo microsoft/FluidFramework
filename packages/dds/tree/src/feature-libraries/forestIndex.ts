@@ -29,10 +29,10 @@ import {
     recordDependency,
     JsonableTree,
     Delta,
-    mapCursorFieldNew,
+    mapCursorField,
 } from "../core";
 import { singleTextCursor } from "./treeTextCursor";
-import { jsonableTreeFromCursorNew } from ".";
+import { jsonableTreeFromCursor } from ".";
 
 /**
  * The storage key for the blob in the summary containing tree data

@@ -19,7 +19,7 @@ import {
     NamedTreeSchema,
     ValueSchema,
     lookupTreeSchema,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
 } from "../../core";
 import { brand } from "../../util";
@@ -205,7 +205,7 @@ export class ProxyTarget {
             }
 
             this.cursor.enterField(key);
-            const types = mapCursorFieldNew(this.cursor, (c) => c.type);
+            const types = mapCursorField(this.cursor, (c) => c.type);
             this.cursor.exitField();
             assert(types.length <= 1, 0x3c5 /* invalid non sequence */);
             typeName = types[0];
@@ -274,10 +274,7 @@ export class ProxyTarget {
         );
         // Make the childTargets:
         this.cursor.enterField(field);
-        const childTargets = mapCursorFieldNew(
-            this.cursor,
-            (c) => new ProxyTarget(this.context, c),
-        );
+        const childTargets = mapCursorField(this.cursor, (c) => new ProxyTarget(this.context, c));
         this.cursor.exitField();
         return proxifyField(fieldSchema, field, childTargets, unwrap);
     }
@@ -426,7 +423,7 @@ function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditabl
         const primary = target.getPrimaryArrayKey();
         if (primary !== undefined) {
             target.cursor.enterField(primary.key);
-            const childTargets = mapCursorFieldNew(
+            const childTargets = mapCursorField(
                 target.cursor,
                 (c) => new ProxyTarget(target.context, c),
             );

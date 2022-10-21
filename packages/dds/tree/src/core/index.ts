@@ -40,7 +40,7 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
@@ -50,7 +50,7 @@ export {
     genericTreeDeleteIfEmpty,
     getDepth,
     symbolIsFieldKey,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     isGlobalFieldKey,
     getMapTreeField,
@@ -63,7 +63,6 @@ export {
 } from "../tree";
 
 export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -72,8 +71,6 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-    mapCursorField,
     initializeForest,
 } from "../forest";
 

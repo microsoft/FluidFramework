@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    ITreeCursorNew,
+    ITreeCursor,
     singleJsonCursor,
-    jsonableTreeFromCursorNew,
+    jsonableTreeFromCursor,
     EmptyKey,
-    cursorToJsonObjectNew,
+    cursorToJsonObject,
     jsonSchemaData,
 } from "../../..";
 import {
@@ -19,7 +19,7 @@ import {
     defaultSchemaPolicy,
     mapTreeFromCursor,
     singleMapTreeCursor,
-    singleTextCursorNew,
+    singleTextCursor,
 } from "../../../feature-libraries";
 import {
     initializeForest,
@@ -63,12 +63,12 @@ function bench(
     data: {
         name: string;
         getJson: () => any;
-        dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any;
+        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
     }[],
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursorNew(singleJsonCursor(json));
+        const encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
 
         benchmark({
@@ -84,18 +84,18 @@ function bench(
             },
         });
 
-        const cursorFactories: [string, () => ITreeCursorNew][] = [
+        const cursorFactories: [string, () => ITreeCursor][] = [
             ["JsonCursor", () => singleJsonCursor(json)],
-            ["TextCursor", () => singleTextCursorNew(encodedTree)],
+            ["TextCursor", () => singleTextCursor(encodedTree)],
             [
                 "MapCursor",
-                () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree))),
+                () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(encodedTree))),
             ],
             [
                 "object-forest Cursor",
                 () => {
                     const forest = buildForest(schema);
-                    initializeForest(forest, [singleTextCursorNew(encodedTree)]);
+                    initializeForest(forest, [singleTextCursor(encodedTree)]);
                     const cursor = forest.allocateCursor();
                     assert.equal(
                         forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
@@ -109,15 +109,12 @@ function bench(
         const consumers: [
             string,
             (
-                cursor: ITreeCursorNew,
-                dataConsumer: (
-                    cursor: ITreeCursorNew,
-                    calculate: (...operands: any[]) => void,
-                ) => any,
+                cursor: ITreeCursor,
+                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any,
             ) => void,
         ][] = [
-            ["cursorToJsonObject", cursorToJsonObjectNew],
-            ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+            ["cursorToJsonObject", cursorToJsonObject],
+            ["jsonableTreeFromCursor", jsonableTreeFromCursor],
             ["mapTreeFromCursor", mapTreeFromCursor],
             ["sum", sum],
             ["sum-map", sumMap],
@@ -126,7 +123,7 @@ function bench(
 
         for (const [consumerName, consumer] of consumers) {
             for (const [factoryName, factory] of cursorFactories) {
-                let cursor: ITreeCursorNew;
+                let cursor: ITreeCursor;
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `${consumerName}(${factoryName}): '${name}'`,
@@ -152,7 +149,7 @@ const canada = generateCanada(
 );
 
 function extractCoordinatesFromCanada(
-    cursor: ITreeCursorNew,
+    cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
     cursor.enterField(Canada.FeatureKey);
@@ -199,7 +196,7 @@ function extractCoordinatesFromCanada(
 }
 
 function extractAvgValsFromTwitter(
-    cursor: ITreeCursorNew,
+    cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
     cursor.enterField(TwitterStatus.statusesKey); // move from root to field
