@@ -13,7 +13,9 @@ import {
 import React from "react";
 
 import { ConnectionState } from "@fluidframework/container-loader";
+import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import {
     ITinyliciousAudience,
@@ -23,6 +25,7 @@ import {
 
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
+import { defaultSharedObjectRenderers } from "../../RendererOptions";
 import { SessionDataView } from "../../components";
 
 interface ContainerInfo {
@@ -52,7 +55,11 @@ function useContainerInfo(): ContainerInfo | undefined {
             // Configure the container.
             const client: TinyliciousClient = new TinyliciousClient();
             const containerSchema: ContainerSchema = {
-                initialObjects: { sharedString: SharedString },
+                initialObjects: {
+                    sharedString: SharedString,
+                    sharedCounter: SharedCounter,
+                    sharedMap: SharedMap,
+                },
             };
 
             // Get the container from the Fluid service.
@@ -171,11 +178,11 @@ const debuggerViewPaneStackStyles = mergeStyles({
 
 export function App(): React.ReactElement {
     // Load the collaborative SharedString object
-    const containerAndAudience = useContainerInfo();
+    const containerInfo = useContainerInfo();
 
     let view: React.ReactElement;
-    if (containerAndAudience !== undefined) {
-        const { container, containerId, audience } = containerAndAudience;
+    if (containerInfo !== undefined) {
+        const { container, containerId, audience } = containerInfo;
         const sharedString = container.initialObjects.sharedString as SharedString;
         view = (
             <Stack horizontal className={rootStackStyles}>
@@ -187,6 +194,7 @@ export function App(): React.ReactElement {
                         container={container}
                         containerId={containerId}
                         audience={audience}
+                        sharedObjectRenderers={defaultSharedObjectRenderers}
                     />
                 </StackItem>
             </Stack>

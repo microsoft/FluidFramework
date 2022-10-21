@@ -2,29 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
 import React from "react";
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
+import { RendererOptions } from "../RendererOptions";
 import { Accordion } from "./Accordion";
+import { FluidObjectView } from "./data-object-views";
 
 export interface DataObjectsViewProps {
     initialObjects: LoadableObjectRecord;
+    sharedObjectRenderers: RendererOptions;
 }
 
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-    const { initialObjects } = props;
+    const { initialObjects, sharedObjectRenderers } = props;
 
-    const objects: DataObjectViewProps[] = Object.entries(initialObjects).map(([key, value]) => ({
+    const objects = Object.entries(initialObjects).map(([key, value]) => ({
         name: key,
-        dataObject: value,
+        loadableObject: value,
     }));
 
     const children = objects.map((object) => (
         <Accordion header={<b>{object.name}</b>}>
-            <DataObjectView {...object} />
+            <FluidObjectView
+                fluidObjectHandle={object.loadableObject.handle}
+                sharedObjectRenderers={sharedObjectRenderers}
+            />
         </Accordion>
     ));
 
@@ -34,23 +38,4 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
             {children}
         </div>
     );
-}
-
-/**
- * {@link DataObjectView} input props.
- */
-export interface DataObjectViewProps {
-    name: string;
-    dataObject: IFluidLoadable; // TODO: a different type?
-}
-
-/**
- * Displays information about the provided container.
- *
- * @param props - See {@link ContainerDataViewProps}.
- */
-export function DataObjectView(props: DataObjectViewProps): React.ReactElement {
-    // TODO: actually render data about the objects
-
-    return <Stack className="data-object-view">TODO</Stack>;
 }

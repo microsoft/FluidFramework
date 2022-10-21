@@ -15,10 +15,12 @@ import React from "react";
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { RendererOptions } from "../RendererOptions";
 import { getInnerContainer } from "../Utilities";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
+import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
 
 const sessionDataViewStyles: IStackItemStyles = {
@@ -45,6 +47,11 @@ export interface SessionDataViewProps {
      * Audience information.
      */
     audience: IServiceAudience<IMember>;
+
+    /**
+     * Policies for displaying debug information for shared Fluid objects.
+     */
+    sharedObjectRenderers: RendererOptions;
 }
 
 /**
@@ -53,7 +60,7 @@ export interface SessionDataViewProps {
  * @param props - See {@link SessionDataViewProps}.
  */
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
-    const { containerId, container, audience } = props;
+    const { containerId, container, audience, sharedObjectRenderers } = props;
 
     const innerContainer = getInnerContainer(container);
 
@@ -118,6 +125,14 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             case RootView.Container:
                 innerView = <ContainerDataView containerId={containerId} container={container} />;
                 break;
+            case RootView.Data:
+                innerView = (
+                    <DataObjectsView
+                        initialObjects={container.initialObjects}
+                        sharedObjectRenderers={sharedObjectRenderers}
+                    />
+                );
+                break;
             case RootView.Audience:
                 innerView = <AudienceView audience={audience} myself={myself} />;
                 break;
@@ -162,6 +177,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
  */
 enum RootView {
     Container = "Container",
+    Data = "Data",
     Audience = "Audience",
     OpsStream = "Ops Stream",
 }

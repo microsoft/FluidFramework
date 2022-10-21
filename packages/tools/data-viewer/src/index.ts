@@ -10,3 +10,4 @@
  */
 
 export * from "./components";
+export * from "./RendererOptions";
