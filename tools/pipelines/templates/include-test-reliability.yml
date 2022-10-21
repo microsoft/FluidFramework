@@ -2,11 +2,14 @@
 # Licensed under the MIT License.
 
 # include-test-coverage
-
 parameters:
 - name: poolBuild
   type: object
   default: Large
+
+- name: taskBuild
+  type: string
+  default: ci:build
 
 - name: testPackage
   type: string
@@ -42,7 +45,7 @@ parameters:
 
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
-    - job:
+    - job: build
       displayName: Run Test Coverage
       pool: ${{ parameters.poolBuild }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
@@ -60,6 +63,10 @@ jobs:
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
+      - name: artifactPipeline
+        value: Build - client packages
+      - name: buildDirectory
+        value: "."
       - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
         - name: feed
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
@@ -69,7 +76,7 @@ jobs:
 
       steps:
         # Setup
-        - checkout: none
+        - checkout: self
           clean: true
 
         # Print parameters/Vars
@@ -81,19 +88,21 @@ jobs:
               # Show all task group conditions
 
               echo "
-              Pipeline Parameters:
-                poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ parameters.testPackage }}
 
-              Pipeline Variables:
+              Task Variables:
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 feed=${{ variables.feed }}
                 testCommand=${{ parameters.testCommand }}
-                continueOnError=${{ parameters.continueOnError }}
-                variant.flag=${{ variant.flags }}
                 testFileTarName=${{ parameters.testFileTarName }}
-                extraDependencies=${{ parameters.extraDependencies }}
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ parameters.testPackage }}
+
+              Pipeline Parameters:
+                BuildDir=${{ variables.buildDirectory }}
+                Build=${{ parameters.taskBuild }}
+
+              SourceBranch=$(Build.SourceBranch)
               "
 
         # Install
@@ -108,7 +117,7 @@ jobs:
           inputs:
             source: specific
             project: internal
-            pipeline: Build - client packages
+            pipeline: ${{ variables.artifactPipeline }}
             preferTriggeringPipeline: true
             allowPartiallySucceededBuilds: true
             runVersion: latestFromBranch
@@ -185,7 +194,7 @@ jobs:
             inputs:
               source: specific
               project: internal
-              pipeline: Build - client packages
+              pipeline: ${{ variables.artifactPipeline }}
               preferTriggeringPipeline: true
               allowPartiallySucceededBuilds: true
               runVersion: latestFromBranch
