@@ -208,6 +208,9 @@ export class ContainerContext implements IContainerContext {
     }
 
     public close(error?: Error): void {
+        if (!this.runtime.close) {
+            return this.dispose(error);
+        }
         if (this._disposed) {
             return;
         }

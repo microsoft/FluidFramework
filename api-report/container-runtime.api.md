@@ -84,6 +84,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get clientId(): string | undefined;
     // (undocumented)
+    close(error?: Error): void;
+    // (undocumented)
     get closeFn(): (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
         logger?: ITelemetryLogger;
@@ -105,7 +107,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    dispose(error?: Error): void;
+    dispose(error?: Error, skipEmitDisposed?: boolean): void;
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
