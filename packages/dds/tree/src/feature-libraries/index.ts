@@ -80,16 +80,7 @@ export {
     tryExtendMark,
 } from "./sequence-change-family";
 export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
-export {
-    singleTextCursor as singleTextCursorNew,
-    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
-} from "./treeTextCursor";
-export {
-    jsonableTreeFromCursor,
-    RootedTextCursor,
-    singleTextCursor,
-    TextCursor,
-} from "./treeTextCursorLegacy";
+export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";

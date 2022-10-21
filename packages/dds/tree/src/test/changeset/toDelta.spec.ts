@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
     ProtoNode,
-    singleTextCursorNew,
+    singleTextCursor,
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../feature-libraries";
@@ -39,7 +39,7 @@ const content: ProtoNode[] = [
     },
 ];
 const contentCursor: ITreeCursorSynchronous[] = [
-    singleTextCursorNew({
+    singleTextCursor({
         type,
         value: 42,
         fields: { foo: [{ type, value: 43 }] },
@@ -391,7 +391,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 4242,
                         fields: {
@@ -431,7 +431,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                         fields: {
@@ -471,7 +471,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                         fields: {
@@ -508,7 +508,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                     }),

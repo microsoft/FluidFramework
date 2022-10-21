@@ -5,9 +5,9 @@
 
 export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
 export {
-    ITreeCursor as ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
-    mapCursorField as mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     forEachNode,
     forEachField,
@@ -48,6 +48,7 @@ export {
     keyAsDetachedField,
     rootFieldKey,
     NodeData,
+    rootFieldKeySymbol,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 
