@@ -90,13 +90,14 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
         const result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        const roots =
-            result === TreeNavigationResult.Ok
-                ? mapCursorFieldNew(this.cursor, jsonableTreeFromCursorNew)
-                : [];
+        let roots: JsonableTree[] | undefined;
+        if (result === TreeNavigationResult.Ok) {
+            this.cursor.exitNode();
+            roots = mapCursorFieldNew(this.cursor, jsonableTreeFromCursorNew);
+        }
         this.cursor.clear();
 
-        return JSON.stringify(roots);
+        return JSON.stringify(roots ?? []);
     }
 
     public getAttachSummary(
