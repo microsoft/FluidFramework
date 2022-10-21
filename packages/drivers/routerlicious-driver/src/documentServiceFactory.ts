@@ -39,7 +39,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enableWholeSummaryUpload: false,
     enableRestLess: true,
     enableInternalSummaryCaching: true,
-    enableWriteModeByDefault: true,
 };
 
 /**

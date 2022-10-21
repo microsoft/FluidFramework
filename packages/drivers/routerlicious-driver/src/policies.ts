@@ -50,8 +50,9 @@ export interface IRouterliciousDriverPolicies {
     enableInternalSummaryCaching: boolean;
 
     /**
-     * Enable write mode by default
-     * Default: true
+     * Enable all connections to start the connection mode as write instead of read.
+     * Setting to `true` enables write mode by default.
+     * Default: undefined
      */
     enableWriteModeByDefault?: boolean;
 }
