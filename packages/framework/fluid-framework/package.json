@@ -60,6 +60,19 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "EnumDeclaration_ContainerErrorType": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "EnumDeclaration_DriverErrorType": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_ICriticalContainerError": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }
