@@ -5,8 +5,7 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
-import { Anchor, DetachedField } from "../tree";
-import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
+import { Anchor, DetachedField, ITreeCursor } from "../tree";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -65,7 +64,7 @@ export interface IForestSubscription extends Dependee {
     tryMoveCursorTo(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent
+        observer?: ObservingDependent,
     ): TreeNavigationResult;
 }
 
@@ -136,3 +135,26 @@ export enum ITreeSubscriptionCursorState {
      */
     Freed,
 }
+
+export const enum TreeNavigationResult {
+    /**
+     * Attempt to navigate cursor to a key or index that is outside the client's view.
+     */
+    NotFound = -1,
+
+    /**
+     * Attempt to navigate cursor to a portion of the tree that has not yet been loaded.
+     */
+    Pending = 0,
+
+    /**
+     * ITreeReader successfully navigated to the desired node.
+     */
+    Ok = 1,
+}
+
+/**
+ * TreeNavigationResult, but never "Pending".
+ * Can be used when data is never pending.
+ */
+export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;

@@ -4,38 +4,73 @@
  */
 
 export {
-    Dependee, Dependent, NamedComputation, ObservingDependent, InvalidationToken, recordDependency,
+    Dependee,
+    Dependent,
+    NamedComputation,
+    ObservingDependent,
+    InvalidationToken,
+    recordDependency,
     SimpleDependee,
-} from "./dependency-tracking";
-
-export {
-    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
-    UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, JsonableTree,
-    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
-    ITreeCursorNew,
+    EmptyKey,
+    FieldKey,
+    TreeType,
+    Value,
+    TreeValue,
+    AnchorSet,
+    DetachedField,
+    UpPath,
+    Anchor,
+    RootField,
+    ChildCollection,
+    ChildLocation,
+    FieldMapObject,
+    NodeData,
+    GenericTreeNode,
+    JsonableTree,
+    Delta,
+    rootFieldKey,
+    FieldScope,
+    GlobalFieldKeySymbol,
+    symbolFromKey,
+    keyFromSymbol,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
-    AnchorLocator
-} from "./tree";
-
-export { ITreeCursor, TreeNavigationResult, IEditableForest,
+    AnchorLocator,
+    TreeNavigationResult,
+    IEditableForest,
     IForestSubscription,
     TreeLocation,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-} from "./forest";
-
-export {
-    LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema,
-    StoredSchemaRepository, FieldKindIdentifier,
-    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataAndPolicy,
-} from "./schema-stored";
+    LocalFieldKey,
+    GlobalFieldKey,
+    TreeSchemaIdentifier,
+    NamedTreeSchema,
+    Named,
+    FieldSchema,
+    ValueSchema,
+    TreeSchema,
+    StoredSchemaRepository,
+    FieldKindIdentifier,
+    TreeTypeSet,
+    SchemaData,
+    SchemaPolicy,
+    SchemaDataAndPolicy,
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    ChangesetFromChangeRebaser,
+    ICheckout,
+    TransactionResult,
+} from "./core";
 
 export {
     Brand,
@@ -58,35 +93,19 @@ export {
 } from "./util";
 
 export {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
-} from "./change-family";
-
-export {
-    Rebaser,
-    ChangeRebaser,
-    RevisionTag,
-    ChangesetFromChangeRebaser,
-} from "./rebase";
-
-export {
-    ICheckout,
-    TransactionResult,
-} from "./checkout";
-
-export {
     cursorToJsonObject,
-    JsonCursor,
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    singleJsonCursor,
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonString,
     jsonSchemaData,
 } from "./domains";
 
 export {
     buildForest,
-    TextCursor,
-    jsonableTreeFromCursor,
-    singleTextCursor,
     emptyField,
     neverTree,
     FieldKinds,
@@ -102,7 +121,6 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
-    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -117,17 +135,23 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
+    EditableField,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
     defaultSchemaPolicy,
-    singleTextCursorNew,
-    jsonableTreeFromCursorNew,
+    jsonableTreeFromCursor,
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,
+    DefaultEditBuilder,
+    DefaultChangeset,
+    ValueFieldEditBuilder,
+    OptionalFieldEditBuilder,
+    SequenceFieldEditBuilder,
+    SequenceField,
     NodePath,
     PlacePath,
     Transposed,
@@ -144,7 +168,4 @@ export {
     NodeCount,
 } from "./feature-libraries";
 
-export {
-    ISharedTree,
-    SharedTreeFactory,
-} from "./shared-tree";
+export { ISharedTree, SharedTreeFactory } from "./shared-tree";

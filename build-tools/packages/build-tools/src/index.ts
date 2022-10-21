@@ -18,7 +18,7 @@ export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
-export { Logger, LoggingFunction } from "./common/logging";
+export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
 export { Package } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
@@ -33,3 +33,5 @@ export {
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
+export { findPackagesUnderPath, getAndUpdatePackageDetails } from "./typeValidator/packageJson";
+export { generateTests } from "./typeValidator/testGeneration";

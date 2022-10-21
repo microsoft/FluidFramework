@@ -14,7 +14,6 @@ import {
     MockStorage,
     MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
@@ -1061,100 +1060,6 @@ describe("SharedString interval collections", () => {
                 { label: "test3", local: true },
                 { label: "test1", local: false },
             ]);
-        });
-
-        describe("emits changeInterval events", () => {
-            let collection: IntervalCollection<SequenceInterval>;
-            const eventLog: {
-                interval: { start: number; end: number; };
-                local: boolean;
-                op: ISequencedDocumentMessage | undefined;
-            }[] = [];
-            let intervalId: string;
-            beforeEach(() => {
-                sharedString.insertText(0, "hello world");
-                collection = sharedString.getIntervalCollection("test");
-                collection.on("changeInterval",
-                    ({ start, end }, local, op) => eventLog.push({
-                        interval: {
-                            start: sharedString.localReferencePositionToPosition(start),
-                            end: sharedString.localReferencePositionToPosition(end),
-                        },
-                        local,
-                        op,
-                    }),
-                );
-                const _intervalId = collection.add(0, 1, IntervalType.SlideOnRemove).getIntervalId();
-                assert(_intervalId);
-                intervalId = _intervalId;
-                containerRuntimeFactory.processAllMessages();
-                eventLog.length = 0;
-            });
-
-            it("on local change", () => {
-                collection.change(intervalId, 2, 3);
-                assert.equal(eventLog.length, 1);
-                {
-                    const [{ interval, local, op }] = eventLog;
-                    assert.deepEqual(interval, { start: 2, end: 3 });
-                    assert.equal(local, true);
-                    assert.equal(op, undefined);
-                }
-                containerRuntimeFactory.processAllMessages();
-                assert.equal(eventLog.length, 2);
-                {
-                    const { interval, local, op } = eventLog[1];
-                    assert.deepEqual(interval, { start: 2, end: 3 });
-                    assert.equal(local, true);
-                    assert.equal(op?.contents.type, "act");
-                }
-            });
-
-            it("on a remote change", () => {
-                const collection2 = sharedString2.getIntervalCollection("test");
-                collection2.change(intervalId, 2, 3);
-                assert.equal(eventLog.length, 0);
-                containerRuntimeFactory.processAllMessages();
-                assert.equal(eventLog.length, 1);
-                {
-                    const [{ interval, local, op }] = eventLog;
-                    assert.deepEqual(interval, { start: 2, end: 3 });
-                    assert.equal(local, false);
-                    assert.equal(op?.contents.type, "act");
-                }
-            });
-
-            it("on a property change", () => {
-                collection.changeProperties(intervalId, { foo: "bar" });
-                assert.equal(eventLog.length, 1);
-                {
-                    const [{ interval, local, op }] = eventLog;
-                    assert.deepEqual(interval, { start: 0, end: 1 });
-                    assert.equal(local, true);
-                    assert.equal(op, undefined);
-                }
-                containerRuntimeFactory.processAllMessages();
-                assert.equal(eventLog.length, 2);
-                {
-                    const { interval, local, op } = eventLog[1];
-                    assert.deepEqual(interval, { start: 0, end: 1 });
-                    assert.equal(local, true);
-                    assert.equal(op?.contents.type, "act");
-                }
-            });
-
-            it("on a change due to an endpoint sliding", () => {
-                sharedString.removeRange(1, 3);
-                assert.equal(eventLog.length, 0);
-                containerRuntimeFactory.processAllMessages();
-                assert.equal(eventLog.length, 1);
-                {
-                    const [{ interval, local, op }] = eventLog;
-                    assert.deepEqual(interval, { start: 0, end: 1 });
-                    assert.equal(local, true);
-                    assert.equal(op, undefined);
-                }
-            });
         });
 
         it("can be concurrently created", () => {

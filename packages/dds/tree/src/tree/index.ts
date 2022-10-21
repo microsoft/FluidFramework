@@ -3,6 +3,37 @@
  * Licensed under the MIT License.
  */
 
+export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
+export {
+    ITreeCursor,
+    CursorLocationType,
+    mapCursorField,
+    mapCursorFields,
+    forEachNode,
+    forEachField,
+    ITreeCursorSynchronous,
+} from "./cursor";
+export {
+    GlobalFieldKeySymbol,
+    keyFromSymbol,
+    symbolFromKey,
+    symbolIsFieldKey,
+} from "./globalFieldKeySymbol";
+export { getMapTreeField, MapTree } from "./mapTree";
+export { clonePath, getDepth, UpPath } from "./pathTree";
+export {
+    FieldMapObject,
+    FieldScope,
+    GenericFieldsNode,
+    genericTreeDeleteIfEmpty,
+    genericTreeKeys,
+    GenericTreeNode,
+    getGenericTreeField,
+    isGlobalFieldKey,
+    JsonableTree,
+    scopeFromKey,
+    setGenericTreeField,
+} from "./treeTextFormat";
 export {
     EmptyKey,
     FieldKey,
@@ -17,23 +48,9 @@ export {
     keyAsDetachedField,
     rootFieldKey,
     NodeData,
+    rootFieldKeySymbol,
 } from "./types";
-
-export * from "./pathTree";
-export * from "./anchorSet";
-export * from "./treeTextFormat";
-export * from "./visitDelta";
-export * from "./globalFieldKeySymbol";
-export * from "./mapTree";
-
-export {
-    ITreeCursor as ITreeCursorNew,
-    CursorLocationType,
-    mapCursorField as mapCursorFieldNew,
-    mapCursorFields,
-    forEachNode,
-    ITreeCursorSynchronous,
-} from "./cursor";
+export { DeltaVisitor, visitDelta } from "./visitDelta";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";

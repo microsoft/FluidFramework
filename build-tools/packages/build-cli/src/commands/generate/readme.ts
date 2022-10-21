@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Interfaces } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
 import { default as BaseReadme } from "oclif/lib/commands/readme";
 
 export default class Readme extends BaseReadme {

@@ -72,22 +72,45 @@ export async function npmCheckUpdates(
     const searchGlobs: string[] = [];
     let repoPath: string;
 
-    log?.info(`Checking npm for package updates...`);
-    if (releaseGroup === undefined) {
-        // Apply to all packages in repo
+    const releaseGroupsToCheck =
+        releaseGroup === undefined
+            ? [...context.repo.releaseGroups.keys()]
+            : isReleaseGroup(releaseGroup)
+            ? [releaseGroup]
+            : undefined;
+
+    const packagesToCheck = isReleaseGroup(releaseGroup) ? undefined : releaseGroup;
+
+    // Run on the whole repo
+    if (releaseGroupsToCheck === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pkg = context.fullPackageMap.get(releaseGroup!);
+        if (pkg === undefined) {
+            throw new Error(`Package not found in context: ${releaseGroup}`);
+        }
+
+        repoPath = pkg.directory;
+        searchGlobs.push(pkg.directory);
+    } else {
         repoPath = context.repo.resolvedRoot;
 
-        for (const releaseGroupRoot of context.repo.releaseGroups.values()) {
-            if (releaseGroupRoot.kind === releaseGroupFilter) {
+        for (const group of releaseGroupsToCheck) {
+            if (group === releaseGroupFilter) {
                 log?.verbose(
                     `Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
                 );
                 continue;
             }
 
+            const releaseGroupRoot = context.repo.releaseGroups.get(group);
+            if (releaseGroupRoot === undefined) {
+                throw new Error(`Cannot find release group: ${group}`);
+            }
+
             log?.verbose(
                 `Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.kind}.`,
             );
+
             searchGlobs.push(
                 ...releaseGroupRoot.workspaceGlobs.map((g) =>
                     path.join(
@@ -96,39 +119,28 @@ export async function npmCheckUpdates(
                     ),
                 ),
                 // Includes the root package.json, in case there are deps there that also need upgrade.
-                ".",
+                // path.join(releaseGroupRoot.repoPath, "package.json"),
+                path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
             );
         }
+    }
 
+    if (packagesToCheck === undefined) {
         for (const pkg of context.independentPackages) {
             searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
         }
-    } else if (isReleaseGroup(releaseGroup)) {
-        const monorepo = context.repo.releaseGroups.get(releaseGroup);
-        if (monorepo === undefined) {
-            throw new Error(`Can't find release group: ${releaseGroup}`);
-        }
-
-        repoPath = monorepo.repoPath;
-        searchGlobs.push(...monorepo.workspaceGlobs, ".");
-    } else {
-        const pkg = context.fullPackageMap.get(releaseGroup);
-        if (pkg === undefined) {
-            throw new Error(`Package not found in context: ${releaseGroup}`);
-        }
-
-        repoPath = pkg.directory;
-        searchGlobs.push(pkg.directory);
     }
 
+    log?.info(`Checking npm for package updates...`);
+
     for (const glob of searchGlobs) {
-        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}...`);
+        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
             filter: depsToUpdate,
             cwd: repoPath,
-            packageFile: `${glob}/package.json`,
+            packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
             target: depUpdateType,
             pre: prerelease,
             upgrade: writeChanges,
