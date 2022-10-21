@@ -7,7 +7,7 @@ import * as fs from "node:fs";
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
 
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
 import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
@@ -96,14 +96,14 @@ export class TestOrchestrator {
             logger,
             { eventName: "RunStages" },
             async () => {
-                await this.execRun();
+                await this.execRun(logger);
             },
             { start: true, end: true, cancel: "generic" },
         );
         this.runStatus = "done";
     }
 
-    private async execRun(): Promise<void> {
+    private async execRun(logger: TelemetryLogger): Promise<void> {
         if (!this.doc) {
             throw new Error("Invalid config.");
         }
@@ -118,10 +118,18 @@ export class TestOrchestrator {
             if (runner) {
                 try {
                     console.log("Starting stage:", stage.name);
-                    const r = await this.runStage(runner, stage);
-                    if (r !== undefined && stage.out !== undefined) {
-                        this.env.set(stage.out, r);
-                    }
+                    await PerformanceEvent.timedExecAsync(
+                        logger,
+                        { eventName: "RunStage", stageName: stage.name },
+                        async () => {
+                            const r = await this.runStage(runner, stage);
+                            if (r !== undefined && stage.out !== undefined) {
+                                this.env.set(stage.out, r);
+                            }
+                        },
+                        { start: true, end: true, cancel: "generic" },
+                    );
+
                     console.log("done with stage", stage.name);
                     this.stageStatus.set(stage.id, {
                         id: stage.id,

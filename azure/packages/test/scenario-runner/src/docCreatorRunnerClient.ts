@@ -81,7 +81,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
     const logger = await getLogger({
         runId: config.runId,
         scenarioName: config.scenarioName,
-        namespace: "scenario:runner:doccreator:client",
+        namespace: "scenario:runner:DocCreator",
     });
 
     try {
@@ -92,7 +92,14 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
 
     let container: IFluidContainer;
     try {
-        ({ container } = await ac.createContainer(schema));
+        ({ container } = await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "create" },
+            async () => {
+                return ac.createContainer(schema);
+            },
+            { start: true, end: true, cancel: "generic" },
+        ));
     } catch {
         throw new Error("Unable to create container.");
     }

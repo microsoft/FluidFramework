@@ -9,10 +9,7 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
-import { getLogger } from "./logger";
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
@@ -42,21 +39,9 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
     }
 
     public async run(config: IRunConfig): Promise<string | string[] | undefined> {
-        const logger = await getLogger({
-            runId: config.runId,
-            scenarioName: config.scenarioName,
-            namespace: "scenario:runner:doccreator",
-        });
         this.status = "running";
 
-        const r = PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "RunStage" },
-            async () => {
-                return this.execRun(config);
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
+        const r = await this.execRun(config);
         this.status = "success";
         return r;
     }
