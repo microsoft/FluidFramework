@@ -93,7 +93,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         let roots: JsonableTree[] | undefined;
         if (result === TreeNavigationResult.Ok) {
             this.cursor.exitNode();
-            roots = mapCursorFieldNew(this.cursor, jsonableTreeFromCursorNew);
+            roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
         }
         this.cursor.clear();
 
