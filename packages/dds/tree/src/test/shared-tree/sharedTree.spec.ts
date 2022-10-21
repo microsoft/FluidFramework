@@ -93,7 +93,7 @@ describe("SharedTree", () => {
     it("can process ops after loading from summary", async () => {
         function insert(tree: ISharedTree, index: number, value: string): void {
             tree.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
                 field.insert(index, singleTextCursor({ type: brand("Node"), value }));
                 return TransactionResult.Apply;
             });
@@ -102,10 +102,8 @@ describe("SharedTree", () => {
         // Validate that the given tree is made up of nodes with the expected value
         function validateTree(tree: ISharedTree, expected: Value[]): void {
             const readCursor = tree.forest.allocateCursor();
-            const destination = tree.forest.root(tree.forest.rootField);
-            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
-            assert.equal(cursorResult, TreeNavigationResult.Ok);
-            let hasNode = true;
+            moveToDetachedField(tree.forest, readCursor);
+            let hasNode = readCursor.firstNode();
             for (const value of expected) {
                 assert(hasNode);
                 assert.equal(readCursor.value, value);
@@ -113,7 +111,6 @@ describe("SharedTree", () => {
             }
             assert.equal(hasNode, false);
             readCursor.free();
-            tree.forest.forgetAnchor(destination);
         }
 
         const provider = await TestTreeProvider.create(1, true);
@@ -142,7 +139,7 @@ describe("SharedTree", () => {
 
         // Delete Z
         tree2.runTransaction((forest, editor) => {
-            const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+            const field = editor.sequenceField(undefined, rootFieldKeySymbol);
             field.delete(0, 1);
             return TransactionResult.Apply;
         });
