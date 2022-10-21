@@ -27,7 +27,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
 and required in the `IRuntimeFactory` interface. This flag is used to determine whether the runtime should
-be created for the first time or from an existing context.
+be created for the first time or from an existing context. As a result the `load` function in containerRuntime
+is being deprecated and replaced with `loadRuntime`, in which `existing is a required parameter.
 
 ### Remove iframe-driver
 The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
