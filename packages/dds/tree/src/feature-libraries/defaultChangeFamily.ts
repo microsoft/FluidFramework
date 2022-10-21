@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "../change-family";
-import { ITreeCursor } from "../forest";
-import { ChangeRebaser } from "../rebase";
-import { FieldKindIdentifier } from "../schema-stored";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ChangeRebaser,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    FieldKey,
+    ITreeCursorSynchronous,
+    UpPath,
+    Value,
+    ITreeCursor,
+} from "../core";
 import { brand } from "../util";
-import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath, Value } from "../tree";
 import {
     FieldKind,
     ModularChangeFamily,

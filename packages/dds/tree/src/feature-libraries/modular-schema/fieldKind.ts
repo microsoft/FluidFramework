@@ -10,7 +10,7 @@ import {
     SchemaPolicy,
     fieldSchema,
     SchemaData,
-} from "../../schema-stored";
+} from "../../core";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 

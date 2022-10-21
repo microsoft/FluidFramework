@@ -4,23 +4,25 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, FieldKey, symbolIsFieldKey } from "../../tree";
 import {
+    Value,
+    Anchor,
+    FieldKey,
+    symbolIsFieldKey,
     IEditableForest,
     TreeNavigationResult,
-    mapCursorField,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-} from "../../forest";
-import { brand } from "../../util";
-import {
     FieldSchema,
     LocalFieldKey,
     TreeSchemaIdentifier,
     NamedTreeSchema,
     ValueSchema,
     lookupTreeSchema,
-} from "../../schema-stored";
+    mapCursorField,
+    mapCursorFields,
+} from "../../core";
+import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,
@@ -192,15 +194,21 @@ export class ProxyTarget {
         key?: FieldKey,
         nameOnly = true,
     ): NamedTreeSchema | TreeSchemaIdentifier | undefined {
-        let typeName = this.cursor.type;
+        let typeName: TreeSchemaIdentifier | undefined = this.cursor.type;
         if (key !== undefined) {
+            // TODO: remove option to use this for getting field types:
+            // Once fields are properly wrapped, get the field, and get its type.
+
             const fieldKind = this.lookupFieldKind(key);
             if (fieldKind.multiplicity === Multiplicity.Sequence) {
                 return undefined;
             }
-            const fieldLength = this.cursor.childFieldLength(key);
-            assert(fieldLength <= 1, 0x3c5 /* invalid non sequence */);
-            typeName = mapCursorField(this.cursor, key, (c) => c.type)[0];
+
+            this.cursor.enterField(key);
+            const types = mapCursorField(this.cursor, (c) => c.type);
+            this.cursor.exitField();
+            assert(types.length <= 1, 0x3c5 /* invalid non sequence */);
+            typeName = types[0];
         }
         if (nameOnly) {
             return typeName;
@@ -229,20 +237,15 @@ export class ProxyTarget {
     }
 
     public getFieldKeys(): FieldKey[] {
-        // For now this is an approximation:
-        const fieldKeys: FieldKey[] = [];
-        for (const key of this.cursor.keys) {
-            // TODO: with new cursor API, field iteration will skip empty fields and this check can be removed.
-            if (this.has(key)) {
-                fieldKeys.push(key);
-            }
-        }
-        return fieldKeys;
+        return mapCursorFields(this.cursor, (c) => c.getFieldKey());
     }
 
     public has(field: FieldKey): boolean {
         // Make fields present only if non-empty.
-        return this.cursor.childFieldLength(field) !== 0;
+        this.cursor.enterField(field);
+        const length = this.cursor.getFieldLength();
+        this.cursor.exitField();
+        return length !== 0;
     }
 
     /**
@@ -270,11 +273,9 @@ export class ProxyTarget {
             this.getType(undefined, false) as NamedTreeSchema,
         );
         // Make the childTargets:
-        const childTargets = mapCursorField(
-            this.cursor,
-            field,
-            (c) => new ProxyTarget(this.context, c),
-        );
+        this.cursor.enterField(field);
+        const childTargets = mapCursorField(this.cursor, (c) => new ProxyTarget(this.context, c));
+        this.cursor.exitField();
         return proxifyField(fieldSchema, field, childTargets, unwrap);
     }
 
@@ -421,11 +422,12 @@ function inProxyOrUnwrap(target: ProxyTarget, unwrap: boolean): UnwrappedEditabl
         }
         const primary = target.getPrimaryArrayKey();
         if (primary !== undefined) {
+            target.cursor.enterField(primary.key);
             const childTargets = mapCursorField(
                 target.cursor,
-                primary.key,
                 (c) => new ProxyTarget(target.context, c),
             );
+            target.cursor.exitField();
             return childTargets.map((childTarget) => inProxyOrUnwrap(childTarget, unwrap));
         }
     }
