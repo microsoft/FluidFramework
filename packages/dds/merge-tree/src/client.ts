@@ -224,10 +224,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     /**
-     * Removes the range
+     * Obliterates the range. This is similar to removing the range, but also
+     * includes any concurrently inserted content.
      *
-     * @param start - The inclusive start of the range to remove
-     * @param end - The exclusive end of the range to remove
+     * @param start - The inclusive start of the range to obliterate
+     * @param end - The exclusive end of the range to obliterate
      */
     public obliterateRangeLocal(start: number, end: number) {
         const obliterateOp = createObliterateRangeOp(start, end);
@@ -492,10 +493,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
 
-        if (!range) {
-            return false;
-        }
-
         let traceStart: Trace | undefined;
         if (this.measureOps) {
             traceStart = Trace.start();
@@ -526,10 +523,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-
-        if (!range) {
-            return false;
-        }
 
         let segments: ISegment[] | undefined;
         if (op.seg) {

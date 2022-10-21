@@ -2197,7 +2197,6 @@ export class MergeTree {
         this.nodeMap(refSeq, clientId, markRemoved, undefined, afterMarkRemoved, start, end);
         // these segments are already viewed as being removed locally and are not event-ed
         // so can slide non-StayOnRemove refs immediately
-        // TODO: should we also do this for obliterate
         localOverlapWithRefs.forEach(
             (s) => this.slideAckedRemovedSegmentReferences(s),
         );
@@ -2213,7 +2212,6 @@ export class MergeTree {
         // these events are newly removed
         // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
-        // TODO: should we also do this for obliterate
         if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
             removedSegments.forEach((rSeg) => {
                 this.slideAckedRemovedSegmentReferences(rSeg.segment);
@@ -2683,7 +2681,7 @@ export class MergeTree {
                     return NodeAction.Skip;
                 }
 
-                const lenAtRefSeq = this.nodeLength(node, refSeq, clientId, localSeq) ?? 0;
+                const lenAtRefSeq = lenSeq === refSeq ? len : (this.nodeLength(node, refSeq, clientId, localSeq) ?? 0);
 
                 const nextPos = pos + lenAtRefSeq;
                 // start is beyond the current node, so we can skip it
