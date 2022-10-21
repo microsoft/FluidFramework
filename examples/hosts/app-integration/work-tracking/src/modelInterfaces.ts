@@ -17,9 +17,9 @@ export interface IAppModelEvents extends IMigratableModelEvents { }
  */
 export interface IAppModel extends IMigratableModel, IEventProvider<IAppModelEvents> {
     /**
-     * An inventory tracker list.
+     * An task tracker list.
      */
-    readonly inventoryList: ITaskList;
+    readonly taskList: ITaskList;
 }
 
 export interface ITask extends EventEmitter {
@@ -29,16 +29,16 @@ export interface ITask extends EventEmitter {
 }
 
 /**
- * IInventoryList describes the public API surface for our inventory list object.
+ * ITaskList describes the public API surface for our task list object.
  */
 export interface ITaskList extends EventEmitter {
-    readonly addTask: (name: string, quantity: number) => void;
+    readonly addTask: (name: string, priority: number) => void;
 
     readonly getTasks: () => ITask[];
     readonly getTask: (id: string) => ITask | undefined;
 
     /**
-     * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
+     * The listChanged event will fire whenever an task is added/removed, either locally or remotely.
      */
-    on(event: "itemAdded" | "itemDeleted", listener: (item: ITask) => void): this;
+    on(event: "taskAdded" | "taskDeleted", listener: (task: ITask) => void): this;
 }

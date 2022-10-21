@@ -31,8 +31,8 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
         const createResponse = await sessionStorageModelLoader.createDetached("1.0");
         model = createResponse.model;
 
-        // Add a test item so we can see something.
-        model.inventoryList.addTask("testName", 3);
+        // Add a test task so we can see something.
+        model.taskList.addTask("testName", 3);
 
         id = await createResponse.attach();
     } else {
@@ -45,7 +45,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
     document.title = id;
 
     // Render it
-    ReactDOM.render(<TaskListView inventoryList={ model.inventoryList } />, element);
+    ReactDOM.render(<TaskListView taskList={ model.taskList } />, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

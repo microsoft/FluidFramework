@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { TaskListContainerRuntimeFactory, inventoryListId } from "./containerCode";
-export { TaskList, TaskListInstantiationFactory } from "./inventoryList";
+export { TaskListContainerRuntimeFactory, taskListId } from "./containerCode";
+export { TaskList, TaskListInstantiationFactory } from "./taskList";

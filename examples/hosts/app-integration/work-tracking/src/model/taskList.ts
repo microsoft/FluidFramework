@@ -11,7 +11,7 @@ import { SharedString } from "@fluidframework/sequence";
 
 import type { ITask, ITaskList } from "../modelInterfaces";
 
-class InventoryItem extends EventEmitter implements ITask {
+class Task extends EventEmitter implements ITask {
     public get id() {
         return this._id;
     }
@@ -20,103 +20,98 @@ class InventoryItem extends EventEmitter implements ITask {
         return this._name;
     }
     public get priority() {
-        const cellValue = this._quantity.get();
+        const cellValue = this._priority.get();
         if (cellValue === undefined) {
-            throw new Error("Expected a valid quantity");
+            throw new Error("Expected a valid priority");
         }
         return cellValue;
     }
     public set priority(newValue: number) {
-        this._quantity.set(newValue);
+        this._priority.set(newValue);
     }
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
-        private readonly _quantity: SharedCell<number>,
+        private readonly _priority: SharedCell<number>,
     ) {
         super();
-        // this._name.on("sequenceDelta", () =>{
-        //     this.emit("nameChanged");
-        // });
-        this._quantity.on("valueChanged", () => {
-            this.emit("quantityChanged");
+        this._priority.on("valueChanged", () => {
+            this.emit("priorityChanged");
         });
     }
 }
 
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedCell> };
-
 /**
- * The InventoryList is our data object that implements the IInventoryList interface.
+ * The TaskList is our data object that implements the ITaskList interface.
  */
 export class TaskList extends DataObject implements ITaskList {
-    private readonly inventoryItems = new Map<string, InventoryItem>();
+    private readonly tasks = new Map<string, Task>();
 
-    public readonly addTask = (name: string, quantity: number) => {
+    public readonly addTask = (name: string, priority: number) => {
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
-        const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
-        quantityCell.set(quantity);
+        const priorityCell: SharedCell<number> = SharedCell.create(this.runtime);
+        priorityCell.set(priority);
         const id = uuid();
-        this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
+        this.root.set(id, { name: nameString.handle, priority: priorityCell.handle });
     };
 
     public readonly getTasks = () => {
-        return [...this.inventoryItems.values()];
+        return [...this.tasks.values()];
     };
 
     public readonly getTask = (id: string) => {
-        return this.inventoryItems.get(id);
+        return this.tasks.get(id);
     };
 
-    private readonly handleItemAdded = async (id: string) => {
-        const itemData = this.root.get(id);
-        const [nameSharedString, quantitySharedCell] = await Promise.all([
-            itemData.name.get(),
-            itemData.quantity.get(),
+    private readonly handleTaskAdded = async (id: string) => {
+        const taskData = this.root.get(id);
+        const [nameSharedString, prioritySharedCell] = await Promise.all([
+            taskData.name.get(),
+            taskData.priority.get(),
         ]);
-        // It's possible the item was deleted while getting the name/quantity, in which case quietly exit.
+        // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
         if (this.root.get(id) === undefined) {
             return;
         }
-        const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
-        this.inventoryItems.set(id, newInventoryItem);
-        this.emit("itemAdded", newInventoryItem);
+        const newTask = new Task(id, nameSharedString, prioritySharedCell);
+        this.tasks.set(id, newTask);
+        this.emit("taskAdded", newTask);
     };
 
-    private readonly handleItemDeleted = (id: string) => {
-        const deletedItem = this.inventoryItems.get(id);
-        this.inventoryItems.delete(id);
-        this.emit("itemDeleted", deletedItem);
+    private readonly handleTaskDeleted = (id: string) => {
+        const deletedTask = this.tasks.get(id);
+        this.tasks.delete(id);
+        this.emit("taskDeleted", deletedTask);
     };
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-     * DataObject, by registering an event listener for changes to the inventory list.
+     * DataObject, by registering an event listener for changes to the task list.
      */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
-                // Must be from adding a new item
-                this.handleItemAdded(changed.key).catch((error) => {
+                // Must be from adding a new task
+                this.handleTaskAdded(changed.key).catch((error) => {
                     console.error(error);
                 });
             } else if (this.root.get(changed.key) === undefined) {
                 // Must be from a deletion
-                this.handleItemDeleted(changed.key);
+                this.handleTaskDeleted(changed.key);
             } else {
                 // Since all data modifications happen within the SharedString or SharedCell, the root directory
                 // should never see anything except adds and deletes.
-                console.error("Unexpected modification to inventory list");
+                console.error("Unexpected modification to task list");
             }
         });
 
-        for (const [id, itemData] of this.root) {
-            const [nameSharedString, quantitySharedCell] = await Promise.all([
-                itemData.name.get(),
-                itemData.quantity.get(),
+        for (const [id, taskData] of this.root) {
+            const [nameSharedString, prioritySharedCell] = await Promise.all([
+                taskData.name.get(),
+                taskData.priority.get(),
             ]);
-            this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
+            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
         }
     }
 }

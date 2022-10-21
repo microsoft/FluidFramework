@@ -16,17 +16,17 @@ export interface ITaskViewProps {
 
 export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
     const { task, disabled } = props;
-    const quantityRef = useRef<HTMLInputElement>(null);
+    const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
-        const updateFromRemoteQuantity = () => {
-            if (quantityRef.current !== null) {
-                quantityRef.current.value = task.priority.toString();
+        const updateFromRemotePriority = () => {
+            if (priorityRef.current !== null) {
+                priorityRef.current.value = task.priority.toString();
             }
         };
-        task.on("quantityChanged", updateFromRemoteQuantity);
-        updateFromRemoteQuantity();
+        task.on("priorityChanged", updateFromRemotePriority);
+        updateFromRemotePriority();
         return () => {
-            task.off("quantityChanged", updateFromRemoteQuantity);
+            task.off("priorityChanged", updateFromRemotePriority);
         };
     }, [task]);
 
@@ -43,7 +43,7 @@ export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
                 disabled={ disabled }
             ></CollaborativeInput>
             <input
-                ref={ quantityRef }
+                ref={ priorityRef }
                 onInput={ inputHandler }
                 type="number"
                 style={{ width: "50px" }}
@@ -54,34 +54,34 @@ export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
 };
 
 export interface ITaskListViewProps {
-    inventoryList: ITaskList;
+    taskList: ITaskList;
     disabled?: boolean;
 }
 
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-    const { inventoryList, disabled } = props;
+    const { taskList, disabled } = props;
 
-    const [inventoryItems, setInventoryItems] = useState<ITask[]>(inventoryList.getTasks());
+    const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
     useEffect(() => {
-        const updateItems = () => {
-            setInventoryItems(inventoryList.getTasks());
+        const updateTasks = () => {
+            setTasks(taskList.getTasks());
         };
-        inventoryList.on("itemAdded", updateItems);
-        inventoryList.on("itemDeleted", updateItems);
+        taskList.on("taskAdded", updateTasks);
+        taskList.on("taskDeleted", updateTasks);
 
         return () => {
-            inventoryList.off("itemAdded", updateItems);
-            inventoryList.off("itemDeleted", updateItems);
+            taskList.off("taskAdded", updateTasks);
+            taskList.off("taskDeleted", updateTasks);
         };
-    }, [inventoryList]);
+    }, [taskList]);
 
-    const inventoryItemViews = inventoryItems.map((inventoryItem) => (
-        <TaskView key={ inventoryItem.id } task={ inventoryItem } disabled={ disabled } />
+    const taskViews = tasks.map((task) => (
+        <TaskView key={ task.id } task={ task } disabled={ disabled } />
     ));
 
     return (
         <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>
-            { inventoryItemViews }
+            { taskViews }
         </div>
     );
 };

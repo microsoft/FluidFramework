@@ -21,38 +21,38 @@ export function readVersion(stringData: string) {
 
 /**
  * Parse string data in version:one format into an array of simple objects that are easily imported into an
- * inventory list.
+ * task list.
  * @param stringData - version:one formatted string data
- * @returns An array of objects, each representing a single inventory item
+ * @returns An array of objects, each representing a single task
  */
 export function parseStringDataVersionOne(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "one") {
         throw new Error(`Expected to parse version one, got version ${version}`);
     }
-    const itemStrings = stringData.split("\n");
-    itemStrings.shift(); // remove version line
-    return itemStrings.map((itemString) => {
-        const [itemNameString, itemQuantityString] = itemString.split(":");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
+    const taskStrings = stringData.split("\n");
+    taskStrings.shift(); // remove version line
+    return taskStrings.map((taskString) => {
+        const [taskNameString, taskPriorityString] = taskString.split(":");
+        return { name: taskNameString, priority: parseInt(taskPriorityString, 10) };
     });
 }
 
 /**
  * Parse string data in version:two format into an array of simple objects that are easily imported into an
- * inventory list.
+ * task list.
  * @param stringData - version:two formatted string data
- * @returns An array of objects, each representing a single inventory item
+ * @returns An array of objects, each representing a single task
  */
 export function parseStringDataVersionTwo(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "two") {
         throw new Error(`Expected to parse version two, got version ${version}`);
     }
-    const itemStrings = stringData.split("\n");
-    itemStrings.shift(); // remove version line
-    return itemStrings.map((itemString) => {
-        const [itemNameString, itemQuantityString] = itemString.split("\t");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
+    const taskStrings = stringData.split("\n");
+    taskStrings.shift(); // remove version line
+    return taskStrings.map((taskString) => {
+        const [taskNameString, taskPriorityString] = taskString.split("\t");
+        return { name: taskNameString, priority: parseInt(taskPriorityString, 10) };
     });
 }

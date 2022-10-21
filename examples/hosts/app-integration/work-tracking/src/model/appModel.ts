@@ -14,10 +14,10 @@ import type {
 } from "../modelInterfaces";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
-export type InventoryListAppModelExportFormat1 = string;
+export type TaskListAppModelExportFormat1 = string;
 
 /**
- * The InventoryListAppModel serves the purpose of wrapping this particular Container in a friendlier interface,
+ * The AppModel serves the purpose of wrapping this particular Container in a friendlier interface,
  * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
@@ -28,18 +28,18 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents>
     public readonly version = "one";
 
     public constructor(
-        public readonly inventoryList: ITaskList,
+        public readonly taskList: ITaskList,
         private readonly container: IContainer,
     ) {
         super();
     }
 
-    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportFormat1 => {
+    public readonly supportsDataFormat = (initialData: unknown): initialData is TaskListAppModelExportFormat1 => {
         return typeof initialData === "string" && readVersion(initialData) === "one";
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-    // importing data into a completely untouched InventoryListAppModel.
+    // importing data into a completely untouched AppModel.
     public readonly importData = async (initialData: unknown): Promise<void> => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
@@ -49,19 +49,19 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents>
         }
 
         // Applies string data in version:one format.
-        const parsedInventoryItemData = parseStringDataVersionOne(initialData);
-        for (const { name, quantity } of parsedInventoryItemData) {
-            this.inventoryList.addTask(name, quantity);
+        const parsedTaskData = parseStringDataVersionOne(initialData);
+        for (const { name, priority } of parsedTaskData) {
+            this.taskList.addTask(name, priority);
         }
     };
 
-    public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
-        // Exports in version:one format (using ':' delimiter between name/quantity)
-        const inventoryItems = this.inventoryList.getTasks();
-        const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-            return `${ inventoryItem.name.getText() }:${ inventoryItem.priority.toString() }`;
+    public readonly exportData = async (): Promise<TaskListAppModelExportFormat1> => {
+        // Exports in version:one format (using ':' delimiter between name/priority)
+        const tasks = this.taskList.getTasks();
+        const taskStrings = tasks.map((task) => {
+            return `${ task.name.getText() }:${ task.priority.toString() }`;
         });
-        return `version:one\n${inventoryItemStrings.join("\n")}`;
+        return `version:one\n${taskStrings.join("\n")}`;
     };
 
     public close() {

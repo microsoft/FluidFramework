@@ -17,11 +17,11 @@ export interface IExternalDataSourceEvents extends IEvent {
  * more-realistic cases there's not an expectation that the data source pushes updates or anything.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-    private externalInventoryData: string;
+    private externalTaskData: string;
 
     public constructor() {
         super();
-        this.externalInventoryData =
+        this.externalTaskData =
 `version:one
 Alpha:1
 Beta:2
@@ -30,12 +30,12 @@ Delta:4`;
     }
 
     public async fetchData(): Promise<string> {
-        return this.externalInventoryData;
+        return this.externalTaskData;
     }
 
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
-        this.externalInventoryData = data;
+        this.externalTaskData = data;
         // Emit for debug views to update
         this.emit("dataWritten", data);
     }

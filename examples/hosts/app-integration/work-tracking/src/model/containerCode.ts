@@ -12,9 +12,9 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { ITaskList, IAppModel } from "../modelInterfaces";
 import { AppModel } from "./appModel";
-import { TaskListInstantiationFactory } from "./inventoryList";
+import { TaskListInstantiationFactory } from "./taskList";
 
-export const inventoryListId = "default-inventory-list";
+export const taskListId = "default-task-list";
 
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
     constructor() {
@@ -29,8 +29,8 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const inventoryList = await runtime.createDataStore(TaskListInstantiationFactory.type);
-        await inventoryList.trySetAlias(inventoryListId);
+        const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
+        await taskList.trySetAlias(taskListId);
     }
 
     /**
@@ -43,10 +43,10 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
      protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const inventoryList = await requestFluidObject<ITaskList>(
-            await runtime.getRootDataStore(inventoryListId),
+        const taskList = await requestFluidObject<ITaskList>(
+            await runtime.getRootDataStore(taskListId),
             "",
         );
-        return new AppModel(inventoryList, container);
+        return new AppModel(taskList, container);
     }
 }
