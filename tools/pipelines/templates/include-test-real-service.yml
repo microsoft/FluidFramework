@@ -166,8 +166,8 @@ jobs:
             mkdir ${{ parameters.testWorkspace }}
 
       - task: Bash@3
-        name: Initialize V2
-        displayName: Initialize V2
+        name: InitializeV2
+        displayName: InitializeV2
         inputs:
           targetType: 'inline'
           workingDirectory: ${{ parameters.testWorkspace }}
