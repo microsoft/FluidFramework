@@ -55,7 +55,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluidframework/test-end-to-end-tests"
+  default: "@fluidframework/sequence"
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -245,57 +245,57 @@ stages:
               ls -la ${{ variables.testWorkspace }}/
 
 
-        # Run performance tests
-        # - Add custom npm feeds to the tool's .npmrc file
-        # - Authenticate to the custom npm feeds
-        # - Install the aria-logger package from the custom npm feeds
-        # - Run execution-time tests
-        # - Run memory-usage tests
-        # - Process output files and send telemetry to Kusto
-        - task: Npm@1
-          displayName: 'Run performance test - execution time'
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run test:realsvc:odsp:report'
-
-        # Copy files
-        # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
-        - task: CopyFiles@2
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/**/benchmarkOutput/**\
-            #contents: '**'
-            targetFolder:  ${{ variables.buildDirectory }}/benchmarkOutput
-            #cleanTargetFolder: false # Optional
-            #overWrite: false # Optional
-            #flattenFolders: false # Optional
-            #preserveTimestamp: false # Optional
-            #retryCount: 0 # Optional
-            #ignoreMakeDirErrors: false # Optional
-
+        # # Run performance tests
+        # # - Add custom npm feeds to the tool's .npmrc file
+        # # - Authenticate to the custom npm feeds
+        # # - Install the aria-logger package from the custom npm feeds
+        # # - Run execution-time tests
+        # # - Run memory-usage tests
+        # # - Process output files and send telemetry to Kusto
         # - task: Npm@1
-        #   displayName: 'Consolidate output files - execution time'
+        #   displayName: 'Run performance test - execution time'
         #   inputs:
         #     command: 'custom'
-        #     workingDir: ${{ variables.buildDirectory }}
-        #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
-        # # modification is probably "look at node_modules for blah"
-        - task: Bash@3
-          displayName: 'Write measurements to Aria/Kusto - execution time'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
-            script: |
-              npm i;
-              npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
+        #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+        #     customCommand: 'run test:benchmark:report'
 
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Artifact - Perf tests output - execution time'
-          inputs:
-            targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
-            artifactName: 'perf-test-outputs_execution-time'
-            condition: succeededOrFailed()
+        # # Copy files
+        # # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
+        # - task: CopyFiles@2
+        #   inputs:
+        #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/**/benchmarkOutput/**\
+        #     #contents: '**'
+        #     targetFolder:  ${{ variables.buildDirectory }}/benchmarkOutput
+        #     #cleanTargetFolder: false # Optional
+        #     #overWrite: false # Optional
+        #     #flattenFolders: false # Optional
+        #     #preserveTimestamp: false # Optional
+        #     #retryCount: 0 # Optional
+        #     #ignoreMakeDirErrors: false # Optional
+
+        # # - task: Npm@1
+        # #   displayName: 'Consolidate output files - execution time'
+        # #   inputs:
+        # #     command: 'custom'
+        # #     workingDir: ${{ variables.buildDirectory }}
+        # #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
+        # # # modification is probably "look at node_modules for blah"
+        # - task: Bash@3
+        #   displayName: 'Write measurements to Aria/Kusto - execution time'
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: $(toolAbsolutePath)
+        #     script: |
+        #       npm i;
+        #       npm run build:compile;
+        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
+
+        # - task: PublishPipelineArtifact@1
+        #   displayName: 'Publish Artifact - Perf tests output - execution time'
+        #   inputs:
+        #     targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
+        #     artifactName: 'perf-test-outputs_execution-time'
+        #     condition: succeededOrFailed()
 
         - task: Npm@1
           displayName: 'Run performance test - memory usage'
