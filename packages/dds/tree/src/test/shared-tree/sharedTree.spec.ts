@@ -220,8 +220,7 @@ describe("SharedTree", () => {
             assert.equal(getTestValue(tree2), undefined);
         });
 
-        // TODO: Add global field representation in changesets and delta
-        it.skip("can edit a global field", async () => {
+        it("can edit a global field", async () => {
             const provider = await TestTreeProvider.create(2);
             const [tree1, tree2] = provider.trees;
 
