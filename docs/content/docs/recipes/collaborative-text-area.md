@@ -338,7 +338,7 @@ if (sharedString) {
 
     {{< callout note >}}
 
-    If you receive a compilation error related to a "buffer" package, then you may need to install an additional dependency to make this demo compatible with Webpack 5. Run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+    If you receive a compilation error related to a "buffer" package, then you need to install an additional dependency to make this demo compatible with Webpack 5. Run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
 
     {{< /callout >}}
 
