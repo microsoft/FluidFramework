@@ -88,7 +88,7 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    public async fetchExternalDataAndUpdate() {
+    public async importExternalData() {
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
@@ -109,7 +109,7 @@ export class TaskList extends DataObject implements ITaskList {
         await Promise.all(updateTaskPs);
     }
 
-    public async pushDataToExternal() {
+    public async saveChanges() {
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
@@ -119,7 +119,7 @@ export class TaskList extends DataObject implements ITaskList {
     }
 
     protected async initializingFirstTime(): Promise<void> {
-        await this.fetchExternalDataAndUpdate();
+        await this.importExternalData();
     }
 
     /**
