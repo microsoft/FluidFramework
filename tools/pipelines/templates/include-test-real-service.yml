@@ -216,7 +216,7 @@ jobs:
           customRegistry: 'useNpmrc'
 
       - task: Bash@3
-        name: Initialize internal feeds
+        name: InitializeInternal
         displayName: Initialize
         inputs:
           targetType: 'inline'
