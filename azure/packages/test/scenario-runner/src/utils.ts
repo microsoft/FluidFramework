@@ -56,27 +56,19 @@ export function createAzureTokenProvider(
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
-export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
+ export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
     const useAzure = config.connType === "remote";
-    const configStr = process.env.fluid__scenario__runner;
-
-    let frsConfig;
     if (useAzure) {
-        if (!configStr) {
-            throw new Error("Missing FRS env configuration.");
-        }
-
-        frsConfig = JSON.parse(configStr);
-        if (!frsConfig.tenantId) {
+        if (!process.env.azure__fluid__relay__service__tenantId) {
             throw new Error("Missing FRS env configuration: Tenant ID.");
         }
-        if (!frsConfig.fnUrl) {
+        if (!process.env.azure__fluid__relay__service__function__url) {
             throw new Error("Missing FRS env configuration: Secret.");
         }
     }
 
-    const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
-    const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
+    const tenantId = useAzure ? (process.env.azure__fluid__relay__service__tenantId as string) : "frs-client-tenant";
+    const fnUrl = useAzure ? (process.env.azure__fluid__relay__service__function__url as string) : "";
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,

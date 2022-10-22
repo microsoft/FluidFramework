@@ -46,6 +46,22 @@ variables:
 stages:
   # Run Azure Client FRS Tests
   - stage:
+    displayName: e2e - frs perf tests
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/azure-scenario-runner"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: start
+        extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
+        downloadAzureTestArtifacts: true
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+  - stage:
     displayName: e2e - azure client with frs
     dependsOn: []
     jobs:
