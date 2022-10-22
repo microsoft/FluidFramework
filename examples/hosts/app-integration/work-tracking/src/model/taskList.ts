@@ -88,6 +88,8 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
+    // TODO: Consider implementing a data object state while import is occurring (e.g. to disable input, etc.)?
+    // TODO: Consider a 2-phase (fetch/pull) to have some nice conflict UI
     public async importExternalData() {
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
@@ -100,10 +102,10 @@ export class TaskList extends DataObject implements ITaskList {
                 return;
             }
             if (currentTask.name.getText() !== name) {
-                // Name has changed from external source, update the Fluid data
+                // TODO: Name has changed from external source, update the Fluid data
             }
             if (currentTask.priority !== priority) {
-                // Priority has changed from external source, update the Fluid data
+                // TODO: Priority has changed from external source, update the Fluid data
             }
         });
         await Promise.all(updateTaskPs);

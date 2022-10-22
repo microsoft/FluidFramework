@@ -82,8 +82,11 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 
     return (
         // TODO: Make this a table
+        // TODO: Gray button if not "authenticated" via debug controls
+        // TODO: Conflict UI
         <div style={{ whiteSpace: "nowrap" }}>
             { taskViews }
+            <button>Save changes</button>
         </div>
     );
 };
