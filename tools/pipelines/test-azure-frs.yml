@@ -52,7 +52,7 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/azure-client"
+        testPackage: "@fluidframework/azure-scenario-runner"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: start
         extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
