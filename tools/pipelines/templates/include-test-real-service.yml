@@ -179,7 +179,6 @@ jobs:
             echo "registry=https://registry.npmjs.org" >> ./.npmrc
             echo "always-auth=false" >> ./.npmrc
 
-            echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
