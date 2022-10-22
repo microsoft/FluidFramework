@@ -182,6 +182,13 @@ jobs:
             echo "Contents of .npmrc:"
             cat .npmrc
 
+            if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
+              echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+            else
+              ls -1 ${{ variables.testPackagePathPattern }}
+              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+            fi
+
       # Auth to internal feed
       - task: npmAuthenticate@0
         displayName: 'npm authenticate (internal feed)'
