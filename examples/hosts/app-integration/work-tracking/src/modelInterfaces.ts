@@ -32,7 +32,7 @@ export interface ITask extends EventEmitter {
  * ITaskList describes the public API surface for our task list object.
  */
 export interface ITaskList extends EventEmitter {
-    readonly addTask: (name: string, priority: number) => void;
+    readonly addTask: (id: string, name: string, priority: number) => void;
 
     readonly getTasks: () => ITask[];
     readonly getTask: (id: string) => ITask | undefined;

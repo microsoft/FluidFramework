@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
-import { parseStringDataVersionOne, readVersion } from "../dataTransform";
+import { parseStringData } from "../dataTransform";
 import type {
     IAppModel,
     IAppModelEvents,
@@ -14,7 +14,7 @@ import type {
 } from "../modelInterfaces";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
-export type TaskListAppModelExportFormat1 = string;
+export type TaskListAppModelExportFormat = string;
 
 /**
  * The AppModel serves the purpose of wrapping this particular Container in a friendlier interface,
@@ -34,8 +34,8 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents>
         super();
     }
 
-    public readonly supportsDataFormat = (initialData: unknown): initialData is TaskListAppModelExportFormat1 => {
-        return typeof initialData === "string" && readVersion(initialData) === "one";
+    public readonly supportsDataFormat = (initialData: unknown): initialData is TaskListAppModelExportFormat => {
+        return typeof initialData === "string";
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
@@ -48,14 +48,14 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents>
             throw new Error("Data format not supported");
         }
 
-        // Applies string data in version:one format.
-        const parsedTaskData = parseStringDataVersionOne(initialData);
-        for (const { name, priority } of parsedTaskData) {
-            this.taskList.addTask(name, priority);
+        // Applies string data
+        const parsedTaskData = parseStringData(initialData);
+        for (const { id, name, priority } of parsedTaskData) {
+            this.taskList.addTask(id, name, priority);
         }
     };
 
-    public readonly exportData = async (): Promise<TaskListAppModelExportFormat1> => {
+    public readonly exportData = async (): Promise<TaskListAppModelExportFormat> => {
         // Exports in version:one format (using ':' delimiter between name/priority)
         const tasks = this.taskList.getTasks();
         const taskStrings = tasks.map((task) => {

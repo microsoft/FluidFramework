@@ -37,6 +37,7 @@ export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
 
     return (
         <div>
+            <span>{ task.id }: </span>
             <CollaborativeInput
                 sharedString={ task.name }
                 style={{ width: "200px" }}
@@ -80,7 +81,8 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     ));
 
     return (
-        <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+        // TODO: Make this a table
+        <div style={{ whiteSpace: "nowrap" }}>
             { taskViews }
         </div>
     );

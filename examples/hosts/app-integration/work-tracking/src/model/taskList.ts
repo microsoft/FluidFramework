@@ -4,12 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
+import { externalDataSource } from "../externalData";
 import type { ITask, ITaskList } from "../modelInterfaces";
+import { parseStringData } from "../dataTransform";
 
 class Task extends EventEmitter implements ITask {
     public get id() {
@@ -47,13 +48,12 @@ class Task extends EventEmitter implements ITask {
 export class TaskList extends DataObject implements ITaskList {
     private readonly tasks = new Map<string, Task>();
 
-    public readonly addTask = (name: string, priority: number) => {
+    public readonly addTask = (id: string, name: string, priority: number) => {
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
         const priorityCell: SharedCell<number> = SharedCell.create(this.runtime);
         priorityCell.set(priority);
-        const id = uuid();
-        this.root.set(id, { name: nameString.handle, priority: priorityCell.handle });
+        this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
     };
 
     public readonly getTasks = () => {
@@ -84,6 +84,27 @@ export class TaskList extends DataObject implements ITaskList {
         this.tasks.delete(id);
         this.emit("taskDeleted", deletedTask);
     };
+
+    public async fetchExternalDataAndUpdate() {
+        const externalData = await externalDataSource.fetchData();
+        const parsedTaskData = parseStringData(externalData);
+        // TODO: Delete any items that are in the root but missing from the external data
+        const updateTaskPs = parsedTaskData.map(async ({ id, name, priority }) => {
+            const currentTask = this.tasks.get(id);
+            if (currentTask === undefined) {
+                // A new task was added from external source, add it to the Fluid data.
+                this.addTask(id, name, priority);
+                return;
+            }
+            if (currentTask.name.getText() !== name) {
+                // Name has changed from external source, update the Fluid data
+            }
+            if (currentTask.priority !== priority) {
+                // Priority has changed from external source, update the Fluid data
+            }
+        });
+        await Promise.all(updateTaskPs);
+    }
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the

@@ -19,14 +19,14 @@ export interface IExternalDataSourceEvents extends IEvent {
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
     private externalTaskData: string;
 
+    // TODO: Maybe put this in localStorage so multiple clients can reference the same?
     public constructor() {
         super();
         this.externalTaskData =
-`version:one
-Alpha:1
-Beta:2
-Gamma:3
-Delta:4`;
+`12:Alpha:1
+34:Beta:2
+56:Gamma:3
+78:Delta:4`;
     }
 
     public async fetchData(): Promise<string> {
