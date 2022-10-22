@@ -4,9 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 
-import { parseStringData } from "../dataTransform";
 import type {
     IAppModel,
     IAppModelEvents,
@@ -36,32 +35,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents>
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is TaskListAppModelExportFormat => {
         return typeof initialData === "string";
-    };
-
-    // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-    // importing data into a completely untouched AppModel.
-    public readonly importData = async (initialData: unknown): Promise<void> => {
-        if (this.container.attachState !== AttachState.Detached) {
-            throw new Error("Cannot set initial data after attach");
-        }
-        if (!this.supportsDataFormat(initialData)) {
-            throw new Error("Data format not supported");
-        }
-
-        // Applies string data
-        const parsedTaskData = parseStringData(initialData);
-        for (const { id, name, priority } of parsedTaskData) {
-            this.taskList.addTask(id, name, priority);
-        }
-    };
-
-    public readonly exportData = async (): Promise<TaskListAppModelExportFormat> => {
-        // Exports in version:one format (using ':' delimiter between name/priority)
-        const tasks = this.taskList.getTasks();
-        const taskStrings = tasks.map((task) => {
-            return `${ task.name.getText() }:${ task.priority.toString() }`;
-        });
-        return `version:one\n${taskStrings.join("\n")}`;
     };
 
     public close() {

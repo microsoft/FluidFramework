@@ -4,18 +4,17 @@
  */
 
 import { EventEmitter } from "events";
-import type { IEventProvider } from "@fluidframework/common-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import type { IMigratableModel, IMigratableModelEvents } from "./migrationInterfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IAppModelEvents extends IMigratableModelEvents { }
+export interface IAppModelEvents extends IEvent { }
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IAppModel extends IMigratableModel, IEventProvider<IAppModelEvents> {
+export interface IAppModel extends IEventProvider<IAppModelEvents> {
     /**
      * An task tracker list.
      */

@@ -49,6 +49,9 @@ export class TaskList extends DataObject implements ITaskList {
     private readonly tasks = new Map<string, Task>();
 
     public readonly addTask = (id: string, name: string, priority: number) => {
+        if (this.tasks.get(id) !== undefined) {
+            throw new Error("Task already exists");
+        }
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
         const priorityCell: SharedCell<number> = SharedCell.create(this.runtime);
@@ -113,6 +116,10 @@ export class TaskList extends DataObject implements ITaskList {
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
         return externalDataSource.writeData(stringDataToWrite);
+    }
+
+    protected async initializingFirstTime(): Promise<void> {
+        await this.fetchExternalDataAndUpdate();
     }
 
     /**
