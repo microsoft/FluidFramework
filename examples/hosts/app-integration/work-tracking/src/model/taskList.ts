@@ -106,6 +106,15 @@ export class TaskList extends DataObject implements ITaskList {
         await Promise.all(updateTaskPs);
     }
 
+    public async pushDataToExternal() {
+        const tasks = this.getTasks();
+        const taskStrings = tasks.map((task) => {
+            return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
+        });
+        const stringDataToWrite = `${taskStrings.join("\n")}`;
+        return externalDataSource.writeData(stringDataToWrite);
+    }
+
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for changes to the task list.
