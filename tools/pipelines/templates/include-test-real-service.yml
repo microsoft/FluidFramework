@@ -166,22 +166,21 @@ jobs:
             mkdir ${{ parameters.testWorkspace }}
 
       - task: Bash@3
-        name: Initialize
-        displayName: Initialize
+        displayName: 'Add custom feeds to .npmrc'
         inputs:
           targetType: 'inline'
           workingDirectory: ${{ parameters.testWorkspace }}
-           script: |
-              echo "Adding custom npm feeds to .npmrc"
-              cat << EOF >> .npmrc
-                registry=https://registry.npmjs.org
-                always-auth=false
-                @ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-                @microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-                always-auth=true
-              EOF
-              echo "Contents of .npmrc:"
-              cat .npmrc
+          script: |
+            echo "Adding custom npm feeds to .npmrc"
+            cat << EOF >> .npmrc
+              registry=https://registry.npmjs.org
+              always-auth=false
+              @ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+              @microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+              always-auth=true
+            EOF
+            echo "Contents of .npmrc:"
+            cat .npmrc
 
       # Auth to internal feed
       - task: npmAuthenticate@0
