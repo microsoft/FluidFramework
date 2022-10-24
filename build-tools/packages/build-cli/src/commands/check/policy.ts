@@ -94,15 +94,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static pathToGitRoot = "";
 
     async run() {
-        const handlersToRun: Handler[] = policyHandlers.filter(
-            (h) => {
-                const shouldRun = !this.processedFlags.excludeHandler?.includes(h.name);
-                if(!shouldRun) {
-                    this.info(`Excluding handler: ${h.name}`);
-                }
-                return shouldRun;
+        const handlersToRun: Handler[] = policyHandlers.filter((h) => {
+            const shouldRun = !this.processedFlags.excludeHandler?.includes(h.name);
+            if (!shouldRun) {
+                this.info(`Excluding handler: ${h.name}`);
             }
-        );
+            return shouldRun;
+        });
 
         // list the handlers then exit
         if (this.processedFlags.listHandlers) {
