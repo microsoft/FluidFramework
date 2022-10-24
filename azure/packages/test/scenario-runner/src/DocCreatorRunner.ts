@@ -2,10 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
