@@ -5,7 +5,6 @@
 
 import { assert, expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { LoaderHeader } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
@@ -14,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, NodeId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -29,12 +28,7 @@ import {
 	ChangeNode,
 	ChangeNode_0_0_2,
 	ChangeTypeInternal,
-	CompressedChangeInternal,
-	EditChunkContents,
-	editsPerChunk,
 	EditStatus,
-	EditWithoutId,
-	FluidEditHandle,
 	SharedTreeEditOp,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
@@ -758,59 +752,6 @@ export function runSharedTreeOperationsTests(
 			});
 
 			if (writeFormat !== WriteFormat.v0_0_2) {
-				// This is a regression test for an issue where edits containing Fluid handles weren't properly
-				// serialized by chunk uploading code: rather than use an IFluidSerializer, we previously just
-				// JSON.stringify'd.
-				it('can round-trip edits containing handles through chunking', async () => {
-					const blobbedPayload = 'blobbed-string-payload';
-					const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-						writeFormat,
-					});
-					const testTree = setUpTestTree(tree);
-
-					const buffer = IsoBuffer.from(blobbedPayload, 'utf8');
-					const blob = await tree.getRuntime().uploadBlob(buffer);
-					const nodeWithPayload = testTree.buildLeaf(testTree.generateNodeId());
-					tree.applyEdit(
-						...Change.insertTree(nodeWithPayload, StablePlace.after(testTree.left)),
-						Change.setPayload(nodeWithPayload.identifier, { blob })
-					);
-
-					// Apply enough edits for the upload of an edit chunk
-					for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
-						applyNoop(tree);
-					}
-
-					// `ensureSynchronized` does not guarantee blob upload
-					await new Promise((resolve) => setImmediate(resolve));
-					// Wait for the ops to to be submitted and processed across the containers
-					await testObjectProvider.ensureSynchronized();
-
-					const summary = tree.saveSummary() as SharedTreeSummary;
-
-					const { editHistory } = summary;
-					const { editChunks } = assertNotUndefined(editHistory);
-					expect(editChunks.length).to.equal(2);
-
-					const chunkHandle = editChunks[0].chunk as FluidEditHandle;
-					expect(typeof chunkHandle.get).to.equal('function');
-
-					const { tree: secondTree } = await setUpLocalServerTestSharedTree({
-						writeFormat,
-						testObjectProvider,
-					});
-					secondTree.loadSummary(summary);
-					expect(tree.equals(secondTree)).to.be.true;
-
-					const { blob: blobHandle } = new TreeNodeHandle(
-						secondTree.currentView,
-						translateId(nodeWithPayload.identifier, tree, secondTree)
-					).payload;
-					expect(blobHandle).to.not.be.undefined;
-					const blobContents = await blobHandle.get();
-					expect(IsoBuffer.from(blobContents, 'utf8').toString()).to.equal(blobbedPayload);
-				});
-
 				it('can exchange attribution IDs', () => {
 					const attributionId1 = generateStableId();
 					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree({
@@ -1029,38 +970,6 @@ export function runSharedTreeOperationsTests(
 				const { tree: tree2 } = setUpTestSharedTree({ summarizeHistory: false });
 				tree2.loadSummary(summary);
 				expect(tree2.currentView.tryGetViewNode(tree2.currentView.root)?.payload).to.equal(payload);
-			});
-
-			// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
-			it.skip('does not swallow errors in asynchronous blob uploading', async () => {
-				const errorMessage = 'Simulated exception in uploadBlob';
-				const { sharedTree, testTree, componentRuntime, containerRuntimeFactory } = createSimpleTestTree({
-					localMode: false,
-				});
-				componentRuntime.uploadBlob = async () => {
-					throw new Error(errorMessage);
-				};
-
-				let treeErrorEventWasInvoked = false;
-				sharedTree.on('error', (error: unknown) => {
-					treeErrorEventWasInvoked = true;
-					expect(error).to.have.property('message').which.equals(errorMessage);
-				});
-
-				// Generate enough edits to cause a chunk upload.
-				for (let i = 0; i < (sharedTree.edits as EditLog).editsPerChunk / 2 + 1; i++) {
-					const insertee = testTree.buildLeaf(testTree.generateNodeId());
-					sharedTree.applyEdit(...Change.insertTree(insertee, StablePlace.before(testTree.left)));
-					sharedTree.applyEdit(Change.delete(StableRange.only(insertee)));
-				}
-
-				containerRuntimeFactory.processAllMessages();
-				sharedTree.saveSummary();
-
-				// Just waiting for the ChunksEmitted event here isn't sufficient, as the SharedTree error
-				// will propagate in a separate promise chain.
-				await new Promise((resolve) => setTimeout(resolve, 0));
-				expect(treeErrorEventWasInvoked).to.equal(true, 'SharedTree error was never raised');
 			});
 		});
 
@@ -1389,8 +1298,7 @@ export function runSharedTreeOperationsTests(
 				headers: { [LoaderHeader.version]: firstSummaryVersion },
 			});
 
-			// Apply enough edits for the upload of a few edit chunks, and some extra so future chunks are misaligned
-			for (let i = 0; i < (5 * editsPerChunk) / 2; i++) {
+			for (let i = 0; i < (5 * 10) / 2; i++) {
 				applyNoop(tree);
 			}
 
@@ -1409,8 +1317,7 @@ export function runSharedTreeOperationsTests(
 			let unexpectedHistoryChunkCount = 0;
 			tree3.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => unexpectedHistoryChunkCount++);
 			await testObjectProvider.ensureSynchronized();
-			// Apply enough edits to guarantee another chunk upload occurs.
-			for (let i = 0; i < editsPerChunk; i++) {
+			for (let i = 0; i < 10; i++) {
 				applyNoop(tree2);
 			}
 
@@ -1515,66 +1422,6 @@ export function runSharedTreeOperationsTests(
 					expect(tree.equals(secondTree)).to.be.false;
 					secondTree.loadSummary(summary);
 					expect(tree.equals(secondTree)).to.be.true;
-				});
-
-				it('compress and decompress edit chunks via interning and tree compression', async () => {
-					const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-						writeFormat,
-					});
-					const testTree = setUpTestTree(tree);
-
-					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
-						{
-							changes: getEditLogInternal(tree).getEditInSessionAtIndex(0).changes,
-						},
-					];
-
-					// Apply enough edits for the upload of an edit chunk
-					for (let i = 0; i < (tree.edits as EditLog).editsPerChunk - 1; i++) {
-						const newNode = testTree.buildLeaf(testTree.generateNodeId());
-						const edit = tree.applyEditInternal(
-							ChangeInternal.insertTree([newNode], StablePlace.after(testTree.left))
-						);
-						uncompressedEdits.push({ changes: edit.changes });
-					}
-
-					await testObjectProvider.ensureSynchronized();
-
-					const interner = getMutableStringInterner(tree);
-					const expectedCompressedEdits: readonly EditWithoutId<CompressedChangeInternal<OpSpaceNodeId>>[] =
-						new SharedTreeEncoder_0_1_1(true).encodeEditChunk(
-							uncompressedEdits,
-							sequencedIdNormalizer(testTree),
-							interner
-						).edits;
-
-					// Apply one more edit so that an edit chunk gets uploaded
-					const newNode = testTree.buildLeaf(testTree.generateNodeId());
-					tree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));
-
-					// `ensureSynchronized` does not guarantee blob upload
-					await new Promise((resolve) => setImmediate(resolve));
-					// Wait for the ops to to be submitted and processed across the containers
-					await testObjectProvider.ensureSynchronized();
-
-					const summary = tree.saveSummary() as SharedTreeSummary;
-
-					const { editHistory } = summary;
-					const { editChunks } = assertNotUndefined(editHistory);
-					expect(editChunks.length).to.equal(2);
-
-					const handle = editChunks[0].chunk as FluidEditHandle;
-					expect(typeof handle.get).to.equal('function');
-					const chunkContents: EditChunkContents = JSON.parse(IsoBuffer.from(await handle.get()).toString());
-					expect(chunkContents.edits).to.deep.equal(expectedCompressedEdits);
-
-					const { tree: secondTree } = setUpTestSharedTree({ writeFormat });
-					expect(tree.equals(secondTree)).to.be.false;
-					secondTree.loadSummary(summary);
-					expect(tree.equals(secondTree)).to.be.true;
-					expect((await tree.edits.getEditAtIndex(2)).id).to.equal(
-						(await secondTree.edits.getEditAtIndex(2)).id
-					);
 				});
 			});
 		}

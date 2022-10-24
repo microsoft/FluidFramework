@@ -37,51 +37,6 @@ export function runPendingLocalStateTests(
 	describe(title, () => {
 		const documentId = 'documentId';
 
-		it('deals with stashed handle ops gracefully', async () => {
-			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-				id: documentId,
-				writeFormat: WriteFormat.v0_1_1,
-			});
-			const testTree = setUpTestTree(tree);
-			await setUpLocalServerTestSharedTree({
-				id: documentId,
-				testObjectProvider,
-				writeFormat: WriteFormat.v0_1_1,
-			});
-
-			await testObjectProvider.ensureSynchronized();
-			await testObjectProvider.opProcessingController.pauseProcessing();
-			// Generate enough edits to cause a chunk upload.
-			for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
-				tree.applyEdit(
-					...Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.left.traitLocation))
-				);
-			}
-			// Process all of those messages, sequencing them but without informing the container that they have been sequenced.
-			await testObjectProvider.opProcessingController.processOutgoing(container);
-			// Inform the container that all of the edits it generated above have been sequenced, thereby filling an edit chunk
-			// whose responsibility to upload is on the container.
-			await testObjectProvider.opProcessingController.processIncoming(container);
-			// Process outgoing/incoming once more to handle the blob attach op.
-			await testObjectProvider.opProcessingController.processOutgoing(container);
-			await testObjectProvider.opProcessingController.processIncoming(container);
-
-			const pendingLocalState = container.closeAndGetPendingLocalState();
-			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
-				testObjectProvider,
-				pendingLocalState,
-				id: documentId,
-				writeFormat: WriteFormat.v0_1_1,
-			});
-
-			await testObjectProvider.ensureSynchronized();
-
-			const editLog = tree2.edits as EditLog;
-			const unuploadedEditChunks = Array.from(editLog.getEditChunksReadyForUpload());
-			expect(unuploadedEditChunks.length).to.equal(0);
-			expect(editLog.getEditLogSummary().editChunks.length).to.equal(2);
-		});
-
 		it('applies and submits ops from 0.0.2 in 0.0.2', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
 		it('applies and submits ops from 0.0.2 in 0.1.1', async () =>
