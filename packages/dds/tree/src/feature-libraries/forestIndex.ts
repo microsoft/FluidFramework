@@ -19,7 +19,6 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    TreeNavigationResult,
     Index,
     SummaryElement,
     SummaryElementParser,
@@ -30,9 +29,9 @@ import {
     JsonableTree,
     Delta,
     mapCursorField,
+    moveToDetachedField,
 } from "../core";
-import { singleTextCursor } from "./treeTextCursor";
-import { jsonableTreeFromCursor } from ".";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -88,16 +87,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private getTreeString(): string {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
-        const rootAnchor = this.forest.root(this.forest.rootField);
-        const result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        let roots: JsonableTree[] | undefined;
-        if (result === TreeNavigationResult.Ok) {
-            this.cursor.exitNode();
-            roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
-        }
+        moveToDetachedField(this.forest, this.cursor);
+        const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
         this.cursor.clear();
-
-        return JSON.stringify(roots ?? []);
+        return JSON.stringify(roots);
     }
 
     public getAttachSummary(
