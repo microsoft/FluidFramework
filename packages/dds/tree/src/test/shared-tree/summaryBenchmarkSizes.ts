@@ -17,87 +17,39 @@ import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
 describe("Summary size benchmark", () => {
-    it("for different sized trees", async () => {
-        const output = await getSummaryBenchmarkSizes();
-        assert(output.summarySizeWideInsert1 < 1000);
-        assert(output.summarySizeWideInsert10 < 3000);
-        assert(output.summarySizeWideInsert100 < 20000);
-        assert(output.summarySizeNarrowInsert10 < 3000);
-        assert(output.summarySizeNarrowInsert100 < 20000);
-        assert(output.summarySizeNoEdits < 1000);
+    it("with no nodes.", async () => {
+        const provider = await TestTreeProvider.create(1);
+        const tree = provider.trees[0];
+
+        const { summary } = tree.getAttachSummary();
+        const summaryString = JSON.stringify(summary);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize < 1000);
     });
-    it("for 1000 inserts width wise", async () => {
+    it("with 1 inserted node.", async () => {
+        const summarySize = await getInsertsSummarySize(1, 0, false);
+        assert(summarySize < 1000);
+    });
+    it("with 10 inserted nodes width-wise.", async () => {
+        const summarySize = await getInsertsSummarySize(10, 0, false);
+        assert(summarySize < 3000);
+    });
+    it("with 100 inserted nodes width-wise.", async () => {
+        const summarySize = await getInsertsSummarySize(100, 0, false);
+        assert(summarySize < 20000);
+    });
+    it("with 10 inserted nodes depth-wise.", async () => {
+        const summarySize = await getInsertsSummarySize(10, 0, true);
+        assert(summarySize < 3000);
+    });
+    it("with 100 inserted nodes depth-wise.", async () => {
+        const summarySize = await getInsertsSummarySize(100, 0, true);
+        assert(summarySize < 20000);
+    });
+    it("rejected for 1000 inserts depth wise", async () => {
         await assert.rejects(getInsertsSummarySize(1000, 0, true), { message: "BatchTooLarge" });
     });
 });
-
-export interface summarySizeBenchmarks {
-    /**
-     * byte size of the resulting summary of a testTree with no edits.
-     */
-    summarySizeNoEdits: number;
-    /**
-     * byte size of the resulting summary of a testTree with 1 inserted node.
-     * node is inserted width wise (resulting in a wide tree)
-     */
-    summarySizeWideInsert1: number;
-    /**
-     * byte size of the resulting summary of a testTree with 10 inserted nodes.
-     * nodes are inserted width wise (resulting in a wide tree)
-     */
-    summarySizeWideInsert10: number;
-    /**
-     * byte size of the resulting summary of a testTree with 100 inserted nodes.
-     * nodes are inserted width wise (resulting in a wide tree)
-     */
-    summarySizeWideInsert100: number;
-    /**
-     * byte size of the resulting summary of a testTree with 10 inserted nodes.
-     * nodes are inserted depth wise (resulting in a narrow/deep tree)
-     */
-    summarySizeNarrowInsert10: number;
-    /**
-     * byte size of the resulting summary of a testTree with 100 inserted nodes.
-     * nodes are inserted depth wise (resulting in a narrow/deep tree)
-     */
-    summarySizeNarrowInsert100: number;
-}
-
-/**
- *
- * @returns an object with the summary sized of trees with various edits
- */
-export async function getSummaryBenchmarkSizes(): Promise<summarySizeBenchmarks> {
-    const summarySizes: summarySizeBenchmarks = {
-        summarySizeNoEdits: 0,
-        summarySizeWideInsert1: 0,
-        summarySizeWideInsert10: 0,
-        summarySizeWideInsert100: 0,
-        summarySizeNarrowInsert10: 0,
-        summarySizeNarrowInsert100: 0,
-    };
-
-    // summary size for tree with no edit.
-    const provider = await TestTreeProvider.create(1);
-    const tree = provider.trees[0];
-
-    const { summary } = tree.getAttachSummary();
-    const summaryString = JSON.stringify(summary);
-    summarySizes.summarySizeNoEdits = IsoBuffer.from(summaryString).byteLength;
-
-    const seed = 0;
-
-    // summary sizes for inserting nodes resulting in wide trees.
-    summarySizes.summarySizeWideInsert1 = await getInsertsSummarySize(1, seed);
-    summarySizes.summarySizeWideInsert10 = await getInsertsSummarySize(10, seed);
-    summarySizes.summarySizeWideInsert100 = await getInsertsSummarySize(100, seed);
-
-    // summary sizes for inserting nodes resulting narrow/deep trees.
-    summarySizes.summarySizeNarrowInsert10 = await getInsertsSummarySize(10, seed, true);
-    summarySizes.summarySizeNarrowInsert100 = await getInsertsSummarySize(100, seed, true);
-
-    return summarySizes;
-}
 
 /**
  * Inserts a single node under the root of the tree with the given value.
@@ -168,7 +120,6 @@ function setTestValuesNarrow(
 ): void {
     const random = makeRandom(seed);
     const rootKey = detachedFieldAsKey(tree.forest.rootField);
-    const fieldKeys = Array.from(parentKeys);
     let path: PlacePath = {
         parent: undefined,
         parentField: rootKey,
