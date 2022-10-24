@@ -16,22 +16,6 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public (undocumented)
-export interface ICellLocalOpMetadata {
-    // (undocumented)
-    pendingMessageId: number;
-    // (undocumented)
-    previousValue?: any;
-    // (undocumented)
-    type: "edit";
-}
-
-// @public (undocumented)
-export interface ICellValue {
-    // (undocumented)
-    value: any;
-}
-
 // @public
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     delete(): void;
@@ -62,8 +46,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
+    // Warning: (ae-forgotten-export) The symbol "ICellLocalOpMetadata" needs to be exported by the entry point index.d.ts
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata): void;
-    rollback(op: any, localOpMetadata: ICellLocalOpMetadata): void;
+    protected rollback(op: any, localOpMetadata: ICellLocalOpMetadata): void;
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
