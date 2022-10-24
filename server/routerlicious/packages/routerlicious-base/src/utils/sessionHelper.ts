@@ -100,6 +100,8 @@ async function updateExistingSession(
             // Reset logOffset, ordererUrl, and historianUrl when moving session location.
             Lumberjack.info("Moving session", {
                 ...lumberjackProperties,
+                isSessionSticky,
+                sessionHasLocation,
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
                 newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
