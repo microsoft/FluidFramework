@@ -301,14 +301,14 @@ stages:
           displayName: 'Run performance test - memory usage'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
+            workingDir: ${{ variables.testWorkspace }}
             customCommand: 'run test:memory-profiling:report'
 
         - task: Npm@1
           displayName: 'Consolidate output files - memory usage'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
+            workingDir: ${{ variables.testWorkspace }}
             customCommand: 'run test:memory-profiling:copyresults'
 
         - task: Bash@3
