@@ -81,7 +81,7 @@ export async function npmCheckUpdates(
 
     const packagesToCheck =
         releaseGroup === undefined // run on the whole repo
-            ? [...context.independentPackages] // include ll independent packages
+            ? [...context.independentPackages] // include all independent packages
             : isReleaseGroup(releaseGroup)
             ? [] // run on a release group so no independent packages should be included
             : [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
