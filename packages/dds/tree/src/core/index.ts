@@ -40,7 +40,7 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
@@ -50,7 +50,7 @@ export {
     genericTreeDeleteIfEmpty,
     getDepth,
     symbolIsFieldKey,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     isGlobalFieldKey,
     getMapTreeField,
@@ -59,10 +59,10 @@ export {
     keyAsDetachedField,
     visitDelta,
     setGenericTreeField,
+    rootFieldKeySymbol,
 } from "../tree";
 
 export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -71,9 +71,9 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-    mapCursorField,
     initializeForest,
+    FieldAnchor,
+    moveToDetachedField,
 } from "../forest";
 
 export {
@@ -130,3 +130,12 @@ export {
     Compatibility,
     FieldAdapter,
 } from "../schema-view";
+
+export {
+    Branch,
+    Commit,
+    EditManager,
+    MutableSummaryData,
+    ReadonlySummaryData,
+    SessionId,
+} from "../edit-manager";

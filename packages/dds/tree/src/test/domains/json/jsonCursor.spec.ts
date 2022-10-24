@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EmptyKey, ITreeCursorNew, singleJsonCursor, cursorToJsonObjectNew } from "../../..";
+import { EmptyKey, ITreeCursor, singleJsonCursor, cursorToJsonObject } from "../../..";
 import { CursorLocationType, FieldKey, mapCursorFields } from "../../../tree";
 import { brand } from "../../../util";
 import { testCursors } from "../../cursor.spec";
@@ -43,7 +43,7 @@ describe("JsonCursor", () => {
                     const cursor = singleJsonCursor(expected);
 
                     assert.deepEqual(
-                        cursorToJsonObjectNew(cursor),
+                        cursorToJsonObject(cursor),
                         expected,
                         "JsonCursor results must match source.",
                     );
@@ -51,7 +51,7 @@ describe("JsonCursor", () => {
                     // Read tree a second time to verify that the previous traversal returned the cursor's
                     // internal state machine to the root (i.e., stacks should be empty.)
                     assert.deepEqual(
-                        cursorToJsonObjectNew(cursor),
+                        cursorToJsonObject(cursor),
                         expected,
                         "JsonCursor must return same results on second traversal.",
                     );
@@ -61,9 +61,8 @@ describe("JsonCursor", () => {
     });
 
     describe("keys", () => {
-        const getFieldKey = (cursor: ITreeCursorNew) => cursor.getFieldKey();
-        const getKeysAsSet = (cursor: ITreeCursorNew) =>
-            new Set(mapCursorFields(cursor, getFieldKey));
+        const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
+        const getKeysAsSet = (cursor: ITreeCursor) => new Set(mapCursorFields(cursor, getFieldKey));
 
         it("object", () => {
             assert.deepEqual(getKeysAsSet(singleJsonCursor({})), new Set());
@@ -193,7 +192,7 @@ describe("JsonCursor", () => {
         const notFoundKey: FieldKey = brand("notFound");
         const foundKey: FieldKey = brand("found");
 
-        function expectError(cursor: ITreeCursorNew, key: FieldKey, index = 0) {
+        function expectError(cursor: ITreeCursor, key: FieldKey, index = 0) {
             cursor.enterField(key);
             assert(
                 !(index >= 0) || index >= cursor.getFieldLength(),
@@ -254,7 +253,7 @@ describe("JsonCursor", () => {
     });
 });
 
-const cursors: { cursorName: string; cursor: ITreeCursorNew }[] = [];
+const cursors: { cursorName: string; cursor: ITreeCursor }[] = [];
 
 for (const [name, testValues] of testCases) {
     for (const data of testValues) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IFluidDataStoreRuntime,
@@ -19,7 +19,6 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    TreeNavigationResult,
     Index,
     SummaryElement,
     SummaryElementParser,
@@ -29,9 +28,10 @@ import {
     recordDependency,
     JsonableTree,
     Delta,
+    mapCursorField,
+    moveToDetachedField,
 } from "../core";
-import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
-import { singleTextCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -87,16 +87,9 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private getTreeString(): string {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
-        const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: JsonableTree[] = [];
-        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        while (result === TreeNavigationResult.Ok) {
-            roots.push(jsonableTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1);
-        }
+        moveToDetachedField(this.forest, this.cursor);
+        const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, 0x34b /* Unsupported navigation result */);
-
         return JSON.stringify(roots);
     }
 

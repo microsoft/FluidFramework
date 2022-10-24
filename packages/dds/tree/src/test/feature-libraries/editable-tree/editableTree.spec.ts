@@ -39,7 +39,7 @@ import {
     valueSymbol,
     EditableTreeOrPrimitive,
     isPrimitiveValue,
-    singleTextCursorNew,
+    singleTextCursor,
     isUnwrappedNode,
     emptyField,
 } from "../../../feature-libraries";
@@ -68,7 +68,7 @@ import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
     const forest = buildForest(schemaRepo);
-    initializeForest(forest, data.map(singleTextCursorNew));
+    initializeForest(forest, data.map(singleTextCursor));
     return forest;
 }
 
