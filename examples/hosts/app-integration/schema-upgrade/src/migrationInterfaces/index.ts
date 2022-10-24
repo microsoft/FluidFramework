@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./migratableModel";
-export * from "./migrationTool";
-export * from "./migrator";
+export { IImportExportModel, IMigratableModel, IMigratableModelEvents, IVersionedModel } from "./migratableModel";
+export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool";
+export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator";

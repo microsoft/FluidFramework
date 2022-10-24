@@ -2,15 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-export * from "./constants";
-export * from "./consoleUtils";
-export * from "./chronometer";
-export * from "./joinPaths";
-export * from "./guidUtils";
-export * from "./error_objects";
-export * from "./deferredPromise";
-export * from "./deterministicRandomGenerator";
-export * from "./hashCalculator";
-export * from "./datastructures";
 export { EventEmitter } from "events";
+
+export { Chronometer } from "./chronometer";
+export { ConsoleUtils } from "./consoleUtils";
+export { constants } from "./constants";
+export {
+	BaseDataArray,
+	BoolDataArray,
+	Collection,
+	Float32DataArray,
+	Float64DataArray,
+	Int16DataArray,
+	Int32DataArray,
+	Int64,
+	Int8DataArray,
+	Integer64,
+	SortedCollection,
+	StringDataArray,
+	Uint16DataArray,
+	Uint32DataArray,
+	Uint64,
+	Uint8DataArray,
+	UniversalDataArray,
+} from "./datastructures";
+export { DeferredPromise } from "./deferredPromise";
+export { DeterministicRandomGenerator } from "./deterministicRandomGenerator";
+export { FlaggedError, HTTPError, HTTPErrorNoStack, OperationError } from "./error_objects";
+export { GuidUtils } from "./guidUtils";
+export { calculateHash } from "./hashCalculator";
+export { joinPaths } from "./joinPaths";

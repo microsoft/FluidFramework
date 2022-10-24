@@ -563,7 +563,7 @@ class PathNode implements UpPath {
      * Allowed when dangling (but not when disposed).
      */
     private disposeThis(): void {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
         if (this.status === Status.Alive) {
             this.parentPath?.removeChild(this);
         }

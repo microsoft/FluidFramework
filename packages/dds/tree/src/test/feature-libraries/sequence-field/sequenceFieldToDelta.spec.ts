@@ -10,7 +10,7 @@ import {
     FieldKinds,
     NodeChangeset,
     SequenceField as SF,
-    singleTextCursorNew,
+    singleTextCursor,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
@@ -21,7 +21,7 @@ import { TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: "X" };
 const content = [nodeX];
-const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew(nodeX)];
+const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const opId = 42;
 const tag = "TestTag";
 const moveId = brandOpaque<Delta.MoveId>(opId);
@@ -236,7 +236,7 @@ describe("SequenceField - toDelta", () => {
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: [
-                singleTextCursorNew({
+                singleTextCursor({
                     type,
                     value: "1",
                 }),
