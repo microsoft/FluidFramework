@@ -416,9 +416,7 @@ const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
 
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
-        if (!existsSync(directory)) {
-            mkdirSync(directory, { recursive: true });
-        }
+        mkdirSync(directory, { recursive: true });
     });
 
     function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
