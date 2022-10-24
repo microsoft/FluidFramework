@@ -621,7 +621,7 @@ function convertToBasePropertyType(x: any): TelemetryEventPropertyType | null {
             return x;
         default:
             if (!Array.isArray(x)) {
-                return undefined;
+                return null;
             }
             if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
                 return JSON.stringify(x);
