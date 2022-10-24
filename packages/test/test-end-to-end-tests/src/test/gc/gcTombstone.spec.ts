@@ -22,6 +22,7 @@ import { IErrorBase } from "@fluidframework/container-definitions";
 
 /**
  * When a datastore is tombstoned it should be unable to send and receive ops
+ * TODO: add testing for sending and receiving signals
  */
 describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjectProvider) => {
     const waitLessThanSweepTimeoutMs = 100;
@@ -93,20 +94,24 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         const testDataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
         const testDataObjectId = testDataObject._context.id;
 
-        // Reference a datastore and summarize
+        // Reference a datastore - important for making it live
         defaultDataObject._root.set(handleKey, testDataObject.handle);
+        // Unreference a datastore
+        defaultDataObject._root.delete(handleKey);
+
+        // Summarize
         const {
             container: summarizingContainer1,
             summarizer: summarizer1,
         } = await loadSummarizerAndContainer();
-
-        // Unreference a datastore and summarize
-        defaultDataObject._root.delete(handleKey);
         const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
-        // TODO: trailing op test - causes inactive object x errors
+        // TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
+        // but it is detected - it's stored in the pending queue and the container closes before the error is sent.
         testDataObject._root.set("send while unreferenced", "op");
         await provider.ensureSynchronized();
+
+        // Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
         container.close();
         summarizingContainer1.close();
 
@@ -152,7 +157,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             `Should not be able to send ops for a tombstoned datastore.`);
     });
 
-    // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     itExpects("Container loaded before sweep timeout expires can't send ops for tombstoned datastores",
     [
         {
@@ -199,7 +204,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             `Should not be able to send ops for a tombstoned datastore.`);
     });
 
-    // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     itExpects("Container loaded after sweep timeout expires closes on receiving ops for tombstoned datastores",
     [
         {
@@ -231,18 +236,17 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // The datastore should be tombstoned now
         await summarize(summarizer2);
 
-        // We load this container from a summary that had not yet tombstoned the datastore so that the datastore will
-        // load. Work that throws a 404 for a tombstoned/deleted datastore would force us to change this test
-        // regardless.
+        // We load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
         const container2 = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application
-        // This does not cause a sweep ready changed error as the container has loaded from a summary without
-        // tombstone called.
+        // This does not cause a sweep ready changed error as the container has loaded from a summary before sweep
+        // ready was set
         const testDataObject2 = await requestFluidObject<ITestDataObject>(container2, testDataObjectId);
 
-        // Receive an op - the summarizing container does not throw a sweep ready changed error as it closes before
-        // the op is processed.
+        // Receive an op - the summarizing container does not log a sweep ready changed error as it closes before
+        // the op is processed. The summarizing container does log a sweep ready loaded error and then it should
+        // process the op which causes the container to close.
         testDataObject2._root.set("receive", "op");
         await provider.ensureSynchronized();
         assert(summarizingContainer2.closed === true, `Summarizing container should close.`);
@@ -251,7 +255,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert(closeError.message === "Context is tombstoned: Call site -  process!");
     });
 
-    // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     itExpects("Container loaded before sweep timeout expires closes on receiving ops for tombstoned datastores",
     [
         {
@@ -269,7 +273,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // Wait some time, the datastore should not be sweep ready after this wait
         await delay(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
 
-        // Load a new container and summarizer based on the latest summary, summarize
+        // Load a new container and summarizer based on the latest summary
         const {
             container: summarizingContainer2,
             summarizer: summarizer2,
@@ -280,9 +284,10 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             closeError = error;
         });
 
+        // We load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
         const container2 = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
-        // production application.
+        // production application. Causes an inactiveObject loaded error
         const testDataObject2 = await requestFluidObject<ITestDataObject>(container2, testDataObjectId);
 
         // Wait enough time so that the datastore is sweep ready
@@ -295,7 +300,8 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // The datastore should be tombstoned now
         await summarize(summarizer2);
 
-        // Send an op
+        // Send an op - no sweep changed or loaded - the summarizing container does not log sweep ready errors as it
+        // closes before the op is processed and the datastore is realized
         testDataObject2._root.set("receive", "op");
         await provider.ensureSynchronized();
         assert(summarizingContainer2.closed === true, `Summarizing container should close.`);
