@@ -218,7 +218,7 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = (
                 settings: Record<string, ConfigTypes> = {},
-                logger: ITelemetryLogger = new MockLogger()
+                logger: ITelemetryLogger = new MockLogger(),
             ): Partial<IContainerContext> => ({
                 attachState: AttachState.Attached,
                 deltaManager: new MockDeltaManager(),
