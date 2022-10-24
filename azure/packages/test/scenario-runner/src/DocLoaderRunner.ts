@@ -15,46 +15,46 @@ export interface AzureClientConfig {
     tenantId?: string;
 }
 
-export interface DocSchema {
+export interface DocLoaderSchema {
     initialObjects: { [key: string]: string };
     dynamicObjects?: { [key: string]: string };
 }
 
-export interface DocCreatorRunnerConfig {
+export interface DocLoaderRunnerConfig {
     connectionConfig: AzureClientConfig;
-    schema: DocSchema;
-    numDocs: number;
+    schema: DocLoaderSchema;
+    docIds: string[];
     clientStartDelayMs: number;
 }
 
-export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
     private status: RunnnerStatus = "notStarted";
-    private readonly docIds: string[] = [];
-    constructor(public readonly c: DocCreatorRunnerConfig) {
+    constructor(public readonly c: DocLoaderRunnerConfig) {
         super();
     }
 
-    public async run(config: IRunConfig): Promise<string | string[] | undefined> {
+    public async run(config: IRunConfig): Promise<void> {
         this.status = "running";
-
-        const r = await this.execRun(config);
+        await this.execRun(config);
         this.status = "success";
-        return r;
     }
 
-    public async execRun(config: IRunConfig): Promise<string | string[] | undefined> {
+    public async execRun(config: IRunConfig): Promise<void> {
         this.status = "running";
         const runnerArgs: string[][] = [];
-        for (let i = 0; i < this.c.numDocs; i++) {
+        let i = 0;
+        for (const docId of this.c.docIds) {
             const connection = this.c.connectionConfig;
             const childArgs: string[] = [
-                "./dist/docCreatorRunnerClient.js",
+                "./dist/docLoaderRunnerClient.js",
                 "--runId",
                 config.runId,
                 "--scenarioName",
                 config.scenarioName,
                 "--childId",
-                i.toString(),
+                (i++).toString(),
+                "--docId",
+                docId,
                 "--schema",
                 JSON.stringify(this.c.schema),
                 "--connType",
@@ -81,10 +81,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         } catch {
             throw new Error("Not all clients closed sucesfully.");
         }
-
-        if(this.docIds.length > 0) {
-            return this.docIds.length === 1 ? this.docIds[0] : this.docIds;
-        }
     }
 
     public stop(): void {}
@@ -98,7 +94,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
     }
 
     private description(): string {
-        return `This stage creates empty document for the given schema.`;
+        return `This stage loads a list of documents, given their IDs`;
     }
 
     private async createChild(childArgs: string[]): Promise<boolean> {
@@ -106,14 +102,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         const runnerProcess = child_process.spawn("node", childArgs, {
             stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
             env: envVar,
-        });
-
-        runnerProcess.stdout?.once("data", (data) => {
-            this.docIds.push(String(data))
-        });
-
-        runnerProcess.on('message', (id) => {
-            this.docIds.push(String(id))
         });
 
         return new Promise((resolve, reject) =>
