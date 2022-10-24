@@ -297,6 +297,13 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 // @public
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
+// @public
+export interface FieldAnchor {
+    // (undocumented)
+    fieldKey: FieldKey;
+    parent: Anchor | undefined;
+}
+
 // @public (undocumented)
 export interface FieldChange {
     // (undocumented)
@@ -503,11 +510,9 @@ export interface IEditableForest extends IForestSubscription {
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
     forgetAnchor(anchor: Anchor): void;
-    root(range: DetachedField): Anchor;
-    // (undocumented)
-    readonly rootField: DetachedField;
     readonly schema: StoredSchemaRepository;
-    tryMoveCursorTo(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+    tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
+    tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
 
 // @public
