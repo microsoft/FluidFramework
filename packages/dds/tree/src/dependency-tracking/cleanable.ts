@@ -62,16 +62,16 @@ export const cleaningFailed: InvalidationToken = new CleaningFailedToken("cleani
  * @internal
  */
 export interface Cleanable extends Dependee {
-	/**
-	 * Guarantees this dependee is not in the 'awaiting cleaning' state, attempting to clean this dependee if necessary.
-	 * If this cleaning fails (ex: cannot be updated, or updating results in changes),
-	 * the implementation must call markInvalid with a
-	 * cleaningFailed token on all dependents.
-	 *
-	 * If `tryClean` undefined,
-	 * this dependee is considered not to be Cleanable and must not send cleanable invalidation:
-	 * dependents can assume that 'cleanable' invalidation only comes from dependees with a defined tryClean,
-	 * and thus any dependee without a tryClean is never in the 'awaiting cleaning' state.
-	 */
-	tryClean?(): void;
+    /**
+     * Guarantees this dependee is not in the 'awaiting cleaning' state, attempting to clean this dependee if necessary.
+     * If this cleaning fails (ex: cannot be updated, or updating results in changes),
+     * the implementation must call markInvalid with a
+     * cleaningFailed token on all dependents.
+     *
+     * If `tryClean` undefined,
+     * this dependee is considered not to be Cleanable and must not send cleanable invalidation:
+     * dependents can assume that 'cleanable' invalidation only comes from dependees with a defined tryClean,
+     * and thus any dependee without a tryClean is never in the 'awaiting cleaning' state.
+     */
+    tryClean?(): void;
 }

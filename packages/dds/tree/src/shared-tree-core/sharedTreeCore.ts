@@ -5,12 +5,26 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannelAttributes, IChannelStorageService, IFluidDataStoreRuntime,
+    IChannelAttributes,
+    IChannelStorageService,
+    IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISummaryTree,
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
+import {
+    ITelemetryContext,
+    ISummaryTreeWithStats,
+    IGarbageCollectionData,
+} from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    IFluidSerializer,
+    ISharedObjectEvents,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager } from "../edit-manager";
@@ -35,10 +49,10 @@ const formatVersion = 0;
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
-    extends SharedObject<ISharedTreeCoreEvents> {
-    public readonly editManager: EditManager<TChange, TChangeFamily>;
-
+export class SharedTreeCore<
+    TChange,
+    TChangeFamily extends ChangeFamily<any, TChange>,
+> extends SharedObject<ISharedTreeCoreEvents> {
     /**
      * A random ID that uniquely identifies this client in the collab session.
      * This is sent alongside every op to identify which client the op originated from.
@@ -60,19 +74,22 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     public constructor(
         private readonly indexes: Index<TChange>[],
         public readonly changeFamily: TChangeFamily,
+        public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
 
         // Base class arguments
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
-        telemetryContextPrefix: string) {
+        telemetryContextPrefix: string,
+    ) {
         super(id, runtime, attributes, telemetryContextPrefix);
 
         this.stableId = uuid();
-
-        this.editManager = new EditManager(this.stableId, changeFamily, anchors);
-        this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
+        editManager.initSessionId(this.stableId);
+        this.summaryElements = indexes
+            .map((i) => i.summaryElement)
+            .filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
             0x350 /* Index summary element keys must be unique */,
@@ -81,7 +98,10 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
 
     // TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
     // We might want to not subclass it, or override/reimplement most of its functionality.
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         let stats = mergeStats();
         const summary: ISummaryTree = {
             type: SummaryType.Tree,
@@ -92,12 +112,13 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         // Merge the summaries of all indexes together under a single ISummaryTree
         const indexSummaryTree: ISummaryTree["tree"] = {};
         for (const summaryElement of this.summaryElements) {
-            const { stats: elementStats, summary: elementSummary } = summaryElement.getAttachSummary(
-                (contents) => serializer.stringify(contents, this.handle),
-                undefined,
-                undefined,
-                telemetryContext,
-            );
+            const { stats: elementStats, summary: elementSummary } =
+                summaryElement.getAttachSummary(
+                    (contents) => serializer.stringify(contents, this.handle),
+                    undefined,
+                    undefined,
+                    telemetryContext,
+                );
             indexSummaryTree[summaryElement.key] = elementSummary;
             stats = mergeStats(stats, elementStats);
         }
@@ -115,11 +136,12 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     protected async loadCore(services: IChannelStorageService): Promise<void> {
-        const loadIndexes = this.summaryElements
-            .map(async (summaryElement) => summaryElement.load(
+        const loadIndexes = this.summaryElements.map(async (summaryElement) =>
+            summaryElement.load(
                 scopeStorageService(services, "indexes", summaryElement.key),
                 (contents) => this.serializer.parse(contents),
-            ));
+            ),
+        );
 
         await Promise.all(loadIndexes);
     }
@@ -138,7 +160,11 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         this.submitLocalMessage(message);
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        localOpMetadata: unknown,
+    ) {
         const { originatorId: stableClientId, changeset } = message.contents as Message;
         const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
         const commit: Commit<TChange> = {
@@ -156,7 +182,7 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         }
     }
 
-    protected onDisconnect() { }
+    protected onDisconnect() {}
 
     protected applyStashedOp(content: any): unknown {
         throw new Error("Method not implemented.");
@@ -283,7 +309,10 @@ export type SummaryElementParser = (contents: string) => unknown;
 /**
  * Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service
  */
-function scopeStorageService(service: IChannelStorageService, ...pathElements: string[]): IChannelStorageService {
+function scopeStorageService(
+    service: IChannelStorageService,
+    ...pathElements: string[]
+): IChannelStorageService {
     const scope = `${pathElements.join("/")}/`;
 
     return {

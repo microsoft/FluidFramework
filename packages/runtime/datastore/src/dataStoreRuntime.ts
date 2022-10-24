@@ -201,8 +201,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.channelsBaseGCDetails = new LazyPromise(async () => {
-            const baseGCDetails = await
-                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
             return unpackChildNodesGCDetails(baseGCDetails);
         });
 
@@ -658,10 +657,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
      * update their used routes.
      * @param usedRoutes - The routes that are used in all contexts in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of channel ids to routes used in it.
         const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -672,7 +669,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
         }
     }
 

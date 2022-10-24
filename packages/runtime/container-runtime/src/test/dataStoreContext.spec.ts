@@ -6,6 +6,10 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
+
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -26,12 +30,10 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import {
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -108,7 +110,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 assert.throws(codeBlock,
@@ -126,7 +127,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 try {
@@ -154,7 +154,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 await localDataStoreContext.realize();
@@ -195,7 +194,6 @@ describe("Data Store Context Tests", () => {
                         makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
-                        writeGCDataAtRoot: true,
                     },
                 );
 
@@ -229,7 +227,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 await localDataStoreContext.realize();
@@ -268,7 +265,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -286,7 +282,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -306,7 +301,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await localDataStoreContext.getGCData();
@@ -324,7 +318,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.
@@ -434,7 +427,6 @@ describe("Data Store Context Tests", () => {
                         storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                         scope,
                         createSummarizerNodeFn,
-                        writeGCDataAtRoot: true,
                     });
 
                     const isRootNode = await remoteDataStoreContext.isRoot();
@@ -468,7 +460,6 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                     snapshotTree: undefined,
-                    writeGCDataAtRoot: true,
                     getBaseGCDetails: async () => undefined as unknown as IGarbageCollectionDetailsBase,
                 });
 
@@ -522,7 +513,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -557,7 +547,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -597,7 +586,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -632,7 +620,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
@@ -675,7 +662,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.

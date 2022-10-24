@@ -7,11 +7,15 @@ import { strict as assert } from "assert";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
+    appendToMergeTreeDeltaRevertibles,
     Marker,
+    matchProperties,
+    MergeTreeDeltaRevertible,
     ReferenceType,
     reservedMarkerIdKey,
     reservedMarkerSimpleTypeKey,
     reservedTileLabelsKey,
+    revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree";
 import {
     MockFluidDataStoreRuntime,
@@ -155,9 +159,12 @@ describe("SharedString", () => {
 
             // Verify that the simple marker can be retrieved via id.
             const simpleMarker = sharedString.getMarkerFromId("markerId");
-            assert.equal(simpleMarker.type, "Marker", "Could not get simple marker");
-            assert.equal(simpleMarker.properties?.markerId, "markerId", "markerId is incorrect");
-            assert.equal(simpleMarker.properties?.markerSimpleType, "markerKeyValue", "markerSimpleType is incorrrect");
+            assert.equal(simpleMarker?.type, "Marker", "Could not get simple marker");
+            assert.equal(simpleMarker?.properties?.markerId, "markerId", "markerId is incorrect");
+            assert.equal(
+                simpleMarker?.properties?.markerSimpleType,
+                "markerKeyValue", "markerSimpleType is incorrrect",
+            );
 
             // Insert a tile marker.
             sharedString.insertMarker(
@@ -540,6 +547,80 @@ describe("SharedString", () => {
 
             // Verify that the changes were correctly received by the second SharedString
             assert.equal(sharedString2.getText(), "hello friend");
+        });
+    });
+
+    // revertibles are deeply test in the merge tree package
+    // these test just validate high level integration
+    describe("revertible smoke tests", () => {
+        it("insert", () => {
+            const revertibles: MergeTreeDeltaRevertible[] = [];
+            sharedString.on(
+                "sequenceDelta",
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
+            for (let i = 0; i < 10; i++) {
+                sharedString.insertText(sharedString.getLength(), i.toString());
+            }
+            assert.equal(sharedString.getText(), "0123456789");
+
+            // undo all inserts
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "");
+
+            // redo all inserts
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "0123456789");
+        });
+
+        it("remove", () => {
+            sharedString.insertText(sharedString.getLength(), "hello world");
+            const revertibles: MergeTreeDeltaRevertible[] = [];
+            sharedString.on(
+                "sequenceDelta",
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
+            while (sharedString.getLength() > 0) {
+                const middle = Math.floor(sharedString.getLength() / 2);
+                sharedString.removeRange(middle, middle + 1);
+            }
+            assert.equal(sharedString.getText(), "");
+
+            // undo all removes
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "hello world");
+
+            // redo all removes
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "");
+        });
+
+        it("annotate", () => {
+            sharedString.insertText(0, "hello world");
+            Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
+                assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined)));
+
+            const revertibles: MergeTreeDeltaRevertible[] = [];
+            sharedString.on(
+                "sequenceDelta",
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
+
+            for (let i = 0; i < sharedString.getLength(); i++) {
+                sharedString.annotateRange(i, i + 1, { test: i });
+            }
+            assert.equal(sharedString.getText(), "hello world");
+            Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
+                assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })));
+
+            // undo all annotates
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "hello world");
+            Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
+                assert(matchProperties(sharedString.getPropertiesAtPosition(i), { })));
+
+            // redo all annotates
+            revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+            assert.equal(sharedString.getText(), "hello world");
+            Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
+                assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })));
         });
     });
 });

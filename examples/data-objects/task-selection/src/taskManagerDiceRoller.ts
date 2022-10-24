@@ -49,7 +49,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
         const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
         this._taskManager = await taskManagerHandle?.get();
 
-        this.volunteerForAutoRoll();
+        this.subscribeToAutoRoll();
     }
 
     private get taskManager() {
@@ -68,27 +68,25 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
         this.root.set(diceValueKey, rollValue);
     };
 
-    public volunteerForAutoRoll() {
-        // Try to take the task and wait until we get it.  This may wait forever if the current task holder
-        // doesn't release it.
-        this.taskManager.lockTask(autoRollTaskId)
-            .then(async () => {
-                // Attempt to reacquire the task if we lose it
-                this.taskManager.once("lost", () => {
-                    this.emit("taskOwnershipChanged");
-                    this.endAutoRollTask();
-                    this.volunteerForAutoRoll();
-                });
+    public subscribeToAutoRoll() {
+        // Subscribe to the auto roll task. This will constantly keep us in queue for the task until we get it. If we
+        // lose the task assignment we will automatically re-enter queue.
+
+        this.taskManager.on("lost", (taskId: string) => {
+            if (taskId === autoRollTaskId) {
+                this.emit("taskOwnershipChanged");
+                this.endAutoRollTask();
+            }
+        });
+
+        this.taskManager.on("assigned", (taskId: string) => {
+            if (taskId === autoRollTaskId) {
                 this.emit("taskOwnershipChanged");
                 this.startAutoRollTask();
-            }).catch(() => {
-                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
-                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
-                // give up.
-                if (!this.runtime.connected) {
-                    this.runtime.once("connected", () => { this.volunteerForAutoRoll(); });
-                }
-            });
+            }
+        });
+
+        this.taskManager.subscribeToTask(autoRollTaskId);
     }
 
     private startAutoRollTask() {
@@ -109,7 +107,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     }
 
     public hasTask() {
-        return this.taskManager.haveTaskLock(autoRollTaskId);
+        return this.taskManager.assigned(autoRollTaskId);
     }
 }
 

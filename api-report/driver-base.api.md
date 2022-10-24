@@ -6,7 +6,7 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IAnyDriverError } from '@fluidframework/driver-utils';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';

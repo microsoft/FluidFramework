@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
+    IAnyDriverError,
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -27,7 +28,6 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
-    IAnyDriverError,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,

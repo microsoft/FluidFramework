@@ -379,7 +379,7 @@ export class TscTask extends LeafTask {
                     );
                 }
             } else {
-                verbose(`${this.node.pkg.nameColored}: ${this.tsBuildInfoFileName} file not found`);
+                verbose(`${this.node.pkg.nameColored}: ${tsBuildInfoFileFullPath} file not found`);
             }
         }
         return this._tsBuildInfo;

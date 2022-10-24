@@ -15,6 +15,10 @@
  */
 
 export {
+    MarkdownDocumenterConfiguration,
+    markdownDocumenterConfigurationWithDefaults,
+} from "./Configuration";
+export {
     DocAlert,
     DocAlertType,
     DocEmphasisSpan,
@@ -29,18 +33,78 @@ export {
     IDocListParameters,
     ListKind,
 } from "./doc-nodes";
-export * from "./rendering";
-export * from "./utilities";
-
-export * from "./Heading";
-export * from "./Link";
-export * from "./LoadModel";
-export * from "./Logging";
-export * from "./MarkdownDocument";
-export * from "./MarkdownDocumenter";
-export * from "./Configuration";
-export * from "./MarkdownEmitter";
-export * from "./Policies";
+export { Heading } from "./Heading";
+export { Link } from "./Link";
+export { loadModel } from "./LoadModel";
+export { defaultConsoleLogger, Logger, LoggingFunction, verboseConsoleLogger } from "./Logging";
+export { MarkdownDocument } from "./MarkdownDocument";
+export { getDocumentItems, renderDocuments, renderFiles } from "./MarkdownDocumenter";
+export {
+    emitMarkdown,
+    EmitterContext,
+    EmitterOptions,
+    MarkdownEmitter,
+    maxHeadingLevel,
+} from "./MarkdownEmitter";
+export {
+    DefaultPolicies,
+    defaultPolicyOptions,
+    DocumentBoundaries,
+    FileNamePolicy,
+    HeadingTitlePolicy,
+    HierarchyBoundaries,
+    LinkTextPolicy,
+    PackageFilterPolicy,
+    PolicyOptions,
+    UriBaseOverridePolicy,
+} from "./Policies";
+export {
+    DefaultRenderingPolicies,
+    defaultRenderingPolicies,
+    renderApiItemDocument,
+    RenderApiItemWithChildren,
+    RenderApiItemWithoutChildren,
+    RenderingHelpers,
+    RenderingPolicies,
+    renderModelDocument,
+    renderPackageDocument,
+    RenderSectionWithInnerContent,
+} from "./rendering";
+export {
+    ApiFunctionLike,
+    ApiMemberKind,
+    ApiModifier,
+    ApiModuleLike,
+    ApiSignatureLike,
+    doesItemGenerateHierarchy,
+    doesItemKindGenerateHierarchy,
+    doesItemKindRequireOwnDocument,
+    doesItemRequireOwnDocument,
+    filterByKind,
+    getAncestralHierarchy,
+    getDefaultValueBlock,
+    getDeprecatedBlock,
+    getExampleBlocks,
+    getFileNameForApiItem,
+    getFilePathForApiItem,
+    getFilteredParent,
+    getFirstAncestorWithOwnDocument,
+    getHeadingForApiItem,
+    getHeadingIdForApiItem,
+    getLinkForApiItem,
+    getLinkUrlForApiItem,
+    getModifiers,
+    getQualifiedApiItemName,
+    getReturnsBlock,
+    getSeeBlocks,
+    getThrowsBlocks,
+    getUnscopedPackageName,
+    isDeprecated,
+    isOptional,
+    isReadonly,
+    isStatic,
+    mergeSections,
+} from "./utilities";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

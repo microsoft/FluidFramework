@@ -83,7 +83,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -120,7 +119,6 @@ declare function get_old_VariableDeclaration_DefaultSummaryConfiguration():
 declare function use_current_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof current.DefaultSummaryConfiguration>);
 use_current_VariableDeclaration_DefaultSummaryConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DefaultSummaryConfiguration());
 
 /*
@@ -134,30 +132,6 @@ declare function use_old_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof old.DefaultSummaryConfiguration>);
 use_old_VariableDeclaration_DefaultSummaryConfiguration(
     get_current_VariableDeclaration_DefaultSummaryConfiguration());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaScheduler": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_DeltaScheduler():
-    TypeOnly<old.DeltaScheduler>;
-declare function use_current_ClassDeclaration_DeltaScheduler(
-    use: TypeOnly<current.DeltaScheduler>);
-use_current_ClassDeclaration_DeltaScheduler(
-    get_old_ClassDeclaration_DeltaScheduler());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DeltaScheduler": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_DeltaScheduler():
-    TypeOnly<current.DeltaScheduler>;
-declare function use_old_ClassDeclaration_DeltaScheduler(
-    use: TypeOnly<old.DeltaScheduler>);
-use_old_ClassDeclaration_DeltaScheduler(
-    get_current_ClassDeclaration_DeltaScheduler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -450,6 +424,30 @@ use_old_InterfaceDeclaration_IClientSummaryWatcher(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICompressionRuntimeOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICompressionRuntimeOptions():
+    TypeOnly<old.ICompressionRuntimeOptions>;
+declare function use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
+    use: TypeOnly<current.ICompressionRuntimeOptions>);
+use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
+    get_old_InterfaceDeclaration_ICompressionRuntimeOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICompressionRuntimeOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICompressionRuntimeOptions():
+    TypeOnly<current.ICompressionRuntimeOptions>;
+declare function use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
+    use: TypeOnly<old.ICompressionRuntimeOptions>);
+use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
+    get_current_InterfaceDeclaration_ICompressionRuntimeOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnectableRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnectableRuntime():
@@ -469,7 +467,6 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*
@@ -614,7 +611,6 @@ declare function get_current_InterfaceDeclaration_IGeneratedSummaryStats():
 declare function use_old_InterfaceDeclaration_IGeneratedSummaryStats(
     use: TypeOnly<old.IGeneratedSummaryStats>);
 use_old_InterfaceDeclaration_IGeneratedSummaryStats(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGeneratedSummaryStats());
 
 /*
@@ -639,7 +635,6 @@ declare function get_current_InterfaceDeclaration_IGenerateSummaryTreeResult():
 declare function use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<old.IGenerateSummaryTreeResult>);
 use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenerateSummaryTreeResult());
 
 /*
@@ -717,30 +712,6 @@ use_old_InterfaceDeclaration_IPendingFlush(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingFlushMode": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IPendingFlushMode():
-    TypeOnly<old.IPendingFlushMode>;
-declare function use_current_InterfaceDeclaration_IPendingFlushMode(
-    use: TypeOnly<current.IPendingFlushMode>);
-use_current_InterfaceDeclaration_IPendingFlushMode(
-    get_old_InterfaceDeclaration_IPendingFlushMode());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingFlushMode": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IPendingFlushMode():
-    TypeOnly<current.IPendingFlushMode>;
-declare function use_old_InterfaceDeclaration_IPendingFlushMode(
-    use: TypeOnly<old.IPendingFlushMode>);
-use_old_InterfaceDeclaration_IPendingFlushMode(
-    get_current_InterfaceDeclaration_IPendingFlushMode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPendingLocalState():
@@ -789,18 +760,6 @@ use_old_InterfaceDeclaration_IPendingMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingRuntimeState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingRuntimeState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IPendingState": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IPendingState():
@@ -845,6 +804,30 @@ declare function use_old_InterfaceDeclaration_IProvideSummarizer(
     use: TypeOnly<old.IProvideSummarizer>);
 use_old_InterfaceDeclaration_IProvideSummarizer(
     get_current_InterfaceDeclaration_IProvideSummarizer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRefreshSummaryAckOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRefreshSummaryAckOptions():
+    TypeOnly<old.IRefreshSummaryAckOptions>;
+declare function use_current_InterfaceDeclaration_IRefreshSummaryAckOptions(
+    use: TypeOnly<current.IRefreshSummaryAckOptions>);
+use_current_InterfaceDeclaration_IRefreshSummaryAckOptions(
+    get_old_InterfaceDeclaration_IRefreshSummaryAckOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRefreshSummaryAckOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRefreshSummaryAckOptions():
+    TypeOnly<current.IRefreshSummaryAckOptions>;
+declare function use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
+    use: TypeOnly<old.IRefreshSummaryAckOptions>);
+use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
+    get_current_InterfaceDeclaration_IRefreshSummaryAckOptions());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -916,7 +899,6 @@ declare function get_current_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<old.ISubmitSummaryOpResult>);
 use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*
@@ -1109,7 +1091,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1266,7 +1247,6 @@ declare function get_old_TypeAliasDeclaration_ISummaryConfiguration():
 declare function use_current_TypeAliasDeclaration_ISummaryConfiguration(
     use: TypeOnly<current.ISummaryConfiguration>);
 use_current_TypeAliasDeclaration_ISummaryConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ISummaryConfiguration());
 
 /*
@@ -1339,7 +1319,6 @@ declare function get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics():
 declare function use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     use: TypeOnly<current.ISummaryConfigurationHeuristics>);
 use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics());
 
 /*
@@ -1448,7 +1427,6 @@ declare function get_current_InterfaceDeclaration_IUploadSummaryResult():
 declare function use_old_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<old.IUploadSummaryResult>);
 use_old_InterfaceDeclaration_IUploadSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUploadSummaryResult());
 
 /*
@@ -1574,31 +1552,6 @@ use_old_EnumDeclaration_RuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ScheduleManager": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_ScheduleManager():
-    TypeOnly<old.ScheduleManager>;
-declare function use_current_ClassDeclaration_ScheduleManager(
-    use: TypeOnly<current.ScheduleManager>);
-use_current_ClassDeclaration_ScheduleManager(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_ScheduleManager());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ScheduleManager": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_ScheduleManager():
-    TypeOnly<current.ScheduleManager>;
-declare function use_old_ClassDeclaration_ScheduleManager(
-    use: TypeOnly<old.ScheduleManager>);
-use_old_ClassDeclaration_ScheduleManager(
-    get_current_ClassDeclaration_ScheduleManager());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SubmitSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SubmitSummaryResult():
@@ -1618,7 +1571,6 @@ declare function get_current_TypeAliasDeclaration_SubmitSummaryResult():
 declare function use_old_TypeAliasDeclaration_SubmitSummaryResult(
     use: TypeOnly<old.SubmitSummaryResult>);
 use_old_TypeAliasDeclaration_SubmitSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SubmitSummaryResult());
 
 /*
