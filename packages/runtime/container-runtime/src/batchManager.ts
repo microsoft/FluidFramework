@@ -5,7 +5,6 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage } from "./containerRuntime";
 
 /**
@@ -17,6 +16,12 @@ export type BatchMessage = IBatchMessage & {
     referenceSequenceNumber: number;
 };
 
+export interface IBatchManagerOptions {
+    readonly enableOpReentryCheck?: boolean;
+    readonly hardLimit: number;
+    readonly softLimit?: number;
+}
+
 /**
  * Helper class that manages partial batch & rollback.
  */
@@ -25,13 +30,9 @@ export class BatchManager {
     private batchContentSize = 0;
 
     public get length() { return this.pendingBatch.length; }
-    public get limit() { return this.hardLimit; }
+    public get limit() { return this.options.hardLimit; }
 
-    constructor(
-        private readonly mc: MonitoringContext,
-        private readonly hardLimit: number,
-        public readonly softLimit?: number,
-    ) { }
+    constructor(private readonly options: IBatchManagerOptions) { }
 
     public push(message: BatchMessage): boolean {
         this.checkReferenceSequenceNumber(message);
@@ -49,7 +50,7 @@ export class BatchManager {
         // If we were provided soft limit, check for exceeding it.
         // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
         // and start over. That's not an option if we have no ops.
-        if (this.softLimit !== undefined && this.length > 0 && socketMessageSize >= this.softLimit) {
+        if (this.options.softLimit !== undefined && this.length > 0 && socketMessageSize >= this.options.softLimit) {
             return false;
         }
 
@@ -91,7 +92,7 @@ export class BatchManager {
     }
 
     private checkReferenceSequenceNumber(message: BatchMessage) {
-        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true
+        if (this.options.enableOpReentryCheck === true
             && this.pendingBatch.length > 0
             && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
             throw new GenericError(

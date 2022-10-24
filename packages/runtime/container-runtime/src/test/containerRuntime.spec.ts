@@ -26,6 +26,7 @@ import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtim
 import { ContainerMessageType, ContainerRuntime } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -35,17 +36,15 @@ describe("Runtime", () => {
 
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((): Partial<IContainerContext> => {
-                return {
-                    attachState: AttachState.Attached,
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorumClients(),
-                    taggedLogger: new MockLogger(),
-                    clientDetails: { capabilities: { interactive: true } },
-                    closeFn: (_error?: ICriticalContainerError): void => { },
-                    updateDirtyContainerState: (_dirty: boolean) => { },
-                };
-            });
+            const getMockContext = ((): Partial<IContainerContext> => ({
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger: new MockLogger(),
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { },
+            }));
 
             it("Default flush mode", async () => {
                 containerRuntime = await ContainerRuntime.load(
@@ -215,20 +214,23 @@ describe("Runtime", () => {
 
         describe("Op reentry enforcement", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((settings: Record<string, ConfigTypes>): Partial<IContainerContext> => ({
+            const getMockContext = (
+                settings: Record<string, ConfigTypes> = {},
+                logger: ITelemetryLogger = new MockLogger()
+            ): Partial<IContainerContext> => ({
                 attachState: AttachState.Attached,
                 deltaManager: new MockDeltaManager(),
                 quorum: new MockQuorumClients(),
                 taggedLogger:
-                    mixinMonitoringContext(new MockLogger(), configProvider(settings)) as unknown as MockLogger,
+                    mixinMonitoringContext(logger, configProvider(settings)) as unknown as MockLogger,
                 clientDetails: { capabilities: { interactive: true } },
                 closeFn: (_error?: ICriticalContainerError): void => { },
                 updateDirtyContainerState: (_dirty: boolean) => { },
-            }));
+            });
 
             it("By default, don't enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext({}) as IContainerContext,
+                    getMockContext() as IContainerContext,
                     [],
                     undefined, // requestHandler
                     {}, // runtimeOptions
@@ -250,7 +252,7 @@ describe("Runtime", () => {
 
             it("If option enabled, enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext({}) as IContainerContext,
+                    getMockContext() as IContainerContext,
                     [],
                     undefined, // requestHandler
                     {
@@ -293,6 +295,28 @@ describe("Runtime", () => {
                             containerRuntime.submitDataStoreOp("id", "test"),
                         ),
                     ));
+            });
+
+            it("Report at most 5 reentrant ops", async () => {
+                const mockLogger = new MockLogger();
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}, mockLogger) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                mockLogger.clear();
+                containerRuntime.ensureNoDataModelChanges(() => {
+                    for (let i = 0; i < 10; i++) {
+                        containerRuntime.submitDataStoreOp("id", "test");
+                    }
+                });
+
+                // We expect only 5 events
+                mockLogger.assertMatchStrict(Array.from(Array(5).keys()).map(() => ({
+                    eventName: "ContainerRuntime:Op reentry detected",
+                })));
             });
         });
 
@@ -436,22 +460,20 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const mockLogger = new MockLogger();
             const containerErrors: ICriticalContainerError[] = [];
-            const getMockContext = (): Partial<IContainerContext> => {
-                return {
-                    clientId: "fakeClientId",
-                    attachState: AttachState.Attached,
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorumClients(),
-                    taggedLogger: mockLogger,
-                    clientDetails: { capabilities: { interactive: true } },
-                    closeFn: (error?: ICriticalContainerError): void => {
-                        if (error !== undefined) {
-                            containerErrors.push(error);
-                        }
-                    },
-                    updateDirtyContainerState: (_dirty: boolean) => { },
-                };
-            };
+            const getMockContext = (): Partial<IContainerContext> => ({
+                clientId: "fakeClientId",
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger: mockLogger,
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (error?: ICriticalContainerError): void => {
+                    if (error !== undefined) {
+                        containerErrors.push(error);
+                    }
+                },
+                updateDirtyContainerState: (_dirty: boolean) => { }
+            });
             const getMockPendingStateManager = (): PendingStateManager => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 let pendingMessages = 0;
@@ -648,17 +670,15 @@ describe("Runtime", () => {
 
         describe("User input validations", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((): Partial<IContainerContext> => {
-                return {
-                    attachState: AttachState.Attached,
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorumClients(),
-                    taggedLogger: new MockLogger(),
-                    clientDetails: { capabilities: { interactive: true } },
-                    closeFn: (_error?: ICriticalContainerError): void => { },
-                    updateDirtyContainerState: (_dirty: boolean) => { },
-                };
-            });
+            const getMockContext = ((): Partial<IContainerContext> => ({
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger: new MockLogger(),
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { }
+            }));
 
             before(async () => {
                 containerRuntime = await ContainerRuntime.load(
