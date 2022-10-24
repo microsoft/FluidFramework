@@ -23,10 +23,10 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ContainerMessageType, ContainerRuntime } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -36,15 +36,17 @@ describe("Runtime", () => {
 
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((): Partial<IContainerContext> => ({
-                attachState: AttachState.Attached,
-                deltaManager: new MockDeltaManager(),
-                quorum: new MockQuorumClients(),
-                taggedLogger: new MockLogger(),
-                clientDetails: { capabilities: { interactive: true } },
-                closeFn: (_error?: ICriticalContainerError): void => { },
-                updateDirtyContainerState: (_dirty: boolean) => { },
-            }));
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    attachState: AttachState.Attached,
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
 
             it("Default flush mode", async () => {
                 containerRuntime = await ContainerRuntime.load(
@@ -460,20 +462,22 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const mockLogger = new MockLogger();
             const containerErrors: ICriticalContainerError[] = [];
-            const getMockContext = (): Partial<IContainerContext> => ({
-                clientId: "fakeClientId",
-                attachState: AttachState.Attached,
-                deltaManager: new MockDeltaManager(),
-                quorum: new MockQuorumClients(),
-                taggedLogger: mockLogger,
-                clientDetails: { capabilities: { interactive: true } },
-                closeFn: (error?: ICriticalContainerError): void => {
-                    if (error !== undefined) {
-                        containerErrors.push(error);
-                    }
-                },
-                updateDirtyContainerState: (_dirty: boolean) => { }
-            });
+            const getMockContext = (): Partial<IContainerContext> => {
+                return {
+                    clientId: "fakeClientId",
+                    attachState: AttachState.Attached,
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: mockLogger,
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (error?: ICriticalContainerError): void => {
+                        if (error !== undefined) {
+                            containerErrors.push(error);
+                        }
+                    },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            };
             const getMockPendingStateManager = (): PendingStateManager => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 let pendingMessages = 0;
@@ -670,15 +674,17 @@ describe("Runtime", () => {
 
         describe("User input validations", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((): Partial<IContainerContext> => ({
-                attachState: AttachState.Attached,
-                deltaManager: new MockDeltaManager(),
-                quorum: new MockQuorumClients(),
-                taggedLogger: new MockLogger(),
-                clientDetails: { capabilities: { interactive: true } },
-                closeFn: (_error?: ICriticalContainerError): void => { },
-                updateDirtyContainerState: (_dirty: boolean) => { }
-            }));
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    attachState: AttachState.Attached,
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
 
             before(async () => {
                 containerRuntime = await ContainerRuntime.load(
