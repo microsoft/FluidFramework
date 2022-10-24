@@ -5,8 +5,8 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { IContainer, IFluidCodeDetails, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState, ILoaderProps } from "@fluidframework/container-loader";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
     IGCRuntimeOptions,
     ISummarizer,
@@ -23,7 +23,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
-import { fluidEntryPoint } from "./localCodeLoader";
 
 const summarizerClientType = "summarizer";
 
@@ -122,15 +121,10 @@ export async function createSummarizer(
 export async function createSummarizerWithContainer(
     provider: ITestObjectProvider,
     absoluteUrl: string | undefined,
-    entryPoint: fluidEntryPoint,
-    loaderProps?: Partial<ILoaderProps>,
+    testContainerConfig: ITestContainerConfig,
     summaryVersion?: string,
 ): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
-    const defaultCodeDetails: IFluidCodeDetails = {
-        package: "defaultTestPackage",
-        config: {},
-    };
-    const loader = provider.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+    const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
 

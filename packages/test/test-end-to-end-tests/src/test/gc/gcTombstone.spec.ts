@@ -5,9 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-    ContainerRuntime,
-    IContainerRuntimeOptions,
-    IGCRuntimeOptions,
     ISummarizer,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -17,91 +14,59 @@ import {
     summarizeNow,
     waitForContainerConnection,
     mockConfigProvider,
+    ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { DataObject, DataObjectFactory, ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-
-    public get containerRuntime() {
-        return this.context.containerRuntime as ContainerRuntime;
-    }
-}
+import { IErrorBase } from "@fluidframework/container-definitions";
 
 /**
  * When a datastore is tombstoned it should be unable to send and receive ops
  */
 describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjectProvider) => {
-    let provider: ITestObjectProvider;
-    const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        [],
-    );
     const waitLessThanSweepTimeoutMs = 100;
     const sweepTimeoutMs = 200;
     assert(waitLessThanSweepTimeoutMs < sweepTimeoutMs, "waitLessThanSweepTimeoutMs should be < sweepTimeoutMs");
-
-    const gcOptions: IGCRuntimeOptions = {
-        gcAllowed: true,
-        inactiveTimeoutMs: 0,
-    };
-
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            summaryConfigOverrides: {
-                state: "disableHeuristics",
-                maxAckWaitTime: 10000,
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
-            },
-        },
-        gcOptions,
-    };
-
-    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-        runtime.IFluidHandleContext.resolveHandle(request);
-
-    const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        dataObjectFactory,
-        [
-            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
-        ],
-        undefined,
-        [innerRequestHandler],
-        runtimeOptions,
-    );
-
     const settings = {
         "Fluid.GarbageCollection.Test.Tombstone": "true",
         "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
     };
-    const configProvider = mockConfigProvider(settings);
+
+    const testContainerConfig: ITestContainerConfig = {
+        runtimeOptions: {
+            summaryOptions: {
+                summaryConfigOverrides: {
+                    state: "disableHeuristics",
+                    maxAckWaitTime: 10000,
+                    maxOpsSinceLastSummary: 7000,
+                    initialSummarizerDelayMs: 0,
+                    summarizerClientElection: false,
+                },
+            },
+            gcOptions: {
+                gcAllowed: true,
+                inactiveTimeoutMs: 0,
+            },
+        },
+        loaderProps: {
+            configProvider: mockConfigProvider(settings),
+        },
+    };
+
+    let provider: ITestObjectProvider;
     let documentAbsoluteUrl: string | undefined;
 
-    const createContainer = async () => {
-        const container = await provider.createContainer(runtimeFactory, { configProvider });
+    const makeContainer = async () => {
+        const container = await provider.makeTestContainer(testContainerConfig);
         documentAbsoluteUrl = await container.getAbsoluteUrl("");
         return container;
     };
+
     const loadSummarizerAndContainer = async (summaryVersion?: string) => {
         return createSummarizerWithContainer(
             provider,
             documentAbsoluteUrl,
-            runtimeFactory,
-            { configProvider },
+            testContainerConfig,
             summaryVersion);
     };
     const summarize = async (summarizer: ISummarizer) => {
@@ -119,13 +84,14 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
     // This function creates an unreferenced datastore and returns the datastore's id and the summary version that
     // datastore was unreferenced in.
     const getUnreferencedDataStoreIdAndSummaryVersion = async () => {
-        const container = await createContainer();
-        const defaultDataObject = await requestFluidObject<TestDataObject>(container, "default");
+        const container = await makeContainer();
+        const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
         await waitForContainerConnection(container);
 
         const handleKey = "handle";
-        const testDataObject = await dataObjectFactory.createInstance(defaultDataObject.containerRuntime);
-        const testDataObjectId = testDataObject.id;
+        const dataStore = await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+        const testDataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
+        const testDataObjectId = testDataObject._context.id;
 
         // Reference a datastore and summarize
         defaultDataObject._root.set(handleKey, testDataObject.handle);
@@ -163,7 +129,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
 
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application
-        const testDataObject2 = await requestFluidObject<TestDataObject>(summarizingContainer2, testDataObjectId);
+        const testDataObject2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId);
 
         // The datastore should be tombstoned now
         await summarize(summarizer2);
@@ -193,14 +159,14 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
 
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application.
-        const testDataObject2 = await requestFluidObject<TestDataObject>(summarizingContainer2, testDataObjectId);
+        const testDataObject2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId);
         testDataObject2._root.set("send a", "op via unreferenced content");
 
         // Wait enough time so that the datastore is sweep ready
         await delay(waitLessThanSweepTimeoutMs);
 
         // Send an op to update the currentTimestampMs to now
-        const mainDataStore2 = await requestFluidObject<TestDataObject>(summarizingContainer2, "default");
+        const mainDataStore2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, "default");
         mainDataStore2._root.set("send a", "op");
 
         // The datastore should be tombstoned now
@@ -239,19 +205,33 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             container: summarizingContainer2,
             summarizer: summarizer2,
         } = await loadSummarizerAndContainer(summaryVersion);
-
-        const container2 = await provider.loadContainer(runtimeFactory, { configProvider }, { summaryVersion });
-        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
-        // production application
-        const testDataObject2 = await requestFluidObject<TestDataObject>(container2, testDataObjectId);
+        // Setup close validation
+        let closeError: IErrorBase | undefined;
+        summarizingContainer2.on("closed", (error) => {
+            closeError = error;
+        });
 
         // The datastore should be tombstoned now
         await summarize(summarizer2);
 
-        // Receive an op
+        // We load this container from a summary that had not yet tombstoned the datastore so that the datastore will
+        // load. Work that throws a 404 for a tombstoned/deleted datastore would force us to change this test
+        // regardless.
+        const container2 = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
+        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+        // production application
+        // This does not cause a sweep ready changed error as the container has loaded from a summary without
+        // tombstone called.
+        const testDataObject2 = await requestFluidObject<ITestDataObject>(container2, testDataObjectId);
+
+        // Receive an op - the summarizing container does not throw a sweep ready changed error as it closes before
+        // the op is processed.
         testDataObject2._root.set("receive", "op");
         await provider.ensureSynchronized();
         assert(summarizingContainer2.closed === true, `Summarizing container should close.`);
+        assert(closeError !== undefined, `Expecting an error!`);
+        assert(closeError.errorType === "dataCorruptionError");
+        assert(closeError.message === "Context is tombstoned: Call site -  process!");
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sessionExpiryTimeoutMs` above
@@ -277,17 +257,22 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             container: summarizingContainer2,
             summarizer: summarizer2,
         } = await loadSummarizerAndContainer(summaryVersion);
+        // Setup close validation
+        let closeError: IErrorBase | undefined;
+        summarizingContainer2.on("closed", (error) => {
+            closeError = error;
+        });
 
-        const container2 = await provider.loadContainer(runtimeFactory, { configProvider }, { summaryVersion });
+        const container2 = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application.
-        const testDataObject2 = await requestFluidObject<TestDataObject>(container2, testDataObjectId);
+        const testDataObject2 = await requestFluidObject<ITestDataObject>(container2, testDataObjectId);
 
         // Wait enough time so that the datastore is sweep ready
         await delay(waitLessThanSweepTimeoutMs);
 
         // Send an op to update the currentTimestampMs to now
-        const mainDataStore2 = await requestFluidObject<TestDataObject>(summarizingContainer2, "default");
+        const mainDataStore2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, "default");
         mainDataStore2._root.set("send a", "op");
 
         // The datastore should be tombstoned now
@@ -297,5 +282,8 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         testDataObject2._root.set("receive", "op");
         await provider.ensureSynchronized();
         assert(summarizingContainer2.closed === true, `Summarizing container should close.`);
+        assert(closeError !== undefined, `Expecting an error!`);
+        assert(closeError.errorType === "dataCorruptionError");
+        assert(closeError.message === "Context is tombstoned: Call site -  process!");
     });
 });
