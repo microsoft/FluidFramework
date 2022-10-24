@@ -49,7 +49,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             default: "minor",
         }),
         prerelease: Flags.boolean({
-            char: "p",
             dependsOn: ["updateType"],
             description: "Treat prerelease versions as valid versions to update to.",
         }),
@@ -61,7 +60,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             exclusive: ["package"],
         }),
         package: packageSelectorFlag({
-            char: undefined,
             description: "Only bump dependencies of this package.",
             exclusive: ["releaseGroup"],
         }),
