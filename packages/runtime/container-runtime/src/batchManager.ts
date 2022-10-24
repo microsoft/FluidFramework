@@ -4,6 +4,8 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
+import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage } from "./containerRuntime";
 
 /**
@@ -21,16 +23,19 @@ export type BatchMessage = IBatchMessage & {
 export class BatchManager {
     private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
+    private outOfOrderMessagesToReport = 30;
 
     public get length() { return this.pendingBatch.length; }
     public get limit() { return this.hardLimit; }
 
     constructor(
+        private readonly mc: MonitoringContext,
         private readonly hardLimit: number,
         public readonly softLimit?: number,
     ) { }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
         const contentSize = this.batchContentSize + message.contents.length;
         const opCount = this.pendingBatch.length;
 
@@ -83,5 +88,21 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.pendingBatch.length > 0
+            && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber
+            && this.outOfOrderMessagesToReport > 0) {
+            this.mc.logger.sendTelemetryEvent(
+                {
+                    eventName: "Out of order message detected",
+                    referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+                },
+                // We need to capture the callstack in order to inspect the source of this usage pattern
+                new GenericError("Out of order message detected"));
+            this.outOfOrderMessagesToReport--;
+        }
     }
 }
