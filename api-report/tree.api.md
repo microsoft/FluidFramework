@@ -931,7 +931,7 @@ export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangese
 // @public (undocumented)
 type NodeChangeRebaser_2<TNodeChange> = (change: TNodeChange, baseChange: TNodeChange) => TNodeChange;
 
-// @public (undocumented)
+// @public
 export interface NodeChangeset {
     // (undocumented)
     fieldChanges?: FieldChangeMap;
