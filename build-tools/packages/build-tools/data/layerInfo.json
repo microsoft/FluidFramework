@@ -159,6 +159,10 @@
         "packages": ["@fluidframework/azure-service-utils"],
         "deps": ["Protocol-Definitions", "Server-Shared-Utils", "Test-Utils"]
       },
+      "Azure-Service": {
+        "packages": ["@fluidframework/azure-local-service"],
+        "deps": ["Server-Tools"]
+      },
       "Azure-Examples": {
         "packages": [
           "@fluid-example/presence-tracker",
@@ -179,7 +183,7 @@
         "deps": ["Protocol-Utils", "Server-Shared-Utils"]
       },
       "Server-Tools": {
-        "packages": ["@fluidframework/azure-local-service", "tinylicious"],
+        "packages": ["tinylicious"],
         "deps": ["Server-Libs"]
       }
     }

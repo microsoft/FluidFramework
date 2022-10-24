@@ -81,8 +81,8 @@ export abstract class InstructionalPromptWriter {
         const prompt = await this.formatPrompt(data);
 
         this.log.logHr();
-        this.log.info("");
-        this.log.info(prompt);
+        this.log.log("");
+        this.log.log(prompt);
     }
 }
 

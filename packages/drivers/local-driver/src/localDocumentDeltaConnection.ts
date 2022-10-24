@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import {
     IClient,
@@ -11,6 +10,7 @@ import {
     IDocumentMessage,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import type { Socket } from "socket.io-client";

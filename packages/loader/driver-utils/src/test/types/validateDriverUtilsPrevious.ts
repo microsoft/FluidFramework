@@ -35,7 +35,6 @@ declare function get_current_ClassDeclaration_AuthorizationError():
 declare function use_old_ClassDeclaration_AuthorizationError(
     use: TypeOnly<old.AuthorizationError>);
 use_old_ClassDeclaration_AuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AuthorizationError());
 
 /*
@@ -109,6 +108,30 @@ declare function use_old_FunctionDeclaration_buildSnapshotTree(
     use: TypeOnly<typeof old.buildSnapshotTree>);
 use_old_FunctionDeclaration_buildSnapshotTree(
     get_current_FunctionDeclaration_buildSnapshotTree());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_canBeCoalescedByService": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_canBeCoalescedByService():
+    TypeOnly<typeof old.canBeCoalescedByService>;
+declare function use_current_FunctionDeclaration_canBeCoalescedByService(
+    use: TypeOnly<typeof current.canBeCoalescedByService>);
+use_current_FunctionDeclaration_canBeCoalescedByService(
+    get_old_FunctionDeclaration_canBeCoalescedByService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_canBeCoalescedByService": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_canBeCoalescedByService():
+    TypeOnly<typeof current.canBeCoalescedByService>;
+declare function use_old_FunctionDeclaration_canBeCoalescedByService(
+    use: TypeOnly<typeof old.canBeCoalescedByService>);
+use_old_FunctionDeclaration_canBeCoalescedByService(
+    get_current_FunctionDeclaration_canBeCoalescedByService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -425,6 +448,30 @@ use_old_FunctionDeclaration_ensureFluidResolvedUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidInvalidSchemaError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_FluidInvalidSchemaError():
+    TypeOnly<old.FluidInvalidSchemaError>;
+declare function use_current_ClassDeclaration_FluidInvalidSchemaError(
+    use: TypeOnly<current.FluidInvalidSchemaError>);
+use_current_ClassDeclaration_FluidInvalidSchemaError(
+    get_old_ClassDeclaration_FluidInvalidSchemaError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidInvalidSchemaError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_FluidInvalidSchemaError():
+    TypeOnly<current.FluidInvalidSchemaError>;
+declare function use_old_ClassDeclaration_FluidInvalidSchemaError(
+    use: TypeOnly<old.FluidInvalidSchemaError>);
+use_old_ClassDeclaration_FluidInvalidSchemaError(
+    get_current_ClassDeclaration_FluidInvalidSchemaError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_GenericNetworkError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_GenericNetworkError():
@@ -444,7 +491,6 @@ declare function get_current_ClassDeclaration_GenericNetworkError():
 declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericNetworkError());
 
 /*
@@ -618,30 +664,6 @@ use_old_InterfaceDeclaration_IProgress(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isClientMessage": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_isClientMessage():
-    TypeOnly<typeof old.isClientMessage>;
-declare function use_current_FunctionDeclaration_isClientMessage(
-    use: TypeOnly<typeof current.isClientMessage>);
-use_current_FunctionDeclaration_isClientMessage(
-    get_old_FunctionDeclaration_isClientMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isClientMessage": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_isClientMessage():
-    TypeOnly<typeof current.isClientMessage>;
-declare function use_old_FunctionDeclaration_isClientMessage(
-    use: TypeOnly<typeof old.isClientMessage>);
-use_old_FunctionDeclaration_isClientMessage(
-    get_current_FunctionDeclaration_isClientMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidResolvedUrl():
@@ -762,6 +784,30 @@ use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_LocationRedirectionError():
+    TypeOnly<old.LocationRedirectionError>;
+declare function use_current_ClassDeclaration_LocationRedirectionError(
+    use: TypeOnly<current.LocationRedirectionError>);
+use_current_ClassDeclaration_LocationRedirectionError(
+    get_old_ClassDeclaration_LocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_LocationRedirectionError():
+    TypeOnly<current.LocationRedirectionError>;
+declare function use_old_ClassDeclaration_LocationRedirectionError(
+    use: TypeOnly<old.LocationRedirectionError>);
+use_old_ClassDeclaration_LocationRedirectionError(
+    get_current_ClassDeclaration_LocationRedirectionError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_logNetworkFailure": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_logNetworkFailure():
@@ -782,6 +828,30 @@ declare function use_old_FunctionDeclaration_logNetworkFailure(
     use: TypeOnly<typeof old.logNetworkFailure>);
 use_old_FunctionDeclaration_logNetworkFailure(
     get_current_FunctionDeclaration_logNetworkFailure());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_MessageType2": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_MessageType2():
+    TypeOnly<old.MessageType2>;
+declare function use_current_EnumDeclaration_MessageType2(
+    use: TypeOnly<current.MessageType2>);
+use_current_EnumDeclaration_MessageType2(
+    get_old_EnumDeclaration_MessageType2());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_MessageType2": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_MessageType2():
+    TypeOnly<current.MessageType2>;
+declare function use_old_EnumDeclaration_MessageType2(
+    use: TypeOnly<old.MessageType2>);
+use_old_EnumDeclaration_MessageType2(
+    get_current_EnumDeclaration_MessageType2());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1213,7 +1283,6 @@ declare function get_current_ClassDeclaration_ThrottlingError():
 declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingError());
 
 /*

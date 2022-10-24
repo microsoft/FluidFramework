@@ -30,8 +30,10 @@ export class SimpleObservingDependent implements ObservingDependent {
      * Unregister from dependees as a dependent. Necessary as part of disposal and markInvalid.
      */
     public unregisterDependees(): void {
-        assert(this._dependees !== null,
-            0x309 /* Cannot unregister dependees on a disposed SimpleObservingDependent. */);
+        assert(
+            this._dependees !== null,
+            0x309 /* Cannot unregister dependees on a disposed SimpleObservingDependent. */,
+        );
         for (const dependee of this._dependees) {
             // remove references to this from each dependee
             dependee.removeDependent(this);
