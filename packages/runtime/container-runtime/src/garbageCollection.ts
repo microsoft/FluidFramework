@@ -791,15 +791,19 @@ export class GarbageCollector implements IGarbageCollector {
      */
     public setConnectionState(connected: boolean, clientId?: string | undefined): void {
         /**
-         * For non-summarizer clients, initialize the base state when the container becomes active, i.e., it transitions
+         * For all clients, initialize the base state when the container becomes active, i.e., it transitions
          * to "write" mode. This will ensure that the container's own join op is processed and there is a recent
          * reference timestamp that will be used to update the state of unreferenced nodes. Also, all trailing ops which
          * could affect the GC state will have been processed.
          *
+         * If GC is up-to-date for the client and the summarizing client, there will be an doubling of both
+         * InactiveObject_Loaded and SweepReady_Loaded errors, as there will be one from the sending client and one from
+         * the receiving summarizer client.
+         *
          * Ideally, this initialization should only be done for summarizer client. However, we are currently rolling out
          * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
          */
-        if (this.activeConnection() && !this.isSummarizerClient && this.shouldRunGC) {
+        if (this.activeConnection() && this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {});
         }
     }
