@@ -26,7 +26,8 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Fields ********** //
 
     /**
-     * Moves the "current field" forward one in an arbitrary field traversal order.
+     * Moves the "current field" forward one in an arbitrary field traversal order,
+     * skipping any empty fields.
      *
      * If there is no remaining field to iterate to,
      * returns false and navigates up to the parent setting the mode to `Nodes`.
@@ -166,7 +167,7 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Nodes and not pending ********** //
 
     /**
-     * Enters the first field (setting mode to `Fields`)
+     * Enters the first non-empty field (setting mode to `Fields`)
      * so fields can be iterated with `nextField` and `skipPendingFields`.
      *
      * If there are no fields, mode is returned to `Nodes` and false is returned.
@@ -246,7 +247,7 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
     cursor: TCursor,
     f: (cursor: TCursor) => void,
 ): void {
-    assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+    assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
     for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
         f(cursor);
     }

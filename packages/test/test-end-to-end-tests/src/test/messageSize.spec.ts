@@ -88,7 +88,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
     ], async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
-        await setupContainers(testContainerConfig, { });
+        await setupContainers(testContainerConfig, {});
         const errorEvent = containerError(container1);
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
@@ -111,7 +111,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     it("Small ops will pass", async () => {
         const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
-        await setupContainers(testContainerConfig, { });
+        await setupContainers(testContainerConfig, {});
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
         setMapKeys(dataObject1map, messageCount, largeString);

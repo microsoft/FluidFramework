@@ -30,7 +30,7 @@ const allOperations: TestOperation[] = [
 ];
 
 export const debugOptions: IConflictFarmConfig = {
-    minLength: { min: 2, max: 2 },
+    minLength: { min: 1, max: 1 },
     clients: { min: 3, max: 3 },
     opsPerRoundRange: { min: 1, max: 100 },
     rounds: 1000,
@@ -81,7 +81,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
             }
             mt.seedWithArray(seedArray);
 
-            const clients: TestClient[] = [new TestClient()];
+            const clients: TestClient[] = [new TestClient({ mergeTreeUseNewLengthCalculations: true })];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 

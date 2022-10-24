@@ -11,7 +11,6 @@ import {
     IDocumentMessage,
     INack,
     ISignalMessage,
-    MessageType,
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
@@ -537,19 +536,6 @@ export function configureWebSocketServices(
                         try {
                             const sanitized = messages
                                 .filter((message) => {
-                                    if (message.type === MessageType.RoundTrip) {
-                                        if (message.traces) {
-                                            // End of tracking. Write traces.
-                                            // TODO: add Lumber metric here?
-                                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                                (error) => {
-                                                    logger.error(error.stack);
-                                                    Lumberjack.error(error.stack);
-                                                });
-                                        }
-                                        return false;
-                                    }
-
                                     if (verifyMaxMessageSize === true) {
                                         // Local tests show `JSON.stringify` to be fast
                                         // - <1ms for JSONs <100kb

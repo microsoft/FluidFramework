@@ -7,3 +7,4 @@ oclif.manifest.json
 README.md
 /api-report
 _api-extractor-temp/
+/docs/*.md

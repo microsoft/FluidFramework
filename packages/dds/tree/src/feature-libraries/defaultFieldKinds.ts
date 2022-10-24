@@ -4,12 +4,16 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder } from "../change-family";
-import { ITreeCursor } from "../forest";
-import { FieldKindIdentifier } from "../schema-stored";
-import { AnchorSet, Delta, JsonableTree } from "../tree";
+import {
+    ChangeEncoder,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    JsonableTree,
+    ITreeCursor,
+} from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
-import { singleTextCursor } from "./treeTextCursor";
+import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -26,10 +30,9 @@ import {
     NodeChangeEncoder,
     FieldEditor,
 } from "./modular-schema";
-import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
-import { sequenceFieldChangeHandler } from "./sequence-field";
+import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 
 /**
  * Encoder for changesets which carry no information.
@@ -322,7 +325,7 @@ const valueFieldEditor: ValueFieldEditor = {
     set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
 };
 
-const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
+const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
     rebaser: valueRebaser,
     encoder: valueFieldEncoder,
     editor: valueFieldEditor,
@@ -360,7 +363,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
 /**
  * Exactly one item.
  */
-export const value: FieldKind = new FieldKind(
+export const value: FieldKind<ValueFieldEditor> = new FieldKind(
     brand("Value"),
     Multiplicity.Value,
     valueChangeHandler,
@@ -497,11 +500,14 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
-        fieldChange: { newContent, wasEmpty },
+        fieldChange: {
+            newContent: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            wasEmpty,
+        },
     }),
 
     buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
-        assert(index === 0, "Optional fields only support a single child node");
+        assert(index === 0, 0x404 /* Optional fields only support a single child node */);
         return { childChange };
     },
 };
@@ -581,7 +587,7 @@ function deltaFromInsertAndChange(
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind = new FieldKind(
+export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
     brand("Optional"),
     Multiplicity.Optional,
     {
@@ -612,7 +618,7 @@ export const optional: FieldKind = new FieldKind(
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind = new FieldKind(
+export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
     sequenceFieldChangeHandler,

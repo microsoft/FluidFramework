@@ -15,7 +15,7 @@ import {
     ITaggedTelemetryPropertyType,
     TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     CachedConfigProvider,
     loggerIsMonitoringContext,
@@ -528,7 +528,7 @@ export class PerformanceEvent {
  * Logger that is useful for UT
  * It can be used in places where logger instance is required, but events should be not send over.
  */
- export class TelemetryUTLogger implements ITelemetryLogger {
+export class TelemetryUTLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
     }
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
@@ -560,4 +560,30 @@ export class PerformanceEvent {
         console.error(error);
         throw error;
     }
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+    /**
+     * Send an event with the logger
+     *
+     * @param event - the event to send
+     */
+    public send(event: ITelemetryBaseEvent): void {
+        return;
+    }
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class TelemetryNullLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {}
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }

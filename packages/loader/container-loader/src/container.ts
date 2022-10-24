@@ -617,7 +617,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
         const summarizeProtocolTree =
-            this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree")
+            this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2")
             ?? this.loader.services.options.summarizeProtocolTree;
 
         this.options = {
@@ -1708,7 +1708,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const result = this.protocolHandler.processMessage(message, local);
 
         // Forward messages to the loaded runtime for processing
-        this.context.process(message, local, undefined);
+        this.context.process(message, local);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {

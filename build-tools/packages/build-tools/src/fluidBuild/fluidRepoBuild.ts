@@ -32,6 +32,7 @@ const uncheckedPackages = [
     "@fluid-tools/build-cli",
     "@fluid-tools/version-tools",
     "@fluidframework/build-tools",
+    "@fluidframework/eslint-config-fluid",
 ];
 
 export class FluidRepoBuild extends FluidRepo {

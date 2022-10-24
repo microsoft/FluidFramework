@@ -157,7 +157,7 @@ function parseOptions(argv: string[]) {
             paramReleaseName = name;
 
             if (version) {
-                if (typeof version === "string") {
+                if (isVersionBumpType(version)) {
                     paramReleaseVersion = version;
                 } else {
                     fatal(`Invalid version ${version} for flag --release`);

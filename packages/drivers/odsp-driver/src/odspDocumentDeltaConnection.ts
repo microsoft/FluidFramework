@@ -165,7 +165,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 
         // We should not have any users now, assuming synchronous disconnect flow in response to
         // "disconnect" event
-        assert(this.references === 0, "Nobody should be connected to this socket at this point!");
+        assert(this.references === 0, 0x412 /* Nobody should be connected to this socket at this point! */);
 
         socket.disconnect();
     }
@@ -239,6 +239,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            driverVersion: pkgVersion,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
             relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
@@ -364,7 +365,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @returns ops retrieved
      */
      public requestOps(from: number, to: number) {
-        assert(!this.socketReference?.disconnected, "non-active socket");
+        assert(!this.socketReference?.disconnected, 0x413 /* non-active socket */);
 
         // Given that to is exclusive, we should be asking for at least something!
         assert(to > from, 0x272 /* "empty request" */);
@@ -422,7 +423,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public async flush(): Promise<FlushResult> {
-        assert(!this.socketReference?.disconnected, "non-active socket");
+        assert(!this.socketReference?.disconnected, 0x414 /* non-active socket */);
 
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_flush_ops] !== true) {
@@ -459,7 +460,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
-        assert(!this.socketReference?.disconnected, "non-active socket");
+        assert(!this.socketReference?.disconnected, 0x415 /* non-active socket */);
 
         if (this.enableMultiplexing) {
             // multiplex compatible early handlers
@@ -600,9 +601,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
     protected closeSocket(error: IAnyDriverError) {
         const socket = this.socketReference;
-        assert(socket !== undefined, "reentrancy not supported in close socket");
+        assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
         socket.closeSocket(error);
-        assert(this.socketReference === undefined, "disconnect flow did not work correctly");
+        assert(this.socketReference === undefined, 0x417 /* disconnect flow did not work correctly */);
     }
 
     /**

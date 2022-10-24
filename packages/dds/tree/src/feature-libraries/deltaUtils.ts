@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Delta, FieldKey, getMapTreeField, MapTree } from "../tree";
+import { Delta, FieldKey, getMapTreeField, MapTree } from "../core";
 import { fail, OffsetListFactory } from "../util";
 import { mapTreeFromCursor } from "./mapTreeCursor";
 

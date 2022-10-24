@@ -70,6 +70,8 @@ export interface GenericFieldsNode<TChild> {
 /**
  * A tree represented using plain JavaScript objects.
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
+ *
+ * JsonableTrees should not store empty fields.
  */
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 

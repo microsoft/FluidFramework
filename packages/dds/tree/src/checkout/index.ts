@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./checkout";
+export { ICheckout, TransactionResult } from "./checkout";
