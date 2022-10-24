@@ -94,18 +94,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string, wait = true) =>
         runtimeOf(dataObject).getRootDataStore(id, wait);
 
-    const corruptedAPIAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
-        new Promise<boolean>((resolve, reject) => {
-            runtime.once("dispose", () => reject(new Error("Runtime disposed")));
-            (runtime as ContainerRuntime).submitDataStoreAliasOp({ id: alias }, resolve);
-        }).catch((error) => new Error(error.message));
-
-    const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
-        new Promise<boolean>((resolve, reject) => {
-            runtime.once("dispose", () => reject(new Error("Runtime disposed")));
-            (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
-        }).catch((error) => new Error(error.message));
-
     describe("Legacy APIs", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
         afterEach(async () => reset());
@@ -295,8 +283,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Sending a bad alias message returns error", async () => {
-            const aliasResult = await corruptedAPIAliasOp(runtimeOf(dataObject1), alias);
-            assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
+            try {
+                (runtimeOf(dataObject1) as ContainerRuntime).submitDataStoreAliasOp({ id: alias }, undefined);
+                assert.fail("Expected exception from sending invalid alias");
+            } catch (err) {
+                assert.equal((err as Error).message, "malformedDataStoreAliasMessage");
+            }
         });
 
         const events = [
@@ -305,7 +297,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         ];
         itExpects("Receiving a bad alias message breaks the container", events, async function() {
             const dataCorruption = allDataCorruption([container1, container2]);
-            await corruptedAliasOp(runtimeOf(dataObject1), alias);
+            (runtimeOf(dataObject1) as any).submit(ContainerMessageType.Alias, { id: alias });
             assert(await dataCorruption);
         });
 
