@@ -81,6 +81,14 @@ async function updateExistingSession(
     // Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
     const sessionHasLocation: boolean =
         !!existingSession.ordererUrl && !!existingSession.historianUrl && !!existingSession.deltaStreamUrl;
+    Lumberjack.info("Calculated isSessionSticky and sessionHasLocation", {
+        ...lumberjackProperties,
+        isSessionSticky,
+        sessionHasLocation,
+        documentLastAccessTime: document.lastAccessTime,
+        sessionStickyCalculationTimestamp,
+        sessionStickinessDurationMs,
+        });
     if (!isSessionSticky || !sessionHasLocation) {
         // Allow session location to be moved.
         if (
@@ -92,10 +100,6 @@ async function updateExistingSession(
             // Reset logOffset, ordererUrl, and historianUrl when moving session location.
             Lumberjack.info("Moving session", {
                 ...lumberjackProperties,
-                isSessionSticky,
-                documentLastAccessTime: document.lastAccessTime,
-                sessionStickyCalculationTimestamp,
-                sessionStickinessDurationMs,
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
                 newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
