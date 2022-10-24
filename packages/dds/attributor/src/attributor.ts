@@ -15,7 +15,7 @@ export interface AttributionInfo {
 }
 
 export interface IAttributor {
-	getAttributionInfo(seq: number): AttributionInfo;
+	getAttributionInfo(key: number): AttributionInfo;
 
 	serialize(): string;
 }
@@ -27,13 +27,13 @@ export type SummaryEncoder = Encoder<SerializedAttributor, string>;
  */
 export interface SerializedAttributor {
 	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
-	seqs: number[];
+	keys: number[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
 }
 
 export class Attributor implements IAttributor {
-	private readonly seqToInfo: Map<number, AttributionInfo> = new Map();
+	private readonly keyToInfo: Map<number, AttributionInfo> = new Map();
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
@@ -46,16 +46,16 @@ export class Attributor implements IAttributor {
 		if (serialized !== undefined) {
 			const serializedAttributor: SerializedAttributor = this.encoders.summary.decode(serialized);
 			const interner = new MutableStringInterner(serializedAttributor.interner);
-			const { seqs, timestamps: encodedTimestamps, attributionRefs } = serializedAttributor;
+			const { keys, timestamps: encodedTimestamps, attributionRefs } = serializedAttributor;
 			const timestamps = this.encoders.timestamps.decode(encodedTimestamps);
-			assert(seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
+			assert(keys.length === timestamps.length && timestamps.length === attributionRefs.length,
 				"serialized attribution columns should have the same length");
-			for (let i = 0; i < seqs.length; i++) {
-				const seq = seqs[i];
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i];
 				const timestamp = timestamps[i];
 				const ref = attributionRefs[i];
 				const user: IUser = JSON.parse(interner.getString(ref));
-				this.seqToInfo.set(seq, { user, timestamp });
+				this.keyToInfo.set(key, { user, timestamp });
 			}
 		}
 
@@ -64,26 +64,26 @@ export class Attributor implements IAttributor {
 			const client = runtime.getAudience().getMember(message.clientId);
 			// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
 			assert(client !== undefined, "Received message from user not in the audience");
-			this.seqToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
+			this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
 		});
 	}
 
-	public getAttributionInfo(seq: number): AttributionInfo {
-		const result = this.seqToInfo.get(seq);
+	public getAttributionInfo(key: number): AttributionInfo {
+		const result = this.keyToInfo.get(key);
 		// TODO: This error handling is awkward; this message doesn't make it clear what went wrong.
 		if (!result) {
-			throw new UsageError(`No attribution info associated with key ${seq}.`);
+			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
 		}
 		return result;
 	}
 
 	public serialize(): string {
 		const interner = new MutableStringInterner();
-		const seqs: number[] = [];
+		const keys: number[] = [];
 		const timestamps: number[] = [];
 		const attributionRefs: InternedStringId[] = [];
-		for (const [seq, { user, timestamp }] of this.seqToInfo.entries()) {
-			seqs.push(seq);
+		for (const [key, { user, timestamp }] of this.keyToInfo.entries()) {
+			keys.push(key);
 			timestamps.push(timestamp);
 			const ref = interner.getOrCreateInternedId(JSON.stringify(user));
 			attributionRefs.push(ref);
@@ -91,7 +91,7 @@ export class Attributor implements IAttributor {
 
 		const serialized: SerializedAttributor = {
 			interner: interner.getSerializable(),
-			seqs,
+			keys,
 			timestamps: this.encoders.timestamps.encode(timestamps),
 			attributionRefs,
 		};

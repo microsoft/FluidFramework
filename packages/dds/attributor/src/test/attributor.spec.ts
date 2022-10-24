@@ -71,7 +71,7 @@ describe("Attributor", () => {
 		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
 		assert.throws(
 			() => attributor.getAttributionInfo(42),
-			/No attribution info associated/,
+			/Requested attribution information for unstored key/,
 			"invalid key should throw",
 		);
 	});

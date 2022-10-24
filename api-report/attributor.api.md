@@ -23,7 +23,7 @@ export class Attributor implements IAttributor {
         timestamps: TimestampEncoder;
     });
     // (undocumented)
-    getAttributionInfo(seq: number): AttributionInfo;
+    getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     serialize(): string;
 }
@@ -42,7 +42,7 @@ export interface Encoder<TDecoded, TEncoded> {
 // @public (undocumented)
 export interface IAttributor {
     // (undocumented)
-    getAttributionInfo(seq: number): AttributionInfo;
+    getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     serialize(): string;
 }
@@ -75,7 +75,7 @@ export interface SerializedAttributor {
     // (undocumented)
     interner: readonly string[];
     // (undocumented)
-    seqs: number[];
+    keys: number[];
     // (undocumented)
     timestamps: number[];
 }
@@ -96,7 +96,7 @@ export interface StringInterner {
 export type SummaryEncoder = Encoder<SerializedAttributor, string>;
 
 // @public (undocumented)
-export type TimestampEncoder = Encoder<number[], Jsonable>;
+export type TimestampEncoder = Encoder<number[], number[]>;
 
 // (No @packageDocumentation comment for this package)
 

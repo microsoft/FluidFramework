@@ -12,7 +12,9 @@ export interface Encoder<TDecoded, TEncoded> {
 	decode(encoded: TEncoded): TDecoded;
 }
 
-export type TimestampEncoder = Encoder<number[], Jsonable>;
+// Note: the encoded format doesn't matter as long as it's serializable;
+// these types could be weakened.
+export type TimestampEncoder = Encoder<number[], number[]>;
 
 export function makeGzipEncoder<T>(): Encoder<Jsonable<T>, string> {
 	return {
