@@ -23,8 +23,8 @@ import {
 } from "../../../feature-libraries";
 import {
     initializeForest,
-    TreeNavigationResult,
     InMemoryStoredSchemaRepository,
+    moveToDetachedField,
 } from "../../../core";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
@@ -97,10 +97,8 @@ function bench(
                     const forest = buildForest(schema);
                     initializeForest(forest, [singleTextCursor(encodedTree)]);
                     const cursor = forest.allocateCursor();
-                    assert.equal(
-                        forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
-                        TreeNavigationResult.Ok,
-                    );
+                    moveToDetachedField(forest, cursor);
+                    assert(cursor.firstNode());
                     return cursor;
                 },
             ],
