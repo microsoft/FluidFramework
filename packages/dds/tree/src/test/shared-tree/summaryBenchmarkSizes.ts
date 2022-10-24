@@ -7,12 +7,14 @@ import assert from "assert";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { TransactionResult } from "../../checkout";
-import { FieldKinds, PlacePath, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { detachedFieldAsKey, FieldKey, rootFieldKey, TreeValue } from "../../tree";
+import { FieldKey, rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { brand } from "../../util";
 import { TestTreeProvider } from "../utils";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+// eslint-disable-next-line import/no-internal-modules
+import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
@@ -28,7 +30,7 @@ describe("Summary size benchmark", () => {
     });
     it("with 1 inserted node.", async () => {
         const summarySize = await getInsertsSummarySize(1, 0, false);
-        assert(summarySize < 1000);
+        assert(summarySize < 2000);
     });
     it("with 10 inserted nodes width-wise.", async () => {
         const summarySize = await getInsertsSummarySize(10, 0, false);
@@ -58,7 +60,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
         field.insert(index, writeCursor);
 
         return TransactionResult.Apply;
@@ -69,7 +71,7 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
     // Apply an edit to the tree which inserts a node with a value.
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        const field = editor.sequenceField(path, detachedFieldAsKey(forest.rootField));
+        const field = editor.sequenceField(path, rootFieldKeySymbol);
         field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
@@ -95,7 +97,7 @@ export async function getInsertsSummarySize(
     seed: number,
     depth?: boolean,
 ): Promise<number> {
-    const provider = await TestTreeProvider.create(1);
+    const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 
@@ -106,8 +108,8 @@ export async function getInsertsSummarySize(
     } else {
         setTestValuesWide(tree, seed, numNodes);
     }
-    const { summary } = tree.getAttachSummary();
-    const summaryString = JSON.stringify(summary);
+    const summaryTree = await provider.summarize();
+    const summaryString = JSON.stringify(summaryTree);
     const summarySize = IsoBuffer.from(summaryString).byteLength;
     return summarySize;
 }
@@ -119,10 +121,9 @@ function setTestValuesNarrow(
     maxDepth: number,
 ): void {
     const random = makeRandom(seed);
-    const rootKey = detachedFieldAsKey(tree.forest.rootField);
     let path: PlacePath = {
         parent: undefined,
-        parentField: rootKey,
+        parentField: rootFieldKeySymbol,
         parentIndex: 0,
     };
     // loop through and update path for the next insert.
@@ -134,7 +135,7 @@ function setTestValuesNarrow(
         );
         path = {
             parent: path,
-            parentField: rootKey,
+            parentField: rootFieldKeySymbol,
             parentIndex: 0,
         };
     }
@@ -164,7 +165,7 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
         field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
