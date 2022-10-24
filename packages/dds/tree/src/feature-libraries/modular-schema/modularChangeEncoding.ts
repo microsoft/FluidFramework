@@ -37,7 +37,7 @@ type EncodedFieldChangeMap = EncodedFieldChange[];
 
 interface EncodedFieldChange {
     fieldKey: LocalFieldKey | GlobalFieldKey;
-    global: boolean;
+    keyIsGlobal: boolean;
     fieldKind: FieldKindIdentifier;
     /**
      * Encoded in format selected by `fieldKind`
@@ -62,7 +62,7 @@ export function encodeForJsonFormat0(
         const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
         const encodedField: EncodedFieldChange = {
             fieldKey,
-            global,
+            keyIsGlobal: global,
             fieldKind: fieldChange.fieldKind,
             change: encodedChange,
         };
@@ -103,7 +103,7 @@ export function decodeJsonFormat0(
             (encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
         );
 
-        const fieldKey: FieldKey = field.global
+        const fieldKey: FieldKey = field.keyIsGlobal
             ? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))
             : brand<LocalFieldKey>(field.fieldKey);
 
