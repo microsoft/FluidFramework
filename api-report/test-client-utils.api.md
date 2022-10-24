@@ -7,12 +7,14 @@
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
 import { IUser } from '@fluidframework/protocol-definitions';
 
+// @public (undocumented)
+export const consoleLogger: () => Console;
+
 // @public
 export const generateTestUser: () => IUser & {
     name: string;
 };
 
 export { InsecureTokenProvider }
-
 
 ```
