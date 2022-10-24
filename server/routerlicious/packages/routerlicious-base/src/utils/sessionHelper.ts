@@ -193,6 +193,10 @@ export async function getSession(
     }
     // Session can be undefined for documents that existed before the concept of service sessions.
     const existingSession: ISession | undefined = document.session;
+    Lumberjack.info(
+        `The existingSession in getSession: ${JSON.stringify(existingSession)}`,
+        lumberjackProperties,
+    );
 
     if (!existingSession) {
         // Create a new session for the document and persist to DB.
