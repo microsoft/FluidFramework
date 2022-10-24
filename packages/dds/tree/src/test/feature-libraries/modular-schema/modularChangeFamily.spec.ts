@@ -14,11 +14,11 @@ import {
     ModularChangeFamily,
     FieldKinds,
     FieldEditor,
-    UpPathWithFieldKinds,
     NodeChangeset,
+    genericFieldKind,
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import { AnchorSet, Delta, FieldKey } from "../../../tree";
+import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
@@ -28,9 +28,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-    intoDelta: (change, deltaFromChild) => change === 0
-        ? []
-        : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+    intoDelta: (change, deltaFromChild) =>
+        change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -89,10 +88,9 @@ const valueChange1b: ValueChangeset = { old: 0, new: 2 };
 const valueChange2: ValueChangeset = { old: 1, new: 2 };
 
 const nodeChange1a: NodeChangeset = {
-    fieldChanges: new Map([[
-        fieldA,
-        { fieldKind: valueField.identifier, change: brand(valueChange1a) },
-    ]]),
+    fieldChanges: new Map([
+        [fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+    ]),
 };
 
 const nodeChanges1b: NodeChangeset = {
@@ -150,24 +148,65 @@ const rootChange1a: FieldChangeMap = new Map([
     ],
 ]);
 
-const rootChange1b: FieldChangeMap = new Map([[
-    fieldA,
-    {
-        fieldKind: singleNodeField.identifier,
-        change: brand(nodeChanges1b),
-    },
-]]);
+const rootChange1aGeneric: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange1a)),
+        },
+    ],
+    [
+        fieldB,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange2),
+        },
+    ],
+]);
 
-const rootChange2: FieldChangeMap = new Map([[
-    fieldA,
-    {
-        fieldKind: singleNodeField.identifier,
-        change: brand(nodeChanges2),
-    },
-]]);
+const rootChange1b: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: singleNodeField.identifier,
+            change: brand(nodeChanges1b),
+        },
+    ],
+]);
+
+const rootChange1bGeneric: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges1b)),
+        },
+    ],
+]);
+
+const rootChange2: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: singleNodeField.identifier,
+            change: brand(nodeChanges2),
+        },
+    ],
+]);
+
+const rootChange2Generic: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2)),
+        },
+    ],
+]);
 
 describe("ModularChangeFamily", () => {
-    it("compose", () => {
+    describe("compose", () => {
         const composedValues: ValueChangeset = { old: 0, new: 2 };
 
         const composedNodeChange: NodeChangeset = {
@@ -189,73 +228,176 @@ describe("ModularChangeFamily", () => {
             ]),
         };
 
-        const expectedCompose: FieldChangeMap = new Map([
-            [
-                fieldA,
-                {
-                    fieldKind: singleNodeField.identifier,
-                    change: brand(composedNodeChange),
-                },
-            ],
-            [
-                fieldB,
-                {
-                    fieldKind: valueField.identifier,
-                    change: brand(valueChange2),
-                },
-            ],
-        ]);
+        it("compose specific ○ specific", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+        });
 
-        assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+        it("compose specific ○ generic", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1a, rootChange2Generic]), expectedCompose);
+        });
+
+        it("compose generic ○ specific", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(composedNodeChange),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2]), expectedCompose);
+        });
+
+        it("compose generic ○ generic", () => {
+            const expectedCompose: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: genericFieldKind.identifier,
+                        change: brand(
+                            genericFieldKind.changeHandler.editor.buildChildChange(
+                                0,
+                                composedNodeChange,
+                            ),
+                        ),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange2),
+                    },
+                ],
+            ]);
+            assert.deepEqual(
+                family.compose([rootChange1aGeneric, rootChange2Generic]),
+                expectedCompose,
+            );
+        });
     });
 
-    it("invert", () => {
+    describe("invert", () => {
         const valueInverse1: ValueChangeset = { old: 1, new: 0 };
         const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
         const nodeInverse: NodeChangeset = {
-            fieldChanges: new Map([[
-                fieldA,
-                {
-                    fieldKind: valueField.identifier,
-                    change: brand(valueInverse1),
-                },
-            ]]),
+            fieldChanges: new Map([
+                [
+                    fieldA,
+                    {
+                        fieldKind: valueField.identifier,
+                        change: brand(valueInverse1),
+                    },
+                ],
+            ]),
         };
 
-        const expectedInverse: FieldChangeMap = new Map([
-            [
-                fieldA,
-                { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) },
-            ],
-            [
-                fieldB,
-                { fieldKind: valueField.identifier, change: brand(valueInverse2) },
-            ],
-        ]);
+        it("specific", () => {
+            const expectedInverse: FieldChangeMap = new Map([
+                [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) }],
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
+            ]);
 
-        assert.deepEqual(family.invert(rootChange1a), expectedInverse);
+            assert.deepEqual(family.invert(rootChange1a), expectedInverse);
+        });
+
+        it("generic", () => {
+            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+                0,
+                nodeInverse,
+            );
+            const expectedInverse: FieldChangeMap = new Map([
+                [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
+            ]);
+
+            assert.deepEqual(family.invert(rootChange1aGeneric), expectedInverse);
+        });
     });
 
-    it("rebase", () => {
-        assert.deepEqual(family.rebase(rootChange1b, rootChange1a), rootChange2);
+    describe("rebase", () => {
+        it("rebase specific ↷ specific", () => {
+            assert.deepEqual(family.rebase(rootChange1b, rootChange1a), rootChange2);
+        });
+
+        it("rebase specific ↷ generic", () => {
+            assert.deepEqual(family.rebase(rootChange1b, rootChange1aGeneric), rootChange2);
+        });
+
+        it("rebase generic ↷ specific", () => {
+            assert.deepEqual(family.rebase(rootChange1bGeneric, rootChange1a), rootChange2);
+        });
+
+        it("rebase generic ↷ generic", () => {
+            assert.deepEqual(
+                family.rebase(rootChange1bGeneric, rootChange1aGeneric),
+                rootChange2Generic,
+            );
+        });
     });
 
     it("intoDelta", () => {
-        const valueDelta1: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            setValue: 1,
-        }];
+        const valueDelta1: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                setValue: 1,
+            },
+        ];
 
-        const valueDelta2: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            setValue: 2,
-        }];
+        const valueDelta2: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                setValue: 2,
+            },
+        ];
 
-        const nodeDelta: Delta.MarkList = [{
-            type: Delta.MarkType.Modify,
-            fields: new Map([[fieldA, valueDelta1]]),
-        }];
+        const nodeDelta: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fieldA, valueDelta1]]),
+            },
+        ];
 
         const expectedDelta: Delta.Root = new Map([
             [fieldA, nodeDelta],
@@ -274,45 +416,42 @@ describe("ModularChangeFamily", () => {
 
     it("build child change", () => {
         const editor = family.buildEditor((delta) => {}, new AnchorSet());
-        const path: UpPathWithFieldKinds = {
+        const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
-            parentFieldKind: singleNodeField.identifier,
             parentIndex: 0,
         };
 
         editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
         const changes = editor.getChanges();
         const nodeChange: NodeChangeset = {
-            fieldChanges: new Map([[
-                fieldB,
-                { fieldKind: valueField.identifier, change: brand(valueChange1a) },
-            ]]),
+            fieldChanges: new Map([
+                [fieldB, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+            ]),
         };
 
-        const expectedChange: FieldChangeMap = new Map([[
-            fieldA,
-            { fieldKind: singleNodeField.identifier, change: brand(nodeChange) },
-        ]]);
+        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
+        const expectedChange: FieldChangeMap = new Map([
+            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
+        ]);
 
         assert.deepEqual(changes, [expectedChange]);
     });
 
     it("build value change", () => {
         const editor = family.buildEditor((delta) => {}, new AnchorSet());
-        const path: UpPathWithFieldKinds = {
+        const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
-            parentFieldKind: singleNodeField.identifier,
             parentIndex: 0,
         };
 
         const value = "Test Value";
         const nodeChange: NodeChangeset = { valueChange: { value } };
-        const expectedChange: FieldChangeMap = new Map([[
-            fieldA,
-            { fieldKind: singleNodeField.identifier, change: brand(nodeChange) },
-        ]]);
+        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
+        const expectedChange: FieldChangeMap = new Map([
+            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
+        ]);
 
         editor.setValue(path, value);
         assert.deepEqual(editor.getChanges(), [expectedChange]);

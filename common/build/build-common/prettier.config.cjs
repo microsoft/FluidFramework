@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Shared prettier configuration for use in across the fluid-framework repository.
 // Individual packages may extend this and override rules as needed, though for consistent formatting, package-local
 // overrides should be avoided unless absolutely necessary.
@@ -8,7 +13,7 @@ module.exports = {
     singleQuote: false,
     tabWidth: 4,
     trailingComma: "all",
-    useTabs: false, // TODO: reconsider in the future for accessibility
+    useTabs: true, // changed from false to true
     overrides: [
         {
             files: "lerna.json",

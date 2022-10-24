@@ -140,6 +140,7 @@ function rebaseMark(currMark: T.SizedMark, baseMark: T.SizedMark): T.SizedMark {
             return 0;
         case "Modify":
             return clone(currMark);
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }

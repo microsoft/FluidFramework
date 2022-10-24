@@ -4,10 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+
+import { SharedCell } from "@fluidframework/cell";
+import { Deferred } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { DataStoreMessageType } from "@fluidframework/datastore";
+import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { Ink, IColor } from "@fluidframework/ink";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { SharedString } from "@fluidframework/sequence";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
     ITestContainerConfig,
     DataObjectFactoryType,
@@ -19,21 +36,7 @@ import {
     TestFluidObjectFactory,
     ensureContainerConnected,
 } from "@fluidframework/test-utils";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
-import { Ink, IColor } from "@fluidframework/ink";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedCell } from "@fluidframework/cell";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { DataStoreMessageType } from "@fluidframework/datastore";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 

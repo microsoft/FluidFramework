@@ -80,14 +80,8 @@ function compose(changes: TestChange[], verify: boolean = true): TestChange {
                 // The input context should match the output context of the previous change.
                 assert.deepEqual(change.inputContext, outputContext);
             }
-            outputContext = composeIntentions(
-                outputContext ?? inputContext,
-                change.intentions,
-            );
-            intentions = composeIntentions(
-                intentions,
-                change.intentions,
-            );
+            outputContext = composeIntentions(outputContext ?? inputContext, change.intentions);
+            intentions = composeIntentions(intentions, change.intentions);
         }
     }
     if (inputContext !== undefined) {
@@ -147,7 +141,10 @@ function rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
     }
 }
 
-function checkChangeList(changes: readonly RecursiveReadonly<TestChange>[], intentions: number[]): void {
+function checkChangeList(
+    changes: readonly RecursiveReadonly<TestChange>[],
+    intentions: number[],
+): void {
     const filtered = changes.filter(isNonEmptyChange);
     let intentionsSeen: number[] = [];
     let index = 0;
@@ -181,6 +178,17 @@ export interface AnchorRebaseData {
 
 const emptyChange: TestChange = { intentions: [] };
 
+export class TestChangeEncoder extends ChangeEncoder<TestChange> {
+    public encodeForJson(formatVersion: number, change: TestChange): JsonCompatible {
+        return change as unknown as JsonCompatible;
+    }
+    public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TestChange {
+        return change as unknown as TestChange;
+    }
+}
+
+const encoder = new TestChangeEncoder();
+
 export const TestChange = {
     emptyChange,
     mint,
@@ -190,6 +198,7 @@ export const TestChange = {
     rebaseAnchors,
     checkChangeList,
     toDelta,
+    encoder,
 };
 deepFreeze(TestChange);
 
@@ -220,15 +229,6 @@ export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
 export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
     public rebases: RecursiveReadonly<NonEmptyTestChange>[] = [];
     public intentions: number[] = [];
-}
-
-export class TestChangeEncoder extends ChangeEncoder<TestChange> {
-    public encodeForJson(formatVersion: number, change: TestChange): JsonCompatible {
-        return change as unknown as JsonCompatible;
-    }
-    public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TestChange {
-        return change as unknown as TestChange;
-    }
 }
 
 export type TestChangeFamily = ChangeFamily<unknown, TestChange>;

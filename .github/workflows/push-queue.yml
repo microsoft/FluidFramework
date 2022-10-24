@@ -28,20 +28,3 @@ jobs:
               label: `queued`,
             };
             await queueClient.sendMessage(JSON.stringify(message));
-  add-comment:
-    runs-on: ubuntu-latest
-    needs: [ queue-pr ]
-    steps:
-      - uses: jwalton/gh-find-current-pr@e12d66bc9ecc4fdcde07b0f70a3cb68ce7e4d807 # pin@v1
-        id: findPr
-        with:
-          state: all
-      - run: echo "Your PR is ${PR}"
-        if: success() && steps.findPr.outputs.number
-        env:
-          PR: ${{ steps.findPr.outputs.pr }}
-      - uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
-        with:
-          number: ${{ steps.findPr.outputs.pr }}
-          message: |
-            This commit is queued for merging with the `next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.

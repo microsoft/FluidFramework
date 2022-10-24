@@ -32,10 +32,13 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases?: boolean): string;
 
 // @public
+export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined];
+
+// @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
-export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases?: boolean): boolean;
+export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean): boolean;
 
 // @public
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;

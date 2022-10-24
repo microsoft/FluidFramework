@@ -3,5 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./insecureTinyliciousUrlResolver";
-export * from "./insecureTinyliciousTokenProvider";
+export { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider";
+export {
+	createTinyliciousCreateNewRequest,
+	defaultTinyliciousEndpoint,
+	defaultTinyliciousPort,
+	InsecureTinyliciousUrlResolver,
+} from "./insecureTinyliciousUrlResolver";
