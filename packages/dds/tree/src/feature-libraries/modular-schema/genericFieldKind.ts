@@ -22,7 +22,7 @@ import { FieldKind, Multiplicity } from "./fieldKind";
  */
 export interface GenericChange {
     /**
-     * Index withing the field of the changed node.
+     * Index within the field of the changed node.
      */
     index: number;
     /**
