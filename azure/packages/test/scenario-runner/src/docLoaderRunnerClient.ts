@@ -20,10 +20,11 @@ import { ContainerFactorySchema } from "./interface";
 import { getLogger } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
 
-export interface DocCreatorRunnerConfig {
+export interface DocLoaderRunnerConfig {
     runId: string;
     scenarioName: string;
     childId: number;
+    docId: string;
     connType: string;
     connEndpoint: string;
 }
@@ -38,6 +39,7 @@ async function main() {
     commander
         .version("0.0.1")
         .requiredOption("-s, --schema <schema>", "Container Schema")
+        .requiredOption("-d, --docId <docId>", "Document id")
         .requiredOption("-r, --runId <runId>", "orchestrator run id.")
         .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
@@ -54,6 +56,7 @@ async function main() {
         runId: commander.runId,
         scenarioName: commander.scenarioName,
         childId: commander.childId,
+        docId: commander.docId,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
     };
@@ -82,15 +85,22 @@ async function main() {
     process.exit(0);
 }
 
-async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise<void> {
+async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<void> {
     let schema;
+    const eventMap = new Map([
+        [
+            "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
+            "scenario:runner:DocLoader:getSummary",
+        ],
+    ]);
     const logger = await getLogger(
         {
             runId: config.runId,
             scenarioName: config.scenarioName,
-            namespace: "scenario:runner:DocCreator",
+            namespace: "scenario:runner:DocLoader",
         },
         ["scenario:runner"],
+        eventMap,
     );
 
     try {
@@ -103,28 +113,14 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
     try {
         ({ container } = await PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "create" },
+            { eventName: "load" },
             async () => {
-                return ac.createContainer(schema);
+                return ac.getContainer(config.docId, schema);
             },
             { start: true, end: true, cancel: "generic" },
         ));
     } catch {
-        throw new Error("Unable to create container.");
-    }
-
-    let id: string;
-    try {
-        id = await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "attach" },
-            async () => {
-                return container.attach();
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    } catch {
-        throw new Error("Unable to attach container.");
+        throw new Error("Unable to load container.");
     }
 
     if (container.connectionState !== ConnectionState.Connected) {
@@ -140,8 +136,6 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             { start: true, end: true, cancel: "generic" },
         );
     }
-
-    process.send?.(id);
 }
 
 main().catch((error) => {
