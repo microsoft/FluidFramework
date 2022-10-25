@@ -104,7 +104,7 @@ export interface IRuntime extends IDisposable {
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 
     // TODO
-    close?(error?: Error): void;
+    close(error?: Error): void;
 }
 
 /**
@@ -137,6 +137,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
+    readonly disposeFn: () => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;

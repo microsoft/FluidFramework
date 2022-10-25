@@ -733,7 +733,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public dispose() {
-        // TODO
+        // TODO: should maybe do close asserts as well?
         this._deltaManager.dispose();
     }
 
@@ -1548,12 +1548,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            // TODO: Don't send dispose events
             this.closeCore(error);
         });
 
         deltaManager.on("dispose", () => {
-            // TODO: Send dispose events
             this.closeCore(undefined, true);
         });
 
@@ -1829,6 +1827,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
+            () => this.dispose(),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             (dirty: boolean) => this.updateDirtyContainerState(dirty),

@@ -111,6 +111,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    get disposeFn(): () => void;
+    // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
     //
@@ -516,6 +518,8 @@ export interface ISummarizerInternalsProvider {
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    disposeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // @deprecated (undocumented)

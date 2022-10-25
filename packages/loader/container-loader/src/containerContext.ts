@@ -64,6 +64,7 @@ export class ContainerContext implements IContainerContext {
         submitSummaryFn: (summaryOp: ISummaryContent) => number,
         submitBatchFn: (batch: IBatchMessage[]) => number,
         submitSignalFn: (contents: any) => void,
+        disposeFn: () => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         updateDirtyContainerState: (dirty: boolean) => void,
@@ -79,6 +80,7 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
+            disposeFn,
             submitFn,
             submitSummaryFn,
             submitBatchFn,
@@ -176,6 +178,7 @@ export class ContainerContext implements IContainerContext {
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
+        public readonly disposeFn: () => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
         /** @returns clientSequenceNumber of last message in a batch */
@@ -186,7 +189,6 @@ export class ContainerContext implements IContainerContext {
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
         public readonly existing: boolean,
         public readonly pendingLocalState?: unknown,
-
     ) {
         this._connected = this.container.connected;
         this._quorum = quorum;
@@ -208,7 +210,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public close(error?: Error): void {
-        if (!this.runtime.close) {
+        if (this.runtime.close === undefined) {
             return this.dispose(error);
         }
         if (this._disposed) {

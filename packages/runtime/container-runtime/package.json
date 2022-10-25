@@ -139,11 +139,8 @@
         "backCompat": false,
         "forwardCompat": false
       },
-      "InterfaceDeclaration_IConnectableRuntime": {
-        "backCompat": false
-      },
       "InterfaceDeclaration_ISummarizerRuntime": {
-        "backCompat": false
+        "forwardCompat": false
       },
       "RemovedInterfaceDeclaration_IPendingFlushMode": {
         "backCompat": false,
