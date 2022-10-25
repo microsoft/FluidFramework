@@ -270,7 +270,10 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
                 const messageIdReceived = localOpMetadata.pendingMessageId;
                 assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
                     0x00c /* "messageId is incorrect from from the local client's ACK" */);
-
+                assert(this.pendingMessageIds !== undefined &&
+                    this.pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+                        0x2fa /* Unexpected pending message received */);
+                this.pendingMessageIds.shift();
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = localOpMetadata.pendingMessageId;
             }
