@@ -104,7 +104,6 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "backCompat": false,
         "forwardCompat": false
       },
       "ClassDeclaration_LocalReference": {
@@ -117,15 +116,7 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "ClassDeclaration_Marker": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
       "ClassDeclaration_SnapshotLegacy": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IConsensusInfo": {
         "backCompat": false,
         "forwardCompat": false
       },
@@ -133,52 +124,11 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "InterfaceDeclaration_LocalReferencePosition": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
       "ClassDeclaration_MergeTree": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "ClassDeclaration_BaseSegment": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IHierBlock": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeBlock": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_IncrementalMapState": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_InsertContext": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISegmentChanges": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_LocalReferenceCollection": {
-        "forwardCompat": false
-      },
       "InterfaceDeclaration_LRUSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MergeBlock": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_IMergeNode": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MergeNode": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IMergeNodeCommon": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_TextSegment": {
         "forwardCompat": false
       },
       "RemovedInterfaceDeclaration_AugmentedIntervalNode": {
@@ -264,15 +214,6 @@
       "RemovedClassDeclaration_SnapshotLegacy": {
         "forwardCompat": false,
         "backCompat": false
-      },
-      "TypeAliasDeclaration_RangeStackMap": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ReferencePosition": {
-        "backCompat": false
-      },
-      "ClassDeclaration_TrackingGroup": {
-        "forwardCompat": false
       }
     }
   }
