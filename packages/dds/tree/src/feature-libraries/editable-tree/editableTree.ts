@@ -180,7 +180,7 @@ export class ProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
+            const result = this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
