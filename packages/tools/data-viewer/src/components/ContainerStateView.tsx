@@ -9,6 +9,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 
+/**
+ * {@link ContainerStateView} input props.
+ */
 export interface ContainerStateViewProps {
     /**
      * The Fluid container for which data will be displayed.

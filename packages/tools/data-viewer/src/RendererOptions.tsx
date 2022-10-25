@@ -11,6 +11,10 @@ import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
 import { SharedCounterView, SharedMapView, SharedStringView } from "./components";
 
+// TODOs:
+// - Default rendering policies for SharedTree? PropertyDDS?
+//   - If so, we should consider using existing debug visualizations created for those DDS_s.
+
 /**
  * Renders child data of some shared object.
  *
@@ -49,11 +53,24 @@ export type SharedObjectType = string;
  * specified type and renders a `ReactElement` visualizing the data as desired.
  */
 export interface RendererOptions {
+    /**
+     * Individual render policies, keyed by {@link SharedObjectType}.
+     */
     [k: SharedObjectType]: RenderSharedObject;
 }
 
 /**
  * Default bundled renderers.
+ *
+ * @remarks
+ *
+ * Includes defaults for the following DDS types:
+ *
+ * - {@link @fluidframework/counter#SharedCounter}
+ *
+ * - {@link @fluidframework/map#SharedMap}
+ *
+ * - {@link @fluidframework/sequence#SharedString}
  */
 export const defaultSharedObjectRenderers: RendererOptions = {
     [SharedCounter.getFactory().type]: (sharedObject) => (

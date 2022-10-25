@@ -36,7 +36,7 @@ export interface ContainerDataViewProps {
 // @public
 export function ContainerStateView(props: ContainerStateViewProps): React_2.ReactElement;
 
-// @public (undocumented)
+// @public
 export interface ContainerStateViewProps {
     container: IFluidContainer;
 }
@@ -93,7 +93,7 @@ export interface OpViewProps {
 // @public
 export function RecordDataView(props: RecordDataViewProps): React_2.ReactElement;
 
-// @public (undocumented)
+// @public
 export interface RecordDataViewProps {
     data: Record<string, unknown>;
     sharedObjectRenderers: RendererOptions;
@@ -104,7 +104,6 @@ export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
 export interface RendererOptions {
-    // (undocumented)
     [k: SharedObjectType]: RenderSharedObject;
 }
 

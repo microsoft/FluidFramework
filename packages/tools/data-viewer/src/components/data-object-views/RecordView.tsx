@@ -8,6 +8,9 @@ import React from "react";
 import { RendererOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
 
+/**
+ * {@link RecordDataView} input props.
+ */
 export interface RecordDataViewProps {
     /**
      * The data to display.
