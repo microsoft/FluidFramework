@@ -4,11 +4,15 @@
  */
 
 /**
- * TODO
+ * Contains a customizable debug visualizer / editor for the Fluid client.
  *
  * @packageDocumentation
  */
 
-// TODO: reduced set of exports
-export * from "./components";
-export * from "./RendererOptions";
+export { SessionDataView, SessionDataViewProps } from "./components";
+export {
+    RenderChild,
+    RendererOptions,
+    RenderSharedObject,
+    SharedObjectType,
+} from "./RendererOptions";

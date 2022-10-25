@@ -31,7 +31,7 @@ initializeIcons();
  */
 export interface SessionDataViewProps {
     /**
-     * ID of {@link ContainerDataViewProps.container | the container}.
+     * ID of {@link SessionDataViewProps.container | the container}.
      */
     containerId: string;
 

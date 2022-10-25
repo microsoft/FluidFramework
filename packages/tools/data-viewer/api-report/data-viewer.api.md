@@ -5,99 +5,10 @@
 ```ts
 
 import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IMember } from '@fluidframework/fluid-static';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { default as React_2 } from 'react';
-import { SharedCounter } from '@fluidframework/counter';
-import { SharedMap } from '@fluidframework/map';
 import { SharedObjectCore } from '@fluidframework/shared-object-base';
-import { SharedString } from '@fluidframework/sequence';
-
-// @public
-export function AudienceView(props: AudienceViewProps): React_2.ReactElement;
-
-// @public
-export interface AudienceViewProps {
-    audience: IServiceAudience<IMember>;
-    myself: IMember | undefined;
-}
-
-// @public
-export function ContainerDataView(props: ContainerDataViewProps): React_2.ReactElement;
-
-// @public
-export interface ContainerDataViewProps {
-    container: IFluidContainer;
-    containerId: string;
-}
-
-// @public
-export function ContainerStateView(props: ContainerStateViewProps): React_2.ReactElement;
-
-// @public
-export interface ContainerStateViewProps {
-    container: IFluidContainer;
-}
-
-// @public
-export function CounterWidget(props: CounterWidgetProps): React_2.ReactElement;
-
-// @public
-export interface CounterWidgetProps {
-    // (undocumented)
-    counter: SharedCounter;
-}
-
-// @public
-export const defaultSharedObjectRenderers: RendererOptions;
-
-// @public
-export function DynamicDataView(props: DynamicDataViewProps): React_2.ReactElement;
-
-// @public
-export interface DynamicDataViewProps {
-    data: unknown;
-    sharedObjectRenderers: RendererOptions;
-}
-
-// @public
-export function FluidObjectView(props: FluidObjectViewProps): React_2.ReactElement;
-
-// @public
-export interface FluidObjectViewProps {
-    fluidObjectHandle: IFluidHandle;
-    sharedObjectRenderers: RendererOptions;
-}
-
-// @public
-export function OpsStreamView(props: OpsStreamViewProps): React_2.ReactElement;
-
-// @public
-export interface OpsStreamViewProps {
-    clientId: string | undefined;
-    minimumSequenceNumber: number;
-    ops: readonly ISequencedDocumentMessage[];
-}
-
-// @public
-export function OpView(props: OpViewProps): React_2.ReactElement;
-
-// @public
-export interface OpViewProps {
-    clientId: string | undefined;
-    message: ISequencedDocumentMessage;
-}
-
-// @public
-export function RecordDataView(props: RecordDataViewProps): React_2.ReactElement;
-
-// @public
-export interface RecordDataViewProps {
-    data: Record<string, unknown>;
-    sharedObjectRenderers: RendererOptions;
-}
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
@@ -106,9 +17,6 @@ export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 export interface RendererOptions {
     [k: SharedObjectType]: RenderSharedObject;
 }
-
-// @public
-export function rendererOptionsWithDefaults(customOptions: RendererOptions): RendererOptions;
 
 // @public
 export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
@@ -126,31 +34,6 @@ export interface SessionDataViewProps {
 }
 
 // @public
-export function SharedCounterView(props: SharedCounterViewProps): React_2.ReactElement;
-
-// @public
-export interface SharedCounterViewProps {
-    sharedCounter: SharedCounter;
-}
-
-// @public
-export function SharedMapView(props: SharedMapViewProps): React_2.ReactElement;
-
-// @public
-export interface SharedMapViewProps {
-    renderChild: RenderChild;
-    sharedMap: SharedMap;
-}
-
-// @public
 export type SharedObjectType = string;
-
-// @public
-export function SharedStringView(props: SharedStringViewProps): React_2.ReactElement;
-
-// @public
-export interface SharedStringViewProps {
-    sharedString: SharedString;
-}
 
 ```
