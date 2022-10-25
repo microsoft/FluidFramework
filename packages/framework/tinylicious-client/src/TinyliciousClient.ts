@@ -32,6 +32,7 @@ import {
     TinyliciousContainerServices,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -137,11 +138,23 @@ export class TinyliciousClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
+            options: {
+                client,
+            },
         });
         return loader;
     }

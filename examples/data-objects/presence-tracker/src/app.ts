@@ -7,6 +7,7 @@ import { Signaler } from "@fluid-experimental/data-objects";
 import {
     IFluidContainer,
     ContainerSchema,
+    SharedMap,
 } from "fluid-framework";
 import {
     TinyliciousClient,
@@ -23,6 +24,7 @@ const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
         signaler: Signaler,
+        map: SharedMap,
     },
 };
 
@@ -107,6 +109,9 @@ async function start(): Promise<void> {
     // create/get container API returns a combination of the container and associated container services
     document.title = containerId;
 
+    const map1 = container.initialObjects.map as SharedMap;
+
+    map1.set("newpair-id", "test");
     // Render page focus information for audience members
     const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
     const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
