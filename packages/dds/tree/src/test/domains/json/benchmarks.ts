@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { forEachNode, forEachField, ITreeCursorNew } from "../../../tree";
+import { forEachNode, forEachField, ITreeCursor } from "../../../tree";
 
-export function sum(cursor: ITreeCursorNew): number {
+export function sum(cursor: ITreeCursor): number {
     let total = 0;
     const value = cursor.value;
     if (typeof value === "number") {
@@ -21,7 +21,7 @@ export function sum(cursor: ITreeCursorNew): number {
     return total;
 }
 
-export function sumMap(cursor: ITreeCursorNew): number {
+export function sumMap(cursor: ITreeCursor): number {
     let total = 0;
     const value = cursor.value;
     if (typeof value === "number") {
@@ -45,8 +45,8 @@ export function sumMap(cursor: ITreeCursorNew): number {
  * @returns a set of two average values.
  */
 export function averageTwoValues(
-    cursor: ITreeCursorNew,
-    dataConsumer: (cursor: ITreeCursorNew, calculate: (x: number, y: number) => void) => number,
+    cursor: ITreeCursor,
+    dataConsumer: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
 ): [number, number] {
     let count = 0;
     let xTotal = 0;

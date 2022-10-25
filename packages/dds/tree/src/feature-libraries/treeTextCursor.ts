@@ -8,9 +8,9 @@ import {
     genericTreeKeys,
     getGenericTreeField,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
+    mapCursorField,
     ITreeCursorSynchronous,
     setGenericTreeField,
 } from "../core";

@@ -23,8 +23,10 @@
     name: Create empty document
     package: doc-creator
     params:
-      client: ${client}
+      connectionConfig: ${connectionConfig}
       schema: ${schema}
+      numDocs: 1
+      clientStartDelayMs: 0
     out: ${docId}
   - stage-3:
     id: 3
@@ -34,8 +36,9 @@
       connectionConfig: ${connectionConfig}
       docId: ${docId}
       schema: ${schema}
-      numClients: 1
+      numClients: 90
       clientStartDelayMs: 100
-      writeRatePerMin: 60
+      writeRatePerMin: 120
       sharedMapKey: key1
-      totalWriteCount: 5
+      totalWriteCount: 60
+

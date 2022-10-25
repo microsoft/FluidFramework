@@ -9,7 +9,7 @@ import { ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { Delta, FieldKey } from "../../tree";
-import { brand, makeArray, RecursiveReadonly } from "../../util";
+import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
     AnchorRebaseData,
     TestAnchorSet,
@@ -46,17 +46,17 @@ function changeFamilyFactory(
     return family;
 }
 
-function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
+function editManagerFactory(options: {
+    rebaser?: ChangeRebaser<TestChange>;
+    sessionId?: SessionId;
+}): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
 } {
-    const family = changeFamilyFactory(rebaser);
+    const family = changeFamilyFactory(options.rebaser);
     const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
-        localSessionId,
-        family,
-        anchors,
-    );
+    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
+    manager.initSessionId(options.sessionId ?? localSessionId);
     return { manager, anchors };
 }
 
@@ -344,7 +344,30 @@ function runUnitTestScenario(
     rebaser?: ChangeRebaser<TestChange>,
 ): void {
     const run = () => {
-        const { manager, anchors } = editManagerFactory(rebaser);
+        const { manager, anchors } = editManagerFactory({ rebaser });
+        /**
+         * An `EditManager` that is kept up to date with all sequenced edits.
+         * Used as a source of summary data to spin-up `joiners`.
+         * This `EditManager` never has local changes.
+         */
+        const summarizer = editManagerFactory({ rebaser, sessionId: "Summarizer" }).manager;
+        /**
+         * A set of `EditManager`s spun-up based on summaries produced by `summarizer`.
+         * One such joiner is produced after every sequenced edit (i.e., after every "Ack" or "Pull" step).
+         * These are kept up to date with all sequenced edits.
+         * Used to check that summarization works properly.
+         */
+        const joiners: TestEditManager[] = [];
+        /**
+         * Local helper to update all the state that is dependent on the sequencing of new edits.
+         */
+        const recordSequencedEdit = (commit: TestCommit): void => {
+            trunk.push(commit.seqNumber);
+            summarizer.addSequencedChange(commit);
+            for (const j of joiners) {
+                j.addSequencedChange(commit);
+            }
+        };
         /**
          * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
          */
@@ -411,8 +434,8 @@ function runUnitTestScenario(
                     }
                     // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
                     assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
-                    trunk.push(seq);
                     localRef = seq;
+                    recordSequencedEdit(commit);
                     break;
                 }
                 case "Pull": {
@@ -460,7 +483,7 @@ function runUnitTestScenario(
                         // Verify that the test case was annotated with the right expectations.
                         assert.deepEqual(step.expectedDelta, expected);
                     }
-                    trunk.push(seq);
+                    recordSequencedEdit(commit);
                     knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
                     localRef = seq;
                     break;
@@ -472,6 +495,29 @@ function runUnitTestScenario(
             assert.deepEqual(anchors.intentions, knownToLocal);
             // The exposed trunk and local changes should reflect what is known to the local client
             checkChangeList(manager, knownToLocal);
+            checkChangeList(summarizer, trunk);
+
+            // Spin-up a new joiner whenever a summary client would have a different state.
+            // This assumes summary clients have no local changes, which may change in the future.
+            if (step.type !== "Push") {
+                const joiner = editManagerFactory({
+                    rebaser,
+                    sessionId: `Join${joiners.length}`,
+                }).manager;
+                const summary = clone(summarizer.getSummaryData());
+                joiner.loadSummaryData((data) => {
+                    data.trunk.push(...summary.trunk);
+                    for (const [k, v] of summary.branches) {
+                        data.branches.set(k, v);
+                    }
+                });
+                joiners.push(joiner);
+            }
+
+            // Verify that clients spun-up based on summaries are able to interpret new edits properly
+            for (const j of joiners) {
+                checkChangeList(j, trunk);
+            }
         }
     };
     if (title !== undefined) {

@@ -9,7 +9,6 @@ import {
     FieldKinds,
     NodeChangeset,
     singleTextCursor,
-    singleTextCursorNew,
 } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
@@ -146,7 +145,7 @@ describe("Value field changesets", () => {
     it("can be represented as a delta", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
         ];
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
@@ -252,7 +251,7 @@ describe("Optional field changesets", () => {
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew(tree3)],
+                content: [singleTextCursor(tree3)],
             },
         ];
 
@@ -262,7 +261,7 @@ describe("Optional field changesets", () => {
     it("can be converted to a delta when replacing content", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree2)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
         ];
 
         assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);

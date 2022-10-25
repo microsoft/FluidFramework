@@ -80,16 +80,7 @@ export {
     tryExtendMark,
 } from "./sequence-change-family";
 export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
-export {
-    singleTextCursor as singleTextCursorNew,
-    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
-} from "./treeTextCursor";
-export {
-    jsonableTreeFromCursor,
-    RootedTextCursor,
-    singleTextCursor,
-    TextCursor,
-} from "./treeTextCursorLegacy";
+export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -129,3 +120,11 @@ import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
 export { applyModifyToTree, mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+
+export {
+    EditManagerIndex,
+    CommitEncoder,
+    commitEncoderFromChangeEncoder,
+    parseSummary as loadSummary,
+    stringifySummary as encodeSummary,
+} from "./editManagerIndex";
