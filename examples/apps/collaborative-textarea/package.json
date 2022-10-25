@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/collaborative-textarea",
   "version": "2.0.0-internal.2.1.0",
-  "private": true,
+  "private": false,
   "description": "A minimal example using the react collaborative-textarea",
   "homepage": "https://fluidframework.com",
   "repository": {

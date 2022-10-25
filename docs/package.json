@@ -1,7 +1,7 @@
 {
   "name": "fluidframework-docs",
   "version": "0.25.0",
-  "private": true,
+  "private": false,
   "description": "Fluid Framework documentation",
   "homepage": "https://fluidframework.com",
   "repository": {

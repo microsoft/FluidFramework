@@ -1,7 +1,7 @@
 {
   "name": "@fluid-internal/getkeys",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "description": "",
   "homepage": "https://fluidframework.com",
   "repository": {

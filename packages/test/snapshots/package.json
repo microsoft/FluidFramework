@@ -1,7 +1,7 @@
 {
   "name": "@fluid-internal/test-snapshots",
   "version": "2.0.0-internal.2.1.0",
-  "private": true,
+  "private": false,
   "description": "Comprehensive test of snapshot logic.",
   "homepage": "https://fluidframework.com",
   "repository": {

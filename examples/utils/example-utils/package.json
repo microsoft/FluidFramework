@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/example-utils",
   "version": "2.0.0-internal.2.1.0",
-  "private": true,
+  "private": false,
   "description": "Shared utilities used by examples.",
   "homepage": "https://fluidframework.com",
   "repository": {
