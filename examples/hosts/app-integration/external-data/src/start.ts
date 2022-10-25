@@ -6,11 +6,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import type { IAppModel } from "./modelInterfaces";
-import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, TaskListAppView } from "./view";
 import { TaskListContainerRuntimeFactory } from "./model";
 
@@ -40,18 +38,9 @@ const render = (model: IAppModel) => {
 };
 
 async function start(): Promise<void> {
-    const tinyliciousService = new TinyliciousService();
-
-    // If we assumed the container code could consistently present a model to us, we could bake that assumption
-    // in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
-    // (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
-    // (e.g. container.request({ url: "mode" })) looks like.
-    const modelLoader = new ModelLoader<IAppModel>({
-        urlResolver: tinyliciousService.urlResolver,
-        documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
-        generateCreateNewRequest: createTinyliciousCreateNewRequest,
-    });
+    const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
+        new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+    );
 
     let id: string;
     let model: IAppModel;
@@ -59,13 +48,13 @@ async function start(): Promise<void> {
     if (location.hash.length === 0) {
         // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
         // Normally we would create with the most-recent version.
-        const createResponse = await modelLoader.createDetached("one");
+        const createResponse = await tinyliciousModelLoader.createDetached("one");
         model = createResponse.model;
 
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
-        model = await modelLoader.loadExisting(id);
+        model = await tinyliciousModelLoader.loadExisting(id);
     }
 
     render(model);
