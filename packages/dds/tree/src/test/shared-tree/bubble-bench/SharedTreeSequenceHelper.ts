@@ -29,7 +29,7 @@ export class SharedTreeSequenceHelper {
     public getAllAnchors() {
         const nodeAnchors: Anchor[] = [];
         const cursor = this.treeNodeHelper.getCursor();
-
+        cursor.enterField(this.sequenceFieldKey);
         let currentNode = cursor.firstNode();
         if (!currentNode) {
             cursor.free();

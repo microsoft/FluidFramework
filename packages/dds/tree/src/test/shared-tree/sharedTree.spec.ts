@@ -603,9 +603,6 @@ describe("SharedTree", () => {
             const cursor = provider.trees[0].forest.allocateCursor();
             const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
-            // move to sequence
-            // const sequenceFieldKey: FieldKey = brand("testSequence");
-            // cursor.enterField(sequenceFieldKey);
             const treeSequence = new SharedTreeSequenceHelper(
                 provider.trees[0],
                 cursor.buildAnchor(),
@@ -617,7 +614,27 @@ describe("SharedTree", () => {
             assert.equal(treeNodes.length, 2);
             assert.equal(treeNodes[0].getFieldValue(brand("testField")), 10);
             assert.equal(treeNodes[1].getFieldValue(brand("testField")), 11);
+            cursor.free();
         });
+
+        it("length()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+            assert.equal(treeSequence.length(), 2);
+            cursor.free();
+        });
+
+
     });
 });
 
