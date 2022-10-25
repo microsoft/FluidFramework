@@ -7,7 +7,7 @@ import { brand, Brand, Invariant } from "../util";
 import { AnchorSet } from "../tree";
 
 /**
- * A way to refer to a particular revision within a given {@link Rebaser} instance.
+ * A way to refer to a particular revision within a given `Rebaser` instance.
  */
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
@@ -107,8 +107,7 @@ export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>
 /**
  * Rebasing logic for a particular kind of change.
  *
- * This interface is designed to be easy to implement.
- * Use {@link Rebaser} for an ergonomic wrapper around this.
+ * This interface is used to provide rebase policy to `Rebaser`.
  *
  * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
  * - `compose([])` is the identity element.

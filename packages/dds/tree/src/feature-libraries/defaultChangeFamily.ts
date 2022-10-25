@@ -68,10 +68,46 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 export const defaultChangeFamily = new DefaultChangeFamily();
 
 /**
+ * Default editor for transactions.
+ */
+export interface IDefaultEditBuilder {
+    setValue(path: UpPath, value: Value): void;
+
+    /**
+     * @param parent - path to the parent node of the value field being edited
+     * @param field - the value field which is being edited under the parent node
+     * @returns An object with methods to edit the given field of the given parent.
+     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+     * is bounded by the lifetime of this edit builder.
+     */
+    valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder;
+
+    /**
+     * @param parent - path to the parent node of the optional field being edited
+     * @param field - the optional field which is being edited under the parent node
+     * @returns An object with methods to edit the given field of the given parent.
+     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+     * is bounded by the lifetime of this edit builder.
+     */
+    optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
+
+    /**
+     * @param parent - path to the parent node of the sequence field being edited
+     * @param field - the sequence field which is being edited under the parent node
+     * @returns An object with methods to edit the given field of the given parent.
+     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+     * is bounded by the lifetime of this edit builder.
+     */
+    sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
+}
+
+/**
  * Implementation of {@link ProgressiveEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
-export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChangeset> {
+export class DefaultEditBuilder
+    implements ProgressiveEditBuilder<DefaultChangeset>, IDefaultEditBuilder
+{
     private readonly modularBuilder: ModularEditBuilder;
 
     constructor(
@@ -86,13 +122,6 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
         this.modularBuilder.setValue(path, value);
     }
 
-    /**
-     * @param parent - path to the parent node of the value field being edited
-     * @param field - the value field which is being edited under the parent node
-     * @returns An object with methods to edit the given field of the given parent.
-     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
-     * is bounded by the lifetime of this edit builder.
-     */
     public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor): void => {
@@ -104,13 +133,6 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
         };
     }
 
-    /**
-     * @param parent - path to the parent node of the optional field being edited
-     * @param field - the optional field which is being edited under the parent node
-     * @returns An object with methods to edit the given field of the given parent.
-     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
-     * is bounded by the lifetime of this edit builder.
-     */
     public optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder {
         return {
             set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
@@ -122,13 +144,6 @@ export class DefaultEditBuilder implements ProgressiveEditBuilder<DefaultChanges
         };
     }
 
-    /**
-     * @param parent - path to the parent node of the sequence field being edited
-     * @param field - the sequence field which is being edited under the parent node
-     * @returns An object with methods to edit the given field of the given parent.
-     * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
-     * is bounded by the lifetime of this edit builder.
-     */
     public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
         return {
             insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
