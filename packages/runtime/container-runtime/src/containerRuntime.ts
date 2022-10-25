@@ -606,6 +606,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     /**
+     * @deprecated - use loadRuntime instead.
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -621,120 +622,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
-        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-        // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
-        const passLogger = backCompatContext.taggedLogger ??
-            new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
-        const logger = ChildLogger.create(passLogger, undefined, {
-            all: {
-                runtimeVersion: pkgVersion,
-            },
-        });
-
-        const {
-            summaryOptions = {},
-            gcOptions = {},
-            loadSequenceNumberVerification = "close",
-            flushMode = defaultFlushMode,
-            enableOfflineLoad = false,
-            compressionOptions = {},
-            maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-        } = runtimeOptions;
-
-        const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
-        const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
-        const storage = !pendingRuntimeState ?
-            context.storage :
-            new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
-
-        const registry = new FluidDataStoreRegistry(registryEntries);
-
-        const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
-            const blobId = baseSnapshot?.blobs[blobName];
-            if (baseSnapshot && blobId) {
-                // IContainerContext storage api return type still has undefined in 0.39 package version.
-                // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
-                return readAndParse<T>(storage, blobId);
-            }
-        };
-
-        const [chunks, metadata, electedSummarizerData, aliases] = await Promise.all([
-            tryFetchBlob<[string, string[]][]>(chunksBlobName),
-            tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-            tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
-            tryFetchBlob<[string, string][]>(aliasBlobName),
-        ]);
-
-        const loadExisting = existing === true || context.existing === true;
-
-        // read snapshot blobs needed for BlobManager to load
-        const blobManagerSnapshot = await BlobManager.load(
-            baseSnapshot?.trees[blobsTreeName],
-            async (id) => {
-                // IContainerContext storage api return type still has undefined in 0.39 package version.
-                // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
-                return readAndParse(storage, id);
-            },
-        );
-
-        // Verify summary runtime sequence number matches protocol sequence number.
-        const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
-        // When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
-        if (!pendingRuntimeState && runtimeSequenceNumber !== undefined) {
-            const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
-            // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
-            if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
-                // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
-                const error = new DataCorruptionError(
-                    // pre-0.58 error message: SummaryMetadataMismatch
-                    "Summary metadata mismatch",
-                    { runtimeVersion: pkgVersion, runtimeSequenceNumber, protocolSequenceNumber },
-                );
-
-                if (loadSequenceNumberVerification === "log") {
-                    logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
-                } else {
-                    context.closeFn(error);
-                }
-            }
+        let existingFlag = true;
+        if (!existing) {
+            existingFlag = false;
         }
-
-        const runtime = new ContainerRuntime(
-            context,
-            registry,
-            metadata,
-            electedSummarizerData,
-            chunks ?? [],
-            aliases ?? [],
-            {
-                summaryOptions,
-                gcOptions,
-                loadSequenceNumberVerification,
-                flushMode,
-                enableOfflineLoad,
-                compressionOptions,
-                maxBatchSizeInBytes,
-            },
-            containerScope,
-            logger,
-            loadExisting,
-            blobManagerSnapshot,
-            storage,
-            requestHandler,
-        );
-
-        if (pendingRuntimeState) {
-            await runtime.processSavedOps(pendingRuntimeState);
-            // delete these once runtime has seen them to save space
-            pendingRuntimeState.savedOps = [];
-        }
-
-        await runtime.getSnapshotBlobs();
-
-        return runtime;
+        return this.loadRuntime(context, registryEntries, existingFlag, requestHandler, runtimeOptions, containerScope);
     }
 
     /**
@@ -753,7 +645,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: FluidObject = context.scope,
     ): Promise<ContainerRuntime> {
-        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
+       // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
         const passLogger = backCompatContext.taggedLogger ??
@@ -798,6 +690,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
             tryFetchBlob<[string, string][]>(aliasBlobName),
         ]);
+
+        const loadExisting = existing === true || context.existing === true;
 
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(
@@ -850,7 +744,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             containerScope,
             logger,
-            existing,
+            loadExisting,
             blobManagerSnapshot,
             storage,
             requestHandler,
