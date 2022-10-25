@@ -43,36 +43,62 @@ export interface SessionDataViewProps {
 
 /**
  * Displays information about the provided container and its audience.
- *
- * @param props - See {@link SessionDataViewProps}.
  */
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
     const { containerId, container, audience, sharedObjectRenderers } = props;
 
-    const innerContainer = getInnerContainer(container);
+    // #region Audience state
 
-    const [clientId, updateClientId] = React.useState<string | undefined>(innerContainer.clientId);
     const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
+
+    React.useEffect(() => {
+        function onUpdateAudienceMembers(): void {
+            updateMyself(audience.getMyself());
+        }
+
+        audience.on("membersChanged", onUpdateAudienceMembers);
+
+        return (): void => {
+            audience.off("membersChanged", onUpdateAudienceMembers);
+        };
+    }, [audience, updateMyself]);
+
+    // #endregion
+
+    // #region State bound to the outer container
+
     const [isContainerDisposed, updateIsContainerDisposed] = React.useState<boolean>(
         container.disposed,
     );
-    const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
-        innerContainer.deltaManager.minimumSequenceNumber,
-    );
-    const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
-    // const [pendingLocalOps, updatePendingLocalOps] = React.useState(innerContainer.deltaManager.)
 
     React.useEffect(() => {
-        function onConnectionChange(): void {
-            updateClientId(innerContainer.clientId);
-        }
-
         function onDispose(): void {
             updateIsContainerDisposed(true);
         }
 
-        function onUpdateAudienceMembers(): void {
-            updateMyself(audience.getMyself());
+        container.on("disposed", onDispose);
+
+        return (): void => {
+            container.off("disposed", onDispose);
+        };
+    }, [container, updateIsContainerDisposed]);
+
+    // #endregion
+
+    const innerContainer = getInnerContainer(container);
+
+    // #region State bound to the inner container / deltaManager
+
+    const [clientId, updateClientId] = React.useState<string | undefined>(innerContainer.clientId);
+
+    const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
+        innerContainer.deltaManager.minimumSequenceNumber,
+    );
+    const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
+
+    React.useEffect(() => {
+        function onConnectionChange(): void {
+            updateClientId(innerContainer.clientId);
         }
 
         function onOp(message: ISequencedDocumentMessage): void {
@@ -80,25 +106,20 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
             updateOps([...ops, message]);
         }
 
-        container.on("connected", onConnectionChange);
-        container.on("disconnected", onConnectionChange);
-        container.on("disposed", onDispose);
-
-        audience.on("membersChanged", onUpdateAudienceMembers);
-
+        innerContainer.on("connected", onConnectionChange);
+        innerContainer.on("disconnected", onConnectionChange);
         innerContainer.on("op", onOp);
 
         return (): void => {
-            container.off("connected", onConnectionChange);
-            container.off("disconnected", onConnectionChange);
-            container.off("disposed", onDispose);
-
-            audience.off("membersChanged", onUpdateAudienceMembers);
-
+            innerContainer.off("connected", onConnectionChange);
+            innerContainer.off("disconnected", onConnectionChange);
             innerContainer.off("op", onOp);
         };
-    }, [container, innerContainer, audience, ops]);
+    }, [innerContainer, updateClientId, updateMinimumSequenceNumber, ops, updateOps]);
 
+    // #endregion
+
+    // UI state
     const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
         RootView.Container,
     );
@@ -170,17 +191,45 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
  * Root view options for the container visualizer.
  */
 enum RootView {
+    /**
+     * Corresponds with {@link ContainerDataView}.
+     */
     Container = "Container",
+
+    /**
+     * Corresponds with {@link DataObjectsView}.
+     */
     Data = "Data",
+
+    /**
+     * Corresponds with {@link AudienceView}.
+     */
     Audience = "Audience",
+
+    /**
+     * Corresponds with {@link OpsStreamView}.
+     */
     OpsStream = "Ops Stream",
 }
 
+/**
+ * {@link ViewSelectionMenu} input props.
+ */
 interface ViewSelectionMenuProps {
+    /**
+     * The currently-selected inner app view.
+     */
     currentSelection: RootView;
+
+    /**
+     * Updates the inner app view to the one specified.
+     */
     updateSelection(newSelection: RootView): void;
 }
 
+/**
+ * Menu for selecting the inner app view to be displayed.
+ */
 function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
     const { currentSelection, updateSelection } = props;
 
@@ -189,6 +238,9 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
         name: value,
     }));
 
+    /**
+     * Specifies how to render an individual menu option.
+     */
     function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
         return (
             <Link
@@ -202,6 +254,9 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
         );
     }
 
+    /**
+     * Specifies how to render any overflow options in the menu.
+     */
     function onRenderOverflowButton(
         overflowItems: IOverflowSetItemProps[] | undefined,
     ): React.ReactElement {
