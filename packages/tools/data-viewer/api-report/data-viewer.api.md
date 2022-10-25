@@ -53,14 +53,12 @@ export interface CounterWidgetProps {
 // @public
 export const defaultSharedObjectRenderers: RendererOptions;
 
-// @public (undocumented)
+// @public
 export function DynamicDataView(props: DynamicDataViewProps): React_2.ReactElement;
 
 // @public
 export interface DynamicDataViewProps {
-    // (undocumented)
     data: unknown;
-    // (undocumented)
     sharedObjectRenderers: RendererOptions;
 }
 

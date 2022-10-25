@@ -14,10 +14,27 @@ import { RendererOptions } from "../../RendererOptions";
  * {@link DynamicDataView} input props.
  */
 export interface DynamicDataViewProps {
+    /**
+     * The data to render.
+     */
     data: unknown;
+
+    /**
+     * {@inheritDoc RendererOptions}
+     */
     sharedObjectRenderers: RendererOptions;
 }
 
+/**
+ * Renders arbitrary data in via the following policy:
+ *
+ * - If the data is a primitive: simply display its raw value.
+ *
+ * - If the data is a {@link @fluidframework/core-interfaces#IFluidHandle}: dispatch to the appropriate data
+ * rendering policy (see {@link DynamicDataViewProps.sharedObjectRenderers }).
+ *
+ * - Else: the data is assumed to be an object with serializable traits; recurse on each of those traits.
+ */
 export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement {
     const { data, sharedObjectRenderers } = props;
 
