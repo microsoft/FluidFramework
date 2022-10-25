@@ -29,7 +29,7 @@ export interface IDataObjectGrid extends EventEmitter {
 }
 
 /**
- * Spaces collects serializable formats of items and stores them with grid-based layout information.
+ * The serializable format of items that DataObjectGrid can store along with grid-based layout information.
  */
 export interface IDataObjectGridItem {
     /**
@@ -37,7 +37,7 @@ export interface IDataObjectGridItem {
      */
     readonly id: string;
     /**
-     * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
+     * A key matching an entry in the dataObjectRegistry, which we'll use to pair the unknown blob with an entry that
      * knows how to deal with it.
      */
     readonly type: string;
@@ -52,7 +52,7 @@ export interface IDataObjectGridItem {
 }
 
 /**
- * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
+ * DataObjectGrid manages multiple subcomponents and their layouts.
  */
 export class DataObjectGrid extends DataObject implements IDataObjectGrid {
     public static get ComponentName() { return "@fluid-example/spaces"; }
