@@ -385,7 +385,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * {@inheritDoc OrderedEditSet.tryGetEditFromId}
 	 */
 	public tryGetEditFromId(editId: EditId): Edit<TChange> | undefined {
-        const index = this.tryGetIndexOfId(editId);
+		const index = this.tryGetIndexOfId(editId);
 		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
 
@@ -547,8 +547,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * {@inheritDoc OrderedEditSet.tryGetEdit}
 	 */
 	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
-        const index = this.tryGetIndexOfId(editId);
-        return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
+		const index = this.tryGetIndexOfId(editId);
+		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
 
 	/**
