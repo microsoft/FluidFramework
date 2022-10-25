@@ -11,6 +11,9 @@ import { SharedString } from "@fluidframework/sequence";
  * {@link SharedStringView} input props.
  */
 export interface SharedStringViewProps {
+    /**
+     * {@link @fluidframework/sequence#SharedString} whose data will be displayed.
+     */
     sharedString: SharedString;
 }
 

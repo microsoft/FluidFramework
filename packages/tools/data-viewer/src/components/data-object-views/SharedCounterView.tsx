@@ -11,6 +11,9 @@ import { SharedCounter } from "@fluidframework/counter";
  * {@link SharedCounterView} input props.
  */
 export interface SharedCounterViewProps {
+    /**
+     * {@link @fluidframework/map#SharedMap} whose data will be displayed.
+     */
     sharedCounter: SharedCounter;
 }
 

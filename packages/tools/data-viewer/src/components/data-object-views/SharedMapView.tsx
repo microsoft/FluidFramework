@@ -15,10 +15,13 @@ import { Accordion } from "../utility-components";
  */
 export interface SharedMapViewProps {
     /**
-     * The shared map whose contents will be displayed.
+     * {@link @fluidframework/map#SharedMap} whose data will be displayed.
      */
     sharedMap: SharedMap;
 
+    /**
+     * Callback to render child values in {@link SharedMapViewProps.sharedMap}.
+     */
     renderChild: RenderChild;
 }
 
