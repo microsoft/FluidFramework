@@ -50,12 +50,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     static flags = {
         fix: Flags.boolean({
-            description: `Fix errors if possible`,
+            description: `Fix errors if possible.`,
             required: false,
             char: "f",
         }),
         handler: Flags.string({
-            description: `Filter handler names by <regex>`,
+            description: `Filter handler names by <regex>.`,
             required: false,
             char: "d",
         }),
@@ -66,18 +66,18 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             multiple: true,
         }),
         path: Flags.string({
-            description: `Filter file paths by <regex>`,
+            description: `Filter file paths by <regex>.`,
             required: false,
             char: "p",
         }),
         exclusions: Flags.file({
-            description: `Path to the exclusions.json file`,
+            description: `Path to the exclusions.json file.`,
             exists: true,
             required: true,
             char: "e",
         }),
         stdin: Flags.boolean({
-            description: `Get file from stdin`,
+            description: `Read list of files from stdin.`,
             required: false,
         }),
         listHandlers: Flags.boolean({
