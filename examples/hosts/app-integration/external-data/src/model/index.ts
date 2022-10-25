@@ -4,4 +4,3 @@
  */
 
 export { TaskListContainerRuntimeFactory } from "./containerCode";
-export { TaskList, TaskListInstantiationFactory } from "./taskList";
