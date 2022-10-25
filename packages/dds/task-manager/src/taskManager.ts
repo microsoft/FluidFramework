@@ -52,9 +52,10 @@ const snapshotFileName = "header";
 /**
  * The TaskManager distributed data structure tracks queues of clients that want to exclusively run a task.
  *
- * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
- *
  * @remarks
+ *
+ * For an in-depth overview, see [TaskManager](https://fluidframework.com/docs/data-structures/task-manager/).
+ *
  * ### Creation
  *
  * To create a `TaskManager`, call the static create method:
@@ -75,6 +76,21 @@ const snapshotFileName = "header";
  *     .catch((err) => { console.error(err); });
  * ```
  *
+ * Alternatively, you can indefinitely volunteer for a task with the synchronous `subscribeToTask()` method. This
+ * method does not return a value, therefore you need to rely on eventing to know when you have acquired the rights
+ * to run the task (see below).
+ *
+ * ```typescript
+ * taskManager.subscribeToTask("NameOfTask");
+ * ```
+ *
+ * To check if the local client is currently subscribed to a task, use the `subscribed()` method.
+ * ```typescript
+ * if (taskManager.subscribed("NameOfTask")) {
+ *     console.log("This client is currently subscribed to the task.");
+ * }
+ * ```
+ *
  * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
  * rights to run the task.
  *
@@ -82,21 +98,29 @@ const snapshotFileName = "header";
  * taskManager.abandon("NameOfTask");
  * ```
  *
- * To inspect your state in the queue, you can use the `queued()` and `assignedTask()` methods.
+ * To inspect your state in the queue, you can use the `queued()` and `assigned()` methods.
  *
  * ```typescript
  * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client is somewhere in the queue, potentially even having the lock");
+ *     console.log("This client is somewhere in the queue, potentially even having the task assignment.");
  * }
  *
- * if (taskManager.queued("NameOfTask")) {
+ * if (taskManager.assigned("NameOfTask")) {
  *     console.log("This client currently has the rights to run the task");
  * }
  * ```
  *
+ * To signal to other connected clients that a task is completed, use the `complete()` method. This will release all
+ * clients from the queue and emit the "completed" event.
+ *
+ * ```typescript
+ * taskManager.complete("NameOfTask");
+ * ```
+ *
  * ### Eventing
  *
- * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released.
+ * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client, when the task
+ * assignment is lost, and when a task was completed by another client.
  *
  * ```typescript
  * taskManager.on("assigned", (taskId: string) => {
@@ -106,10 +130,14 @@ const snapshotFileName = "header";
  * taskManager.on("lost", (taskId: string) => {
  *     console.log(`Client released task: ${taskId}`);
  * });
+ *
+ * taskManager.on("completed", (taskId: string) => {
+ *     console.log(`Another client completed task: ${taskId}`);
+ * });
  * ```
  *
- * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task and it's
- * not convenient to pass the Promise around.
+ * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task, such as
+ * when using the `subscribeToTask()` method.
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     /**
@@ -216,20 +244,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, "Unexpected op");
+                assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
                 // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "complete", "Unexpected op type");
+                    assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
 
                 // Remove complete op from this.pendingCompletedTasks
                 const pendingIds = this.pendingCompletedTasks.get(taskId);
-                assert(pendingIds !== undefined && pendingIds.length > 0, "pendingIds is empty");
+                assert(pendingIds !== undefined && pendingIds.length > 0, 0x402 /* pendingIds is empty */);
                 const removed = pendingIds.shift();
-                assert(removed === messageId, "Removed complete op id does not match");
+                assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
             }
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
@@ -336,7 +364,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         if (!this.connected) {
-            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
+            throw new Error(`Attempted to volunteer in disconnected state: ${taskId}`);
         }
 
         // This promise works even if we already have an outstanding volunteer op.
@@ -367,7 +395,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 this.completedWatcher.off("completed", checkIfCompleted);
-                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
+                reject(new Error(`Abandoned before acquiring task assignment: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
@@ -375,7 +403,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 this.completedWatcher.off("completed", checkIfCompleted);
-                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
+                reject(new Error(`Disconnected before acquiring task assignment: ${taskId}`));
             };
 
             const checkIfCompleted = (eventTaskId: string) => {

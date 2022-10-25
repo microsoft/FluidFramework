@@ -176,6 +176,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 this.mc.logger,
+                true,
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
@@ -502,6 +503,7 @@ export class OdspDocumentService implements IDocumentService {
             this._opsCache?.flushOps();
         }
         this._opsCache?.dispose();
+        this.clearJoinSessionTimer();
     }
 
     protected get opsCache() {

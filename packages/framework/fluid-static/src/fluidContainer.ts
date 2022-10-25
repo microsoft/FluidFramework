@@ -15,80 +15,64 @@ import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from 
 
 /**
  * Events emitted from {@link IFluidContainer}.
- *
- * @remarks
- *
- * The following is the list of events emitted.
- *
- * ### "connected"
- *
- * The "connected" event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void;
- * ```
- *
- * ### "disposed"
- *
- * The "disposed" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void;
- * ```
- *
- * ### "disconnected"
- *
- * The "disconnected" event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void;
- * ```
- *
- * ### "saved"
- *
- * The "saved" event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void
- * ```
- *
- * ### "dirty"
- *
- * The "dirty" event is emitted when the `IFluidContainer` has local changes that have not yet
- * been acknowledged by the service.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void
- * ```
  */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IFluidContainerEvents extends IEvent {
     /**
-     * **connected** & **disconnected** events reflect connection state changes against the (delta)
-     * service acknowledging ops/edits.
+     * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
+     *
+     * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     *
+     * @see
+     *
+     * - {@link IFluidContainer.connectionState}
+     *
+     * - {@link IFluidContainer.disconnect}
      */
-    (event: "connected" | "disconnected", listener: () => void): void;
+    (event: "connected", listener: () => void): void;
+
     /**
-     * **saved** event is raised when all local changes/edits have been acknowledged by the service.
-     * **dirty** event is raised when first local change has been made, following a "saved" state.
+     * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
+     *
+     * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     *
+     * @see
+     *
+     * - {@link IFluidContainer.connectionState}
+     *
+     * - {@link IFluidContainer.disconnect}
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    (event: "saved" | "dirty", listener: () => void): void;
+    (event: "disconnected", listener: () => void): void;
+
     /**
-     * Disposed event is raised when container is closed. If container was closed due to error
-     * (vs explicit **dispose** action), optional argument contains further details about the error.
+     * Emitted when all local changes/edits have been acknowledged by the service.
+     *
+     * @remarks "dirty" event will be emitted when the next local change has been made.
+     *
+     * @see {@link IFluidContainer.isDirty}
+     */
+    (event: "saved", listener: () => void): void;
+
+    /**
+     * Emitted when the first local change has been made, following a "saved" event.
+     *
+     * @remarks "saved" event will be emitted once all local changes have been acknowledged by the service.
+     *
+     * @see {@link IFluidContainer.isDirty}
+     */
+    (event: "dirty", listener: () => void): void;
+
+    /**
+     * Emitted when the {@link IFluidContainer} is closed, which permanently disables it.
+     *
+     * @remarks
+     *
+     * If container was closed due to error (as opposed to an explicit call to
+     * {@link IFluidContainer.dispose}), optional argument contains further details about the error.
      */
     (event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Provides an entrypoint into the client side of collaborative Fluid data.

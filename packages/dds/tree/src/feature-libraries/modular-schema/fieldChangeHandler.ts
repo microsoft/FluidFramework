@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta, FieldKey, Value } from "../../tree";
+import { FieldKindIdentifier, Delta, FieldKey, Value } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  */
-export interface FieldChangeHandler<TChangeset> {
+export interface FieldChangeHandler<
+    TChangeset,
+    TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
+> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
-    editor: FieldEditor<TChangeset>;
+    editor: TEditor;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
     // TODO
@@ -79,6 +81,9 @@ export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+/**
+ * Changeset for a subtree rooted at a specific node.
+ */
 export interface NodeChangeset {
     fieldChanges?: FieldChangeMap;
     valueChange?: ValueChange;

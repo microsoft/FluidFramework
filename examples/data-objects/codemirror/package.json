@@ -36,8 +36,8 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\""
+    "webpack": "webpack --env production",
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
     "@fluidframework/aqueduct": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",

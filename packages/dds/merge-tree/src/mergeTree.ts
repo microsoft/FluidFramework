@@ -1971,7 +1971,7 @@ export class MergeTree {
             }
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups?.pop?.();
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x3ee /* Unexpected segmentGroup in segment */);
 
                 assert(segment.removedClientIds !== undefined
                     && segment.removedClientIds[0] === this.collabWindow.clientId,
@@ -2003,7 +2003,7 @@ export class MergeTree {
             let i = 0;
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups.pop?.();
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x3ef /* Unexpected segmentGroup in segment */);
 
                 const start = this.findRollbackPosition(segment);
                 if (op.type === MergeTreeDeltaType.INSERT) {

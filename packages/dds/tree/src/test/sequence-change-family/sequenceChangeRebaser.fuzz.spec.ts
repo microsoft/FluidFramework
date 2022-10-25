@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { Transposed as T, toDelta, sequenceChangeRebaser } from "../../feature-libraries";
+
+import {
+    Transposed as T,
+    toDelta,
+    sequenceChangeRebaser,
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { noFailure, OutputType, verifyChangeRebaser } from "../../rebase";
 import { Delta, FieldKey } from "../../tree";

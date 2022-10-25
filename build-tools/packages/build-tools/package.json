@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.4.8000",
+  "version": "0.5.0",
   "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -49,11 +49,11 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
-    "tsc": "tsc -b"
+    "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.8000",
-    "@fluidframework/bundle-size-tools": "^0.4.8000",
+    "@fluid-tools/version-tools": "^0.5.0",
+    "@fluidframework/bundle-size-tools": "^0.5.0",
     "async": "^3.2.0",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
