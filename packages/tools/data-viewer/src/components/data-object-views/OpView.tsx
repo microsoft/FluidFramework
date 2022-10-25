@@ -42,10 +42,9 @@ export function OpView(props: OpViewProps): React.ReactElement {
     const doesOpBelongToMe = message.clientId === clientId;
 
     const header = (
-        <Stack horizontal
-        tokens={{ childrenGap: 5 }}>
+        <Stack horizontal tokens={{ childrenGap: 5 }}>
             <StackItem>
-            <b>Op #{message.sequenceNumber}</b>:{" "}
+                <b>Op #{message.sequenceNumber}</b>:{" "}
                 {wasOpToday ? opTimeStamp.toTimeString() : opTimeStamp.toDateString()}
             </StackItem>
             <StackItem>
