@@ -6,7 +6,7 @@
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid";
-import { ISpacesItemEntry, spacesItemMap } from "./dataObjectRegistry";
+import { IDataObjectGridItemEntry, dataObjectRegistry } from "./dataObjectRegistry";
 import { DataObjectGridToolbar } from "./toolbar";
 
 import "react-grid-layout/css/styles.css";
@@ -85,7 +85,7 @@ const ItemView: React.FC<IItemViewProps> =
 interface IDataObjectGridViewProps {
     getUrlForItem: (itemId: string) => string;
     model: IDataObjectGrid;
-    registry: Map<string, ISpacesItemEntry>;
+    registry: Map<string, IDataObjectGridItemEntry>;
     editable: boolean;
 }
 
@@ -191,13 +191,13 @@ export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (pro
                 editable={editable}
                 setEditable={setEditable}
                 addItem={(type: string) => { model.addItem(type).catch(console.error); }}
-                registry={spacesItemMap}
+                registry={dataObjectRegistry}
             />
             <DataObjectGridView
                 // TODO: Maybe can just pass in the views rather than making it go fetch
                 getUrlForItem={getDirectUrl}
                 model={model}
-                registry={spacesItemMap}
+                registry={dataObjectRegistry}
                 editable={editable}
             />
         </div>

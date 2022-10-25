@@ -78,7 +78,7 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 /**
  * A registry entry, with extra metadata.
  */
-export interface ISpacesItemEntry<T = any> {
+export interface IDataObjectGridItemEntry<T = any> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
     // This might be done by integrating these items with the Spaces subcomponent registry?
     create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
@@ -95,42 +95,42 @@ export interface IToolbarOption {
     fabricIconName: string;
 }
 
-const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const clickerItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
     getView: getClickerView,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const codemirrorItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(codeMirrorFactory),
     getView: getCodeMirrorView,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const textboxItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(CollaborativeText.getFactory()),
     getView: getCollaborativeTextView,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const prosemirrorItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(proseMirrorFactory),
     getView: getProseMirrorView,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-const sliderCoordinateItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const sliderCoordinateItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(Coordinate.getFactory()),
     getView: getSliderCoordinateView,
     friendlyName: "Coordinate",
     fabricIconName: "NumberSymbol",
 };
 
-export const spacesItemMap = new Map<string, ISpacesItemEntry>([
+export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry>([
     ["clicker", clickerItemEntry],
     ["codemirror", codemirrorItemEntry],
     ["textbox", textboxItemEntry],

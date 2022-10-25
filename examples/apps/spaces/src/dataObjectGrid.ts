@@ -16,7 +16,7 @@ import { v4 as uuid } from "uuid";
 
 import {
     registryEntries,
-    spacesItemMap,
+    dataObjectRegistry,
 } from "./dataObjectRegistry";
 
 export interface IDataObjectGrid extends EventEmitter {
@@ -78,7 +78,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
     };
 
     public readonly addItem = async (type: string) => {
-        const itemMapEntry = spacesItemMap.get(type);
+        const itemMapEntry = dataObjectRegistry.get(type);
         if (itemMapEntry === undefined) {
             throw new Error("Unknown item, can't add");
         }
@@ -117,7 +117,7 @@ export class DataObjectGrid extends DataObject implements IDataObjectGrid {
     };
 
     public readonly getViewForItem = async (item: IDataObjectGridItem) => {
-        const registryEntry = spacesItemMap.get(item.type);
+        const registryEntry = dataObjectRegistry.get(item.type);
 
         if (registryEntry === undefined) {
             // Probably would be ok to return undefined instead

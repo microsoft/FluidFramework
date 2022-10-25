@@ -10,7 +10,7 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
-    ISpacesItemEntry,
+    IDataObjectGridItemEntry,
     IToolbarOption,
 } from "./dataObjectRegistry";
 import "./toolbar.css";
@@ -67,7 +67,7 @@ interface IDataObjectGridToolbarProps {
     editable: boolean;
     setEditable: (editable: boolean) => void;
     addItem: (type: string) => void;
-    registry: Map<string, ISpacesItemEntry>;
+    registry: Map<string, IDataObjectGridItemEntry>;
 }
 
 export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
