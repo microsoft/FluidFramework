@@ -18,7 +18,6 @@ import {
     VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
-    isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
@@ -90,9 +89,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         const context = await this.getContext();
         const bumpType: VersionBumpType | undefined = flags.bumpType;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const shouldInstall: boolean = flags.install && !flags.skipChecks;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
         if (args.package_or_release_group === undefined) {
@@ -169,16 +166,19 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         this.logHr();
         this.log("");
 
-        const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-            type: "confirm",
-            name: "proceed",
-            message: `Proceed with the bump?`,
-        };
+        // If a bump type was provided, ask the user to confirm. This is skipped when --exact is used.
+        if (bumpType !== undefined) {
+            const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
+                type: "confirm",
+                name: "proceed",
+                message: `Proceed with the bump?`,
+            };
 
-        const answers = await inquirer.prompt(confirmIntegratedQuestion);
-        if (answers.proceed !== true) {
-            this.info(`Cancelled.`);
-            this.exit(0);
+            const answers = await inquirer.prompt(confirmIntegratedQuestion);
+            if (answers.proceed !== true) {
+                this.info(`Cancelled.`);
+                this.exit(0);
+            }
         }
 
         const logs = await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme);
