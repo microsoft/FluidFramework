@@ -151,7 +151,7 @@ export class MatrixUndoProvider<T> {
         if (this.consumer !== undefined) {
             this.consumer.pushToCurrentOperation({
                 revert: () => {
-                    // let containingSegment!: PermutationSegment;
+                    let containingSegment!: PermutationSegment;
                     let rowsContainingOffset: number;
                     let colsContainingOffset: number;
                     this.rows.walkAllSegments(
@@ -165,7 +165,7 @@ export class MatrixUndoProvider<T> {
                             const end = start + cachedLength;
 
                             if (start <= rowsRefSeq && rowsRefSeq < end) {
-                                // containingSegment = segment as PermutationSegment;
+                                containingSegment = segment as PermutationSegment;
                                 rowsContainingOffset = rowsRefSeq - start;
                                 return false;
                             }
@@ -183,7 +183,7 @@ export class MatrixUndoProvider<T> {
                             const end = start + cachedLength;
 
                             if (start <= colsRefSeq && colsRefSeq < end) {
-                                // containingSegment = segment as PermutationSegment;
+                                containingSegment = segment as PermutationSegment;
                                 colsContainingOffset = colsRefSeq - start;
                                 return false;
                             }
