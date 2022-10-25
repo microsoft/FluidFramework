@@ -14,9 +14,8 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
@@ -346,29 +345,5 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedCell.get(), "old");
-    });
-
-    itExpects("Closes container when rollback fails",
-    [
-        {
-            eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "RollbackError: rollback not supported",
-            errorType: ContainerErrorType.dataProcessingError,
-        },
-    ],
-    async () => {
-        let error: Error | undefined;
-        try {
-            containerRuntime.orderSequentially(() => {
-                sharedCell.set(0);
-                throw new Error(errorMessage);
-            });
-        } catch (err) {
-            error = err as Error;
-        }
-
-        assert.notEqual(error, undefined, "No error");
-        assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-        assert.equal(containerRuntime.disposed, true);
     });
 });
