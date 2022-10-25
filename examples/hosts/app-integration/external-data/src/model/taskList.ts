@@ -110,14 +110,14 @@ export class TaskList extends DataObject implements ITaskList {
         await Promise.all(updateTaskPs);
     }
 
-    public async saveChanges() {
+    public readonly saveChanges = async () => {
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
         return externalDataSource.writeData(stringDataToWrite);
-    }
+    };
 
     protected async initializingFirstTime(): Promise<void> {
         await this.importExternalData();

@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { externalDataSource } from "../externalData";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDebugViewProps {
@@ -38,7 +39,8 @@ interface IControlsViewProps {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     return (
         <div style={{ margin: "10px 0" }}>
-            Controls eventually
+            <button onClick={ externalDataSource.debugResetData }>Reset external data</button>
+            More controls eventually
         </div>
     );
 };

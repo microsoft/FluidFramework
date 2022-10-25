@@ -20,6 +20,14 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
     });
 }
 
+const startingExternalData =
+`12:Alpha:1
+34:Beta:2
+56:Gamma:3
+78:Delta:4`;
+
+const localStorageKey = "fake-external-data";
+
 export interface IExternalDataSourceEvents extends IEvent {
     (event: "dataWritten", listener: (data: string) => void);
 }
@@ -31,28 +39,34 @@ export interface IExternalDataSourceEvents extends IEvent {
  * more-realistic cases there's not an expectation that the data source pushes updates or anything.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-    private externalTaskData: string;
-
-    // TODO: Maybe put this in localStorage so multiple clients can reference the same?
     public constructor() {
         super();
-        this.externalTaskData =
-`12:Alpha:1
-34:Beta:2
-56:Gamma:3
-78:Delta:4`;
+        if (window.localStorage.getItem(localStorageKey) === null) {
+            this.debugResetData();
+        }
     }
 
     public async fetchData(): Promise<string> {
-        return this.externalTaskData;
+        const currentExternalData = window.localStorage.getItem(localStorageKey);
+        if (currentExternalData === null) {
+            throw new Error("External data should not be null, something went wrong");
+        }
+        return currentExternalData;
     }
 
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
-        this.externalTaskData = data;
+        window.localStorage.setItem(localStorageKey, data);
         // Emit for debug views to update
         this.emit("dataWritten", data);
     }
+
+    /**
+     * Debug API for demo purposes, not really something we'd expect to find on a real external data source.
+     */
+    public readonly debugResetData = (): void => {
+        window.localStorage.setItem(localStorageKey, startingExternalData);
+    };
 }
 
 export const externalDataSource = new ExternalDataSource();

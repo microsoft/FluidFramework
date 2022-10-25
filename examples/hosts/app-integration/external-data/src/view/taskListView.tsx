@@ -86,7 +86,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         // TODO: Conflict UI
         <div style={{ whiteSpace: "nowrap" }}>
             { taskViews }
-            <button>Save changes</button>
+            <button onClick={ taskList.saveChanges }>Save changes</button>
         </div>
     );
 };

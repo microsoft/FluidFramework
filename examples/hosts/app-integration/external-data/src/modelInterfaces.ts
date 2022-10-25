@@ -35,6 +35,8 @@ export interface ITaskList extends EventEmitter {
     readonly getTasks: () => ITask[];
     readonly getTask: (id: string) => ITask | undefined;
 
+    readonly saveChanges: () => Promise<void>;
+
     /**
      * The taskAdded/taskRemoved event will fire whenever an task is added/removed, either locally or remotely.
      */
