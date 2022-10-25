@@ -297,12 +297,14 @@ stages:
         #     artifactName: 'perf-test-outputs_execution-time'
         #     condition: succeededOrFailed()
 
-        - task: Npm@1
-          displayName: 'Run performance test - memory usage'
+        - task: Bash@3
+          displayName: 'Run memory performance test'
           inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run test:memory-profiling:report'
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            script: |
+              npm i;
+              npm run test:memory-profiling:report;
 
         - task: Npm@1
           displayName: 'Consolidate output files - memory usage'
