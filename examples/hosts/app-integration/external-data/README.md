@@ -1,4 +1,4 @@
-# @fluid-example/app-integration-work-tracking
+# @fluid-example/app-integration-external-data
 
 This example experiments with an approach for migrating data from an existing Fluid container into a new Fluid container which may have a different schema or code running on it.
 
