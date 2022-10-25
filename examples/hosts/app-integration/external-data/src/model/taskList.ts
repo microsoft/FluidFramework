@@ -8,9 +8,8 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import { externalDataSource } from "../externalData";
+import { externalDataSource, parseStringData } from "../externalData";
 import type { ITask, ITaskList } from "../modelInterfaces";
-import { parseStringData } from "../dataTransform";
 
 class Task extends EventEmitter implements ITask {
     public get id() {
