@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Icon, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import ReactJson from "react-json-view";
 
@@ -42,11 +42,15 @@ export function OpView(props: OpViewProps): React.ReactElement {
     const doesOpBelongToMe = message.clientId === clientId;
 
     const header = (
-        <Stack>
-            <div>
-                <b>Op #{message.sequenceNumber}</b>:{" "}
+        <Stack horizontal
+        tokens={{ childrenGap: 5 }}>
+            <StackItem>
+            <b>Op #{message.sequenceNumber}</b>:{" "}
                 {wasOpToday ? opTimeStamp.toTimeString() : opTimeStamp.toDateString()}
-            </div>
+            </StackItem>
+            <StackItem>
+                <Icon iconName={doesOpBelongToMe ? "Upload" : "Download"} />
+            </StackItem>
         </Stack>
     );
 
