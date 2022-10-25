@@ -14,10 +14,10 @@ import type { ITaskList, IAppModel } from "../modelInterfaces";
 import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 
-export const taskListId = "default-task-list";
+const taskListId = "task-list";
 
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    constructor() {
+    public constructor() {
         super(
             new Map([
                 TaskListInstantiationFactory.registryEntry,
@@ -42,7 +42,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
-     protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
         const taskList = await requestFluidObject<ITaskList>(
             await runtime.getRootDataStore(taskListId),
             "",

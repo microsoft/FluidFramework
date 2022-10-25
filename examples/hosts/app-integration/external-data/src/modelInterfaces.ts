@@ -11,12 +11,11 @@ import { SharedString } from "@fluidframework/sequence";
 export interface IAppModelEvents extends IEvent { }
 
 /**
- * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
- * for the application to run.
+ * For this simple demo, our app model only needs a single member taskList.
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
     /**
-     * An task tracker list.
+     * A task tracker list.
      */
     readonly taskList: ITaskList;
 }
@@ -37,7 +36,7 @@ export interface ITaskList extends EventEmitter {
     readonly getTask: (id: string) => ITask | undefined;
 
     /**
-     * The listChanged event will fire whenever an task is added/removed, either locally or remotely.
+     * The taskAdded/taskRemoved event will fire whenever an task is added/removed, either locally or remotely.
      */
     on(event: "taskAdded" | "taskDeleted", listener: (task: ITask) => void): this;
 }

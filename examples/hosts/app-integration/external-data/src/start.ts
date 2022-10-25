@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import type { IAppModel } from "./modelInterfaces";
-import { DebugView, TaskListAppView } from "./view";
+import { DebugView, AppView } from "./view";
 import { TaskListContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string) => {
@@ -24,11 +24,12 @@ const render = (model: IAppModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
-        React.createElement(TaskListAppView, { model }),
+        React.createElement(AppView, { model }),
         appDiv,
     );
 
-    // The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
+    // The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
+    // would be some external system or arbitrarily occurring.
     const debugDiv = document.getElementById("debug") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
@@ -46,8 +47,9 @@ async function start(): Promise<void> {
     let model: IAppModel;
 
     if (location.hash.length === 0) {
-        // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
-        // Normally we would create with the most-recent version.
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
         const createResponse = await tinyliciousModelLoader.createDetached("one");
         model = createResponse.model;
 
