@@ -2,14 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IOverflowSetItemProps,
-    IStackItemStyles,
-    IconButton,
-    Link,
-    OverflowSet,
-    Stack,
-} from "@fluentui/react";
+import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
 import React from "react";
 
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
@@ -22,12 +15,6 @@ import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
-
-const sessionDataViewStyles: IStackItemStyles = {
-    root: {
-        height: "100%",
-    },
-};
 
 /**
  * {@link SessionDataView} input props.
@@ -160,7 +147,14 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
     }
 
     return (
-        <Stack tokens={{ childrenGap: 25 }} styles={sessionDataViewStyles}>
+        <Stack
+            tokens={{ childrenGap: 25 }}
+            styles={{
+                root: {
+                    height: "100%",
+                },
+            }}
+        >
             <ContainerSummaryView
                 container={container}
                 containerId={containerId}
