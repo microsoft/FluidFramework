@@ -62,7 +62,7 @@ export class EditManager<
      * @param id - The ID for the session associated with this `EditManager` instance.
      */
     public initSessionId(id: SessionId): void {
-        assert(this.localSessionId === undefined, "The session ID should only be set once");
+        assert(this.localSessionId === undefined, 0x424 /* The session ID should only be set once */);
         this.localSessionId = id;
     }
 
@@ -83,7 +83,7 @@ export class EditManager<
         // rebasing trunk changes over the inverse of trunk changes.
         assert(
             this.localChanges.length === 0,
-            "Clients with local changes cannot be used to generate summaries",
+            0x425 /* Clients with local changes cannot be used to generate summaries */,
         );
         return { trunk: this.trunk, branches: this.branches };
     }
@@ -111,7 +111,7 @@ export class EditManager<
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
         assert(
             this.localSessionId !== undefined,
-            "The session ID should be set before processing changes",
+            0x426 /* The session ID should be set before processing changes */,
         );
 
         if (this.trunk.length > 0) {
@@ -163,7 +163,7 @@ export class EditManager<
     public addLocalChange(change: TChangeset): Delta.Root {
         assert(
             this.localSessionId !== undefined,
-            "The session ID should be set before processing changes",
+            0x427 /* The session ID should be set before processing changes */,
         );
 
         this.localChanges.push(change);
