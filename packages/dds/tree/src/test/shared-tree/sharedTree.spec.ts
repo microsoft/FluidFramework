@@ -11,6 +11,7 @@ import {
     valueSymbol,
     getSchemaString,
     getTypeSymbol,
+    emptyField,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
@@ -26,7 +27,8 @@ import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData, ValueSchema } from "../../schema-stored";
+import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
@@ -458,6 +460,58 @@ describe("SharedTree", () => {
         tree1.context.free();
         tree2.context.free();
     });
+
+    describe("SharedTreeNodeHelper", () => {
+
+        const int32Schema = namedTreeSchema({
+            name: brand("Int32"),
+            extraLocalFields: emptyField,
+            value: ValueSchema.Number,
+        });
+
+        const testObjectSchema = namedTreeSchema({
+            name: brand("TestSharedTree"),
+            localFields: {
+                testField: fieldSchema(FieldKinds.value, [int32Schema.name]),
+            },
+            extraLocalFields: emptyField,
+        });
+
+        const schemaData: SchemaData = {
+            treeSchema: new Map([
+                [int32Schema.name, int32Schema],
+            ]),
+            globalFieldSchema: new Map([
+                [rootFieldKey, fieldSchema(FieldKinds.value, [testObjectSchema.name])],
+            ]),
+        };
+
+        const jsonableTree: JsonableTree = {
+            type: testObjectSchema.name,
+            fields: {
+                testField: [{ type: int32Schema.name, value: 10 }]
+            }
+        }
+
+        it("getFieldValue()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+            const nodeValue = treeNode.getFieldValue(brand('testField')) as number;
+            assert.equal(nodeValue, 10);
+        });
+
+    });
+
+
+
+
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
