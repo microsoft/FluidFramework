@@ -172,7 +172,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
                     onClick={tryConnect}
                     menuIconProps={{ iconName: "PlugConnected" }}
                     aria-describedby={connectButtonTooltipId}
-                ></IconButton>
+                />
             </TooltipHost>
         ) : (
             <TooltipHost content="Disconnect" id={disconnectButtonTooltipId}>
@@ -180,7 +180,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
                     onClick={forceDisconnect}
                     menuIconProps={{ iconName: "PlugDisconnected" }}
                     aria-describedby={disconnectButtonTooltipId}
-                ></IconButton>
+                />
             </TooltipHost>
         );
 
@@ -190,7 +190,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
                 onClick={disposeContainer}
                 menuIconProps={{ iconName: "Delete" }}
                 aria-describedby={disposeContainerButtonTooltipId}
-            ></IconButton>
+            />
         </TooltipHost>
     );
 

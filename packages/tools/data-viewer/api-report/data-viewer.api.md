@@ -42,6 +42,15 @@ export interface ContainerStateViewProps {
 }
 
 // @public
+export function CounterWidget(props: CounterWidgetProps): React_2.ReactElement;
+
+// @public
+export interface CounterWidgetProps {
+    // (undocumented)
+    counter: SharedCounter;
+}
+
+// @public
 export const defaultSharedObjectRenderers: RendererOptions;
 
 // @public (undocumented)

@@ -4,6 +4,7 @@
  */
 
 export * from "./data-object-views";
+export * from "./widgets";
 export * from "./AudienceView";
 export * from "./ContainerDataView";
 export * from "./SessionDataView";
