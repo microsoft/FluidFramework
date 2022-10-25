@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { SharedString } from "@fluidframework/sequence";
@@ -37,10 +37,10 @@ export function SharedStringView(props: SharedStringViewProps): React.ReactEleme
 
     return (
         <Stack>
-            <Stack.Item>
+            <StackItem>
                 <b>SharedString</b>
-            </Stack.Item>
-            <Stack.Item>{text}</Stack.Item>
+            </StackItem>
+            <StackItem>{text}</StackItem>
         </Stack>
     );
 }

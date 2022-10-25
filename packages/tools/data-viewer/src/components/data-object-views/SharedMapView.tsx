@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { SharedMap } from "@fluidframework/map";
 
 import { RenderChild } from "../../RendererOptions";
-import { Accordion } from "../Accordion";
+import { Accordion } from "../utility-components";
 
 /**
  * {@link SharedMapView} input props.
@@ -44,12 +44,12 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 
     return (
         <Stack>
-            <Stack.Item>
+            <StackItem>
                 <b>SharedMap</b>
-            </Stack.Item>
-            <Stack.Item>Entry count: {entries.length}</Stack.Item>
+            </StackItem>
+            <StackItem>Entry count: {entries.length}</StackItem>
             {entries.map(([key, value]) => (
-                <Stack.Item key={`map-entry-${key}`}>
+                <StackItem key={`map-entry-${key}`}>
                     <Accordion
                         header={
                             <div>
@@ -59,7 +59,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
                     >
                         {renderChild(value)}
                     </Accordion>
-                </Stack.Item>
+                </StackItem>
             ))}
         </Stack>
     );

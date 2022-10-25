@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Spinner, Stack } from "@fluentui/react";
+import { Spinner, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { FluidObject, IFluidHandle, IProvideFluidHandle } from "@fluidframework/core-interfaces";
@@ -36,10 +36,27 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
         );
     }
 
+    if (data === null) {
+        return <div>NULL</div>;
+    }
+
     // If the underlying data was not a primitive, and it wasn't a Fluid handle, it must be serializable data.
     // But that serializable data might contain Fluid handles as descendents, so we can't just
     // display json or something.
-    return <Stack>TODO: raw data view</Stack>;
+    const objectProperties = Object.entries(data);
+
+    return (
+        <Stack>
+            {objectProperties.map(([key, value]) => (
+                <StackItem key={key}>
+                    <DynamicDataView
+                        data={value as unknown}
+                        sharedObjectRenderers={sharedObjectRenderers}
+                    />
+                </StackItem>
+            ))}
+        </Stack>
+    );
 }
 
 /**
@@ -54,10 +71,10 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
     const { fluidObjectHandle, sharedObjectRenderers } = props;
 
     // eslint-disable-next-line unicorn/no-useless-undefined
-    const [resolvedData, updatedResolvedData] = React.useState<FluidObject | undefined>(undefined);
+    const [resolvedData, setResolvedData] = React.useState<FluidObject | undefined>(undefined);
 
     React.useEffect(() => {
-        fluidObjectHandle.get().then(updatedResolvedData, (error) => {
+        fluidObjectHandle.get().then(setResolvedData, (error) => {
             throw error;
         });
     }, [resolvedData]);
@@ -70,9 +87,9 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
     if (resolvedData instanceof SharedObjectCore) {
         return sharedObjectRenderers[resolvedData.attributes.type] === undefined ? (
             <Stack>
-                <Stack.Item>
+                <StackItem>
                     No renderer provided for shared object type "{resolvedData.attributes.type}"
-                </Stack.Item>
+                </StackItem>
             </Stack>
         ) : (
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -97,9 +114,9 @@ export function RecordDataView(props: RecordDataViewProps): React.ReactElement {
     return (
         <Stack>
             {entries.map(([key, value]) => (
-                <Stack.Item key={key}>
+                <StackItem key={key}>
                     <DynamicDataView data={value} sharedObjectRenderers={sharedObjectRenderers} />
-                </Stack.Item>
+                </StackItem>
             ))}
         </Stack>
     );

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { SharedCounter } from "@fluidframework/counter";
@@ -36,10 +36,10 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 
     return (
         <Stack>
-            <Stack.Item>
+            <StackItem>
                 <b>SharedCounter</b>
-            </Stack.Item>
-            <Stack.Item>Value: {value}</Stack.Item>
+            </StackItem>
+            <StackItem>Value: {value}</StackItem>
         </Stack>
     );
 }

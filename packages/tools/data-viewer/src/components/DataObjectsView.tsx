@@ -7,14 +7,31 @@ import React from "react";
 import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
 import { RendererOptions } from "../RendererOptions";
-import { Accordion } from "./Accordion";
 import { FluidObjectView } from "./data-object-views";
+import { Accordion } from "./utility-components";
 
+/**
+ * {@link DataObjectsView} input props.
+ */
 export interface DataObjectsViewProps {
+    /**
+     * The {@link Container}'s {@link Container.initialObjects} to be displayed.
+     */
     initialObjects: LoadableObjectRecord;
+
+    /**
+     * {@inheritDoc RendererOptions}
+     */
     sharedObjectRenderers: RendererOptions;
 }
 
+/**
+ * View containing a drop-down style view of {@link DataObjectsViewProps.initialObjects}.
+ *
+ * @remarks
+ *
+ * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.sharedObjectRenderers}.
+ */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
     const { initialObjects, sharedObjectRenderers } = props;
 

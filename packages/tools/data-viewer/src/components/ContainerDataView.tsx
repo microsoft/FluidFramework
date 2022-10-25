@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IStackItemStyles, IconButton, Stack, TooltipHost } from "@fluentui/react";
+import { IStackItemStyles, IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import React, { useEffect, useState } from "react";
 
@@ -100,35 +100,35 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             resolvedUrl === undefined ? (
                 <></>
             ) : (
-                <Stack.Item>
+                <StackItem>
                     <b>Resolved URL: </b>
                     {resolvedUrlToString(resolvedUrl)}
-                </Stack.Item>
+                </StackItem>
             );
 
         innerView = (
             <Stack>
-                <Stack.Item>
+                <StackItem>
                     <b>Attach state: </b>
                     {attachState}
-                </Stack.Item>
-                <Stack.Item>
+                </StackItem>
+                <StackItem>
                     <b>Connection state: </b>
                     {connectionStateToString(connectionState)}
-                </Stack.Item>
+                </StackItem>
                 {maybeResolvedUrlView}
-                <Stack.Item>
+                <StackItem>
                     <b>Local edit state: </b>
                     {isDirty ? "Pending local edits" : "No pending local edits"}
-                </Stack.Item>
-                <Stack.Item align="end">
+                </StackItem>
+                <StackItem align="end">
                     <ActionsBar
                         connectionState={connectionState}
                         tryConnect={(): void => container.connect()}
                         forceDisconnect={(): void => container.disconnect()}
                         disposeContainer={(): void => container.dispose()}
                     />
-                </Stack.Item>
+                </StackItem>
             </Stack>
         );
     }
@@ -202,8 +202,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 
     return (
         <Stack horizontal>
-            <Stack.Item styles={itemStyles}>{changeConnectionStateButton}</Stack.Item>
-            <Stack.Item styles={itemStyles}>{disposeContainerButton}</Stack.Item>
+            <StackItem styles={itemStyles}>{changeConnectionStateButton}</StackItem>
+            <StackItem styles={itemStyles}>{disposeContainerButton}</StackItem>
         </Stack>
     );
 }

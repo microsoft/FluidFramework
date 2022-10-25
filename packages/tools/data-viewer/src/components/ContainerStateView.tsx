@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Spinner, Stack } from "@fluentui/react";
+import { Spinner, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { AttachState } from "@fluidframework/container-definitions";
@@ -65,9 +65,9 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
     return (
         <Stack horizontal>
             {children.map((child, index) => (
-                <Stack.Item key={`state-child-${index}`} styles={{ root: { paddingRight: 5 } }}>
+                <StackItem key={`state-child-${index}`} styles={{ root: { paddingRight: 5 } }}>
                     {child}
-                </Stack.Item>
+                </StackItem>
             ))}
         </Stack>
     );

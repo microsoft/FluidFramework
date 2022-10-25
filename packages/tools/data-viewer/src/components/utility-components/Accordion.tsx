@@ -9,6 +9,7 @@ import {
     IStackStyles,
     IconButton,
     Stack,
+    StackItem,
     initializeIcons,
     mergeStyleSets,
 } from "@fluentui/react";
@@ -71,25 +72,25 @@ export function Accordion(props: AccordionProps): React.ReactElement {
 
     return (
         <Stack horizontal={false} styles={accordionStyles}>
-            <Stack.Item styles={mergeStyleSets(accordionHeaderStyles, headerStyles)}>
+            <StackItem styles={mergeStyleSets(accordionHeaderStyles, headerStyles)}>
                 <Stack horizontal={true} onClick={(): void => setCollapsed(!collapsed)}>
-                    <Stack.Item>
+                    <StackItem>
                         <IconButton
                             iconProps={{
                                 iconName: collapsed ? "ChevronRight" : "ChevronDown",
                             }}
                         />
-                    </Stack.Item>
-                    <Stack.Item align="center">{header}</Stack.Item>
+                    </StackItem>
+                    <StackItem align="center">{header}</StackItem>
                 </Stack>
-            </Stack.Item>
+            </StackItem>
             {!collapsed && (
-                <Stack.Item
+                <StackItem
                     className={AnimationClassNames.slideDownIn20}
                     styles={mergeStyleSets(contentStyles, accordionConentStyles)}
                 >
                     {children}
-                </Stack.Item>
+                </StackItem>
             )}
         </Stack>
     );

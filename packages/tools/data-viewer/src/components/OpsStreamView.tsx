@@ -7,14 +7,13 @@ import React from "react";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { OpView } from "./OpView";
+import { OpView } from "./data-object-views";
 
 // TODOs:
 // - Show pending local ops (styled differently)
 //   - Set styling back to default once acknowledged.
-// - Differentiate my ops from others' ops
-// - Option to hide ops prior to snapshot
 // - Show snapshot
+// - Option to hide ops prior to snapshot
 
 /**
  * {@link OpsStreamView} input props.

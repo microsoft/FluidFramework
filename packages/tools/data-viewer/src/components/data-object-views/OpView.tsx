@@ -8,7 +8,7 @@ import ReactJson from "react-json-view";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { Accordion } from "./Accordion";
+import { Accordion } from "../utility-components";
 
 // TODOs:
 // - Copy raw data to clipboard button (outside of json viewer)
