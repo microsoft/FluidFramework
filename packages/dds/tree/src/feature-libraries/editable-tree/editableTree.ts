@@ -199,9 +199,9 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
 /**
  * This is a base class for `ProxyTarget` and `SequenceProxyTarget`, which uniformly handles cursors and anchors.
  */
-export class BaseProxyTarget {
+export abstract class BaseProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
-    private anchor?: Anchor;
+    private anchor?: Anchor | FieldAnchor;
 
     constructor(
         public readonly context: ProxyContext,
@@ -221,19 +221,50 @@ export class BaseProxyTarget {
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
-            this.context.forest.anchors.forget(this.anchor);
+            if (this.isFieldProxyTarget) {
+                const fieldAnchor = this.anchor as FieldAnchor;
+                if (fieldAnchor.parent !== undefined) {
+                    this.context.forest.anchors.forget(fieldAnchor.parent);
+                }
+            } else {
+                this.context.forest.anchors.forget(this.anchor as Anchor);
+            }
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
         }
     }
 
-    public getAnchor(): Anchor | FieldAnchor {
+    public getNodeAnchor(): Anchor {
         if (this.anchor === undefined) {
             this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
         }
-        return this.anchor;
+        return this.anchor as Anchor;
     }
+
+    public getFieldAnchor(): FieldAnchor {
+        if (this.anchor === undefined) {
+            if (this.fieldKey === rootFieldKeySymbol) {
+                this.anchor = {
+                    fieldKey: this.fieldKey,
+                    parent: undefined,
+                };
+            } else {
+                this.lazyCursor.exitField();
+                this.anchor = {
+                    fieldKey: this.fieldKey,
+                    parent: this.lazyCursor.buildAnchor(),
+                };
+                this.lazyCursor.enterField(this.fieldKey);
+                this.context.withAnchors.add(this);
+            }
+        }
+        return this.anchor as FieldAnchor;
+    }
+
+    abstract getAnchor(): Anchor | FieldAnchor;
+
+    abstract get isFieldProxyTarget(): boolean;
 
     public prepareForEdit(): void {
         this.getAnchor();
@@ -247,12 +278,12 @@ export class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = isFieldProxyTarget(this)
+            const result = this.isFieldProxyTarget
                 ? this.context.forest.tryMoveCursorToField(
-                      this.getAnchor() as FieldAnchor,
+                      this.anchor as FieldAnchor,
                       this.lazyCursor,
                   )
-                : this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
+                : this.context.forest.tryMoveCursorToNode(this.anchor as Anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
@@ -271,6 +302,10 @@ class NodeProxyTarget extends BaseProxyTarget {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor, fieldKey: FieldKey) {
         assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
         super(context, cursor, fieldKey);
+    }
+
+    get isFieldProxyTarget(): false {
+        return false;
     }
 
     public getType(
@@ -371,7 +406,7 @@ class NodeProxyTarget extends BaseProxyTarget {
     }
 
     public getAnchor(): Anchor {
-        return super.getAnchor() as Anchor;
+        return super.getNodeAnchor();
     }
 }
 
@@ -526,20 +561,12 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         this.fieldSchema = fieldSchema;
     }
 
+    get isFieldProxyTarget(): true {
+        return true;
+    }
+
     public getAnchor(): FieldAnchor {
-        if (this.fieldKey === rootFieldKeySymbol) {
-            return {
-                fieldKey: this.fieldKey,
-                parent: undefined,
-            };
-        }
-        this.cursor.exitField();
-        const parent = super.getAnchor() as Anchor;
-        this.cursor.enterField(this.primaryField ?? this.fieldKey);
-        return {
-            fieldKey: this.fieldKey,
-            parent,
-        };
+        return super.getFieldAnchor();
     }
 
     readonly [index: number]: UnwrappedEditableTree;
@@ -712,7 +739,7 @@ function inProxyOrUnwrap(
     unwrap: boolean,
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
-    if (unwrap && !isFieldProxyTarget(target)) {
+    if (unwrap && !target.isFieldProxyTarget) {
         const nodeType = target.getType(undefined, false) as NamedTreeSchema;
         if (isPrimitive(nodeType)) {
             const nodeValue = target.cursor.value;
@@ -738,7 +765,7 @@ function inProxyOrUnwrap(
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
     }
-    if (isFieldProxyTarget(target)) {
+    if (target.isFieldProxyTarget) {
         return adaptWithProxy(target, fieldProxyHandler);
     }
     return adaptWithProxy(target, nodeProxyHandler);
@@ -812,15 +839,7 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
  */
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
     return (
-        typeof field === "object" && isFieldProxyTarget(field[proxyTargetSymbol] as BaseProxyTarget)
+        typeof field === "object" &&
+        (field[proxyTargetSymbol] as BaseProxyTarget).isFieldProxyTarget
     );
-}
-
-/**
- * Checks the type of a proxy target.
- */
-export function isFieldProxyTarget(
-    target: BaseProxyTarget | undefined,
-): target is FieldProxyTarget {
-    return target !== undefined && target instanceof FieldProxyTarget;
 }
