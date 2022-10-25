@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IResponse } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
     ISequencedDocumentMessage,
@@ -35,7 +35,7 @@ import {
     responseToException,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ChildLogger, generateErrorWithStack, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
@@ -425,6 +425,21 @@ export class DataStores implements IDisposable {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
             throw responseToException(create404Response(request), request);
+        }
+
+        if (context.tombstoned) {
+            // The requested data store is tombstoned by gc. Throw a 404 response exception.
+            const request = { url: id };
+            const urlNoQuery = request.url.split("?")[0];
+            const errWithStack = generateErrorWithStack();
+
+            const response: IResponse = {
+                mimeType: "text/plain",
+                status: 404,
+                value: `Datastore tombstoned: ${urlNoQuery}`,
+                get stack() { return errWithStack.stack; },
+            };
+            throw responseToException(response, request);
         }
 
         return context;

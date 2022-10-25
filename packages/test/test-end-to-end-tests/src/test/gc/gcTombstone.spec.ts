@@ -150,7 +150,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // Modifying a testDataObject substantiated from the request pattern should fail!
         assert.throws(() => testDataObject2._root.set("send", "op"),
             (error) => {
-                const correctErrorType = error.errorType = "dataCorruptionError";
+                const correctErrorType = error.errorType === "dataCorruptionError";
                 const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
                 return correctErrorType && correctErrorMessage;
             },
@@ -197,7 +197,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         // Sending an op from a datastore substantiated from the request pattern should fail!
         assert.throws(() => testDataObject2._root.set("send", "op"),
             (error) => {
-                const correctErrorType = error.errorType = "dataCorruptionError";
+                const correctErrorType = error.errorType === "dataCorruptionError";
                 const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
                 return correctErrorType && correctErrorMessage;
             },
@@ -308,5 +308,94 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert(closeError !== undefined, `Expecting an error!`);
         assert(closeError.errorType === "dataCorruptionError");
         assert(closeError.message === "Context is tombstoned: Call site -  process!");
+    });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Container loaded after sweep timeout expires is unable to load tombstoned datastores",
+    [
+        {
+            eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+        },
+    ],
+    async () => {
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
+
+        // Wait some time, the datastore should not be sweep ready after this wait
+        await delay(sweepTimeoutMs);
+
+        // Load a new container and summarizer based on the latest summary, summarize
+        const {
+            container: summarizingContainer2,
+            summarizer: summarizer2,
+        } = await loadSummarizerAndContainer(summaryVersion);
+
+        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+        // production application - causes an inactive loaded and changed error
+        await assert.doesNotReject(
+            async () => requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId),
+            `Should be able to still request unreferenced datastores`,
+        );
+
+        // Send an op to update the currentTimestampMs to now
+        const mainDataStore2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, "default");
+        mainDataStore2._root.set("send a", "op");
+
+        // The datastore should be tombstoned now
+        await summarize(summarizer2);
+
+        // Sending an op from a datastore substantiated from the request pattern should fail!
+        await assert.rejects(async () => requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId),
+            (error) => {
+                const correctErrorType = error.code === 404;
+                const correctErrorMessage = error.message.startsWith(`Datastore tombstoned:`) === true;
+                return correctErrorType && correctErrorMessage;
+            },
+            `Should not be able to retrieve a tombstoned datastore.`);
+    });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Container loaded before sweep timeout expires is unable to load tombstoned datastores",
+    [
+        {
+            eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded",
+        },
+    ],
+    async () => {
+        const { testDataObjectId, summaryVersion } = await getUnreferencedDataStoreIdAndSummaryVersion();
+
+        // Wait some time, the datastore should not be sweep ready after this wait
+        await delay(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+
+        // Load a new container and summarizer based on the latest summary, summarize
+        const {
+            container: summarizingContainer2,
+            summarizer: summarizer2,
+        } = await loadSummarizerAndContainer(summaryVersion);
+
+        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+        // production application - causes an inactive loaded and changed error
+        await assert.doesNotReject(
+            async () => requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId),
+            `Should be able to still request unreferenced datastores`,
+        );
+
+        // Wait enough time so that the datastore is sweep ready
+        await delay(waitLessThanSweepTimeoutMs);
+
+        // Send an op to update the currentTimestampMs to now
+        const mainDataStore2 = await requestFluidObject<ITestDataObject>(summarizingContainer2, "default");
+        mainDataStore2._root.set("send a", "op");
+
+        // The datastore should be tombstoned now
+        await summarize(summarizer2);
+
+        // Sending an op from a datastore substantiated from the request pattern should fail!
+        await assert.rejects(async () => requestFluidObject<ITestDataObject>(summarizingContainer2, testDataObjectId),
+            (error) => {
+                const correctErrorType = error.code === 404;
+                const correctErrorMessage = error.message.startsWith(`Datastore tombstoned:`) === true;
+                return correctErrorType && correctErrorMessage;
+            },
+            `Should not be able to retrieve a tombstoned datastore.`);
     });
 });
