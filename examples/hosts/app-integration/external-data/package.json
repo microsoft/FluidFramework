@@ -2,7 +2,7 @@
   "name": "@fluid-example/app-integration-external-data",
   "version": "2.0.0-internal.2.1.0",
   "private": true,
-  "description": "Using external data to initialize the container state and serialize out afterwards.",
+  "description": "Integrating an external data source with Fluid data.",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
