@@ -291,7 +291,7 @@ export class Client {
             accum, start, end, splitRange);
     }
 
-    public walkAllSegments<TClientData>(
+    protected walkAllSegments<TClientData>(
         action: (segment: ISegment, accum?: TClientData) => boolean,
         accum?: TClientData,
     ): boolean {
@@ -717,14 +717,7 @@ export class Client {
      * of the current sequence number. This is desirable when rebasing operations for reconnection.
      *
      * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
-     * the current sequence number, the returned position will align with the position of a reference given
-     * `SlideOnRemove` semantics.
-     *
-     * If a reference was initially given `StayOnRemove` semantics, with intent to later change to `SlideOnRemove`,
-     * that isn't equivalent, and so local bookkeeping needs to be updated.
-     *
-     * If the position has slid off and there is no nearest position (i.e. the
-     * tree is empty), returns `DetachedReferencePosition`
+     * the current sequence number, returns undefined.
      */
     public rebasePositionWithoutSegmentSlide(
         pos: number,
@@ -735,30 +728,11 @@ export class Client {
         const { clientId } = this.getCollabWindow();
         const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         if (segment === undefined && offset === undefined) {
-            // getContainingSegment will only return non-removed segments. This means the position was past
-            // all non-removed segments in the tree, so we take the last one instead as an approximation.
-            // let finalSegment: IMergeNode = this._mergeTree.root;
-            // while (!finalSegment.isLeaf()) {
-            //     finalSegment = finalSegment.children[finalSegment.childCount - 1];
-            // }
-            // segment = finalSegment;
-            // offset = 0;
             return;
         }
-        // if (segment === undefined) {
-        //     return;
-        // }
+
         // if segment is undefined, it slid off the string
         assert(segment !== undefined, 0x302 /* No segment found */);
-        // want logic above to apply to matrix, if segment is undefined (noop) or segment is removed just return
-        // for logic below, create 2 rebase position methods -
-        // one for matrix and one with this for interval collections
-        // const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
-
-        // // case happens when rebasing op, but concurrently entire string has been deleted
-        // if (segoff.segment === undefined || segoff.offset === undefined) {
-        //     return DetachedReferencePosition;
-        // }
 
         assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;

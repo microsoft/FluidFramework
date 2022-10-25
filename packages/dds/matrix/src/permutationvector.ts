@@ -228,68 +228,65 @@ export class PermutationVector extends Client {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.getPosition(segment) + offset!;
     }
-    // get rid of this
-    // public handleToPosition(
-    //     pos: number,
-    //     localSeq = this.getCollabWindow().localSeq,
-    //     rebaseFromSeq,
-    // ) {
-    //     assert(localSeq <= this.getCollabWindow().localSeq,
-    //         0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
-    //     // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
-    //     //       the original operation to the current position for resubmitting.  This is probably the
-    //     //       ideal solution, as we would no longer need to store row/col handles in the op metadata.
-    //     //
-    //     //       Failing that, we could avoid the O(n) search below by building a temporary map in the
-    //     //       opposite direction from the handle to either it's current position or segment + offset
-    //     //       and reuse it for the duration of resubmission.  (Ideally, we would know when resubmission
-    //     //       ended so we could discard this map.)
-    //     //
-    //     //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
-    //     //       one using the Tiny-Calc adjust tree.
+    public handleToPosition(
+        handle: Handle,
+        localSeq = this.getCollabWindow().localSeq,
+    ) {
+        assert(localSeq <= this.getCollabWindow().localSeq,
+            0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
-    //     return this.rebasePosition(pos, rebaseFromSeq, localSeq);
+        // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
+        //       the original operation to the current position for resubmitting.  This is probably the
+        //       ideal solution, as we would no longer need to store row/col handles in the op metadata.
+        //
+        //       Failing that, we could avoid the O(n) search below by building a temporary map in the
+        //       opposite direction from the handle to either it's current position or segment + offset
+        //       and reuse it for the duration of resubmission.  (Ideally, we would know when resubmission
+        //       ended so we could discard this map.)
+        //
+        //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
+        //       one using the Tiny-Calc adjust tree.
+        let containingSegment!: PermutationSegment;
+        let containingOffset: number;
 
-        // this.walkAllSegments(
-        //     (segment) => {
-        //         const { start, cachedLength } = segment as PermutationSegment;
+        this.walkAllSegments(
+            (segment) => {
+                const { start, cachedLength } = segment as PermutationSegment;
 
-        //         // If the segment is unallocated, skip it.
-        //         if (!isHandleValid(start)) {
-        //             return true;
-        //         }
+                // If the segment is unallocated, skip it.
+                if (!isHandleValid(start)) {
+                    return true;
+                }
 
-        //         const end = start + cachedLength;
+                const end = start + cachedLength;
 
-        //         if (start <= handle && handle < end) {
-        //             containingSegment = segment as PermutationSegment;
-        //             containingOffset = handle - start;
-        //             return false;
-        //         }
+                if (start <= handle && handle < end) {
+                    containingSegment = segment as PermutationSegment;
+                    containingOffset = handle - start;
+                    return false;
+                }
 
-        //         return true;
-        //     });
+                return true;
+            });
 
-    //     // We are guaranteed to find the handle in the PermutationVector, even if the corresponding
-    //     // row/col has been removed, because handles are not recycled until the containing segment
-    //     // is unlinked from the MergeTree.
-    //     //
-    //     // Therefore, either a row/col removal has been ACKed, in which case there will be no pending
-    //     // ops that reference the stale handle, or the removal is unACKed, in which case the handle
-    //     // has not yet been recycled.
+        // We are guaranteed to find the handle in the PermutationVector, even if the corresponding
+        // row/col has been removed, because handles are not recycled until the containing segment
+        // is unlinked from the MergeTree.
+        //
+        // Therefore, either a row/col removal has been ACKed, in which case there will be no pending
+        // ops that reference the stale handle, or the removal is unACKed, in which case the handle
+        // has not yet been recycled.
 
-    //     // assert(isHandleValid(containingSegment.start),
-    //     // 0x029 /* "Invalid handle at start of containing segment!" */);
+        assert(isHandleValid(containingSegment.start), 0x029 /* "Invalid handle at start of containing segment!" */);
 
-    //     // Once we know the current position of the handle, we can use the MergeTree to get the segment
-    //     // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
-    //     // have not yet been submitted.
+        // Once we know the current position of the handle, we can use the MergeTree to get the segment
+        // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
+        // have not yet been submitted.
 
-    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    //     // assert(segment !== undefined && offset !== undefined, "segment or offset is undefined");
-    //     // return this.findReconnectionPosition(segment, localSeq) + offset;
-    // }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
+    }
 
     // Constructs an ISummaryTreeWithStats for the cell data.
     public summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer):

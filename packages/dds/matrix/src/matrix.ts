@@ -230,57 +230,16 @@ export class SharedMatrix<T = any>
         value: MatrixItem<T>,
         rowHandle = this.rows.getAllocatedHandle(row),
         colHandle = this.cols.getAllocatedHandle(col),
-        // rowsRefSeq = this.rows.getCollabWindow().currentSeq,
-        // colsRefSeq = this.cols.getCollabWindow().currentSeq,
     ) {
         if (this.undo !== undefined) {
             let oldValue = this.cells.getCell(rowHandle, colHandle);
             if (oldValue === null) {
                 oldValue = undefined;
             }
-            // this.rows.walkAllSegments(
-            //     (segment) => {
-            //         const { start, cachedLength } = segment as PermutationSegment;
-            //         let containingSegment!: PermutationSegment;
-            //         let containingOffset: number;
-            //         // If the segment is unallocated, skip it.
-            //         if (!isHandleValid(start)) {
-            //             return true;
-            //         }
 
-            //         const end = start + cachedLength;
-
-            //         if (start <= row && row < end) {
-            //             containingSegment = segment as PermutationSegment;
-            //             containingOffset = row - start;
-            //             return false;
-            //         }
-
-            //         return true;
-            //     });
-            // this.cols.walkAllSegments(
-            //     (segment) => {
-            //         const { start, cachedLength } = segment as PermutationSegment;
-            //         let containingSegment!: PermutationSegment;
-            //         let containingOffset: number;
-            //         // If the segment is unallocated, skip it.
-            //         if (!isHandleValid(start)) {
-            //             return true;
-            //         }
-
-            //         const end = start + cachedLength;
-
-            //         if (start <= col && col < end) {
-            //             containingSegment = segment as PermutationSegment;
-            //             containingOffset = col - start;
-            //             return false;
-            //         }
-
-            //         return true;
-            //     });
             this.undo.cellSet(
-                row,
-                col,
+                rowHandle,
+                colHandle,
                 oldValue);
         }
 
@@ -562,8 +521,6 @@ export class SharedMatrix<T = any>
                 if (this.isLatestPendingWrite(
                     rowHandle,
                     colHandle,
-                    // this.rows.getAllocatedHandle(setOp.row),
-                    // this.cols.getAllocatedHandle(setOp.col),
                     localSeq,
                 )) {
                     const row = this.rows.rebasePositionWithoutSegmentSlide(setOp.row, rowsRefSeq, localSeq);
@@ -576,8 +533,6 @@ export class SharedMatrix<T = any>
                             setOp.value,
                             rowHandle,
                             colHandle,
-                            // this.rows.getAllocatedHandle(row),
-                            // this.cols.getAllocatedHandle(col),
                             localSeq,
                             rowsRefSeq,
                             colsRefSeq,
@@ -637,8 +592,6 @@ export class SharedMatrix<T = any>
 
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
-                    // const rowHandle = this.rows.getAllocatedHandle(row);
-                    // const colHandle = this.cols.getAllocatedHandle(col);
                     if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
                         this.pending.setCell(rowHandle, colHandle, undefined);
                     }
@@ -776,49 +729,10 @@ export class SharedMatrix<T = any>
                 if (oldValue === null) {
                     oldValue = undefined;
                 }
-                // this.rows.walkAllSegments(
-                //     (segment) => {
-                //         const { start, cachedLength } = segment as PermutationSegment;
-                //         let containingSegment!: PermutationSegment;
-                //         let containingOffset: number;
-                //         // If the segment is unallocated, skip it.
-                //         if (!isHandleValid(start)) {
-                //             return true;
-                //         }
 
-                //         const end = start + cachedLength;
-
-                //         if (start <= setOp.row && setOp.row < end) {
-                //             containingSegment = segment as PermutationSegment;
-                //             containingOffset = setOp.row - start;
-                //             return false;
-                //         }
-
-                //         return true;
-                //     });
-                // this.cols.walkAllSegments(
-                //     (segment) => {
-                //         const { start, cachedLength } = segment as PermutationSegment;
-                //         let containingSegment!: PermutationSegment;
-                //         let containingOffset: number;
-                //         // If the segment is unallocated, skip it.
-                //         if (!isHandleValid(start)) {
-                //             return true;
-                //         }
-
-                //         const end = start + cachedLength;
-
-                //         if (start <= setOp.col && setOp.col < end) {
-                //             containingSegment = segment as PermutationSegment;
-                //             containingOffset = setOp.col - start;
-                //             return false;
-                //         }
-
-                //         return true;
-                //     });
                 this.undo.cellSet(
-                    setOp.row,
-                    setOp.col,
+                    rowHandle,
+                    rowHandle,
                     oldValue);
             }
 

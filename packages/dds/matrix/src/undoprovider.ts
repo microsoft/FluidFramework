@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { TrackingGroup, MergeTreeDeltaOperationType, MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
-import { isHandleValid } from "./handletable";
+import { Handle, isHandleValid } from "./handletable";
 import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
 
@@ -141,63 +141,17 @@ export class MatrixUndoProvider<T> {
         );
     }
 
-    cellSet(rowPos: number, colPos: number, oldValue: MatrixItem<T>) {
-        // assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
-        //     0x02c /* "On cellSet(), invalid row and/or column handles!" */);
-        const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
-        const colsRefSeq = this.cols.getCollabWindow().currentSeq;
-        const rowsLocalSeq = this.rows.getCollabWindow().localSeq;
-        const colsLocalSeq = this.cols.getCollabWindow().localSeq;
+    cellSet(rowHandle: Handle, colHandle: Handle, oldValue: MatrixItem<T>) {
+        assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
+            0x02c /* "On cellSet(), invalid row and/or column handles!" */);
+
         if (this.consumer !== undefined) {
             this.consumer.pushToCurrentOperation({
                 revert: () => {
-                    let containingSegment!: PermutationSegment;
-                    let rowsContainingOffset: number;
-                    let colsContainingOffset: number;
-                    this.rows.walkAllSegments(
-                        (segment) => {
-                            const { start, cachedLength } = segment as PermutationSegment;
-                            // If the segment is unallocated, skip it.
-                            if (!isHandleValid(start)) {
-                                return true;
-                            }
-
-                            const end = start + cachedLength;
-
-                            if (start <= rowsRefSeq && rowsRefSeq < end) {
-                                containingSegment = segment as PermutationSegment;
-                                rowsContainingOffset = rowsRefSeq - start;
-                                return false;
-                            }
-
-                            return true;
-                        });
-                    this.cols.walkAllSegments(
-                        (segment) => {
-                            const { start, cachedLength } = segment as PermutationSegment;
-                            // If the segment is unallocated, skip it.
-                            if (!isHandleValid(start)) {
-                                return true;
-                            }
-
-                            const end = start + cachedLength;
-
-                            if (start <= colsRefSeq && colsRefSeq < end) {
-                                containingSegment = segment as PermutationSegment;
-                                colsContainingOffset = colsRefSeq - start;
-                                return false;
-                            }
-
-                            return true;
-                        });
-                    const row = this.rows.rebasePositionWithoutSegmentSlide(rowPos, rowsRefSeq, rowsLocalSeq);
-                    const col = this.cols.rebasePositionWithoutSegmentSlide(colPos, colsRefSeq, colsLocalSeq);
-                    if (row !== undefined && col !== undefined) {
-                        this.matrix.setCell(
-                            row,
-                            col,
-                            oldValue);
-                    }
+                    this.matrix.setCell(
+                        this.rows.handleToPosition(rowHandle),
+                        this.cols.handleToPosition(colHandle),
+                        oldValue);
                 },
                 discard: () => {},
             });
