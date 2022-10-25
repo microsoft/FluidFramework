@@ -600,12 +600,12 @@ describe("SharedTree", () => {
         };
 
         const testFieldKey: FieldKey = brand("testField");
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const expectedFirstNodeInitialValue =
             testJsonableTree.fields!.testSequence[0]!.fields!.testField[0].value;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const expectedSecondNodeInitialValue =
             testJsonableTree.fields!.testSequence[1]!.fields!.testField[0].value;
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
         it("getAnchor()", async () => {
             const provider = await TestTreeProvider.create(1);
