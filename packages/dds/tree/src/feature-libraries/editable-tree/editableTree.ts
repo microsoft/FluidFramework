@@ -23,6 +23,8 @@ import {
     mapCursorFields,
     CursorLocationType,
     rootFieldKeySymbol,
+    moveToDetachedField,
+    FieldAnchor,
 } from "../../core";
 import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -204,34 +206,15 @@ export class BaseProxyTarget {
     constructor(
         public readonly context: ProxyContext,
         cursor: ITreeSubscriptionCursor,
-        public readonly fieldKey?: FieldKey,
+        public readonly fieldKey: FieldKey,
     ) {
-        // A root field requires special handling as it has no parent:
-        // - the cursor can't be used if the root is empty
-        // - the root is anchored at its child node and is permanent
-        // TODO: this is a workaround until anchors and `getPath()` (used in `cursor.fork()`) will get support for fields.
-        if (this.isRoot) {
-            this.anchor = context.forest.root(context.forest.rootField);
-            if (cursor.state === ITreeSubscriptionCursorState.Current) {
-                cursor.enterNode(0);
-                this.lazyCursor = cursor.fork();
-                this.lazyCursor.exitNode();
-                cursor.exitNode();
-                context.withCursors.add(this);
-            } else {
-                // Empty root has `neveAnchor` implicitly returned by forest, and `neverCursor` is just a placeholder for `lazyCursor`.
-                // They are used to not overlap with "alive" cursors and anchors of a non-empty target.
-                // Note that in this context `undefined` anchor is just a not yet created anchor.
-                this.lazyCursor = context.neverCursor;
-            }
+        if (this.isRoot && cursor.mode === CursorLocationType.Fields) {
+            this.lazyCursor = this.context.forest.allocateCursor();
+            moveToDetachedField(this.context.forest, this.lazyCursor);
         } else {
             this.lazyCursor = cursor.fork();
             context.withCursors.add(this);
         }
-    }
-
-    public get isEmptyRoot(): boolean {
-        return this.anchor === this.context.neverAnchor;
     }
 
     public get isRoot(): boolean {
@@ -239,7 +222,6 @@ export class BaseProxyTarget {
     }
 
     public free(): void {
-        if (this.isEmptyRoot) return;
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
@@ -249,7 +231,7 @@ export class BaseProxyTarget {
         }
     }
 
-    public getAnchor(): Anchor {
+    public getAnchor(): Anchor | FieldAnchor {
         if (this.anchor === undefined) {
             this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
@@ -258,7 +240,6 @@ export class BaseProxyTarget {
     }
 
     public prepareForEdit(): void {
-        if (this.isEmptyRoot) return;
         this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
@@ -270,20 +251,17 @@ export class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
+            const result = isFieldProxyTarget(this)
+                ? this.context.forest.tryMoveCursorToField(
+                      this.getAnchor() as FieldAnchor,
+                      this.lazyCursor,
+                  )
+                : this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
             );
             this.context.withCursors.add(this);
-            if (isFieldProxyTarget(this) && this.lazyCursor.mode === CursorLocationType.Nodes) {
-                // A root field is anchored at its child node, and any other field is anchored at its parent node.
-                if (!this.isRoot) {
-                    this.lazyCursor.enterField(this.fieldKey);
-                } else if (!this.isEmptyRoot) {
-                    this.lazyCursor.exitNode();
-                }
-            }
         }
         return this.lazyCursor;
     }
@@ -294,8 +272,12 @@ export class BaseProxyTarget {
  * the fields of {@link EditableTree} by means of the cursors.
  */
 class NodeProxyTarget extends BaseProxyTarget {
-    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        super(context, cursor);
+    constructor(
+        public readonly context: ProxyContext,
+        cursor: ITreeSubscriptionCursor,
+        fieldKey: FieldKey,
+    ) {
+        super(context, cursor, fieldKey);
         assert(this.cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
     }
 
@@ -394,6 +376,10 @@ class NodeProxyTarget extends BaseProxyTarget {
         for (const field of fields) {
             yield field;
         }
+    }
+
+    public getAnchor(): Anchor {
+        return super.getAnchor() as Anchor;
     }
 }
 
@@ -520,7 +506,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     private readonly primaryType?: TreeSchemaIdentifier;
-    private readonly primaryField?: FieldKey;
+    public readonly primaryField?: FieldKey;
 
     constructor(
         context: ProxyContext,
@@ -529,52 +515,47 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
-        // allowed only for empty roots
-        if (cursor.state !== ITreeSubscriptionCursorState.Current) {
-            assert(
-                fieldKey === rootFieldKeySymbol,
-                "The cursor must point to this field if it's not a root field.",
-            );
+        assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+        let primaryField: FieldKey | undefined;
+        if (primaryType !== undefined) {
+            primaryField = cursor.getFieldKey();
+        }
+        // a root field has no parent
+        if (fieldKey === rootFieldKeySymbol && primaryField === undefined) {
             super(context, cursor, fieldKey);
         } else {
-            assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
-            let primaryField: FieldKey | undefined;
-            if (primaryType !== undefined) {
-                primaryField = cursor.getFieldKey();
-            }
-            // a root field has no parent
-            if (fieldKey === rootFieldKeySymbol && primaryField === undefined) {
-                super(context, cursor, fieldKey);
-            } else {
-                // The cursor will be forked by super, which is currently only allowed for nodes.
-                cursor.exitField();
-                super(context, cursor, primaryField ?? fieldKey);
-                this.cursor.enterField(primaryField ?? fieldKey);
-                cursor.enterField(primaryField ?? fieldKey);
-            }
-            this.primaryType = primaryType;
-            this.primaryField = primaryField;
+            // The cursor will be forked by super, which is currently only allowed for nodes.
+            cursor.exitField();
+            super(context, cursor, primaryField ?? fieldKey);
+            this.cursor.enterField(primaryField ?? fieldKey);
+            cursor.enterField(primaryField ?? fieldKey);
         }
+        this.primaryType = primaryType;
+        this.primaryField = primaryField;
         this.fieldKey = fieldKey;
         this.fieldSchema = fieldSchema;
     }
 
-    public getAnchor(): Anchor {
-        // Root field has a permanent anchor.
+    public getAnchor(): FieldAnchor {
         if (this.isRoot) {
-            return super.getAnchor();
+            return {
+                fieldKey: this.fieldKey,
+                parent: undefined,
+            };
         }
-        // Anchor at the parent node.
         this.cursor.exitField();
-        const anchor = super.getAnchor();
+        const parent = super.getAnchor() as Anchor;
         this.cursor.enterField(this.primaryField ?? this.fieldKey);
-        return anchor;
+        return {
+            fieldKey: this.fieldKey,
+            parent,
+        };
     }
 
     readonly [index: number]: UnwrappedEditableTree;
 
     public get length(): number {
-        return this.isEmptyRoot ? 0 : this.cursor.getFieldLength();
+        return this.cursor.getFieldLength();
     }
 
     public getType(
@@ -602,7 +583,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      */
     public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree {
         this.cursor.enterNode(index);
-        const target = new NodeProxyTarget(this.context, this.cursor);
+        const target = new NodeProxyTarget(this.context, this.cursor, this.fieldKey);
         this.cursor.exitNode();
         return inProxyOrUnwrap(target, unwrap);
     }
@@ -622,11 +603,9 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      * Gets array of unwrapped nodes.
      */
     private get asArray(): UnwrappedEditableTree[] {
-        return this.isEmptyRoot
-            ? []
-            : mapCursorField(this.cursor, (c) =>
-                  inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
-              );
+        return mapCursorField(this.cursor, (c) =>
+            inProxyOrUnwrap(new NodeProxyTarget(this.context, c, this.fieldKey), true),
+        );
     }
 
     *[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
@@ -741,7 +720,6 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 function inProxyOrUnwrap(
     target: NodeProxyTarget | FieldProxyTarget,
     unwrap: boolean,
-    fieldKey?: FieldKey,
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
     if (unwrap && !isFieldProxyTarget(target)) {
@@ -761,8 +739,7 @@ function inProxyOrUnwrap(
             target.cursor.enterField(primary.key);
             const primarySequence = new FieldProxyTarget(
                 target.context,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                fieldKey!,
+                target.fieldKey,
                 primary.schema,
                 target.cursor,
                 nodeType.name,
@@ -811,16 +788,14 @@ export function proxifyField(
         );
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
-    if (cursor.state === ITreeSubscriptionCursorState.Current) {
-        const length = cursor.getFieldLength();
-        assert(length <= 1, 0x3c8 /* invalid non sequence */);
-        if (length === 1) {
-            cursor.enterNode(0);
-            const target = new NodeProxyTarget(context as ProxyContext, cursor);
-            const proxifiedNode = inProxyOrUnwrap(target, unwrap, fieldKey);
-            cursor.exitNode();
-            return proxifiedNode;
-        }
+    const length = cursor.getFieldLength();
+    assert(length <= 1, 0x3c8 /* invalid non sequence */);
+    if (length === 1) {
+        cursor.enterNode(0);
+        const target = new NodeProxyTarget(context as ProxyContext, cursor, fieldKey);
+        const proxifiedNode = inProxyOrUnwrap(target, unwrap);
+        cursor.exitNode();
+        return proxifiedNode;
     }
     return undefined;
 }
