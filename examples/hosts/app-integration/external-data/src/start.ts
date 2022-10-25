@@ -6,13 +6,13 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ModelLoader } from "@fluid-example/example-utils";
+import { ModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
-import { DemoCodeLoader } from "./demoCodeLoader";
 import type { IAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, TaskListAppView } from "./view";
+import { TaskListContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -49,7 +49,7 @@ async function start(): Promise<void> {
     const modelLoader = new ModelLoader<IAppModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: new DemoCodeLoader(),
+        codeLoader: new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
 
