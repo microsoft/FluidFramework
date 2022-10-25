@@ -2,18 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Flags } from "@oclif/core";
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
+import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 
 import {
     ReleaseVersion,
+    VersionBumpType,
+    VersionChangeType,
     VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
+    isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
@@ -25,7 +30,6 @@ import {
     generateBumpVersionCommitMessage,
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
-import { Flags } from "@oclif/core";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
     static summary =
@@ -40,8 +44,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             char: "t",
             description:
                 "Bump the release group or package to the next version according to this bump type.",
-            }),
             exclusive: ["exact"],
+        }),
         exact: Flags.string({
             description:
                 "An exact string to use as the version. The string must be a valid semver string.",
@@ -85,10 +89,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const flags = this.processedFlags;
 
         const context = await this.getContext();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const bumpType = flags.bumpType!;
-        const shouldInstall = flags.install && !flags.skipChecks;
-        const shouldCommit = flags.commit && !flags.skipChecks;
+        const bumpType: VersionBumpType | undefined = flags.bumpType;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const shouldInstall: boolean = flags.install && !flags.skipChecks;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
         if (args.package_or_release_group === undefined) {
             this.error("ERROR: No dependency provided.");
@@ -97,7 +102,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         let repoVersion: ReleaseVersion;
         let packageOrReleaseGroup: Package | MonoRepo;
         let scheme: VersionScheme | undefined;
+        const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
         const updatedPackages: Package[] = [];
+
+        if (bumpType === undefined && exactVersion === null) {
+            this.error(`Either --bumpType or --exact must be provided.`);
+        }
 
         if (isReleaseGroup(args.package_or_release_group)) {
             const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
@@ -133,11 +143,26 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             packageOrReleaseGroup = releasePackage;
         }
 
-        const newVersion = bumpVersionScheme(repoVersion, bumpType, scheme).version;
+        const newVersion =
+            exactVersion === null
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  bumpVersionScheme(repoVersion, bumpType!, scheme).version
+                : exactVersion.version;
+
+        let bumpArg: VersionChangeType;
+        if (bumpType === undefined) {
+            if (exactVersion === null) {
+                this.error(`bumpType and exactVersion are both null/undefined.`);
+            } else {
+                bumpArg = exactVersion;
+            }
+        } else {
+            bumpArg = bumpType;
+        }
 
         this.logHr();
         this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
-        this.log(`Bump type: ${chalk.blue(bumpType)}`);
+        this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
         this.log(`Versions: ${newVersion} <== ${repoVersion}`);
         this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
         this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
@@ -156,7 +181,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             this.exit(0);
         }
 
-        const logs = await bumpReleaseGroup(context, bumpType, packageOrReleaseGroup, scheme);
+        const logs = await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme);
         this.verbose(logs);
 
         if (shouldInstall) {
@@ -170,14 +195,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         if (shouldCommit) {
             const commitMessage = generateBumpVersionCommitMessage(
                 args.package_or_release_group,
-                bumpType,
+                bumpArg,
                 repoVersion,
                 scheme,
             );
 
             const bumpBranch = generateBumpVersionBranchName(
                 args.package_or_release_group,
-                bumpType,
+                bumpArg,
                 repoVersion,
                 scheme,
             );
