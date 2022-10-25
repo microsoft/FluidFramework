@@ -2,7 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import {
+    IOverflowSetItemProps,
+    IconButton,
+    Link,
+    OverflowSet,
+    Stack,
+    initializeIcons,
+} from "@fluentui/react";
 import React from "react";
 
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
@@ -15,6 +22,9 @@ import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
+
+// Initialize Fluent icons used this library's components.
+initializeIcons();
 
 /**
  * {@link SessionDataView} input props.

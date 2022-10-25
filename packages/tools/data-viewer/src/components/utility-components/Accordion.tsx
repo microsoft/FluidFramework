@@ -10,7 +10,6 @@ import {
     IconButton,
     Stack,
     StackItem,
-    initializeIcons,
     mergeStyleSets,
 } from "@fluentui/react";
 import React from "react";
@@ -20,16 +19,20 @@ import React from "react";
  * This implementation is based on {@link https://naveegator.in/accordion-in-fluent-ui-office-ui-fabric/}.
  */
 
-// Initialize Fluent icons
-initializeIcons();
-
+/**
+ * Default style used by the Accordion's header component.
+ * @remarks May be overridden by {@link AccordionProps.headerStyles}.
+ */
 const accordionHeaderStyles: IStackItemStyles = {
     root: {
         background: DefaultPalette.neutralLighter,
         padding: 5,
-        cursor: "pointer",
     },
 };
+
+/**
+ * Style used by the Accordion's body component.
+ */
 const accordionStyles: IStackStyles = {
     root: {
         borderStyle: "solid",
@@ -37,7 +40,12 @@ const accordionStyles: IStackStyles = {
         borderColor: DefaultPalette.neutralTertiary,
     },
 };
-const accordionConentStyles: IStackStyles = {
+
+/**
+ * Default style used by the Accordion's child item components.
+ * @remarks May be overridden by {@link AccordionProps.contentStyles}.
+ */
+const accordionContentStyles: IStackStyles = {
     root: {
         padding: 10,
     },
@@ -61,10 +69,22 @@ export type AccordionProps = React.PropsWithChildren<{
      */
     initiallyCollapsed?: boolean;
 
+    /**
+     * Optional styling for the Accordion's header component.
+     */
     headerStyles?: IStackStyles;
+
+    /**
+     * Optional styling for each of the Accordion's child items.
+     */
     contentStyles?: IStackStyles;
 }>;
 
+/**
+ * A simple accordion-style vertical list.
+ *
+ * Displays a header, and a series of child items. May be collapsed or expanded via UI button.
+ */
 export function Accordion(props: AccordionProps): React.ReactElement {
     const { header, children, initiallyCollapsed, headerStyles, contentStyles } = props;
 
@@ -87,7 +107,7 @@ export function Accordion(props: AccordionProps): React.ReactElement {
             {!collapsed && (
                 <StackItem
                     className={AnimationClassNames.slideDownIn20}
-                    styles={mergeStyleSets(contentStyles, accordionConentStyles)}
+                    styles={mergeStyleSets(contentStyles, accordionContentStyles)}
                 >
                     {children}
                 </StackItem>
