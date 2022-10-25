@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DataObjectGridContainer } from "./container";
-import { IDataObjectGrid } from "./dataObjectGrid";
+import { DataObjectGridContainerRuntimeFactory, IDataObjectGridAppModel } from "./container";
 import { DataObjectGridAppView } from "./dataObjectGridView";
 
 /**
@@ -17,23 +15,29 @@ import { DataObjectGridAppView } from "./dataObjectGridView";
  * requires making async calls.
  */
 async function start() {
-    // when the document ID is not provided, create a new one.
-    const shouldCreateNew = location.hash.length === 0;
-    const documentId = !shouldCreateNew ? window.location.hash.substring(1) : "";
-
-    // Get the Fluid Container associated with the provided id
-    const [container, containerId] = await getTinyliciousContainer(
-        documentId,
-        DataObjectGridContainer,
-        shouldCreateNew,
+    const tinyliciousModelLoader = new TinyliciousModelLoader<IDataObjectGridAppModel>(
+        new StaticCodeLoader(new DataObjectGridContainerRuntimeFactory()),
     );
 
-    // update the browser URL and the window title with the actual container ID
-    location.hash = containerId;
-    document.title = containerId;
+    let id: string;
+    let model: IDataObjectGridAppModel;
 
-    // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<IDataObjectGrid>(container);
+    if (location.hash.length === 0) {
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
+        const createResponse = await tinyliciousModelLoader.createDetached("1.0");
+        model = createResponse.model;
+        id = await createResponse.attach();
+    } else {
+        id = location.hash.substring(1);
+        model = await tinyliciousModelLoader.loadExisting(id);
+    }
+
+    // update the browser URL and the window title with the actual container ID
+    location.hash = id;
+    document.title = id;
+
     const contentDiv = document.getElementById("content") as HTMLDivElement;
 
     const parsedUrl = new URL(window.location.href);
@@ -43,16 +47,16 @@ async function start() {
         ReactDOM.render(
             React.createElement(
                 DataObjectGridAppView,
-                { model: defaultObject, getDirectUrl: (itemId: string) => `?item=${itemId}#${documentId}` },
+                { model: model.dataObjectGrid, getDirectUrl: (itemId: string) => `?item=${itemId}#${id}` },
             ),
             contentDiv,
         );
     } else {
-        const item = defaultObject.getItem(requestedItemId);
+        const item = model.dataObjectGrid.getItem(requestedItemId);
         if (item === undefined) {
             throw new Error("Item not found");
         }
-        const view = await defaultObject.getViewForItem(item);
+        const view = await model.dataObjectGrid.getViewForItem(item);
         ReactDOM.render(
             view,
             contentDiv,

@@ -98,7 +98,14 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     }
 
     public async loadExisting(id: string): Promise<ModelType> {
-        const container = await this.loader.resolve({ url: id });
+        const container = await this.loader.resolve({
+            url: id,
+            headers: {
+                loadMode: {
+                    opsBeforeReturn: "all",
+                },
+            },
+        });
         const model = await this.getModelFromContainer(container);
         return model;
     }
