@@ -213,7 +213,7 @@ function createSharedString(
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 			const { deltaManager } = dataStoreRuntime;
-			deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); };
+			// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); };
 			if (index === 0) {
 				attributor = makeAttributor?.(dataStoreRuntime);
 			}
@@ -224,11 +224,10 @@ function createSharedString(
 			);
 			// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
 			// audience / op emission.
+			let opIndex = 0;
 			sharedString.on("op", (message) => {
-				if (message.timestamp === undefined) {
-					// TODO: Make this apples-to-apples comparison of timestamps.
-					message.timestamp = Date.now();
-				}
+				opIndex++;
+				message.timestamp = getTimestamp(opIndex);
 				deltaManager.emit("op", message);
 			});
 			dataStoreRuntime.getAudience = () => audience;
@@ -331,15 +330,18 @@ function writeJson(filepath: string, content: Jsonable) {
 
 const validateInterval = 10;
 
-function embedAttributionInProps(operations: Operation[]): Operation[] {
+function getTimestamp(opIndex: number): number {
 	// This is an arbitrary start point of the same magnitude as current data.
 	// Wed Oct 12 2022 11:40:00 GMT-0700
 	const baseDate = 1665600000000;
+	return baseDate + Math.floor(opIndex / 10) * 5000;
+}
+
+function embedAttributionInProps(operations: Operation[]): Operation[] {
 	return operations.map((operation, index) => {
 		if (operation.type !== "addText") {
 			return operation;
 		} else {
-			const timestamp = baseDate + Math.floor(index / validateInterval) * 5000;
 			const name = operation.stringId.repeat(10);
 			const id = `${name}@microsoft.com`;
 			const email = id;
@@ -348,7 +350,7 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 					id,
 					name,
 					email,
-					timestamp,
+					timestamp: getTimestamp(index),
 				},
 			};
 			return {
@@ -375,67 +377,119 @@ const noopEncoder = {
 	decode: (x: any): any => x,
 };
 
-describe("SharedString Attribution", () => {
-	// Entries of this list produce documents which should contain the same attribution information but
-	// stored in different formats. The "None" factory is an exception in that it contains no attribution
-	// information, and is useful as a baseline for comparison.
-	const dataGenerators: {
-		name: string;
-		factory: (operations: Operation[]) => FuzzTestState;
-		filename: string;
-	}[] = [
-		{
-			name: "None",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations),
-			),
-			filename: "no-attribution-snap.json",
-		},
-		{
-			name: "Prop",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(embedAttributionInProps(operations)),
-			),
-			filename: "prop-attribution-snap.json",
-		},
-		{
-			name: "Attributor without any compression",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined,
-					{ summary: noopEncoder, timestamps: noopEncoder }),
-			),
-			filename: "compressed-attribution-snap.json",
-		},
-		{
-			name: "Attributor without delta encoding",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined,
-					{ summary: makeGzipEncoder(), timestamps: noopEncoder }),
-			),
-			filename: "compressed-attribution-snap.json",
-		},
-		{
-			name: "Attributor",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime),
-			),
-			filename: "compressed-attribution-snap.json",
-		},
-	];
+class DataTable<T> {
+	private readonly rows: Map<string, T[]> = new Map();
+	constructor(private readonly columnNames: string[]) { }
 
+	public addRow(name: string, data: T[]): void {
+		this.rows.set(name, data);
+	}
+
+	public log(dataToString: (t: T) => string = (t) => `${t}`): void {
+		const namePaddingLength = 1 + Math.max(...Array.from(
+			this.rows.keys(),
+			(docName) => docName.length),
+		);
+		const rowStrings = new Map<string, string[]>();
+		const paddingByColumn = this.columnNames.map((name) => name.length);
+		for (const [name, data] of this.rows.entries()) {
+			const dataStrings = data.map(dataToString);
+			rowStrings.set(name, dataStrings);
+			dataStrings.forEach((s, i) => {
+				paddingByColumn[i] = Math.max(paddingByColumn[i], s.length);
+			});
+		}
+		paddingByColumn.forEach((_, i) => { paddingByColumn[i]++; });
+
+		console.log(
+			[
+				`${"Name".padEnd(namePaddingLength)}`,
+				...this.columnNames.map((name, i) => `${name.padStart(paddingByColumn[i])} `),
+			].join("|"),
+		);
+
+		for (const [name, result] of rowStrings.entries()) {
+			console.log(`${
+				name.padEnd(namePaddingLength)
+			}|${
+				result
+					.map((s, i) => `${s.padStart(paddingByColumn[i])} `)
+					.join("|")
+			}`);
+		}
+	}
+}
+
+const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+
+describe("SharedString Attribution", () => {
 	/**
 	 * This test suite is aimed at assessing the overhead of storing attribution information in a document.
 	 * See 'documents/README.md' for more details.
-	 *
-	 * TODO: Convert test document into one that can be used here
 	 */
 
 	describe("using randomly generated documents", () => {
+		// Entries of this list produce documents which should contain the same attribution information but
+		// stored in different formats. The "None" factory is an exception in that it contains no attribution
+		// information, and is useful as a baseline for comparison.
+		const dataGenerators: {
+			name: string;
+			factory: (operations: Operation[]) => FuzzTestState;
+			filename: string;
+		}[] = [
+			{
+				name: "None",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+				),
+				filename: "no-attribution-snap.json",
+			},
+			{
+				name: "Prop",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(embedAttributionInProps(operations)),
+				),
+				filename: "prop-attribution-snap.json",
+			},
+			{
+				name: "Attributor without any compression",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => new Attributor(
+						runtime,
+						undefined,
+						{ summary: noopEncoder, timestamps: noopEncoder },
+					),
+				),
+				filename: "attributor-no-compression-snap.json",
+			},
+			{
+				name: "Attributor without delta encoding",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => new Attributor(
+						runtime,
+						undefined,
+						{ summary: makeGzipEncoder(), timestamps: noopEncoder },
+					),
+				),
+				filename: "attributor-gzip-compression-snap.json",
+			},
+			{
+				name: "Attributor",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => new Attributor(runtime),
+				),
+				filename: "attributor-gzip-and-delta-snap.json",
+			},
+		];
+
 		it.skip("Generate a new document", async () => {
 			const paths = getDocumentPaths("basic");
 			const attributionlessGenerator = chain(
@@ -457,7 +511,7 @@ describe("SharedString Attribution", () => {
 
 		const documents = getDocuments();
 		for (const document of documents) {
-			describe(`document name: ${document} has up-to-date`, () => {
+			describe(`document name: ${document} has an up-to-date`, () => {
 				let paths: TestPaths;
 				let operations: Operation[];
 				before(() => {
@@ -466,7 +520,7 @@ describe("SharedString Attribution", () => {
 				});
 
 				for (const { filename, factory } of dataGenerators) {
-					it(`Snapshot at ${filename}`, async () => {
+					it(`snapshot at ${filename}`, async () => {
 						const expected = readJson(path.join(paths.directory, filename));
 						const actual = await summaryFromState(factory(operations));
 						assert.deepEqual(actual, expected);
@@ -478,43 +532,23 @@ describe("SharedString Attribution", () => {
 		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is
 		// sufficient to do so.
 		it("generate snapshot size impact report", async () => {
-			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
-			const fieldPaddingLength = 12;
-			console.log(
-				[
-					`${"Name".padEnd(namePaddingLength)}`,
-					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength)),
-				].join("|"),
-			);
-
-			const logRow = ({
-				docName,
-				data,
-			}: { docName: string; data: ISummaryTree[]; }) => {
-				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
-				console.log(`${
-					docName.padEnd(namePaddingLength)
-				}|${
-					data
-						.map((summary, i) => getLength(summary).padStart(
-							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length),
-						))
-						.join(" |")
-				}`);
-			};
-
+			const table = new DataTable<ISummaryTree>(dataGenerators.map(({ name }) => name));
 			for (const docName of documents) {
 				const paths = getDocumentPaths(docName);
 				const operations: Operation[] = readJson(paths.operations);
 				const data = await Promise.all(
 					dataGenerators.map(async ({ factory }) => summaryFromState(factory(operations))),
 				);
-				logRow({ docName, data });
+				table.addRow(docName, data);
 			}
+
+			table.log(getSummaryLength);
 		});
 	});
 
-	describe("using sample real documents", () => {
+	describe.skip("using sample real documents", () => {
+		// This prevents the mock logic which sets minimumSequenceNumber on the message, since it's
+		// intended to be used with real documents
 		class MockContainerRuntimeFactoryForReplay extends MockContainerRuntimeFactoryForReconnection {
 			public processOneMessage() {
 				if (this.messages.length === 0) {
@@ -531,9 +565,42 @@ describe("SharedString Attribution", () => {
 			}
 		}
 
-		const messages: any[] = readJson(path.join(__dirname, "../../../src/test/attribution/messages.json"));
+		function makeReplayMessagesFactory(
+			tweakMessage: (message: ISequencedDocumentMessage) => ISequencedDocumentMessage = (x) => x,
+		) {
+			return (messages: ISequencedDocumentMessage[]) => {
+				const random = makeRandom(0);
+				const clientId = random.uuid4();
+				const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
+				const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+				const sharedString = new SharedString(
+					dataStoreRuntime,
+					"mock observer client",
+					SharedStringFactory.Attributes,
+				);
+
+				const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				const services: IChannelServices = {
+					deltaConnection: containerRuntime.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				};
+
+				sharedString.initializeLocal();
+				sharedString.connect(services);
+
+				for (const message of messages) {
+					const mergeTreeMessage = extractMergeTreeOp(message);
+					if (mergeTreeMessage) {
+						containerRuntimeFactory.pushMessage(tweakMessage(message));
+						containerRuntimeFactory.processOneMessage();
+					}
+				}
+
+				return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
+			};
+		}
+
 		const documents = ["fhl-demos"];
-		// eslint-disable-next-line @typescript-eslint/no-shadow
 		const dataGenerators: {
 			name: string;
 			factory: (messages: ISequencedDocumentMessage[]) => FuzzTestState;
@@ -541,140 +608,12 @@ describe("SharedString Attribution", () => {
 		}[] = [
 			{
 				name: "None",
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				factory: (messages: ISequencedDocumentMessage[]) => {
-					const random = makeRandom(0);
-					const clientId = random.uuid4();
-					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
-					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// const { deltaManager } = dataStoreRuntime;
-					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// if (index === 0) {
-					// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// }
-					const sharedString = new SharedString(
-						dataStoreRuntime,
-						"mock observer client",
-						SharedStringFactory.Attributes,
-					);
-					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime
-					// // implements audience / op emission.
-					// sharedString.on("op", (message) => {
-					// 	if (message.timestamp === undefined) {
-					// 		// TODO: Make this apples-to-apples comparison of timestamps.
-					// 		message.timestamp = Date.now();
-					// 	}
-					// 	deltaManager.emit("op", message)
-					// });
-					// dataStoreRuntime.getAudience = () => audience;
-
-					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					const services: IChannelServices = {
-						deltaConnection: containerRuntime.createDeltaConnection(),
-						objectStorage: new MockStorage(),
-					};
-
-					sharedString.initializeLocal();
-					sharedString.connect(services);
-
-					for (const message of messages) {
-						const mergeTreeMessage = extractMergeTreeOp(message);
-						if (mergeTreeMessage) {
-							containerRuntimeFactory.pushMessage(stripAttributionInfo(message));
-							containerRuntimeFactory.processOneMessage();
-						}
-					}
-
-					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
-				},
+				factory: makeReplayMessagesFactory(stripAttributionInfo),
 				filename: "no-attribution-snap.json",
 			},
 			{
 				name: "Prop",
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				factory: (messages: ISequencedDocumentMessage[]) => {
-					const random = makeRandom(0);
-					const clientId = random.uuid4();
-					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
-					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// const { deltaManager } = dataStoreRuntime;
-					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// if (index === 0) {
-					// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// }
-					const sharedString = new SharedString(
-						dataStoreRuntime,
-						"mock observer client",
-						SharedStringFactory.Attributes,
-					);
-					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime
-					// // implements audience / op emission.
-					// sharedString.on("op", (message) => {
-					// 	if (message.timestamp === undefined) {
-					// 		// TODO: Make this apples-to-apples comparison of timestamps.
-					// 		message.timestamp = Date.now();
-					// 	}
-					// 	deltaManager.emit("op", message)
-					// });
-					// dataStoreRuntime.getAudience = () => audience;
-
-					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					const services: IChannelServices = {
-						deltaConnection: containerRuntime.createDeltaConnection(),
-						objectStorage: new MockStorage(),
-					};
-
-					sharedString.initializeLocal();
-					sharedString.connect(services);
-
-					for (const message of messages) {
-						const mergeTreeMessage = extractMergeTreeOp(message);
-						if (mergeTreeMessage) {
-							containerRuntimeFactory.pushMessage(message);
-							containerRuntimeFactory.processOneMessage();
-						}
-					}
-
-					// const initialState: FuzzTestState = {
-					// 	clients: clientIds.map((clientId, index) => {
-					// 		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// 		const { deltaManager } = dataStoreRuntime;
-					// 		deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// 		// if (index === 0) {
-					// 		// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// 		// }
-					// 		const sharedString = new SharedString(
-					// 			dataStoreRuntime,
-					// 			String.fromCharCode(index + 65),
-					// 			SharedStringFactory.Attributes,
-					// 		);
-					// 		// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime
-					// 		// implements audience / op emission.
-					// 		sharedString.on("op", (message) => {
-					// 			if (message.timestamp === undefined) {
-					// 				// TODO: Make this apples-to-apples comparison of timestamps.
-					// 				message.timestamp = Date.now();
-					// 			}
-					// 			deltaManager.emit("op", message)
-					// 		});
-					// 		dataStoreRuntime.getAudience = () => audience;
-
-					// 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					// 		const services: IChannelServices = {
-					// 			deltaConnection: containerRuntime.createDeltaConnection(),
-					// 			objectStorage: new MockStorage(),
-					// 		};
-
-					// 		sharedString.initializeLocal();
-					// 		sharedString.connect(services);
-					// 		return { containerRuntime, sharedString };
-					// 	}),
-					// 	containerRuntimeFactory,
-					// 	random,
-					// };
-					// initialState.attributor = attributor;
-					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
-				},
+				factory: makeReplayMessagesFactory(),
 				filename: "prop-attribution-snap.json",
 			},
 		];
@@ -682,38 +621,20 @@ describe("SharedString Attribution", () => {
 		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose`
 		// script is sufficient to do so.
 		it("generate snapshot size impact report", async () => {
-			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
-			const fieldPaddingLength = 12;
-			console.log(
-				[
-					`${"Name".padEnd(namePaddingLength)}`,
-					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength)),
-				].join("|"),
+			const table = new DataTable<ISummaryTree>(dataGenerators.map(({ name }) => name));
+			const messages: ISequencedDocumentMessage[] = readJson(
+				path.join(__dirname, "../../../src/test/attribution/messages.json"),
 			);
 
-			const logRow = ({
-				docName,
-				data,
-			}: { docName: string; data: ISummaryTree[]; }) => {
-				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
-				console.log(`${
-					docName.padEnd(namePaddingLength)
-				}|${
-					data
-						.map((summary, i) => getLength(summary).padStart(
-							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length),
-						))
-						.join(" |")
-				}`);
-			};
-
-			// TODO: This should look more like operations above. should be able to unify.
 			for (const docName of documents) {
 				const data = await Promise.all(
 					dataGenerators.map(async ({ factory }) => summaryFromState(factory(messages))),
 				);
-				logRow({ docName, data });
+
+				table.addRow(docName, data);
 			}
+
+			table.log(getSummaryLength);
 		});
 	});
 });
@@ -733,7 +654,7 @@ function extractMergeTreeOp(originalMessage: ISequencedDocumentMessage): ISequen
 	return undefined;
 }
 
-function stripAttributionInfo<T>(originalMessage: any): any {
+function stripAttributionInfo(originalMessage: any): any {
 	const messageClone: any = JSON.parse(JSON.stringify(originalMessage));
 	let mergeTreeOpContents = messageClone;
 	while (mergeTreeOpContents && mergeTreeOpContents.seg === undefined) {
