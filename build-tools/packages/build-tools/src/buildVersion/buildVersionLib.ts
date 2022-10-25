@@ -107,13 +107,7 @@ export function getSimpleVersion(
     // Get the Build number and ignore the attempt number.
     const buildId = patch ? parseInt(argBuildNum.split(".")[0]) : undefined;
 
-    if (
-        isInternalVersionScheme(
-            fileVersion,
-            /* allowPrereleases */ true,
-            /* prereleaseIdentifier */ undefined,
-        )
-    ) {
+    if (isInternalVersionScheme(fileVersion, /* allowPrereleases */ true)) {
         if (patch) {
             throw new Error(
                 `Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`,

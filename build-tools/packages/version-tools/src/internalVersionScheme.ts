@@ -173,9 +173,9 @@ function validateVersionScheme(
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
-    // extract what semver calls the "prerelease identifier," which is the first section of the prerelease field.
-    const prereleaseId = parsedVersion.prerelease[0];
     if (prereleaseIdentifier !== undefined) {
+        // the "prerelease identifier" is the first section of the prerelease field
+        const prereleaseId = parsedVersion.prerelease[0];
         if (prereleaseId !== prereleaseIdentifier) {
             throw new Error(
                 `First prerelease component should be '${prereleaseIdentifier}'; found ${prereleaseId}`,
@@ -207,8 +207,8 @@ function validateVersionScheme(
  *
  * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
- * @param prereleaseIdentifier - If provided, the version must use this prereleaseIdentifier to be considered a valid
- * internal version. When set to undefined any prerelease identifier will be considered valid.
+ * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
+ * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
@@ -286,14 +286,11 @@ export function bumpInternalVersion(
  * @param maxAutomaticBump - The maximum level of semver bumps you want the range to allow. For example, if you want the
  * dependency range to allow more recent patch versions, pass the value "patch". You can also pass "~" and "^" to
  * generate a range equivalent to those shorthands.
- * @param prereleaseIdentifier - If provided, the version must use this prereleaseIdentifier to be considered a valid
- * internal version. When set to undefined any prerelease identifier will be considered valid.
  * @returns A dependency range string. If the generated range is invalid an Error will be thrown.
  */
 export function getVersionRange(
     version: semver.SemVer | string,
     maxAutomaticBump: "minor" | "patch" | "~" | "^",
-    // prereleaseIdentifier: string | undefined = REQUIRED_PRERELEASE_IDENTIFIER,
 ): string {
     validateVersionScheme(version, false, undefined);
 
