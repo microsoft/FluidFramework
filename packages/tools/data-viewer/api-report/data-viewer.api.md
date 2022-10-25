@@ -130,7 +130,6 @@ export function SharedCounterView(props: SharedCounterViewProps): React_2.ReactE
 
 // @public
 export interface SharedCounterViewProps {
-    // (undocumented)
     sharedCounter: SharedCounter;
 }
 
@@ -139,7 +138,6 @@ export function SharedMapView(props: SharedMapViewProps): React_2.ReactElement;
 
 // @public
 export interface SharedMapViewProps {
-    // (undocumented)
     renderChild: RenderChild;
     sharedMap: SharedMap;
 }
@@ -152,7 +150,6 @@ export function SharedStringView(props: SharedStringViewProps): React_2.ReactEle
 
 // @public
 export interface SharedStringViewProps {
-    // (undocumented)
     sharedString: SharedString;
 }
 
