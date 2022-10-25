@@ -491,16 +491,20 @@ describe("SharedTree", () => {
             ]),
         };
 
-        const jsonableTree: JsonableTree = {
+        const testJsonableTree: JsonableTree = {
             type: testObjectSchema.name,
             fields: {
-                testField: [{ type: int32Schema.name, value: 10 }],
+                testField: [{ type: int32Schema.name, value: 1 }],
             },
         };
 
+        const testFieldKey: FieldKey = brand("testField");
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const expectedInitialNodeValue = testJsonableTree.fields!.testField[0].value;
+
         it("getFieldValue()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -510,12 +514,12 @@ describe("SharedTree", () => {
             const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
             cursor.free();
             await provider.ensureSynchronized();
-            assert.equal(treeNode.getFieldValue(brand("testField")), 10);
+            assert.equal(treeNode.getFieldValue(testFieldKey), expectedInitialNodeValue);
         });
 
         it("setFieldValue()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -523,12 +527,12 @@ describe("SharedTree", () => {
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
 
             const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
-            const originalNodeValue = treeNode.getFieldValue(brand("testField")) as number;
+            const originalNodeValue = treeNode.getFieldValue(testFieldKey) as number;
             const newNodeValue = originalNodeValue + 99;
             cursor.free();
             await provider.ensureSynchronized();
-            treeNode.setFieldValue(brand("testField"), newNodeValue);
-            assert.equal(treeNode.getFieldValue(brand("testField")), newNodeValue);
+            treeNode.setFieldValue(testFieldKey, newNodeValue);
+            assert.equal(treeNode.getFieldValue(testFieldKey), newNodeValue);
         });
     });
 
@@ -575,7 +579,7 @@ describe("SharedTree", () => {
             ]),
         };
 
-        const jsonableTree: JsonableTree = {
+        const testJsonableTree: JsonableTree = {
             type: testObjectSchema.name,
             fields: {
                 testSequence: [
@@ -596,10 +600,14 @@ describe("SharedTree", () => {
         };
 
         const testFieldKey: FieldKey = brand("testField");
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const expectedFirstNodeInitialValue = testJsonableTree.fields!.testSequence[0]!.fields!.testField[0].value;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const expectedSecondNodeInitialValue = testJsonableTree.fields!.testSequence[1]!.fields!.testField[0].value;
 
         it("getAnchor()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -612,22 +620,20 @@ describe("SharedTree", () => {
                 brand("testSequence"),
             );
 
-            // check value of first node
             const firstNodeAnchor = treeSequence.getAnchor(0);
             const firstNodeCursor = provider.trees[0].forest.allocateCursor();
             provider.trees[0].forest.tryMoveCursorTo(firstNodeAnchor, firstNodeCursor);
             firstNodeCursor.enterField(testFieldKey);
             firstNodeCursor.enterNode(0);
-            assert.equal(firstNodeCursor.value, 1);
+            assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
             firstNodeCursor.free();
 
-            // check value of second node
             const secondNodeAnchor = treeSequence.getAnchor(1);
             const secondNodeCursor = provider.trees[0].forest.allocateCursor();
             provider.trees[0].forest.tryMoveCursorTo(secondNodeAnchor, secondNodeCursor);
             secondNodeCursor.enterField(testFieldKey);
             secondNodeCursor.enterNode(0);
-            assert.equal(firstNodeCursor.value, 1);
+            assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
             secondNodeCursor.free();
 
             cursor.free();
@@ -635,7 +641,7 @@ describe("SharedTree", () => {
 
         it("get()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -647,16 +653,18 @@ describe("SharedTree", () => {
                 cursor.buildAnchor(),
                 brand("testSequence"),
             );
+
             const firstNode = treeSequence.get(0);
-            assert.equal(firstNode.getFieldValue(testFieldKey), 1);
+            assert.equal(firstNode.getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
             const secondNode = treeSequence.get(1);
-            assert.equal(secondNode.getFieldValue(testFieldKey), 2);
+            assert.equal(secondNode.getFieldValue(testFieldKey), expectedSecondNodeInitialValue);
+
             cursor.free();
         });
 
         it("getAllAnchors()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -670,20 +678,18 @@ describe("SharedTree", () => {
             );
             const treeAnchors = treeSequence.getAllAnchors();
 
-            // check value of first node
             const firstNodeCursor = provider.trees[0].forest.allocateCursor();
             provider.trees[0].forest.tryMoveCursorTo(treeAnchors[0], firstNodeCursor);
             firstNodeCursor.enterField(testFieldKey);
             firstNodeCursor.enterNode(0);
-            assert.equal(firstNodeCursor.value, 1);
+            assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
             firstNodeCursor.free();
 
-            // check value of second node
             const secondNodeCursor = provider.trees[0].forest.allocateCursor();
             provider.trees[0].forest.tryMoveCursorTo(treeAnchors[1], secondNodeCursor);
             secondNodeCursor.enterField(testFieldKey);
             secondNodeCursor.enterNode(0);
-            assert.equal(secondNodeCursor.value, 2);
+            assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
             secondNodeCursor.free();
 
             cursor.free();
@@ -691,7 +697,7 @@ describe("SharedTree", () => {
 
         it("getAll()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -705,14 +711,14 @@ describe("SharedTree", () => {
             );
             const treeNodes = treeSequence.getAll();
             assert.equal(treeNodes.length, 2);
-            assert.equal(treeNodes[0].getFieldValue(testFieldKey), 1);
-            assert.equal(treeNodes[1].getFieldValue(testFieldKey), 2);
+            assert.equal(treeNodes[0].getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
+            assert.equal(treeNodes[1].getFieldValue(testFieldKey), expectedSecondNodeInitialValue);
             cursor.free();
         });
 
         it("length()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -730,7 +736,7 @@ describe("SharedTree", () => {
 
         it("pop()", async () => {
             const provider = await TestTreeProvider.create(1);
-            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
             // move to root node
             const cursor = provider.trees[0].forest.allocateCursor();
@@ -747,11 +753,44 @@ describe("SharedTree", () => {
             await provider.ensureSynchronized();
             assert.equal(treeSequence.length(), 1);
             // confirms removal of node was the one at the last index
-            const remainingNode = new SharedTreeNodeHelper(provider.trees[0], treeSequence.getAnchor(0));
-            assert.equal(remainingNode.getFieldValue(testFieldKey), 1);
+            const remainingNode = new SharedTreeNodeHelper(
+                provider.trees[0],
+                treeSequence.getAnchor(0),
+            );
+            assert.equal(remainingNode.getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
         });
 
+        it("push()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
 
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+
+            cursor.free();
+            const initialSequenceLength = treeSequence.length();
+            treeSequence.push({
+                type: testSequenceMemeberSchema.name,
+                fields: {
+                    testField: [{ type: int32Schema.name, value: 3 }],
+                },
+            });
+            await provider.ensureSynchronized();
+            const newLen = treeSequence.length();
+            assert.equal(treeSequence.length(), initialSequenceLength + 1);
+            const treeNodeValues = treeSequence.getAll().map((node) => node.getFieldValue(testFieldKey));
+            assert.equal(treeNodeValues[0], expectedFirstNodeInitialValue);
+            assert.equal(treeNodeValues[1], expectedSecondNodeInitialValue);
+            assert.equal(treeNodeValues[2], 3);
+        });
     });
 });
 

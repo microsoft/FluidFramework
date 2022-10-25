@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import { TransactionResult } from "../../../checkout";
+import { singleTextCursor } from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
-import { Anchor, FieldKey } from "../../../tree";
+import { Anchor, FieldKey, JsonableTree } from "../../../tree";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 
 export class SharedTreeSequenceHelper {
@@ -49,8 +50,7 @@ export class SharedTreeSequenceHelper {
     }
 
     public getAll() {
-        return this.getAllAnchors()
-        .map((anchor) => new SharedTreeNodeHelper(this.tree, anchor));
+        return this.getAllAnchors().map((anchor) => new SharedTreeNodeHelper(this.tree, anchor));
     }
 
     public length() {
@@ -61,50 +61,22 @@ export class SharedTreeSequenceHelper {
         return length;
     }
 
-    // // How can you push to the end of the sequence rather than the beginning in one
-    // public push(jsonTree: JsonableTree) {
-    //     const cursor = this.tree.forest.allocateCursor();
-    //     this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
+    public push(jsonTree: JsonableTree) {
+        const cursor = this.tree.forest.allocateCursor();
+        this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
 
-    //     this.tree.runTransaction((forest, editor) => {
-    //         const parentPath = this.tree.locate(cursor.buildAnchor());
-    //         if (!parentPath) {
-    //             throw new Error("path to anchor does not exist")
-    //         }
-    //         this.tree.context.prepareForEdit();
-    //         const finalPath = {
-    //             parent: parentPath,
-    //             parentField: this.sequenceFieldKey,
-    //             parentIndex: this.length()
-    //         };
-    //         cursor.free();
-    //         editor.insert(finalPath,
-    //             singleTextCursor(jsonTree));
-    //         return TransactionResult.Apply;
-    //     });
-    // }
-
-    // public insert(jsonTree: JsonableTree, index: number) {
-    //     const cursor = this.tree.forest.allocateCursor();
-    //     this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
-
-    //     this.tree.runTransaction((forest, editor) => {
-    //         const parentPath = this.tree.locate(cursor.buildAnchor());
-    //         if (!parentPath) {
-    //             throw new Error("path to anchor does not exist")
-    //         }
-    //         this.tree.context.prepareForEdit();
-    //         const finalPath = {
-    //             parent: parentPath,
-    //             parentField: this.sequenceFieldKey,
-    //             parentIndex: index
-    //         };
-    //         cursor.free();
-    //         editor.insert(finalPath,
-    //             singleTextCursor(jsonTree));
-    //         return TransactionResult.Apply;
-    //     });
-    // }
+        this.tree.runTransaction((forest, editor) => {
+            const parentPath = this.tree.locate(cursor.buildAnchor());
+            if (!parentPath) {
+                throw new Error("path to anchor does not exist");
+            }
+            const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+            this.tree.context.prepareForEdit();
+            cursor.free();
+            field.insert(this.length(), singleTextCursor(jsonTree));
+            return TransactionResult.Apply;
+        });
+    }
 
     public pop() {
         this.tree.runTransaction((forest, editor) => {

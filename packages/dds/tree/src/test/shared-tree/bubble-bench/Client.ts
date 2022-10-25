@@ -1,6 +1,8 @@
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey } from "../../../tree";
 import { brand } from "../../../util";
+import { Bubble } from "./Bubble";
+import { iBubbleSchema, int32Schema } from "./schema";
 // import { iBubbleSchema, int32Schema } from "./schema";
 // import { Bubble } from "./Bubble";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
@@ -13,7 +15,7 @@ export class Client {
 
     private readonly treeHelper: SharedTreeNodeHelper;
     readonly bubbleSeqeunceHelper: SharedTreeSequenceHelper;
-    // private readonly _bubbles: Bubble[];
+    private readonly _bubbles: Bubble[];
 
     constructor(
         public readonly tree: ISharedTree,
@@ -27,7 +29,10 @@ export class Client {
             anchor,
             Client.bubblesFieldKey,
         );
-        // this._bubbles = this.initializeBubblesArray();
+
+        this._bubbles = this.bubbleSeqeunceHelper
+        .getAllAnchors()
+        .map(bubbleAnchor => new Bubble(this.tree, bubbleAnchor));
     }
 
     public get clientId() {
@@ -49,37 +54,28 @@ export class Client {
         this._height = height ?? 480;
     }
 
-    // public get bubbles() {
-    //     return this._bubbles;
-    // }
-
-    private initializeBubblesArray() {
-        // const [cursor, bubbleAnchors] = this.bubbleSeqeunceHelper.getAll();
-        // const bubbles = bubbleAnchors.map(anchor => new Bubble(this.tree, anchor));
-        // cursor.free();
-        // return bubbles;
+    public get bubbles() {
+        return this._bubbles;
     }
 
     public increaseBubbles() {
-        // // TODO: Replace with makeBubbleMethod using width and height
-        // const newBubble = {
-        //     type: iBubbleSchema.name,
-        //     fields: {
-        //         x: [{ type: int32Schema.name, value: 99 }],
-        //         y: [{ type: int32Schema.name, value: 99 }],
-        //         r: [{ type: int32Schema.name, value: 99 }],
-        //         vx: [{ type: int32Schema.name, value: 99 }],
-        //         vy: [{ type: int32Schema.name, value: 99 }],
-        //     }
-        // };
-        // this.bubbleSeqeunceHelper.push(newBubble)
-        // const newBubs = this.initializeBubblesArray().map(bub => bub.x);
-        // const [newBubbleCursor] = this.bubbleSeqeunceHelper.get(this._bubbles.length);
-        // this._bubbles.push(new Bubble(this.tree, newBubbleCursor.buildAnchor()));
+        // TODO: Replace with makeBubbleMethod using width and height
+        const newBubble = {
+            type: iBubbleSchema.name,
+            fields: {
+                x: [{ type: int32Schema.name, value: 99 }],
+                y: [{ type: int32Schema.name, value: 99 }],
+                r: [{ type: int32Schema.name, value: 99 }],
+                vx: [{ type: int32Schema.name, value: 99 }],
+                vy: [{ type: int32Schema.name, value: 99 }],
+            }
+        };
+        this.bubbleSeqeunceHelper.push(newBubble)
+        this._bubbles.push(new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)));
     }
 
     public decreaseBubbles() {
-        // this.bubbleSeqeunceHelper.pop();
-        // this._bubbles.pop();
+        this.bubbleSeqeunceHelper.pop();
+        this._bubbles.pop();
     }
 }
