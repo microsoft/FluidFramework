@@ -301,7 +301,7 @@ stages:
           displayName: 'Run performance test - memory usage'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run test:memory-profiling:report'
 
         - task: Npm@1
