@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, RevisionTag } from "../../core";
-import { TaggedChange } from "../../rebase";
+import { FieldKindIdentifier, Delta, FieldKey, Value, RevisionTag, TaggedChange } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**

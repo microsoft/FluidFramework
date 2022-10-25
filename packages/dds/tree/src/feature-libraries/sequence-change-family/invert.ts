@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TaggedChange } from "../../rebase";
+import { TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TaggedChange } from "../../rebase";
+import { TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { Changeset, ChangesetTag, Mark, MarkList, OpId } from "./format";
 import { isSkipMark } from "./utils";

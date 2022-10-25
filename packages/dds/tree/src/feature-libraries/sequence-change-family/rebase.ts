@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TaggedChange } from "../../rebase";
+import { TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     getInputLength,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../../rebase";
+import { RevisionTag } from "../../core";
 import { FieldChangeRebaser } from "../modular-schema";
 import { compose } from "./compose";
 import { Changeset, Mark } from "./format";

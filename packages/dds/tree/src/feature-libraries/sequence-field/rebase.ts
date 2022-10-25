@@ -4,7 +4,7 @@
  */
 
 import { clone, fail, StackyIterator } from "../../util";
-import { TaggedChange } from "../../rebase";
+import { TaggedChange } from "../../core";
 import {
     getInputLength,
     getOutputLength,

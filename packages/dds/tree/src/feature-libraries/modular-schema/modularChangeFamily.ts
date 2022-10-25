@@ -17,8 +17,8 @@ import {
     UpPath,
     Value,
     RevisionTag,
+    TaggedChange,
 } from "../../core";
-import { TaggedChange } from "../../rebase";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,

@@ -4,9 +4,16 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder, FieldKindIdentifier, Delta, JsonableTree, ITreeCursor } from "../core";
+import {
+    ChangeEncoder,
+    FieldKindIdentifier,
+    Delta,
+    JsonableTree,
+    ITreeCursor,
+    RevisionTag,
+    TaggedChange,
+} from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
-import { RevisionTag, TaggedChange } from "../rebase";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
     FieldKind,
