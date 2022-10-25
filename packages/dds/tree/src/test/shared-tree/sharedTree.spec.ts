@@ -512,8 +512,6 @@ describe("SharedTree", () => {
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
 
             const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
-            cursor.free();
-            await provider.ensureSynchronized();
             assert.equal(treeNode.getFieldValue(testFieldKey), expectedInitialNodeValue);
         });
 
@@ -628,7 +626,6 @@ describe("SharedTree", () => {
             firstNodeCursor.enterField(testFieldKey);
             firstNodeCursor.enterNode(0);
             assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
-            firstNodeCursor.free();
 
             const secondNodeAnchor = treeSequence.getAnchor(1);
             const secondNodeCursor = provider.trees[0].forest.allocateCursor();
@@ -636,9 +633,7 @@ describe("SharedTree", () => {
             secondNodeCursor.enterField(testFieldKey);
             secondNodeCursor.enterNode(0);
             assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
-            secondNodeCursor.free();
 
-            cursor.free();
         });
 
         it("get()", async () => {
@@ -660,8 +655,6 @@ describe("SharedTree", () => {
             assert.equal(firstNode.getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
             const secondNode = treeSequence.get(1);
             assert.equal(secondNode.getFieldValue(testFieldKey), expectedSecondNodeInitialValue);
-
-            cursor.free();
         });
 
         it("getAllAnchors()", async () => {
@@ -685,16 +678,12 @@ describe("SharedTree", () => {
             firstNodeCursor.enterField(testFieldKey);
             firstNodeCursor.enterNode(0);
             assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
-            firstNodeCursor.free();
 
             const secondNodeCursor = provider.trees[0].forest.allocateCursor();
             provider.trees[0].forest.tryMoveCursorTo(treeAnchors[1], secondNodeCursor);
             secondNodeCursor.enterField(testFieldKey);
             secondNodeCursor.enterNode(0);
             assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
-            secondNodeCursor.free();
-
-            cursor.free();
         });
 
         it("getAll()", async () => {
@@ -715,7 +704,6 @@ describe("SharedTree", () => {
             assert.equal(treeNodes.length, 2);
             assert.equal(treeNodes[0].getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
             assert.equal(treeNodes[1].getFieldValue(testFieldKey), expectedSecondNodeInitialValue);
-            cursor.free();
         });
 
         it("length()", async () => {
@@ -733,7 +721,6 @@ describe("SharedTree", () => {
                 brand("testSequence"),
             );
             assert.equal(treeSequence.length(), 2);
-            cursor.free();
         });
 
         it("pop()", async () => {
