@@ -208,17 +208,13 @@ export class BaseProxyTarget {
         cursor: ITreeSubscriptionCursor,
         public readonly fieldKey: FieldKey,
     ) {
-        if (this.isRoot && cursor.mode === CursorLocationType.Fields) {
+        if (this.fieldKey === rootFieldKeySymbol && cursor.mode === CursorLocationType.Fields) {
             this.lazyCursor = this.context.forest.allocateCursor();
             moveToDetachedField(this.context.forest, this.lazyCursor);
         } else {
             this.lazyCursor = cursor.fork();
-            context.withCursors.add(this);
         }
-    }
-
-    public get isRoot(): boolean {
-        return this.fieldKey === rootFieldKeySymbol;
+        this.context.withCursors.add(this);
     }
 
     public free(): void {
@@ -272,13 +268,9 @@ export class BaseProxyTarget {
  * the fields of {@link EditableTree} by means of the cursors.
  */
 class NodeProxyTarget extends BaseProxyTarget {
-    constructor(
-        public readonly context: ProxyContext,
-        cursor: ITreeSubscriptionCursor,
-        fieldKey: FieldKey,
-    ) {
+    constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor, fieldKey: FieldKey) {
+        assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
         super(context, cursor, fieldKey);
-        assert(this.cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
     }
 
     public getType(
@@ -503,7 +495,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * the nodes of {@link EditableField} by means of the cursors.
  */
 class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEditableTree> {
-    public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     private readonly primaryType?: TreeSchemaIdentifier;
     public readonly primaryField?: FieldKey;
@@ -526,18 +517,17 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         } else {
             // The cursor will be forked by super, which is currently only allowed for nodes.
             cursor.exitField();
-            super(context, cursor, primaryField ?? fieldKey);
+            super(context, cursor, fieldKey);
             this.cursor.enterField(primaryField ?? fieldKey);
             cursor.enterField(primaryField ?? fieldKey);
         }
         this.primaryType = primaryType;
         this.primaryField = primaryField;
-        this.fieldKey = fieldKey;
         this.fieldSchema = fieldSchema;
     }
 
     public getAnchor(): FieldAnchor {
-        if (this.isRoot) {
+        if (this.fieldKey === rootFieldKeySymbol) {
             return {
                 fieldKey: this.fieldKey,
                 parent: undefined,

@@ -6,9 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import {
     IEditableForest,
-    ITreeSubscriptionCursor,
     lookupGlobalFieldSchema,
-    Anchor,
     rootFieldKey,
     rootFieldKeySymbol,
     moveToDetachedField,
@@ -66,22 +64,8 @@ export interface EditableTreeContext {
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<BaseProxyTarget> = new Set();
     public readonly withAnchors: Set<BaseProxyTarget> = new Set();
-    /**
-     * A reference to `NeverAnchor` of `AnchorSet`.
-     * Used in `BaseProxyTarget` to indicate that the target is empty.
-     */
-    public readonly neverAnchor: Anchor;
-    /**
-     * A cursor which is freed.
-     * Used as a placeholder in `BaseProxyTarget` for empty targets.
-     */
-    public readonly neverCursor: ITreeSubscriptionCursor;
 
-    constructor(public readonly forest: IEditableForest) {
-        this.neverAnchor = forest.anchors.track(null);
-        this.neverCursor = forest.allocateCursor();
-        this.neverCursor.free();
-    }
+    constructor(public readonly forest: IEditableForest) {}
 
     public prepareForEdit(): void {
         for (const target of this.withCursors) {
