@@ -5,6 +5,8 @@
 
 import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
+// Basic implementation of an ITelemetry Logger. This logger will be passed into a client constructor
+// and gets hooked up to the container telemetry system.
 export class ConsoleLogger implements ITelemetryBaseLogger {
     constructor() {}
 
