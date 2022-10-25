@@ -244,6 +244,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     /**
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
+     *
+     * @alpha
      */
     public obliterateRange(start: number, end: number): IMergeTreeObliterateMsg | undefined {
         const obliterateOp = this.client.obliterateRangeLocal(start, end);

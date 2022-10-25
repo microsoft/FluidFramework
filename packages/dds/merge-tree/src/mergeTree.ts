@@ -1774,7 +1774,6 @@ export class MergeTree {
                     (nearerMovedSegment && breakEndpointTie(nearerMovedSegment, newSegment)) &&
                     (furtherMovedSegment && breakEndpointTie(newSegment, furtherMovedSegment))
                 ) {
-                    // These objects will be analogous to return from `toRemovalInfo`.
                     const nearMoveInfo = toMoveInfo(nearerMovedSegment);
                     const farMoveInfo = toMoveInfo(furtherMovedSegment);
                     // The inserted segment could potentially be adjacent to two different moved regions.
@@ -2021,6 +2020,9 @@ export class MergeTree {
         }
     }
 
+    /**
+     * @alpha
+     */
     public obliterateRange(
         start: number,
         end: number,
@@ -2580,6 +2582,12 @@ export class MergeTree {
         }
     }
 
+    /**
+     *
+     * @param lenSeq - The sequence number at which to determine the length of
+     * a segment for traversal. This is the same as refSeq, except in the case
+     * of obliterate.
+     */
     public mapRange<TClientData>(
         handler: ISegmentAction<TClientData>,
         refSeq: number,
@@ -2647,6 +2655,12 @@ export class MergeTree {
         }
     }
 
+    /**
+     *
+     * @param lenSeq - The sequence number at which to determine the length of
+     * a segment for traversal. This is the same as refSeq, except in the case
+     * of obliterate.
+     */
     private nodeMap<TClientData>(
         refSeq: number,
         clientId: number,
