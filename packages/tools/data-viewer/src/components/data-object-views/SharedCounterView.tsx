@@ -23,14 +23,14 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
     const [value, setValue] = React.useState<number>(sharedCounter.value);
 
     React.useEffect(() => {
-        function updateValue(): void {
-            setValue(sharedCounter.value);
+        function updateValue(delta: number, newValue: number): void {
+            setValue(newValue);
         }
 
-        sharedCounter.on("valueChanged", updateValue);
+        sharedCounter.on("incremented", updateValue);
 
         return (): void => {
-            sharedCounter.off("valueChanged", updateValue);
+            sharedCounter.off("incremented", updateValue);
         };
     }, [sharedCounter, setValue]);
 

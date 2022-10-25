@@ -5,8 +5,7 @@
 import { Spinner, Stack } from "@fluentui/react";
 import React from "react";
 
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidObject, IFluidHandle, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
 import { RendererOptions } from "../../RendererOptions";
@@ -27,10 +26,11 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
         return <>{data}</>;
     }
 
-    if (data instanceof FluidObjectHandle) {
+    if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
+        const handle = data as IFluidHandle;
         return (
             <FluidObjectView
-                fluidObjectHandle={data}
+                fluidObjectHandle={handle}
                 sharedObjectRenderers={sharedObjectRenderers}
             />
         );

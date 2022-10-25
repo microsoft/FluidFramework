@@ -308,7 +308,7 @@ function TextView(props: TextViewProps): React.ReactElement {
             console.error(`Error encountered loading SharedString: "${error}".`);
             throw error;
         });
-    }, [sharedTextHandle]);
+    }, [sharedTextHandle, setSharedText]);
 
     return sharedText === undefined ? <Spinner /> : <CollaborativeTextView text={sharedText} />;
 }
@@ -327,7 +327,7 @@ function CounterView(props: CounterViewProps): React.ReactElement {
             console.error(`Error encountered loading SharedCounter: "${error}".`);
             throw error;
         });
-    }, [sharedCounterHandle]);
+    }, [sharedCounterHandle, setSharedCounter]);
 
     return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
 }

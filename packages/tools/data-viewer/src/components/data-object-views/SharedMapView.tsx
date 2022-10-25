@@ -8,6 +8,7 @@ import React from "react";
 import { SharedMap } from "@fluidframework/map";
 
 import { RenderChild } from "../../RendererOptions";
+import { Accordion } from "../Accordion";
 
 /**
  * {@link SharedMapView} input props.
@@ -25,7 +26,7 @@ export interface SharedMapViewProps {
  * Default {@link @fluidframework/map#SharedMap} viewer.
  */
 export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
-    const { sharedMap } = props;
+    const { sharedMap, renderChild } = props;
 
     const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
 
@@ -47,7 +48,19 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
                 <b>SharedMap</b>
             </Stack.Item>
             <Stack.Item>Entry count: {entries.length}</Stack.Item>
-            <Stack.Item>TODO: visualize entries</Stack.Item>
+            {entries.map(([key, value]) => (
+                <Stack.Item key={`map-entry-${key}`}>
+                    <Accordion
+                        header={
+                            <div>
+                                <b>{key}</b>
+                            </div>
+                        }
+                    >
+                        {renderChild(value)}
+                    </Accordion>
+                </Stack.Item>
+            ))}
         </Stack>
     );
 }
