@@ -98,7 +98,7 @@ export function moveToDetachedField(
     field: DetachedField = rootField,
 ): void {
     const result = forest.tryMoveCursorToField(rootAnchor(field), cursorToMove);
-    assert(result === TreeNavigationResult.Ok, 0x42a /* Navigation to detached fields should never fail */);
+    assert(result === TreeNavigationResult.Ok, "Navigation to detached fields should never fail");
 }
 
 /**
