@@ -386,7 +386,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public tryGetEditFromId(editId: EditId): Edit<TChange> | undefined {
         const index = this.tryGetIndexOfId(editId);
-		return index !== undefined ? this.tryGetEditAtIndex(index) ?? undefined : undefined;
+		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
 
 	/**
