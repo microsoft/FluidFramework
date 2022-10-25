@@ -40,30 +40,6 @@ use_old_ClassDeclaration_DefaultTokenProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DeltaStorageService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DeltaStorageService": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentDeltaStorageService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentDeltaStorageService": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentPostCreateError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentPostCreateError():
@@ -88,30 +64,6 @@ use_old_ClassDeclaration_DocumentPostCreateError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentService": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentStorageService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DocumentStorageService": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRouterliciousDriverPolicies": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRouterliciousDriverPolicies():
@@ -119,7 +71,6 @@ declare function get_old_InterfaceDeclaration_IRouterliciousDriverPolicies():
 declare function use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
     use: TypeOnly<current.IRouterliciousDriverPolicies>);
 use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRouterliciousDriverPolicies());
 
 /*
@@ -205,18 +156,6 @@ declare function use_old_InterfaceDeclaration_ITokenService(
     use: TypeOnly<old.ITokenService>);
 use_old_InterfaceDeclaration_ITokenService(
     get_current_InterfaceDeclaration_ITokenService());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_NullBlobStorageService": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_NullBlobStorageService": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

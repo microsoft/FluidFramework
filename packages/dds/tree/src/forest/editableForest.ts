@@ -8,9 +8,9 @@ import {
     FieldKey,
     DetachedField,
     Delta,
-    detachedFieldAsKey,
     Anchor,
     ITreeCursorSynchronous,
+    rootFieldKeySymbol,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -38,8 +38,7 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
     // TODO: maybe assert forest is empty?
     const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-    const rootField = detachedFieldAsKey(forest.rootField);
-    forest.applyDelta(new Map([[rootField, [insert]]]));
+    forest.applyDelta(new Map([[rootFieldKeySymbol, [insert]]]));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

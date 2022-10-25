@@ -10,7 +10,7 @@ import { UpPath } from "./pathTree";
 import { Value } from "./types";
 
 /**
- * A way to refer to a particular tree location within a {@link Rebaser} instance's revision.
+ * A way to refer to a particular tree location within an {@link AnchorSet}.
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -37,7 +37,7 @@ export interface AnchorLocator {
 /**
  * Collection of Anchors at a specific revision.
  *
- * See {@link Rebaser} for how to update across revisions.
+ * See `Rebaser` for how to update across revisions.
  *
  * @sealed
  */
@@ -563,7 +563,7 @@ class PathNode implements UpPath {
      * Allowed when dangling (but not when disposed).
      */
     private disposeThis(): void {
-        assert(this.status !== Status.Disposed, "PathNode must not be disposed");
+        assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
         if (this.status === Status.Alive) {
             this.parentPath?.removeChild(this);
         }
