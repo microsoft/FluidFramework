@@ -37,8 +37,8 @@ async function start() {
     const contentDiv = document.getElementById("content") as HTMLDivElement;
 
     const parsedUrl = new URL(window.location.href);
-    const itemId = parsedUrl.searchParams.get("item") ?? undefined;
-    if (itemId === undefined) {
+    const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
+    if (requestedItemId === undefined) {
         // For now we will just reach into the FluidObject to render it
         ReactDOM.render(
             React.createElement(
@@ -48,7 +48,7 @@ async function start() {
             contentDiv,
         );
     } else {
-        const item = defaultObject.getItem(itemId);
+        const item = defaultObject.getItem(requestedItemId);
         if (item === undefined) {
             throw new Error("Item not found");
         }
@@ -58,7 +58,6 @@ async function start() {
             contentDiv,
         );
     }
-
 }
 
 start().catch((e) => {
