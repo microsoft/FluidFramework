@@ -43,7 +43,6 @@ async function start() {
     const parsedUrl = new URL(window.location.href);
     const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
     if (requestedItemId === undefined) {
-        // For now we will just reach into the FluidObject to render it
         ReactDOM.render(
             React.createElement(
                 DataObjectGridAppView,
