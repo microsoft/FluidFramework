@@ -39,6 +39,7 @@ import {
     defaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
+    IDefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
@@ -52,7 +53,7 @@ import {
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *

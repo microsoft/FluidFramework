@@ -14,15 +14,15 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
-    detachedFieldAsKey,
     FieldKey,
     JsonableTree,
     rootFieldKey,
+    rootFieldKeySymbol,
     symbolFromKey,
     TreeValue,
     Value,
 } from "../../tree";
-import { TreeNavigationResult } from "../../forest";
+import { moveToDetachedField } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
@@ -38,7 +38,7 @@ describe("SharedTree", () => {
         const provider = await TestTreeProvider.create(1);
         provider.trees[0].runTransaction((f, editor) => {
             const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
-            const field = editor.sequenceField(undefined, detachedFieldAsKey(f.rootField));
+            const field = editor.sequenceField(undefined, rootFieldKeySymbol);
             field.insert(0, writeCursor);
 
             return TransactionResult.Apply;
@@ -46,12 +46,10 @@ describe("SharedTree", () => {
 
         const { forest } = provider.trees[0];
         const readCursor = forest.allocateCursor();
-        const destination = forest.root(provider.trees[0].forest.rootField);
-        const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
-        assert.equal(cursorResult, TreeNavigationResult.Ok);
+        moveToDetachedField(forest, readCursor);
+        assert(readCursor.firstNode());
         assert.equal(readCursor.nextNode(), false);
         readCursor.free();
-        forest.forgetAnchor(destination);
     });
 
     it("can be connected to another tree", async () => {
@@ -95,7 +93,7 @@ describe("SharedTree", () => {
     it("can process ops after loading from summary", async () => {
         function insert(tree: ISharedTree, index: number, value: string): void {
             tree.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
                 field.insert(index, singleTextCursor({ type: brand("Node"), value }));
                 return TransactionResult.Apply;
             });
@@ -104,10 +102,8 @@ describe("SharedTree", () => {
         // Validate that the given tree is made up of nodes with the expected value
         function validateTree(tree: ISharedTree, expected: Value[]): void {
             const readCursor = tree.forest.allocateCursor();
-            const destination = tree.forest.root(tree.forest.rootField);
-            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
-            assert.equal(cursorResult, TreeNavigationResult.Ok);
-            let hasNode = true;
+            moveToDetachedField(tree.forest, readCursor);
+            let hasNode = readCursor.firstNode();
             for (const value of expected) {
                 assert(hasNode);
                 assert.equal(readCursor.value, value);
@@ -115,7 +111,6 @@ describe("SharedTree", () => {
             }
             assert.equal(hasNode, false);
             readCursor.free();
-            tree.forest.forgetAnchor(destination);
         }
 
         const provider = await TestTreeProvider.create(1, true);
@@ -144,7 +139,7 @@ describe("SharedTree", () => {
 
         // Delete Z
         tree2.runTransaction((forest, editor) => {
-            const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+            const field = editor.sequenceField(undefined, rootFieldKeySymbol);
             field.delete(0, 1);
             return TransactionResult.Apply;
         });
@@ -209,7 +204,7 @@ describe("SharedTree", () => {
 
             // Delete node
             tree1.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
                 field.delete(0, 1);
                 return TransactionResult.Apply;
             });
@@ -233,7 +228,7 @@ describe("SharedTree", () => {
                 const field = editor.sequenceField(
                     {
                         parent: undefined,
-                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentField: rootFieldKeySymbol,
                         parentIndex: 0,
                     },
                     globalFieldKeySymbol,
@@ -248,15 +243,13 @@ describe("SharedTree", () => {
             // Validate insertion
             {
                 const readCursor = tree2.forest.allocateCursor();
-                const destination = tree2.forest.root(tree2.forest.rootField);
-                const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
-                assert.equal(cursorResult1, TreeNavigationResult.Ok);
+                moveToDetachedField(tree2.forest, readCursor);
+                assert(readCursor.firstNode());
                 readCursor.enterField(globalFieldKeySymbol);
                 assert(readCursor.firstNode());
                 const { value } = readCursor;
                 assert.equal(value, 43);
                 readCursor.free();
-                tree2.forest.forgetAnchor(destination);
             }
 
             // Delete node
@@ -264,7 +257,7 @@ describe("SharedTree", () => {
                 const field = editor.sequenceField(
                     {
                         parent: undefined,
-                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentField: rootFieldKeySymbol,
                         parentIndex: 0,
                     },
                     globalFieldKeySymbol,
@@ -278,9 +271,8 @@ describe("SharedTree", () => {
             // Validate deletion
             {
                 const readCursor = tree2.forest.allocateCursor();
-                const destination = tree2.forest.root(tree2.forest.rootField);
-                const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
-                assert.equal(cursorResult1, TreeNavigationResult.Ok);
+                moveToDetachedField(tree2.forest, readCursor);
+                assert(readCursor.firstNode());
                 readCursor.enterField(globalFieldKeySymbol);
                 assert(!readCursor.firstNode());
             }
@@ -292,13 +284,13 @@ describe("SharedTree", () => {
 
             // Insert nodes
             tree1.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
                 field.insert(0, singleTextCursor({ type: brand("Test"), value: 1 }));
                 return TransactionResult.Apply;
             });
 
             tree1.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
                 field.insert(1, singleTextCursor({ type: brand("Test"), value: 2 }));
                 return TransactionResult.Apply;
             });
@@ -308,15 +300,13 @@ describe("SharedTree", () => {
             // Validate insertion
             {
                 const readCursor = tree2.forest.allocateCursor();
-                const destination = tree2.forest.root(tree2.forest.rootField);
-                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
-                assert.equal(cursorResult, TreeNavigationResult.Ok);
+                moveToDetachedField(tree2.forest, readCursor);
+                assert(readCursor.firstNode());
                 assert.equal(readCursor.value, 1);
                 assert.equal(readCursor.nextNode(), true);
                 assert.equal(readCursor.value, 2);
                 assert.equal(readCursor.nextNode(), false);
                 readCursor.free();
-                tree2.forest.forgetAnchor(destination);
             }
         });
     });
@@ -490,7 +480,7 @@ function initializeTestTree(
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor(state);
-        const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
         field.insert(0, writeCursor);
 
         return TransactionResult.Apply;
@@ -510,17 +500,11 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
  */
 function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();
-    const destination = forest.root(forest.rootField);
-    const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
-    if (cursorResult !== TreeNavigationResult.Ok) {
+    moveToDetachedField(forest, readCursor);
+    if (!readCursor.firstNode()) {
         return undefined;
     }
     const { value } = readCursor;
     readCursor.free();
-    forest.forgetAnchor(destination);
-    if (cursorResult === TreeNavigationResult.Ok) {
-        return value;
-    }
-
-    return undefined;
+    return value;
 }
