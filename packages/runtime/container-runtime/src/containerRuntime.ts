@@ -159,6 +159,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
+    testTombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -433,6 +434,17 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -640,6 +652,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOfflineLoad = false,
             compressionOptions = {},
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -717,6 +730,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 enableOfflineLoad,
                 compressionOptions,
                 maxBatchSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -830,6 +844,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
+    private ensureNoDataModelChangesCalls = 0;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            return callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
+    }
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -844,6 +877,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -966,6 +1000,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -982,8 +1020,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // latency of processing a batch.
         // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
         // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
-        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes);
+        this.pendingAttachBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
+        this.pendingBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes);
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -1797,16 +1835,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;
@@ -2219,9 +2247,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
+        /**
+         * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
+         * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
+         * external user, but the internal runtime does not delete it in summarizes, etc.
+         */
+        const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
+        // TODO: add blobs
+        if (tombstone) {
+            // If blob routes are passed in here, tombstone will fail and hit an assert
+            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
+            return;
+        }
+
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2645,6 +2686,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+        this.verifyCanSubmitOps();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
@@ -2759,6 +2801,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
+        }
+    }
+
+    private verifyCanSubmitOps() {
+        if (this.enableOpReentryCheck && this.ensureNoDataModelChangesCalls > 0) {
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
         }
     }
 

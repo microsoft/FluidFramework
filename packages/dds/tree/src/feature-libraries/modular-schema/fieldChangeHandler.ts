@@ -81,6 +81,9 @@ export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+/**
+ * Changeset for a subtree rooted at a specific node.
+ */
 export interface NodeChangeset {
     fieldChanges?: FieldChangeMap;
     valueChange?: ValueChange;

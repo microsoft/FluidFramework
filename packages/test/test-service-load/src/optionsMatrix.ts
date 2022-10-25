@@ -77,6 +77,7 @@ export function generateRuntimeOptions(
         flushMode: [undefined],
         compressionOptions: [{ minimumSize: 500 }],
         maxBatchSizeInBytes: [undefined],
+        enableOpReentryCheck: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

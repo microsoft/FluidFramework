@@ -29,6 +29,10 @@ import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+            getRawConfig: (name: string): ConfigTypes => settings[name],
+        }));
+
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
@@ -209,33 +213,110 @@ describe("Runtime", () => {
                 });
             }));
 
+        describe("Op reentry enforcement", () => {
+            let containerRuntime: ContainerRuntime;
+            const getMockContext = ((settings: Record<string, ConfigTypes>): Partial<IContainerContext> => ({
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger:
+                    mixinMonitoringContext(new MockLogger(), configProvider(settings)) as unknown as MockLogger,
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { },
+            }));
+
+            it("By default, don't enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() => {
+                    containerRuntime.submitDataStoreOp("id", "test");
+                    return true;
+                }));
+
+                assert.ok(containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() => {
+                            containerRuntime.submitDataStoreOp("id", "test");
+                            return true;
+                        }),
+                    )));
+            });
+
+            it("If option enabled, enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
+
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                ));
+
+                assert.throws(() => containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ),
+                ));
+            });
+
+            it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({
+                        "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+                    }) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        enableOpReentryCheck: true,
+                    }, // runtimeOptions
+                );
+
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.submitDataStoreOp("id", "test"),
+                );
+
+                containerRuntime.ensureNoDataModelChanges(() =>
+                    containerRuntime.ensureNoDataModelChanges(() =>
+                        containerRuntime.ensureNoDataModelChanges(() =>
+                            containerRuntime.submitDataStoreOp("id", "test"),
+                        ),
+                    ));
+            });
+        });
+
         describe("orderSequentially with rollback", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
 
-                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    const getMockContext = ((): Partial<IContainerContext> => ({
+                        attachState: AttachState.Attached,
+                        deltaManager: new MockDeltaManager(),
+                        quorum: new MockQuorumClients(),
+                        taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                            "Fluid.ContainerRuntime.EnableRollback": true,
+                        })) as unknown as MockLogger,
+                        clientDetails: { capabilities: { interactive: true } },
+                        closeFn: (error?: ICriticalContainerError): void => {
+                            if (error !== undefined) {
+                                containerErrors.push(error);
+                            }
+                        },
+                        updateDirtyContainerState: (dirty: boolean) => { },
                     }));
-
-                    const getMockContext = ((): Partial<IContainerContext> => {
-                        return {
-                            attachState: AttachState.Attached,
-                            deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorumClients(),
-                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
-                                "Fluid.ContainerRuntime.EnableRollback": true,
-                            })) as unknown as MockLogger,
-                            clientDetails: { capabilities: { interactive: true } },
-                            closeFn: (error?: ICriticalContainerError): void => {
-                                if (error !== undefined) {
-                                    containerErrors.push(error);
-                                }
-                            },
-                            updateDirtyContainerState: (dirty: boolean) => { },
-                        };
-                    });
 
                     beforeEach(async () => {
                         containerRuntime = await ContainerRuntime.load(
