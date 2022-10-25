@@ -65,7 +65,7 @@
     "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/protocol-definitions": "^1.1.0-97957",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/routerlicious-driver": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
@@ -79,7 +79,7 @@
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@^1.0.0",
+    "@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -96,19 +96,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "2.0.0",
-    "broken": {
-      "ClassDeclaration_MockFluidDataStoreRuntime": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MockDeltaManager": {
-        "backCompat": false
-      },
-      "ClassDeclaration_MockFluidDataStoreContext": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "version": "2.0.0-internal.2.1.0",
+    "broken": {}
   }
 }

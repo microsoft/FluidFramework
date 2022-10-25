@@ -40,14 +40,26 @@ use_old_FunctionDeclaration_addProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_AugmentedIntervalNode": {"forwardCompat": false}
+* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"forwardCompat": false}
 */
+declare function get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
+    TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>;
+declare function use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>);
+use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_AugmentedIntervalNode": {"backCompat": false}
+* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"backCompat": false}
 */
+declare function get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
+    TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>;
+declare function use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>);
+use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -59,7 +71,6 @@ declare function get_old_ClassDeclaration_BaseSegment():
 declare function use_current_ClassDeclaration_BaseSegment(
     use: TypeOnly<current.BaseSegment>);
 use_current_ClassDeclaration_BaseSegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BaseSegment());
 
 /*
@@ -144,32 +155,7 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ClientSeq": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ClientSeq": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_clientSeqComparer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_clientSeqComparer": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -266,18 +252,6 @@ declare function use_old_VariableDeclaration_compareNumbers(
     use: TypeOnly<typeof old.compareNumbers>);
 use_old_VariableDeclaration_compareNumbers(
     get_current_VariableDeclaration_compareNumbers());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_Comparer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_Comparer": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -402,6 +376,30 @@ use_old_FunctionDeclaration_createAnnotateRangeOp(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof old.createDetachedLocalReferencePosition>;
+declare function use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>);
+use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_old_FunctionDeclaration_createDetachedLocalReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof current.createDetachedLocalReferencePosition>;
+declare function use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>);
+use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_current_FunctionDeclaration_createDetachedLocalReferencePosition());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createGroupOp": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createGroupOp():
@@ -522,6 +520,30 @@ use_old_FunctionDeclaration_createRemoveRangeOp(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_debugMarkerToString": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_debugMarkerToString():
+    TypeOnly<typeof old.debugMarkerToString>;
+declare function use_current_FunctionDeclaration_debugMarkerToString(
+    use: TypeOnly<typeof current.debugMarkerToString>);
+use_current_FunctionDeclaration_debugMarkerToString(
+    get_old_FunctionDeclaration_debugMarkerToString());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_debugMarkerToString": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_debugMarkerToString():
+    TypeOnly<typeof current.debugMarkerToString>;
+declare function use_old_FunctionDeclaration_debugMarkerToString(
+    use: TypeOnly<typeof old.debugMarkerToString>);
+use_old_FunctionDeclaration_debugMarkerToString(
+    get_current_FunctionDeclaration_debugMarkerToString());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_DetachedReferencePosition": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_DetachedReferencePosition():
@@ -566,6 +588,30 @@ declare function use_old_InterfaceDeclaration_Dictionary(
     use: TypeOnly<old.Dictionary<any,any>>);
 use_old_InterfaceDeclaration_Dictionary(
     get_current_InterfaceDeclaration_Dictionary());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible():
+    TypeOnly<typeof old.discardMergeTreeDeltaRevertible>;
+declare function use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof current.discardMergeTreeDeltaRevertible>);
+use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible():
+    TypeOnly<typeof current.discardMergeTreeDeltaRevertible>;
+declare function use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof old.discardMergeTreeDeltaRevertible>);
+use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -618,18 +664,6 @@ use_old_FunctionDeclaration_extendIfUndefined(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Heap": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Heap": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICombiningOp():
@@ -661,7 +695,6 @@ declare function get_old_InterfaceDeclaration_IConsensusInfo():
 declare function use_current_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<current.IConsensusInfo>);
 use_current_InterfaceDeclaration_IConsensusInfo(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -674,7 +707,6 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -711,7 +743,6 @@ declare function get_old_InterfaceDeclaration_IHierBlock():
 declare function use_current_InterfaceDeclaration_IHierBlock(
     use: TypeOnly<current.IHierBlock>);
 use_current_InterfaceDeclaration_IHierBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IHierBlock());
 
 /*
@@ -724,7 +755,6 @@ declare function get_current_InterfaceDeclaration_IHierBlock():
 declare function use_old_InterfaceDeclaration_IHierBlock(
     use: TypeOnly<old.IHierBlock>);
 use_old_InterfaceDeclaration_IHierBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHierBlock());
 
 /*
@@ -750,18 +780,6 @@ declare function use_old_InterfaceDeclaration_IIntegerRange(
     use: TypeOnly<old.IIntegerRange>);
 use_old_InterfaceDeclaration_IIntegerRange(
     get_current_InterfaceDeclaration_IIntegerRange());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IInterval": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IInterval": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -893,7 +911,6 @@ declare function get_old_InterfaceDeclaration_IMergeBlock():
 declare function use_current_InterfaceDeclaration_IMergeBlock(
     use: TypeOnly<current.IMergeBlock>);
 use_current_InterfaceDeclaration_IMergeBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeBlock());
 
 /*
@@ -918,7 +935,6 @@ declare function get_old_TypeAliasDeclaration_IMergeNode():
 declare function use_current_TypeAliasDeclaration_IMergeNode(
     use: TypeOnly<current.IMergeNode>);
 use_current_TypeAliasDeclaration_IMergeNode(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IMergeNode());
 
 /*
@@ -943,7 +959,6 @@ declare function get_old_InterfaceDeclaration_IMergeNodeCommon():
 declare function use_current_InterfaceDeclaration_IMergeNodeCommon(
     use: TypeOnly<current.IMergeNodeCommon>);
 use_current_InterfaceDeclaration_IMergeNodeCommon(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeNodeCommon());
 
 /*
@@ -1249,6 +1264,30 @@ use_old_InterfaceDeclaration_IMergeTreeSegmentDelta(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeTextHelper": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMergeTreeTextHelper():
+    TypeOnly<old.IMergeTreeTextHelper>;
+declare function use_current_InterfaceDeclaration_IMergeTreeTextHelper(
+    use: TypeOnly<current.IMergeTreeTextHelper>);
+use_current_InterfaceDeclaration_IMergeTreeTextHelper(
+    get_old_InterfaceDeclaration_IMergeTreeTextHelper());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMergeTreeTextHelper": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMergeTreeTextHelper():
+    TypeOnly<current.IMergeTreeTextHelper>;
+declare function use_old_InterfaceDeclaration_IMergeTreeTextHelper(
+    use: TypeOnly<old.IMergeTreeTextHelper>);
+use_old_InterfaceDeclaration_IMergeTreeTextHelper(
+    get_current_InterfaceDeclaration_IMergeTreeTextHelper());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IncrementalBlockAction": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IncrementalBlockAction():
@@ -1304,7 +1343,6 @@ declare function get_old_ClassDeclaration_IncrementalMapState():
 declare function use_current_ClassDeclaration_IncrementalMapState(
     use: TypeOnly<current.IncrementalMapState<any>>);
 use_current_ClassDeclaration_IncrementalMapState(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IncrementalMapState());
 
 /*
@@ -1377,7 +1415,6 @@ declare function get_old_InterfaceDeclaration_InsertContext():
 declare function use_current_InterfaceDeclaration_InsertContext(
     use: TypeOnly<current.InsertContext>);
 use_current_InterfaceDeclaration_InsertContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_InsertContext());
 
 /*
@@ -1391,18 +1428,6 @@ declare function use_old_InterfaceDeclaration_InsertContext(
     use: TypeOnly<old.InsertContext>);
 use_old_InterfaceDeclaration_InsertContext(
     get_current_InterfaceDeclaration_InsertContext());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_integerRangeToString": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_integerRangeToString": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1427,42 +1452,6 @@ declare function use_old_FunctionDeclaration_internedSpaces(
     use: TypeOnly<typeof old.internedSpaces>);
 use_old_FunctionDeclaration_internedSpaces(
     get_current_FunctionDeclaration_internedSpaces());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IntervalNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IntervalNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalTree": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IntervalTree": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1618,7 +1607,6 @@ declare function get_old_InterfaceDeclaration_ISegmentChanges():
 declare function use_current_InterfaceDeclaration_ISegmentChanges(
     use: TypeOnly<current.ISegmentChanges>);
 use_current_InterfaceDeclaration_ISegmentChanges(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISegmentChanges());
 
 /*
@@ -1660,42 +1648,6 @@ use_old_InterfaceDeclaration_KeyComparer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_List": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_List": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ListMakeHead": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ListMakeHead": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ListRemoveEntry": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ListRemoveEntry": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LocalClientId": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_LocalClientId():
@@ -1720,18 +1672,6 @@ use_old_VariableDeclaration_LocalClientId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_LocalReference": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_LocalReference": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalReferenceCollection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalReferenceCollection():
@@ -1739,7 +1679,6 @@ declare function get_old_ClassDeclaration_LocalReferenceCollection():
 declare function use_current_ClassDeclaration_LocalReferenceCollection(
     use: TypeOnly<current.LocalReferenceCollection>);
 use_current_ClassDeclaration_LocalReferenceCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalReferenceCollection());
 
 /*
@@ -1757,18 +1696,6 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_LocalReferencePosition": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_LocalReferencePosition():
@@ -1776,7 +1703,6 @@ declare function get_old_InterfaceDeclaration_LocalReferencePosition():
 declare function use_current_InterfaceDeclaration_LocalReferencePosition(
     use: TypeOnly<current.LocalReferencePosition>);
 use_current_InterfaceDeclaration_LocalReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_LocalReferencePosition());
 
 /*
@@ -1789,20 +1715,7 @@ declare function get_current_InterfaceDeclaration_LocalReferencePosition():
 declare function use_old_InterfaceDeclaration_LocalReferencePosition(
     use: TypeOnly<old.LocalReferencePosition>);
 use_old_InterfaceDeclaration_LocalReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_LocalReferencePosition());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_LRUSegment": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_LRUSegment": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1838,7 +1751,6 @@ declare function get_old_ClassDeclaration_Marker():
 declare function use_current_ClassDeclaration_Marker(
     use: TypeOnly<current.Marker>);
 use_current_ClassDeclaration_Marker(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Marker());
 
 /*
@@ -1851,7 +1763,6 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -1936,7 +1847,6 @@ declare function get_old_ClassDeclaration_MergeBlock():
 declare function use_current_ClassDeclaration_MergeBlock(
     use: TypeOnly<current.MergeBlock>);
 use_current_ClassDeclaration_MergeBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeBlock());
 
 /*
@@ -1961,7 +1871,6 @@ declare function get_old_ClassDeclaration_MergeNode():
 declare function use_current_ClassDeclaration_MergeNode(
     use: TypeOnly<current.MergeNode>);
 use_current_ClassDeclaration_MergeNode(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeNode());
 
 /*
@@ -1975,18 +1884,6 @@ declare function use_old_ClassDeclaration_MergeNode(
     use: TypeOnly<old.MergeNode>);
 use_old_ClassDeclaration_MergeNode(
     get_current_ClassDeclaration_MergeNode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTree": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTree": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2059,6 +1956,30 @@ declare function use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     use: TypeOnly<old.MergeTreeDeltaOperationTypes>);
 use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     get_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_MergeTreeDeltaRevertible": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible():
+    TypeOnly<old.MergeTreeDeltaRevertible>;
+declare function use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
+    use: TypeOnly<current.MergeTreeDeltaRevertible>);
+use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
+    get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_MergeTreeDeltaRevertible": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible():
+    TypeOnly<current.MergeTreeDeltaRevertible>;
+declare function use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
+    use: TypeOnly<old.MergeTreeDeltaRevertible>);
+use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
+    get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2183,6 +2104,30 @@ use_old_TypeAliasDeclaration_MergeTreeMaintenanceType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_MergeTreeRevertibleDriver": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_MergeTreeRevertibleDriver():
+    TypeOnly<old.MergeTreeRevertibleDriver>;
+declare function use_current_InterfaceDeclaration_MergeTreeRevertibleDriver(
+    use: TypeOnly<current.MergeTreeRevertibleDriver>);
+use_current_InterfaceDeclaration_MergeTreeRevertibleDriver(
+    get_old_InterfaceDeclaration_MergeTreeRevertibleDriver());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_MergeTreeRevertibleDriver": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_MergeTreeRevertibleDriver():
+    TypeOnly<current.MergeTreeRevertibleDriver>;
+declare function use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
+    use: TypeOnly<old.MergeTreeRevertibleDriver>);
+use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
+    get_current_InterfaceDeclaration_MergeTreeRevertibleDriver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_MergeTreeStats": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_MergeTreeStats():
@@ -2203,18 +2148,6 @@ declare function use_old_InterfaceDeclaration_MergeTreeStats(
     use: TypeOnly<old.MergeTreeStats>);
 use_old_InterfaceDeclaration_MergeTreeStats(
     get_current_InterfaceDeclaration_MergeTreeStats());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTreeTextHelper": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTreeTextHelper": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2363,6 +2296,30 @@ use_old_ClassDeclaration_PropertiesManager(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_PropertiesRollback": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_PropertiesRollback():
+    TypeOnly<old.PropertiesRollback>;
+declare function use_current_EnumDeclaration_PropertiesRollback(
+    use: TypeOnly<current.PropertiesRollback>);
+use_current_EnumDeclaration_PropertiesRollback(
+    get_old_EnumDeclaration_PropertiesRollback());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_PropertiesRollback": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_PropertiesRollback():
+    TypeOnly<current.PropertiesRollback>;
+declare function use_old_EnumDeclaration_PropertiesRollback(
+    use: TypeOnly<old.PropertiesRollback>);
+use_old_EnumDeclaration_PropertiesRollback(
+    get_current_EnumDeclaration_PropertiesRollback());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_Property": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_Property():
@@ -2435,18 +2392,6 @@ use_old_TypeAliasDeclaration_PropertySet(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ProxString": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ProxString": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_QProperty": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_QProperty():
@@ -2490,7 +2435,6 @@ declare function get_current_TypeAliasDeclaration_RangeStackMap():
 declare function use_old_TypeAliasDeclaration_RangeStackMap(
     use: TypeOnly<old.RangeStackMap>);
 use_old_TypeAliasDeclaration_RangeStackMap(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RangeStackMap());
 
 /*
@@ -2635,7 +2579,6 @@ declare function get_current_InterfaceDeclaration_ReferencePosition():
 declare function use_old_InterfaceDeclaration_ReferencePosition(
     use: TypeOnly<old.ReferencePosition>);
 use_old_InterfaceDeclaration_ReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ReferencePosition());
 
 /*
@@ -2929,6 +2872,30 @@ use_old_VariableDeclaration_reservedTileLabelsKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
+    TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>;
+declare function use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>);
+use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
+    TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>;
+declare function use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>);
+use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_SearchResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SearchResult():
@@ -3049,18 +3016,6 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_SnapshotLegacy": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_SortedDictionary": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SortedDictionary():
@@ -3109,6 +3064,54 @@ use_old_ClassDeclaration_SortedSegmentSet(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SortedSegmentSetItem": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SortedSegmentSetItem():
+    TypeOnly<old.SortedSegmentSetItem>;
+declare function use_current_TypeAliasDeclaration_SortedSegmentSetItem(
+    use: TypeOnly<current.SortedSegmentSetItem>);
+use_current_TypeAliasDeclaration_SortedSegmentSetItem(
+    get_old_TypeAliasDeclaration_SortedSegmentSetItem());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SortedSegmentSetItem": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SortedSegmentSetItem():
+    TypeOnly<current.SortedSegmentSetItem>;
+declare function use_old_TypeAliasDeclaration_SortedSegmentSetItem(
+    use: TypeOnly<old.SortedSegmentSetItem>);
+use_old_TypeAliasDeclaration_SortedSegmentSetItem(
+    get_current_TypeAliasDeclaration_SortedSegmentSetItem());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SortedSet": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_SortedSet():
+    TypeOnly<old.SortedSet<any,any>>;
+declare function use_current_ClassDeclaration_SortedSet(
+    use: TypeOnly<current.SortedSet<any,any>>);
+use_current_ClassDeclaration_SortedSet(
+    get_old_ClassDeclaration_SortedSet());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SortedSet": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_SortedSet():
+    TypeOnly<current.SortedSet<any,any>>;
+declare function use_old_ClassDeclaration_SortedSet(
+    use: TypeOnly<old.SortedSet<any,any>>);
+use_old_ClassDeclaration_SortedSet(
+    get_current_ClassDeclaration_SortedSet());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Stack": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Stack():
@@ -3140,7 +3143,6 @@ declare function get_old_ClassDeclaration_TextSegment():
 declare function use_current_ClassDeclaration_TextSegment(
     use: TypeOnly<current.TextSegment>);
 use_current_ClassDeclaration_TextSegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TextSegment());
 
 /*
@@ -3182,6 +3184,30 @@ use_old_FunctionDeclaration_toRemovalInfo(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_Trackable": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_Trackable():
+    TypeOnly<old.Trackable>;
+declare function use_current_TypeAliasDeclaration_Trackable(
+    use: TypeOnly<current.Trackable>);
+use_current_TypeAliasDeclaration_Trackable(
+    get_old_TypeAliasDeclaration_Trackable());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_Trackable": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_Trackable():
+    TypeOnly<current.Trackable>;
+declare function use_old_TypeAliasDeclaration_Trackable(
+    use: TypeOnly<old.Trackable>);
+use_old_TypeAliasDeclaration_Trackable(
+    get_current_TypeAliasDeclaration_Trackable());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TrackingGroup():
@@ -3189,7 +3215,6 @@ declare function get_old_ClassDeclaration_TrackingGroup():
 declare function use_current_ClassDeclaration_TrackingGroup(
     use: TypeOnly<current.TrackingGroup>);
 use_current_ClassDeclaration_TrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TrackingGroup());
 
 /*
@@ -3251,42 +3276,6 @@ declare function use_old_VariableDeclaration_TreeMaintenanceSequenceNumber(
     use: TypeOnly<typeof old.TreeMaintenanceSequenceNumber>);
 use_old_VariableDeclaration_TreeMaintenanceSequenceNumber(
     get_current_VariableDeclaration_TreeMaintenanceSequenceNumber());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TST": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TST": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_TSTNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_TSTNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_TSTResult": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_TSTResult": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

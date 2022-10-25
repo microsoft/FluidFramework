@@ -9,9 +9,10 @@ import {
     EmptyKey,
     FieldKey,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     mapCursorFields,
     CursorLocationType,
+    rootFieldKeySymbol,
 } from "../tree";
 import { brand } from "../util";
 
@@ -100,6 +101,7 @@ export function testJsonableTreeCursor(
     cursorName: string,
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
+    testRooted = true,
 ): void {
     describe(`${cursorName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
@@ -116,10 +118,13 @@ export function testJsonableTreeCursor(
             }
         });
 
-        it("up from root", () => {
-            const cursor = factory({ type: brand("Foo") });
-            assert.throws(() => cursor.exitNode());
-        });
+        // TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
+        if (testRooted) {
+            it("up from root", () => {
+                const cursor = factory({ type: brand("Foo") });
+                assert.throws(() => cursor.exitNode());
+            });
+        }
 
         describe("keys", () => {
             const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
@@ -343,7 +348,9 @@ export function testJsonableTreeCursor(
                 cursor.enterField(key);
                 assert(
                     0 <= index && index < cursor.getFieldLength(),
-                    `.length() must include index of existing child '${String(key)}[${index}]'.`,
+                    `.getFieldLength() must include index of existing child '${String(
+                        key,
+                    )}[${index}]'.`,
                 );
 
                 assert.doesNotThrow(
@@ -359,7 +366,9 @@ export function testJsonableTreeCursor(
                 cursor.enterField(key);
                 assert(
                     !(index >= 0) || index >= cursor.getFieldLength(),
-                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
+                    `.getFieldLength() must exclude index of missing child '${String(
+                        key,
+                    )}[${index}]'.`,
                 );
 
                 assert.throws(
@@ -419,6 +428,13 @@ export function testJsonableTreeCursor(
         });
 
         describe("getPath() returns correct path for", () => {
+            const parent = testRooted
+                ? undefined
+                : {
+                      parent: undefined,
+                      parentField: rootFieldKeySymbol,
+                      parentIndex: 0,
+                  };
             it(`first node in a root trait`, () => {
                 const cursor = factory({
                     type: brand("Foo"),
@@ -427,7 +443,7 @@ export function testJsonableTreeCursor(
                 cursor.enterField(brand("key"));
                 cursor.firstNode();
                 assert.deepEqual(cursor.getPath(), {
-                    parent: undefined,
+                    parent,
                     parentField: brand<FieldKey>("key"),
                     parentIndex: 0,
                 });
@@ -446,7 +462,7 @@ export function testJsonableTreeCursor(
                 cursor.enterField(brand("key"));
                 cursor.enterNode(1);
                 assert.deepEqual(cursor.getPath(), {
-                    parent: undefined,
+                    parent,
                     parentField: brand<FieldKey>("key"),
                     parentIndex: 1,
                 });
@@ -470,7 +486,7 @@ export function testJsonableTreeCursor(
                 assert.equal(cursor.firstNode(), true);
                 assert.deepEqual(cursor.getPath(), {
                     parent: {
-                        parent: undefined,
+                        parent,
                         parentField: brand<FieldKey>("a"),
                         parentIndex: 0,
                     },
@@ -479,6 +495,23 @@ export function testJsonableTreeCursor(
                 });
             });
         });
+
+        for (const [name, data] of cursorTestCases) {
+            const restrictedKeys: FieldKey[] = [
+                brand("__proto__"),
+                brand("toString"),
+                brand("toFixed"),
+                brand("hasOwnProperty"),
+            ];
+
+            it(`returns no values for retricted keys on ${name} tree`, () => {
+                for (const key of restrictedKeys) {
+                    const cursor = factory(data);
+                    cursor.enterField(key);
+                    assert.equal(cursor.getFieldLength(), 0);
+                }
+            });
+        }
     });
 }
 
@@ -501,6 +534,7 @@ function traverseNode(cursor: ITreeCursor) {
 
         const firstNodeResult = cursor.firstNode();
         if (!firstNodeResult) {
+            cursor.exitField();
             break;
         }
 

@@ -70,30 +70,23 @@ export async function npmCheckUpdates(
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
     const upgradeLogLines = new Set<string>();
     const searchGlobs: string[] = [];
-    let repoPath: string;
+    const repoPath = context.repo.resolvedRoot;
 
     const releaseGroupsToCheck =
-        releaseGroup === undefined
+        releaseGroup === undefined // run on the whole repo
             ? [...context.repo.releaseGroups.keys()]
-            : isReleaseGroup(releaseGroup)
+            : isReleaseGroup(releaseGroup) // run on just this release group
             ? [releaseGroup]
             : undefined;
 
-    const packagesToCheck = isReleaseGroup(releaseGroup) ? undefined : releaseGroup;
+    const packagesToCheck =
+        releaseGroup === undefined // run on the whole repo
+            ? [...context.independentPackages] // include all independent packages
+            : isReleaseGroup(releaseGroup)
+            ? [] // run on a release group so no independent packages should be included
+            : [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
 
-    // Run on the whole repo
-    if (releaseGroupsToCheck === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pkg = context.fullPackageMap.get(releaseGroup!);
-        if (pkg === undefined) {
-            throw new Error(`Package not found in context: ${releaseGroup}`);
-        }
-
-        repoPath = pkg.directory;
-        searchGlobs.push(pkg.directory);
-    } else {
-        repoPath = context.repo.resolvedRoot;
-
+    if (releaseGroupsToCheck !== undefined) {
         for (const group of releaseGroupsToCheck) {
             if (group === releaseGroupFilter) {
                 log?.verbose(
@@ -113,21 +106,19 @@ export async function npmCheckUpdates(
 
             searchGlobs.push(
                 ...releaseGroupRoot.workspaceGlobs.map((g) =>
-                    path.join(
-                        path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
-                        g,
-                    ),
+                    path.join(path.relative(repoPath, releaseGroupRoot.repoPath), g),
                 ),
                 // Includes the root package.json, in case there are deps there that also need upgrade.
-                // path.join(releaseGroupRoot.repoPath, "package.json"),
-                path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
+                path.relative(repoPath, releaseGroupRoot.repoPath),
             );
         }
     }
 
-    if (packagesToCheck === undefined) {
-        for (const pkg of context.independentPackages) {
-            searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
+    if (packagesToCheck !== undefined) {
+        for (const pkg of packagesToCheck) {
+            if (pkg !== undefined) {
+                searchGlobs.push(path.relative(repoPath, pkg.directory));
+            }
         }
     }
 

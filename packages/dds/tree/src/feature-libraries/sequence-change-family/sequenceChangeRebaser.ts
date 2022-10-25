@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser, RevisionTag } from "../../rebase";
-import { AnchorSet } from "../../tree";
+import { ChangeRebaser, AnchorSet, RevisionTag } from "../../core";
 import { toDelta } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { compose } from "./compose";
