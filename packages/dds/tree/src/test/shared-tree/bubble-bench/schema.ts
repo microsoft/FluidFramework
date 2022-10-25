@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { brand } from "../../../util";
 import { emptyField, FieldKinds } from "../../../feature-libraries";
 import { fieldSchema, namedTreeSchema, SchemaData, ValueSchema } from "../../../schema-stored";
@@ -73,8 +77,9 @@ export const bubbleBenchAppStateSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-
-export const rootBubbleBenchAppStateSchema = fieldSchema(FieldKinds.value, [bubbleBenchAppStateSchema.name]);
+export const rootBubbleBenchAppStateSchema = fieldSchema(FieldKinds.value, [
+    bubbleBenchAppStateSchema.name,
+]);
 
 export const bubbleBenchAppStateSchemaData: SchemaData = {
     treeSchema: new Map([
@@ -87,107 +92,111 @@ export const bubbleBenchAppStateSchemaData: SchemaData = {
         [iClientSequenceSchema.name, iClientSequenceSchema],
         [bubbleBenchAppStateSchema.name, bubbleBenchAppStateSchema],
     ]),
-    globalFieldSchema: new Map([
-        [rootFieldKey, rootBubbleBenchAppStateSchema],
-    ]),
+    globalFieldSchema: new Map([[rootFieldKey, rootBubbleBenchAppStateSchema]]),
 };
 
 export const bubbleBenchAppStateJsonTree: JsonableTree = {
     type: bubbleBenchAppStateSchema.name,
     fields: {
-        localClient: [{
-            type: iClientSchema.name,
-            fields: {
-                clientId: [{ type: stringSchema.name, value: "1" }],
-                color: [{ type: stringSchema.name, value: "red" }],
-                bubbles: [
-                    {
-                        type: iBubbleSchema.name,
-                        fields: {
-                            x: [{ type: int32Schema.name, value: 10 }],
-                            y: [{ type: int32Schema.name, value: 11 }],
-                            r: [{ type: int32Schema.name, value: 12 }],
-                            vx: [{ type: int32Schema.name, value: 13 }],
-                            vy: [{ type: int32Schema.name, value: 14 }],
-                        }
-                    },
-                    {
-                        type: iBubbleSchema.name,
-                        fields: {
-                            x: [{ type: int32Schema.name, value: 20 }],
-                            y: [{ type: int32Schema.name, value: 20 }],
-                            r: [{ type: int32Schema.name, value: 20 }],
-                            vx: [{ type: int32Schema.name, value: 20 }],
-                            vy: [{ type: int32Schema.name, value: 20 }],
-                        }
-                    }
-                ],
-                simpleBubbles: [{
-                    type: simpeBubblesSequenceSchema.name,
-                    fields: {
-                        [EmptyKey]: [
-                            {
-                                type: iBubbleSchema.name,
-                                fields: {
-                                    x: [{ type: int32Schema.name, value: 10 }],
-                                    y: [{ type: int32Schema.name, value: 10 }],
-                                    r: [{ type: int32Schema.name, value: 10 }],
-                                    vx: [{ type: int32Schema.name, value: 10 }],
-                                    vy: [{ type: int32Schema.name, value: 10 }],
-                                }
+        localClient: [
+            {
+                type: iClientSchema.name,
+                fields: {
+                    clientId: [{ type: stringSchema.name, value: "1" }],
+                    color: [{ type: stringSchema.name, value: "red" }],
+                    bubbles: [
+                        {
+                            type: iBubbleSchema.name,
+                            fields: {
+                                x: [{ type: int32Schema.name, value: 10 }],
+                                y: [{ type: int32Schema.name, value: 11 }],
+                                r: [{ type: int32Schema.name, value: 12 }],
+                                vx: [{ type: int32Schema.name, value: 13 }],
+                                vy: [{ type: int32Schema.name, value: 14 }],
                             },
-                            {
-                                type: iBubbleSchema.name,
-                                fields: {
-                                    x: [{ type: int32Schema.name, value: 20 }],
-                                    y: [{ type: int32Schema.name, value: 20 }],
-                                    r: [{ type: int32Schema.name, value: 20 }],
-                                    vx: [{ type: int32Schema.name, value: 20 }],
-                                    vy: [{ type: int32Schema.name, value: 20 }],
-                                }
-                            }
-                        ]
-                    }
-                }]
-            }
-        }],
+                        },
+                        {
+                            type: iBubbleSchema.name,
+                            fields: {
+                                x: [{ type: int32Schema.name, value: 20 }],
+                                y: [{ type: int32Schema.name, value: 20 }],
+                                r: [{ type: int32Schema.name, value: 20 }],
+                                vx: [{ type: int32Schema.name, value: 20 }],
+                                vy: [{ type: int32Schema.name, value: 20 }],
+                            },
+                        },
+                    ],
+                    simpleBubbles: [
+                        {
+                            type: simpeBubblesSequenceSchema.name,
+                            fields: {
+                                [EmptyKey]: [
+                                    {
+                                        type: iBubbleSchema.name,
+                                        fields: {
+                                            x: [{ type: int32Schema.name, value: 10 }],
+                                            y: [{ type: int32Schema.name, value: 10 }],
+                                            r: [{ type: int32Schema.name, value: 10 }],
+                                            vx: [{ type: int32Schema.name, value: 10 }],
+                                            vy: [{ type: int32Schema.name, value: 10 }],
+                                        },
+                                    },
+                                    {
+                                        type: iBubbleSchema.name,
+                                        fields: {
+                                            x: [{ type: int32Schema.name, value: 20 }],
+                                            y: [{ type: int32Schema.name, value: 20 }],
+                                            r: [{ type: int32Schema.name, value: 20 }],
+                                            vx: [{ type: int32Schema.name, value: 20 }],
+                                            vy: [{ type: int32Schema.name, value: 20 }],
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
         width: [{ type: int32Schema.name, value: 1920 }],
         height: [{ type: int32Schema.name, value: 1080 }],
-        clients: [{
-            type: iClientSequenceSchema.name,
-            fields: {
-                [EmptyKey]: [
-                    {
-                        type: iClientSchema.name,
-                        fields: {
-                            clientId: [{ type: stringSchema.name, value: "2" }],
-                            color: [{ type: stringSchema.name, value: "blue" }],
-                            bubbles: [
-                                {
-                                    type: iBubbleSchema.name,
-                                    fields: {
-                                        x: [{ type: int32Schema.name, value: 10 }],
-                                        y: [{ type: int32Schema.name, value: 10 }],
-                                        r: [{ type: int32Schema.name, value: 10 }],
-                                        vx: [{ type: int32Schema.name, value: 10 }],
-                                        vy: [{ type: int32Schema.name, value: 10 }],
-                                    }
-                                },
-                                {
-                                    type: iBubbleSchema.name,
-                                    fields: {
-                                        x: [{ type: int32Schema.name, value: 20 }],
-                                        y: [{ type: int32Schema.name, value: 20 }],
-                                        r: [{ type: int32Schema.name, value: 20 }],
-                                        vx: [{ type: int32Schema.name, value: 20 }],
-                                        vy: [{ type: int32Schema.name, value: 20 }],
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        }]
-    }
-}
+        clients: [
+            {
+                type: iClientSequenceSchema.name,
+                fields: {
+                    [EmptyKey]: [
+                        {
+                            type: iClientSchema.name,
+                            fields: {
+                                clientId: [{ type: stringSchema.name, value: "2" }],
+                                color: [{ type: stringSchema.name, value: "blue" }],
+                                bubbles: [
+                                    {
+                                        type: iBubbleSchema.name,
+                                        fields: {
+                                            x: [{ type: int32Schema.name, value: 10 }],
+                                            y: [{ type: int32Schema.name, value: 10 }],
+                                            r: [{ type: int32Schema.name, value: 10 }],
+                                            vx: [{ type: int32Schema.name, value: 10 }],
+                                            vy: [{ type: int32Schema.name, value: 10 }],
+                                        },
+                                    },
+                                    {
+                                        type: iBubbleSchema.name,
+                                        fields: {
+                                            x: [{ type: int32Schema.name, value: 20 }],
+                                            y: [{ type: int32Schema.name, value: 20 }],
+                                            r: [{ type: int32Schema.name, value: 20 }],
+                                            vx: [{ type: int32Schema.name, value: 20 }],
+                                            vy: [{ type: int32Schema.name, value: 20 }],
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+    },
+};

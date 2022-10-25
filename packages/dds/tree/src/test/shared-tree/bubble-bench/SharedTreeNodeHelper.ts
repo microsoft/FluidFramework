@@ -1,12 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { TransactionResult } from "../../../checkout";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey, Value } from "../../../tree";
 
 export class SharedTreeNodeHelper {
-    constructor(
-        public readonly tree: ISharedTree,
-        public readonly anchor: Anchor
-    ) { }
+    constructor(public readonly tree: ISharedTree, public readonly anchor: Anchor) {}
 
     /**
      * Gets the value at a given field of the Shared Tree node held by this class instance.
@@ -17,6 +18,7 @@ export class SharedTreeNodeHelper {
     getFieldValue(fieldKey: FieldKey): unknown {
         const cursor = this.getCursor();
         cursor.enterField(fieldKey);
+        cursor.enterNode(0);
         const value = cursor.value;
         cursor.free();
         return value;
@@ -36,14 +38,15 @@ export class SharedTreeNodeHelper {
      * @param fieldKey - The FieldKey of the field (node) within the tree node held by this class instance.
      * @param value - the value to be set at the given field (node) within the tree node held by this class instance.
      */
-    editFieldValue(fieldKey: FieldKey, value: Value) {
+    setFieldValue(fieldKey: FieldKey, value: Value) {
         const cursor = this.getCursor();
         cursor.enterField(fieldKey);
+        cursor.enterNode(0);
         const fieldAnchor = cursor.buildAnchor();
         this.tree.runTransaction((forest, editor) => {
-            const path = this.tree.locate(fieldAnchor)
+            const path = this.tree.locate(fieldAnchor);
             if (!path) {
-                throw new Error("path to anchor does not exist")
+                throw new Error("path to anchor does not exist");
             }
             this.tree.context.prepareForEdit();
             cursor.free();
@@ -51,5 +54,4 @@ export class SharedTreeNodeHelper {
             return TransactionResult.Apply;
         });
     }
-
 }

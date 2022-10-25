@@ -1,15 +1,15 @@
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey } from "../../../tree";
 import { brand } from "../../../util";
-import { iBubbleSchema, int32Schema } from "./schema";
-import { Bubble } from "./Bubble";
+// import { iBubbleSchema, int32Schema } from "./schema";
+// import { Bubble } from "./Bubble";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./SharedTreeSequenceHelper";
 
 export class Client {
-    static clientIdFieldKey: FieldKey = brand('clientId');
-    static colorFieldKey: FieldKey = brand('color');
-    static bubblesFieldKey: FieldKey = brand('bubbles');
+    static clientIdFieldKey: FieldKey = brand("clientId");
+    static colorFieldKey: FieldKey = brand("color");
+    static bubblesFieldKey: FieldKey = brand("bubbles");
 
     private readonly treeHelper: SharedTreeNodeHelper;
     readonly bubbleSeqeunceHelper: SharedTreeSequenceHelper;
@@ -22,15 +22,27 @@ export class Client {
         private _height: number,
     ) {
         this.treeHelper = new SharedTreeNodeHelper(tree, anchor);
-        this.bubbleSeqeunceHelper = new SharedTreeSequenceHelper(tree, anchor, Client.bubblesFieldKey);
+        this.bubbleSeqeunceHelper = new SharedTreeSequenceHelper(
+            tree,
+            anchor,
+            Client.bubblesFieldKey,
+        );
         // this._bubbles = this.initializeBubblesArray();
     }
 
-    public get clientId() { return this.treeHelper.getFieldValue(Client.clientIdFieldKey) as string }
-    public set clientId(value: string) { this.treeHelper.editFieldValue(Client.clientIdFieldKey, value); }
+    public get clientId() {
+        return this.treeHelper.getFieldValue(Client.clientIdFieldKey) as string;
+    }
+    public set clientId(value: string) {
+        this.treeHelper.setFieldValue(Client.clientIdFieldKey, value);
+    }
 
-    public get color() { return this.treeHelper.getFieldValue(Client.colorFieldKey) as string }
-    public set color(value: string) { this.treeHelper.editFieldValue(Client.colorFieldKey, value); }
+    public get color() {
+        return this.treeHelper.getFieldValue(Client.colorFieldKey) as string;
+    }
+    public set color(value: string) {
+        this.treeHelper.setFieldValue(Client.colorFieldKey, value);
+    }
 
     public setSize(width?: number, height?: number) {
         this._width = width ?? 640;
@@ -60,7 +72,6 @@ export class Client {
         //         vy: [{ type: int32Schema.name, value: 99 }],
         //     }
         // };
-
         // this.bubbleSeqeunceHelper.push(newBubble)
         // const newBubs = this.initializeBubblesArray().map(bub => bub.x);
         // const [newBubbleCursor] = this.bubbleSeqeunceHelper.get(this._bubbles.length);
@@ -71,5 +82,4 @@ export class Client {
         // this.bubbleSeqeunceHelper.pop();
         // this._bubbles.pop();
     }
-
 }

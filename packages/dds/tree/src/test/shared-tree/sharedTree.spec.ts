@@ -16,6 +16,7 @@ import {
 import { brand } from "../../util";
 import {
     detachedFieldAsKey,
+    EmptyKey,
     FieldKey,
     JsonableTree,
     rootFieldKey,
@@ -27,8 +28,15 @@ import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData, ValueSchema } from "../../schema-stored";
+import {
+    fieldSchema,
+    GlobalFieldKey,
+    namedTreeSchema,
+    SchemaData,
+    ValueSchema,
+} from "../../schema-stored";
 import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
+import { SharedTreeSequenceHelper } from "./bubble-bench/SharedTreeSequenceHelper";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
@@ -462,7 +470,6 @@ describe("SharedTree", () => {
     });
 
     describe("SharedTreeNodeHelper", () => {
-
         const int32Schema = namedTreeSchema({
             name: brand("Int32"),
             extraLocalFields: emptyField,
@@ -478,9 +485,7 @@ describe("SharedTree", () => {
         });
 
         const schemaData: SchemaData = {
-            treeSchema: new Map([
-                [int32Schema.name, int32Schema],
-            ]),
+            treeSchema: new Map([[int32Schema.name, int32Schema]]),
             globalFieldSchema: new Map([
                 [rootFieldKey, fieldSchema(FieldKinds.value, [testObjectSchema.name])],
             ]),
@@ -489,9 +494,9 @@ describe("SharedTree", () => {
         const jsonableTree: JsonableTree = {
             type: testObjectSchema.name,
             fields: {
-                testField: [{ type: int32Schema.name, value: 10 }]
-            }
-        }
+                testField: [{ type: int32Schema.name, value: 10 }],
+            },
+        };
 
         it("getFieldValue()", async () => {
             const provider = await TestTreeProvider.create(1);
@@ -503,15 +508,117 @@ describe("SharedTree", () => {
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
 
             const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
-            const nodeValue = treeNode.getFieldValue(brand('testField')) as number;
-            assert.equal(nodeValue, 10);
+            cursor.free();
+            await provider.ensureSynchronized();
+            assert.equal(treeNode.getFieldValue(brand("testField")), 10);
         });
 
+        it("setFieldValue()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+            const originalNodeValue = treeNode.getFieldValue(brand("testField")) as number;
+            const newNodeValue = originalNodeValue + 99;
+            cursor.free();
+            await provider.ensureSynchronized();
+            treeNode.setFieldValue(brand("testField"), newNodeValue);
+            assert.equal(treeNode.getFieldValue(brand("testField")), newNodeValue);
+        });
     });
 
+    describe("SharedTreeSequenceHelper", () => {
+        const int32Schema = namedTreeSchema({
+            name: brand("Int32Schema"),
+            extraLocalFields: emptyField,
+            value: ValueSchema.Number,
+        });
 
+        const testSequenceMemeberSchema = namedTreeSchema({
+            name: brand("testSequenceMemeberSchema"),
+            localFields: {
+                testField: fieldSchema(FieldKinds.value, [int32Schema.name]),
+            },
+            extraLocalFields: emptyField,
+        });
 
+        const testSequenceSchema = namedTreeSchema({
+            name: brand("testSequenceSchema"),
+            localFields: {
+                [EmptyKey]: fieldSchema(FieldKinds.sequence, [testSequenceMemeberSchema.name]),
+            },
+            extraLocalFields: emptyField,
+        });
 
+        const testObjectSchema = namedTreeSchema({
+            name: brand("testObjectSchema"),
+            localFields: {
+                testSequence: fieldSchema(FieldKinds.sequence, [testSequenceSchema.name]),
+            },
+            extraLocalFields: emptyField,
+        });
+
+        const schemaData: SchemaData = {
+            treeSchema: new Map([
+                [int32Schema.name, int32Schema],
+                [testSequenceMemeberSchema.name, testSequenceMemeberSchema],
+                [testSequenceSchema.name, testSequenceSchema],
+                [testObjectSchema.name, testObjectSchema],
+            ]),
+            globalFieldSchema: new Map([
+                [rootFieldKey, fieldSchema(FieldKinds.value, [testObjectSchema.name])],
+            ]),
+        };
+
+        const jsonableTree: JsonableTree = {
+            type: testObjectSchema.name,
+            fields: {
+                testSequence: [
+                    {
+                        type: testSequenceMemeberSchema.name,
+                        fields: {
+                            testField: [{ type: int32Schema.name, value: 10 }],
+                        },
+                    },
+                    {
+                        type: testSequenceMemeberSchema.name,
+                        fields: {
+                            testField: [{ type: int32Schema.name, value: 11 }],
+                        },
+                    },
+                ],
+            },
+        };
+
+        it("getAllAnchors()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+            // move to sequence
+            // const sequenceFieldKey: FieldKey = brand("testSequence");
+            // cursor.enterField(sequenceFieldKey);
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+            const treeNodes = treeSequence
+                .getAllAnchors()
+                .map((anchor) => new SharedTreeNodeHelper(provider.trees[0], anchor));
+            assert.equal(treeNodes.length, 2);
+            assert.equal(treeNodes[0].getFieldValue(brand("testField")), 10);
+            assert.equal(treeNodes[1].getFieldValue(brand("testField")), 11);
+        });
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);

@@ -1,9 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { TransactionResult } from "../../../checkout";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey } from "../../../tree";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 
 export class SharedTreeSequenceHelper {
-
     private readonly treeNodeHelper: SharedTreeNodeHelper;
     constructor(
         public readonly tree: ISharedTree,
@@ -13,23 +17,16 @@ export class SharedTreeSequenceHelper {
         this.treeNodeHelper = new SharedTreeNodeHelper(tree, parentAnchor);
     }
 
-    public getCursor(index: number) {
+    public getAnchor(index: number) {
         const cursor = this.treeNodeHelper.getCursor();
         cursor.enterField(this.sequenceFieldKey);
         cursor.enterNode(index);
-        return cursor;
-    }
-
-    public get(index: number) {
-        const cursor = this.treeNodeHelper.getCursor();
-        cursor.enterField(this.sequenceFieldKey);
-        cursor.enterNode(index);
-        const treeNode = new SharedTreeNodeHelper(this.tree, cursor.buildAnchor());
+        const treeNode = cursor.buildAnchor();
         cursor.free();
         return treeNode;
     }
 
-    public getAll() {
+    public getAllAnchors() {
         const nodeAnchors: Anchor[] = [];
         const cursor = this.treeNodeHelper.getCursor();
 
@@ -47,9 +44,10 @@ export class SharedTreeSequenceHelper {
         return nodeAnchors;
     }
 
-    public length(): number {
+    public length() {
         const cursor = this.treeNodeHelper.getCursor();
-        const length = cursor.getFieldLength() as number;
+        cursor.enterField(this.sequenceFieldKey);
+        const length: number = cursor.getFieldLength();
         cursor.free();
         return length;
     }
@@ -99,21 +97,15 @@ export class SharedTreeSequenceHelper {
     //     });
     // }
 
-
-    // public pop() {
-    //     const cursor = this.tree.forest.allocateCursor();
-    //     this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
-    //     cursor.down(this.sequenceFieldKey, this.length() - 1);
-    //     this.tree.runTransaction((forest, editor) => {
-    //         const path = this.tree.locate(cursor.buildAnchor());
-    //         if (!path) {
-    //             throw new Error("path to anchor does not exist")
-    //         }
-    //         this.tree.context.prepareForEdit();
-    //         cursor.free();
-    //         editor.delete(path, 1);
-    //         return TransactionResult.Apply;
-    //     });
-    // }
-
+    public pop() {
+        this.tree.runTransaction((forest, editor) => {
+            const cursor = this.treeNodeHelper.getCursor();
+            const parentPath = this.tree.locate(cursor.buildAnchor());
+            const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+            field.delete(this.length() - 1, 1);
+            this.tree.context.prepareForEdit();
+            cursor.free();
+            return TransactionResult.Apply;
+        });
+    }
 }
