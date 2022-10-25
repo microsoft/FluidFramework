@@ -582,18 +582,77 @@ describe("SharedTree", () => {
                     {
                         type: testSequenceMemeberSchema.name,
                         fields: {
-                            testField: [{ type: int32Schema.name, value: 10 }],
+                            testField: [{ type: int32Schema.name, value: 1 }],
                         },
                     },
                     {
                         type: testSequenceMemeberSchema.name,
                         fields: {
-                            testField: [{ type: int32Schema.name, value: 11 }],
+                            testField: [{ type: int32Schema.name, value: 2 }],
                         },
                     },
                 ],
             },
         };
+
+        const testFieldKey: FieldKey = brand("testField");
+
+        it("getAnchor()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+
+            // check value of first node
+            const firstNodeAnchor = treeSequence.getAnchor(0);
+            const firstNodeCursor = provider.trees[0].forest.allocateCursor();
+            provider.trees[0].forest.tryMoveCursorTo(firstNodeAnchor, firstNodeCursor);
+            firstNodeCursor.enterField(testFieldKey);
+            firstNodeCursor.enterNode(0);
+            assert.equal(firstNodeCursor.value, 1);
+            firstNodeCursor.free();
+
+            // check value of second node
+            const secondNodeAnchor = treeSequence.getAnchor(1);
+            const secondNodeCursor = provider.trees[0].forest.allocateCursor();
+            provider.trees[0].forest.tryMoveCursorTo(secondNodeAnchor, secondNodeCursor);
+            secondNodeCursor.enterField(testFieldKey);
+            secondNodeCursor.enterNode(0);
+            assert.equal(firstNodeCursor.value, 1);
+            secondNodeCursor.free();
+
+            cursor.free();
+        });
+
+        it("get()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+            const firstNode = treeSequence.get(0);
+            assert.equal(firstNode.getFieldValue(testFieldKey), 1);
+            const secondNode = treeSequence.get(1);
+            assert.equal(secondNode.getFieldValue(testFieldKey), 2);
+            cursor.free();
+        });
 
         it("getAllAnchors()", async () => {
             const provider = await TestTreeProvider.create(1);
@@ -603,17 +662,51 @@ describe("SharedTree", () => {
             const cursor = provider.trees[0].forest.allocateCursor();
             const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
             const treeSequence = new SharedTreeSequenceHelper(
                 provider.trees[0],
                 cursor.buildAnchor(),
                 brand("testSequence"),
             );
-            const treeNodes = treeSequence
-                .getAllAnchors()
-                .map((anchor) => new SharedTreeNodeHelper(provider.trees[0], anchor));
+            const treeAnchors = treeSequence.getAllAnchors();
+
+            // check value of first node
+            const firstNodeCursor = provider.trees[0].forest.allocateCursor();
+            provider.trees[0].forest.tryMoveCursorTo(treeAnchors[0], firstNodeCursor);
+            firstNodeCursor.enterField(testFieldKey);
+            firstNodeCursor.enterNode(0);
+            assert.equal(firstNodeCursor.value, 1);
+            firstNodeCursor.free();
+
+            // check value of second node
+            const secondNodeCursor = provider.trees[0].forest.allocateCursor();
+            provider.trees[0].forest.tryMoveCursorTo(treeAnchors[1], secondNodeCursor);
+            secondNodeCursor.enterField(testFieldKey);
+            secondNodeCursor.enterNode(0);
+            assert.equal(secondNodeCursor.value, 2);
+            secondNodeCursor.free();
+
+            cursor.free();
+        });
+
+        it("getAll()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+            const treeNodes = treeSequence.getAll();
             assert.equal(treeNodes.length, 2);
-            assert.equal(treeNodes[0].getFieldValue(brand("testField")), 10);
-            assert.equal(treeNodes[1].getFieldValue(brand("testField")), 11);
+            assert.equal(treeNodes[0].getFieldValue(testFieldKey), 1);
+            assert.equal(treeNodes[1].getFieldValue(testFieldKey), 2);
             cursor.free();
         });
 
@@ -655,7 +748,7 @@ describe("SharedTree", () => {
             assert.equal(treeSequence.length(), 1);
             // confirms removal of node was the one at the last index
             const remainingNode = new SharedTreeNodeHelper(provider.trees[0], treeSequence.getAnchor(0));
-            assert.equal(remainingNode.getFieldValue(brand('testField')), 10);
+            assert.equal(remainingNode.getFieldValue(testFieldKey), 1);
         });
 
 

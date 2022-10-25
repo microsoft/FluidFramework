@@ -26,6 +26,10 @@ export class SharedTreeSequenceHelper {
         return treeNode;
     }
 
+    public get(index: number) {
+        return new SharedTreeNodeHelper(this.tree, this.getAnchor(index));
+    }
+
     public getAllAnchors() {
         const nodeAnchors: Anchor[] = [];
         const cursor = this.treeNodeHelper.getCursor();
@@ -42,6 +46,11 @@ export class SharedTreeSequenceHelper {
 
         cursor.free();
         return nodeAnchors;
+    }
+
+    public getAll() {
+        return this.getAllAnchors()
+        .map((anchor) => new SharedTreeNodeHelper(this.tree, anchor));
     }
 
     public length() {
