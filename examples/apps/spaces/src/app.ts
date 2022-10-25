@@ -34,15 +34,31 @@ async function start() {
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<IDataObjectGrid>(container);
+    const contentDiv = document.getElementById("content") as HTMLDivElement;
 
-    // For now we will just reach into the FluidObject to render it
-    const contentDiv = document.getElementById("content");
-    if (contentDiv !== null) {
+    const parsedUrl = new URL(window.location.href);
+    const itemId = parsedUrl.searchParams.get("item") ?? undefined;
+    if (itemId === undefined) {
+        // For now we will just reach into the FluidObject to render it
         ReactDOM.render(
-            React.createElement(DataObjectGridAppView, { model: defaultObject, getDirectUrl: () => "" }),
+            React.createElement(
+                DataObjectGridAppView,
+                { model: defaultObject, getDirectUrl: (itemId: string) => `?item=${itemId}#${documentId}` },
+            ),
+            contentDiv,
+        );
+    } else {
+        const item = defaultObject.getItem(itemId);
+        if (item === undefined) {
+            throw new Error("Item not found");
+        }
+        const view = await defaultObject.getViewForItem(item);
+        ReactDOM.render(
+            view,
             contentDiv,
         );
     }
+
 }
 
 start().catch((e) => {
