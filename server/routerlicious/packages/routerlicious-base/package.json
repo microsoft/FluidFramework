@@ -84,8 +84,8 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.4.4000",
     "@fluidframework/build-common": "^1.0.0",
-"@fluid-tools/build-cli": "^0.4.4000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/server-local-server": "^0.1038.3000",
     "@fluidframework/server-test-utils": "^0.1038.3000",
