@@ -12,4 +12,4 @@
 
 export { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 export { generateTestUser } from "./generateTestUser";
-export { BaseConsoleLogger } from "./baseConsoleLogger";
+export { ConsoleLogger } from "./ConsoleLogger";

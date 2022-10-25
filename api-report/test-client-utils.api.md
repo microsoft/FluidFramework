@@ -5,10 +5,16 @@
 ```ts
 
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export const consoleLogger: () => Console;
+export class ConsoleLogger implements ITelemetryBaseLogger {
+    constructor();
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+}
 
 // @public
 export const generateTestUser: () => IUser & {
