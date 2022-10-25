@@ -23,10 +23,8 @@
     name: Create empty document
     package: doc-creator
     params:
-      connectionConfig: ${connectionConfig}
+      client: ${client}
       schema: ${schema}
-      numDocs: 1
-      clientStartDelayMs: 0
     out: ${docId}
   - stage-3:
     id: 3

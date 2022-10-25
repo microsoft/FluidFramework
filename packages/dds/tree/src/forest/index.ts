@@ -16,6 +16,4 @@ export {
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-    FieldAnchor,
-    moveToDetachedField,
 } from "./forest";

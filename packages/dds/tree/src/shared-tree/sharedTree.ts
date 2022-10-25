@@ -27,7 +27,6 @@ import {
     AnchorLocator,
     AnchorSet,
     UpPath,
-    EditManager,
 } from "../core";
 import {
     defaultSchemaPolicy,
@@ -39,12 +38,10 @@ import {
     defaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
-    IDefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
     DefaultChangeset,
-    EditManagerIndex,
 } from "../feature-libraries";
 
 /**
@@ -53,7 +50,7 @@ import {
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *
@@ -122,19 +119,13 @@ class SharedTree
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         const forest = new ObjectForest(schema, anchors);
-        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
-            defaultChangeFamily,
-            anchors,
-        );
         const indexes: Index<DefaultChangeset>[] = [
             new SchemaIndex(runtime, schema),
             new ForestIndex(runtime, forest),
-            new EditManagerIndex(runtime, editManager),
         ];
         super(
             indexes,
             defaultChangeFamily,
-            editManager,
             anchors,
             id,
             runtime,

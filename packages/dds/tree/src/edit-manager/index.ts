@@ -3,12 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-    Branch,
-    Commit,
-    EditManager,
-    MutableSummaryData,
-    SeqNumber,
-    SessionId,
-    ReadonlySummaryData,
-} from "./editManager";
+export { Commit, EditManager, SeqNumber, SessionId } from "./editManager";

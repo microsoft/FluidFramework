@@ -768,6 +768,7 @@ export const shortCodeMap = {
     "0x3c3": "EditableTree should have an anchor if it does not have a cursor",
     "0x3c4": "It is invalid to access an EditableTree node which no longer exists",
     "0x3c5": "invalid non sequence",
+    "0x3c6": "invalid non sequence",
     "0x3c7": "undefined` values not allowed for primitive field",
     "0x3c8": "invalid non sequence",
     "0x3c9": "no batch markup on single message",
@@ -835,6 +836,7 @@ export const shortCodeMap = {
     "0x40d": "PathNode must be alive",
     "0x40e": "PathNode must be alive",
     "0x40f": "PathNode must be alive",
+    "0x410": "PathNode must be alive",
     "0x411": "should be in nodes",
     "0x412": "Nobody should be connected to this socket at this point!",
     "0x413": "non-active socket",
@@ -846,12 +848,5 @@ export const shortCodeMap = {
     "0x419": "client sends non-client message",
     "0x41a": "undefined or string",
     "0x41b": "We cannot process batches in chunks",
-    "0x41c": "cannot flush in the middle of a batch",
-    "0x41d": "PathNode must not be disposed",
-    "0x41e": "explicit undefined fields should not be preserved in JSON",
-    "0x41f": "expected a primitive value",
-    "0x420": "expected non-empty field",
-    "0x421": "expected exactly one node",
-    "0x422": "unexpected type",
-    "0x423": "The field is a local field, a parent schema is required."
+    "0x41c": "cannot flush in the middle of a batch"
 };

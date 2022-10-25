@@ -5,7 +5,10 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { getLogger } from "./logger";
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
@@ -38,9 +41,21 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
     }
 
     public async run(config: IRunConfig): Promise<void> {
+        const logger = await getLogger({
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+            namespace: "scenario:runner:maptraffic",
+        });
         this.status = "running";
 
-        await this.execRun(config);
+        await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "RunStage" },
+            async () => {
+                return this.execRun(config);
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
         this.status = "success";
     }
 

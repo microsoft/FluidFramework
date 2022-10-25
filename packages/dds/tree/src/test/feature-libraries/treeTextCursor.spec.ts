@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { initializeForest, InMemoryStoredSchemaRepository, moveToDetachedField } from "../../core";
+import { initializeForest, InMemoryStoredSchemaRepository, TreeNavigationResult } from "../../core";
 import { jsonSchemaData } from "../../domains";
 import {
     defaultSchemaPolicy,
@@ -28,8 +28,10 @@ testJsonableTreeCursor(
         );
         initializeForest(forest, [singleTextCursor(data)]);
         const cursor = forest.allocateCursor();
-        moveToDetachedField(forest, cursor);
-        assert(cursor.firstNode());
+        assert.equal(
+            forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
+            TreeNavigationResult.Ok,
+        );
         return cursor;
     },
     jsonableTreeFromCursor,

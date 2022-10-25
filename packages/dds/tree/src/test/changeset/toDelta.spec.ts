@@ -4,13 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../../feature-libraries";
 import {
     ProtoNode,
+    singleTextCursor,
     toDelta as toDeltaImpl,
     Transposed as T,
-    // eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/sequence-change-family";
+} from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta, ITreeCursorSynchronous } from "../../tree";
 import { brand, brandOpaque } from "../../util";

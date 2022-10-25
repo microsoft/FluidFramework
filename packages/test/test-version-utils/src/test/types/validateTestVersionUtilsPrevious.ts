@@ -359,6 +359,7 @@ declare function get_old_InterfaceDeclaration_ITestDataObject():
 declare function use_current_InterfaceDeclaration_ITestDataObject(
     use: TypeOnly<current.ITestDataObject>);
 use_current_InterfaceDeclaration_ITestDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestDataObject());
 
 /*
@@ -371,6 +372,7 @@ declare function get_current_InterfaceDeclaration_ITestDataObject():
 declare function use_old_InterfaceDeclaration_ITestDataObject(
     use: TypeOnly<old.ITestDataObject>);
 use_old_InterfaceDeclaration_ITestDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestDataObject());
 
 /*

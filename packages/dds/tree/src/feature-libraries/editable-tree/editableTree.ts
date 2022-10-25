@@ -23,7 +23,6 @@ import {
     mapCursorFields,
     CursorLocationType,
     rootFieldKeySymbol,
-    moveToDetachedField,
 } from "../../core";
 import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -207,13 +206,32 @@ export class BaseProxyTarget {
         cursor: ITreeSubscriptionCursor,
         public readonly fieldKey?: FieldKey,
     ) {
+        // A root field requires special handling as it has no parent:
+        // - the cursor can't be used if the root is empty
+        // - the root is anchored at its child node and is permanent
+        // TODO: this is a workaround until anchors and `getPath()` (used in `cursor.fork()`) will get support for fields.
         if (this.isRoot) {
-            this.lazyCursor = this.context.forest.allocateCursor();
-            moveToDetachedField(this.context.forest, this.lazyCursor);
+            this.anchor = context.forest.root(context.forest.rootField);
+            if (cursor.state === ITreeSubscriptionCursorState.Current) {
+                cursor.enterNode(0);
+                this.lazyCursor = cursor.fork();
+                this.lazyCursor.exitNode();
+                cursor.exitNode();
+                context.withCursors.add(this);
+            } else {
+                // Empty root has `neveAnchor` implicitly returned by forest, and `neverCursor` is just a placeholder for `lazyCursor`.
+                // They are used to not overlap with "alive" cursors and anchors of a non-empty target.
+                // Note that in this context `undefined` anchor is just a not yet created anchor.
+                this.lazyCursor = context.neverCursor;
+            }
         } else {
             this.lazyCursor = cursor.fork();
             context.withCursors.add(this);
         }
+    }
+
+    public get isEmptyRoot(): boolean {
+        return this.anchor === this.context.neverAnchor;
     }
 
     public get isRoot(): boolean {
@@ -221,6 +239,7 @@ export class BaseProxyTarget {
     }
 
     public free(): void {
+        if (this.isEmptyRoot) return;
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
@@ -239,6 +258,7 @@ export class BaseProxyTarget {
     }
 
     public prepareForEdit(): void {
+        if (this.isEmptyRoot) return;
         this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
@@ -250,7 +270,7 @@ export class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
+            const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
@@ -260,7 +280,7 @@ export class BaseProxyTarget {
                 // A root field is anchored at its child node, and any other field is anchored at its parent node.
                 if (!this.isRoot) {
                     this.lazyCursor.enterField(this.fieldKey);
-                } else {
+                } else if (!this.isEmptyRoot) {
                     this.lazyCursor.exitNode();
                 }
             }
@@ -509,23 +529,32 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
-        assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
-        let primaryField: FieldKey | undefined;
-        if (primaryType !== undefined) {
-            primaryField = cursor.getFieldKey();
-        }
-        // a root field has no parent
-        if (fieldKey === rootFieldKeySymbol && primaryField === undefined) {
+        // allowed only for empty roots
+        if (cursor.state !== ITreeSubscriptionCursorState.Current) {
+            assert(
+                fieldKey === rootFieldKeySymbol,
+                "The cursor must point to this field if it's not a root field.",
+            );
             super(context, cursor, fieldKey);
         } else {
-            // The cursor will be forked by super, which is currently only allowed for nodes.
-            cursor.exitField();
-            super(context, cursor, primaryField ?? fieldKey);
-            this.cursor.enterField(primaryField ?? fieldKey);
-            cursor.enterField(primaryField ?? fieldKey);
+            assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+            let primaryField: FieldKey | undefined;
+            if (primaryType !== undefined) {
+                primaryField = cursor.getFieldKey();
+            }
+            // a root field has no parent
+            if (fieldKey === rootFieldKeySymbol && primaryField === undefined) {
+                super(context, cursor, fieldKey);
+            } else {
+                // The cursor will be forked by super, which is currently only allowed for nodes.
+                cursor.exitField();
+                super(context, cursor, primaryField ?? fieldKey);
+                this.cursor.enterField(primaryField ?? fieldKey);
+                cursor.enterField(primaryField ?? fieldKey);
+            }
+            this.primaryType = primaryType;
+            this.primaryField = primaryField;
         }
-        this.primaryType = primaryType;
-        this.primaryField = primaryField;
         this.fieldKey = fieldKey;
         this.fieldSchema = fieldSchema;
     }
@@ -545,7 +574,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
     readonly [index: number]: UnwrappedEditableTree;
 
     public get length(): number {
-        return this.cursor.getFieldLength();
+        return this.isEmptyRoot ? 0 : this.cursor.getFieldLength();
     }
 
     public getType(
@@ -593,9 +622,11 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      * Gets array of unwrapped nodes.
      */
     private get asArray(): UnwrappedEditableTree[] {
-        return mapCursorField(this.cursor, (c) =>
-            inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
-        );
+        return this.isEmptyRoot
+            ? []
+            : mapCursorField(this.cursor, (c) =>
+                  inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
+              );
     }
 
     *[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
@@ -780,14 +811,16 @@ export function proxifyField(
         );
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
-    const length = cursor.getFieldLength();
-    assert(length <= 1, 0x3c8 /* invalid non sequence */);
-    if (length === 1) {
-        cursor.enterNode(0);
-        const target = new NodeProxyTarget(context as ProxyContext, cursor);
-        const proxifiedNode = inProxyOrUnwrap(target, unwrap, fieldKey);
-        cursor.exitNode();
-        return proxifiedNode;
+    if (cursor.state === ITreeSubscriptionCursorState.Current) {
+        const length = cursor.getFieldLength();
+        assert(length <= 1, 0x3c8 /* invalid non sequence */);
+        if (length === 1) {
+            cursor.enterNode(0);
+            const target = new NodeProxyTarget(context as ProxyContext, cursor);
+            const proxifiedNode = inProxyOrUnwrap(target, unwrap, fieldKey);
+            cursor.exitNode();
+            return proxifiedNode;
+        }
     }
     return undefined;
 }

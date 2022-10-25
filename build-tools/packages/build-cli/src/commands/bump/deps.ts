@@ -11,13 +11,7 @@ import { FluidRepo } from "@fluidframework/build-tools";
 
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
-import {
-    checkFlags,
-    dependencyUpdateTypeFlag,
-    packageSelectorFlag,
-    releaseGroupFlag,
-    skipCheckFlag,
-} from "../../flags";
+import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
 import {
     generateBumpDepsBranchName,
     generateBumpDepsCommitMessage,
@@ -46,9 +40,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         updateType: dependencyUpdateTypeFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
-            default: "minor",
         }),
         prerelease: Flags.boolean({
+            char: "p",
             dependsOn: ["updateType"],
             description: "Treat prerelease versions as valid versions to update to.",
         }),
@@ -57,11 +51,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         }),
         releaseGroup: releaseGroupFlag({
             description: "Only bump dependencies within this release group.",
-            exclusive: ["package"],
-        }),
-        package: packageSelectorFlag({
-            description: "Only bump dependencies of this package.",
-            exclusive: ["releaseGroup"],
         }),
         commit: checkFlags.commit,
         install: checkFlags.install,
@@ -114,6 +103,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         }
 
         /**
+         * The version range or bump type (depending on the CLI arguments) to set.
+         */
+        const versionToSet = flags.updateType ?? "current";
+
+        /**
          * A list of package names on which to update dependencies.
          */
         const depsToUpdate: string[] = [];
@@ -143,11 +137,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
         this.logHr();
         this.log(`Dependencies: ${chalk.blue(args.package_or_release_group)}`);
-        this.log(
-            `Packages: ${chalk.blueBright(flags.releaseGroup ?? flags.package ?? "all packages")}`,
-        );
+        this.log(`Packages: ${chalk.blueBright(flags.releaseGroup ?? "all packages")}`);
         this.log(`Prerelease: ${flags.prerelease ? chalk.green("yes") : "no"}`);
-        this.log(`Bump type: ${chalk.bold(flags.updateType ?? "unknown")}`);
+        this.log(`Bump type: ${chalk.bold(versionToSet)}`);
         this.logHr();
         this.log("");
 
@@ -157,7 +149,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
         const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
-            flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+            flags.releaseGroup, // if undefined the whole repo will be checked
             depsToUpdate,
             args.package_or_release_group,
             flags.updateType,

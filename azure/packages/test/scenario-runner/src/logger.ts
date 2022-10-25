@@ -18,11 +18,10 @@ export interface LoggerConfig {
     runId?: string;
 }
 
-class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private error: boolean = false;
     private readonly schema = new Map<string, number>();
     private targetEvents: string[] = [];
-    private transformedEvents: Map<string, string> = new Map();
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
@@ -33,14 +32,8 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
         this.targetEvents = expectedEventNames;
     }
 
-    public transformEvents(events: Map<string, string>) {
-        this.transformedEvents = events;
-        for (const k of events.keys()) {
-            this.targetEvents.push(k);
-        }
-    }
-
     async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
+        // console.log("event----", this.targetEvents);
         const baseFlushP = this.baseLogger?.flush();
 
         if (this.error && runInfo !== undefined) {
@@ -69,7 +62,6 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
     }
 
     send(event: ITelemetryBaseEvent): void {
-        // We want to log only events that are relevant to the test runner.
         if (this.targetEvents.length > 0) {
             const found = this.targetEvents.find((a) => event.eventName.startsWith(a));
             if (!found) {
@@ -77,19 +69,13 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
             }
         }
 
-        // Here we are remapping internal FF events to scenario runner events.
-        // TODO: Further cleanup needed.
-        for (const k of this.transformedEvents.keys()) {
-            if (event.eventName.startsWith(k)) {
-                event.eventName = `${this.transformedEvents.get(k)}${event.eventName.slice(
-                    k.length,
-                )}`;
-                break;
-            }
-        }
-
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
+        } else if (
+            typeof event.message === "string" &&
+            event.message.includes("FaultInjectionNack")
+        ) {
+            event.category = "generic";
         }
         this.baseLogger?.send({ ...event, hostName: pkgName });
 
@@ -103,28 +89,21 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
     }
 }
 
-export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
+export const loggerP = new LazyPromise<FileLogger>(async () => {
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger?.();
         assert(logger !== undefined, "Expected getTestLogger to return something");
-        return new ScenarioRunnerLogger(logger);
+        return new FileLogger(logger);
     } else {
-        return new ScenarioRunnerLogger();
+        return new FileLogger();
     }
 });
 
-export async function getLogger(
-    config: LoggerConfig,
-    events?: string[],
-    transformEvents?: Map<string, string>,
-): Promise<TelemetryLogger> {
+export async function getLogger(config: LoggerConfig, events?: string[]): Promise<TelemetryLogger> {
     const baseLogger = await loggerP;
-    if (events) {
+    if(events) {
         baseLogger.registerExpectedEvent(events);
-    }
-    if (transformEvents) {
-        baseLogger.transformEvents(transformEvents);
     }
     return ChildLogger.create(baseLogger, config.namespace, {
         all: {

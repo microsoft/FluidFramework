@@ -8,8 +8,7 @@ import {
     Transposed as T,
     sequenceChangeFamily,
     sequenceChangeRebaser,
-    // eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/sequence-change-family";
+} from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand } from "../../util";

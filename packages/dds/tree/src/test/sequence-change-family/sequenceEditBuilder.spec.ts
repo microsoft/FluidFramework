@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
-import { singleTextCursor } from "../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { SequenceEditBuilder } from "../../feature-libraries/sequence-change-family";
+import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
 
 const rootKey = brand<FieldKey>("root");

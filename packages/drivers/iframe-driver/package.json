@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:tsc npm:build:esnext && npm run typetests:gen",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -30,8 +30,7 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
@@ -46,7 +45,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/iframe-driver-previous": "npm:@fluidframework/iframe-driver@2.0.0-internal.2.0.0",
+    "@fluidframework/iframe-driver-previous": "npm:@fluidframework/iframe-driver@^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -62,7 +61,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_InnerDocumentDeltaConnection": {
+        "backCompat": false
+      }
+    }
   }
 }

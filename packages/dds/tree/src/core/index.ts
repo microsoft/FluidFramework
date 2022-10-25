@@ -72,8 +72,6 @@ export {
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     initializeForest,
-    FieldAnchor,
-    moveToDetachedField,
 } from "../forest";
 
 export {
@@ -130,12 +128,3 @@ export {
     Compatibility,
     FieldAdapter,
 } from "../schema-view";
-
-export {
-    Branch,
-    Commit,
-    EditManager,
-    MutableSummaryData,
-    ReadonlySummaryData,
-    SessionId,
-} from "../edit-manager";

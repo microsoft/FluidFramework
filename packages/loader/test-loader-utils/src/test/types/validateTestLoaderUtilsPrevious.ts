@@ -35,6 +35,7 @@ declare function get_current_ClassDeclaration_MockDocumentDeltaConnection():
 declare function use_old_ClassDeclaration_MockDocumentDeltaConnection(
     use: TypeOnly<old.MockDocumentDeltaConnection>);
 use_old_ClassDeclaration_MockDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockDocumentDeltaConnection());
 
 /*

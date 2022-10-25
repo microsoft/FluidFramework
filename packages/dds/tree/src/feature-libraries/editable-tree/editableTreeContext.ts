@@ -7,11 +7,11 @@ import { assert } from "@fluidframework/common-utils";
 import {
     IEditableForest,
     ITreeSubscriptionCursor,
+    TreeNavigationResult,
     lookupGlobalFieldSchema,
     Anchor,
     rootFieldKey,
     rootFieldKeySymbol,
-    moveToDetachedField,
 } from "../../core";
 import {
     BaseProxyTarget,
@@ -112,9 +112,16 @@ export class ProxyContext implements EditableTreeContext {
     private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
-        moveToDetachedField(this.forest, cursor);
+        // TODO: support anchors for fields, and use them here to avoid using first node of root field.
+        const destination = this.forest.root(this.forest.rootField);
+        const result = this.forest.tryMoveCursorTo(destination, cursor);
+        // the cursor must be in fields mode
+        if (result === TreeNavigationResult.Ok) {
+            cursor.exitNode();
+        }
         const proxifiedField = proxifyField(this, rootSchema, rootFieldKeySymbol, cursor, unwrap);
         cursor.free();
+        this.forest.anchors.forget(destination);
         return proxifiedField;
     }
 }

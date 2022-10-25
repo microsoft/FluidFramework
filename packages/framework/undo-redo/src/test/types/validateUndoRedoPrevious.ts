@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_SharedSegmentSequenceRevertible():
 declare function use_current_ClassDeclaration_SharedSegmentSequenceRevertible(
     use: TypeOnly<current.SharedSegmentSequenceRevertible>);
 use_current_ClassDeclaration_SharedSegmentSequenceRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequenceRevertible());
 
 /*
@@ -107,6 +108,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequenceRevertible():
 declare function use_old_ClassDeclaration_SharedSegmentSequenceRevertible(
     use: TypeOnly<old.SharedSegmentSequenceRevertible>);
 use_old_ClassDeclaration_SharedSegmentSequenceRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequenceRevertible());
 
 /*

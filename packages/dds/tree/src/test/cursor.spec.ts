@@ -12,7 +12,7 @@ import {
     ITreeCursor,
     mapCursorFields,
     CursorLocationType,
-    rootFieldKeySymbol,
+    rootFieldKey,
 } from "../tree";
 import { brand } from "../util";
 
@@ -432,7 +432,7 @@ export function testJsonableTreeCursor(
                 ? undefined
                 : {
                       parent: undefined,
-                      parentField: rootFieldKeySymbol,
+                      parentField: rootFieldKey,
                       parentIndex: 0,
                   };
             it(`first node in a root trait`, () => {

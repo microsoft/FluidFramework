@@ -45,7 +45,6 @@ export const EmptyKey: LocalFieldKey = brand("");
  */
 export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
 export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
-export const rootField = keyAsDetachedField(rootFieldKeySymbol);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -91,12 +90,9 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * Some code abstracts the root as a node with detached fields as its fields.
  * This maps detached field to field keys for thus use.
  *
- * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
+ * @returns `field` as a {@link LocalFieldKey} usable on a special root node serving as a parent of detached fields.
  */
-export function detachedFieldAsKey(field: DetachedField): FieldKey {
-    if (field === rootField) {
-        return rootFieldKeySymbol;
-    }
+export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
     return brand(extractFromOpaque(field));
 }
 

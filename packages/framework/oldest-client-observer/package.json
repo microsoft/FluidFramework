@@ -83,8 +83,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "disabled": true,
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }

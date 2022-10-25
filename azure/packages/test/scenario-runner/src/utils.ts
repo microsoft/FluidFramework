@@ -80,7 +80,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
-              tokenProvider: createAzureTokenProvider(fnUrl, config.userId, config.userName),
+              tokenProvider: createAzureTokenProvider(fnUrl),
               endpoint: config.connEndpoint,
               type: "remote",
           }
