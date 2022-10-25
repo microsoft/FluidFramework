@@ -88,6 +88,7 @@ stages:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
           ${{ else }}:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+          devFeed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
 
         steps:
         # Setup
@@ -167,7 +168,7 @@ stages:
 
               echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
               echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-              echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+              echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
               echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
               echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
               echo "always-auth=true" >> ./.npmrc
