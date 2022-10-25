@@ -724,7 +724,7 @@ export class Client {
         seqNumberFrom: number,
         localSeq: number,
     ): number | undefined {
-        assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
+        assert(localSeq <= this._mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
         const { clientId } = this.getCollabWindow();
         const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         if (segment === undefined && offset === undefined) {
@@ -732,9 +732,9 @@ export class Client {
         }
 
         // if segment is undefined, it slid off the string
-        assert(segment !== undefined, 0x302 /* No segment found */);
+        assert(segment !== undefined, "No segment found");
 
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
         return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
