@@ -601,9 +601,11 @@ describe("SharedTree", () => {
 
         const testFieldKey: FieldKey = brand("testField");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const expectedFirstNodeInitialValue = testJsonableTree.fields!.testSequence[0]!.fields!.testField[0].value;
+        const expectedFirstNodeInitialValue =
+            testJsonableTree.fields!.testSequence[0]!.fields!.testField[0].value;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const expectedSecondNodeInitialValue = testJsonableTree.fields!.testSequence[1]!.fields!.testField[0].value;
+        const expectedSecondNodeInitialValue =
+            testJsonableTree.fields!.testSequence[1]!.fields!.testField[0].value;
 
         it("getAnchor()", async () => {
             const provider = await TestTreeProvider.create(1);
@@ -786,7 +788,9 @@ describe("SharedTree", () => {
             await provider.ensureSynchronized();
             const newLen = treeSequence.length();
             assert.equal(treeSequence.length(), initialSequenceLength + 1);
-            const treeNodeValues = treeSequence.getAll().map((node) => node.getFieldValue(testFieldKey));
+            const treeNodeValues = treeSequence
+                .getAll()
+                .map((node) => node.getFieldValue(testFieldKey));
             assert.equal(treeNodeValues[0], expectedFirstNodeInitialValue);
             assert.equal(treeNodeValues[1], expectedSecondNodeInitialValue);
             assert.equal(treeNodeValues[2], 3);

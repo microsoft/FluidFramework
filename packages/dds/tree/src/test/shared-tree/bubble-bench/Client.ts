@@ -31,8 +31,8 @@ export class Client {
         );
 
         this._bubbles = this.bubbleSeqeunceHelper
-        .getAllAnchors()
-        .map(bubbleAnchor => new Bubble(this.tree, bubbleAnchor));
+            .getAllAnchors()
+            .map((bubbleAnchor) => new Bubble(this.tree, bubbleAnchor));
     }
 
     public get clientId() {
@@ -68,10 +68,12 @@ export class Client {
                 r: [{ type: int32Schema.name, value: 99 }],
                 vx: [{ type: int32Schema.name, value: 99 }],
                 vy: [{ type: int32Schema.name, value: 99 }],
-            }
+            },
         };
-        this.bubbleSeqeunceHelper.push(newBubble)
-        this._bubbles.push(new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)));
+        this.bubbleSeqeunceHelper.push(newBubble);
+        this._bubbles.push(
+            new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)),
+        );
     }
 
     public decreaseBubbles() {
