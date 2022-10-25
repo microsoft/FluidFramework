@@ -15,7 +15,7 @@ import React from "react";
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { RendererOptions } from "../RendererOptions";
+import { SharedObjectRendererOptions } from "../RendererOptions";
 import { getInnerContainer } from "../Utilities";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
@@ -48,7 +48,7 @@ export interface SessionDataViewProps {
     /**
      * Policies for displaying debug information for shared Fluid objects.
      */
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
 
 /**

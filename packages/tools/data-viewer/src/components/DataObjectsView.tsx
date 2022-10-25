@@ -6,7 +6,7 @@ import React from "react";
 
 import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
-import { RendererOptions } from "../RendererOptions";
+import { SharedObjectRendererOptions } from "../RendererOptions";
 import { FluidObjectView } from "./data-object-views";
 import { Accordion } from "./utility-components";
 
@@ -22,7 +22,7 @@ export interface DataObjectsViewProps {
     /**
      * {@inheritDoc RendererOptions}
      */
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
 
 /**

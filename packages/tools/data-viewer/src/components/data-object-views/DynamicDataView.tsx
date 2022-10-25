@@ -6,7 +6,7 @@ import React from "react";
 
 import { IFluidHandle, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 
-import { RendererOptions } from "../../RendererOptions";
+import { SharedObjectRendererOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
 import { RecordDataView } from "./RecordView";
 
@@ -22,7 +22,7 @@ export interface DynamicDataViewProps {
     /**
      * {@inheritDoc RendererOptions}
      */
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
 
 /**

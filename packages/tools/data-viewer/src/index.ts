@@ -12,7 +12,8 @@
 export { SessionDataView, SessionDataViewProps } from "./components";
 export {
     RenderChild,
-    RendererOptions,
     RenderSharedObject,
+    SharedObjectRendererOptions,
+    sharedObjectRendererOptionsWithDefaults,
     SharedObjectType,
 } from "./RendererOptions";

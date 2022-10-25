@@ -8,7 +8,7 @@ import React from "react";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
-import { RendererOptions } from "../../RendererOptions";
+import { SharedObjectRendererOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
 
 /**
@@ -23,7 +23,7 @@ export interface FluidObjectViewProps {
     /**
      * {@inheritDoc RendererOptions}
      */
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
 
 /**

@@ -52,7 +52,7 @@ export type SharedObjectType = string;
  * - value: A renderer that takes a {@link @fluidframework/shared-object-base#SharedObjectCore} of the
  * specified type and renders a `ReactElement` visualizing the data as desired.
  */
-export interface RendererOptions {
+export interface SharedObjectRendererOptions {
     /**
      * Individual render policies, keyed by {@link SharedObjectType}.
      */
@@ -72,7 +72,7 @@ export interface RendererOptions {
  *
  * - {@link @fluidframework/sequence#SharedString}
  */
-export const defaultSharedObjectRenderers: RendererOptions = {
+export const defaultSharedObjectRenderers: SharedObjectRendererOptions = {
     [SharedCounter.getFactory().type]: (sharedObject) => (
         <SharedCounterView sharedCounter={sharedObject as SharedCounter} />
     ),
@@ -89,7 +89,9 @@ export const defaultSharedObjectRenderers: RendererOptions = {
  *
  * @remarks Custom renderers will take precendence over library defaults.
  */
-export function rendererOptionsWithDefaults(customOptions: RendererOptions): RendererOptions {
+export function sharedObjectRendererOptionsWithDefaults(
+    customOptions: SharedObjectRendererOptions,
+): SharedObjectRendererOptions {
     return {
         ...defaultSharedObjectRenderers,
         ...customOptions,

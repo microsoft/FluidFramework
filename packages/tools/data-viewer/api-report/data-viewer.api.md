@@ -14,11 +14,6 @@ import { SharedObjectCore } from '@fluidframework/shared-object-base';
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
-export interface RendererOptions {
-    [k: SharedObjectType]: RenderSharedObject;
-}
-
-// @public
 export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
 renderChild: RenderChild) => React_2.ReactElement;
 
@@ -30,8 +25,16 @@ export interface SessionDataViewProps {
     audience: IServiceAudience<IMember>;
     container: IFluidContainer;
     containerId: string;
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
+
+// @public
+export interface SharedObjectRendererOptions {
+    [k: SharedObjectType]: RenderSharedObject;
+}
+
+// @public
+export function sharedObjectRendererOptionsWithDefaults(customOptions: SharedObjectRendererOptions): SharedObjectRendererOptions;
 
 // @public
 export type SharedObjectType = string;

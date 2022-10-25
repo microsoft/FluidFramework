@@ -5,7 +5,7 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
-import { RendererOptions } from "../../RendererOptions";
+import { SharedObjectRendererOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
 
 /**
@@ -20,7 +20,7 @@ export interface RecordDataViewProps {
     /**
      * {@inheritDoc RendererOptions}
      */
-    sharedObjectRenderers: RendererOptions;
+    sharedObjectRenderers: SharedObjectRendererOptions;
 }
 
 /**
