@@ -31,15 +31,18 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
+  $ flub check policy -e <value> [-D <value> | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ] [-v]
 
 FLAGS
-  -d, --handler=<value>     Filter handler names by <regex>
-  -e, --exclusions=<value>  (required) Path to the exclusions.json file
-  -f, --fix                 Fix errors if possible
-  -p, --path=<value>        Filter file paths by <regex>
-  -v, --verbose             Verbose logging.
-  --stdin                   Get file from stdin
+  -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple
+                                   handlers.
+  -d, --handler=<value>            Filter handler names by <regex>.
+  -e, --exclusions=<value>         (required) Path to the exclusions.json file.
+  -f, --fix                        Fix errors if possible.
+  -p, --path=<value>               Filter file paths by <regex>.
+  -v, --verbose                    Verbose logging.
+  --listHandlers                   List all policy handlers by name.
+  --stdin                          Read list of files from stdin.
 
 DESCRIPTION
   Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
