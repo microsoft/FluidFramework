@@ -24,7 +24,6 @@ import {
     CursorLocationType,
     rootFieldKeySymbol,
     moveToDetachedField,
-    FieldAnchor,
 } from "../../core";
 import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -206,9 +205,9 @@ export class BaseProxyTarget {
     constructor(
         public readonly context: ProxyContext,
         cursor: ITreeSubscriptionCursor,
-        public readonly fieldKey: FieldKey,
+        public readonly fieldKey?: FieldKey,
     ) {
-        if (this.isRoot && cursor.mode === CursorLocationType.Fields) {
+        if (this.isRoot) {
             this.lazyCursor = this.context.forest.allocateCursor();
             moveToDetachedField(this.context.forest, this.lazyCursor);
         } else {
@@ -231,7 +230,7 @@ export class BaseProxyTarget {
         }
     }
 
-    public getAnchor(): Anchor | FieldAnchor {
+    public getAnchor(): Anchor {
         if (this.anchor === undefined) {
             this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
@@ -251,17 +250,20 @@ export class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = isFieldProxyTarget(this)
-                ? this.context.forest.tryMoveCursorToField(
-                      this.getAnchor() as FieldAnchor,
-                      this.lazyCursor,
-                  )
-                : this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
+            const result = this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
             );
             this.context.withCursors.add(this);
+            if (isFieldProxyTarget(this) && this.lazyCursor.mode === CursorLocationType.Nodes) {
+                // A root field is anchored at its child node, and any other field is anchored at its parent node.
+                if (!this.isRoot) {
+                    this.lazyCursor.enterField(this.fieldKey);
+                } else {
+                    this.lazyCursor.exitNode();
+                }
+            }
         }
         return this.lazyCursor;
     }
@@ -272,12 +274,8 @@ export class BaseProxyTarget {
  * the fields of {@link EditableTree} by means of the cursors.
  */
 class NodeProxyTarget extends BaseProxyTarget {
-    constructor(
-        public readonly context: ProxyContext,
-        cursor: ITreeSubscriptionCursor,
-        fieldKey: FieldKey,
-    ) {
-        super(context, cursor, fieldKey);
+    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+        super(context, cursor);
         assert(this.cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
     }
 
@@ -376,10 +374,6 @@ class NodeProxyTarget extends BaseProxyTarget {
         for (const field of fields) {
             yield field;
         }
-    }
-
-    public getAnchor(): Anchor {
-        return super.getAnchor() as Anchor;
     }
 }
 
@@ -506,7 +500,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     private readonly primaryType?: TreeSchemaIdentifier;
-    public readonly primaryField?: FieldKey;
+    private readonly primaryField?: FieldKey;
 
     constructor(
         context: ProxyContext,
@@ -536,20 +530,16 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         this.fieldSchema = fieldSchema;
     }
 
-    public getAnchor(): FieldAnchor {
+    public getAnchor(): Anchor {
+        // Root field has a permanent anchor.
         if (this.isRoot) {
-            return {
-                fieldKey: this.fieldKey,
-                parent: undefined,
-            };
+            return super.getAnchor();
         }
+        // Anchor at the parent node.
         this.cursor.exitField();
-        const parent = super.getAnchor() as Anchor;
+        const anchor = super.getAnchor();
         this.cursor.enterField(this.primaryField ?? this.fieldKey);
-        return {
-            fieldKey: this.fieldKey,
-            parent,
-        };
+        return anchor;
     }
 
     readonly [index: number]: UnwrappedEditableTree;
@@ -583,7 +573,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      */
     public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree {
         this.cursor.enterNode(index);
-        const target = new NodeProxyTarget(this.context, this.cursor, this.fieldKey);
+        const target = new NodeProxyTarget(this.context, this.cursor);
         this.cursor.exitNode();
         return inProxyOrUnwrap(target, unwrap);
     }
@@ -604,7 +594,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      */
     private get asArray(): UnwrappedEditableTree[] {
         return mapCursorField(this.cursor, (c) =>
-            inProxyOrUnwrap(new NodeProxyTarget(this.context, c, this.fieldKey), true),
+            inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
         );
     }
 
@@ -720,6 +710,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 function inProxyOrUnwrap(
     target: NodeProxyTarget | FieldProxyTarget,
     unwrap: boolean,
+    fieldKey?: FieldKey,
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
     if (unwrap && !isFieldProxyTarget(target)) {
@@ -739,7 +730,8 @@ function inProxyOrUnwrap(
             target.cursor.enterField(primary.key);
             const primarySequence = new FieldProxyTarget(
                 target.context,
-                target.fieldKey,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                fieldKey!,
                 primary.schema,
                 target.cursor,
                 nodeType.name,
@@ -792,8 +784,8 @@ export function proxifyField(
     assert(length <= 1, 0x3c8 /* invalid non sequence */);
     if (length === 1) {
         cursor.enterNode(0);
-        const target = new NodeProxyTarget(context as ProxyContext, cursor, fieldKey);
-        const proxifiedNode = inProxyOrUnwrap(target, unwrap);
+        const target = new NodeProxyTarget(context as ProxyContext, cursor);
+        const proxifiedNode = inProxyOrUnwrap(target, unwrap, fieldKey);
         cursor.exitNode();
         return proxifiedNode;
     }
