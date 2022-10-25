@@ -272,7 +272,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
                     0x00c /* "messageId is incorrect from from the local client's ACK" */);
                 assert(this.pendingMessageIds !== undefined &&
                     this.pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-                        "Unexpected pending message received");
+                        0x424 /* Unexpected pending message received */);
                 this.pendingMessageIds.shift();
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = localOpMetadata.pendingMessageId;
