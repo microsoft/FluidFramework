@@ -732,7 +732,7 @@ export class SharedMatrix<T = any>
 
                 this.undo.cellSet(
                     rowHandle,
-                    rowHandle,
+                    colHandle,
                     oldValue);
             }
 

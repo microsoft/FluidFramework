@@ -752,7 +752,7 @@ export class Client {
      * If the position has slid off and there is no nearest position (i.e. the
      * tree is empty), returns `DetachedReferencePosition`
      */
-     public rebasePosition(
+    public rebasePosition(
         pos: number,
         seqNumberFrom: number,
         localSeq: number,
@@ -773,9 +773,7 @@ export class Client {
 
         // if segment is undefined, it slid off the string
         assert(segment !== undefined, 0x302 /* No segment found */);
-        // want logic above to apply to matrix, if segment is undefined (noop) or segment is removed just return
-        // for logic below, create 2 rebase position methods -
-        // one for matrix and one without this for interval collections
+
         const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
 
         // case happens when rebasing op, but concurrently entire string has been deleted

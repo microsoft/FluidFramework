@@ -229,10 +229,7 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset!;
     }
 
-    public handleToPosition(
-        handle: Handle,
-        localSeq = this.getCollabWindow().localSeq,
-    ) {
+    public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq) {
         assert(localSeq <= this.getCollabWindow().localSeq,
             0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
