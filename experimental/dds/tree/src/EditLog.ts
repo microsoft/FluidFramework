@@ -51,11 +51,11 @@ export interface OrderedEditSet<TChange = unknown> {
 	/**
 	 * @returns the edit with the given identifier within this `OrderedEditSet`.
 	 */
-	tryGetEditFromIdentifier(editId: EditId): Edit<TChange> | undefined;
+	tryGetEditFromId(editId: EditId): Edit<TChange> | undefined;
 
 	/**
 	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
-	 * @deprecated Edit virtualization is no longer supported. Don't use the asynchronous APIs. Instead, use {@link OrderedEditSet.tryGetEditFromIdentifier}.
+	 * @deprecated Edit virtualization is no longer supported. Don't use the asynchronous APIs. Instead, use {@link OrderedEditSet.tryGetEditFromId}.
 	 */
 	tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
 
@@ -207,7 +207,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private localEditSequence = 0;
 	private _minSequenceNumber = 0;
 
-	private readonly edits: Edit<TChange>[] = [];
+	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
 	private readonly indexOfFirstEditInMemory: number;
 
@@ -253,7 +253,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 				for (const [index, edit] of chunk.entries()) {
 					const editIndex = startRevision + index;
 					const id = editIds[editIndex];
-					this.edits.push({ id, ...edit });
+					this.sequencedEdits.push({ id, ...edit });
 					const encounteredEditId = this.allEditIds.get(id);
 					assert(encounteredEditId === undefined, 'Duplicate acked edit.');
 					this.allEditIds.set(id, { isLocal: false, index: editIndex });
@@ -296,7 +296,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * The number of sequenced (acked) edits in the log.
 	 */
 	public get numberOfSequencedEdits(): number {
-		return this.edits.length;
+		return this.sequencedEdits.length;
 	}
 
 	/**
@@ -310,7 +310,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * {@inheritDoc OrderedEditSet.editIds}
 	 */
 	public get editIds(): EditId[] {
-		return this.edits.map(({ id }) => id).concat(this.localEdits.map(({ id }) => id));
+		return this.sequencedEdits.map(({ id }) => id).concat(this.localEdits.map(({ id }) => id));
 	}
 
 	/**
@@ -325,7 +325,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @returns true iff the revision is a sequenced revision (not local).
 	 */
 	public isSequencedRevision(revision: number): boolean {
-		return revision <= this.edits.length;
+		return revision <= this.sequencedEdits.length;
 	}
 
 	/**
@@ -367,30 +367,26 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			return this.localEdits[index - this.numberOfSequencedEdits].id;
 		}
 
-		return this.edits[index].id;
+		return this.sequencedEdits[index].id;
 	}
 
 	/**
-	 * {@inheritDoc OrderedEditSet.getEditAtIndex}
+	 * {@inheritDoc OrderedEditSet.tryGetEditAtIndex}
 	 */
-	public tryGetEditAtIndex(index: number): Edit<TChange> {
+	public tryGetEditAtIndex(index: number): Edit<TChange> | undefined {
 		if (index < this.numberOfSequencedEdits) {
-			return this.edits[index];
+			return this.sequencedEdits[index];
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
 	}
 
 	/**
-	 * {@inheritDoc OrderedEditSet.tryGetEdit}
+	 * {@inheritDoc OrderedEditSet.tryGetEditFromId}
 	 */
-	public tryGetEditFromIdentifier(editId: EditId): Edit<TChange> | undefined {
-		try {
-			const index = this.getIndexOfId(editId);
-			return this.tryGetEditAtIndex(index);
-		} catch {
-			return undefined;
-		}
+	public tryGetEditFromId(editId: EditId): Edit<TChange> | undefined {
+        const index = this.tryGetIndexOfId(editId);
+		return index !== undefined ? this.tryGetEditAtIndex(index) ?? undefined : undefined;
 	}
 
 	/**
@@ -463,7 +459,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
-		this.edits.push(edit);
+		this.sequencedEdits.push(edit);
 
 		const sequencedEditId: SequencedOrderedEditId = {
 			index: this.numberOfSequencedEdits - 1,
@@ -516,60 +512,56 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	public getEditLogSummary<TCompressedChange>(
 		compressEdit?: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
 	): EditLogSummary<TChange, FluidEditHandle> | EditLogSummary<TCompressedChange, FluidEditHandle> {
-		const editIds = this.edits.map(({ id }) => id);
+		const editIds = this.sequencedEdits.map(({ id }) => id);
 		return compressEdit !== undefined
 			? {
 					editChunks:
-						this.edits.length === 0
+						this.sequencedEdits.length === 0
 							? []
 							: [
 									{
 										// Store all edits within a single "chunk"
 										startRevision: 0,
-										chunk: this.edits.map((edit) => compressEdit(edit)),
+										chunk: this.sequencedEdits.map((edit) => compressEdit(edit)),
 									},
 							  ],
 					editIds,
 			  }
 			: {
 					editChunks:
-						this.edits.length === 0
+						this.sequencedEdits.length === 0
 							? []
 							: [
 									{
 										// Store all edits within a single "chunk"
 										startRevision: 0,
-										chunk: this.edits.map(({ changes }) => ({ changes })),
+										chunk: this.sequencedEdits.map(({ changes }) => ({ changes })),
 									},
 							  ],
 					editIds,
 			  };
 	}
 
-	// APIS DEPRECATED DUE TO KILLING HISTORY
+	// APIS DEPRECATED DUE TO HISTORY'S PEACEFUL DEATH
 	/**
 	 * {@inheritDoc OrderedEditSet.tryGetEdit}
 	 */
 	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
-		try {
-			const index = this.getIndexOfId(editId);
-			return this.getEditAtIndex(index);
-		} catch {
-			return undefined;
-		}
+        const index = this.tryGetIndexOfId(editId);
+        return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
 
 	/**
 	 * {@inheritDoc OrderedEditSet.getEditAtIndex}
 	 */
 	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
-		return this.tryGetEditAtIndex(index);
+		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
 	}
 
 	/**
 	 * {@inheritDoc OrderedEditSet.getEditInSessionAtIndex}
 	 */
 	public getEditInSessionAtIndex(index: number): Edit<TChange> {
-		return this.tryGetEditAtIndex(index);
+		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
 	}
 }
