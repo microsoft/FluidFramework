@@ -25,6 +25,7 @@ import {
     generateBumpVersionCommitMessage,
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
+import { Flags } from "@oclif/core";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
     static summary =
@@ -39,11 +40,17 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             char: "t",
             description:
                 "Bump the release group or package to the next version according to this bump type.",
-            required: true,
+            }),
+            exclusive: ["exact"],
+        exact: Flags.string({
+            description:
+                "An exact string to use as the version. The string must be a valid semver string.",
+            exclusive: ["bumpType", "scheme"],
         }),
         scheme: versionSchemeFlag({
             description: "Override the version scheme used by the release group or package.",
             required: false,
+            exclusive: ["exact"],
         }),
         commit: checkFlags.commit,
         install: checkFlags.install,
