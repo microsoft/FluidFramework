@@ -62,14 +62,12 @@ export interface DynamicDataViewProps {
     sharedObjectRenderers: RendererOptions;
 }
 
-// @public (undocumented)
+// @public
 export function FluidObjectView(props: FluidObjectViewProps): React_2.ReactElement;
 
 // @public
 export interface FluidObjectViewProps {
-    // (undocumented)
     fluidObjectHandle: IFluidHandle;
-    // (undocumented)
     sharedObjectRenderers: RendererOptions;
 }
 
@@ -92,14 +90,12 @@ export interface OpViewProps {
     message: ISequencedDocumentMessage;
 }
 
-// @public (undocumented)
+// @public
 export function RecordDataView(props: RecordDataViewProps): React_2.ReactElement;
 
 // @public (undocumented)
 export interface RecordDataViewProps {
-    // (undocumented)
     data: Record<string, unknown>;
-    // (undocumented)
     sharedObjectRenderers: RendererOptions;
 }
 

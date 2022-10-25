@@ -8,3 +8,5 @@ export * from "./SharedMapView";
 export * from "./SharedStringView";
 export * from "./DynamicDataView";
 export * from "./OpView";
+export * from "./RecordView";
+export * from "./FluidObjectView";
