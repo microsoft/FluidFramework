@@ -102,9 +102,9 @@ export class SharedTreeSequenceHelper {
             const cursor = this.treeNodeHelper.getCursor();
             const parentPath = this.tree.locate(cursor.buildAnchor());
             const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
-            field.delete(this.length() - 1, 1);
             this.tree.context.prepareForEdit();
             cursor.free();
+            field.delete(this.length() - 1, 1);
             return TransactionResult.Apply;
         });
     }

@@ -625,6 +625,7 @@ describe("SharedTree", () => {
             const cursor = provider.trees[0].forest.allocateCursor();
             const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
             provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
             const treeSequence = new SharedTreeSequenceHelper(
                 provider.trees[0],
                 cursor.buildAnchor(),
@@ -632,6 +633,29 @@ describe("SharedTree", () => {
             );
             assert.equal(treeSequence.length(), 2);
             cursor.free();
+        });
+
+        it("pop()", async () => {
+            const provider = await TestTreeProvider.create(1);
+            initializeTestTree(provider.trees[0], jsonableTree, schemaData);
+
+            // move to root node
+            const cursor = provider.trees[0].forest.allocateCursor();
+            const destination = provider.trees[0].forest.root(provider.trees[0].forest.rootField);
+            provider.trees[0].forest.tryMoveCursorTo(destination, cursor);
+
+            const treeSequence = new SharedTreeSequenceHelper(
+                provider.trees[0],
+                cursor.buildAnchor(),
+                brand("testSequence"),
+            );
+            cursor.free();
+            treeSequence.pop();
+            await provider.ensureSynchronized();
+            assert.equal(treeSequence.length(), 1);
+            // confirms removal of node was the one at the last index
+            const remainingNode = new SharedTreeNodeHelper(provider.trees[0], treeSequence.getAnchor(0));
+            assert.equal(remainingNode.getFieldValue(brand('testField')), 10);
         });
 
 
