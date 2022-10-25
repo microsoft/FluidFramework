@@ -518,11 +518,7 @@ export class SharedMatrix<T = any>
                 // If there are more pending local writes to the same row/col handle, it is important
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
-                if (this.isLatestPendingWrite(
-                    rowHandle,
-                    colHandle,
-                    localSeq,
-                )) {
+                if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
                     const row = this.rows.rebasePositionWithoutSegmentSlide(setOp.row, rowsRefSeq, localSeq);
                     const col = this.cols.rebasePositionWithoutSegmentSlide(setOp.col, colsRefSeq, localSeq);
 
