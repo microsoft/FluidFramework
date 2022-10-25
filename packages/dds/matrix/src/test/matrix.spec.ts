@@ -241,7 +241,7 @@ describe("Matrix", () => {
         });
 
         describe("contiguous", () => {
-            it("read/write 256x256", () => {
+            it.skip("read/write 256x256", () => {
                 matrix.insertRows(0, 256);
                 matrix.insertCols(0, 256);
                 fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
@@ -250,7 +250,7 @@ describe("Matrix", () => {
         });
 
         describe("fragmented", () => {
-            it("read/write 256x256", () => {
+            it.skip("read/write 256x256", () => {
                 insertFragmented(matrix, 256, 256);
                 fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
                 check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
