@@ -303,7 +303,8 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             script: |
-              npm i;
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm i ;
               npm run test:memory-profiling:report;
 
         - task: Npm@1
