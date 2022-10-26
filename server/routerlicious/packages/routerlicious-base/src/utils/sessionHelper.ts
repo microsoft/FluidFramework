@@ -64,6 +64,7 @@ async function updateExistingSession(
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number,
     lumberjackProperties: Record<string, any>,
+    count: number,
 ): Promise<ISession> {
     let updatedDeli: string | undefined;
     let updatedScribe: string | undefined;
@@ -150,19 +151,29 @@ async function updateExistingSession(
                 version: document.version,
             });
         // There is no document with isSessionAlive as false. It means this session has been discovered by
-        // another call, and we encoutered race condition with different clients writing truth into the cosmosdb
-        // from different clusters.
-        if (!result.existing) {
+        // another call, and there is a race condition with different clients writing truth into the cosmosdb
+        // from different clusters. Thus, let it call getSession for maximum three times.
+        if (!result.existing && count === 3) {
+            Lumberjack.error(`The documentId: ${documentId} reaches three times for calling getSession`,
+                lumberjackProperties);
+            throw new Error(`The documentId: ${documentId} reaches three times for calling getSession`);
+        }
+        if (!result.existing && count < 3) {
+            Lumberjack.info(
+                `The documentId: ${documentId} with isSessionAlive as false was not found in documents collection`,
+                lumberjackProperties,
+            );
             return getSession(ordererUrl,
                 historianUrl,
                 deltaStreamUrl,
                 tenantId,
                 documentId,
                 documentsCollection,
-                sessionStickinessDurationMs);
+                sessionStickinessDurationMs,
+                count + 1);
         }
         Lumberjack.info(
-            `The Session ${JSON.stringify(updatedSession)} was updated into the document collection`,
+            `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
             lumberjackProperties,
         );
     } catch (error) {
@@ -203,6 +214,7 @@ export async function getSession(
     documentId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
+    count: number,
 ): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
@@ -247,6 +259,7 @@ export async function getSession(
         documentsCollection,
         sessionStickinessDurationMs,
         lumberjackProperties,
+        count,
     );
     return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 }

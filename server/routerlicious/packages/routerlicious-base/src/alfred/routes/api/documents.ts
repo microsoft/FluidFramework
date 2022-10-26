@@ -160,6 +160,7 @@ export function create(
                 documentId,
                 documentsCollection,
                 sessionStickinessDurationMs,
+                0,
             );
             handleResponse(session, response, false);
         });
