@@ -31,11 +31,11 @@ import { OpsStreamView } from "./OpsStreamView";
 initializeIcons();
 
 /**
- * {@link SessionDataView} input props.
+ * {@link ClientDebugView} input props.
  */
-export interface SessionDataViewProps {
+export interface ClientDebugViewProps {
     /**
-     * ID of {@link SessionDataViewProps.container | the container}.
+     * ID of {@link ClientDebugViewProps.container | the container}.
      */
     containerId: string;
 
@@ -58,7 +58,7 @@ export interface SessionDataViewProps {
 /**
  * Displays information about the provided container and its audience.
  */
-export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
+export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
     const { containerId, container, audience, renderOptions: userRenderOptions } = props;
 
     const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);

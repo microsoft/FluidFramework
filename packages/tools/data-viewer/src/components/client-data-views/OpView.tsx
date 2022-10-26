@@ -106,9 +106,7 @@ export function OpView(props: OpViewProps): React.ReactElement {
                     <b>Reference sequence number: </b>
                     {message.referenceSequenceNumber}
                 </StackItem>
-                <StackItem>
-                    {dataView}
-                </StackItem>
+                <StackItem>{dataView}</StackItem>
             </Stack>
         </Accordion>
     );

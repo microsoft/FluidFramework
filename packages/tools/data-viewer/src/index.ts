@@ -6,15 +6,22 @@
 /**
  * Contains a customizable debug visualizer / editor for the Fluid client.
  *
+ * @remarks
+ *
+ * The primary entry-point to this package is {@link ClientDebugView}.
+ *
+ * Rendering options can be configured using {@link ClientDebugViewProps.renderOptions}.
+ *
  * @packageDocumentation
  */
 
 export {
     AudienceMemberViewProps,
     OpViewProps,
-    SessionDataView,
-    SessionDataViewProps,
+    ClientDebugView,
+    ClientDebugViewProps,
 } from "./components";
+
 export {
     getRenderOptionsWithDefaults,
     getSharedObjectRendererOptionsWithDefaults,

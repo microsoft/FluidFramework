@@ -18,6 +18,17 @@ export interface AudienceMemberViewProps {
 }
 
 // @public
+export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
+
+// @public
+export interface ClientDebugViewProps {
+    audience: IServiceAudience<IMember>;
+    container: IFluidContainer;
+    containerId: string;
+    renderOptions?: RenderOptions;
+}
+
+// @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
@@ -48,17 +59,6 @@ export interface RenderOptions {
 // @public
 export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
 renderChild: RenderChild) => React_2.ReactElement;
-
-// @public
-export function SessionDataView(props: SessionDataViewProps): React_2.ReactElement;
-
-// @public
-export interface SessionDataViewProps {
-    audience: IServiceAudience<IMember>;
-    container: IFluidContainer;
-    containerId: string;
-    renderOptions?: RenderOptions;
-}
 
 // @public
 export interface SharedObjectRenderOptions {

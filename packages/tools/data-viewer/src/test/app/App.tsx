@@ -26,7 +26,7 @@ import {
 
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
-import { CounterWidget, SessionDataView } from "../../components";
+import { ClientDebugView, CounterWidget } from "../../components";
 
 const sharedTextKey = "shared-text";
 const sharedCounterKey = "shared-counter";
@@ -282,7 +282,7 @@ function AppView(props: AppViewProps): React.ReactElement {
                 </Stack>
             </StackItem>
             <StackItem className={debuggerViewPaneStackStyles}>
-                <SessionDataView
+                <ClientDebugView
                     container={container}
                     containerId={containerId}
                     audience={audience}
