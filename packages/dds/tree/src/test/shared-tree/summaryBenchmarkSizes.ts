@@ -62,7 +62,9 @@ describe("Summary size benchmark", () => {
     });
     // TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
     it("rejected for deep tree with 1000 nodes", async () => {
-        await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), { message: "BatchTooLarge" });
+        await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), {
+            message: "BatchTooLarge",
+        });
     });
 });
 
@@ -129,10 +131,7 @@ export async function getInsertsSummarySize(
     return summarySize;
 }
 
-function setTestValuesNarrow(
-    tree: ISharedTree,
-    numberOfNodes: number,
-): void {
+function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
     const seed = 0;
     const random = makeRandom(seed);
     let path: PlacePath = {
