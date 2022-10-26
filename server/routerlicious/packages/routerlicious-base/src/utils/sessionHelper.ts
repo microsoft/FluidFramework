@@ -214,7 +214,7 @@ export async function getSession(
     documentId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
-    count: number,
+    count: number = 0,
 ): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
