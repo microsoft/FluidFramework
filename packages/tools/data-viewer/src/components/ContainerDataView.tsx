@@ -15,7 +15,6 @@ import { getInnerContainer } from "../Utilities";
 // TODOs:
 // - Container Read/Write permissions
 // - UI to generate and save to disk snapshot of current state
-// - UI to force disconnect / reconnect
 // - Tooltips on data labels to indicate what they mean (mode, minimal sequence number, etc.)
 
 /**
