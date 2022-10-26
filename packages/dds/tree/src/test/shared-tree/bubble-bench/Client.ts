@@ -3,8 +3,6 @@ import { Anchor, FieldKey } from "../../../tree";
 import { brand } from "../../../util";
 import { Bubble } from "./Bubble";
 import { iBubbleSchema, int32Schema } from "./schema";
-// import { iBubbleSchema, int32Schema } from "./schema";
-// import { Bubble } from "./Bubble";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./SharedTreeSequenceHelper";
 
@@ -20,8 +18,6 @@ export class Client {
     constructor(
         public readonly tree: ISharedTree,
         public readonly anchor: Anchor,
-        private _width: number,
-        private _height: number,
     ) {
         this.treeHelper = new SharedTreeNodeHelper(tree, anchor);
         this.bubbleSeqeunceHelper = new SharedTreeSequenceHelper(
@@ -49,35 +45,38 @@ export class Client {
         this.treeHelper.setFieldValue(Client.colorFieldKey, value);
     }
 
-    public setSize(width?: number, height?: number) {
-        this._width = width ?? 640;
-        this._height = height ?? 480;
-    }
-
     public get bubbles() {
         return this._bubbles;
     }
 
-    public increaseBubbles() {
-        // TODO: Replace with makeBubbleMethod using width and height
-        const newBubble = {
+    public increaseBubbles(bubble: {
+        x: number;
+        y: number;
+        r: number;
+        vx: number;
+        vy: number;
+    }) {
+        // TODO: Replace with makeBubble method with actual one from common when available
+        const newBubbleJsonableTree = {
             type: iBubbleSchema.name,
             fields: {
-                x: [{ type: int32Schema.name, value: 99 }],
-                y: [{ type: int32Schema.name, value: 99 }],
-                r: [{ type: int32Schema.name, value: 99 }],
-                vx: [{ type: int32Schema.name, value: 99 }],
-                vy: [{ type: int32Schema.name, value: 99 }],
+                x: [{ type: int32Schema.name, value: bubble.x }],
+                y: [{ type: int32Schema.name, value: bubble.y }],
+                r: [{ type: int32Schema.name, value: bubble.r }],
+                vx: [{ type: int32Schema.name, value: bubble.vx }],
+                vy: [{ type: int32Schema.name, value: bubble.y }],
             },
         };
-        this.bubbleSeqeunceHelper.push(newBubble);
+        this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
         this._bubbles.push(
             new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)),
         );
     }
 
     public decreaseBubbles() {
-        this.bubbleSeqeunceHelper.pop();
-        this._bubbles.pop();
+        if (this._bubbles.length > 1) {
+            this.bubbleSeqeunceHelper.pop();
+            this._bubbles.pop();
+        }
     }
 }

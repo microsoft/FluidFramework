@@ -39,21 +39,12 @@ export const iBubbleSequenceSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-export const simpeBubblesSequenceSchema = namedTreeSchema({
-    name: brand("Test:SimpleBubbles-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [iBubbleSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
 export const iClientSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppStateiClient-1.0.0"),
     localFields: {
         clientId: fieldSchema(FieldKinds.value, [stringSchema.name]),
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
         bubbles: fieldSchema(FieldKinds.sequence, [iBubbleSequenceSchema.name]),
-        simpleBubbles: fieldSchema(FieldKinds.optional, [simpeBubblesSequenceSchema.name]),
     },
     extraLocalFields: emptyField,
 });
@@ -66,39 +57,35 @@ export const iClientSequenceSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-export const bubbleBenchAppStateSchema = namedTreeSchema({
+export const AppStateSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppState-1.0.0"),
     localFields: {
-        localClient: fieldSchema(FieldKinds.value, [iClientSchema.name]),
         clients: fieldSchema(FieldKinds.sequence, [iClientSequenceSchema.name]),
-        width: fieldSchema(FieldKinds.value, [int32Schema.name]),
-        height: fieldSchema(FieldKinds.value, [int32Schema.name]),
     },
     extraLocalFields: emptyField,
 });
 
-export const rootBubbleBenchAppStateSchema = fieldSchema(FieldKinds.value, [
-    bubbleBenchAppStateSchema.name,
+export const rootAppStateSchema = fieldSchema(FieldKinds.value, [
+    AppStateSchema.name,
 ]);
 
-export const bubbleBenchAppStateSchemaData: SchemaData = {
+export const AppStateSchemaData: SchemaData = {
     treeSchema: new Map([
         [stringSchema.name, stringSchema],
         [int32Schema.name, int32Schema],
         [iBubbleSchema.name, iBubbleSchema],
         [iBubbleSequenceSchema.name, iBubbleSequenceSchema],
-        [simpeBubblesSequenceSchema.name, simpeBubblesSequenceSchema],
         [iClientSchema.name, iClientSchema],
         [iClientSequenceSchema.name, iClientSequenceSchema],
-        [bubbleBenchAppStateSchema.name, bubbleBenchAppStateSchema],
+        [AppStateSchema.name, AppStateSchema],
     ]),
-    globalFieldSchema: new Map([[rootFieldKey, rootBubbleBenchAppStateSchema]]),
+    globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
 };
 
-export const bubbleBenchAppStateJsonTree: JsonableTree = {
-    type: bubbleBenchAppStateSchema.name,
+export const mockAppStateJsonTree: JsonableTree = {
+    type: AppStateSchema.name,
     fields: {
-        localClient: [
+        clients: [
             {
                 type: iClientSchema.name,
                 fields: {
@@ -126,41 +113,8 @@ export const bubbleBenchAppStateJsonTree: JsonableTree = {
                             },
                         },
                     ],
-                    simpleBubbles: [
-                        {
-                            type: simpeBubblesSequenceSchema.name,
-                            fields: {
-                                [EmptyKey]: [
-                                    {
-                                        type: iBubbleSchema.name,
-                                        fields: {
-                                            x: [{ type: int32Schema.name, value: 10 }],
-                                            y: [{ type: int32Schema.name, value: 10 }],
-                                            r: [{ type: int32Schema.name, value: 10 }],
-                                            vx: [{ type: int32Schema.name, value: 10 }],
-                                            vy: [{ type: int32Schema.name, value: 10 }],
-                                        },
-                                    },
-                                    {
-                                        type: iBubbleSchema.name,
-                                        fields: {
-                                            x: [{ type: int32Schema.name, value: 20 }],
-                                            y: [{ type: int32Schema.name, value: 20 }],
-                                            r: [{ type: int32Schema.name, value: 20 }],
-                                            vx: [{ type: int32Schema.name, value: 20 }],
-                                            vy: [{ type: int32Schema.name, value: 20 }],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
                 },
             },
-        ],
-        width: [{ type: int32Schema.name, value: 1920 }],
-        height: [{ type: int32Schema.name, value: 1080 }],
-        clients: [
             {
                 type: iClientSequenceSchema.name,
                 fields: {
