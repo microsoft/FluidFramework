@@ -94,16 +94,15 @@ function setTestValuesWide(tree: ISharedTree, seed: number, numNodes: number): v
 
 /**
  *
- * @param numNodes - number of nodes you would like to insert
- * @param seed - seed to randomly generate values for the inserts
+ * @param numberOfNodes - number of nodes you would like to insert
  * @param depth - boolean to specify inserting nodes depth wise or width wise
  * @returns the byte size of the tree's summary
  */
 export async function getInsertsSummarySize(
-    numNodes: number,
-    seed: number,
+    numberOfNodes: number,
     depth?: boolean,
 ): Promise<number> {
+    const seed = 0;
     const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
@@ -111,9 +110,9 @@ export async function getInsertsSummarySize(
     if (depth) {
         const fooKey = brand<FieldKey>("foo");
         const keySet = new Set([fooKey]);
-        setTestValuesNarrow(keySet, seed, tree, numNodes);
+        setTestValuesNarrow(keySet, seed, tree, numberOfNodes);
     } else {
-        setTestValuesWide(tree, seed, numNodes);
+        setTestValuesWide(tree, seed, numberOfNodes);
     }
     const summaryTree = await provider.summarize();
     const summaryString = JSON.stringify(summaryTree);
