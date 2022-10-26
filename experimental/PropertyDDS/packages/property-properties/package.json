@@ -89,6 +89,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "1.4.0",
     "broken": {}
   }

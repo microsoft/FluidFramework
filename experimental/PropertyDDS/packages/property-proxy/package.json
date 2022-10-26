@@ -65,6 +65,7 @@
     "outputName": "jest-junit-report.xml"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "1.4.0",
     "broken": {}
   }

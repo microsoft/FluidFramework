@@ -1510,7 +1510,10 @@ use_old_InterfaceDeclaration_NodeIdGenerator(get_current_InterfaceDeclaration_No
  */
 declare function get_old_InterfaceDeclaration_NodeInTrait(): TypeOnly<old.NodeInTrait>;
 declare function use_current_InterfaceDeclaration_NodeInTrait(use: TypeOnly<current.NodeInTrait>);
-use_current_InterfaceDeclaration_NodeInTrait(get_old_InterfaceDeclaration_NodeInTrait());
+use_current_InterfaceDeclaration_NodeInTrait(
+	// @ts-expect-error compatibility expected to be broken
+	get_old_InterfaceDeclaration_NodeInTrait()
+);
 
 /*
  * Validate back compat by using current type in place of old type
@@ -1519,7 +1522,10 @@ use_current_InterfaceDeclaration_NodeInTrait(get_old_InterfaceDeclaration_NodeIn
  */
 declare function get_current_InterfaceDeclaration_NodeInTrait(): TypeOnly<current.NodeInTrait>;
 declare function use_old_InterfaceDeclaration_NodeInTrait(use: TypeOnly<old.NodeInTrait>);
-use_old_InterfaceDeclaration_NodeInTrait(get_current_InterfaceDeclaration_NodeInTrait());
+use_old_InterfaceDeclaration_NodeInTrait(
+	// @ts-expect-error compatibility expected to be broken
+	get_current_InterfaceDeclaration_NodeInTrait()
+);
 
 /*
  * Validate forward compat by using old type in place of current type
@@ -1620,7 +1626,10 @@ use_old_TypeAliasDeclaration_PlaceholderTree(get_current_TypeAliasDeclaration_Pl
  */
 declare function get_old_TypeAliasDeclaration_PlaceIndex(): TypeOnly<old.PlaceIndex>;
 declare function use_current_TypeAliasDeclaration_PlaceIndex(use: TypeOnly<current.PlaceIndex>);
-use_current_TypeAliasDeclaration_PlaceIndex(get_old_TypeAliasDeclaration_PlaceIndex());
+use_current_TypeAliasDeclaration_PlaceIndex(
+	// @ts-expect-error compatibility expected to be broken
+	get_old_TypeAliasDeclaration_PlaceIndex()
+);
 
 /*
  * Validate back compat by using current type in place of old type
@@ -1629,7 +1638,10 @@ use_current_TypeAliasDeclaration_PlaceIndex(get_old_TypeAliasDeclaration_PlaceIn
  */
 declare function get_current_TypeAliasDeclaration_PlaceIndex(): TypeOnly<current.PlaceIndex>;
 declare function use_old_TypeAliasDeclaration_PlaceIndex(use: TypeOnly<old.PlaceIndex>);
-use_old_TypeAliasDeclaration_PlaceIndex(get_current_TypeAliasDeclaration_PlaceIndex());
+use_old_TypeAliasDeclaration_PlaceIndex(
+	// @ts-expect-error compatibility expected to be broken
+	get_current_TypeAliasDeclaration_PlaceIndex()
+);
 
 /*
  * Validate forward compat by using old type in place of current type
@@ -2744,7 +2756,10 @@ use_old_InterfaceDeclaration_TraitMap(get_current_InterfaceDeclaration_TraitMap(
  */
 declare function get_old_TypeAliasDeclaration_TraitNodeIndex(): TypeOnly<old.TraitNodeIndex>;
 declare function use_current_TypeAliasDeclaration_TraitNodeIndex(use: TypeOnly<current.TraitNodeIndex>);
-use_current_TypeAliasDeclaration_TraitNodeIndex(get_old_TypeAliasDeclaration_TraitNodeIndex());
+use_current_TypeAliasDeclaration_TraitNodeIndex(
+	// @ts-expect-error compatibility expected to be broken
+	get_old_TypeAliasDeclaration_TraitNodeIndex()
+);
 
 /*
  * Validate back compat by using current type in place of old type
@@ -2753,7 +2768,10 @@ use_current_TypeAliasDeclaration_TraitNodeIndex(get_old_TypeAliasDeclaration_Tra
  */
 declare function get_current_TypeAliasDeclaration_TraitNodeIndex(): TypeOnly<current.TraitNodeIndex>;
 declare function use_old_TypeAliasDeclaration_TraitNodeIndex(use: TypeOnly<old.TraitNodeIndex>);
-use_old_TypeAliasDeclaration_TraitNodeIndex(get_current_TypeAliasDeclaration_TraitNodeIndex());
+use_old_TypeAliasDeclaration_TraitNodeIndex(
+	// @ts-expect-error compatibility expected to be broken
+	get_current_TypeAliasDeclaration_TraitNodeIndex()
+);
 
 /*
  * Validate forward compat by using old type in place of current type

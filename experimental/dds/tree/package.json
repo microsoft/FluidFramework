@@ -87,6 +87,10 @@
   },
   "typeValidation": {
     "version": "1.4.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_NodeInTrait": {"backCompat": false, "forwardCompat": false},
+      "TypeAliasDeclaration_PlaceIndex": {"backCompat": false, "forwardCompat": false},
+      "TypeAliasDeclaration_TraitNodeIndex": {"backCompat": false, "forwardCompat": false}
+    }
   }
 }
