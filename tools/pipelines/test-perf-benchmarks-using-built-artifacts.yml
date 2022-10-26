@@ -308,12 +308,12 @@ stages:
               npm i ;
               npm run test:memory-profiling:report;
 
-        - task: Npm@1
-          displayName: 'Consolidate output files - memory usage'
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run test:memory-profiling:copyresults'
+        # - task: Npm@1
+        #   displayName: 'Consolidate output files - memory usage'
+        #   inputs:
+        #     command: 'custom'
+        #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+        #     customCommand: 'run test:memory-profiling:copyresults'
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
