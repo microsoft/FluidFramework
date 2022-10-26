@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import {
-    Handler,
-    readFile
-} from "../common";
+import { Handler, readFile } from "../common";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
@@ -16,7 +12,7 @@ export const handlers: Handler[] = [
     {
         name: "package-lockfiles-no-private-url",
         match: lockFilePattern,
-        handler: file => {
+        handler: (file) => {
             const content = readFile(file);
             const matches = content.match(urlPattern);
             if (matches !== null) {
@@ -26,11 +22,13 @@ export const handlers: Handler[] = [
                     if (url.protocol === `https:` && url.hostname === `registry.npmjs.org`) {
                         return false;
                     }
-                    results.push(value)
+                    results.push(value);
                     return true;
                 });
                 if (containsBadUrl) {
-                    return `A private registry URL is in lock file: ${file}:\n${results.join("\n")}`;
+                    return `A private registry URL is in lock file: ${file}:\n${results.join(
+                        "\n",
+                    )}`;
                 }
             }
             return;
@@ -39,7 +37,7 @@ export const handlers: Handler[] = [
     {
         name: "package-lockfiles-npm-version",
         match: lockFilePattern,
-        handler: file => {
+        handler: (file) => {
             const content = readFile(file);
             const match = content.match(versionPattern);
             if (match === null) {
@@ -47,5 +45,5 @@ export const handlers: Handler[] = [
             }
             return;
         },
-    }
+    },
 ];

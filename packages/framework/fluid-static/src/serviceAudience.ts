@@ -6,32 +6,42 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
+import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
 /**
- * Base class for providing audience information for sessions interacting with FluidContainer
+ * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
+ *
+ * @remarks
+ *
  * This can be extended by different service-specific client packages to additional parameters to
- * the user and client details returned in IMember
- * @typeParam M - A service-specific member type.
+ * the user and client details returned in {@link IMember}.
+ *
+ * @typeParam M - A service-specific {@link IMember} implementation.
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
   /**
-   * Audience object which includes all the existing members of the container.
+   * Audience object which includes all the existing members of the {@link IFluidContainer | container}.
    */
   protected readonly audience: IAudience;
 
   /**
-   * Retain the most recent member list.  This is so we have more information about a member
-   * leaving the audience in the removeMember event.  It allows us to match the behavior of the
-   * addMember event where it only fires on a change to the members this class exposes (and would
-   * actually produce a change in what getMembers returns).  It also allows us to provide the
-   * client details in the event which makes it easier to find that client connection in a map
-   * keyed on the userId and not clientId.
-   * This map will always be up-to-date in a removeMember event because it is set once at
-   * construction and in every addMember event.
-   * It is mapped clientId to M to be better work with what the IAudience event provides
+   * Retain the most recent member list.
+   *
+   * @remarks
+   *
+   * This is so we have more information about a member leaving the audience in the `removeMember` event.
+   *
+   * It allows us to match the behavior of the `addMember` event where it only fires on a change to the members this
+   * class exposes (and would actually produce a change in what `getMembers` returns).
+   *
+   * It also allows us to provide the client details in the event which makes it easier to find that client connection
+   * in a map keyed on the `userId` and not `clientId`.
+   *
+   * This map will always be up-to-date in a `removeMember` event because it is set once at construction and in
+   * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IServiceAudience}
+   * events provide.
    */
   protected lastMembers: Map<string, M> = new Map();
 
@@ -68,6 +78,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
   /**
    * Provides ability for inheriting class to modify/extend the audience object.
+   *
    * @param audienceMember - Record of a specific audience member.
    */
   protected abstract createServiceMember(audienceMember: IClient): M;
@@ -101,12 +112,20 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   /**
    * {@inheritDoc IServiceAudience.getMyself}
    */
-  public getMyself(): M | undefined {
+  public getMyself(): Myself<M> | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;
     }
-    return this.getMember(clientId);
+
+    const member = this.getMember(clientId);
+    if (member === undefined) {
+        return undefined;
+      }
+
+    const myself: Myself<M> = { ...member, currentConnection: clientId };
+
+    return myself;
   }
 
   private getMember(clientId: string): M | undefined {
@@ -127,6 +146,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   /**
    * Provides ability for the inheriting class to include/omit specific members.
    * An example use case is omitting the summarizer client.
+   *
    * @param member - Member to be included/omitted.
    */
   protected shouldIncludeAsMember(member: IClient): boolean {

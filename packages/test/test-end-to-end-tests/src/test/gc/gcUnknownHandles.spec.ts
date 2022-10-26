@@ -8,7 +8,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, mockConfigProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { IFluidHandle, IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { defaultGCConfig } from "./gcTestConfigs";
@@ -69,13 +69,6 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
     let dataStoreA: ITestDataObject;
     let summarizerRuntime: ContainerRuntime;
 
-    const loadContainer = async () => {
-        return provider.loadTestContainer({
-            ...defaultGCConfig,
-            loaderProps: { configProvider: mockConfigProvider({ "Fluid.GarbageCollection.WriteDataAtRoot": "true" }) },
-        });
-    };
-
     /**
      * Submits a summary and returns the paths of all GC nodes in the GC data in summary.
      */
@@ -99,7 +92,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
         dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
 
-        const summarizerContainer = await loadContainer();
+        const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);
         const summarizerDataStoreA = await requestFluidObject<ITestDataObject>(summarizerContainer, "default");
         summarizerRuntime = summarizerDataStoreA._context.containerRuntime as ContainerRuntime;
         await waitForContainerConnection(summarizerContainer);

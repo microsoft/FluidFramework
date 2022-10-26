@@ -4,14 +4,14 @@
  */
 
 import { fail } from "../../util";
-import * as F from "./format";
+import { Changeset, ChangesetTag, Mark, MarkList, OpId } from "./format";
 import { isSkipMark } from "./utils";
 
 /**
  * Dummy value used in place of the actual tag.
  * TODO: give `invert` access real tag data.
  */
- export const DUMMY_INVERT_TAG: F.ChangesetTag = "Dummy Invert Changeset Tag";
+export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -27,24 +27,24 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  * - Support for slices is not implemented.
  */
 export function invert<TNodeChange>(
-    change: F.Changeset<TNodeChange>,
+    change: Changeset<TNodeChange>,
     invertChild: NodeChangeInverter<TNodeChange>,
-): F.Changeset<TNodeChange> {
+): Changeset<TNodeChange> {
     // TODO: support the input change being a squash
-    const opIdToTag = (id: F.OpId): F.ChangesetTag => {
+    const opIdToTag = (id: OpId): ChangesetTag => {
         return DUMMY_INVERT_TAG;
     };
     return invertMarkList(change, opIdToTag, invertChild);
 }
 
-type IdToTagLookup = (id: F.OpId) => F.ChangesetTag;
+type IdToTagLookup = (id: OpId) => ChangesetTag;
 
 function invertMarkList<TNodeChange>(
-    markList: F.MarkList<TNodeChange>,
+    markList: MarkList<TNodeChange>,
     opIdToTag: IdToTagLookup,
     invertChild: NodeChangeInverter<TNodeChange>,
-): F.MarkList<TNodeChange> {
-    const inverseMarkList: F.MarkList<TNodeChange> = [];
+): MarkList<TNodeChange> {
+    const inverseMarkList: MarkList<TNodeChange> = [];
     for (const mark of markList) {
         const inverseMarks = invertMark(mark, opIdToTag, invertChild);
         inverseMarkList.push(...inverseMarks);
@@ -53,44 +53,53 @@ function invertMarkList<TNodeChange>(
 }
 
 function invertMark<TNodeChange>(
-    mark: F.Mark<TNodeChange>,
+    mark: Mark<TNodeChange>,
     opIdToTag: IdToTagLookup,
     invertChild: NodeChangeInverter<TNodeChange>,
-): F.Mark<TNodeChange>[] {
+): Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
     } else {
         switch (mark.type) {
             case "Insert":
             case "MInsert": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.type === "Insert" ? mark.content.length : 1,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.type === "Insert" ? mark.content.length : 1,
+                    },
+                ];
             }
             case "Delete": {
-                return [{
-                    type: "Revive",
-                    id: mark.id,
-                    tomb: opIdToTag(mark.id),
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Revive",
+                        id: mark.id,
+                        tomb: opIdToTag(mark.id),
+                        count: mark.count,
+                    },
+                ];
             }
             case "Revive": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.count,
+                    },
+                ];
             }
             case "Modify": {
-                return [{
-                    type: "Modify",
-                    changes: invertChild(mark.changes),
-                }];
+                return [
+                    {
+                        type: "Modify",
+                        changes: invertChild(mark.changes),
+                    },
+                ];
             }
-            default: fail("Not implemented");
+            default:
+                fail("Not implemented");
         }
     }
 }

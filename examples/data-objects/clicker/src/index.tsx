@@ -62,24 +62,23 @@ export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
     }
 
     private setupAgent() {
-        this.taskManager.lockTask(consoleLogTaskId)
-            .then(async () => {
-                console.log(`Picked`);
-                const clickerAgent = new ClickerAgent(this.counter);
-                // Attempt to reacquire the task if we lose it
-                this.taskManager.once("lost", () => {
-                    clickerAgent.stop();
-                    this.setupAgent();
-                });
-                await clickerAgent.run();
-            }).catch(() => {
-                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
-                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
-                // give up.
-                if (!this.runtime.connected) {
-                    this.runtime.once("connected", () => { this.setupAgent(); });
-                }
-            });
+        // We want to make sure that at any given time there is one (and only one) client executing the console log
+        // task. Each client will enter the queue on startup.
+        // Additionally, we use subscribeToTask() instead of volunteerForTask() since we always want to stay
+        // volunteered because this is an ongoing and not a one-time task.
+        const clickerAgent = new ClickerAgent(this.counter);
+        this.taskManager.subscribeToTask(consoleLogTaskId);
+        this.taskManager.on("assigned", (taskId: string) => {
+            if (taskId === consoleLogTaskId) {
+                console.log("Assigned:", (this.taskManager as any).runtime.clientId);
+                void clickerAgent.run();
+            }
+        });
+        this.taskManager.on("lost", (taskId: string) => {
+            if (taskId === consoleLogTaskId) {
+                clickerAgent.stop();
+            }
+        });
     }
 
     private get counter() {

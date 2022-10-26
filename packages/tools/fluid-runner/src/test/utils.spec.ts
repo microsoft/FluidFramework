@@ -6,7 +6,9 @@
 import * as fs from "fs";
 import path from "path";
 import { strict as assert } from "assert";
-import { isJsonSnapshot } from "../utils";
+import { isJsonSnapshot, validateCommandLineArgs } from "../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 
 describe("utils", () => {
     const snapshotFolder = path.join(__dirname, "../../src/test/localOdspSnapshots");
@@ -22,6 +24,41 @@ describe("utils", () => {
                     assert.strictEqual(isJsonSnapshot(fileContent), true, "expect a JSON file");
                 } else {
                     assert.strictEqual(isJsonSnapshot(fileContent), false, "expect a non-JSON file");
+                }
+            });
+        });
+    });
+
+    describe("validateCommandLineArgs", () => {
+        describe("codeLoader and fluidFileConverter", () => {
+            it("disallow providing both", async () => {
+                const result = validateCommandLineArgs("value", await fluidExport);
+                assert.notStrictEqual(result, undefined, "expected an error");
+            });
+
+            it("disallow providing neither", () => {
+                {
+                    const result = validateCommandLineArgs();
+                    assert.notStrictEqual(result, undefined, "expected an error");
+                }
+                {
+                    const result = validateCommandLineArgs("");
+                    assert.notStrictEqual(result, undefined, "expected an error");
+                }
+            });
+
+            it("valid", async () => {
+                {
+                    const result = validateCommandLineArgs("value");
+                    assert.strictEqual(result, undefined, `unexpected error [${result}]`);
+                }
+                {
+                    const result = validateCommandLineArgs(undefined, await fluidExport);
+                    assert.strictEqual(result, undefined, `unexpected error [${result}]`);
+                }
+                {
+                    const result = validateCommandLineArgs("", await fluidExport);
+                    assert.strictEqual(result, undefined, `unexpected error [${result}]`);
                 }
             });
         });

@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldChangeHandler, FieldKinds, NodeChangeset, singleTextCursor, singleTextCursorNew } from "../../feature-libraries";
+import {
+    FieldChangeHandler,
+    FieldKinds,
+    NodeChangeset,
+    singleTextCursor,
+} from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -47,36 +52,39 @@ const childComposer1_2 = (changes: NodeChangeset[]): NodeChangeset => {
 };
 
 describe("Value field changesets", () => {
-    const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset> = FieldKinds.value.changeHandler;
+    const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset, FieldKinds.ValueFieldEditor> =
+        FieldKinds.value.changeHandler;
 
-    const change1WithChildChange: FieldKinds.ValueChangeset = { value: tree1, changes: nodeChange1 };
+    const change1WithChildChange: FieldKinds.ValueChangeset = {
+        value: tree1,
+        changes: nodeChange1,
+    };
     const childChange1: FieldKinds.ValueChangeset = { changes: nodeChange1 };
     const childChange2: FieldKinds.ValueChangeset = { changes: nodeChange2 };
     const childChange3: FieldKinds.ValueChangeset = { changes: nodeChange3 };
 
-    const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree1));
-    const change2 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree2));
+    const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
+    const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
     const simpleChildComposer = (changes: NodeChangeset[]) => {
         assert.equal(changes.length, 1);
         return changes[0];
     };
 
+    it("can be created", () => {
+        const expected: FieldKinds.ValueChangeset = { value: tree1 };
+        assert.deepEqual(change1, expected);
+    });
+
     it("can be composed", () => {
-        const composed = fieldHandler.rebaser.compose(
-            [change1, change2],
-            simpleChildComposer,
-        );
+        const composed = fieldHandler.rebaser.compose([change1, change2], simpleChildComposer);
 
         assert.deepEqual(composed, change2);
     });
 
     it("can be composed with child changes", () => {
         assert.deepEqual(
-            fieldHandler.rebaser.compose(
-                [change1, childChange1],
-                simpleChildComposer,
-            ),
+            fieldHandler.rebaser.compose([change1, childChange1], simpleChildComposer),
             change1WithChildChange,
         );
 
@@ -87,18 +95,12 @@ describe("Value field changesets", () => {
 
         assert.deepEqual(change1WithChildChange, expected);
         assert.deepEqual(
-            fieldHandler.rebaser.compose(
-                [childChange1, change1],
-                simpleChildComposer,
-            ),
+            fieldHandler.rebaser.compose([childChange1, change1], simpleChildComposer),
             change1,
         );
 
         assert.deepEqual(
-            fieldHandler.rebaser.compose(
-                [childChange1, childChange2],
-                childComposer1_2,
-            ),
+            fieldHandler.rebaser.compose([childChange1, childChange2], childComposer1_2),
             childChange3,
         );
     });
@@ -109,23 +111,17 @@ describe("Value field changesets", () => {
             return nodeChange2;
         };
 
-        const inverted = fieldHandler.rebaser.invert(
-            change1WithChildChange,
-            childInverter,
-        );
+        const inverted = fieldHandler.rebaser.invert(change1WithChildChange, childInverter);
 
         assert.deepEqual(inverted.changes, nodeChange2);
     });
 
     it("can be rebased", () => {
-        const childRebaser = (_1: NodeChangeset, _2: NodeChangeset) => assert.fail("Should not be called");
+        const childRebaser = (_1: NodeChangeset, _2: NodeChangeset) =>
+            assert.fail("Should not be called");
 
         assert.deepEqual(
-            fieldHandler.rebaser.rebase(
-                change2,
-                change1WithChildChange,
-                childRebaser,
-            ),
+            fieldHandler.rebaser.rebase(change2, change1WithChildChange, childRebaser),
             change2,
         );
     });
@@ -149,7 +145,7 @@ describe("Value field changesets", () => {
     it("can be represented as a delta", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
         ];
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
@@ -160,21 +156,23 @@ describe("Value field changesets", () => {
         const version = 0;
 
         const encoded = JSON.stringify(
-            fieldHandler.encoder.encodeForJson(
-                version,
-                change1WithChildChange,
-                childEncoder1,
-            ),
+            fieldHandler.encoder.encodeForJson(version, change1WithChildChange, childEncoder1),
         );
 
-        const decoded = fieldHandler.encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+        const decoded = fieldHandler.encoder.decodeJson(
+            version,
+            JSON.parse(encoded),
+            childDecoder1,
+        );
         assert.deepEqual(decoded, change1WithChildChange);
     });
 });
 
 describe("Optional field changesets", () => {
-    const fieldHandler: FieldChangeHandler<FieldKinds.OptionalChangeset> = FieldKinds.optional.changeHandler;
-    const editor: FieldKinds.OptionalFieldEditor = fieldHandler.editor as FieldKinds.OptionalFieldEditor;
+    const fieldHandler: FieldChangeHandler<FieldKinds.OptionalChangeset> =
+        FieldKinds.optional.changeHandler;
+    const editor: FieldKinds.OptionalFieldEditor =
+        fieldHandler.editor as FieldKinds.OptionalFieldEditor;
 
     const change1: FieldKinds.OptionalChangeset = {
         fieldChange: { newContent: tree1, wasEmpty: true },
@@ -184,6 +182,14 @@ describe("Optional field changesets", () => {
     const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
     const change3: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), true);
     const change4: FieldKinds.OptionalChangeset = editor.buildChildChange(0, nodeChange2);
+
+    it("can be created", () => {
+        const actual: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
+        const expected: FieldKinds.OptionalChangeset = {
+            fieldChange: { newContent: tree1, wasEmpty: true },
+        };
+        assert.deepEqual(actual, expected);
+    });
 
     it("can be composed", () => {
         const childComposer = (_: NodeChangeset[]) => assert.fail("Should not be called");
@@ -200,7 +206,7 @@ describe("Optional field changesets", () => {
         assert.deepEqual(
             fieldHandler.rebaser.compose([change1, change4], childComposer1_2),
             expected,
-        )
+        );
     });
 
     it("can be inverted", () => {
@@ -214,18 +220,13 @@ describe("Optional field changesets", () => {
             childChange: nodeChange2,
         };
 
-        assert.deepEqual(
-            fieldHandler.rebaser.invert(change1, childInverter),
-            expected,
-        );
+        assert.deepEqual(fieldHandler.rebaser.invert(change1, childInverter), expected);
     });
 
     it("can be rebased", () => {
-        const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) => assert.fail("Should not be called");
-        assert.deepEqual(
-            fieldHandler.rebaser.rebase(change3, change1, childRebaser),
-            change2,
-        );
+        const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
+            assert.fail("Should not be called");
+        assert.deepEqual(fieldHandler.rebaser.rebase(change3, change1, childRebaser), change2);
     });
 
     it("can rebase child change", () => {
@@ -247,51 +248,43 @@ describe("Optional field changesets", () => {
     });
 
     it("can be converted to a delta when field was empty", () => {
-        const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)],
-        }];
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Insert,
+                content: [singleTextCursor(tree3)],
+            },
+        ];
 
-        assertMarkListEqual(
-            fieldHandler.intoDelta(change1, deltaFromChild1),
-            expected,
-        );
+        assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1), expected);
     });
 
     it("can be converted to a delta when replacing content", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree2)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
         ];
 
-        assertMarkListEqual(
-            fieldHandler.intoDelta(change2, deltaFromChild1),
-            expected,
-        );
+        assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);
     });
 
     it("can be converted to a delta with only child changes", () => {
-        const expected: Delta.MarkList = [
-            { type: Delta.MarkType.Modify, setValue: "value4" },
-        ];
+        const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
 
-        assertMarkListEqual(
-            fieldHandler.intoDelta(change4, deltaFromChild2),
-            expected,
-        );
+        assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
     });
 
     it("can be encoded in JSON", () => {
         const version = 0;
 
         const encoded = JSON.stringify(
-            fieldHandler.encoder.encodeForJson(
-                version,
-                change1,
-                childEncoder1,
-            ),
+            fieldHandler.encoder.encodeForJson(version, change1, childEncoder1),
         );
 
-        const decoded = fieldHandler.encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+        const decoded = fieldHandler.encoder.decodeJson(
+            version,
+            JSON.parse(encoded),
+            childDecoder1,
+        );
         assert.deepEqual(decoded, change1);
     });
 });

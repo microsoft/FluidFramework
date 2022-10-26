@@ -11,6 +11,7 @@ describe("BatchManager", () => {
     });
 
     const softLimit = 1024;
+    const hardLimit = 950 * 1024;
 
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
@@ -18,7 +19,7 @@ describe("BatchManager", () => {
 
     it("BatchManager's soft limit: a bunch of small messages", () => {
         const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-        const batchManager = new BatchManager(softLimit);
+        const batchManager = new BatchManager(hardLimit, softLimit);
 
         // Can push one large message
         assert.equal(batchManager.push(message), true);
@@ -46,7 +47,7 @@ describe("BatchManager", () => {
 
     it("BatchManager's soft limit: single large message", () => {
         const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-        const batchManager = new BatchManager(softLimit);
+        const batchManager = new BatchManager(hardLimit, softLimit);
 
         // Can push one large message, even above soft limit
         assert.equal(batchManager.push(message), true);
@@ -69,8 +70,8 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: no soft limit", () => {
-        const batchManager = new BatchManager();
-        const third = Math.floor(batchManager.limit / 3) + 1;
+        const batchManager = new BatchManager(hardLimit);
+        const third = Math.floor(hardLimit / 3) + 1;
         const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
 
         // Can push one large message, even above soft limit
@@ -101,10 +102,10 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: soft limit is higher than hard limit", () => {
-        const batchManager = new BatchManager(BatchManager.limit * 2);
-        const twoThird = Math.floor(batchManager.limit * 2 / 3);
+        const batchManager = new BatchManager(hardLimit, hardLimit * 2);
+        const twoThird = Math.floor(hardLimit * 2 / 3);
         const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
-        const largeMessage = { contents: generateStringOfSize(batchManager.limit + 1) } as any as BatchMessage;
+        const largeMessage = { contents: generateStringOfSize(hardLimit + 1) } as any as BatchMessage;
 
         // Can't push very large message, above hard limit
         assert.equal(batchManager.push(largeMessage), false);
@@ -121,5 +122,15 @@ describe("BatchManager", () => {
         // Pop and check batch
         const batch = batchManager.popBatch();
         assert.equal(batch.length, 1);
+    });
+
+    it("BatchManager: 'infinity' hard limit allows everything", () => {
+        const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
+        const batchManager = new BatchManager(Infinity);
+
+        for (let i = 1; i <= 10; i++) {
+            assert.equal(batchManager.push(message), true);
+            assert.equal(batchManager.length, i);
+        }
     });
 });

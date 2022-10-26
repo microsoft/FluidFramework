@@ -4,12 +4,20 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentStorageService, ISummaryContext, LoaderCachingPolicy } from "@fluidframework/driver-definitions";
+import {
+    IDocumentStorageService,
+    IDocumentStorageServicePolicies,
+    ISummaryContext,
+    LoaderCachingPolicy,
+    FiveDaysMs,
+} from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-import { defaultCacheExpiryTimeoutMs } from "./epochTracker";
+import { IConfigProvider } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /* eslint-disable max-len */
+
+const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
 class BlobCache {
     // Save the timeout so we can cancel and reschedule it as needed
@@ -108,24 +116,37 @@ class BlobCache {
 }
 
 export abstract class OdspDocumentStorageServiceBase implements IDocumentStorageService {
-    readonly policies = {
-        // By default, ODSP tells the container not to prefetch/cache.
-        caching: LoaderCachingPolicy.NoCaching,
+    readonly policies: IDocumentStorageServicePolicies;
 
-        // ODSP storage works better if it has less number of blobs / edges
-        // Runtime creating many small blobs results in sub-optimal perf.
-        // 2K seems like the sweat spot:
-        // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
-        // of minimal "cluster" size, so having small blobs is wasteful
-        // At the same time increasing the limit ensure that more blobs with user content are aggregated,
-        // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
-        // are not reused across data stores, or even within data store, resulting in duplication of content)
-        // Note that duplication of content should not have significant impact for bytes over wire as
-        // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
-        minBlobSize: 2048,
-        maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
-    };
+    constructor(config: IConfigProvider) {
+        // We circumvent the restrictions on the policy only when using this TestOverride setting,
+        // which also applies to the code that reads from the cache in epochTracker.ts
+        // This may result in files created for testing being unusable in production sessions,
+        // due to the GC code guarding against this policy changing over the lifetime of a file.
+        const maximumCacheDurationMsInEffect = (
+            config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
+                ? 0
+                : maximumCacheDurationMs
+        ) as FiveDaysMs;
 
+        this.policies = {
+            // By default, ODSP tells the container not to prefetch/cache.
+            caching: LoaderCachingPolicy.NoCaching,
+
+            // ODSP storage works better if it has less number of blobs / edges
+            // Runtime creating many small blobs results in sub-optimal perf.
+            // 2K seems like the sweat spot:
+            // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
+            // of minimal "cluster" size, so having small blobs is wasteful
+            // At the same time increasing the limit ensure that more blobs with user content are aggregated,
+            // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
+            // are not reused across data stores, or even within data store, resulting in duplication of content)
+            // Note that duplication of content should not have significant impact for bytes over wire as
+            // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
+            minBlobSize: 2048,
+            maximumCacheDurationMs: maximumCacheDurationMsInEffect,
+        };
+    }
     protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();

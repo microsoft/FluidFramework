@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import * as semver from "semver";
-import { isVersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
+
+import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
 import {
     bumpInternalVersion,
     isInternalVersionRange,

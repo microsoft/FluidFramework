@@ -13,6 +13,9 @@ export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prer
 // @public
 export function bumpVersionScheme(version: string | semver.SemVer | undefined, bumpType: VersionBumpTypeExtended, scheme?: VersionScheme): semver.SemVer;
 
+// @public (undocumented)
+export function changePreReleaseIdentifier(version: semver.SemVer | string, newIdentifier: string): string;
+
 // @public
 export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
 
@@ -29,10 +32,13 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases?: boolean): string;
 
 // @public
+export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined];
+
+// @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
-export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases?: boolean): boolean;
+export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean): boolean;
 
 // @public
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;

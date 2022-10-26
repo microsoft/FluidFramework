@@ -71,6 +71,7 @@ declare function get_old_InterfaceDeclaration_IAgentScheduler():
 declare function use_current_InterfaceDeclaration_IAgentScheduler(
     use: TypeOnly<current.IAgentScheduler>);
 use_current_InterfaceDeclaration_IAgentScheduler(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAgentScheduler());
 
 /*
@@ -119,6 +120,7 @@ declare function get_old_InterfaceDeclaration_IProvideAgentScheduler():
 declare function use_current_InterfaceDeclaration_IProvideAgentScheduler(
     use: TypeOnly<current.IProvideAgentScheduler>);
 use_current_InterfaceDeclaration_IProvideAgentScheduler(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideAgentScheduler());
 
 /*

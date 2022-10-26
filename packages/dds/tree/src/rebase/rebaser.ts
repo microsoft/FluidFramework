@@ -7,7 +7,7 @@ import { brand, Brand, Invariant } from "../util";
 import { AnchorSet } from "../tree";
 
 /**
- * A way to refer to a particular revision within a given {@link Rebaser} instance.
+ * A way to refer to a particular revision within a given `Rebaser` instance.
  */
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
@@ -34,7 +34,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
      */
     private readonly revisionTree: Map<
         RevisionTag,
-        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser>; }
+        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
     > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
@@ -51,8 +51,10 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
         to: RevisionTag,
     ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
         const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.rebase(changes, over);
+        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
+            changes,
+            over,
+        );
         const newRevision = this.makeRevision();
         this.revisionTree.set(newRevision, {
             before: to,
@@ -64,11 +66,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     /**
      * Modifies `anchors` to be valid at the destination.
      */
-    public rebaseAnchors(
-        anchors: AnchorSet,
-        from: RevisionTag,
-        to: RevisionTag,
-    ): void {
+    public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
         const over = this.getResolutionPath(from, to);
         this.rebaser.rebaseAnchors(anchors, over);
     }
@@ -103,17 +101,13 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
 }
 
 // TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
-export type ChangesetFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any>,
-    > = TChangeRebaser extends ChangeRebaser<infer TChangeset>
-    ? TChangeset
-    : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
+    TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 /**
  * Rebasing logic for a particular kind of change.
  *
- * This interface is designed to be easy to implement.
- * Use {@link Rebaser} for an ergonomic wrapper around this.
+ * This interface is used to provide rebase policy to `Rebaser`.
  *
  * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
  * - `compose([])` is the identity element.
