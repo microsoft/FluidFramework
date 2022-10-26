@@ -60,6 +60,7 @@ describe("Summary size benchmark", () => {
         assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
+    // TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
     it("rejected for 1000 inserts depth wise", async () => {
         await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), { message: "BatchTooLarge" });
     });
