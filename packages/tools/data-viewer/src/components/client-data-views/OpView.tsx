@@ -82,34 +82,33 @@ export function OpView(props: OpViewProps): React.ReactElement {
             }}
         >
             <Stack>
-                <div>
+                <StackItem>
                     <b>Date: </b>
                     {opTimeStamp.toDateString()}
-                </div>
-                <div>
+                </StackItem>
+                <StackItem>
                     <b>Time: </b>
                     {opTimeStamp.toTimeString()}
-                </div>
-                <div>
+                </StackItem>
+                <StackItem>
                     <b>Client: </b>
                     {`${message.clientId}${doesOpBelongToMe ? " (me)" : ""}`}
-                </div>
-                <div>
+                </StackItem>
+                <StackItem>
                     <b>Type: </b>
                     {message.type}
-                </div>
-                <div>
+                </StackItem>
+                <StackItem>
                     <b>Client sequence number: </b>
                     {message.clientSequenceNumber}
-                </div>
-                <div>
+                </StackItem>
+                <StackItem>
                     <b>Reference sequence number: </b>
                     {message.referenceSequenceNumber}
-                </div>
-                {dataView}
-                <div>
-                    <b>TODO: what else?</b>
-                </div>
+                </StackItem>
+                <StackItem>
+                    {dataView}
+                </StackItem>
             </Stack>
         </Accordion>
     );
