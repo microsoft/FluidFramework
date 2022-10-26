@@ -201,7 +201,7 @@ export class BaseProxyTarget {
 
     constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
-        this.context.withCursors.add(this);
+       context.withCursors.add(this);
     }
 
     public free(): void {
@@ -221,7 +221,7 @@ export class BaseProxyTarget {
      */
     public getAnchor(): Anchor {
         if (this.anchor === undefined) {
-            this.anchor = this.cursor.buildAnchor();
+            this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
         }
         return this.anchor;
