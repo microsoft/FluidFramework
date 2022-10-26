@@ -88,11 +88,3 @@ export class AppState {
 
 }
 
-// const initialAppStateJsonTree: JsonableTree = {
-//     type: bubbleBenchAppStateSchema.name,
-//     fields: {
-//         clients: [],
-//     },
-// };
-
-

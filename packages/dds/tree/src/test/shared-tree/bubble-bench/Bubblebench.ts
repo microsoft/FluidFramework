@@ -14,8 +14,6 @@ import { detachedFieldAsKey } from "../../../tree";
 import { AppState } from "./AppState";
 import { AppStateSchema, AppStateSchemaData } from "./schema";
 
-interface IApp { clients: IArrayish<IClient>; }
-
 export class Bubblebench extends DataObject {
     public static get Name() { return "@fluid-example/bubblebench-sharedtree"; }
     private maybeTree?: ISharedTree = undefined;
@@ -29,7 +27,7 @@ export class Bubblebench extends DataObject {
 
         // Apply an edit to the tree which inserts a node with the initial AppState as the root of the tree
         this.maybeTree?.runTransaction((forest, editor) => {
-            // This write cursor contains the initial state of the root of the bubblebench shared tree
+            // This cursor contains the initial state of the root of the bubblebench shared tree as a JsonableTree
             const writeCursor = singleTextCursor(
                 {
                     type: AppStateSchema.name,
@@ -40,7 +38,6 @@ export class Bubblebench extends DataObject {
             );
             const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
             field.insert(0, writeCursor);
-
             return TransactionResult.Apply;
         });
     }
