@@ -11,6 +11,7 @@ import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
+// - History of audience changes
 
 /**
  * {@link AudienceView} input props.
@@ -54,15 +55,15 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         };
     }, [audience]);
 
-    const renderedOthers: React.ReactElement[] = [];
+    const memberViews: React.ReactElement[] = [];
     for (const member of allMembers.values()) {
-        renderedOthers.push(
-            <StackItem key={member.userId}>
+        memberViews.push(
+            <li key={member.userId}>
                 {onRenderAudienceMember({
                     audienceMember: member,
                     isMyself: member.userId === myself?.userId,
                 })}
-            </StackItem>,
+            </li>,
         );
     }
 
@@ -76,11 +77,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         >
             <StackItem>
                 <div className="audience-view-members-list">
-                    <b>Audience members:</b> {allMembers.size}
+                    <b>Audience members ({allMembers.size})</b>
                 </div>
             </StackItem>
             <StackItem>
-                <Stack>{renderedOthers}</Stack>
+                <ul>{memberViews}</ul>
             </StackItem>
         </Stack>
     );
