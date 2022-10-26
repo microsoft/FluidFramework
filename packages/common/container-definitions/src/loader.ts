@@ -171,11 +171,11 @@ export interface IContainerEvents extends IEvent {
     (event: "attached", listener: () => void);
 
     /**
-     * TODO
+     * Emitted when the {@link IContainer} is closed, which permanently disables it.
      *
      * @remarks Listener parameters:
      *
-     * - `error`: TODO
+     * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
      */
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 
