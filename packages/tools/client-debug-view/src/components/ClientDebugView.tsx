@@ -192,7 +192,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
     return (
         <Stack
-            tokens={{ childrenGap: 40 }}
+            tokens={{ childrenGap: 25 }}
             styles={{
                 root: {
                     height: "100%",
