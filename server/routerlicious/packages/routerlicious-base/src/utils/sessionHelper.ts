@@ -59,7 +59,8 @@ async function updateExistingSession(
     deltaStreamUrl: string,
     document: IDocument,
     existingSession: ISession,
-    documentId,
+    documentId: string,
+    tenantId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number,
     lumberjackProperties: Record<string, any>,
@@ -88,7 +89,7 @@ async function updateExistingSession(
         documentLastAccessTime: document.lastAccessTime,
         sessionStickyCalculationTimestamp,
         sessionStickinessDurationMs,
-        });
+    });
     if (!isSessionSticky || !sessionHasLocation) {
         // Allow session location to be moved.
         if (
@@ -105,7 +106,7 @@ async function updateExistingSession(
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
                 newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
-              });
+            });
             updatedOrdererUrl = ordererUrl;
             updatedHistorianUrl = historianUrl;
             updatedDeltaStreamUrl = deltaStreamUrl;
@@ -134,16 +135,32 @@ async function updateExistingSession(
         isSessionActive: false,
     };
     try {
-        await documentsCollection.upsert(
+        const result = await documentsCollection.findOrCreate(
             {
                 documentId,
+                "session.isSessionAlive": false,
             },
             {
+                createTime: document.createTime,
                 deli: updatedDeli ?? document.deli,
-                scribe: updatedScribe ?? document.scribe,
+                documentId: document.documentId,
                 session: updatedSession,
-            },
-            null);
+                scribe: updatedScribe ?? document.scribe,
+                tenantId: document.tenantId,
+                version: document.version,
+            });
+        // There is no document with isSessionAlive as false. It means this session has been discovered by
+        // another call, and we encoutered race condition with different clients writing truth into the cosmosdb
+        // from different clusters.
+        if (!result.existing) {
+            return getSession(ordererUrl,
+                historianUrl,
+                deltaStreamUrl,
+                tenantId,
+                documentId,
+                documentsCollection,
+                sessionStickinessDurationMs);
+        }
         Lumberjack.info(
             `The Session ${JSON.stringify(updatedSession)} was updated into the document collection`,
             lumberjackProperties,
@@ -226,6 +243,7 @@ export async function getSession(
         document,
         existingSession,
         documentId,
+        tenantId,
         documentsCollection,
         sessionStickinessDurationMs,
         lumberjackProperties,
