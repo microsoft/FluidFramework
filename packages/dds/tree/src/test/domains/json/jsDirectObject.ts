@@ -61,7 +61,6 @@ export function jsObjectBench(
             type: BenchmarkType.Measurement,
             title: `sum JS Object: '${name}'`,
             before: () => {
-                // TODO: add checks before running
             },
             benchmarkFn: () => {
                 sumDirect(json);
@@ -72,7 +71,6 @@ export function jsObjectBench(
             type: BenchmarkType.Measurement,
             title: `averageTwoValues JS Object: '${name}'`,
             before: () => {
-                // TODO: add checks before running
             },
             benchmarkFn: () => {
                 averageTwoValues(json, dataConsumer);
