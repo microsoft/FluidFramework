@@ -99,6 +99,8 @@
   },
   "typeValidation": {
     "version": "1.4.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_Client": {"forwardCompat": false}
+    }
   }
 }

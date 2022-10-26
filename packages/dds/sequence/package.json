@@ -106,6 +106,9 @@
   },
   "typeValidation": {
     "version": "1.4.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"forwardCompat": false}
+    }
   }
 }
