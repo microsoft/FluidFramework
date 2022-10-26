@@ -321,8 +321,6 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             script: |
-              npm i;
-              npm run build:compile;
               node --require @ff-internal/aria-logger bin/run --handlerModule ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
 
         - task: PublishPipelineArtifact@1
