@@ -197,7 +197,7 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  */
 export class BaseProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
-    private anchor?: Anchor;
+    protected anchor?: Anchor;
 
     constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
@@ -515,11 +515,13 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
             fieldKey: this.fieldKey,
             parent: undefined,
         };
-        this.cursor.exitField();
-        const parentAnchor = this.getAnchor();
-        this.cursor.enterField(this.fieldKey);
-        if (parentAnchor !== this.context.forest.anchors.track(null)) {
-            fieldAnchor.parent = parentAnchor;
+        if (this.anchor === undefined) {
+            this.cursor.exitField();
+            this.getAnchor();
+            this.cursor.enterField(this.fieldKey);
+        }
+        if (this.anchor !== this.context.forest.anchors.track(null)) {
+            fieldAnchor.parent = this.anchor;
         }
         return fieldAnchor;
     }
