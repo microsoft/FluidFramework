@@ -1074,11 +1074,23 @@ export class MergeTree {
                     if (removalInfo !== undefined) {
                         const removedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
                             ? Number.MAX_SAFE_INTEGER
-                            : removalInfo?.removedSeq;
+                            : removalInfo.removedSeq;
                         if (removedSeq <= this.collabWindow.minSeq) {
                             return undefined;
                         }
                         if (removedSeq <= refSeq || removalInfo.removedClientIds.includes(clientId)) {
+                            return 0;
+                        }
+                    }
+
+                    if (moveInfo !== undefined) {
+                        const movedSeq = moveInfo.movedSeq === UnassignedSequenceNumber
+                            ? Number.MAX_SAFE_INTEGER
+                            : moveInfo.movedSeq;
+                        if (movedSeq <= this.collabWindow.minSeq) {
+                            return undefined;
+                        }
+                        if (movedSeq <= refSeq || moveInfo.movedClientIds.includes(clientId)) {
                             return 0;
                         }
                     }
@@ -1113,11 +1125,15 @@ export class MergeTree {
                         return segment.cachedLength;
                     }
                 } else {
-                    // the segment was inserted and removed before the
+                    // the segment was inserted and removed/moved before the
                     // this context, so it will never exist for this
                     // context
                     if (removalInfo !== undefined
                         && removalInfo.removedSeq !== UnassignedSequenceNumber) {
+                        return undefined;
+                    }
+                    if (moveInfo !== undefined
+                        && moveInfo.movedSeq !== UnassignedSequenceNumber) {
                         return undefined;
                     }
                     // Segment invisible to client at reference sequence number/branch id/client id of op
@@ -1749,14 +1765,14 @@ export class MergeTree {
                 let moveUpperBound = Number.POSITIVE_INFINITY;
                 let movedSegment: ISegment | undefined = undefined as any;
                 const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
-                const findAdjacentMovedSegment = (seg) => {
+                const findAdjacentMovedSegment = (seg: ISegment) => {
                     if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq) || seg.localMovedSeq !== undefined) {
                         movedSegment = seg;
                         return false;
                     }
 
                     if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-                        moveUpperBound = Math.min(moveUpperBound, seg.seq);
+                        moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
                     }
                     // If we've reached a segment that existed before any of our in-collab-window move ops
                     // happened, no need to continue.

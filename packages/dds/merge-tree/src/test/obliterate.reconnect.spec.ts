@@ -93,7 +93,7 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it("deletes reconnected insert into obliterate range", () => {
+    it("does not delete reconnected insert into obliterate range if insert is rebased", () => {
         const helper = new ReconnectTestHelper();
 
         helper.insertText("B", 0, "ABCD");
@@ -112,7 +112,7 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it("deletes reconnected insert into obliterate range when entire string deleted", () => {
+    it("does deletes reconnected insert into obliterate range when entire string deleted if rebased", () => {
         const helper = new ReconnectTestHelper();
 
         helper.insertText("B", 0, "ABCD");
@@ -131,7 +131,7 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it("does not delete reconnected insert at start of obliterate range", () => {
+    it("does not delete reconnected insert at start of obliterate range if rebased", () => {
         const helper = new ReconnectTestHelper();
 
         helper.insertText("B", 0, "ABCD");
@@ -198,11 +198,11 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it.skip("deletes concurrent insert that occurs before obliterate", () => {
+    it("does not delete segment inserted between two different local obliterate ranges", () => {
         const helper = new ReconnectTestHelper();
 
-        helper.insertText("C", 0, "ABCDE");
-        helper.obliterateRange("C", 0, 5);
+        helper.insertText("C", 0, "A");
+        helper.obliterateRange("C", 0, 1);
         helper.insertText("B", 0, "W");
         helper.insertText("C", 0, "D");
         helper.obliterateRange("C", 0, 1);
@@ -243,5 +243,21 @@ describe("obliterate", () => {
             assert(e instanceof LoggingError);
             assert.equal(e.message, "RangeOutOfBounds");
         }
+    });
+
+    it.skip("deletes ...", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("C", 0, "A");
+        helper.insertText("B", 0, "X");
+        helper.obliterateRange("C", 0, 1);
+        helper.insertText("C", 0, "B");
+        helper.obliterateRange("C", 0, 1);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "");
+        assert.equal(helper.clients.C.getText(), "");
+
+        helper.logger.validate();
     });
 });

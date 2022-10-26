@@ -203,6 +203,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
+    // Warning: (ae-forgotten-export) The symbol "IMergeTreeObliterateMsg" needs to be exported by the entry point index.d.ts
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
@@ -286,9 +287,6 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 
 // @public (undocumented)
 export function createMap<T>(): MapLike<T>;
-
-// @public
-export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
 
 // @public
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
@@ -530,20 +528,6 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 }
 
 // @public (undocumented)
-export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
-    // (undocumented)
-    pos1?: number;
-    // (undocumented)
-    pos2?: number;
-    // (undocumented)
-    relativePos1?: IRelativePosition;
-    // (undocumented)
-    relativePos2?: IRelativePosition;
-    // (undocumented)
-    type: typeof MergeTreeDeltaType.OBLITERATE;
-}
-
-// @public (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @public (undocumented)
@@ -583,14 +567,6 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-}
-
-// @public
-export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    moveDst?: ReferencePosition;
 }
 
 // @public (undocumented)
@@ -695,6 +671,8 @@ export interface IRemovalInfo {
     removedSeq: number;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IMoveInfo" needs to be exported by the entry point index.d.ts
+//
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
@@ -1349,9 +1327,6 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     readonly type = "TextSegment";
 }
-
-// @public (undocumented)
-export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined;
 
 // @public (undocumented)
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
