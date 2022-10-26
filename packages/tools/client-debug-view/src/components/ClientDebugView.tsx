@@ -298,6 +298,8 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
         <OverflowSet
             aria-label="Debug root view selection"
             items={options}
+            // TODO: We can add additional menu options here. Reserved for less-frequently used views items.
+            // overflowItems={}
             onRenderItem={onRenderItem}
             onRenderOverflowButton={onRenderOverflowButton}
         />
