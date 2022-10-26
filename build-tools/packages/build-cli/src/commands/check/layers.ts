@@ -26,7 +26,8 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
         }),
         info: Flags.file({
             description: "Path to the layer graph json file",
-            required: false,
+            required: true,
+            exists: true,
         }),
         logtime: Flags.boolean({
             description: "Display the current time on every status message for logging",
