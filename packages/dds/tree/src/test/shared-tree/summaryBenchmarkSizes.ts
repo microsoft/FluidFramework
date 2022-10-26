@@ -18,6 +18,7 @@ import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 
+// TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
     it("with no nodes.", async () => {
         const provider = await TestTreeProvider.create(1);
