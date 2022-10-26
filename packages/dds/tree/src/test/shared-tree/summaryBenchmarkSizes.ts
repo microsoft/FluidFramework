@@ -27,26 +27,32 @@ describe("Summary size benchmark", () => {
         const { summary } = tree.getAttachSummary();
         const summaryString = JSON.stringify(summary);
         const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize !== 0);
         assert(summarySize < 1000);
     });
     it("with 1 inserted node.", async () => {
         const summarySize = await getInsertsSummarySize(1, 0, false);
+        assert(summarySize !== 0);
         assert(summarySize < 2000);
     });
     it("with 10 inserted nodes width-wise.", async () => {
         const summarySize = await getInsertsSummarySize(10, 0, false);
+        assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
     it("with 100 inserted nodes width-wise.", async () => {
         const summarySize = await getInsertsSummarySize(100, 0, false);
+        assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
     it("with 10 inserted nodes depth-wise.", async () => {
         const summarySize = await getInsertsSummarySize(10, 0, true);
+        assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
     it("with 100 inserted nodes depth-wise.", async () => {
         const summarySize = await getInsertsSummarySize(100, 0, true);
+        assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
     it("rejected for 1000 inserts depth wise", async () => {
