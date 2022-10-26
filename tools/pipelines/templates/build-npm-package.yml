@@ -152,9 +152,13 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
+
+              # Assign target branch
+              if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
+                echo "targetBranchName = $(System.PullRequest.TargetBranch)"
+              fi
 
               # Error checking
               if [[ "$(release)" == "release" ]]; then
