@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { TransactionResult } from "../../checkout";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
@@ -17,6 +17,11 @@ import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+
+enum TreeShape {
+    Wide = 0,
+    Deep = 1,
+}
 
 // TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
@@ -31,32 +36,32 @@ describe("Summary size benchmark", () => {
         assert(summarySize < 1000);
     });
     it("with 1 inserted node.", async () => {
-        const summarySize = await getInsertsSummarySize(1, 0, false);
+        const summarySize = await getInsertsSummarySize(1, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 2000);
     });
     it("with 10 inserted nodes width-wise.", async () => {
-        const summarySize = await getInsertsSummarySize(10, 0, false);
+        const summarySize = await getInsertsSummarySize(10, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
     it("with 100 inserted nodes width-wise.", async () => {
-        const summarySize = await getInsertsSummarySize(100, 0, false);
+        const summarySize = await getInsertsSummarySize(100, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
     it("with 10 inserted nodes depth-wise.", async () => {
-        const summarySize = await getInsertsSummarySize(10, 0, true);
+        const summarySize = await getInsertsSummarySize(10, TreeShape.Deep);
         assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
     it("with 100 inserted nodes depth-wise.", async () => {
-        const summarySize = await getInsertsSummarySize(100, 0, true);
+        const summarySize = await getInsertsSummarySize(100, TreeShape.Deep);
         assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
     it("rejected for 1000 inserts depth wise", async () => {
-        await assert.rejects(getInsertsSummarySize(1000, 0, true), { message: "BatchTooLarge" });
+        await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), { message: "BatchTooLarge" });
     });
 });
 
@@ -100,19 +105,25 @@ function setTestValuesWide(tree: ISharedTree, seed: number, numNodes: number): v
  */
 export async function getInsertsSummarySize(
     numberOfNodes: number,
-    depth?: boolean,
+    shape: TreeShape,
 ): Promise<number> {
     const seed = 0;
     const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 
-    if (depth) {
-        const fooKey = brand<FieldKey>("foo");
-        const keySet = new Set([fooKey]);
-        setTestValuesNarrow(keySet, seed, tree, numberOfNodes);
-    } else {
-        setTestValuesWide(tree, seed, numberOfNodes);
+    const fooKey = brand<FieldKey>("foo");
+    const keySet = new Set([fooKey]);
+
+    switch (shape) {
+        case TreeShape.Deep:
+            setTestValuesNarrow(keySet, seed, tree, numberOfNodes);
+            break;
+        case TreeShape.Wide:
+            setTestValuesWide(tree, seed, numberOfNodes);
+            break;
+        default:
+            unreachableCase(shape);
     }
     const summaryTree = await provider.summarize();
     const summaryString = JSON.stringify(summaryTree);
