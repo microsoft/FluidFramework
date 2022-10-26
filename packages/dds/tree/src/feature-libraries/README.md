@@ -37,7 +37,7 @@ Longer term there are many options (these are not all planned, and is not an exh
     -   graphQL
 
 -   Schematize configurations:
-    Likely the only schematize configuration we will want is one for using it with `Schema` and `EditableTree`, but other options are possible.
+    Likely the only schematize configuration we will want is one for use with `Schema` and `EditableTree`, but other options are possible.
     Likely will want optional fast path for when the `EditableTree` is backed by a `Forest` using shape based compression: may be able to skip some or all validation for whole subtrees this way.
 
 -   Schematize Types: A typescript type-meta-function that subsets the `EditableTree` API to be schema aware (for both reading and editing)
