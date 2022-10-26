@@ -91,7 +91,8 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
     });
 }
 
-function setTestValuesWide(tree: ISharedTree, seed: number, numNodes: number): void {
+function setTestValuesWide(tree: ISharedTree, numNodes: number): void {
+    const seed = 0;
     const random = makeRandom(seed);
     for (let j = 0; j < numNodes; j++) {
         setTestValue(tree, random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER), j);
@@ -108,17 +109,16 @@ export async function getInsertsSummarySize(
     numberOfNodes: number,
     shape: TreeShape,
 ): Promise<number> {
-    const seed = 0;
     const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 
     switch (shape) {
         case TreeShape.Deep:
-            setTestValuesNarrow(seed, tree, numberOfNodes);
+            setTestValuesNarrow(tree, numberOfNodes);
             break;
         case TreeShape.Wide:
-            setTestValuesWide(tree, seed, numberOfNodes);
+            setTestValuesWide(tree, numberOfNodes);
             break;
         default:
             unreachableCase(shape);
@@ -130,10 +130,10 @@ export async function getInsertsSummarySize(
 }
 
 function setTestValuesNarrow(
-    seed: number,
     tree: ISharedTree,
     maxDepth: number,
 ): void {
+    const seed = 0;
     const random = makeRandom(seed);
     let path: PlacePath = {
         parent: undefined,
