@@ -132,6 +132,18 @@ export class EditManager<
             // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
             // change in the incoming commit.
             const change = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+
+            // TODO: The local change may contain references to local revision tags.
+            // When other clients rebase this change, they will instead use the corresponding sequence numbers
+            // instead of this client's local revision numbers. Although this need not inherently cause a divergence
+            // in the state of the document, this is potentially dangerous.
+            // This could be solved by one of the following approaches:
+            // A) Maintain a `Branch` of sequenced changes from this client in addition to `localChanges`,
+            //    and only use the rebased changes from that branch when adding to the trunk.
+            // B) Use a UUID as the revision tag for each changeset instead of a sequence number,
+            //    so that we do not need local revision tags.
+            // C) Strip any references to local changes before adding the change to the trunk.
+            //    This would also have to be done on each branch with references to changes local to that branch.
             this.trunk.push({
                 ...newCommit,
                 changeset: change.change,
@@ -361,6 +373,8 @@ function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return { revision: brand(commit.seqNumber), change: commit.changeset };
 }
 
+// This always returns undefined, as we do not currently need an identity for the inverse of a change.
+// TODO: Correctly implement this function if needed; otherwise remove it.
 function revisionTagForInverse(revision: RevisionTag | undefined): RevisionTag | undefined {
     return undefined;
 }

@@ -146,7 +146,7 @@ export class ModularChangeFamily
     invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap {
         const invertedFields: FieldChangeMap = new Map();
 
-        for (const [field, fieldChange] of changes.change.entries()) {
+        for (const [field, fieldChange] of changes.change) {
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
@@ -225,7 +225,7 @@ export class ModularChangeFamily
 
     intoDelta(change: FieldChangeMap): Delta.Root {
         const delta: Delta.Root = new Map();
-        for (const [field, fieldChange] of change.entries()) {
+        for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
                 (childChange) => this.deltaFromNodeChange(childChange),
