@@ -4,9 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IEditableForest, TreeNavigationResult } from "../../forest";
-import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { rootFieldKey, symbolFromKey } from "../../tree";
+import {
+    IEditableForest,
+    lookupGlobalFieldSchema,
+    rootFieldKey,
+    symbolFromKey,
+    mapCursorField,
+    moveToDetachedField,
+} from "../../core";
 import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 
 /**
@@ -87,16 +92,9 @@ export class ProxyContext implements EditableTreeContext {
     private getRoot(unwrap: boolean) {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
-        const destination = this.forest.root(this.forest.rootField);
-        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
-        if (cursorResult === TreeNavigationResult.Ok) {
-            do {
-                targets.push(new ProxyTarget(this, cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
-        }
+        moveToDetachedField(this.forest, cursor);
+        const targets: ProxyTarget[] = mapCursorField(cursor, (c) => new ProxyTarget(this, c));
         cursor.free();
-        this.forest.anchors.forget(destination);
         return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
     }
 }

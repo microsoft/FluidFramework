@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta, FieldKey, Value } from "../../tree";
+import { FieldKindIdentifier, Delta, FieldKey, Value } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -82,6 +81,9 @@ export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+/**
+ * Changeset for a subtree rooted at a specific node.
+ */
 export interface NodeChangeset {
     fieldChanges?: FieldChangeMap;
     valueChange?: ValueChange;

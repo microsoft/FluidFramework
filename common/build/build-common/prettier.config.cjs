@@ -13,7 +13,7 @@ module.exports = {
     singleQuote: false,
     tabWidth: 4,
     trailingComma: "all",
-    useTabs: false, // TODO: reconsider in the future for accessibility
+    useTabs: true, // changed from false to true
     overrides: [
         {
             files: "lerna.json",
