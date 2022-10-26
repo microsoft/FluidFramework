@@ -799,7 +799,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
     }
 
-    private readonly ops: any[] = [];
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
         assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
