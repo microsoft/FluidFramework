@@ -813,6 +813,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
     }
 
+    private readonly ops: any[] = [];
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
         assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
@@ -853,16 +854,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (message.type === "noop") {
             this.noOpCounter++;
         }
+        this.ops.push(message);
         const currentClientSeqNum = message.clientSequenceNumber;
-        const clientDiff = currentClientSeqNum - this.lastClientSequenceNumber - 1;
-        if (clientDiff > 0) {
-            if (this.noOpCounter > 0) {
-                this.noOpCounter -= clientDiff;
-            } else {
-                throw new DataCorruptionError("gap in client sequence #",
-                extractSafePropertiesFromMessage(message));
-            }
-        }
+        // const clientDiff = currentClientSeqNum - this.lastClientSequenceNumber - 1;
+        // if (clientDiff > 0) {
+        //     if (this.noOpCounter > 0) {
+        //         this.noOpCounter -= clientDiff;
+        //     } else {
+        //         throw new DataCorruptionError("gap in client sequence #",
+        //         extractSafePropertiesFromMessage(message));
+        //     }
+        // }
         this.lastClientSequenceNumber = currentClientSeqNum === -1 ? 1 : currentClientSeqNum;
 
         // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
