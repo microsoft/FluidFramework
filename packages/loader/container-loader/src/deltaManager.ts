@@ -127,8 +127,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedSequenceNumber: number = 0;
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
-    private lastClientSequenceNumber: number = 0;
-    private noOpCounter: number = 0;
+    // private lastClientSequenceNumber: number = 0;
+    // private noOpCounter: number = 0;
 
     /**
      * Track down the ops size.
@@ -836,22 +836,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
-
-        if (message.type === "noop") {
-            this.noOpCounter++;
-        }
-        this.ops.push(message);
-        const currentClientSeqNum = message.clientSequenceNumber;
-        // const clientDiff = currentClientSeqNum - this.lastClientSequenceNumber - 1;
-        // if (clientDiff > 0) {
-        //     if (this.noOpCounter > 0) {
-        //         this.noOpCounter -= clientDiff;
-        //     } else {
-        //         throw new DataCorruptionError("gap in client sequence #",
-        //         extractSafePropertiesFromMessage(message));
-        //     }
-        // }
-        this.lastClientSequenceNumber = currentClientSeqNum === -1 ? 1 : currentClientSeqNum;
 
         // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
         // reference sequence number as this op.

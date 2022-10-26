@@ -60,7 +60,6 @@ import {
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
-import { runInThisContext } from "vm";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
