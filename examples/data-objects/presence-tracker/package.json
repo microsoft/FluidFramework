@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/presence-tracker",
   "version": "2.0.0-internal.2.1.0",
-  "private": false,
+  "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
   "homepage": "https://fluidframework.com",
   "repository": {
