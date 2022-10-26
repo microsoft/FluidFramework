@@ -11,11 +11,13 @@ import {
     ReleaseVersion,
     VersionBumpType,
     VersionBumpTypeExtended,
+    VersionChangeTypeExtended,
     VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
+    isVersionBumpTypeExtended,
     toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
@@ -64,15 +66,18 @@ export async function createBumpBranch(
  */
 export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-    bumpType: VersionBumpTypeExtended,
+    bumpType: VersionChangeTypeExtended,
     version: ReleaseVersion,
     scheme?: VersionScheme,
 ) {
-    const newVersion = bumpVersionScheme(version, bumpType, scheme);
+    const newVersion = isVersionBumpTypeExtended(bumpType)
+        ? bumpVersionScheme(version, bumpType, scheme)
+        : bumpType.version;
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
-    const branchName = `bump_${name.toLowerCase()}_${bumpType}_${newVersion}`;
+    const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
+    const branchName = `bump_${name.toLowerCase()}_${bumpTypeLog}_${newVersion}`;
     return branchName;
 }
 
@@ -163,15 +168,18 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
  */
 export function generateBumpVersionCommitMessage(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-    bumpType: VersionBumpTypeExtended,
+    bumpType: VersionChangeTypeExtended,
     version: ReleaseVersion,
     scheme?: VersionScheme,
 ): string {
-    const newVersion = bumpVersionScheme(version, bumpType, scheme);
+    const newVersion = isVersionBumpTypeExtended(bumpType)
+        ? bumpVersionScheme(version, bumpType, scheme)
+        : bumpType.version;
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
-    const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpType})\n\nBumped ${name} from ${version} to ${newVersion}.`;
+    const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
+    const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpTypeLog})\n\nBumped ${name} from ${version} to ${newVersion}.`;
     return message;
 }
 
