@@ -6,6 +6,7 @@ import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
+import { Accordion } from "../utility-components";
 import { DynamicDataView } from "./DynamicDataView";
 
 /**
@@ -34,7 +35,9 @@ export function RecordDataView(props: RecordDataViewProps): React.ReactElement {
         <Stack>
             {entries.map(([key, value]) => (
                 <StackItem key={key}>
-                    <DynamicDataView data={value} renderOptions={renderOptions} />
+                    <Accordion header={<div><b>"{key}"</b></div>}>
+                        <DynamicDataView data={value} renderOptions={renderOptions} />
+                    </Accordion>
                 </StackItem>
             ))}
         </Stack>
