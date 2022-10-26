@@ -5,7 +5,6 @@
 
 import { assert, expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { LoaderHeader } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	MockContainerRuntime,
@@ -35,7 +34,7 @@ import {
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
 } from '../../persisted-types';
-import { SharedTreeDiagnosticEvent, SharedTreeEvent } from '../../EventTypes';
+import { SharedTreeEvent } from '../../EventTypes';
 import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
 import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
 import { serialize, SummaryContents } from '../../Summary';
@@ -60,10 +59,7 @@ import {
 	normalizeIds,
 	normalizeId,
 	normalizeEdit,
-	setUpLocalServerTestSharedTree,
-	applyNoop,
 	getIdNormalizerFromSharedTree,
-	waitForSummary,
 	getEditLogInternal,
 } from './TestUtilities';
 
