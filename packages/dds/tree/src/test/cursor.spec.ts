@@ -461,6 +461,7 @@ export function testJsonableTreeCursor(
                 });
                 assert.deepEqual(cursor.getPath(), parent);
             });
+            
             it("getFieldPath in root field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
