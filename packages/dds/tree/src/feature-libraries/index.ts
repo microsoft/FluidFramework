@@ -60,7 +60,6 @@ export {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
-    NodeChangeReferenceFilter,
     NodeChangeEncoder,
     NodeChangeDecoder,
     FieldKind,

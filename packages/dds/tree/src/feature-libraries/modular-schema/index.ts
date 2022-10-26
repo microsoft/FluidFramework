@@ -25,7 +25,6 @@ export {
     NodeChangeEncoder,
     NodeChangeInverter,
     NodeChangeRebaser,
-    NodeChangeReferenceFilter,
     NodeChangeset,
     referenceFreeFieldChangeRebaser,
     ToDelta,

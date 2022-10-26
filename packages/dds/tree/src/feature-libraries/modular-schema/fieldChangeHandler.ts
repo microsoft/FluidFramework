@@ -98,8 +98,6 @@ export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangese
 
 export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 
-export type NodeChangeReferenceFilter = (change: NodeChangeset) => NodeChangeset;
-
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
