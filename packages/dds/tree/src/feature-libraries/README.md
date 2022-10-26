@@ -79,7 +79,7 @@ There are a few different usage patterns for systems with existing data:
 
 Large documents, partial checkout, permissions
 
-indexing / external readonly copies : from deltas (from change sets?)
+indexing / external readonly copies: update them from deltas (or maybe from change sets?)
 
 untrusted clients
 
