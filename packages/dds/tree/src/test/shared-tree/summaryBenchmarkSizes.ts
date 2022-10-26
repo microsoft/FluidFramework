@@ -9,7 +9,7 @@ import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { TransactionResult } from "../../checkout";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { FieldKey, rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
+import { rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { brand } from "../../util";
 import { TestTreeProvider } from "../utils";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
