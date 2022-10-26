@@ -202,30 +202,30 @@ stages:
             customCommand: 'install $(Initialize.testPackageTgz)'
             customRegistry: 'useNpmrc'
 
-        # # Download Test Files
-        # # Download Artifact - Test Files
-        # - task: DownloadPipelineArtifact@2
-        #   displayName: Download test files
-        #   inputs:
-        #     source: specific
-        #     project: internal
-        #     pipeline: ${{ variables.artifactPipeline }}
-        #     preferTriggeringPipeline: true
-        #     allowPartiallySucceededBuilds: true
-        #     runVersion: latestFromBranch
-        #     runBranch: $(Build.SourceBranch)
-        #     artifact: test-files
-        #     path: $(Pipeline.Workspace)/test-files
+        # Download Test Files
+        # Download Artifact - Test Files
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test files
+          inputs:
+            source: specific
+            project: internal
+            pipeline: ${{ variables.artifactPipeline }}
+            preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: test-files
+            path: $(Pipeline.Workspace)/test-files
 
-        # # Unpack test files
-        # - task: Bash@3
-        #   displayName: Unpack test files
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-        #       tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
-        #       mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+        # Unpack test files
+        - task: Bash@3
+          displayName: Unpack test files
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
 
         - task: Bash@3
