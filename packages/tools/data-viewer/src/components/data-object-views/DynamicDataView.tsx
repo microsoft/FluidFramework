@@ -10,6 +10,9 @@ import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
 import { RecordDataView } from "./RecordView";
 
+// TODOs:
+// - UI for copying raw data elements to the clipboard
+
 /**
  * {@link DynamicDataView} input props.
  */
