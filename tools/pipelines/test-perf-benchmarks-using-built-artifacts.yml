@@ -201,7 +201,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}
-            customCommand: 'install $(Initialize.testPackageTgz)'
+            customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
         # Download Test Files
