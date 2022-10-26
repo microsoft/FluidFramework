@@ -2377,11 +2377,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
             latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
-            if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
-                // We need to catch up to the latest summary's reference sequence number before pausing.
-                await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
-                    summaryNumberLogger);
-            }
+            // We might need to catch up to the latest summary's reference sequence number before pausing.
+            await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
+                summaryNumberLogger);
         }
 
         try {
@@ -2841,11 +2839,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async waitForDeltaManagerToCatchup(latestSnapshotRefSeq: number,
+    private async waitForDeltaManagerToCatchup(
+        latestSnapshotRefSeq: number,
         summaryLogger: ITelemetryLogger,
-        ): Promise<void> {
+    ): Promise<void> {
         if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
-            // We need to catch up to the latest summary's reference sequence number before pausing.
+            // We need to catch up to the latest summary's reference sequence number before proceeding.
             await PerformanceEvent.timedExecAsync(
                 summaryLogger,
                 {
@@ -2866,8 +2865,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         // The call to fetch the snapshot is very expensive and not always needed.
         // It should only be done by the summarizerNode, if required.
+        // When fetching from storage we will always get the latest version and do not use the ackHandle.
         const snapshotTreeFetcher = async () => {
-            // When fetching from storage we will always get the latest version and do not use the ackHandle.
             const fetchResult = await this.fetchSnapshotFromStorage(
                 null,
                 summaryLogger,
@@ -2880,10 +2879,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
             assert(latestSnapshotRefSeq >= summaryRefSeq,
-                    "Latest snapshot reference number greater than summaryRefSeq");
+                    "Latest snapshot reference number should be greater than summaryRefSeq");
             summaryLogger.sendTelemetryEvent(
             {
                 eventName: "LatestSummaryRetrieved",
+                ackHandle,
                 lastSequenceNumber: latestSnapshotRefSeq,
                 targetSequenceNumber: summaryRefSeq,
             });
