@@ -25,7 +25,7 @@ enum TreeShape {
 
 // TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
-    it("with no nodes.", async () => {
+    it("for an empty tree.", async () => {
         const provider = await TestTreeProvider.create(1);
         const tree = provider.trees[0];
 
@@ -35,33 +35,33 @@ describe("Summary size benchmark", () => {
         assert(summarySize !== 0);
         assert(summarySize < 1000);
     });
-    it("with 1 inserted node.", async () => {
+    it("for a tree with 1 node.", async () => {
         const summarySize = await getInsertsSummarySize(1, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 2000);
     });
-    it("with 10 inserted nodes width-wise.", async () => {
+    it("for a wide tree with 10 nodes", async () => {
         const summarySize = await getInsertsSummarySize(10, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
-    it("with 100 inserted nodes width-wise.", async () => {
+    it("for a wide tree with 100 nodes", async () => {
         const summarySize = await getInsertsSummarySize(100, TreeShape.Wide);
         assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
-    it("with 10 inserted nodes depth-wise.", async () => {
+    it("for a deep tree with 10 nodes", async () => {
         const summarySize = await getInsertsSummarySize(10, TreeShape.Deep);
         assert(summarySize !== 0);
         assert(summarySize < 3000);
     });
-    it("with 100 inserted nodes depth-wise.", async () => {
+    it("for a deep tree with 100 nodes.", async () => {
         const summarySize = await getInsertsSummarySize(100, TreeShape.Deep);
         assert(summarySize !== 0);
         assert(summarySize < 20000);
     });
     // TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
-    it("rejected for 1000 inserts depth wise", async () => {
+    it("rejected for deep tree with 1000 nodes", async () => {
         await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), { message: "BatchTooLarge" });
     });
 });
