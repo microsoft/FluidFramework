@@ -32,7 +32,7 @@ export class AppState {
         return this.clientsSequenceHelper.getAll().map(treeNode => new Client(this.tree, treeNode.anchor));
     }
 
-    makeClientInitialJsonTree(numBubbles: number) {
+    makeClientInitialJsonTree(numBubbles: number): JsonableTree {
         const clientInitialJsonTree: JsonableTree = {
             type: iClientSchema.name,
             fields: {
