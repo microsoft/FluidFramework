@@ -567,9 +567,8 @@ ${lines.join(newline)}
     }
 
     public static load(root: string, packages: Packages, info?: string): LayerGraph {
-        const layerInfoFile = info ??
-            path.join(__dirname, "..", "..", "data", "layerInfo.json");
-            const layerData: ILayerInfoFile = readJsonSync(layerInfoFile);
+        const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
+        const layerData: ILayerInfoFile = readJsonSync(layerInfoFile);
         return new LayerGraph(root, layerData, packages);
     }
 }
