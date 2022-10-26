@@ -4,7 +4,7 @@
  */
 
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { forEachNode, forEachField, ITreeCursorNew } from "../../../tree";
+import { forEachNode, forEachField, ITreeCursor } from "../../../tree";
 
 
 export function sum(cursor: ITreeCursor): number {
