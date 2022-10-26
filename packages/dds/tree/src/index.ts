@@ -68,6 +68,8 @@ export {
     ICheckout,
     TransactionResult,
     FieldAnchor,
+    RevisionTag,
+    TaggedChange,
 } from "./core";
 
 export {
