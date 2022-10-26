@@ -28,9 +28,19 @@ import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
 import { ClientDebugView, CounterWidget } from "../../components";
 
+/**
+ * Key in the app's `rootMap` under which the SharedString object is stored.
+ */
 const sharedTextKey = "shared-text";
+
+/**
+ * Key in the app's `rootMap` under which the SharedCounter object is stored.
+ */
 const sharedCounterKey = "shared-counter";
 
+/**
+ * Schema used by the app.
+ */
 const containerSchema: ContainerSchema = {
     initialObjects: {
         rootMap: SharedMap,
@@ -46,16 +56,26 @@ interface ContainerLoadResult {
     services: TinyliciousContainerServices;
 }
 
+/**
+ * Basic information about the container, as well as the associated audience.
+ */
 interface ContainerInfo {
     containerId: string;
     container: IFluidContainer;
     audience: ITinyliciousAudience;
 }
 
+/**
+ * Helper function to read the container ID from the URL location.
+ */
 function getContainerIdFromLocation(location: Location): string {
     return location.hash.slice(1);
 }
 
+/**
+ * Create a new Container associated with the provided client, populates the initial test app data, and attaches
+ * to the delta service.
+ */
 async function createNewFluidContainer(client: TinyliciousClient): Promise<ContainerInfo> {
     // Create the container
     console.log("Creating new container...");
@@ -93,6 +113,9 @@ async function createNewFluidContainer(client: TinyliciousClient): Promise<Conta
     };
 }
 
+/**
+ * Loads an existing Container for the given ID.
+ */
 async function loadExistingFluidContainer(
     client: TinyliciousClient,
     containerId: string,
@@ -126,6 +149,9 @@ async function loadExistingFluidContainer(
     };
 }
 
+/**
+ * Populate the app's `rootMap` with the desired initial data for use with the client debug view.
+ */
 async function populateRootMap(container: IFluidContainer): Promise<void> {
     const rootMap = container.initialObjects.rootMap as SharedMap;
     if (rootMap === undefined) {
@@ -140,8 +166,22 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
     // Set up SharedCounter for counter widget
     const sharedCounter = await container.create(SharedCounter);
     rootMap.set(sharedCounterKey, sharedCounter.handle);
+    // Also set a couple of primitives for testing the debug view
+    rootMap.set("numeric-value", 42);
+    rootMap.set("string-value", "Hello world!");
+    rootMap.set("record-value", {
+        aNumber: 37,
+        aString: "Here is some text content.",
+        anObject: {
+            a: "a",
+            b: "b",
+        },
+    });
 }
 
+/**
+ * React hook for asynchronously creating / loading the Fluid Container.
+ */
 function useContainerInfo(): ContainerInfo | undefined {
     const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
 
@@ -229,7 +269,7 @@ export function App(): React.ReactElement {
         containerInfo !== undefined ? (
             <AppView containerInfo={containerInfo} />
         ) : (
-            <Stack horizontalAlign="center">
+            <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
                 <Spinner />
                 <div>Loading Fluid container...</div>
             </Stack>
