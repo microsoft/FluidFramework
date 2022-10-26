@@ -32,6 +32,7 @@ import {
     getMapTreeField,
     FieldAnchor,
     afterChangeToken,
+    FieldUpPath,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -303,6 +304,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     private innerCursor?: CursorWithNode<MapTree>;
     public constructor(public readonly forest: ObjectForest) {
         super();
+    }
+    buildFieldAnchor(): FieldAnchor {
+        const path = this.getFieldPath();
+        const anchor =
+            path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
+        return { parent: anchor, fieldKey: path.field };
+    }
+    getFieldPath(): FieldUpPath {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        return this.innerCursor.getFieldPath();
     }
     get mode(): CursorLocationType {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
