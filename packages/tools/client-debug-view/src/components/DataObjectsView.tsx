@@ -51,7 +51,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
     return (
         <div className="data-objects-view">
-            <h3>Data Objects</h3>
+            <h3>initialObjects Tree</h3>
             {children}
         </div>
     );
