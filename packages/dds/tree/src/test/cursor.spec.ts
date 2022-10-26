@@ -455,13 +455,14 @@ export function testJsonableTreeCursor(
                       parentField: rootFieldKeySymbol,
                       parentIndex: 0,
                   };
+
             it("at root", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                 });
                 assert.deepEqual(cursor.getPath(), parent);
             });
-            
+
             it("getFieldPath in root field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
@@ -472,6 +473,7 @@ export function testJsonableTreeCursor(
                     field: "key",
                 });
             });
+
             it("first node in a root field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
