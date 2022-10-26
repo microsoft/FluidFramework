@@ -175,8 +175,8 @@ export interface ChangeRebaser<TChangeset> {
 }
 
 export interface TaggedChange<TChangeset> {
-    revision: RevisionTag | undefined;
-    change: TChangeset;
+    readonly revision: RevisionTag | undefined;
+    readonly change: TChangeset;
 }
 
 export function makeAnonChange<T>(change: T): TaggedChange<T> {
