@@ -319,9 +319,11 @@ stages:
           displayName: 'Write measurements to Aria/Kusto - memory usage'
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            workingDirectory: $(toolAbsolutePath)
             script: |
-              node --require @ff-internal/aria-logger bin/run --handlerModule ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
+              npm i;
+              npm run build:compile;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/benchmarkOutput;
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
