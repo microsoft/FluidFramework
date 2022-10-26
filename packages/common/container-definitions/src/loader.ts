@@ -111,7 +111,7 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `readonly` (boolean): Whether or not the container is now in a readonly state.
+     * - `readonly`: Whether or not the container is now in a readonly state.
      *
      * @see {@link IContainer.readOnlyInfo}
      */
@@ -135,9 +135,9 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `codeDetails` ({@link IFluidCodeDetails}): TODO
+     * - `codeDetails`: TODO
      *
-     * - `proposal` ({@link ISequencedProposal}): TODO
+     * - `proposal`: TODO
      *
      * @see {@link IContainer.proposeCodeDetails}
      */
@@ -148,12 +148,12 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `codeDetails` ({@link IFluidCodeDetails}): TODO
+     * - `codeDetails`: TODO
      */
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
 
     /**
-     * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
+     * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
      *
      * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
      *
@@ -175,7 +175,7 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `error` ({@link ICriticalContainerError}): TODO
+     * - `error`: TODO
      */
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 
@@ -184,7 +184,7 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `error` ({@link ContainerWarning}): TODO
+     * - `error`: TODO
      */
     (event: "warning", listener: (error: ContainerWarning) => void);
 
@@ -193,7 +193,7 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `message` ({@link ISequencedDocumentMessage}): TODO
+     * - `message`: TODO
      */
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
 
@@ -385,13 +385,19 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * The server provided ID of the client.
-     * Set once this.connectionState === ConnectionState.Connected is true, otherwise undefined
+     *
+     * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).Connected},
+     * otherwise undefined.
+     *
      * @alpha
      */
-    readonly clientId?: string | undefined;
+    readonly clientId?: string;
 
     /**
      * Tells if container is in read-only mode.
+     *
+     * @remarks
+     *
      * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
@@ -419,6 +425,8 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
+     *
+     * @remarks
      *
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
@@ -569,9 +577,9 @@ export interface IPendingLocalState {
 
 /**
  * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
- * in separate property: {@link ISnapshotTreeWithBlobContents.blobContents}.
+ * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
- * This is used as the {@link ContainerContext}'s base snapshot when attaching.
+ * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     blobsContents: { [path: string]: ArrayBufferLike; };

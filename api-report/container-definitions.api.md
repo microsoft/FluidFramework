@@ -126,7 +126,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
     readonly audience: IAudience;
     // @alpha
-    readonly clientId?: string | undefined;
+    readonly clientId?: string;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
@@ -202,24 +202,17 @@ export interface IContainerContext extends IDisposable {
 
 // @public
 export interface IContainerEvents extends IEvent {
-    // (undocumented)
     (event: "readonly", listener: (readonly: boolean) => void): void;
-    // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-    // (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
-    // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
-    // (undocumented)
-    (event: "disconnected" | "attached", listener: () => void): any;
-    // (undocumented)
+    (event: "disconnected", listener: () => void): any;
+    (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
-    // (undocumented)
     (event: "warning", listener: (error: ContainerWarning) => void): any;
-    // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
-    // (undocumented)
-    (event: "dirty" | "saved", listener: (dirty: boolean) => void): any;
+    (event: "dirty", listener: (dirty: boolean) => void): any;
+    (event: "saved", listener: (dirty: boolean) => void): any;
 }
 
 // @public (undocumented)
@@ -262,20 +255,14 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
 // @public
 export interface IDeltaManagerEvents extends IEvent {
-    // (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
-    // (undocumented)
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
-    // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
-    // (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
-    // (undocumented)
-    (event: "pong" | "processTime", listener: (latency: number) => void): any;
+    (event: "pong", listener: (latency: number) => void): any;
+    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    // (undocumented)
     (event: "disconnect", listener: (reason: string) => void): any;
-    // (undocumented)
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 

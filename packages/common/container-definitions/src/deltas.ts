@@ -71,7 +71,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `messageBuffer` (`any[]`): TODO
+     * - `messageBuffer`: TODO
      */
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
 
@@ -80,7 +80,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `message` ({@link IDocumentMessage}): TODO
+     * - `message`: TODO
      */
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
 
@@ -89,9 +89,9 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `message` ({@link ISequencedDocumentMessage}): TODO
+     * - `message`: TODO
      *
-     * - `processingTime` (`number`): TODO
+     * - `processingTime`: TODO
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
@@ -105,7 +105,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `latency` (`number`): TODO
+     * - `latency`: TODO
      */
     (event: "pong", listener: (latency: number) => void);
 
@@ -114,7 +114,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `latency` (`number`): TODO
+     * - `latency`: TODO
      */
     (event: "processTime", listener: (latency: number) => void);
 
@@ -126,7 +126,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * - `details` ({@link IConnectionDetails}): TODO
      *
-     * - `opsBehind` (`number`): TODO
+     * - `opsBehind`: TODO
      */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
@@ -135,7 +135,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `reason` (`string`): TODO
+     * - `reason`: TODO
      */
     (event: "disconnect", listener: (reason: string) => void);
 
@@ -144,7 +144,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `readonly` (`boolean`): TODO
+     * - `readonly`: TODO
      */
     (event: "readonly", listener: (readonly: boolean) => void);
 }
