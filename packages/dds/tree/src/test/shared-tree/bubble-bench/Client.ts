@@ -56,7 +56,6 @@ export class Client {
         vx: number;
         vy: number;
     }) {
-        // TODO: Replace with makeBubble method with actual one from common when available
         const newBubbleJsonableTree = {
             type: iBubbleSchema.name,
             fields: {
