@@ -101,6 +101,7 @@ export {
 	createInsertOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+    createObliterateRangeOp,
 } from "./opBuilder";
 export {
 	ICombiningOp,
@@ -116,6 +117,7 @@ export {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+    IMergeTreeObliterateMsg,
 } from "./ops";
 export {
 	addProperties,

@@ -203,7 +203,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
-    // Warning: (ae-forgotten-export) The symbol "IMergeTreeObliterateMsg" needs to be exported by the entry point index.d.ts
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
@@ -287,6 +286,9 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 
 // @public (undocumented)
 export function createMap<T>(): MapLike<T>;
+
+// @public
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
 
 // @public
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
@@ -525,6 +527,20 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 
 // @public (undocumented)
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {
+}
+
+// @public (undocumented)
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    relativePos1?: IRelativePosition;
+    // (undocumented)
+    relativePos2?: IRelativePosition;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE;
 }
 
 // @public (undocumented)
