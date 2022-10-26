@@ -113,12 +113,9 @@ export async function getInsertsSummarySize(
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 
-    const fooKey = brand<FieldKey>("foo");
-    const keySet = new Set([fooKey]);
-
     switch (shape) {
         case TreeShape.Deep:
-            setTestValuesNarrow(keySet, seed, tree, numberOfNodes);
+            setTestValuesNarrow(seed, tree, numberOfNodes);
             break;
         case TreeShape.Wide:
             setTestValuesWide(tree, seed, numberOfNodes);
@@ -133,7 +130,6 @@ export async function getInsertsSummarySize(
 }
 
 function setTestValuesNarrow(
-    parentKeys: Set<FieldKey>,
     seed: number,
     tree: ISharedTree,
     maxDepth: number,
