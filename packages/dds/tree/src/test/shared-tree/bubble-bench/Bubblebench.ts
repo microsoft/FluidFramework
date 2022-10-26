@@ -7,9 +7,10 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TransactionResult } from "../../../checkout";
 import { singleTextCursor } from "../../../feature-libraries";
-import { ISharedTree } from "../../../shared-tree";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { detachedFieldAsKey } from "../../../tree";
 import { AppState } from "./AppState";
 import { AppStateSchema, AppStateSchemaData } from "./schema";
@@ -18,15 +19,16 @@ export class Bubblebench extends DataObject {
     public static get Name() { return "@fluid-example/bubblebench-sharedtree"; }
     private maybeTree?: ISharedTree = undefined;
     private maybeAppState?: AppState = undefined;
+    static treeFactory = new SharedTreeFactory();
 
     protected async initializingFirstTime() {
-        // const tree = this.maybeTree = ISharedTree.create(this.runtime); // what is the replacemenet here?
+        this.maybeTree = Bubblebench.treeFactory.create(this.runtime, "bubbleBench"); // Is this correct?
 
         // initialize the schema of the shared tree to that of the Bubblebench AppState
-        this.maybeTree?.storedSchema.update(AppStateSchemaData);
+        this.maybeTree.storedSchema.update(AppStateSchemaData);
 
         // Apply an edit to the tree which inserts a node with the initial AppState as the root of the tree
-        this.maybeTree?.runTransaction((forest, editor) => {
+        this.maybeTree.runTransaction((forest, editor) => {
             // This cursor contains the initial state of the root of the bubblebench shared tree as a JsonableTree
             const writeCursor = singleTextCursor(
                 {
@@ -40,12 +42,14 @@ export class Bubblebench extends DataObject {
             field.insert(0, writeCursor);
             return TransactionResult.Apply;
         });
+
+        this.root.set("bubbleBench", this.maybeTree.handle);
     }
 
     // What is the replacement for this method?
     protected async initializingFromExisting() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        // this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
+        this.maybeTree = await this.root.get<IFluidHandle<ISharedTree>>("bubbleBench")!.get();
     }
 
     protected async hasInitialized() {
@@ -92,7 +96,7 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
-    [], // [SharedTree.getFactory(WriteFormat.v0_1_1)], // what will this be replaced with?
+    [new SharedTreeFactory()], // Is this correct?
     {},
 );
 
