@@ -257,9 +257,8 @@ interface ViewSelectionMenuProps {
 function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
     const { currentSelection, updateSelection } = props;
 
-    const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([value, flag]) => ({
+    const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
         key: flag,
-        name: value,
     }));
 
     /**
@@ -273,7 +272,7 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
                 disabled={item.key === currentSelection}
                 onClick={(): void => updateSelection(item.key as RootView)}
             >
-                {item.name}
+                {item.key}
             </Link>
         );
     }
