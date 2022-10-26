@@ -115,6 +115,25 @@ describe("generate:buildVersion", () => {
             expect(ctx.stdout).to.contain("isLatest=true");
         });
 
+    test.stdout()
+        .command([
+            "generate:buildVersion",
+            "--build",
+            "12345",
+            "--fileVersion",
+            "0.5.2002",
+            "--tag",
+            "build-tools",
+            "--release",
+            "prerelease",
+            "--tags",
+            ...test_tags,
+        ])
+        .it("outputs isLatest=false when release is prerelease", (ctx) => {
+            expect(ctx.stdout).to.contain("version=0.5.2002-12345");
+            expect(ctx.stdout).to.contain("isLatest=false");
+        });
+
     test.env({
         VERSION_RELEASE: "release",
     })
@@ -171,10 +190,13 @@ describe("generate:buildVersion", () => {
             "--tags",
             ...test_tags,
         ])
-        .it("calculates internal versions as latest", (ctx) => {
-            expect(ctx.stdout).to.contain("version=1.2.4");
-            expect(ctx.stdout).to.contain("isLatest=false");
-        });
+        .it(
+            "isLatest=false when including internal versions when determining what's latest",
+            (ctx) => {
+                expect(ctx.stdout).to.contain("version=1.2.4");
+                expect(ctx.stdout).to.contain("isLatest=false");
+            },
+        );
 
     test.env({
         VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
@@ -275,5 +297,51 @@ describe("generate:buildVersion", () => {
         .it("tinylicious test case from 2022-08-26", (ctx) => {
             expect(ctx.stdout).to.contain("version=0.4.88879");
             expect(ctx.stdout).to.contain("isLatest=true");
+        });
+
+    test.env({
+        VERSION_BUILDNUMBER: "100339",
+        VERSION_TAGNAME: "client",
+        TEST_BUILD: "false",
+        VERSION_RELEASE: "prerelease",
+        VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+    })
+        .stdout()
+        .command([
+            "generate:buildVersion",
+            "--fileVersion",
+            "1.3.0",
+            "--tags",
+            "client_v1.0.0",
+            "client_v1.0.1",
+            "client_v1.0.2",
+            "client_v1.1.0",
+            "client_v1.1.1",
+            "client_v1.1.2",
+            "client_v1.2.0",
+            "client_v1.2.1",
+            "client_v1.2.2",
+            "client_v1.2.3",
+            "client_v1.2.4",
+            "client_v1.2.5",
+            "client_v1.2.6",
+            "client_v1.2.7",
+            "client_v2.0.0-internal.1.0.0",
+            "client_v2.0.0-internal.1.0.1",
+            "client_v2.0.0-internal.1.1.0",
+            "client_v2.0.0-internal.1.1.1",
+            "client_v2.0.0-internal.1.1.2",
+            "client_v2.0.0-internal.1.1.3",
+            "client_v2.0.0-internal.1.1.4",
+            "client_v2.0.0-internal.1.2.0",
+            "client_v2.0.0-internal.1.2.1",
+            "client_v2.0.0-internal.1.2.2",
+            "client_v2.0.0-internal.1.4.0",
+            "client_v2.0.0-internal.1.4.1",
+            "client_v2.0.0-internal.1.4.2",
+        ])
+        .it("lts test case from 2022-10-13", (ctx) => {
+            expect(ctx.stdout).to.contain("version=1.3.0-100339");
+            expect(ctx.stdout).to.contain("isLatest=false");
         });
 });

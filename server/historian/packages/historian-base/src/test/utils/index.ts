@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./testCache";
-export * from "./testTenantService";
+export { TestCache } from "./testCache";
+export { TestTenantService } from "./testTenantService";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Dependee, Dependent } from "./dependencies";
+import { Dependee, Dependent, InvalidationToken } from "./dependencies";
 
 /**
  * Simple implementation of {@link Dependee}.
@@ -30,9 +30,9 @@ export class SimpleDependee implements Dependee {
     /**
      * Invalidates the dependents that have are dependent on this data.
      */
-    public invalidateDependents(): void {
+    public invalidateDependents(token?: InvalidationToken): void {
         for (const dependent of this.dependents) {
-            dependent.markInvalid();
+            dependent.markInvalid(token);
         }
     }
 

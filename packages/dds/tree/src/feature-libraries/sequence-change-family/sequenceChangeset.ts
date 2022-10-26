@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder } from "../../change-family";
+import { ChangeEncoder } from "../../core";
 import { JsonCompatible } from "../../util";
 import { Transposed as T } from "./changeset";
 

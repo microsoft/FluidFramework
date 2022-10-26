@@ -20,6 +20,7 @@ export {
     isDependencyUpdateType,
     PackageWithRangeSpec,
 } from "./bump";
+export { Repository } from "./git";
 export {
     filterVersionsOlderThan,
     getAllVersions,
