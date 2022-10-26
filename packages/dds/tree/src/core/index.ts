@@ -74,6 +74,7 @@ export {
     initializeForest,
     FieldAnchor,
     moveToDetachedField,
+    afterChangeToken,
 } from "../forest";
 
 export {
