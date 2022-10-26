@@ -9,12 +9,12 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { ITask, ITaskList } from "../modelInterfaces";
 
-export interface ITaskViewProps {
+interface ITaskRowProps {
     task: ITask;
     disabled?: boolean;
 }
 
-export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
+const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, disabled } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
@@ -36,21 +36,25 @@ export const TaskView: React.FC<ITaskViewProps> = (props: ITaskViewProps) => {
     };
 
     return (
-        <div>
-            <span>{ task.id }: </span>
-            <CollaborativeInput
-                sharedString={ task.name }
-                style={{ width: "200px" }}
-                disabled={ disabled }
-            ></CollaborativeInput>
-            <input
-                ref={ priorityRef }
-                onInput={ inputHandler }
-                type="number"
-                style={{ width: "50px" }}
-                disabled={ disabled }
-            ></input>
-        </div>
+        <tr>
+            <td>{ task.id }</td>
+            <td>
+                <CollaborativeInput
+                    sharedString={ task.name }
+                    style={{ width: "200px" }}
+                    disabled={ disabled }
+                ></CollaborativeInput>
+            </td>
+            <td>
+                <input
+                    ref={ priorityRef }
+                    onInput={ inputHandler }
+                    type="number"
+                    style={{ width: "50px" }}
+                    disabled={ disabled }
+                ></input>
+            </td>
+        </tr>
     );
 };
 
@@ -76,16 +80,26 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         };
     }, [taskList]);
 
-    const taskViews = tasks.map((task) => (
-        <TaskView key={ task.id } task={ task } disabled={ disabled } />
+    const taskRows = tasks.map((task) => (
+        <TaskRow key={ task.id } task={ task } disabled={ disabled } />
     ));
 
     return (
-        // TODO: Make this a table
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
-        <div style={{ whiteSpace: "nowrap" }}>
-            { taskViews }
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Title</td>
+                        <td>Priority</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    { taskRows }
+                </tbody>
+            </table>
             <button onClick={ taskList.saveChanges }>Save changes</button>
         </div>
     );
