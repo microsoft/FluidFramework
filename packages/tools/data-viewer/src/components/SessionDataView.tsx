@@ -25,6 +25,7 @@ import { OpsStreamView } from "./OpsStreamView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
+// - History of client ID changes
 
 // Initialize Fluent icons used this library's components.
 initializeIcons();

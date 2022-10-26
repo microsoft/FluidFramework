@@ -16,6 +16,7 @@ import { getInnerContainer } from "../Utilities";
 // - Container Read/Write permissions
 // - UI to generate and save to disk snapshot of current state
 // - Tooltips on data labels to indicate what they mean (mode, minimal sequence number, etc.)
+// - History of container state changes
 
 /**
  * {@link ContainerDataView} input props.
