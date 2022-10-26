@@ -321,6 +321,8 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm install @ff-internal/aria-logger;
               npm i;
               npm run build:compile;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/benchmarkOutput;
