@@ -102,7 +102,7 @@ function setTestValuesWide(tree: ISharedTree, numNodes: number): void {
 /**
  *
  * @param numberOfNodes - number of nodes you would like to insert
- * @param depth - boolean to specify inserting nodes depth wise or width wise
+ * @param shape - TreeShape enum to specify the shape of the tree
  * @returns the byte size of the tree's summary
  */
 export async function getInsertsSummarySize(
