@@ -14,7 +14,6 @@ import {
     IResponse,
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
@@ -92,7 +91,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+        // this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+        this.innerHandle = this.runtime.entryPoint as IFluidHandle<this>;
 
         // Container event handlers
         this.runtime.once("dispose", () => {
