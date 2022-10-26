@@ -80,8 +80,6 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean): TChangeset;
-    // (undocumented)
     invert(changes: TaggedChange<TChangeset>): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
@@ -298,8 +296,6 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
-    // (undocumented)
-    filterReferences(change: TChangeset, shouldRemoveReference: (revision: RevisionTag) => boolean, filterChild: NodeChangeReferenceFilter): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
@@ -746,8 +742,6 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     readonly encoder: ChangeEncoder<FieldChangeMap>;
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-    // (undocumented)
-    filterReferences(change: FieldChangeMap, shouldRemoveReference: (revision: RevisionTag) => boolean): FieldChangeMap;
     // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
