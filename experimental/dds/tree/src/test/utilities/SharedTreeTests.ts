@@ -1372,23 +1372,24 @@ export function runSharedTreeOperationsTests(
 		 *
 		 * In the meantime, we are forbidding collaboration of no-history clients and history clients.
 		 */
-		it('can be initialized on multiple clients with different `summarizeHistory` values', async () => {
+		it.only('can be initialized on multiple clients with different `summarizeHistory` values', async () => {
 			const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
 				writeFormat,
 				summarizeHistory: false,
 			});
-
+            (container as any).testId = 'a';
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
 			const firstSummaryVersion = await waitForSummary(container);
 
-			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+			const { tree: tree2, container: container2 } = await setUpLocalServerTestSharedTree({
 				writeFormat,
 				testObjectProvider,
 				summarizeHistory: true,
 				headers: { [LoaderHeader.version]: firstSummaryVersion },
 			});
 
+            (container2 as any).testId = 'b';
 			// Apply enough edits for the upload of a few edit chunks, and some extra so future chunks are misaligned
 			for (let i = 0; i < (5 * editsPerChunk) / 2; i++) {
 				applyNoop(tree);
@@ -1418,7 +1419,7 @@ export function runSharedTreeOperationsTests(
 			// If tree 2 didn't change its write format, it would attempt to upload the above chunk with start revision 200, which is past
 			// how many sequenced edits tree 3 thinks there are.
 			expect(unexpectedHistoryChunkCount).to.equal(0);
-		}).timeout(/* double summarization can take some time */ 20000);
+		}).timeout(/* double summarization can take some time */ 200000);
 
 		// This functionality was only implemented in format 0.1.1.
 		if (writeFormat !== WriteFormat.v0_0_2) {
