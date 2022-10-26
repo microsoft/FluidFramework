@@ -49,6 +49,7 @@ export {
     rootFieldKey,
     NodeData,
     rootFieldKeySymbol,
+    rootField,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 

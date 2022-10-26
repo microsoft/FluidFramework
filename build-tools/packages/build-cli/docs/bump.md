@@ -58,8 +58,9 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ] [-v]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [--prerelease -t
+    latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g client|server|azure|build-tools | -p
+    <value>] [-x | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -67,14 +68,15 @@ ARGUMENTS
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools>
-  -p, --prerelease             Treat prerelease versions as valid versions to update to.
-  -t, --updateType=<option>    Bump the current version of the dependency according to this bump type.
+  -p, --package=<value>        Only bump dependencies of this package.
+  -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
   -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]commit                Commit changes to a new branch.
   --[no-]install               Update lockfiles by running 'npm install' automatically.
   --onlyBumpPrerelease         Only bump dependencies that are on pre-release versions.
+  --prerelease                 Treat prerelease versions as valid versions to update to.
 
 DESCRIPTION
   Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

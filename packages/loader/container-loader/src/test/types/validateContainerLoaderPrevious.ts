@@ -23,7 +23,6 @@ declare function get_old_EnumDeclaration_ConnectionState():
 declare function use_current_EnumDeclaration_ConnectionState(
     use: TypeOnly<current.ConnectionState>);
 use_current_EnumDeclaration_ConnectionState(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_ConnectionState());
 
 /*
@@ -48,7 +47,6 @@ declare function get_old_ClassDeclaration_Container():
 declare function use_current_ClassDeclaration_Container(
     use: TypeOnly<current.Container>);
 use_current_ClassDeclaration_Container(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Container());
 
 /*
@@ -282,6 +280,30 @@ use_old_InterfaceDeclaration_IPendingContainerState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IProtocolHandler():
+    TypeOnly<old.IProtocolHandler>;
+declare function use_current_InterfaceDeclaration_IProtocolHandler(
+    use: TypeOnly<current.IProtocolHandler>);
+use_current_InterfaceDeclaration_IProtocolHandler(
+    get_old_InterfaceDeclaration_IProtocolHandler());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProtocolHandler": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IProtocolHandler():
+    TypeOnly<current.IProtocolHandler>;
+declare function use_old_InterfaceDeclaration_IProtocolHandler(
+    use: TypeOnly<old.IProtocolHandler>);
+use_old_InterfaceDeclaration_IProtocolHandler(
+    get_current_InterfaceDeclaration_IProtocolHandler());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Loader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Loader():
@@ -302,6 +324,30 @@ declare function use_old_ClassDeclaration_Loader(
     use: TypeOnly<old.Loader>);
 use_old_ClassDeclaration_Loader(
     get_current_ClassDeclaration_Loader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ProtocolHandlerBuilder": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ProtocolHandlerBuilder():
+    TypeOnly<old.ProtocolHandlerBuilder>;
+declare function use_current_TypeAliasDeclaration_ProtocolHandlerBuilder(
+    use: TypeOnly<current.ProtocolHandlerBuilder>);
+use_current_TypeAliasDeclaration_ProtocolHandlerBuilder(
+    get_old_TypeAliasDeclaration_ProtocolHandlerBuilder());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ProtocolHandlerBuilder": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ProtocolHandlerBuilder():
+    TypeOnly<current.ProtocolHandlerBuilder>;
+declare function use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
+    use: TypeOnly<old.ProtocolHandlerBuilder>);
+use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
+    get_current_TypeAliasDeclaration_ProtocolHandlerBuilder());
 
 /*
 * Validate forward compat by using old type in place of current type

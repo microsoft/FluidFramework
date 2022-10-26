@@ -30,8 +30,7 @@ import {
     TreeValue,
     MapTree,
     getMapTreeField,
-    keyAsDetachedField,
-    rootFieldKeySymbol,
+    FieldAnchor,
     afterChangeToken,
 } from "../../core";
 import { brand, fail } from "../../util";
@@ -54,8 +53,6 @@ function makeRoot(): MapTree {
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
-    public readonly rootField: DetachedField;
-
     public readonly roots: MapTree = makeRoot();
 
     private readonly dependees: Map<ObjectField | MapTree, DisposingDependee> = new Map();
@@ -68,25 +65,8 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         public readonly anchors: AnchorSet = new AnchorSet(),
     ) {
         super("object-forest.ObjectForest");
-        this.rootField = keyAsDetachedField(rootFieldKeySymbol);
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
-    }
-
-    public root(field: DetachedField, index = 0): Anchor {
-        const key = detachedFieldAsKey(field);
-        if (index >= getMapTreeField(this.roots, key, false).length) {
-            // This should probably error, or return something useful.
-            // It seems unlikely a caller would want this.
-            return this.anchors.track(null);
-        }
-
-        // TODO: Mark anchor as undefined/removed
-        return this.anchors.track({
-            parent: undefined,
-            parentField: key,
-            parentIndex: index,
-        });
     }
 
     public forgetAnchor(anchor: Anchor): void {
@@ -232,7 +212,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.invalidateDependents(afterChangeToken);
     }
 
-    tryMoveCursorTo(
+    tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent,
@@ -245,13 +225,29 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return TreeNavigationResult.Ok;
     }
 
+    tryMoveCursorToField(
+        destination: FieldAnchor,
+        cursorToMove: ITreeSubscriptionCursor,
+    ): TreeNavigationResult {
+        if (destination.parent === undefined) {
+            this.moveCursorToPath(undefined, cursorToMove);
+        } else {
+            const result = this.tryMoveCursorToNode(destination.parent, cursorToMove);
+            if (result !== TreeNavigationResult.Ok) {
+                return result;
+            }
+        }
+        cursorToMove.enterField(destination.fieldKey);
+        return TreeNavigationResult.Ok;
+    }
+
     /**
      * Set `cursorToMove` to location described by path.
      * This is NOT a relative move: current position is discarded.
      * Path must point to existing node.
      */
     moveCursorToPath(
-        destination: UpPath,
+        destination: UpPath | undefined,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent,
     ): void {
