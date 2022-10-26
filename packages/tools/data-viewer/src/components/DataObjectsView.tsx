@@ -6,7 +6,7 @@ import React from "react";
 
 import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
-import { SharedObjectRendererOptions } from "../RendererOptions";
+import { SharedObjectRenderOptions } from "../RendererOptions";
 import { FluidObjectView } from "./data-object-views";
 import { Accordion } from "./utility-components";
 
@@ -22,7 +22,7 @@ export interface DataObjectsViewProps {
     /**
      * {@inheritDoc RendererOptions}
      */
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -30,10 +30,10 @@ export interface DataObjectsViewProps {
  *
  * @remarks
  *
- * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.sharedObjectRenderers}.
+ * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-    const { initialObjects, sharedObjectRenderers } = props;
+    const { initialObjects, renderOptions: sharedObjectRenderers } = props;
 
     const objects = Object.entries(initialObjects).map(([key, value]) => ({
         name: key,
@@ -44,7 +44,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
         <Accordion header={<b>{object.name}</b>}>
             <FluidObjectView
                 fluidObjectHandle={object.loadableObject.handle}
-                sharedObjectRenderers={sharedObjectRenderers}
+                renderOptions={sharedObjectRenderers}
             />
         </Accordion>
     ));

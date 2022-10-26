@@ -8,7 +8,7 @@ import React from "react";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
-import { SharedObjectRendererOptions } from "../../RendererOptions";
+import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
 
 /**
@@ -21,18 +21,18 @@ export interface FluidObjectViewProps {
     fluidObjectHandle: IFluidHandle;
 
     /**
-     * {@inheritDoc RendererOptions}
+     * {@inheritDoc SharedObjectRenderOptions}
      */
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions: SharedObjectRenderOptions;
 }
 
 /**
  * Queries the provided {@link FluidObjectViewProps.fluidObjectHandle} for its backing data.
  * Until that has resolved, displays a spinner. Once it has resolved, dispatches to the appropriate renderer
- * for the data type (see {@link FluidObjectViewProps.sharedObjectRenderers}).
+ * for the data type (see {@link FluidObjectViewProps.renderOptions}).
  */
 export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement {
-    const { fluidObjectHandle, sharedObjectRenderers } = props;
+    const { fluidObjectHandle, renderOptions } = props;
 
     // eslint-disable-next-line unicorn/no-useless-undefined
     const [resolvedData, setResolvedData] = React.useState<FluidObject | undefined>(undefined);
@@ -49,7 +49,7 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 
     // TODO: is this the right type check for this?
     if (resolvedData instanceof SharedObjectCore) {
-        return sharedObjectRenderers[resolvedData.attributes.type] === undefined ? (
+        return renderOptions[resolvedData.attributes.type] === undefined ? (
             <Stack>
                 <StackItem>
                     No renderer provided for shared object type "{resolvedData.attributes.type}"
@@ -57,8 +57,8 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
             </Stack>
         ) : (
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            sharedObjectRenderers[resolvedData.attributes.type](resolvedData, (data) => (
-                <DynamicDataView data={data} sharedObjectRenderers={sharedObjectRenderers} />
+            renderOptions[resolvedData.attributes.type](resolvedData, (data) => (
+                <DynamicDataView data={data} renderOptions={renderOptions} />
             ))
         );
     }

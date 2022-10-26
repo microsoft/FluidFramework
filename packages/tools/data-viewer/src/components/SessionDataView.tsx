@@ -15,13 +15,16 @@ import React from "react";
 import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { SharedObjectRendererOptions } from "../RendererOptions";
+import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { getInnerContainer } from "../Utilities";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
+
+// TODOs:
+// - Allow consumers to specify additional tabs / views for list of inner app view options.
 
 // Initialize Fluent icons used this library's components.
 initializeIcons();
@@ -46,16 +49,18 @@ export interface SessionDataViewProps {
     audience: IServiceAudience<IMember>;
 
     /**
-     * Policies for displaying debug information for shared Fluid objects.
+     * Rendering policies for different kinds of Fluid client and object data.
      */
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions?: RenderOptions;
 }
 
 /**
  * Displays information about the provided container and its audience.
  */
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
-    const { containerId, container, audience, sharedObjectRenderers } = props;
+    const { containerId, container, audience, renderOptions: userRenderOptions } = props;
+
+    const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
     // #region Audience state
 
@@ -147,12 +152,18 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                 innerView = (
                     <DataObjectsView
                         initialObjects={container.initialObjects}
-                        sharedObjectRenderers={sharedObjectRenderers}
+                        renderOptions={renderOptions.sharedObjectRenderOptions}
                     />
                 );
                 break;
             case RootView.Audience:
-                innerView = <AudienceView audience={audience} myself={myself} />;
+                innerView = (
+                    <AudienceView
+                        audience={audience}
+                        myself={myself}
+                        onRenderAudienceMember={renderOptions.onRenderAudienceMember}
+                    />
+                );
                 break;
             case RootView.OpsStream:
                 innerView = (
@@ -160,6 +171,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
                         ops={ops}
                         minimumSequenceNumber={minimumSequenceNumber}
                         clientId={clientId}
+                        onRenderOp={renderOptions.onRenderOp}
                     />
                 );
                 break;

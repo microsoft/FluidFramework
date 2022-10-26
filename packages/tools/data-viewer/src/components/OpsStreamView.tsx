@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { OpView } from "./data-object-views";
+import { OpViewProps } from "./client-data-views";
 
 // TODOs:
 // - Show pending local ops (styled differently)
@@ -33,13 +33,18 @@ export interface OpsStreamViewProps {
      * The client ID for the session.
      */
     clientId: string | undefined;
+
+    /**
+     * Callback to render data about an individual operation (op).
+     */
+    onRenderOp(props: OpViewProps): React.ReactElement;
 }
 
 /**
  * Displays information about the ops stream for the current container.
  */
 export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
-    const { ops, minimumSequenceNumber, clientId } = props;
+    const { ops, minimumSequenceNumber, clientId, onRenderOp } = props;
 
     const reversedOpsList = [...ops].reverse(); // Copy to avoid mutating input
 
@@ -65,7 +70,9 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
                 }}
             >
                 {reversedOpsList.map((message) => (
-                    <OpView key={message.sequenceNumber} message={message} clientId={clientId} />
+                    <StackItem key={message.sequenceNumber}>
+                        {onRenderOp({ message, clientId })}
+                    </StackItem>
                 ))}
             </Stack>
         </Stack>

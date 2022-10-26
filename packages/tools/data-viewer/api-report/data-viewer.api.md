@@ -6,12 +6,44 @@
 
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { default as React_2 } from 'react';
 import { SharedObjectCore } from '@fluidframework/shared-object-base';
 
 // @public
+export interface AudienceMemberViewProps {
+    audienceMember: IMember;
+    isMyself: boolean;
+}
+
+// @public
+export const defaultRenderOptions: Required<RenderOptions>;
+
+// @public
+export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
+
+// @public
+export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefined): Required<RenderOptions>;
+
+// @public
+export function getSharedObjectRendererOptionsWithDefaults(userOptions: SharedObjectRenderOptions | undefined): SharedObjectRenderOptions;
+
+// @public
+export interface OpViewProps {
+    clientId: string | undefined;
+    message: ISequencedDocumentMessage;
+}
+
+// @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
+
+// @public
+export interface RenderOptions {
+    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React_2.ReactElement;
+    onRenderOp?: (props: OpViewProps) => React_2.ReactElement;
+    sharedObjectRenderOptions?: SharedObjectRenderOptions;
+}
 
 // @public
 export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
@@ -25,16 +57,13 @@ export interface SessionDataViewProps {
     audience: IServiceAudience<IMember>;
     container: IFluidContainer;
     containerId: string;
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions?: RenderOptions;
 }
 
 // @public
-export interface SharedObjectRendererOptions {
+export interface SharedObjectRenderOptions {
     [k: SharedObjectType]: RenderSharedObject;
 }
-
-// @public
-export function sharedObjectRendererOptionsWithDefaults(customOptions: SharedObjectRendererOptions): SharedObjectRendererOptions;
 
 // @public
 export type SharedObjectType = string;

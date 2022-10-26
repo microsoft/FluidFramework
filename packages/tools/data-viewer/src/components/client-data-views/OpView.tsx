@@ -15,7 +15,8 @@ import { Accordion } from "../utility-components";
 // - Raw data as modal dialogue rather than drop-down
 
 /**
- * {@link OpView} input props.
+ * Input props describing a Fluid
+ * {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage | operation (op)}.
  */
 export interface OpViewProps {
     /**

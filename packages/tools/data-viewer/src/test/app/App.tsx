@@ -26,7 +26,6 @@ import {
 
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
-import { defaultSharedObjectRenderers } from "../../RendererOptions";
 import { CounterWidget, SessionDataView } from "../../components";
 
 const sharedTextKey = "shared-text";
@@ -287,7 +286,6 @@ function AppView(props: AppViewProps): React.ReactElement {
                     container={container}
                     containerId={containerId}
                     audience={audience}
-                    sharedObjectRenderers={defaultSharedObjectRenderers}
                 />
             </StackItem>
         </Stack>

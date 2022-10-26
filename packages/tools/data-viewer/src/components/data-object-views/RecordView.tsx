@@ -5,7 +5,7 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
-import { SharedObjectRendererOptions } from "../../RendererOptions";
+import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
 
 /**
@@ -18,23 +18,23 @@ export interface RecordDataViewProps {
     data: Record<string, unknown>;
 
     /**
-     * {@inheritDoc RendererOptions}
+     * {@inheritDoc SharedObjectRenderOptions}
      */
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions: SharedObjectRenderOptions;
 }
 
 /**
  * Renders each property of {@link RecordDataViewProps.data} in a list.
  */
 export function RecordDataView(props: RecordDataViewProps): React.ReactElement {
-    const { data, sharedObjectRenderers } = props;
+    const { data, renderOptions } = props;
 
     const entries = Object.entries(data);
     return (
         <Stack>
             {entries.map(([key, value]) => (
                 <StackItem key={key}>
-                    <DynamicDataView data={value} sharedObjectRenderers={sharedObjectRenderers} />
+                    <DynamicDataView data={value} renderOptions={renderOptions} />
                 </StackItem>
             ))}
         </Stack>

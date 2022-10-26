@@ -9,11 +9,20 @@
  * @packageDocumentation
  */
 
-export { SessionDataView, SessionDataViewProps } from "./components";
 export {
+    AudienceMemberViewProps,
+    OpViewProps,
+    SessionDataView,
+    SessionDataViewProps,
+} from "./components";
+export {
+    getRenderOptionsWithDefaults,
+    getSharedObjectRendererOptionsWithDefaults,
+    defaultRenderOptions,
+    defaultSharedObjectRenderers,
     RenderChild,
+    RenderOptions,
     RenderSharedObject,
-    SharedObjectRendererOptions,
-    sharedObjectRendererOptionsWithDefaults,
+    SharedObjectRenderOptions,
     SharedObjectType,
 } from "./RendererOptions";

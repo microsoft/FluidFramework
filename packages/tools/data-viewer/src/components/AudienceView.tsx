@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+
+import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -15,7 +17,7 @@ import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
  */
 export interface AudienceViewProps {
     /**
-     * Audience member infor for the session user.
+     * Audience member info for the session user.
      */
     myself: IMember | undefined;
 
@@ -23,6 +25,11 @@ export interface AudienceViewProps {
      * Audience information.
      */
     audience: IServiceAudience<IMember>;
+
+    /**
+     * Callback to render data about an individual audience member.
+     */
+    onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
 }
 
 /**
@@ -31,7 +38,7 @@ export interface AudienceViewProps {
  * @param props - See {@link AudienceViewProps}.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-    const { audience, myself } = props;
+    const { audience, myself, onRenderAudienceMember } = props;
 
     const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
 
@@ -50,9 +57,12 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     const renderedOthers: React.ReactElement[] = [];
     for (const member of allMembers.values()) {
         renderedOthers.push(
-            <li key={member.userId}>
-                <MemberView member={member} myself={myself} />
-            </li>,
+            <StackItem key={member.userId}>
+                {onRenderAudienceMember({
+                    audienceMember: member,
+                    isMyself: member.userId === myself?.userId,
+                })}
+            </StackItem>,
         );
     }
 
@@ -64,43 +74,14 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
                 },
             }}
         >
-            <AudienceCount audienceCount={allMembers.size} />
-            <ul>{renderedOthers}</ul>
+            <StackItem>
+                <div className="audience-view-members-list">
+                    <b>Audience members:</b> {allMembers.size}
+                </div>
+            </StackItem>
+            <StackItem>
+                <Stack>{renderedOthers}</Stack>
+            </StackItem>
         </Stack>
-    );
-}
-
-interface MemberViewProps {
-    member: IMember;
-
-    /**
-     * Audience member infor for the session user.
-     */
-    myself: IMember | undefined;
-}
-
-function MemberView(props: MemberViewProps): React.ReactElement {
-    const { member, myself } = props;
-
-    const mePostfix = member.userId === myself?.userId ? " (me)" : "";
-
-    const connectionsPostfix =
-        member.connections.length !== 1 ? ` (connections: ${member.connections.length})` : "";
-
-    return (
-        <div className="audience-view-member">{`${member.userId}${mePostfix}${connectionsPostfix}`}</div>
-    );
-}
-
-interface AudienceCountProps {
-    audienceCount: number;
-}
-
-function AudienceCount(props: AudienceCountProps): React.ReactElement {
-    const { audienceCount } = props;
-    return (
-        <div className="audience-view-members-list">
-            <b>Audience members:</b> {audienceCount}
-        </div>
     );
 }

@@ -9,7 +9,15 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
-import { SharedCounterView, SharedMapView, SharedStringView } from "./components";
+import {
+    AudienceMemberView,
+    AudienceMemberViewProps,
+    OpView,
+    OpViewProps,
+    SharedCounterView,
+    SharedMapView,
+    SharedStringView,
+} from "./components";
 
 // TODOs:
 // - Default rendering policies for SharedTree? PropertyDDS?
@@ -52,7 +60,7 @@ export type SharedObjectType = string;
  * - value: A renderer that takes a {@link @fluidframework/shared-object-base#SharedObjectCore} of the
  * specified type and renders a `ReactElement` visualizing the data as desired.
  */
-export interface SharedObjectRendererOptions {
+export interface SharedObjectRenderOptions {
     /**
      * Individual render policies, keyed by {@link SharedObjectType}.
      */
@@ -72,7 +80,7 @@ export interface SharedObjectRendererOptions {
  *
  * - {@link @fluidframework/sequence#SharedString}
  */
-export const defaultSharedObjectRenderers: SharedObjectRendererOptions = {
+export const defaultSharedObjectRenderers: SharedObjectRenderOptions = {
     [SharedCounter.getFactory().type]: (sharedObject) => (
         <SharedCounterView sharedCounter={sharedObject as SharedCounter} />
     ),
@@ -89,11 +97,69 @@ export const defaultSharedObjectRenderers: SharedObjectRendererOptions = {
  *
  * @remarks Custom renderers will take precendence over library defaults.
  */
-export function sharedObjectRendererOptionsWithDefaults(
-    customOptions: SharedObjectRendererOptions,
-): SharedObjectRendererOptions {
+export function getSharedObjectRendererOptionsWithDefaults(
+    userOptions: SharedObjectRenderOptions | undefined,
+): SharedObjectRenderOptions {
+    if (userOptions === undefined) {
+        return defaultSharedObjectRenderers;
+    }
+
     return {
         ...defaultSharedObjectRenderers,
-        ...customOptions,
+        ...userOptions,
+    };
+}
+
+/**
+ * Customizable rendering policies.
+ */
+export interface RenderOptions {
+    /**
+     * Override policy for rendering data about an individual
+     * {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage | op}.
+     */
+    onRenderOp?: (props: OpViewProps) => React.ReactElement;
+
+    /**
+     * Override policy for rendering data about an individual
+     * {@link @fluidframework/fluid-static#IMember | audience member}.
+     */
+    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React.ReactElement;
+
+    /**
+     * Optional policies for rendering data for different kinds of Fluid Objects.
+     *
+     * @defaultValue {@link defaultSharedObjectRenderers}
+     */
+    sharedObjectRenderOptions?: SharedObjectRenderOptions;
+}
+
+/**
+ * System default render options.
+ */
+export const defaultRenderOptions: Required<RenderOptions> = {
+    onRenderOp: (props) => <OpView {...props} />,
+    onRenderAudienceMember: (props) => <AudienceMemberView {...props} />,
+    sharedObjectRenderOptions: defaultSharedObjectRenderers,
+};
+
+/**
+ * Combines the specified set of custom renderer options with the default options bundled with this library.
+ *
+ * @remarks Custom renderers will take precendence over library defaults.
+ */
+export function getRenderOptionsWithDefaults(
+    userOptions: RenderOptions | undefined,
+): Required<RenderOptions> {
+    if (userOptions === undefined) {
+        return defaultRenderOptions;
+    }
+
+    return {
+        ...defaultRenderOptions,
+        ...userOptions,
+        sharedObjectRenderOptions: getSharedObjectRendererOptionsWithDefaults(
+            userOptions.sharedObjectRenderOptions,
+        ),
     };
 }

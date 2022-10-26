@@ -6,7 +6,7 @@ import React from "react";
 
 import { IFluidHandle, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 
-import { SharedObjectRendererOptions } from "../../RendererOptions";
+import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
 import { RecordDataView } from "./RecordView";
 
@@ -20,9 +20,9 @@ export interface DynamicDataViewProps {
     data: unknown;
 
     /**
-     * {@inheritDoc RendererOptions}
+     * {@inheritDoc SharedObjectRenderOptions}
      */
-    sharedObjectRenderers: SharedObjectRendererOptions;
+    renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -31,12 +31,12 @@ export interface DynamicDataViewProps {
  * - If the data is a primitive: simply display its raw value.
  *
  * - If the data is a {@link @fluidframework/core-interfaces#IFluidHandle}: dispatch to the appropriate data
- * rendering policy (see {@link DynamicDataViewProps.sharedObjectRenderers }).
+ * rendering policy (see {@link DynamicDataViewProps.renderOptions }).
  *
  * - Else: the data is assumed to be an object with serializable traits; recurse on each of those traits.
  */
 export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement {
-    const { data, sharedObjectRenderers } = props;
+    const { data, renderOptions } = props;
 
     // Render primitives and falsy types via their string representation
     if (typeof data !== "object") {
@@ -45,12 +45,7 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
 
     if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
         const handle = data as IFluidHandle;
-        return (
-            <FluidObjectView
-                fluidObjectHandle={handle}
-                sharedObjectRenderers={sharedObjectRenderers}
-            />
-        );
+        return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
     }
 
     if (data === null) {
@@ -58,10 +53,5 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
     }
 
     // If the underlying data was not a primitive, and it wasn't a Fluid handle, it must be a serializable record.
-    return (
-        <RecordDataView
-            data={data as Record<string, unknown>}
-            sharedObjectRenderers={sharedObjectRenderers}
-        />
-    );
+    return <RecordDataView data={data as Record<string, unknown>} renderOptions={renderOptions} />;
 }

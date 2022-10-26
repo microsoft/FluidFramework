@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./client-data-views";
 export * from "./data-object-views";
 export * from "./widgets";
 export * from "./AudienceView";
