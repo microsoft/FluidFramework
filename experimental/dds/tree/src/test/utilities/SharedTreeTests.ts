@@ -1377,7 +1377,7 @@ export function runSharedTreeOperationsTests(
 				writeFormat,
 				summarizeHistory: false,
 			});
-            (container as any).testId = 'a';
+			(container as any).testId = 'a';
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
 			const firstSummaryVersion = await waitForSummary(container);
@@ -1389,7 +1389,7 @@ export function runSharedTreeOperationsTests(
 				headers: { [LoaderHeader.version]: firstSummaryVersion },
 			});
 
-            (container2 as any).testId = 'b';
+			(container2 as any).testId = 'b';
 			// Apply enough edits for the upload of a few edit chunks, and some extra so future chunks are misaligned
 			for (let i = 0; i < (5 * editsPerChunk) / 2; i++) {
 				applyNoop(tree);
