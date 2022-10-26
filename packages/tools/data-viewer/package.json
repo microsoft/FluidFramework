@@ -3,6 +3,7 @@
   "version": "2.0.0-internal.1.2.0",
   "description": "TODO",
   "homepage": "https://fluidframework.com",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
