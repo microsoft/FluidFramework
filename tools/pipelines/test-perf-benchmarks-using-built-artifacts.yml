@@ -312,22 +312,22 @@ stages:
           displayName: 'Consolidate output files - memory usage'
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run test:memory-profiling:copyresults'
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
           inputs:
-            targetPath: '${{ variables.buildDirectory }}/memoryProfilingOutput'
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput'
             artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()
