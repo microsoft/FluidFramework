@@ -196,6 +196,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
             styles={{
                 root: {
                     height: "100%",
+                    width: "400px",
                 },
             }}
         >
@@ -205,7 +206,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
                 clientId={clientId}
                 myself={myself}
             />
-            <div style={{ width: "400px", height: "100%", overflowY: "auto" }}>{view}</div>
+            <div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
         </Stack>
     );
 }
