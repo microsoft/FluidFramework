@@ -22,8 +22,6 @@ import {
     mapCursorField,
     mapCursorFields,
     CursorLocationType,
-    rootFieldKeySymbol,
-    moveToDetachedField,
     FieldAnchor,
 } from "../../core";
 import { brand } from "../../util";
@@ -157,13 +155,11 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly fieldKey: FieldKey;
 
     /**
-     * Gets the type of the node by its index or the "field type" if index is not provided and this is the primary field.
-     * If the node is well-formed, it must follow its schema.
-     * @param index - if index is provided, returns the type of the node. Otherwise, if this field is the primary field,
-     * returns the type of the parent node this primary field belongs to.
-     * @param nameOnly - if true, returns only the type identifier.
+     * The type name of the parent node.
+     *
+     * It is defined iff this field is the primary field of its parent node (see note on `EmptyKey`).
      */
-    getType(index?: number, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly primaryType?: TreeSchemaIdentifier;
 
     /**
      * Gets a node of this field by its index without unwrapping.
@@ -197,23 +193,14 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 /**
- * This is a base class for `ProxyTarget` and `SequenceProxyTarget`, which uniformly handles cursors and anchors.
+ * This is a base class for `NodeProxyTarget` and `FieldProxyTarget`, which uniformly handles cursors and anchors.
  */
-export abstract class BaseProxyTarget {
+export class BaseProxyTarget {
     private readonly lazyCursor: ITreeSubscriptionCursor;
-    private anchor?: Anchor | FieldAnchor;
+    private anchor?: Anchor;
 
-    constructor(
-        public readonly context: ProxyContext,
-        cursor: ITreeSubscriptionCursor,
-        public readonly fieldKey: FieldKey,
-    ) {
-        if (this.fieldKey === rootFieldKeySymbol && cursor.mode === CursorLocationType.Fields) {
-            this.lazyCursor = this.context.forest.allocateCursor();
-            moveToDetachedField(this.context.forest, this.lazyCursor);
-        } else {
-            this.lazyCursor = cursor.fork();
-        }
+    constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+        this.lazyCursor = cursor.fork();
         this.context.withCursors.add(this);
     }
 
@@ -221,53 +208,31 @@ export abstract class BaseProxyTarget {
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
-            if (this.isFieldProxyTarget) {
-                const fieldAnchor = this.anchor as FieldAnchor;
-                if (fieldAnchor.parent !== undefined) {
-                    this.context.forest.anchors.forget(fieldAnchor.parent);
-                }
-            } else {
-                this.context.forest.anchors.forget(this.anchor as Anchor);
-            }
+            this.context.forest.anchors.forget(this.anchor);
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
         }
     }
 
-    public getNodeAnchor(): Anchor {
+    /**
+     * Gets the anchor of this node.
+     *
+     * The cursor must be at the parent when calling from `FieldProxyTarget`.
+     */
+    public getAnchor(): Anchor {
         if (this.anchor === undefined) {
-            this.anchor = this.lazyCursor.buildAnchor();
+            this.anchor = this.cursor.buildAnchor();
             this.context.withAnchors.add(this);
         }
-        return this.anchor as Anchor;
+        return this.anchor;
     }
-
-    public getFieldAnchor(): FieldAnchor {
-        if (this.anchor === undefined) {
-            if (this.fieldKey === rootFieldKeySymbol) {
-                this.anchor = {
-                    fieldKey: this.fieldKey,
-                    parent: undefined,
-                };
-            } else {
-                this.lazyCursor.exitField();
-                this.anchor = {
-                    fieldKey: this.fieldKey,
-                    parent: this.lazyCursor.buildAnchor(),
-                };
-                this.lazyCursor.enterField(this.fieldKey);
-                this.context.withAnchors.add(this);
-            }
-        }
-        return this.anchor as FieldAnchor;
-    }
-
-    abstract getAnchor(): Anchor | FieldAnchor;
-
-    abstract get isFieldProxyTarget(): boolean;
 
     public prepareForEdit(): void {
-        this.getAnchor();
+        if (isFieldProxyTarget(this)) {
+            this.getFieldAnchor();
+        } else {
+            this.getAnchor();
+        }
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
     }
@@ -278,12 +243,9 @@ export abstract class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = this.isFieldProxyTarget
-                ? this.context.forest.tryMoveCursorToField(
-                      this.anchor as FieldAnchor,
-                      this.lazyCursor,
-                  )
-                : this.context.forest.tryMoveCursorToNode(this.anchor as Anchor, this.lazyCursor);
+            const result = isFieldProxyTarget(this)
+                ? this.context.forest.tryMoveCursorToField(this.getFieldAnchor(), this.lazyCursor)
+                : this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
@@ -294,18 +256,18 @@ export abstract class BaseProxyTarget {
     }
 }
 
+function isFieldProxyTarget(target: BaseProxyTarget): target is FieldProxyTarget {
+    return target instanceof FieldProxyTarget;
+}
+
 /**
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
  */
 class NodeProxyTarget extends BaseProxyTarget {
-    constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor, fieldKey: FieldKey) {
+    constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
-        super(context, cursor, fieldKey);
-    }
-
-    get isFieldProxyTarget(): false {
-        return false;
+        super(context, cursor);
     }
 
     public getType(
@@ -403,10 +365,6 @@ class NodeProxyTarget extends BaseProxyTarget {
         for (const field of fields) {
             yield field;
         }
-    }
-
-    public getAnchor(): Anchor {
-        return super.getNodeAnchor();
     }
 }
 
@@ -530,43 +488,40 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * the nodes of {@link EditableField} by means of the cursors.
  */
 class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEditableTree> {
+    public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
-    private readonly primaryType?: TreeSchemaIdentifier;
-    public readonly primaryField?: FieldKey;
+    public readonly primaryType?: TreeSchemaIdentifier;
 
     constructor(
         context: ProxyContext,
-        fieldKey: FieldKey,
         fieldSchema: FieldSchema,
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
         assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
-        let primaryField: FieldKey | undefined;
-        if (primaryType !== undefined) {
-            primaryField = cursor.getFieldKey();
-        }
-        // a root field has no parent
-        if (fieldKey === rootFieldKeySymbol && primaryField === undefined) {
-            super(context, cursor, fieldKey);
-        } else {
-            // The cursor will be forked by super, which is currently only allowed for nodes.
-            cursor.exitField();
-            super(context, cursor, fieldKey);
-            this.cursor.enterField(primaryField ?? fieldKey);
-            cursor.enterField(primaryField ?? fieldKey);
-        }
+        const fieldKey = cursor.getFieldKey();
+        // The cursor will be forked by super, which is currently only allowed for nodes.
+        cursor.exitField();
+        super(context, cursor);
+        this.cursor.enterField(fieldKey);
+        cursor.enterField(fieldKey);
+        this.fieldKey = fieldKey;
         this.primaryType = primaryType;
-        this.primaryField = primaryField;
         this.fieldSchema = fieldSchema;
     }
 
-    get isFieldProxyTarget(): true {
-        return true;
-    }
-
-    public getAnchor(): FieldAnchor {
-        return super.getFieldAnchor();
+    public getFieldAnchor(): FieldAnchor {
+        const fieldAnchor: FieldAnchor = {
+            fieldKey: this.fieldKey,
+            parent: undefined,
+        };
+        this.cursor.exitField();
+        const parentAnchor = this.getAnchor();
+        this.cursor.enterField(this.fieldKey);
+        if (parentAnchor !== this.context.forest.anchors.track(null)) {
+            fieldAnchor.parent = parentAnchor;
+        }
+        return fieldAnchor;
     }
 
     readonly [index: number]: UnwrappedEditableTree;
@@ -575,32 +530,12 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         return this.cursor.getFieldLength();
     }
 
-    public getType(
-        index?: number,
-        nameOnly = true,
-    ): TreeSchemaIdentifier | NamedTreeSchema | undefined {
-        let typeName: TreeSchemaIdentifier | undefined;
-        if (index === undefined) {
-            // The field may be "typed" only if it's a primary field.
-            if (this.primaryType !== undefined) {
-                typeName = this.primaryType;
-            }
-        } else if (keyIsValidIndex(index, this.length)) {
-            this.cursor.enterNode(index);
-            typeName = this.cursor.type;
-            this.cursor.exitNode();
-        }
-        return typeName && !nameOnly
-            ? { name: typeName, ...lookupTreeSchema(this.context.forest.schema, typeName) }
-            : typeName;
-    }
-
     /**
      * Returns a node (unwrapped by default, see {@link UnwrappedEditableTree}) by its index.
      */
     public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree {
         this.cursor.enterNode(index);
-        const target = new NodeProxyTarget(this.context, this.cursor, this.fieldKey);
+        const target = new NodeProxyTarget(this.context, this.cursor);
         this.cursor.exitNode();
         return inProxyOrUnwrap(target, unwrap);
     }
@@ -621,7 +556,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
      */
     private get asArray(): UnwrappedEditableTree[] {
         return mapCursorField(this.cursor, (c) =>
-            inProxyOrUnwrap(new NodeProxyTarget(this.context, c, this.fieldKey), true),
+            inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
         );
     }
 
@@ -639,7 +574,7 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
 const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> = {
     get: (target: FieldProxyTarget, key: string | symbol, receiver: object): unknown => {
         if (typeof key === "string") {
-            if (key in { length: true, fieldKey: true, fieldSchema: true }) {
+            if (key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }) {
                 return Reflect.get(target, key);
             } else if (keyIsValidIndex(key, target.length)) {
                 return target.proxifyNode(Number(key));
@@ -679,7 +614,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         } else {
             if (
                 keyIsValidIndex(key, target.length) ||
-                key in { length: true, fieldKey: true, fieldSchema: true }
+                key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }
             ) {
                 return true;
             }
@@ -689,7 +624,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
     ownKeys: (target: FieldProxyTarget): ArrayLike<keyof EditableField> => {
         // This includes 'length' property.
         const keys: string[] = getOwnArrayKeys(target.length);
-        keys.push("fieldKey", "fieldSchema");
+        keys.push("fieldKey", "fieldSchema", "primaryType");
         return keys as ArrayLike<keyof EditableField>;
     },
     getOwnPropertyDescriptor: (
@@ -711,7 +646,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 default:
             }
         } else {
-            if (key in { length: true, fieldKey: true, fieldSchema: true }) {
+            if (key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }) {
                 return {
                     configurable: true,
                     enumerable: false,
@@ -739,7 +674,7 @@ function inProxyOrUnwrap(
     unwrap: boolean,
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
-    if (unwrap && !target.isFieldProxyTarget) {
+    if (unwrap && !isFieldProxyTarget(target)) {
         const nodeType = target.getType(undefined, false) as NamedTreeSchema;
         if (isPrimitive(nodeType)) {
             const nodeValue = target.cursor.value;
@@ -756,7 +691,6 @@ function inProxyOrUnwrap(
             target.cursor.enterField(primary.key);
             const primarySequence = new FieldProxyTarget(
                 target.context,
-                target.fieldKey,
                 primary.schema,
                 target.cursor,
                 nodeType.name,
@@ -765,7 +699,7 @@ function inProxyOrUnwrap(
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
     }
-    if (target.isFieldProxyTarget) {
+    if (isFieldProxyTarget(target)) {
         return adaptWithProxy(target, fieldProxyHandler);
     }
     return adaptWithProxy(target, nodeProxyHandler);
@@ -787,29 +721,19 @@ export function proxifyField(
     unwrap: boolean,
 ): UnwrappedEditableField {
     if (!unwrap) {
-        const targetSequence = new FieldProxyTarget(
-            context as ProxyContext,
-            fieldKey,
-            fieldSchema,
-            cursor,
-        );
+        const targetSequence = new FieldProxyTarget(context as ProxyContext, fieldSchema, cursor);
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity === Multiplicity.Sequence) {
-        const targetSequence = new FieldProxyTarget(
-            context as ProxyContext,
-            fieldKey,
-            fieldSchema,
-            cursor,
-        );
+        const targetSequence = new FieldProxyTarget(context as ProxyContext, fieldSchema, cursor);
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
     const length = cursor.getFieldLength();
     assert(length <= 1, 0x3c8 /* invalid non sequence */);
     if (length === 1) {
         cursor.enterNode(0);
-        const target = new NodeProxyTarget(context as ProxyContext, cursor, fieldKey);
+        const target = new NodeProxyTarget(context as ProxyContext, cursor);
         const proxifiedNode = inProxyOrUnwrap(target, unwrap);
         cursor.exitNode();
         return proxifiedNode;
@@ -839,7 +763,6 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
  */
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
     return (
-        typeof field === "object" &&
-        (field[proxyTargetSymbol] as BaseProxyTarget).isFieldProxyTarget
+        typeof field === "object" && isFieldProxyTarget(field[proxyTargetSymbol] as BaseProxyTarget)
     );
 }

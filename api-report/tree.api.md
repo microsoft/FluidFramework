@@ -208,8 +208,8 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
-    getType(index?: number, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
     getWithoutUnwrapping(index: number): EditableTree;
+    readonly primaryType?: TreeSchemaIdentifier;
 }
 
 // @public

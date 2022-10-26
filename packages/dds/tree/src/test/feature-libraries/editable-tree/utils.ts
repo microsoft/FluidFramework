@@ -43,7 +43,7 @@ export function expectTreeEquals(
     const primary = getPrimaryField(expectedType);
     if (primary !== undefined) {
         assert(isEditableField(inputField));
-        assert.equal(inputField.getType(), expectedType.name);
+        assert.equal(inputField.primaryType, expectedType.name);
         // Handle inlined primary fields
         const expectedNodes = expected.fields?.[primary.key];
         if (expectedNodes === undefined) {

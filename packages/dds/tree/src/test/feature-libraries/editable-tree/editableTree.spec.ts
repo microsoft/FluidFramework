@@ -433,7 +433,6 @@ describe("editable-tree", () => {
         assert(isEditableField(proxy.address.phones));
         assert.equal(proxy.address.phones.length, 4);
         assert.equal(proxy.address.phones[1], 123456879);
-        assert.equal(proxy.address.phones.fieldKey, "phones" as FieldKey);
         const expectedPhones: Value[] = [
             "+49123456778",
             123456879,
@@ -465,6 +464,7 @@ describe("editable-tree", () => {
             "length",
             "fieldKey",
             "fieldSchema",
+            "primaryType",
         ]);
         const act = [...proxy.address.phones].map(
             (phone: UnwrappedEditableTree): Value | object => {
