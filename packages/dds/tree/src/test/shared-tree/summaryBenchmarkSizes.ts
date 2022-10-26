@@ -91,10 +91,10 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
     });
 }
 
-function setTestValuesWide(tree: ISharedTree, numNodes: number): void {
+function setTestValuesWide(tree: ISharedTree, numberOfNodes: number): void {
     const seed = 0;
     const random = makeRandom(seed);
-    for (let j = 0; j < numNodes; j++) {
+    for (let j = 0; j < numberOfNodes; j++) {
         setTestValue(tree, random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER), j);
     }
 }
@@ -131,7 +131,7 @@ export async function getInsertsSummarySize(
 
 function setTestValuesNarrow(
     tree: ISharedTree,
-    maxDepth: number,
+    numberOfNodes: number,
 ): void {
     const seed = 0;
     const random = makeRandom(seed);
@@ -141,7 +141,7 @@ function setTestValuesNarrow(
         parentIndex: 0,
     };
     // loop through and update path for the next insert.
-    for (let i = 0; i <= maxDepth; i++) {
+    for (let i = 0; i <= numberOfNodes; i++) {
         setTestValueOnPath(
             tree,
             random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
