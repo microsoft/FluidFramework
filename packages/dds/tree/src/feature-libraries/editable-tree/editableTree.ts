@@ -201,7 +201,7 @@ export class BaseProxyTarget {
 
     constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
-       context.withCursors.add(this);
+        context.withCursors.add(this);
     }
 
     public free(): void {
