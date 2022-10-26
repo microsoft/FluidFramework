@@ -61,21 +61,94 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-/** Events emitted by the Delta Manager */
+/**
+ * Events emitted by {@link IDeltaManager}.
+ */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaManagerEvents extends IEvent {
-    (event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    (event: "submitOp", listener: (message: IDocumentMessage) => void);
-    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
-    (event: "allSentOpsAckd", listener: () => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
     /**
-     * The connect event fires once we've received the connect_document_success message from the
-     * server.  This happens prior to the client's join message (if there is a join message).
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `messageBuffer` (`any[]`): TODO
+     */
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `message` ({@link IDocumentMessage}): TODO
+     */
+    (event: "submitOp", listener: (message: IDocumentMessage) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `message` ({@link ISequencedDocumentMessage}): TODO
+     *
+     * - `processingTime` (`number`): TODO
+     */
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
+
+    /**
+     * TODO
+     */
+    (event: "allSentOpsAckd", listener: () => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `latency` (`number`): TODO
+     */
+    (event: "pong", listener: (latency: number) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `latency` (`number`): TODO
+     */
+    (event: "processTime", listener: (latency: number) => void);
+
+    /**
+     * The connect event fires once we've received the connect_document_success message from the server.
+     * This happens prior to the client's join message (if there is a join message).
+     *
+     * @remarks Listener parameters:
+     *
+     * - `details` ({@link IConnectionDetails}): TODO
+     *
+     * - `opsBehind` (`number`): TODO
      */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `reason` (`string`): TODO
+     */
     (event: "disconnect", listener: (reason: string) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `readonly` (`boolean`): TODO
+     */
     (event: "readonly", listener: (readonly: boolean) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Manages the transmission of ops between the runtime and storage.

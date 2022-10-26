@@ -27,7 +27,7 @@ export interface IFluidContainerEvents extends IEvent {
      *
      * - {@link IFluidContainer.connectionState}
      *
-     * - {@link IFluidContainer.disconnect}
+     * - {@link IFluidContainer.connect}
      */
     (event: "connected", listener: () => void): void;
 
@@ -145,7 +145,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
     /**
      * Attempts to connect the container to the delta stream and process operations.
-     * Will throw an error if unsuccessful.
+     *
+     * @throws Will throw an error if connection is unsuccessful.
      *
      * @remarks
      *

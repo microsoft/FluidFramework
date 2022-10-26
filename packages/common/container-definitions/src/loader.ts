@@ -102,19 +102,128 @@ export interface ICodeAllowList {
 }
 
 /**
- * Events emitted by the Container "upwards" to the Loader and Host
+ * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IContainerEvents extends IEvent {
+    /**
+     * Emitted when the readonly state of the container changes.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `readonly` (boolean): Whether or not the container is now in a readonly state.
+     *
+     * @see {@link IContainer.readOnlyInfo}
+     */
     (event: "readonly", listener: (readonly: boolean) => void): void;
+
+    /**
+     * Emitted when the {@link IContainer} completes connecting to the Fluid service.
+     *
+     * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     *
+     * @see
+     *
+     * - {@link IContainer.connectionState}
+     *
+     * - {@link IContainer.connect}
+     */
     (event: "connected", listener: (clientId: string) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `codeDetails` ({@link IFluidCodeDetails}): TODO
+     *
+     * - `proposal` ({@link ISequencedProposal}): TODO
+     *
+     * @see {@link IContainer.proposeCodeDetails}
+     */
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `codeDetails` ({@link IFluidCodeDetails}): TODO
+     */
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "attached", listener: () => void);
+
+    /**
+     * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
+     *
+     * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     *
+     * @see
+     *
+     * - {@link IContainer.connectionState}
+     *
+     * - {@link IContainer.disconnect}
+     */
+    (event: "disconnected", listener: () => void);
+
+    /**
+     * TODO
+     */
+    (event: "attached", listener: () => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `error` ({@link ICriticalContainerError}): TODO
+     */
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `error` ({@link ContainerWarning}): TODO
+     */
     (event: "warning", listener: (error: ContainerWarning) => void);
+
+    /**
+     * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     *
+     */
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "dirty" | "saved", listener: (dirty: boolean) => void);
+
+    /**
+     * Emitted when the first local change has been made, following a "saved" event.
+     *
+     * @remarks
+     *
+     * The "saved" event will be emitted once all local changes have been acknowledged by the service.
+     *
+     * TODO: what does listener param represent in this case?
+     *
+     * @see {@link IContainer.isDirty}
+     */
+    (event: "dirty", listener: (dirty: boolean) => void);
+
+    /**
+     * Emitted when all local changes/edits have been acknowledged by the service.
+     *
+     * @remarks
+     *
+     * The "dirty" event will be emitted when the next local change has been made.
+     *
+     * TODO: what does listener param represent in this case?
+     *
+     * @see {@link IContainer.isDirty}
+     */
+    (event: "saved", listener: (dirty: boolean) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Namespace for the different connection states a container can be in
@@ -172,7 +281,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getQuorum(): IQuorumClients;
 
     /**
-     * Represents the resolved url to the Container
+     * Represents the resolved url to the Container.
      * Will be undefined only when the container is in the {@link AttachState.Detached | detatched} state.
      */
     resolvedUrl: IResolvedUrl | undefined;
@@ -196,7 +305,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
     /**
-     * Returns true if the container has been closed, otherwise false
+     * Returns true if the container has been closed, otherwise false.
      */
     readonly closed: boolean;
 
@@ -214,23 +323,24 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Closes the container and returns serialized local state intended to be
-     * given to a newly loaded container
+     * given to a newly loaded container.
      */
     closeAndGetPendingLocalState(): string;
 
     /**
-     * Propose new code details that define the code to be loaded
-     * for this container's runtime. The returned promise will
-     * be true when the proposal is accepted, and false if
-     * the proposal is rejected.
+     * Propose new code details that define the code to be loaded for this container's runtime.
+     *
+     * The returned promise will be true when the proposal is accepted, and false if the proposal is rejected.
      */
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
 
     /**
      * Attaches the Container to the Container specified by the given Request.
      *
-     * TODO - in the case of failure options should give a retry policy. Or some continuation function
-     * that allows attachment to a secondary document.
+     * @privateRemarks
+     *
+     * TODO - in the case of failure options should give a retry policy.
+     * Or some continuation function that allows attachment to a secondary document.
      */
     attach(request: IRequest): Promise<void>;
 
@@ -240,10 +350,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     serialize(): string;
 
     /**
-     * Get an absolute url for a provided container-relative request url.
+     * Get an absolute URL for a provided container-relative request URL.
      * If the container is not attached, this will return undefined.
      *
-     * @param relativeUrl - A container-relative request URL
+     * @param relativeUrl - A container-relative request URL.
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
@@ -409,6 +519,7 @@ export interface IContainerLoadMode {
      * recommended to have some progress UX / cancellation built into loading flow when using this option.
      */
     | "all";
+
     deltaConnection?:
     /*
      * Connection to delta stream is made only when Container.connect() call is made. Op processing
@@ -449,7 +560,7 @@ export interface IProvideLoader {
 /**
  * @deprecated 0.48, This API will be removed in 0.50
  * No replacement since it is not expected anyone will depend on this outside container-loader
- * See https://github.com/microsoft/FluidFramework/issues/9711 for context
+ * See {@link https://github.com/microsoft/FluidFramework/issues/9711} for context.
  */
 export interface IPendingLocalState {
     url: string;
@@ -458,8 +569,9 @@ export interface IPendingLocalState {
 
 /**
  * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
- * in separate property: blobContents. This is used as the ContainerContext's base snapshot
- * when attaching.
+ * in separate property: {@link ISnapshotTreeWithBlobContents.blobContents}.
+ *
+ * This is used as the {@link ContainerContext}'s base snapshot when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     blobsContents: { [path: string]: ArrayBufferLike; };
