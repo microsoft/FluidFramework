@@ -1,4 +1,4 @@
-# @fluid-tools/data-viewer
+# @fluid-tools/client-debug-view
 
 TODO
 
@@ -9,7 +9,7 @@ TODO
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-tools/data-viewer -D
+npm i @fluid-tools/client-debug-view -D
 ```
 
 <!-- AUTO-GENERATED-CONTENT:END -->

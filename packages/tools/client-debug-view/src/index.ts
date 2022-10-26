@@ -4,7 +4,7 @@
  */
 
 /**
- * Contains a customizable debug visualizer / editor for the Fluid client.
+ * Contains an externsible debug visualizer / editor for the Fluid client.
  *
  * @remarks
  *
