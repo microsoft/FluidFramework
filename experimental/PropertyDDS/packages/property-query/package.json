@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@fluid-experimental/property-properties": "^1.4.0",
+    "@fluid-experimental/property-query-previous": "npm:@fluid-experimental/property-query@1.3.0",
     "@fluidframework/mocha-test-setup": "^1.4.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.2",
@@ -43,5 +44,9 @@
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
     "sinon": "^7.4.2"
+  },
+  "typeValidation": {
+    "version": "1.4.0",
+    "broken": {}
   }
 }

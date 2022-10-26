@@ -69,6 +69,7 @@
     "ot-json1": "^1.0.1"
   },
   "devDependencies": {
+    "@fluid-experimental/sharejs-json1-previous": "npm:@fluid-experimental/sharejs-json1@1.3.0",
     "@fluid-internal/test-dds-utils": "^1.4.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
@@ -88,5 +89,9 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
+  },
+  "typeValidation": {
+    "version": "1.4.0",
+    "broken": {}
   }
 }

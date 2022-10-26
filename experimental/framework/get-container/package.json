@@ -44,6 +44,7 @@
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
+    "@fluid-experimental/get-container-previous": "npm:@fluid-experimental/get-container@1.3.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
@@ -56,5 +57,9 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
+  },
+  "typeValidation": {
+    "version": "1.4.0",
+    "broken": {}
   }
 }
