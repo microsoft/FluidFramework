@@ -180,7 +180,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
                 throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
         }
         view = (
-            <Stack>
+            <Stack tokens={{ childrenGap: 10 }}>
                 <ViewSelectionMenu
                     currentSelection={rootViewSelection}
                     updateSelection={updateRootViewSelection}
