@@ -13,9 +13,7 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject>
-    implements IFluidHandle
-{
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
 
     /**
@@ -72,7 +70,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject>
     constructor(
         protected readonly value: T | Promise<T>,
         public readonly path: string,
-        public readonly routeContext: IFluidHandleContext
+        public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
