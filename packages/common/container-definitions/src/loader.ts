@@ -167,6 +167,8 @@ export interface IContainerEvents extends IEvent {
 
     /**
      * TODO
+     *
+     * @see {@link IContainer.attachState}
      */
     (event: "attached", listener: () => void);
 
