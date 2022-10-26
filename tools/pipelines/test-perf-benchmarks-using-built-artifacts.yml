@@ -84,6 +84,7 @@ stages:
           testPackageDir: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
           testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
+          testFileTarName: sequence
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
           ${{ else }}:
@@ -119,6 +120,7 @@ stages:
                 BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 TestWorkspace=${{ variables.testWorkspace }}
+                testFileTarName=${{ variables.testFileTarName }}
 
               SourceBranch=$(Build.SourceBranch)
               "
@@ -224,9 +226,8 @@ stages:
             targetType: 'inline'
             script: |
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/*.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/${{ variables.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-
 
         - task: Bash@3
           name: Print_dir
