@@ -119,7 +119,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "processTime", listener: (latency: number) => void);
 
     /**
-     * The connect event fires once we've received the connect_document_success message from the server.
+     * Emitted once we've received the connect_document_success message from the server.
      * This happens prior to the client's join message (if there is a join message).
      *
      * @remarks Listener parameters:

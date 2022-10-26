@@ -193,7 +193,7 @@ export interface IContainerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     *
+     * - `message` ({@link ISequencedDocumentMessage}): TODO
      */
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
 
