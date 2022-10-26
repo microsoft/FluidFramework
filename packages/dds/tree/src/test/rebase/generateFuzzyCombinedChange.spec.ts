@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, TaggedChange, RevisionTag } from "../../rebase";
+import { ChangeRebaser, TaggedChange } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { generateFuzzyCombinedChange } from "./fuzz";
 
@@ -17,7 +17,6 @@ const testRebaser: ChangeRebaser<TestChange> = {
     invert: (change: TaggedChange<TestChange>) => ({ I: change.change }),
     rebase: (change: TestChange, over: TaggedChange<TestChange>) => ({ C: change, O: over.change }),
     rebaseAnchors: (anchor: AnchorSet, over: TestChange) => {},
-    filterReferences: (change: TestChange, _filter: (revision: RevisionTag) => boolean) => change,
 };
 
 function generateRandomChange(seed: number) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, RevisionTag, TaggedChange } from "../../core";
+import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -46,37 +46,20 @@ export interface FieldChangeRebaser<TChangeset> {
         over: TaggedChange<TChangeset>,
         rebaseChild: NodeChangeRebaser,
     ): TChangeset;
-
-    /**
-     * @returns a version of `change` stripped of any references to revisions for which `shouldRemoveReference` returns true.
-     */
-    filterReferences(
-        change: TChangeset,
-        shouldRemoveReference: (revision: RevisionTag) => boolean,
-        filterChild: NodeChangeReferenceFilter,
-    ): TChangeset;
 }
 
 /**
  * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags
- * `filterReferences` only needs to be provided if `TChangeset` can contain `NodeChangeset`s
- * which might contain references.
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
     compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset;
     invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset;
     rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset;
-    filterReferences?: (
-        change: TChangeset,
-        shouldRemoveReference: (revision: RevisionTag) => boolean,
-        filterChild: NodeChangeReferenceFilter,
-    ) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
     return {
         compose: data.compose,
         invert: (change, invertChild) => data.invert(change.change, invertChild),
         rebase: (change, over, rebaseChild) => data.rebase(change, over.change, rebaseChild),
-        filterReferences: data.filterReferences ?? ((change, _filter, _filterChild) => change),
     };
 }
 

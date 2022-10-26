@@ -172,14 +172,6 @@ export interface ChangeRebaser<TChangeset> {
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
-
-    /**
-     * @returns a version of `change` stripped of any references to revisions for which `shouldRemoveReference` returns true.
-     */
-    filterReferences(
-        change: TChangeset,
-        shouldRemoveReference: (revision: RevisionTag) => boolean,
-    ): TChangeset;
 }
 
 export interface TaggedChange<TChangeset> {

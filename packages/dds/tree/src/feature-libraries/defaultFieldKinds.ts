@@ -10,7 +10,6 @@ import {
     Delta,
     JsonableTree,
     ITreeCursor,
-    RevisionTag,
     TaggedChange,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
@@ -30,7 +29,6 @@ import {
     NodeChangeDecoder,
     NodeChangeEncoder,
     FieldEditor,
-    NodeChangeReferenceFilter,
     referenceFreeFieldChangeRebaser,
 } from "./modular-schema";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
@@ -144,7 +142,6 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
             const changes = change.change;
             return changes === 0 ? 0 : { old: changes.new, new: changes.old };
         },
-        filterReferences: (change: ReplaceOp<T>, _shouldRemoveReference, _filterChild) => change,
     };
 }
 
@@ -268,16 +265,6 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = referenceFreeFieldChang
             return change;
         }
         return { ...change, changes: rebaseChild(change.changes, over.changes) };
-    },
-
-    filterReferences: (
-        change: ValueChangeset,
-        _shouldRemoveReference: (revision: RevisionTag) => boolean,
-        filterChild: NodeChangeReferenceFilter,
-    ): ValueChangeset => {
-        return change.changes === undefined
-            ? change
-            : { ...change, changes: filterChild(change.changes) };
     },
 });
 
@@ -501,16 +488,6 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> =
             }
 
             return change;
-        },
-
-        filterReferences: (
-            change: OptionalChangeset,
-            _shouldRemoveReference: (revision: RevisionTag) => boolean,
-            filterChild: NodeChangeReferenceFilter,
-        ): OptionalChangeset => {
-            return change.childChange === undefined
-                ? change
-                : { ...change, childChange: filterChild(change.childChange) };
         },
     });
 

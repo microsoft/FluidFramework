@@ -50,7 +50,6 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
     compose: (changes, composeChild) => composeChild(changes),
     invert: (change, invertChild) => invertChild(change.change),
     rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
-    filterReferences: (change, _filter, filterChild) => filterChild(change),
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {

@@ -43,7 +43,12 @@ export class EditManager<
     // This is the ordered list of changes made by this client which have not yet been confirmed as sequenced changes.
     // The first change in this list is based on the last change in the trunk.
     // Every other change in this list is based on the change preceding it.
-    private localChanges: TChangeset[] = [];
+    private localChanges: TaggedChange<TChangeset>[] = [];
+
+    // Because we do not have sequence numbers for local changes, we assign them temporary revision tags.
+    // We use negative numbers to avoid collisions with finalized revision tags.
+    // TODO: Eventually we will have to send references to local revision tag (e.g. when undoing a local change)
+    private nextLocalRevision = -1;
 
     private localSessionId?: SessionId;
 
@@ -106,7 +111,7 @@ export class EditManager<
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
-        return this.localChanges;
+        return this.localChanges.map((change) => change.change);
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
@@ -126,10 +131,10 @@ export class EditManager<
             // `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
             // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
             // change in the incoming commit.
-            const changeset = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+            const change = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
             this.trunk.push({
                 ...newCommit,
-                changeset,
+                changeset: change.change,
             });
             return Delta.empty;
         }
@@ -172,7 +177,7 @@ export class EditManager<
             "The session ID should be set before processing changes",
         );
 
-        this.localChanges.push(change);
+        this.localChanges.push({ revision: this.allocateLocalRevisionTag(), change });
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -190,28 +195,13 @@ export class EditManager<
             return commitToRebase.changeset;
         }
 
-        let nextRevisionNum = -1;
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
-                this.changeFamily.rebaser.rebase(newChange, {
-                    revision: brand(nextRevisionNum--),
-                    change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(branchCommit)),
-                }),
+                this.changeFamily.rebaser.rebase(newChange, this.inverseFromCommit(branchCommit)),
             commitToRebase.changeset,
         );
 
-        const fullyRebasedChange = this.rebaseOverCommits(
-            changeRebasedToRef,
-            this.getCommitsAfter(branch.refSeq),
-        );
-
-        const shouldRemoveReference = (revision: RevisionTag): boolean =>
-            isTemporaryRevision(revision) || isBranchLocalRevision(branch, revision);
-
-        return this.changeFamily.rebaser.filterReferences(
-            fullyRebasedChange,
-            shouldRemoveReference,
-        );
+        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -219,20 +209,19 @@ export class EditManager<
         const newBranchChanges: TaggedChange<TChangeset>[] = [];
         const inverses: TaggedChange<TChangeset>[] = [];
 
-        let nextTempRevision = -1;
         for (const localChange of this.localChanges) {
-            let change = this.rebaseChange(localChange, inverses);
+            let change = this.rebaseChange(localChange.change, inverses);
             change = this.changeFamily.rebaser.rebase(change, trunkChange);
             change = this.rebaseChange(change, newBranchChanges);
 
-            newBranchChanges.push({ revision: brand(nextTempRevision--), change });
+            newBranchChanges.push({ ...localChange, change });
 
-            const inverse = this.changeFamily.rebaser.invert({
-                revision: brand(nextTempRevision--),
-                change: localChange,
+            const inverse = this.changeFamily.rebaser.invert(localChange);
+
+            inverses.unshift({
+                revision: revisionTagForInverse(localChange.revision),
+                change: inverse,
             });
-
-            inverses.unshift({ revision: brand(nextTempRevision--), change: inverse });
         }
 
         const netChange = this.changeFamily.rebaser.compose([
@@ -245,9 +234,7 @@ export class EditManager<
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
         }
 
-        this.localChanges = newBranchChanges.map((change) =>
-            this.changeFamily.rebaser.filterReferences(change.change, isTemporaryRevision),
-        );
+        this.localChanges = newBranchChanges;
 
         return netChange;
     }
@@ -289,13 +276,7 @@ export class EditManager<
             });
         }
 
-        branch.localChanges = newBranchChanges.map((commit) => ({
-            ...commit,
-            changeset: this.changeFamily.rebaser.filterReferences(
-                commit.changeset,
-                isTemporaryRevision,
-            ),
-        }));
+        branch.localChanges = newBranchChanges;
         branch.refSeq = newRef;
     }
 
@@ -363,21 +344,25 @@ export class EditManager<
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
+
+    private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {
+        return {
+            revision: revisionTagForInverse(brand(commit.seqNumber)),
+            change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+        };
+    }
+
+    private allocateLocalRevisionTag(): RevisionTag {
+        return brand(this.nextLocalRevision--);
+    }
 }
 
 function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return { revision: brand(commit.seqNumber), change: commit.changeset };
 }
 
-function isBranchLocalRevision<TChangeset>(
-    branch: Branch<TChangeset>,
-    revision: RevisionTag,
-): boolean {
-    return branch.localChanges.find((x) => (x.seqNumber as number) === revision) !== undefined;
-}
-
-function isTemporaryRevision(revision: RevisionTag): boolean {
-    return (revision as number) < 0;
+function revisionTagForInverse(revision: RevisionTag | undefined): RevisionTag | undefined {
+    return undefined;
 }
 
 export interface Branch<TChangeset> {

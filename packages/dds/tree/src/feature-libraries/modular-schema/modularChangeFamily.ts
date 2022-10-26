@@ -16,7 +16,6 @@ import {
     FieldKey,
     UpPath,
     Value,
-    RevisionTag,
     TaggedChange,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
@@ -222,42 +221,6 @@ export class ModularChangeFamily
 
     rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void {
         anchors.applyDelta(this.intoDelta(over));
-    }
-
-    filterReferences(
-        change: FieldChangeMap,
-        shouldRemoveReference: (revision: RevisionTag) => boolean,
-    ): FieldChangeMap {
-        const filteredFields: FieldChangeMap = new Map();
-
-        for (const [field, fieldChange] of change.entries()) {
-            const filteredChange = getChangeHandler(
-                this.fieldKinds,
-                fieldChange.fieldKind,
-            ).rebaser.filterReferences(
-                fieldChange.change,
-                shouldRemoveReference,
-                (childChanges: NodeChangeset) => {
-                    if (childChanges.fieldChanges === undefined) {
-                        return childChanges;
-                    }
-                    return {
-                        ...childChanges,
-                        fieldChanges: this.filterReferences(
-                            childChanges.fieldChanges,
-                            shouldRemoveReference,
-                        ),
-                    };
-                },
-            );
-
-            filteredFields.set(field, {
-                fieldKind: fieldChange.fieldKind,
-                change: brand(filteredChange),
-            });
-        }
-
-        return filteredFields;
     }
 
     intoDelta(change: FieldChangeMap): Delta.Root {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser, AnchorSet, RevisionTag } from "../../core";
+import { ChangeRebaser, AnchorSet } from "../../core";
 import { toDelta } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { compose } from "./compose";
@@ -16,17 +16,9 @@ function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
     anchors.applyDelta(toDelta(over));
 }
 
-function filterReferences(
-    change: SequenceChangeset,
-    _shouldRemoveReference: (revision: RevisionTag) => boolean,
-): SequenceChangeset {
-    return change;
-}
-
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
     compose,
     invert,
     rebase,
     rebaseAnchors,
-    filterReferences,
 };

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, RevisionTag } from "../../core";
+import { Delta } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,
@@ -14,7 +14,6 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
-    NodeChangeReferenceFilter,
     referenceFreeFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
@@ -121,18 +120,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             }
             rebased.push(...change.slice(iChange));
             return rebased;
-        },
-        filterReferences: (
-            change: GenericChangeset,
-            _shouldRemoveReference: (revision: RevisionTag) => boolean,
-            filterChild: NodeChangeReferenceFilter,
-        ): GenericChangeset => {
-            return change.map(
-                (c: GenericChange): GenericChange => ({
-                    ...c,
-                    nodeChange: filterChild(c.nodeChange),
-                }),
-            );
         },
     }),
     encoder: {
