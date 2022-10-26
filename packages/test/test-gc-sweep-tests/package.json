@@ -81,7 +81,6 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0-103332",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
