@@ -31,6 +31,7 @@ import {
     MapTree,
     getMapTreeField,
     FieldAnchor,
+    afterChangeToken,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -204,6 +205,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             0x374 /* No cursors can be current when modifying forest */,
         );
         this.invalidateDependents();
+    }
+
+    // TODO: remove this workaround as soon as notification/eventing will be supported.
+    afterChange(): void {
+        this.invalidateDependents(afterChangeToken);
     }
 
     tryMoveCursorToNode(
@@ -452,4 +458,10 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
  */
 export function buildForest(schema: StoredSchemaRepository): IEditableForest {
     return new ObjectForest(schema);
+}
+
+// This must be used only in forestIndex and should never be exported elsewhere.
+// TODO: remove this workaround as soon as notification/eventing will be supported.
+export function afterChangeForest(forest: IEditableForest): void {
+    (forest as ObjectForest).afterChange();
 }
