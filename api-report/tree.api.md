@@ -366,6 +366,12 @@ export const enum FieldScope {
 }
 
 // @public
+export interface FieldUpPath {
+    readonly field: FieldKey;
+    readonly parent: UpPath | undefined;
+}
+
+// @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
@@ -530,6 +536,8 @@ export interface ITreeCursor {
     // (undocumented)
     getFieldLength(): number;
     // (undocumented)
+    getFieldPath(): FieldUpPath;
+    // (undocumented)
     getPath(): UpPath | undefined;
     readonly mode: CursorLocationType;
     nextField(): boolean;
@@ -551,6 +559,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
+    buildFieldAnchor(): FieldAnchor;
     clear(): void;
     // (undocumented)
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
@@ -1238,7 +1247,6 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly Unwrapped
 
 // @public
 export interface UpPath {
-    // (undocumented)
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
