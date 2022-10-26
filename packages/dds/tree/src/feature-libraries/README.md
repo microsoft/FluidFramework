@@ -28,11 +28,11 @@ Currently planned libraries for the near future include: (TODO: [roadmap](../../
 
 Longer term there are many options (these are not all planned, and is not an exhaustive list):
 
--   More Chunk formats: Optimize more common tree shapes (including identifiers, common types with dynamically sized children, sequences with width members like utf-8).
+-   More chunk formats: Optimize more common tree shapes (including identifiers, common types with dynamically sized children, sequences with variable width members like utf-8).
 -   Schema importers: We will likely want at least one tool that takes input schema files and generates the types used by the schema libraries.
     Some options are listed here, but little thought has gone into this list:
 
-    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
+    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile time typing without code gen.
     -   [json schema](https://json-schema.org/)
     -   graphQL
 
@@ -53,8 +53,8 @@ Several different DDS setups can be made with these libraries.
 
 For example, alfred (or some other service) could run a `Rebaser` sufficient to detect all conflicts, marking (or discarding) conflicted ops.
 Such a service could also optionally enforce some validation or editing permissions.
-Or conflict resolution can run fully client side.
-A service could run a `Rebaser` that outputs a stream of tree Diffs and saved tree snapshot summaries allowing lighter weight clients, and optionally granular read permissions.
+Alternatively, conflict resolution can run fully client side.
+A service could run a `Rebaser` that outputs a stream of tree diffs and saved tree snapshot summaries allowing lighter weight clients, and optionally granular read permissions.
 Services could provide additional indexes (such as history or search).
 
 Clients may or may not (depending on their `Rebaser` setup) be able to run with no actual copy of the tree in the DDS at all.
@@ -89,7 +89,7 @@ offline editing -> merge
 
 readers / platforms expecting specific formats (normalize)
 
-demand for rest APIs, GraphQL. Read, maybe even modify. App specific?
+demand for REST APIs, GraphQL. Read, maybe even modify. App specific?
 
 encode / decode libraries or mapping to json (ex: namespace prefix / escaping)
 
