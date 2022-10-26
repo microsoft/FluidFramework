@@ -37,6 +37,7 @@
     "@fluidframework/protocol-definitions": "^1.1.0"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.4.6000",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.2.0.0",

@@ -45,6 +45,7 @@
     "url": "^0.11.0"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.4.6000",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",

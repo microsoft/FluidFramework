@@ -43,6 +43,7 @@
     "idb": "^6.1.2"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.4.6000",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.0.0-internal.2.0.0",
