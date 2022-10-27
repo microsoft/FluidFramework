@@ -196,6 +196,8 @@ export interface IContainerEvents extends IEvent {
      * @remarks Listener parameters:
      *
      * - `message`: The op that was processed.
+     *
+     * @internal
      */
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
 
