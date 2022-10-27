@@ -312,7 +312,7 @@ stages:
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
               ls -la;
-              copyfiles --exclude **/node_modules/** **/memoryProfilingOutput/** memoryProfilingOutput";
+              copyfiles --exclude \"**/node_modules/** \"**/memoryProfilingOutput/**\" memoryProfilingOutput;
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
               ls -la;
