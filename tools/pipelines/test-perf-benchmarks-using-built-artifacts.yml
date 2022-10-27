@@ -300,7 +300,7 @@ stages:
         #     customCommand: 'run test:memory-profiling:copyresults'
 
         - task: Bash@3
-          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          displayName: 'Log out memory test output work dir'
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
@@ -312,9 +312,29 @@ stages:
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
               ls -la;
-              copyfiles --exclude \"**/node_modules/** \"**/memoryProfilingOutput/**\" memoryProfilingOutput;
+
+        # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
+        - task: CopyFiles@2
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput
+            contents: '**'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput
+            #cleanTargetFolder: false # Optional
+            #overWrite: false # Optional
+            #flattenFolders: false # Optional
+            #preserveTimestamp: false # Optional
+            #retryCount: 0 # Optional
+            #ignoreMakeDirErrors: false # Optional
+
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput;
               ls -la;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput;
 
