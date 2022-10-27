@@ -626,7 +626,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (!existing) {
             existingFlag = false;
         }
-        return this.loadRuntime(context, registryEntries, existingFlag, requestHandler, runtimeOptions, containerScope);
+        return this.loadRuntime({
+            context,
+            registryEntries,
+            existing: existingFlag,
+            requestHandler,
+            runtimeOptions,
+            containerScope,
+        });
     }
 
     /**
@@ -638,13 +645,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
      public static async loadRuntime(
-        context: IContainerContext,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
-        existing: boolean,
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        runtimeOptions: IContainerRuntimeOptions = {},
-        containerScope: FluidObject = context.scope,
+        params: {
+            context: IContainerContext;
+            registryEntries: NamedFluidDataStoreRegistryEntries;
+            existing: boolean;
+            requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+            runtimeOptions?: IContainerRuntimeOptions;
+            containerScope?: FluidObject;
+        },
     ): Promise<ContainerRuntime> {
+        const { context, registryEntries, existing, requestHandler } = params;
+        let { runtimeOptions, containerScope } = params;
+        if (!runtimeOptions) {
+            runtimeOptions = {};
+        }
+        if (!containerScope) {
+            containerScope = context.scope;
+        }
        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
@@ -679,7 +696,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (baseSnapshot && blobId) {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, "Attached state should have storage");
+                assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
                 return readAndParse<T>(storage, blobId);
             }
         };
@@ -699,7 +716,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async (id) => {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, "storage undefined in attached container");
+                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
                 return readAndParse(storage, id);
             },
         );
