@@ -181,7 +181,7 @@ export interface EditableField extends EditableFieldMethods, ArrayLike<Unwrapped
 
 /**
  * The declaration of the {@link EditableField} methods.
- * 
+ *
  * By splitting the method and property declarations, we can implement this interface by the `FieldProxyTarget` directly,
  * making the new declarations less error prone when using the Proxy to provide a lazy acces to the field nodes by their indices.
  */

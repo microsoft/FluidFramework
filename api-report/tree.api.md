@@ -211,7 +211,7 @@ export interface EditableField extends EditableFieldMethods, ArrayLike<Unwrapped
     readonly primaryType?: TreeSchemaIdentifier;
 }
 
-// @public (undocumented)
+// @public
 export interface EditableFieldMethods {
     getWithoutUnwrapping(index: number): EditableTree;
 }
