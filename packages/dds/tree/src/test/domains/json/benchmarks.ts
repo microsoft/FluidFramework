@@ -6,7 +6,6 @@
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { forEachNode, forEachField, ITreeCursor } from "../../../tree";
 
-
 export function sum(cursor: ITreeCursor): number {
     let total = 0;
     const value = cursor.value;
