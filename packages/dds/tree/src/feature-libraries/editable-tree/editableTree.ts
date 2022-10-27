@@ -142,9 +142,8 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
  * Use `getWithoutUnwrapping` to get a node without unwrapping.
- * The methods of this interface must be declared in {@link EditableFieldMethods}, as the `FieldProxyTarget` implements that interface.
  */
-export interface EditableField extends EditableFieldMethods, ArrayLike<UnwrappedEditableTree> {
+export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
      * The `FieldSchema` of this field.
      */
@@ -170,6 +169,12 @@ export interface EditableField extends EditableFieldMethods, ArrayLike<Unwrapped
     readonly [proxyTargetSymbol]: object;
 
     /**
+     * Gets a node of this field by its index without unwrapping.
+     * Note that the node must exists at the given index.
+     */
+    getWithoutUnwrapping(index: number): EditableTree;
+
+    /**
      * Gets an iterator iterating over the nodes (unwrapped) of this field.
      * See {@link UnwrappedEditableTree} for what does "unwrapped" mean.
      * It reads all nodes at once before the iteration starts to get a "snapshot" of this field.
@@ -177,20 +182,6 @@ export interface EditableField extends EditableFieldMethods, ArrayLike<Unwrapped
      * when the field is getting changed while iterating.
      */
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
-}
-
-/**
- * The declaration of the {@link EditableField} methods.
- *
- * By splitting the method and property declarations, we can implement this interface by the `FieldProxyTarget` directly,
- * making the new declarations less error prone when using the Proxy to provide a lazy acces to the field nodes by their indices.
- */
-export interface EditableFieldMethods {
-    /**
-     * Gets a node of this field by its index without unwrapping.
-     * Note that the node must exists at the given index.
-     */
-    getWithoutUnwrapping(index: number): EditableTree;
 }
 
 /**
@@ -503,10 +494,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-class FieldProxyTarget
-    extends ProxyTarget<FieldAnchor>
-    implements EditableFieldMethods, ArrayLike<UnwrappedEditableTree>
-{
+class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
@@ -522,6 +510,10 @@ class FieldProxyTarget
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
         this.fieldSchema = fieldSchema;
+    }
+
+    get [proxyTargetSymbol](): FieldProxyTarget {
+        return this;
     }
 
     buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
@@ -604,9 +596,10 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             } else if (keyIsValidIndex(key, target.length)) {
                 return target.proxifyNode(Number(key));
             }
-            // This maps methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
-            // It supports only the methods declared in `EditableFieldMethods`,
-            // as only they are visible for the users of the public API.
+            // This maps the methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
+            // Expected are only the methods declared in the `EditableField` interface,
+            // as only those are visible for the users of the public API.
+            // Such implicit delegation is chosen for a future array implementation in case it will be needed.
             const reflected = Reflect.get(target, key);
             if (typeof reflected === "function") {
                 return function (...args: unknown[]): unknown {
@@ -656,22 +649,29 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         target: FieldProxyTarget,
         key: string | symbol,
     ): PropertyDescriptor | undefined => {
-        // We generally don't want to allow users of the proxy to reconfigure all the properties,
-        // but it is a TypeError to return non-configurable for properties that do not exist on target,
-        // so they must return true.
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
                     return {
-                        configurable: true,
+                        configurable: false,
                         enumerable: false,
                         value: target,
+                        writable: false,
+                    };
+                case Symbol.iterator:
+                    return {
+                        configurable: false,
+                        enumerable: false,
+                        value: target[Symbol.iterator].bind(target),
                         writable: false,
                     };
                 default:
             }
         } else {
             if (editableFieldPropertySet.has(key)) {
+                // We generally don't want to allow users of the proxy to reconfigure all the properties,
+                // but it is a TypeError to return non-configurable for properties that do not exist on target,
+                // so they must return true.
                 return {
                     configurable: true,
                     enumerable: false,

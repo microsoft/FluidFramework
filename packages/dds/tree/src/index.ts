@@ -136,7 +136,6 @@ export {
     EditableTreeOrPrimitive,
     EditableTree,
     EditableField,
-    EditableFieldMethods,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
