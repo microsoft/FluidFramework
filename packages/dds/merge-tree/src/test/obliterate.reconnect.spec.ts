@@ -198,23 +198,6 @@ describe("obliterate", () => {
         helper.logger.validate();
     });
 
-    it("does not delete segment inserted between two different local obliterate ranges", () => {
-        const helper = new ReconnectTestHelper();
-
-        helper.insertText("C", 0, "A");
-        helper.obliterateRange("C", 0, 1);
-        helper.insertText("B", 0, "W");
-        helper.insertText("C", 0, "D");
-        helper.obliterateRange("C", 0, 1);
-        helper.processAllOps();
-
-        assert.equal(helper.clients.A.getText(), "W");
-        assert.equal(helper.clients.B.getText(), "W");
-        assert.equal(helper.clients.C.getText(), "W");
-
-        helper.logger.validate();
-    });
-
     it("does not delete unacked segment at start of string", () => {
         const helper = new ReconnectTestHelper();
 
@@ -245,19 +228,71 @@ describe("obliterate", () => {
         }
     });
 
-    it.skip("deletes ...", () => {
-        const helper = new ReconnectTestHelper();
+    describe("does not delete segment inserted between two different local obliterate ranges", () => {
+        it("does not delete when obliterate immediately after insert", () => {
+            const helper = new ReconnectTestHelper();
 
-        helper.insertText("C", 0, "A");
-        helper.insertText("B", 0, "X");
-        helper.obliterateRange("C", 0, 1);
-        helper.insertText("C", 0, "B");
-        helper.obliterateRange("C", 0, 1);
-        helper.processAllOps();
+            helper.insertText("C", 0, "A");
+            helper.obliterateRange("C", 0, 1);
+            helper.insertText("B", 0, "W");
+            helper.insertText("C", 0, "D");
+            helper.obliterateRange("C", 0, 1);
+            helper.processAllOps();
 
-        assert.equal(helper.clients.A.getText(), "");
-        assert.equal(helper.clients.C.getText(), "");
+            assert.equal(helper.clients.A.getText(), "W");
+            assert.equal(helper.clients.B.getText(), "W");
+            assert.equal(helper.clients.C.getText(), "W");
 
-        helper.logger.validate();
+            helper.logger.validate();
+        });
+
+        it.skip("does not delete remote insert when between local insert+obliterate", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("C", 0, "A");
+            helper.insertText("B", 0, "X");
+            helper.obliterateRange("C", 0, 1);
+            helper.insertText("C", 0, "B");
+            helper.obliterateRange("C", 0, 1);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "X");
+            assert.equal(helper.clients.C.getText(), "X");
+
+            helper.logger.validate();
+        });
+
+        it("does not delete remote insert when between local insert+obliterate", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("C", 0, "A");
+            helper.obliterateRange("C", 0, 1);
+            helper.insertText("B", 0, "B");
+            helper.insertText("C", 0, "X");
+            helper.obliterateRange("B", 0, 1);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "X");
+            assert.equal(helper.clients.B.getText(), "X");
+            assert.equal(helper.clients.C.getText(), "X");
+
+            helper.logger.validate();
+        });
+
+        it("does not delete remote insert when in middle of segment", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("C", 0, "ABC");
+            helper.obliterateRange("C", 2, 3);
+            helper.obliterateRange("C", 0, 1);
+            helper.insertText("B", 0, "X");
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "XB");
+            assert.equal(helper.clients.B.getText(), "XB");
+            assert.equal(helper.clients.C.getText(), "XB");
+
+            helper.logger.validate();
+        });
     });
 });

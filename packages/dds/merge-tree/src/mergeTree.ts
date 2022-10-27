@@ -117,11 +117,6 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
     seg.localMovedSeq = moveInfo.localMovedSeq;
 }
 
-function breakEndpointTie(seg: ISegment, seg2: ISegment): boolean {
-    // TODO
-    return true;
-}
-
 function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
     if (!a) {
         return b;
@@ -1386,6 +1381,9 @@ export class MergeTree {
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.slideAckedRemovedSegmentReferences(pendingSegment);
                 }
+                if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+                    this.moveSeqs.push(seq);
+                }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
                 }
@@ -1517,6 +1515,7 @@ export class MergeTree {
         }
         if (insertSegment.parent
             || insertSegment.removedSeq
+            || insertSegment.movedSeq !== undefined
             || insertSegment.seq !== UniversalSequenceNumber) {
             throw new Error("Cannot insert segment that has already been inserted.");
         }
@@ -1786,10 +1785,7 @@ export class MergeTree {
                 backwardExcursion(newSegment, findAdjacentMovedSegment);
                 const nearerMovedSegment = movedSegment;
 
-                if (
-                    (nearerMovedSegment && breakEndpointTie(nearerMovedSegment, newSegment)) &&
-                    (furtherMovedSegment && breakEndpointTie(newSegment, furtherMovedSegment))
-                ) {
+                if (nearerMovedSegment && furtherMovedSegment) {
                     const nearMoveInfo = toMoveInfo(nearerMovedSegment);
                     const farMoveInfo = toMoveInfo(furtherMovedSegment);
                     // The inserted segment could potentially be adjacent to two different moved regions.
@@ -1848,7 +1844,7 @@ export class MergeTree {
     private readonly moveSeqs: number[] = [];
 
     private getSmallestSeqMoveOp(): number {
-        return this.moveSeqs[0] ?? Number.MIN_SAFE_INTEGER;
+        return this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ?? Number.MIN_SAFE_INTEGER;
     }
 
     private insertingWalk(
@@ -1864,7 +1860,7 @@ export class MergeTree {
             child = children[childIndex];
             const len = this.nodeLength(child, refSeq, clientId);
             if (len === undefined) {
-                // if the seg len in undefined, the segment
+                // if the seg len is undefined, the segment
                 // will be removed, so should just be skipped for now
                 continue;
             } else {
@@ -2048,7 +2044,9 @@ export class MergeTree {
         overwrite: boolean = false,
         opArgs: IMergeTreeDeltaOpArgs,
     ): void {
-        this.moveSeqs.push(seq);
+        if (seq !== UnassignedSequenceNumber) {
+            this.moveSeqs.push(seq);
+        }
 
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
