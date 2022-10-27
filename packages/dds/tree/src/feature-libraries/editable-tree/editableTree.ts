@@ -195,9 +195,9 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
 /**
  * This is a base class for `NodeProxyTarget` and `FieldProxyTarget`, which uniformly handles cursors and anchors.
  */
-export class BaseProxyTarget {
+export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
     private readonly lazyCursor: ITreeSubscriptionCursor;
-    protected anchor?: Anchor;
+    private anchor?: T;
 
     constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         this.lazyCursor = cursor.fork();
@@ -208,31 +208,22 @@ export class BaseProxyTarget {
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
-            this.context.forest.anchors.forget(this.anchor);
+            this.forgetAnchor(this.anchor);
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
         }
     }
 
-    /**
-     * Gets the anchor of this node.
-     *
-     * The cursor must be at the parent when calling from `FieldProxyTarget`.
-     */
-    public getAnchor(): Anchor {
+    public getAnchor(): T {
         if (this.anchor === undefined) {
-            this.anchor = this.lazyCursor.buildAnchor();
+            this.anchor = this.buildAnchorFromCursor(this.lazyCursor);
             this.context.withAnchors.add(this);
         }
         return this.anchor;
     }
 
     public prepareForEdit(): void {
-        if (isFieldProxyTarget(this)) {
-            this.getFieldAnchor();
-        } else {
-            this.getAnchor();
-        }
+        this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
     }
@@ -243,9 +234,7 @@ export class BaseProxyTarget {
                 this.anchor !== undefined,
                 0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
             );
-            const result = isFieldProxyTarget(this)
-                ? this.context.forest.tryMoveCursorToField(this.getFieldAnchor(), this.lazyCursor)
-                : this.context.forest.tryMoveCursorToNode(this.anchor, this.lazyCursor);
+            const result = this.tryMoveCursorToAnchor(this.anchor, this.lazyCursor);
             assert(
                 result === TreeNavigationResult.Ok,
                 0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
@@ -254,9 +243,18 @@ export class BaseProxyTarget {
         }
         return this.lazyCursor;
     }
+
+    abstract buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): T;
+
+    abstract tryMoveCursorToAnchor(
+        anchor: T,
+        cursor: ITreeSubscriptionCursor,
+    ): TreeNavigationResult;
+
+    abstract forgetAnchor(anchor: T): void;
 }
 
-function isFieldProxyTarget(target: BaseProxyTarget): target is FieldProxyTarget {
+function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
     return target instanceof FieldProxyTarget;
 }
 
@@ -264,10 +262,22 @@ function isFieldProxyTarget(target: BaseProxyTarget): target is FieldProxyTarget
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
  */
-class NodeProxyTarget extends BaseProxyTarget {
+class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
         super(context, cursor);
+    }
+
+    buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): Anchor {
+        return cursor.buildAnchor();
+    }
+
+    tryMoveCursorToAnchor(anchor: Anchor, cursor: ITreeSubscriptionCursor): TreeNavigationResult {
+        return this.context.forest.tryMoveCursorToNode(anchor, cursor);
+    }
+
+    forgetAnchor(anchor: Anchor): void {
+        this.context.forest.anchors.forget(anchor);
     }
 
     public getType(
@@ -487,7 +497,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEditableTree> {
+class FieldProxyTarget
+    extends ProxyTarget<FieldAnchor>
+    implements ArrayLike<UnwrappedEditableTree>
+{
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
@@ -499,31 +512,26 @@ class FieldProxyTarget extends BaseProxyTarget implements ArrayLike<UnwrappedEdi
         primaryType?: TreeSchemaIdentifier,
     ) {
         assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
-        const fieldKey = cursor.getFieldKey();
-        // The cursor will be forked by super, which is currently only allowed for nodes.
-        cursor.exitField();
         super(context, cursor);
-        this.cursor.enterField(fieldKey);
-        cursor.enterField(fieldKey);
-        this.fieldKey = fieldKey;
+        this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
         this.fieldSchema = fieldSchema;
     }
 
-    public getFieldAnchor(): FieldAnchor {
-        const fieldAnchor: FieldAnchor = {
-            fieldKey: this.fieldKey,
-            parent: undefined,
-        };
-        if (this.anchor === undefined) {
-            this.cursor.exitField();
-            this.getAnchor();
-            this.cursor.enterField(this.fieldKey);
-        }
-        if (this.anchor !== this.context.forest.anchors.track(null)) {
-            fieldAnchor.parent = this.anchor;
-        }
-        return fieldAnchor;
+    buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
+        return cursor.buildFieldAnchor();
+    }
+
+    tryMoveCursorToAnchor(
+        anchor: FieldAnchor,
+        cursor: ITreeSubscriptionCursor,
+    ): TreeNavigationResult {
+        return this.context.forest.tryMoveCursorToField(anchor, cursor);
+    }
+
+    forgetAnchor(anchor: FieldAnchor): void {
+        if (anchor.parent === undefined) return;
+        this.context.forest.anchors.forget(anchor.parent);
     }
 
     readonly [index: number]: UnwrappedEditableTree;
@@ -701,10 +709,9 @@ function inProxyOrUnwrap(
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
     }
-    if (isFieldProxyTarget(target)) {
-        return adaptWithProxy(target, fieldProxyHandler);
-    }
-    return adaptWithProxy(target, nodeProxyHandler);
+    return isFieldProxyTarget(target)
+        ? adaptWithProxy(target, fieldProxyHandler)
+        : adaptWithProxy(target, nodeProxyHandler);
 }
 
 /**
@@ -765,6 +772,7 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
  */
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
     return (
-        typeof field === "object" && isFieldProxyTarget(field[proxyTargetSymbol] as BaseProxyTarget)
+        typeof field === "object" &&
+        isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
     );
 }

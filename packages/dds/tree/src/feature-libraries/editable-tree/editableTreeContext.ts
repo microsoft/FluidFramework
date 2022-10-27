@@ -10,13 +10,10 @@ import {
     rootFieldKey,
     rootFieldKeySymbol,
     moveToDetachedField,
+    FieldAnchor,
+    Anchor,
 } from "../../core";
-import {
-    BaseProxyTarget,
-    EditableField,
-    proxifyField,
-    UnwrappedEditableField,
-} from "./editableTree";
+import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -62,8 +59,8 @@ export interface EditableTreeContext {
 }
 
 export class ProxyContext implements EditableTreeContext {
-    public readonly withCursors: Set<BaseProxyTarget> = new Set();
-    public readonly withAnchors: Set<BaseProxyTarget> = new Set();
+    public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
+    public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
 
     constructor(public readonly forest: IEditableForest) {}
 

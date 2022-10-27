@@ -348,9 +348,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.enterNode(childIndex);
     }
-    getPath(): UpPath | undefined {
+    getPath(): UpPath {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
-        return this.innerCursor.getPath();
+        return this.innerCursor.getPath() ?? fail("no path when at root");
     }
     get fieldIndex(): number {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
@@ -457,7 +457,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
             this.state === ITreeSubscriptionCursorState.Current,
             0x37a /* Cursor must be current to be used */,
         );
-        return this.forest.anchors.track(this.getPath() ?? null);
+        return this.forest.anchors.track(this.getPath());
     }
 }
 
