@@ -210,6 +210,7 @@ export interface IContainerEvents extends IEvent {
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "warning", listener: (error: ContainerWarning) => void): any;
+    // @internal
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
