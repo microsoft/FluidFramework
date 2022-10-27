@@ -38,7 +38,6 @@ interface SearchContent extends ProvideSearchContent {
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
     summaryOptions: {
-        disableSummaries: true,
         summaryConfigOverrides: { state: "disabled" },
     },
     gcOptions: { gcAllowed: false },
