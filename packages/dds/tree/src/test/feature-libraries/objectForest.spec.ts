@@ -7,19 +7,19 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { ObjectForest } from "../feature-libraries/object-forest";
+import { ObjectForest } from "../../feature-libraries/object-forest";
 
 import {
     fieldSchema,
     InMemoryStoredSchemaRepository,
     StoredSchemaRepository,
-} from "../schema-stored";
+} from "../../schema-stored";
 import {
     IEditableForest,
     initializeForest,
     moveToDetachedField,
     TreeNavigationResult,
-} from "../forest";
+} from "../../forest";
 import {
     jsonNumber,
     jsonObject,
@@ -27,8 +27,8 @@ import {
     jsonRoot,
     singleJsonCursor,
     cursorToJsonObject,
-} from "../domains";
-import { recordDependency } from "../dependency-tracking";
+} from "../../domains";
+import { recordDependency } from "../../dependency-tracking";
 import {
     clonePath,
     Delta,
@@ -37,15 +37,18 @@ import {
     rootFieldKey,
     mapCursorField,
     rootFieldKeySymbol,
-} from "../tree";
-import { brand } from "../util";
+    ITreeCursor,
+} from "../../tree";
+import { brand } from "../../util";
 import {
     defaultSchemaPolicy,
     FieldKinds,
     isNeverField,
+    jsonableTreeFromCursor,
     singleTextCursor,
-} from "../feature-libraries";
-import { MockDependent } from "./utils";
+} from "../../feature-libraries";
+import { MockDependent } from "../utils";
+import { testJsonableTreeCursor } from "../cursorTestSuite";
 
 /**
  * Generic forest test suite
@@ -88,6 +91,24 @@ function testForest(
                     assert.deepEqual(copy, [data]);
                 });
             }
+        });
+
+        it("cursor use", () => {
+            //
+            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+            const content: JsonableTree = { type: jsonNumber.name, value: 1 };
+            initializeForest(forest, [singleTextCursor(content)]);
+
+            const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
+            // TODO: make type-safe
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+            forest.applyDelta(delta);
+
+            const reader = forest.allocateCursor();
+            moveToDetachedField(forest, reader);
+            assert(reader.firstNode());
+
+            assert.equal(reader.value, 2);
         });
 
         it("setValue", () => {
@@ -258,6 +279,22 @@ function testForest(
             });
         });
     });
+
+    testJsonableTreeCursor(
+        "object-forest cursor",
+        (data): ITreeCursor => {
+            const forest = factory(
+                new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+            );
+            initializeForest(forest, [singleTextCursor(data)]);
+            const cursor = forest.allocateCursor();
+            moveToDetachedField(forest, cursor);
+            assert(cursor.firstNode());
+            return cursor;
+        },
+        jsonableTreeFromCursor,
+        false,
+    );
 
     // TODO: implement and test fine grained invalidation.
 }
