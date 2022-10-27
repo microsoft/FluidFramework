@@ -15,6 +15,7 @@ export {
 } from "./audience";
 
 export {
+    IFluidBrowserPackage,
     IFluidBrowserPackageEnvironment
 } from "./browserPackage";
 
@@ -82,6 +83,7 @@ export {
     IContainerContext,
     IRuntimeFactory,
     IProvideRuntimeFactory,
+
 } from "./runtime";
 
 export {
