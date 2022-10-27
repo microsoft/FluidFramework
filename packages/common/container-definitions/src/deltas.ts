@@ -209,15 +209,32 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-/** Events emitted by a Delta Queue */
+/**
+ * Events emitted by {@link IDeltaQueue}.
+ */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
-    (event: "push" | "op", listener: (task: T) => void);
     /**
+     * TODO
+     */
+    (event: "op", listener: (task: T) => void);
+
+    /**
+     * TODO
+     */
+    (event: "op", listener: (task: T) => void);
+
+    /**
+     * TODO
+     *
      * @param count - number of events (T) processed before becoming idle
      * @param duration - amount of time it took to process elements (milliseconds).
+     *
+     * @see {@link IDeltaQueue.idle}
      */
     (event: "idle", listener: (count: number, duration: number) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Queue of ops to be sent to or processed from storage
