@@ -25,7 +25,7 @@
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 2
+      numDocs: 50
       clientStartDelayMs: 10
     out: ${docIds}
   - stage-3:
