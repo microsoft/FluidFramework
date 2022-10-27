@@ -733,6 +733,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             requestHandler,
         );
 
+        // It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
+        // at 1, so we won't see a replayed saved op with a sequence number of 0.
+        await runtime.pendingStateManager.applyStashedOpsAt(0);
+
         return runtime;
     }
 

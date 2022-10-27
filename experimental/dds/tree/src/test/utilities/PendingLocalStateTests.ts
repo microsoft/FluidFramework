@@ -229,13 +229,6 @@ export function runPendingLocalStateTests(
 			expect(countSmallTrees(tree)).to.equal(2);
 			expect(countSmallTrees(tree2)).to.equal(2);
 
-			// Tolerate `InitialElectedClientNotFound` error (TODO:#1120)
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound'
-			);
-
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
 				container: IContainer,
