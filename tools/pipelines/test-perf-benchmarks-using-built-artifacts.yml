@@ -299,6 +299,19 @@ stages:
         #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
         #     customCommand: 'run test:memory-profiling:copyresults'
 
+        # Copy files
+        - task: CopyFiles@2
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput/**\
+            #contents: '**'
+            targetFolder:  ${{ variables.buildDirectory }}/memoryProfilingOutput
+            #cleanTargetFolder: false # Optional
+            #overWrite: false # Optional
+            #flattenFolders: false # Optional
+            #preserveTimestamp: false # Optional
+            #retryCount: 0 # Optional
+            #ignoreMakeDirErrors: false # Optional
+
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
           inputs:
@@ -310,6 +323,7 @@ stages:
               npm i;
               npm run build:compile;
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
               ls -la;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput;
 
