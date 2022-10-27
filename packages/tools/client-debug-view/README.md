@@ -45,7 +45,7 @@ To run the app, navigate to the root of this package and run `npm run start:test
 
 ### Ops Stream View TODOs
 
--   Display local pending ops in Ops Steam view.
+-   Display local pending ops in Ops Stream view.
     -   The Container API does not currently make it easy to get access to pending local op state.
         We should consider making this information easier to access, and display it in our local view in a form that clearly differentiates it from other (non-pending) ops.
 -   Display (optional) complete history of ops in Ops Stream view.
