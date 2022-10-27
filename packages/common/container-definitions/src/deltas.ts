@@ -87,15 +87,13 @@ export interface IDeltaManagerEvents extends IEvent {
     /**
      * Emitted immediately after processing an incoming operation (op).
      *
-     * @remarks
-     *
-     * Note: this event is really only intended for internal use. External use is discouraged.
-     *
-     * Listener parameters:
+     * @remarks Listener parameters:
      *
      * - `message`: The op that was processed.
      *
      * - `processingTime`: TODO
+     *
+     * @internal
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
@@ -110,6 +108,8 @@ export interface IDeltaManagerEvents extends IEvent {
      * @remarks Listener parameters:
      *
      * - `latency`: TODO
+     *
+     * @internal
      */
     (event: "pong", listener: (latency: number) => void);
 
