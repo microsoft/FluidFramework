@@ -79,7 +79,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
             // Calling finishInitialization here like PureDataObject.getDataObject did, to keep the same behavior,
             // since accessing the runtime's entryPoint is how we want the data object to be retrieved going forward.
             // Without this I ran into issues with the load-existing flow not working correctly.
-            await instance.finishInitialization(true);
+            // await instance.finishInitialization(true);
             return instance;
         },
     );
