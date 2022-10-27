@@ -652,7 +652,7 @@ export interface OrderedEditSet<TChange = unknown> {
     // (undocumented)
     tryGetEditAtIndex(index: number): Edit<TChange> | undefined;
     // (undocumented)
-    tryGetEditFromIdentifier(editId: EditId): Edit<TChange> | undefined;
+    tryGetEditFromId(editId: EditId): Edit<TChange> | undefined;
     // (undocumented)
     tryGetIndexOfId(editId: EditId): number | undefined;
 }
