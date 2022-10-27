@@ -103,7 +103,7 @@ export function moveToDetachedField(
 
 /**
  * Anchor to a field.
- * This is structurally based on the parent, so it will move only as the parent moves.W
+ * This is structurally based on the parent, so it will move only as the parent moves.
  */
 export interface FieldAnchor {
     /**
@@ -152,8 +152,18 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Nodes`.
      */
     buildAnchor(): Anchor;
+
+    /**
+     * Construct a `FieldAnchor` which the IForestSubscription will keep rebased to `current`.
+     * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Fields`.
+     */
+    buildFieldAnchor(): FieldAnchor;
 
     /**
      * Current state.

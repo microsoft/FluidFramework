@@ -26,6 +26,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -74,6 +75,7 @@ export {
     initializeForest,
     FieldAnchor,
     moveToDetachedField,
+    afterChangeToken,
 } from "../forest";
 
 export {
