@@ -323,7 +323,7 @@ export interface EditCommittedEventArguments {
 // @public
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
-// @public
+// @public @deprecated
 export interface EditHandle<TChange> {
     // (undocumented)
     readonly baseHandle: FluidEditHandle;
@@ -460,7 +460,7 @@ export interface GenericTransactionPolicy {
     validateOnClose(state: SucceedingTransactionState): ChangeResult;
 }
 
-// @public
+// @public @deprecated
 function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string>;
 export { getSerializedUploadedEditChunkContents }
 export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
@@ -638,17 +638,21 @@ export interface NodeInTrait {
 // @public @sealed
 export interface OrderedEditSet<TChange = unknown> {
     readonly editIds: readonly EditId[];
-    // (undocumented)
+    // @deprecated (undocumented)
     getEditAtIndex(index: number): Promise<Edit<TChange>>;
-    // (undocumented)
+    // @deprecated (undocumented)
     getEditInSessionAtIndex(index: number): Edit<TChange>;
     // (undocumented)
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
     readonly length: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
+    // (undocumented)
+    tryGetEditAtIndex(index: number): Edit<TChange> | undefined;
+    // (undocumented)
+    tryGetEditFromId(editId: EditId): Edit<TChange> | undefined;
     // (undocumented)
     tryGetIndexOfId(editId: EditId): number | undefined;
 }

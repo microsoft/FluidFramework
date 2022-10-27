@@ -75,8 +75,10 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
 // @public
 export interface IFluidContainerEvents extends IEvent {
-    (event: "connected" | "disconnected", listener: () => void): void;
-    (event: "saved" | "dirty", listener: () => void): void;
+    (event: "connected", listener: () => void): void;
+    (event: "disconnected", listener: () => void): void;
+    (event: "saved", listener: () => void): void;
+    (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
@@ -95,7 +97,7 @@ export interface IRootDataObject {
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
-    getMyself(): M | undefined;
+    getMyself(): Myself<M> | undefined;
 }
 
 // @public
@@ -124,6 +126,11 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
+export type Myself<M extends IMember = IMember> = M & {
+    currentConnection: string;
+};
+
+// @public
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
 }> implements IRootDataObject {
@@ -146,7 +153,7 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
     protected readonly container: IContainer;
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
-    getMyself(): M | undefined;
+    getMyself(): Myself<M> | undefined;
     protected lastMembers: Map<string, M>;
     protected shouldIncludeAsMember(member: IClient): boolean;
 }

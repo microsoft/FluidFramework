@@ -388,8 +388,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
-              script: |
-                echo $(System.PullRequest.TargetBranch)
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
