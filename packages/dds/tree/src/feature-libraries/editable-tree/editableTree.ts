@@ -142,8 +142,9 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
  * Use `getWithoutUnwrapping` to get a node without unwrapping.
+ * The methods of this interface must be declared in {@link EditableFieldMethods}, as the `FieldProxyTarget` implements that interface.
  */
-export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+export interface EditableField extends EditableFieldMethods, ArrayLike<UnwrappedEditableTree> {
     /**
      * The `FieldSchema` of this field.
      */
@@ -162,12 +163,6 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly primaryType?: TreeSchemaIdentifier;
 
     /**
-     * Gets a node of this field by its index without unwrapping.
-     * Note that the node must exists at the given index.
-     */
-    getWithoutUnwrapping(index: number): EditableTree;
-
-    /**
      * Stores the target for the proxy which implements reading and writing for this sequence field.
      * The details of this object are implementation details,
      * but the presence of this symbol can be used to separate EditableTrees from other types.
@@ -182,6 +177,20 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
      * when the field is getting changed while iterating.
      */
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+}
+
+/**
+ * The declaration of the {@link EditableField} methods.
+ * 
+ * By splitting the method and property declarations, we can implement this interface by the `FieldProxyTarget` directly,
+ * making the new declarations less error prone when using the Proxy to provide a lazy acces to the field nodes by their indices.
+ */
+export interface EditableFieldMethods {
+    /**
+     * Gets a node of this field by its index without unwrapping.
+     * Note that the node must exists at the given index.
+     */
+    getWithoutUnwrapping(index: number): EditableTree;
 }
 
 /**
@@ -496,7 +505,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  */
 class FieldProxyTarget
     extends ProxyTarget<FieldAnchor>
-    implements ArrayLike<UnwrappedEditableTree>
+    implements EditableFieldMethods, ArrayLike<UnwrappedEditableTree>
 {
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
@@ -595,6 +604,9 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             } else if (keyIsValidIndex(key, target.length)) {
                 return target.proxifyNode(Number(key));
             }
+            // This maps methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
+            // It supports only the methods declared in `EditableFieldMethods`,
+            // as only they are visible for the users of the public API.
             const reflected = Reflect.get(target, key);
             if (typeof reflected === "function") {
                 return function (...args: unknown[]): unknown {

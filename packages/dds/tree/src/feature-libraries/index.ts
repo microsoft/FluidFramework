@@ -15,6 +15,7 @@ export {
 export {
     anchorSymbol,
     EditableField,
+    EditableFieldMethods,
     EditableTree,
     EditableTreeContext,
     EditableTreeOrPrimitive,

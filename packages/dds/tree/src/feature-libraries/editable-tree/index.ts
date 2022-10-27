@@ -9,6 +9,7 @@ export {
     getTypeSymbol,
     EditableTree,
     EditableField,
+    EditableFieldMethods,
     EditableTreeOrPrimitive,
     isEditableField,
     isUnwrappedNode,
