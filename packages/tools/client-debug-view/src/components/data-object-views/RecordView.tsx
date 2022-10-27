@@ -35,7 +35,13 @@ export function RecordDataView(props: RecordDataViewProps): React.ReactElement {
         <Stack>
             {entries.map(([key, value]) => (
                 <StackItem key={key}>
-                    <Accordion header={<div><b>"{key}"</b></div>}>
+                    <Accordion
+                        header={
+                            <div>
+                                <b>"{key}"</b>
+                            </div>
+                        }
+                    >
                         <DynamicDataView data={value} renderOptions={renderOptions} />
                     </Accordion>
                 </StackItem>
