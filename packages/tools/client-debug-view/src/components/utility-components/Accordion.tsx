@@ -25,7 +25,7 @@ import React from "react";
  */
 const accordionHeaderStyles: IStackItemStyles = {
     root: {
-        background: DefaultPalette.neutralLighter,
+        background: DefaultPalette.neutralLight,
         padding: 5,
     },
 };

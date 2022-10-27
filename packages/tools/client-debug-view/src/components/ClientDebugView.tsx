@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    DefaultPalette,
     IOverflowSetItemProps,
     IconButton,
     Link,
@@ -192,11 +193,15 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
     return (
         <Stack
-            tokens={{ childrenGap: 25 }}
+            tokens={{
+                // Add some spacing between the menu and the inner view
+                childrenGap: 25,
+            }}
             styles={{
                 root: {
                     height: "100%",
                     width: "400px",
+                    background: DefaultPalette.neutralLighterAlt,
                 },
             }}
         >
