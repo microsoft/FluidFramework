@@ -114,11 +114,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "pong", listener: (latency: number) => void);
 
     /**
-     * TODO
-     *
-     * @remarks Listener parameters:
-     *
-     * - `latency`: TODO
+     * @deprecated No replacement API recommended.
      */
     (event: "processTime", listener: (latency: number) => void);
 

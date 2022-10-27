@@ -263,6 +263,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "allSentOpsAckd", listener: () => void): any;
     // @internal
     (event: "pong", listener: (latency: number) => void): any;
+    // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string) => void): any;
