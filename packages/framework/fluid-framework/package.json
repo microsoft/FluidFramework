@@ -66,6 +66,43 @@
     "version": "2.0.0-internal.2.2.0",
     "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
     "baselineVersion": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "EnumDeclaration_ContainerErrorType": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "EnumDeclaration_DriverErrorType": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_ICriticalContainerError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISequenceDeltaRange": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "forwardCompat": false
+      }
+    }
   }
 }
