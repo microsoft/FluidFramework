@@ -107,7 +107,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
         await instance.finishInitialization(existing);
     }
 
-    return runtime;
+    return { instance, runtime };
 }
 
 /**
@@ -162,7 +162,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-        const runtime = await createDataObject(
+        const { runtime } = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -266,7 +266,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         context: IFluidDataStoreContextDetached,
         initialState?: I["InitialState"],
     ): Promise<TObj> {
-        const runtime = await createDataObject(
+        const { instance, runtime } = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -277,6 +277,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
         await context.attachRuntime(this, runtime);
 
-        return runtime.entryPoint?.get() as unknown as TObj;
+        return instance;
     }
 }
