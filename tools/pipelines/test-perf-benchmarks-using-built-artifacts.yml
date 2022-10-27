@@ -201,7 +201,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}
-            customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+            customCommand: 'install $(Initialize.testPackageTgz)'
             customRegistry: 'useNpmrc'
 
         # Download Test Files
@@ -325,7 +325,7 @@ stages:
               npm install @ff-internal/aria-logger;
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/benchmarkOutput;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput;
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
