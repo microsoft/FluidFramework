@@ -62,6 +62,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
 - [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [getMyself changed to return Myself object](#getMyself-changed-to-return-Myself-object)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -134,6 +135,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+### getMyself changed to return Myself object
+The `getMyself` method from the ServiceAudience class was updated to return a Myself object instead of an IMember. The Myself type extends the IMember interface to add a `currentConnection` string property.
 
 # 2.0.0-internal.1.3.0
 
@@ -1512,6 +1516,18 @@ The `logger` property of `ContainerContext` has been marked deprecated. Loggers 
 
 ### ContainerErrorType.clientSessionExpiredError added
 We have session expiry for GC purposes. Once the session has expired, we want to throw this new clientSessionExpiredError to clear out any stale in-memory data that may still be on the container.
+
+### Tagged telemetry props will be sent to ITelemetryBaseLogger.send
+As of the 0.40 release, [telemetry properties on logging events may be tagged](#itelemetryproperties-may-be-tagged-for-privacy-purposes),
+meaning the property value may have the shape `{ value: foo, tag: someString }` instead of merely a primitive value.
+Unwrapped/untagged values are still supported.
+See the updated type definition of `ITelemetryProperties` in @fluidframework/common-definitions v0.21 (and v0.20.1).
+This was a breaking change that requires an update to `ITelemetryBaseLogger.send` to handle these tagged values.
+
+The 0.45 release introduces some cases where tagged properties are logged, so before integrating that release
+hosts should take care to properly handle tagged properties by inspecting the tag and logging, hashing, or redacting the value.
+See [this code](https://github.com/microsoft/FluidFramework/blob/main/packages/utils/telemetry-utils/src/logger.ts#L79-L107)
+for an example of how to handle tags.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

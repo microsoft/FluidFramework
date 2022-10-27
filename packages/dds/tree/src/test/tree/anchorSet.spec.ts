@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursorNew } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import { Anchor, AnchorSet, clonePath, Delta, FieldKey, JsonableTree, UpPath } from "../../tree";
 import { brand } from "../../util";
 
@@ -31,7 +31,7 @@ describe("AnchorSet", () => {
 
         const insert = {
             type: Delta.MarkType.Insert,
-            content: [node, node].map(singleTextCursorNew),
+            content: [node, node].map(singleTextCursor),
         };
 
         anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 4])));
@@ -66,10 +66,25 @@ describe("AnchorSet", () => {
         anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
         assert.equal(anchors.locate(anchor4), undefined);
         assert.equal(anchors.locate(anchor1), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor4));
+        assert.doesNotThrow(() => anchors.forget(anchor1));
         checkEquality(anchors.locate(anchor2), path2);
         checkEquality(anchors.locate(anchor3), path3);
-        assert.doesNotThrow(() => anchors.forget(anchor4));
         assert.throws(() => anchors.locate(anchor4));
+        assert.throws(() => anchors.locate(anchor1));
+
+        checkEquality(anchors.locate(anchor2), path2);
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+        checkEquality(anchors.locate(anchor2), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor2));
+        assert.throws(() => anchors.locate(anchor2));
+
+        // The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
+        checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])));
+        checkEquality(anchors.locate(anchor3), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor3));
+        assert.throws(() => anchors.locate(anchor3));
     });
 
     it("can rebase over move", () => {

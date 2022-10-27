@@ -11,9 +11,6 @@ export {
     InvalidationToken,
     recordDependency,
     SimpleDependee,
-} from "./dependency-tracking";
-
-export {
     EmptyKey,
     FieldKey,
     TreeType,
@@ -22,6 +19,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -36,15 +34,11 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
     AnchorLocator,
-} from "./tree";
-
-export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -53,10 +47,6 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-} from "./forest";
-
-export {
     LocalFieldKey,
     GlobalFieldKey,
     TreeSchemaIdentifier,
@@ -71,7 +61,15 @@ export {
     SchemaData,
     SchemaPolicy,
     SchemaDataAndPolicy,
-} from "./schema-stored";
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+    ChangeRebaser,
+    ICheckout,
+    TransactionResult,
+    FieldAnchor,
+} from "./core";
 
 export {
     Brand,
@@ -93,15 +91,9 @@ export {
     JsonCompatibleObject,
 } from "./util";
 
-export { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "./change-family";
-
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
-
-export { ICheckout, TransactionResult } from "./checkout";
-
 export {
     cursorToJsonObject,
-    JsonCursor,
+    singleJsonCursor,
     jsonArray,
     jsonBoolean,
     jsonNull,
@@ -113,12 +105,8 @@ export {
 
 export {
     buildForest,
-    TextCursor,
-    jsonableTreeFromCursor,
-    singleTextCursor,
     emptyField,
     neverTree,
-    FieldKinds,
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
@@ -145,31 +133,20 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
+    EditableField,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
     defaultSchemaPolicy,
-    singleTextCursorNew,
-    jsonableTreeFromCursorNew,
+    jsonableTreeFromCursor,
     PrimitiveValue,
-    SequenceEditBuilder,
-    SequenceChangeset,
-    NodePath,
-    PlacePath,
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    OpId,
-    Skip,
-    ChangesetTag,
-    Effects,
-    Tiebreak,
-    ProtoNode,
-    GapCount,
-    HasOpId,
-    NodeCount,
+    IDefaultEditBuilder,
+    ValueFieldEditBuilder,
+    OptionalFieldEditBuilder,
+    SequenceFieldEditBuilder,
+    SequenceField,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

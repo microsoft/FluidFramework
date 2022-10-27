@@ -46,12 +46,13 @@
     "@fluidframework/routerlicious-driver": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/server-local-server": "^0.1038.2000-98212",
+    "@fluidframework/server-local-server": "^0.1038.2000",
     "@fluidframework/tinylicious-driver": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/view-adapters": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.5.0-103719",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",

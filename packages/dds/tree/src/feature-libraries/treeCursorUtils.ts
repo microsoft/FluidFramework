@@ -8,34 +8,63 @@ import {
     FieldKey,
     TreeType,
     UpPath,
-    Value,
     CursorLocationType,
     ITreeCursorSynchronous,
-    NodeData,
-} from "../tree";
+    Value,
+    FieldUpPath,
+} from "../core";
 import { fail } from "../util";
+
+/**
+ * {@link ITreeCursorSynchronous} that can return the underlying node objects.
+ */
+export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
+    /**
+     * Gets the underlying object for the current node.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    getNode(): TNode;
+}
 
 /**
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  */
-export function singleStackTreeCursor<TNode extends NodeData>(
+export function singleStackTreeCursor<TNode>(
     root: TNode,
     adapter: CursorAdapter<TNode>,
-): ITreeCursorSynchronous {
+): CursorWithNode<TNode> {
     return new StackCursor(root, adapter);
 }
 
 /**
- * Provides functionality to allow `singleStackTreeCursor` to implement a cursor.
+ * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
  */
 export interface CursorAdapter<TNode> {
+    /**
+     * @returns the value of the given node.
+     */
+    value(node: TNode): Value;
+    /**
+     * @returns the type of the given node.
+     */
+    type(node: TNode): TreeType;
+    /**
+     * @returns the keys for non-empty fields on the given node.
+     */
     keysFromNode(node: TNode): readonly FieldKey[];
+    /**
+     * @returns the child nodes for the given node and key.
+     */
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
 }
 
 type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
 
-abstract class SynchronousCursor {
+/**
+ * A class that satisfies part of the ITreeCursorSynchronous implementation.
+ */
+export abstract class SynchronousCursor {
     public get pending(): false {
         return false;
     }
@@ -50,10 +79,7 @@ abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  */
-class StackCursor<TNode extends NodeData>
-    extends SynchronousCursor
-    implements ITreeCursorSynchronous
-{
+class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -118,11 +144,25 @@ class StackCursor<TNode extends NodeData>
 
     public getPath(): UpPath | undefined {
         assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
-        // Even since in nodes mode
-        const length = this.indexStack.length;
+        return this.getOffsetPath(0);
+    }
+
+    public getFieldPath(): FieldUpPath {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        return {
+            field: this.getFieldKey(),
+            parent: this.getOffsetPath(1),
+        };
+    }
+
+    private getOffsetPath(offset: number): UpPath | undefined {
+        const length = this.indexStack.length - offset;
         if (length === 0) {
             return undefined; // At root
         }
+
+        assert(length > 0, "invalid offset to above root");
+        assert(length % 2 === 0, "offset path must point to node not field");
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -237,25 +277,36 @@ class StackCursor<TNode extends NodeData>
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
     }
 
-    private getNode(): TNode {
+    public getNode(): TNode {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
         return (this.siblings as TNode[])[this.index];
     }
 
+    private getParent(): TNode | undefined {
+        // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
+        return this.getStackedNode(this.indexStack.length - 1);
+    }
+
     private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
-        const parent = this.getStackedNode(this.indexStack.length - 1);
+        const parent = this.getParent() ?? fail("cannot getField when at root");
         const key: FieldKey = this.getFieldKey();
         const field = this.adapter.getFieldFromNode(parent, key);
         return field;
     }
 
+    /**
+     * @returns the value of the current node
+     */
     public get value(): Value {
-        return this.getNode().value;
+        return this.adapter.value(this.getNode());
     }
 
+    /**
+     * @returns the type of the current node
+     */
     public get type(): TreeType {
-        return this.getNode().type;
+        return this.adapter.type(this.getNode());
     }
 
     public get fieldIndex(): number {
