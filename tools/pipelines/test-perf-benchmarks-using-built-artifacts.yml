@@ -229,22 +229,6 @@ stages:
               tar -xvf $(Pipeline.Workspace)/test-files/${{ variables.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        - task: Bash@3
-          name: Print_dir
-          displayName: Print_dir
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo Initialize package
-              echo ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-
-              echo cat
-              cat ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
-              echo ls -la ${{ variables.testWorkspace }}/
-              ls -la ${{ variables.testWorkspace }}/
-
 
         # # Run performance tests
         # # - Add custom npm feeds to the tool's .npmrc file
@@ -325,6 +309,8 @@ stages:
               npm install @ff-internal/aria-logger;
               npm i;
               npm run build:compile;
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
+              ls -la;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput;
 
         - task: PublishPipelineArtifact@1
