@@ -116,7 +116,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
             const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
             schemaBuffer = await handle.get();
         } else {
-            assert(await services.contains(stringKey), "EditManager data is required in summary");
+            assert(await services.contains(stringKey), 0x42b /* EditManager data is required in summary */);
             schemaBuffer = await services.readBlob(stringKey);
         }
 
@@ -125,7 +125,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
         // invalid means and is about to be overwritten.
         assert(
             this.editManager.isEmpty(),
-            "There should not already be stored EditManager data when loading from summary",
+            0x42c /* There should not already be stored EditManager data when loading from summary */,
         );
 
         const dataString = bufferToString(schemaBuffer, "utf-8");
