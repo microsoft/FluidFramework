@@ -300,6 +300,7 @@ type ObjectField = MapTree[];
  * (which can be undefined when cleared), instead of sub-classing it.
  */
 class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
+
     state: ITreeSubscriptionCursorState;
     /**
      * @param forest - forest this cursor navigates
@@ -315,6 +316,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
                 ? ITreeSubscriptionCursorState.Cleared
                 : ITreeSubscriptionCursorState.Current;
     }
+
     buildFieldAnchor(): FieldAnchor {
         const path = this.getFieldPath();
         const anchor =
