@@ -213,7 +213,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     /**
      * TODO
      */
-    (event: "op", listener: (task: T) => void);
+    (event: "push", listener: (task: T) => void);
 
     /**
      * TODO

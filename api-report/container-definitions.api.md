@@ -288,7 +288,7 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 
 // @public
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
-    (event: "op", listener: (task: T) => void): any;
+    (event: "push", listener: (task: T) => void): any;
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
