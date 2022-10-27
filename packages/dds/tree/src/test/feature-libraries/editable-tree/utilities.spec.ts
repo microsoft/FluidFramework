@@ -104,11 +104,16 @@ describe("editable-tree utilities", () => {
         assert.equal(keyIsValidIndex(0, 0), false);
         assert.equal(keyIsValidIndex("0", 1), true);
         assert.equal(keyIsValidIndex("0", 0), false);
+        assert.equal(keyIsValidIndex("0.0", 1), false);
         assert.equal(keyIsValidIndex(-1, 2), false);
         assert.equal(keyIsValidIndex("-1", 2), false);
         assert.equal(keyIsValidIndex("-1.5", 2), false);
         assert.equal(keyIsValidIndex("1.5", 2), false);
         assert.equal(keyIsValidIndex("1.x", 2), false);
         assert.equal(keyIsValidIndex("-1.x", 2), false);
+        assert.equal(keyIsValidIndex(NaN, 1), false);
+        assert.equal(keyIsValidIndex(Infinity, 1), false);
+        assert.equal(keyIsValidIndex("NaN", 1), false);
+        assert.equal(keyIsValidIndex("Infinity", 1), false);
     });
 });

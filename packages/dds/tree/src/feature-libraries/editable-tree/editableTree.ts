@@ -368,13 +368,10 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return proxifiedField;
     }
 
-    *[Symbol.iterator](): IterableIterator<EditableField> {
-        const fields = this.getFieldKeys().map(
-            (fieldKey) => this.proxifyField(fieldKey, false) as EditableField,
-        );
-        for (const field of fields) {
-            yield field;
-        }
+    [Symbol.iterator](): IterableIterator<EditableField> {
+        return this.getFieldKeys()
+            .map((fieldKey) => this.proxifyField(fieldKey, false) as EditableField)
+            .values();
     }
 }
 
@@ -564,18 +561,27 @@ class FieldProxyTarget
     /**
      * Gets array of unwrapped nodes.
      */
-    private get asArray(): UnwrappedEditableTree[] {
+    private asArray(): UnwrappedEditableTree[] {
         return mapCursorField(this.cursor, (c) =>
             inProxyOrUnwrap(new NodeProxyTarget(this.context, c), true),
         );
     }
 
-    *[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
-        for (const node of this.asArray) {
-            yield node;
-        }
+    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
+        return this.asArray().values();
     }
 }
+
+/**
+ * The set of `EditableField` properties exposed by `fieldProxyHandler`.
+ * Any other properties are considered to be non-existing.
+ */
+const editableFieldPropertySet = new Set<PropertyKey>([
+    "length",
+    "fieldKey",
+    "fieldSchema",
+    "primaryType",
+]);
 
 /**
  * Returns a Proxy handler, which together with a {@link FieldProxyTarget} implements a basic read/write access to
@@ -584,7 +590,7 @@ class FieldProxyTarget
 const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> = {
     get: (target: FieldProxyTarget, key: string | symbol, receiver: object): unknown => {
         if (typeof key === "string") {
-            if (key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }) {
+            if (editableFieldPropertySet.has(key)) {
                 return Reflect.get(target, key);
             } else if (keyIsValidIndex(key, target.length)) {
                 return target.proxifyNode(Number(key));
@@ -622,10 +628,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 default:
             }
         } else {
-            if (
-                keyIsValidIndex(key, target.length) ||
-                key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }
-            ) {
+            if (keyIsValidIndex(key, target.length) || editableFieldPropertySet.has(key)) {
                 return true;
             }
         }
@@ -656,7 +659,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 default:
             }
         } else {
-            if (key in { length: true, fieldKey: true, fieldSchema: true, primaryType: true }) {
+            if (editableFieldPropertySet.has(key)) {
                 return {
                     configurable: true,
                     enumerable: false,
@@ -705,7 +708,6 @@ function inProxyOrUnwrap(
                 target.cursor,
                 nodeType.name,
             );
-            target.free();
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
     }
@@ -723,26 +725,26 @@ function inProxyOrUnwrap(
  * otherwise always returns the field as {@link EditableField}.
  */
 export function proxifyField(
-    context: EditableTreeContext,
+    context: ProxyContext,
     fieldSchema: FieldSchema,
     fieldKey: FieldKey,
     cursor: ITreeSubscriptionCursor,
     unwrap: boolean,
 ): UnwrappedEditableField {
     if (!unwrap) {
-        const targetSequence = new FieldProxyTarget(context as ProxyContext, fieldSchema, cursor);
+        const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
     const fieldKind = getFieldKind(fieldSchema);
     if (fieldKind.multiplicity === Multiplicity.Sequence) {
-        const targetSequence = new FieldProxyTarget(context as ProxyContext, fieldSchema, cursor);
+        const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
         return inProxyOrUnwrap(targetSequence, unwrap);
     }
     const length = cursor.getFieldLength();
     assert(length <= 1, 0x3c8 /* invalid non sequence */);
     if (length === 1) {
         cursor.enterNode(0);
-        const target = new NodeProxyTarget(context as ProxyContext, cursor);
+        const target = new NodeProxyTarget(context, cursor);
         const proxifiedNode = inProxyOrUnwrap(target, unwrap);
         cursor.exitNode();
         return proxifiedNode;
