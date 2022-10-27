@@ -1916,7 +1916,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (this._orderSequentiallyCalls === 0) {
+        // We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
+        if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
     }

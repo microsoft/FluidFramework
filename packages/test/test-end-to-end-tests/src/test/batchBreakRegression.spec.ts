@@ -173,19 +173,13 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             });
 
         await runAndValidateBatch(provider, proxyDsf, this.timeout());
-        assert.strictEqual(batchesSent, 2, "expected 2 batches to be sent");
+        assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 
         {
             const batch = sentMessages[0];
-            assert.strictEqual(batch.length, 10, "expected 10 messages");
+            assert.strictEqual(batch.length, 11, "expected 11 messages");
             assert.strictEqual(batch[0].metadata?.batch, true, "first message should contain batch metadata");
-            assert.strictEqual(batch[9].metadata?.batch, false, "last message should contain batch metadata");
-        }
-
-        {
-            const batch = sentMessages[1];
-            assert.strictEqual(batch.length, 1, "expected 1 message");
-            assert.strictEqual(batch[0].metadata?.batch, undefined, "message should not contain batch metadata");
+            assert.strictEqual(batch[10].metadata?.batch, false, "last message should contain batch metadata");
         }
     });
 
