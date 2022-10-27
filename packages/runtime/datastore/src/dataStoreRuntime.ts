@@ -118,7 +118,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             context,
             sharedObjectRegistry,
             existing,
-            async (rt) => requestFluidObject(rt, "/"));
+            async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/"));
     }
 
     /**

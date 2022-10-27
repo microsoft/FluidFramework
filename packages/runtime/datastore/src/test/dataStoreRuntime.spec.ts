@@ -28,7 +28,7 @@ describe("FluidDataStoreRuntime Tests", () => {
                 context,
                 registry,
                 /* existing */ false,
-                entrypointInitializationFn ?? (async (rt) => requestFluidObject(rt, "/")));
+                entrypointInitializationFn ?? (async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/")));
     }
 
     beforeEach(() => {
@@ -62,7 +62,7 @@ describe("FluidDataStoreRuntime Tests", () => {
             dataStoreContext,
             sharedObjectRegistry,
             false,
-            async (rt) => { throw new Error("This shouldn't be called during the test"); });
+            async (dataStoreRuntime) => { throw new Error("This shouldn't be called during the test"); });
         assert.throws(codeBlock,
             (e) => validateAssertionError(e,
                 "Id cannot contain slashes. DataStoreContext should have validated this."));
@@ -108,7 +108,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 
     it("entryPoint is initialized correctly", async () => {
         const myObj: FluidObject = { fakeProp: "fakeValue" };
-        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry, async (rt) => myObj);
+        const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry, async (dsRuntime) => myObj);
         assert((await dataStoreRuntime.entryPoint?.get()) === myObj, "entryPoint was not initialized");
     });
 });

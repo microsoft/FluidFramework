@@ -62,13 +62,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
                 return maybeRouter.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(
+        return new runtimeClass(
             context,
             this.ISharedObjectRegistry,
             existing,
-            async (rt) => this.instantiate(context, rt, existing));
-
-        return runtime;
+            async (dataStoreRuntime) => this.instantiate(context, dataStoreRuntime, existing));
     }
 
     public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {

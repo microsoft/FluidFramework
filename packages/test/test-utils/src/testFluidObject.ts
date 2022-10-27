@@ -186,20 +186,18 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 return maybeRouter.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(
+        return new runtimeClass(
             context,
             dataTypes,
             existing,
-            async (rt: IFluidDataStoreRuntime) => TestFluidObject.load(
-                rt,
-                // This works because rt is runtimeClass (which is a FluidDataStoreRuntime and thus implements
-                // IFluidDataStoreChannel) passing itself to the function.
-                rt as FluidDataStoreRuntime,
+            async (dataStoreRuntime: IFluidDataStoreRuntime) => TestFluidObject.load(
+                dataStoreRuntime,
+                // This works because 'runtime' is an instance of runtimeClass (which is a FluidDataStoreRuntime and
+                // thus implements IFluidDataStoreChannel) which passes itself as the parameter to this function.
+                dataStoreRuntime as FluidDataStoreRuntime,
                 context,
                 factoryEntriesMapForObject,
                 existing,
             ));
-
-        return runtime;
     }
 }
