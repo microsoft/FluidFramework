@@ -61,6 +61,17 @@ Other clients will not be affected.
 The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
 
+# 2.0.0-internal.2.1.0
+
+## 2.0.0-internal.2.1.0 Upcoming changes
+- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+
+### Deprecated ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+## 2.0.0-internal.2.1.0 Breaking changes
+
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
