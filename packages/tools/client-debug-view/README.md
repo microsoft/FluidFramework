@@ -24,6 +24,16 @@ npm i @fluid-tools/client-debug-view -D
 This library is intended to be consumed as a component in an existing React app.
 The suggested use pattern is to hide the `ClientDebugView` component behind some dev/debug-only flag, and allow developers to toggle it on as needed to analyze / adjust local state.
 
+## Working in the package
+
+### Test Sandbox App
+
+This package has a simple testing app that sets up a Container with some simple data for testing the debug view, as well as some interactive controls for testing live editing / collaboration scenarios.
+
+To run the app, navigate to the root of this package and run `npm run start:test-app`.
+
+-   This will launch a local [Tinylicious](https://fluidframework.com/docs/testing/tinylicious/) service and serve the app at <http://localhost:8080/>.
+
 ## Library TODOs
 
 -   More default data object visualizers should be added.
