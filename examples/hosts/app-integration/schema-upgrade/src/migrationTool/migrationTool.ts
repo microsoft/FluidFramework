@@ -110,10 +110,6 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         this.taskManager.complete(migrateTaskName);
     }
 
-    public connected(): boolean {
-        return this.runtime.connected;
-    }
-
     protected async initializingFirstTime() {
         const quorum = Quorum.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);
@@ -146,10 +142,6 @@ export class MigrationTool extends DataObject implements IMigrationTool {
             if (key === newContainerIdKey) {
                 this.emit("migrated");
             }
-        });
-
-        this.runtime.on("connected", () => {
-            this.emit("connected");
         });
 
         const taskManagerHandle = this.root.get<IFluidHandle<ITaskManager>>(taskManagerKey);

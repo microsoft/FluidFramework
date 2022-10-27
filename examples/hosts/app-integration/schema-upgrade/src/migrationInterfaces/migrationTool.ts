@@ -15,7 +15,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 export interface IMigrationToolEvents extends IEvent {
-    (event: "stopping" | "migrating" | "migrated" | "connected", listener: () => void);
+    (event: "stopping" | "migrating" | "migrated", listener: () => void);
 }
 
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
@@ -64,9 +64,4 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
      * Completes the migration task to indicate to other clients the migration is complete.
      */
     completeMigrationTask(): void;
-
-    /**
-     * Whether the runtime is currently connected.
-     */
-    connected(): boolean;
 }
