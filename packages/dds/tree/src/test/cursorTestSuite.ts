@@ -128,6 +128,7 @@ export function testJsonableTreeCursor<T>(
         // Use text cursor to provide input data
         return dataFromCursor(singleTextCursor(data));
     }
+
     function factory(data: JsonableTree): ITreeCursor {
         return cursorFactory(dataFromJsonableTree(data));
     }
@@ -138,7 +139,7 @@ export function testJsonableTreeCursor<T>(
                     const convertedData = dataFromJsonableTree(data);
                     const cursor = cursorFactory(convertedData);
                     const convertedClone = dataFromCursor(cursor);
-                    // This assumes `T` is works with deepEqual.
+                    // This assumes `T` works with deepEqual.
                     assert.deepEqual(convertedClone, convertedData);
                     const clone = jsonableTreeFromCursor(cursor);
                     assert.deepEqual(clone, data);
