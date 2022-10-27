@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { averageTwoValues, sumDirect } from "./benchmarks";
+import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
+import { generateCanada } from "./canada";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -76,3 +78,43 @@ export function jsObjectBench(
         });
     }
 }
+
+function extractCoordinatesFromCanadaDirect(
+    // TODO: export Canada type and use instead of any.
+    directObj: any,
+    calculate: (x: number, y: number) => void,
+): void {
+    for (const feature of directObj.features) {
+        for (const coordinates of feature.geometry.coordinates) {
+            for (const [x, y] of coordinates) {
+                calculate(x, y);
+            }
+        }
+    }
+}
+
+function extractAvgValsFromTwitterDirect(
+    directObj: TwitterJson,
+    calculate: (x: number, y: number) => void,
+): void {
+    for (const status of directObj.statuses) {
+        calculate(status.retweet_count, status.favorite_count);
+    }
+}
+
+const canada = generateCanada(
+    // Use the default (large) data set for benchmarking, otherwise use a small dataset.
+    isInPerformanceTestingMode ? undefined : [2, 10],
+);
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+
+describe("Direct Object", () => {
+    jsObjectBench([
+        { name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
+    ]);
+    jsObjectBench([
+        { name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },
+    ]);
+});

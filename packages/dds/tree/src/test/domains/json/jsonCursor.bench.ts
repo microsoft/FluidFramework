@@ -28,8 +28,7 @@ import {
 } from "../../../core";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterJson, TwitterStatus } from "./twitter";
-import { jsObjectBench } from "./jsDirectObject";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -223,41 +222,9 @@ function extractAvgValsFromTwitter(
     cursor.exitField();
 }
 
-function extractCoordinatesFromCanadaDirect(
-    // TODO: export Canada type and use instead of any.
-    directObj: any,
-    calculate: (x: number, y: number) => void,
-): void {
-    for (const feature of directObj.features) {
-        for (const coordinates of feature.geometry.coordinates) {
-            for (const [x, y] of coordinates) {
-                calculate(x, y);
-            }
-        }
-    }
-}
-
-function extractAvgValsFromTwitterDirect(
-    directObj: TwitterJson,
-    calculate: (x: number, y: number) => void,
-): void {
-    for (const status of directObj.statuses) {
-        calculate(status.retweet_count, status.favorite_count);
-    }
-}
-
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
-});
-
-describe("Direct Object", () => {
-    jsObjectBench([
-        { name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
-    ]);
-    jsObjectBench([
-        { name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },
-    ]);
 });
