@@ -85,11 +85,15 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
 
     /**
-     * TODO
+     * Emitted immediately after processing an incoming operation (op).
      *
-     * @remarks Listener parameters:
+     * @remarks
      *
-     * - `message`: TODO
+     * Note: this event is really only intended for internal use. External use is discouraged.
+     *
+     * Listener parameters:
+     *
+     * - `message`: The op that was processed.
      *
      * - `processingTime`: TODO
      */
