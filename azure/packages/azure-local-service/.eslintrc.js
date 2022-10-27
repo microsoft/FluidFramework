@@ -7,7 +7,7 @@ module.exports = {
     extends: [require.resolve("@fluidframework/eslint-config-fluid")],
     plugins: ["eslint-plugin-jsdoc"],
     parserOptions: {
-        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+        project: ["./tsconfig.json"],
     },
     rules: {
         // Require jsdoc/tsdoc comments on public/exported API items.
