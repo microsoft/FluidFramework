@@ -23,6 +23,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove iframe-driver](#remove-iframe-driver)
 - [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
+- [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 
 ### Remove iframe-driver
 The iframe-driver package was deprecated in 2.0.0-internal.1.3.0 and has now been removed.
@@ -55,6 +56,10 @@ sharedMap.set("key1", "1"); // executing this statement will cause an exception 
 Other clients will not be affected.
 
 **As we are planning to enable this feature by default, we are advising our partners to use the `IContainerRuntimeOptions.enableOpReentryCheck` option to identify existing code using this pattern and to let us know in case the proposed API behavior is problematic.**
+
+### Remove ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
 
 # 2.0.0-internal.2.0.0
 
