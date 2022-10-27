@@ -299,18 +299,18 @@ stages:
         #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
         #     customCommand: 'run test:memory-profiling:copyresults'
 
-        # Copy files
-        - task: CopyFiles@2
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput/**\
-            #contents: '**'
-            targetFolder:  ${{ variables.buildDirectory }}/memoryProfilingOutput
-            #cleanTargetFolder: false # Optional
-            #overWrite: false # Optional
-            #flattenFolders: false # Optional
-            #preserveTimestamp: false # Optional
-            #retryCount: 0 # Optional
-            #ignoreMakeDirErrors: false # Optional
+        # # Copy files
+        # - task: CopyFiles@2
+        #   inputs:
+        #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput/**\
+        #     #contents: '**'
+        #     targetFolder:  ${{ variables.buildDirectory }}/memoryProfilingOutput
+        #     #cleanTargetFolder: false # Optional
+        #     #overWrite: false # Optional
+        #     #flattenFolders: false # Optional
+        #     #preserveTimestamp: false # Optional
+        #     #retryCount: 0 # Optional
+        #     #ignoreMakeDirErrors: false # Optional
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
