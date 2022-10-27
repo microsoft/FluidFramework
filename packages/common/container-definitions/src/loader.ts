@@ -191,11 +191,11 @@ export interface IContainerEvents extends IEvent {
     (event: "warning", listener: (error: ContainerWarning) => void);
 
     /**
-     * TODO
+     * Emitted immediately after processing an incoming operation (op).
      *
      * @remarks Listener parameters:
      *
-     * - `message`: TODO
+     * - `message`: The op that was processed.
      */
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
 
