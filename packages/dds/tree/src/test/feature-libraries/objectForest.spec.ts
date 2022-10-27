@@ -93,24 +93,6 @@ function testForest(
             }
         });
 
-        it("cursor use", () => {
-            //
-            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree = { type: jsonNumber.name, value: 1 };
-            initializeForest(forest, [singleTextCursor(content)]);
-
-            const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-            // TODO: make type-safe
-            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
-            forest.applyDelta(delta);
-
-            const reader = forest.allocateCursor();
-            moveToDetachedField(forest, reader);
-            assert(reader.firstNode());
-
-            assert.equal(reader.value, 2);
-        });
-
         it("setValue", () => {
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree = { type: jsonNumber.name, value: 1 };
