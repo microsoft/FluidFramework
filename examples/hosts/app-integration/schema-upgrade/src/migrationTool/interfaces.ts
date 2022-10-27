@@ -18,4 +18,5 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     proposeVersion(newVersion: string): Promise<void>;
     volunteerForMigration(): Promise<boolean>;
     haveMigrationTask(): boolean;
+    completeMigration(): void;
 }
