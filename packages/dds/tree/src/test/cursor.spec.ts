@@ -516,16 +516,20 @@ export function testJsonableTreeCursor(
                                 type: brand("Bar"),
                                 fields: { [EmptyKey]: [{ type: brand("Baz") }] },
                             },
+                            {
+                                type: brand("Bar"),
+                                fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+                            },
                         ],
                     },
                 });
                 cursor.enterField(brand("a"));
-                cursor.enterNode(0);
+                cursor.enterNode(1);
                 cursor.enterField(EmptyKey);
                 const initialPath = {
                     parent,
                     parentField: "a",
-                    parentIndex: 0,
+                    parentIndex: 1,
                 };
                 assert.deepEqual(cursor.getFieldPath(), {
                     parent: initialPath,
