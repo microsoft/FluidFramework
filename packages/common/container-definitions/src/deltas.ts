@@ -128,7 +128,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `details` ({@link IConnectionDetails}): TODO
+     * - `details`: TODO
      *
      * - `opsBehind`: TODO
      */
