@@ -302,7 +302,7 @@ stages:
         # Copy files
         - task: CopyFiles@2
           inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput/**
+            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput
             #contents: '**'
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput
             #cleanTargetFolder: false # Optional
