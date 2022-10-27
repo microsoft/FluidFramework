@@ -323,7 +323,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param localOpMetadata - The local metadata associated with the op.
      */
     protected rollback(op: any, localOpMetadata: ICellLocalOpMetadata) {
-        if (op.type === "set" || op.type === "delete") {
+        if (op.type === "setCell" || op.type === "deleteCell") {
             if (localOpMetadata.previousValue === undefined) {
                 this.deleteCore();
             } else {

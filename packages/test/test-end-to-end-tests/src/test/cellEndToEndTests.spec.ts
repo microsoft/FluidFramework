@@ -322,11 +322,12 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedCell.get(), "old");
-        assert.equal(changedEventData[0], "new");
-        assert.equal(changedEventData[1], "last");
-        // rollback
+        assert.equal(changedEventData[0], "old");
+        assert.equal(changedEventData[1], "new");
         assert.equal(changedEventData[2], "last");
+        // rollback
         assert.equal(changedEventData[3], "new");
+        assert.equal(changedEventData[4], "old");
     });
 
     it("Should rollback delete", async () => {
