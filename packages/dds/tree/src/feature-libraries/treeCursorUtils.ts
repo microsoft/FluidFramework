@@ -185,7 +185,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
         path = {
             parent: path,
-            parentIndex: this.index,
+            parentIndex: offset === 0 ? this.index : this.getStackedNodeIndex(length),
             parentField: this.getStackedFieldKey(length - 1),
         };
         return path;
