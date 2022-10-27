@@ -312,9 +312,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly closed: boolean;
 
     /**
-     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
-     * Closing container in this state results in data loss for user.
-     * Container usually gets into this situation due to loss of connectivity.
+     * Whether or not there there are any local changes that have not been saved.
+     *
+     * @remarks
+     *
+     * Closing the Container in this state results in data loss for user.
+     * The Container usually gets into this situation due to loss of connectivity.
      */
     readonly isDirty: boolean;
 
