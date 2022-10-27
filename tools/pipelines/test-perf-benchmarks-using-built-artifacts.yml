@@ -336,11 +336,11 @@ stages:
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
               ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput;
               ls -la;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput;
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
           inputs:
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryProfilingOutput'
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput'
             artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()
