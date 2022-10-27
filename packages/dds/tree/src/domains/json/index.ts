@@ -13,4 +13,4 @@ export {
     jsonNull,
     jsonBoolean,
     jsonRoot
-}from "./jsonDomainSchema";
+} from "./jsonDomainSchema";

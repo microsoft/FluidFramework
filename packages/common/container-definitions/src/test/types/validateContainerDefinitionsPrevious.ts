@@ -1288,26 +1288,26 @@ use_old_InterfaceDeclaration_IRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
+* "VariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidBrowserPackage():
     TypeOnly<typeof old.isFluidBrowserPackage>;
-declare function use_current_RemovedVariableDeclaration_isFluidBrowserPackage(
+declare function use_current_VariableDeclaration_isFluidBrowserPackage(
     use: TypeOnly<typeof current.isFluidBrowserPackage>);
-use_current_RemovedVariableDeclaration_isFluidBrowserPackage(
+use_current_VariableDeclaration_isFluidBrowserPackage(
     get_old_VariableDeclaration_isFluidBrowserPackage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
+* "VariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
 */
-declare function get_current_RemovedVariableDeclaration_isFluidBrowserPackage():
+declare function get_current_VariableDeclaration_isFluidBrowserPackage():
     TypeOnly<typeof current.isFluidBrowserPackage>;
 declare function use_old_VariableDeclaration_isFluidBrowserPackage(
     use: TypeOnly<typeof old.isFluidBrowserPackage>);
 use_old_VariableDeclaration_isFluidBrowserPackage(
-    get_current_RemovedVariableDeclaration_isFluidBrowserPackage());
+    get_current_VariableDeclaration_isFluidBrowserPackage());
 
 /*
 * Validate forward compat by using old type in place of current type
