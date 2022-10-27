@@ -100,7 +100,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
     /**
-     * TODO
+     * @deprecated Please use the "saved" event instead.
      */
     (event: "allSentOpsAckd", listener: () => void);
 

@@ -258,6 +258,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
+    // @deprecated (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
     (event: "pong", listener: (latency: number) => void): any;
     (event: "processTime", listener: (latency: number) => void): any;
