@@ -1,21 +1,27 @@
-import { ISharedTree } from "../../../shared-tree";
-import { Anchor, FieldKey } from "../../../tree";
-import { brand } from "../../../util";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { IClient } from "@fluid-example/bubblebench-common";
+import { Anchor, brand, FieldKey, ISharedTree } from "@fluid-internal/tree";
 import { Bubble } from "./Bubble";
 import { iBubbleSchema, int32Schema } from "./schema";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./SharedTreeSequenceHelper";
 
-export class Client {
+export class Client implements IClient {
     static clientIdFieldKey: FieldKey = brand("clientId");
     static colorFieldKey: FieldKey = brand("color");
     static bubblesFieldKey: FieldKey = brand("bubbles");
 
     private readonly treeHelper: SharedTreeNodeHelper;
     readonly bubbleSeqeunceHelper: SharedTreeSequenceHelper;
-    private readonly _bubbles: Bubble[];
+    readonly bubbles: Bubble[];
 
-    constructor(public readonly tree: ISharedTree, public readonly anchor: Anchor) {
+    constructor(
+        public readonly tree: ISharedTree,
+        public readonly anchor: Anchor,
+    ) {
         this.treeHelper = new SharedTreeNodeHelper(tree, anchor);
         this.bubbleSeqeunceHelper = new SharedTreeSequenceHelper(
             tree,
@@ -23,7 +29,7 @@ export class Client {
             Client.bubblesFieldKey,
         );
 
-        this._bubbles = this.bubbleSeqeunceHelper
+        this.bubbles = this.bubbleSeqeunceHelper
             .getAllAnchors()
             .map((bubbleAnchor) => new Bubble(this.tree, bubbleAnchor));
     }
@@ -42,11 +48,13 @@ export class Client {
         this.treeHelper.setFieldValue(Client.colorFieldKey, value);
     }
 
-    public get bubbles() {
-        return this._bubbles;
-    }
-
-    public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number }) {
+    public increaseBubbles(bubble: {
+        x: number;
+        y: number;
+        r: number;
+        vx: number;
+        vy: number;
+    }) {
         const newBubbleJsonableTree = {
             type: iBubbleSchema.name,
             fields: {
@@ -58,15 +66,18 @@ export class Client {
             },
         };
         this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
-        this._bubbles.push(
-            new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)),
+        this.bubbles.push(
+            new Bubble(
+                this.tree,
+                this.bubbleSeqeunceHelper.getAnchor(this.bubbles.length),
+            ),
         );
     }
 
     public decreaseBubbles() {
-        if (this._bubbles.length > 1) {
+        if (this.bubbles.length > 1) {
             this.bubbleSeqeunceHelper.pop();
-            this._bubbles.pop();
+            this.bubbles.pop();
         }
     }
 }
