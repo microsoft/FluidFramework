@@ -327,6 +327,6 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
           inputs:
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput'
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput'
             artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()
