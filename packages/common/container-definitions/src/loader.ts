@@ -396,7 +396,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      *
      * @alpha
      */
-    readonly clientId?: string;
+    readonly clientId?: string | undefined;
 
     /**
      * Tells if container is in read-only mode.
