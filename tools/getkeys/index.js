@@ -165,7 +165,7 @@ async function getClient() {
 
     // Disabling fallback to REST client while we decide how to streamline the getkeys tool
 
-    // const primary = AzCliKeyVaultClient.get();
+    // const primary = await AzCliKeyVaultClient.get();
     // if (primary !== undefined) {
     //     console.log("Using Azure CLI");
     //     return primary;
