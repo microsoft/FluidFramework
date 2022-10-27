@@ -4,14 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 
 import {
     EmptyKey,
     FieldKey,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     mapCursorFields,
     CursorLocationType,
+    rootFieldKeySymbol,
+    symbolFromKey,
+    setGenericTreeField,
 } from "../tree";
 import { brand } from "../util";
 
@@ -24,20 +28,37 @@ export const cursorTestCases: [string, JsonableTree][] = [
     ["string with escaped characters", { type: brand("Foo"), value: '\\"\b\f\n\r\t' }],
     ["string with emoticon", { type: brand("Foo"), value: "😀" }],
     [
-        "nested",
+        "local field",
         {
             type: brand("Foo"),
             fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] },
         },
     ],
     [
-        "multiple fields",
+        "global field",
+        {
+            type: brand("Foo"),
+            globalFields: { x: [{ type: brand("Bar") }] },
+        },
+    ],
+    [
+        "multiple local fields",
         {
             type: brand("Foo"),
             fields: {
                 a: [{ type: brand("Bar") }],
                 b: [{ type: brand("Baz") }],
             },
+        },
+    ],
+    [
+        "global and local fields",
+        {
+            type: brand("Foo"),
+            fields: {
+                a: [{ type: brand("Bar") }],
+            },
+            globalFields: { a: [{ type: brand("Baz") }] },
         },
     ],
     [
@@ -100,6 +121,7 @@ export function testJsonableTreeCursor(
     cursorName: string,
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
+    testRooted = true,
 ): void {
     describe(`${cursorName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
@@ -116,10 +138,13 @@ export function testJsonableTreeCursor(
             }
         });
 
-        it("up from root", () => {
-            const cursor = factory({ type: brand("Foo") });
-            assert.throws(() => cursor.exitNode());
-        });
+        // TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
+        if (testRooted) {
+            it("up from root", () => {
+                const cursor = factory({ type: brand("Foo") });
+                assert.throws(() => cursor.exitNode());
+            });
+        }
 
         describe("keys", () => {
             const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
@@ -422,8 +447,34 @@ export function testJsonableTreeCursor(
             });
         });
 
-        describe("getPath() returns correct path for", () => {
-            it(`first node in a root trait`, () => {
+        describe("getPath() and getFieldPath()", () => {
+            const parent = testRooted
+                ? undefined
+                : {
+                      parent: undefined,
+                      parentField: rootFieldKeySymbol,
+                      parentIndex: 0,
+                  };
+
+            it("at root", () => {
+                const cursor = factory({
+                    type: brand("Foo"),
+                });
+                assert.deepEqual(cursor.getPath(), parent);
+            });
+
+            it("getFieldPath in root field", () => {
+                const cursor = factory({
+                    type: brand("Foo"),
+                });
+                cursor.enterField(brand("key"));
+                assert.deepEqual(cursor.getFieldPath(), {
+                    parent,
+                    field: "key",
+                });
+            });
+
+            it("first node in a root field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: { key: [{ type: brand("Bar"), value: 0 }] },
@@ -431,13 +482,13 @@ export function testJsonableTreeCursor(
                 cursor.enterField(brand("key"));
                 cursor.firstNode();
                 assert.deepEqual(cursor.getPath(), {
-                    parent: undefined,
+                    parent,
                     parentField: brand<FieldKey>("key"),
                     parentIndex: 0,
                 });
             });
 
-            it(`node in a root trait`, () => {
+            it("node in a root field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: {
@@ -450,13 +501,13 @@ export function testJsonableTreeCursor(
                 cursor.enterField(brand("key"));
                 cursor.enterNode(1);
                 assert.deepEqual(cursor.getPath(), {
-                    parent: undefined,
+                    parent,
                     parentField: brand<FieldKey>("key"),
                     parentIndex: 1,
                 });
             });
 
-            it(`first node in a nested trait`, () => {
+            it("in a nested field", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: {
@@ -469,37 +520,69 @@ export function testJsonableTreeCursor(
                     },
                 });
                 cursor.enterField(brand("a"));
-                assert.equal(cursor.firstNode(), true);
+                cursor.enterNode(0);
                 cursor.enterField(EmptyKey);
-                assert.equal(cursor.firstNode(), true);
+                const initialPath = {
+                    parent,
+                    parentField: "a",
+                    parentIndex: 0,
+                };
+                assert.deepEqual(cursor.getFieldPath(), {
+                    parent: initialPath,
+                    field: EmptyKey,
+                });
+                cursor.enterNode(0);
                 assert.deepEqual(cursor.getPath(), {
-                    parent: {
-                        parent: undefined,
-                        parentField: brand<FieldKey>("a"),
-                        parentIndex: 0,
-                    },
+                    parent: initialPath,
                     parentField: EmptyKey,
                     parentIndex: 0,
                 });
             });
         });
 
-        for (const [name, data] of cursorTestCases) {
-            const restrictedKeys: FieldKey[] = [
+        describe("key tests", () => {
+            const testGlobalKey = symbolFromKey(brand("testGlobalKey"));
+            const testKeys: FieldKey[] = [
                 brand("__proto__"),
                 brand("toString"),
                 brand("toFixed"),
                 brand("hasOwnProperty"),
+                EmptyKey,
+                testGlobalKey,
+                rootFieldKeySymbol,
             ];
+            const unrelatedKey: LocalFieldKey = brand("unrelated");
+            const unrelatedGlobalKey: GlobalFieldKey = brand("unrelatedGlobal");
+            for (const key of testKeys) {
+                it(`returns no values for key: ${key.toString()}`, () => {
+                    const trees: JsonableTree[] = [
+                        // Test an empty tree, and one with unrelated fields
+                        { type: brand("Foo") },
+                        {
+                            type: brand("Foo"),
+                            fields: { [unrelatedKey]: [{ type: brand("Foo") }] },
+                            globalFields: { [unrelatedGlobalKey]: [{ type: brand("Foo") }] },
+                        },
+                    ];
+                    for (const data of trees) {
+                        const cursor = factory({ type: brand("Foo") });
+                        cursor.enterField(key);
+                        assert.equal(cursor.getFieldLength(), 0);
+                    }
+                });
 
-            it(`returns no values for retricted keys on ${name} tree`, () => {
-                for (const key of restrictedKeys) {
-                    const cursor = factory(data);
+                it(`handles values for key: ${key.toString()}`, () => {
+                    const tree: JsonableTree = { type: brand("Foo") };
+                    const child: JsonableTree[] = [{ type: brand("Bar") }];
+                    setGenericTreeField(tree, key, child);
+                    const cursor = factory(tree);
                     cursor.enterField(key);
-                    assert.equal(cursor.getFieldLength(), 0);
-                }
-            });
-        }
+                    assert.equal(cursor.getFieldLength(), 1);
+                    cursor.enterNode(0);
+                    assert.equal(cursor.type, "Bar");
+                });
+            }
+        });
     });
 }
 

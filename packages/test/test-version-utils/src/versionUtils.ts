@@ -169,6 +169,11 @@ export async function ensureInstalled(requested: string, packageList: string[], 
 
     await ensureModulePath(version, modulePath);
 
+    const adjustedPackageList = [...packageList];
+    if (versionHasMovedSparsedMatrix(version)) {
+        adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
+    }
+
     // Release the __dirname but lock the modulePath so we can do parallel installs
     const release = await lock(modulePath, { retries: { forever: true } });
     try {
@@ -190,7 +195,7 @@ export async function ensureInstalled(requested: string, packageList: string[], 
             );
             await new Promise<void>((resolve, reject) =>
                 exec(
-                    `npm i --no-package-lock ${packageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
+                    `npm i --no-package-lock ${adjustedPackageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
@@ -296,4 +301,9 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
 
     // eslint-disable-next-line max-len
     return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
+}
+
+export function versionHasMovedSparsedMatrix(version: string): boolean {
+    // SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
+    return version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0");
 }
