@@ -50,12 +50,18 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
 
     /**
      * Volunteer to perform the migration.
-     * @returns A promise which resolves when the local client has been selected to perform the migration.  The
-     * migration may have already been completed prior to being selected.
+     * @returns A promise which resolves true when the local client has been selected to perform the migration.
+     * resolves false if the migration was already completed by another client.
      */
     volunteerForMigration(): Promise<boolean>;
+
     /**
      * Whether the local client is selected to perform the migration.
      */
     haveMigrationTask(): boolean;
+
+    /**
+     * Completes the migration task to indicate to other clients the migration is complete.
+     */
+    completeMigrationTask(): void;
 }
