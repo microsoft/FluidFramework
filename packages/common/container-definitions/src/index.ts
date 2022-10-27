@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -10,6 +9,7 @@
  * @packageDocumentation
  */
 
+/* eslint-disable no-restricted-syntax */
 export * from "./audience";
 export * from "./browserPackage";
 export * from "./deltas";
