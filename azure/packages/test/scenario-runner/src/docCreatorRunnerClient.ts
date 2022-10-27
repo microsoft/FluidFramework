@@ -12,7 +12,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
+import { getLogger, loggerP } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
 
 export interface DocCreatorRunnerConfig {
@@ -137,6 +137,9 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
     }
 
     process.send?.(id);
+
+    const scenarioLogger = await loggerP;
+    await scenarioLogger.flush();
 }
 
 main().catch((error) => {

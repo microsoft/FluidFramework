@@ -13,7 +13,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
+import { getLogger, loggerP } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
 
 export interface DocLoaderRunnerConfig {
@@ -132,6 +132,9 @@ async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<
             { start: true, end: true, cancel: "generic" },
         );
     }
+
+    const scenarioLogger = await loggerP;
+    await scenarioLogger.flush();
 }
 
 main().catch((error) => {

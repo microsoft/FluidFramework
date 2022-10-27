@@ -42,7 +42,6 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 
     async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
         const baseFlushP = this.baseLogger?.flush();
-
         if (this.error && runInfo !== undefined) {
             const logs = this.logs;
             const outputDir = `${__dirname}/output/${crypto
