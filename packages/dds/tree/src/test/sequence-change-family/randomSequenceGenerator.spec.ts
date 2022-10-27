@@ -58,7 +58,7 @@ describe("generateRandomChange", () => {
                                 {
                                     type: "Modify",
                                     fields: {
-                                            foo: [
+                                        foo: [
                                             1,
                                             {
                                                 type: "Delete",

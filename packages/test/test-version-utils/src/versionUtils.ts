@@ -101,7 +101,7 @@ export function resolveVersion(requested: string, installed: boolean) {
     }
 
     if (installed) {
-        // Check the install directory instad of asking NPM for it.
+        // Check the install directory instead of asking NPM for it.
         const files = readdirSync(baseModulePath, { withFileTypes: true });
         let found: string | undefined;
         files.map((dirent) => {
@@ -116,32 +116,26 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
         throw new Error(`No matching version found in ${baseModulePath}`);
     } else {
-        let result = execSync(
+        const result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
             { encoding: "utf8" },
         );
-        // if we are requesting an x.x.0-0 prerelease and failed the first try, try
-        // again using the virtualPatch schema
-        if (result === "") {
-            const requestedVersion = new semver.SemVer(requested.substring(requested.indexOf("^") + 1));
-            if (requestedVersion.patch === 0 && requestedVersion.prerelease.length > 0) {
-                const retryVersion = `^${requestedVersion.major}.${requestedVersion.minor}.1000-0`;
-                result = execSync(
-                    `npm v @fluidframework/container-loader@"${retryVersion}" version --json`,
-                    { encoding: "utf8" },
-                );
-            }
+        if (result === "" || result === undefined) {
+            throw new Error(`No version published as ${requested}`);
         }
 
         try {
-            const versions: string | string[] = JSON.parse(result);
+            const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-            if (!version) { throw new Error(`No version found for ${requested}`); }
-            resolutionCache.set(requested, version);
-            return version;
+            if (version) {
+                resolutionCache.set(requested, version);
+                return version;
+            }
         } catch (e) {
             throw new Error(`Error parsing versions for ${requested}`);
         }
+
+        throw new Error(`No version found for ${requested}`);
     }
 }
 
@@ -169,6 +163,11 @@ export async function ensureInstalled(requested: string, packageList: string[], 
 
     await ensureModulePath(version, modulePath);
 
+    const adjustedPackageList = [...packageList];
+    if (versionHasMovedSparsedMatrix(version)) {
+        adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
+    }
+
     // Release the __dirname but lock the modulePath so we can do parallel installs
     const release = await lock(modulePath, { retries: { forever: true } });
     try {
@@ -190,7 +189,7 @@ export async function ensureInstalled(requested: string, packageList: string[], 
             );
             await new Promise<void>((resolve, reject) =>
                 exec(
-                    `npm i --no-package-lock ${packageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
+                    `npm i --no-package-lock ${adjustedPackageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
@@ -279,8 +278,10 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 export function internalSchema(publicVersion: string, internalVersion: string, requested: number | string): string {
     if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
     if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
-    if (publicVersion === "2.0.0" && internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion >= "2.0.0" &&
+        internalVersion < "3.0.0" && requested === -2) { return `^1.0.0-0`; }
 
+    // if the version number is for the older version scheme before 1.0.0
     if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
         const lastPrereleaseVersion = new semver.SemVer("0.59.0");
         const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
@@ -288,12 +289,25 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
     }
 
     let parsedVersion;
+    let semverInternal: string = internalVersion;
+
+    // applied for all the baseVersion passed as 2.0.0-internal-3.0.0 or greater in 2.0.0 internal series
+    if (internalVersion > publicVersion && requested <= -2) {
+        const version = internalVersion.split(".");
+        semverInternal = (parseInt(version[0], 10) + ((requested as number) + 1)).toString().concat(".0.0");
+    }
+
     try {
-        parsedVersion = new semver.SemVer(internalVersion);
+        parsedVersion = new semver.SemVer(semverInternal);
     } catch (err: unknown) {
         throw new Error(err as string);
     }
 
     // eslint-disable-next-line max-len
     return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
+}
+
+export function versionHasMovedSparsedMatrix(version: string): boolean {
+    // SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
+    return version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0");
 }

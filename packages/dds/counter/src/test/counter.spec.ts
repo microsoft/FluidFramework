@@ -14,6 +14,13 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISharedCounter, SharedCounter } from "..";
+import { CounterFactory } from "../counterFactory";
+
+class TestSharedCounter extends SharedCounter {
+    public testApplyStashedOp(content: unknown) {
+        this.applyStashedOp(content);
+    }
+}
 
 describe("SharedCounter", () => {
     let testCounter: ISharedCounter;
@@ -64,6 +71,17 @@ describe("SharedCounter", () => {
                 testCounter.increment(-3);
                 assert.ok(fired1, "The event for first increment was not fired");
                 assert.ok(fired2, "The event for second increment was not fired");
+            });
+        });
+
+        describe("applyStashedOp", () => {
+            it("Immediately applies the op's increment locally", () => {
+                const amt = 7;
+                const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+                const op = { type: "increment", incrementAmount: amt };
+                const counter1 = new TestSharedCounter("testCounter1", dataStoreRuntime1, CounterFactory.Attributes);
+                counter1.testApplyStashedOp(op);
+                assert.equal(counter1.value, amt);
             });
         });
 

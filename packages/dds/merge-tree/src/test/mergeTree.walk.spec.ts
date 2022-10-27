@@ -32,15 +32,16 @@ describe("MergeTree walks", () => {
             undefined);
         for (let i = 1; i < MaxNodesInBlock * MaxNodesInBlock; i++) {
             const text = i.toString();
-            insertText(
+            insertText({
                 mergeTree,
-                mergeTree.getLength(UniversalSequenceNumber, localClientId),
-                UniversalSequenceNumber,
-                localClientId,
-                UniversalSequenceNumber,
+                pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UniversalSequenceNumber,
                 text,
-                undefined,
-                undefined);
+                props: undefined,
+                opArgs: undefined,
+            });
             initialText += text;
         }
     });

@@ -10,8 +10,8 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
+import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -67,7 +67,16 @@ function elapsedMicroseconds(trace: Trace) {
     return trace.trace().duration * 1000;
 }
 
-export class Client {
+/**
+ * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
+ * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
+ * they need for rebasing their ops on reconnection.
+ *
+ * @internal
+ */
+export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
+
+export class Client extends TypedEventEmitter<IClientEvents> {
     public measureOps = false;
     public accumTime = 0;
     public localTime = 0;
@@ -103,6 +112,7 @@ export class Client {
         public readonly logger: ITelemetryLogger,
         options?: PropertySet,
     ) {
+        super();
         this._mergeTree = new MergeTree(options);
     }
 
@@ -717,6 +727,32 @@ export class Client {
      * of the current sequence number. This is desirable when rebasing operations for reconnection.
      *
      * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
+     * the current sequence number, returns undefined.
+     */
+    public rebasePositionWithoutSegmentSlide(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number,
+    ): number | undefined {
+        assert(localSeq <= this._mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        const { clientId } = this.getCollabWindow();
+        const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
+        if (segment === undefined && offset === undefined) {
+            return;
+        }
+
+        // if segment is undefined, it slid off the string
+        assert(segment !== undefined, "No segment found");
+
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        return this.findReconnectionPosition(segment, localSeq) + offset;
+    }
+
+    /**
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     *
+     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
      * the current sequence number, the returned position will align with the position of a reference given
      * `SlideOnRemove` semantics.
      *
@@ -823,7 +859,11 @@ export class Client {
             }
 
             if (newOp) {
-                const newSegmentGroup: SegmentGroup = { segments: [], localSeq: segmentGroup.localSeq };
+                const newSegmentGroup: SegmentGroup = {
+                    segments: [],
+                    localSeq: segmentGroup.localSeq,
+                    refSeq: this.getCollabWindow().currentSeq,
+                };
                 segment.segmentGroups.enqueue(newSegmentGroup);
                 this._mergeTree.pendingSegments!.push(newSegmentGroup);
                 opList.push(newOp);
@@ -937,6 +977,7 @@ export class Client {
             shortRemoteClientId);
     }
 
+    private lastNormalizationRefSeq = 0;
     /**
      * Given an pending operation and segment group, regenerate the op, so it
      * can be resubmitted
@@ -947,6 +988,13 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
+        const rebaseTo = this.getCollabWindow().currentSeq;
+        if (rebaseTo !== this.lastNormalizationRefSeq) {
+            this.emit("normalize", this);
+            this._mergeTree.normalizeSegmentsOnRebase();
+            this.lastNormalizationRefSeq = rebaseTo;
+        }
+
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

@@ -6,9 +6,7 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IClient, IClientConfiguration, ITokenClaims, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
@@ -19,6 +17,8 @@ import {
     IConnectionStateHandler,
     createConnectionStateHandlerCore,
 } from "../connectionStateHandler";
+import { Audience } from "../audience";
+import { ProtocolHandler } from "../protocol";
 
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
@@ -35,8 +35,7 @@ describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
     let handlerInputs: IConnectionStateHandlerInputs;
     let connectionStateHandler: IConnectionStateHandler;
-    let connectionStateHandlerWait: IConnectionStateHandler;
-    let protocolHandler: ProtocolOpHandler;
+    let protocolHandler: ProtocolHandler;
     let shouldClientJoinWrite: boolean;
     let connectionDetails: IConnectionDetails;
     let connectionDetails2: IConnectionDetails;
@@ -65,6 +64,16 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Yield the event loop because the outbound op will be processed asynchronously.
         await yieldEventLoop();
+    }
+
+    function createHandler(connectedRaisedWhenCaughtUp: boolean) {
+        const handler = createConnectionStateHandlerCore(
+            connectedRaisedWhenCaughtUp,
+            handlerInputs,
+            deltaManagerForCatchingUp as any,
+            undefined);
+        handler.initProtocol(protocolHandler);
+        return handler;
     }
 
     before(() => {
@@ -119,11 +128,15 @@ describe("ConnectionStateHandler Tests", () => {
             },
             scopes: [],
         };
-        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
+        protocolHandler = new ProtocolHandler(
+            { minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }, // attributes
+            { members: [], proposals: [], values: [] }, // quorumSnapshot
+            (key, value) => 0, // sendProposal
+            new Audience(),
+        );
         shouldClientJoinWrite = false;
         handlerInputs = {
             maxClientLeaveWaitTime: expectedTimeout,
-            quorumClients: () => protocolHandler.quorum,
             shouldClientJoinWrite: () => shouldClientJoinWrite,
             logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
             connectionStateChanged: () => { },
@@ -132,22 +145,11 @@ describe("ConnectionStateHandler Tests", () => {
 
         deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
 
-        connectionStateHandler = createConnectionStateHandlerCore(
-            false,
-            handlerInputs,
-            deltaManagerForCatchingUp as any,
-            undefined);
-        connectionStateHandler.initProtocol(protocolHandler);
-
-        connectionStateHandlerWait = createConnectionStateHandlerCore(
-            true,
-            handlerInputs,
-            deltaManagerForCatchingUp as any,
-            undefined);
-        connectionStateHandlerWait.initProtocol(protocolHandler);
+        connectionStateHandler = createHandler(
+            false); // connectedRaisedWhenCaughtUp
 
         connectionStateHandler_receivedAddMemberEvent =
-            (id: string) => { protocolHandler.quorum.addMember(id, {} as any as ISequencedClient); };
+            (id: string) => { protocolHandler.quorum.addMember(id, { client: {} } as any as ISequencedClient); };
         connectionStateHandler_receivedRemoveMemberEvent =
             (id: string) => { protocolHandler.quorum.removeMember(id); };
     });
@@ -161,10 +163,12 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should move to connected after catching up for read client", async () => {
-        connectionStateHandler = connectionStateHandlerWait;
+        connectionStateHandler = createHandler(
+            true); // connectedRaisedWhenCaughtUp
+
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in Disconnected state");
-            connectionStateHandlerWait.receivedConnectEvent(client.mode, connectionDetails);
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in CatchingUp state");
         deltaManagerForCatchingUp.catchUp();
@@ -189,7 +193,9 @@ describe("ConnectionStateHandler Tests", () => {
 
     it("Should move to connected state after catching up for write client", async () => {
         client.mode = "write";
-        connectionStateHandler = connectionStateHandlerWait;
+        connectionStateHandler = createHandler(
+            true); // connectedRaisedWhenCaughtUp
+
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in Disconnected state");
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
@@ -208,7 +214,12 @@ describe("ConnectionStateHandler Tests", () => {
 
     it("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
         // swap out quorumClients fn for one that returns undefined at first
-        handlerInputs.quorumClients = () => undefined;
+        // ConnectionStateManager without initialized protocol
+        connectionStateHandler = createConnectionStateHandlerCore(
+            false, // connectedRaisedWhenCaughtUp,
+            handlerInputs,
+            deltaManagerForCatchingUp as any,
+            undefined);
 
         client.mode = "write";
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -217,9 +228,11 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in connecting state");
 
-        // Restore quorumClients fn to return the test quorum object
-        handlerInputs.quorumClients = () => protocolHandler.quorum;
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+
+        // init protocol
+        connectionStateHandler.initProtocol(protocolHandler);
+
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
     });

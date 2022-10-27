@@ -35,6 +35,7 @@ describe("fluid-runner from command line", () => {
                 `--inputFile=${snapshot}`,
                 `--outputFile=${outputFilePath}`,
                 `--telemetryFile=${telemetryFile}`,
+                `--telemetryFormat=CSV`,
             ], { encoding: "utf-8" });
 
             assert.strictEqual(exportFile.status, 0,

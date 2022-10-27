@@ -228,6 +228,9 @@ iframe[name='google_conversion_frame'] {
   position: relative;
   a {
     color: $banner-link-color;
+    &:visited {
+      color: $visited-link-color;
+    }
   }
 }
 

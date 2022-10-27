@@ -4,15 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import {
+    ConfigTypes,
+    IConfigProviderBase,
+    loggerToMonitoringContext,
+    mixinMonitoringContext,
+    MockLogger,
+} from "@fluidframework/telemetry-utils";
 import { BatchManager, BatchMessage } from "../batchManager";
 import { CompressionAlgorithms } from "..";
 
 describe("BatchManager", () => {
-    beforeEach(() => {
-    });
+    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+        getRawConfig: (name: string): ConfigTypes => settings[name],
+    }));
+
+    const getMonitoringContext = (settings: Record<string, ConfigTypes>) =>
+        loggerToMonitoringContext(
+            mixinMonitoringContext(new MockLogger(), configProvider(settings)) as unknown as MockLogger);
+
+    const defaultMonitoringContext = getMonitoringContext({});
 
     const softLimit = 1024;
+    const hardLimit = 950 * 1024;
 
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
@@ -20,7 +34,7 @@ describe("BatchManager", () => {
 
     it("BatchManager's soft limit: a bunch of small messages", () => {
         const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-        const batchManager = new BatchManager(new TelemetryUTLogger(), softLimit);
+        const batchManager = new BatchManager(defaultMonitoringContext, hardLimit, softLimit);
 
         // Can push one large message
         assert.equal(batchManager.push(message), true);
@@ -48,7 +62,7 @@ describe("BatchManager", () => {
 
     it("BatchManager's soft limit: single large message", () => {
         const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-        const batchManager = new BatchManager(new TelemetryUTLogger(), softLimit);
+        const batchManager = new BatchManager(defaultMonitoringContext, hardLimit, softLimit);
 
         // Can push one large message, even above soft limit
         assert.equal(batchManager.push(message), true);
@@ -71,8 +85,8 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: no soft limit", () => {
-        const batchManager = new BatchManager(new TelemetryUTLogger());
-        const third = Math.floor(batchManager.limit / 3) + 1;
+        const batchManager = new BatchManager(defaultMonitoringContext, hardLimit);
+        const third = Math.floor(hardLimit / 3) + 1;
         const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
 
         // Can push one large message, even above soft limit
@@ -103,10 +117,10 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: soft limit is higher than hard limit", () => {
-        const batchManager = new BatchManager(new TelemetryUTLogger(), BatchManager.limit * 2);
-        const twoThird = Math.floor(batchManager.limit * 2 / 3);
+        const batchManager = new BatchManager(defaultMonitoringContext, hardLimit, hardLimit * 2);
+        const twoThird = Math.floor(hardLimit * 2 / 3);
         const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
-        const largeMessage = { contents: generateStringOfSize(batchManager.limit + 1) } as any as BatchMessage;
+        const largeMessage = { contents: generateStringOfSize(hardLimit + 1) } as any as BatchMessage;
 
         // Can't push very large message, above hard limit
         assert.equal(batchManager.push(largeMessage), false);
@@ -126,7 +140,8 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: compresses when configured and criteria met", () => {
-        const batchManager = new BatchManager(new TelemetryUTLogger(),
+        const batchManager = new BatchManager(defaultMonitoringContext,
+                                              Infinity,
                                               undefined,
                                               { minimumBatchSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 });
         const message = { contents: generateStringOfSize(100) } as any as BatchMessage;
@@ -138,7 +153,8 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: doesn't compress when message too short", () => {
-        const batchManager = new BatchManager(new TelemetryUTLogger(),
+        const batchManager = new BatchManager(defaultMonitoringContext,
+                                              Infinity,
                                               undefined,
                                               { minimumBatchSize: 200,
                                                 compressionAlgorithm: CompressionAlgorithms.lz4 });
@@ -152,7 +168,8 @@ describe("BatchManager", () => {
 
     it("BatchManager: doesn't compress when not configured", () => {
         // When turned off, compression is configured with minimumBatchSize POSITIVE_INFINITY
-        const batchManager = new BatchManager(new TelemetryUTLogger(),
+        const batchManager = new BatchManager(defaultMonitoringContext,
+                                              Infinity,
                                               undefined,
                                               { minimumBatchSize: Number.POSITIVE_INFINITY,
                                                 compressionAlgorithm: CompressionAlgorithms.lz4 });
@@ -162,5 +179,31 @@ describe("BatchManager", () => {
         assert.equal(batch.length, 1);
         assert.equal(batch[0].compression, undefined);
         assert.equal(batch[0].metadata?.compressed, undefined);
+    });
+
+    it("Verify op ordering", () => {
+        const batchManager = new BatchManager(defaultMonitoringContext, hardLimit);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.throws(() => batchManager.push({ ...smallMessage, referenceSequenceNumber: 1 }));
+    });
+
+    it("Don't verify op ordering if feature gate is on", () => {
+        const batchManager = new BatchManager(getMonitoringContext({
+            "Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+        }), hardLimit);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 1 }), true);
+    });
+
+    it("BatchManager: 'infinity' hard limit allows everything", () => {
+        const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
+        const batchManager = new BatchManager(defaultMonitoringContext, Infinity);
+
+        for (let i = 1; i <= 10; i++) {
+            assert.equal(batchManager.push(message), true);
+            assert.equal(batchManager.length, i);
+        }
     });
 });

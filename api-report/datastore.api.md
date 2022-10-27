@@ -52,6 +52,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     bind(handle: IFluidHandle): void;
     bindChannel(channel: IChannel): void;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
     // (undocumented)
@@ -68,6 +70,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
@@ -122,7 +125,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)

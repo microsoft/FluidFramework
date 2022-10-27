@@ -75,6 +75,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     public get IAgentScheduler() { return this; }
+    public get IFluidLoadable() { return this; }
 
     private get clientId(): string {
         if (this.runtime.attachState === AttachState.Detached) {
@@ -257,7 +258,14 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReassigned(key, currentClient);
+                // The call below mutates the consensusRegisterCollection in
+                // its event handler, which is not safe.
+                // We need to force this to be part of a different batch of ops by
+                // scheduling a microtask in order to work around the current validations.
+                // This is not recommended and should be avoided.
+                await Promise.resolve().then(async () => {
+                    await this.onTaskReassigned(key, currentClient);
+                });
             }
         });
 

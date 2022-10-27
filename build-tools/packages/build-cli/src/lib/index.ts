@@ -5,7 +5,9 @@
 
 export {
     generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
     getReleaseSourceForReleaseGroup,
@@ -18,7 +20,9 @@ export {
     isDependencyUpdateType,
     PackageWithRangeSpec,
 } from "./bump";
+export { Repository } from "./git";
 export {
+    filterVersionsOlderThan,
     getAllVersions,
     getPreReleaseDependencies,
     generateReleaseGitTagName,
@@ -33,3 +37,4 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
+export { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "./github";

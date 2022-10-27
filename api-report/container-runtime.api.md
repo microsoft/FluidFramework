@@ -116,6 +116,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -211,17 +212,6 @@ export interface ContainerRuntimeMessage {
 
 // @public (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
-
-// @public
-export class DeltaScheduler {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
-    // (undocumented)
-    batchBegin(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    batchEnd(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    static readonly processingTime = 50;
-}
 
 // @public (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -339,10 +329,12 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
+    readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly maxBatchSizeInBytes?: number;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
@@ -533,10 +525,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // @deprecated (undocumented)
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // @deprecated (undocumented)
-    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     readonly summarizerClientId: string | undefined;
 }
 
@@ -632,17 +620,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
     // @deprecated
-    disableSummaries?: boolean;
-    // @deprecated
     initialSummarizerDelayMs?: number;
-    // @deprecated (undocumented)
-    maxOpsSinceLastSummary?: number;
-    // @deprecated
-    summarizerClientElection?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
-    //
-    // @deprecated
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
@@ -686,15 +664,6 @@ export enum RuntimeMessage {
     Operation = "op",
     // (undocumented)
     Rejoin = "rejoin"
-}
-
-// @public
-export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
-    // (undocumented)
-    afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    beforeOpProcessing(message: ISequencedDocumentMessage): void;
 }
 
 // @public

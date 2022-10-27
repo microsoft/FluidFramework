@@ -227,6 +227,21 @@ describe("TaskManager", () => {
                 assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                 assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
             });
+
+            it("Can volunteer for a task immediately after it was completed", async () => {
+                const taskId = "taskId";
+                const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+                containerRuntimeFactory.processAllMessages();
+                await volunteerTaskP;
+
+                taskManager2.subscribeToTask(taskId);
+                taskManager1.complete(taskId);
+                const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
+                containerRuntimeFactory.processAllMessages();
+                await volunteerTaskP2;
+                assert.ok(taskManager1.assigned(taskId), "taskManager1 should be assigned");
+                assert.ok(!taskManager2.queued(taskId), "taskManager 2 should not be assigned");
+            });
         });
 
         describe("Subscribing to a task", () => {

@@ -513,11 +513,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const signalsGapMs = cycleMs / signalsPerCycle;
         let submittedSignals = 0;
         try {
-            while (submittedSignals < clientSignalsSendCount) {
+            while (submittedSignals < clientSignalsSendCount && !this.runtime.disposed) {
                 // all the clients are sending signals;
                 // with signals, there is no particular need to have staggered writers and readers
-                this.runtime.submitSignal("generic-signal", true);
-                submittedSignals++;
+                if (this.runtime.connected) {
+                    this.runtime.submitSignal("generic-signal", true);
+                    submittedSignals++;
+                }
                 // Random jitter of +- 50% of signalGapMs
                 await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));
             }

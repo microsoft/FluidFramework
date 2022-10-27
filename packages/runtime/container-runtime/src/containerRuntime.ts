@@ -145,7 +145,6 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -158,6 +157,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
+    testTombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -377,40 +377,6 @@ export interface ISummaryRuntimeOptions {
      * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
-
-    /**
-     * Flag that disables summaries if it is set to true.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @defaultValue 7000 operations (ops)
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
-     */
-    maxOpsSinceLastSummary?: number;
-
-    /**
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     *
-     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
-     */
-    summarizerClientElection?: boolean;
-
-    /**
-     * Options that control the running summarizer behavior.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
-     * */
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -460,6 +426,28 @@ export interface IContainerRuntimeOptions {
      * @experimental Not ready for use.
      */
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    /**
+     * If specified, when in FlushMode.TurnBased, if the size of the ops between JS turns exceeds this value,
+     * an error will be thrown and the container will close.
+     *
+     * If unspecified, the limit is 950 * 1024.
+     *
+     * 'Infinity' will disable any limit.
+     *
+     * @experimental This config should be driven by the connection with the service and will be moved in the future.
+     */
+    readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -538,6 +526,12 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 
 const defaultFlushMode = FlushMode.TurnBased;
 
+// The actual limit is 1Mb (socket.io and Kafka limits)
+// We can't estimate it fully, as we
+// - do not know what properties relay service will add
+// - we do not stringify final op, thus we do not know how much escaping will be added.
+const defaultMaxBatchSizeInBytes = 950 * 1024;
+
 /**
  * @deprecated - use ContainerRuntimeMessage instead
  */
@@ -561,7 +555,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 /**
  * Unpacks runtime messages
  *
- * @remarks This API makes no promises regarding backward-compatability. This is internal API.
+ * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
  *
@@ -658,6 +652,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOfflineLoad = false,
             compressionOptions = { minimumBatchSize: Number.POSITIVE_INFINITY,
                                    compressionAlgorithm: CompressionAlgorithms.lz4 },
+            maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -734,6 +730,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flushMode,
                 enableOfflineLoad,
                 compressionOptions,
+                maxBatchSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -845,6 +843,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
+    private ensureNoDataModelChangesCalls = 0;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            return callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
+    }
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -859,6 +876,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -878,7 +896,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-
     private readonly pendingAttachBatch: BatchManager;
     private readonly pendingBatch: BatchManager;
 
@@ -903,21 +920,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summariesDisabled: boolean;
     private isSummariesDisabled(): boolean {
-        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disabled";
     }
 
     private readonly heuristicsDisabled: boolean;
     private isHeuristicsDisabled(): boolean {
-        // back-compat: disableHeuristics was moved from ISummarizerOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
@@ -926,22 +933,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
             return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
         }
-        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
-            return true;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.summarizerClientElection === true
             : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
-        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
-            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.maxOpsSinceLastSummary
             : 0;
@@ -998,16 +995,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
-        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth
-        // usage, but at the same time we want to send these ops sooner to reduce overall latency of processing a batch.
-        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-        // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(this.mc.logger, 64 * 1024, this.runtimeOptions.compressionOptions);
-        this.pendingBatch = new BatchManager(this.mc.logger, undefined, this.runtimeOptions.compressionOptions);
-
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
+
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
 
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
@@ -1020,8 +1014,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._flushMode = runtimeOptions.flushMode;
 
+        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression
+        // & bandwidth usage, but at the same time we want to send these ops sooner, to reduce overall
+        // latency of processing a batch.
+        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
+        // payloads. That number represents final (compressed) bits (once compression is implemented).
+        this.pendingAttachBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes,
+                                                   64 * 1024, runtimeOptions.compressionOptions);
+        this.pendingBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes,
+                                             undefined, runtimeOptions.compressionOptions);
+
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
+
+        const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+        if (maxSnapshotCacheDurationMs !== undefined && maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000) {
+            // This is a runtime enforcement of what's already explicit in the policy's type itself,
+            // which dictates the value is either undefined or exactly 5 days in ms.
+            // As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
+            throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+        }
 
         this.garbageCollector = GarbageCollector.create({
             runtime: this,
@@ -1109,6 +1121,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
+            () => this.clientId,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -1177,7 +1190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
+                        this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
@@ -1819,16 +1832,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;
@@ -2212,9 +2215,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
+        /**
+         * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
+         * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
+         * external user, but the internal runtime does not delete it in summarizes, etc.
+         */
+        const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
+        // TODO: add blobs
+        if (tombstone) {
+            // If blob routes are passed in here, tombstone will fail and hit an assert
+            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
+            return;
+        }
+
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2638,6 +2654,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+        this.verifyCanSubmitOps();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
@@ -2679,7 +2696,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
@@ -2755,6 +2772,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private verifyCanSubmitOps() {
+        if (this.enableOpReentryCheck && this.ensureNoDataModelChangesCalls > 0) {
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+        }
+    }
+
     /**
      * Finds the right store and asks it to resubmit the message. This typically happens when we
      * reconnect and there are pending messages.
@@ -2814,25 +2849,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
-             summaryLogger,
-             {
-                 eventName: "RefreshLatestSummaryGetSnapshot",
-                 ackHandle,
-                 summaryRefSeq,
-                 fetchLatest: false,
-             });
-             return fetchResult.snapshotTree;
-         };
-         const result = await this.summarizerNode.refreshLatestSummary(
-             proposalHandle,
-             summaryRefSeq,
-             snapshotTreeFetcher,
-             readAndParseBlob,
-             summaryLogger,
-         );
+                ackHandle,
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    ackHandle,
+                    summaryRefSeq,
+                    fetchLatest: false,
+                });
+            return fetchResult.snapshotTree;
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            snapshotTreeFetcher,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 

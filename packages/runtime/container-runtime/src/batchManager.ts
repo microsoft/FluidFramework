@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
+import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
 import { OpCompressor } from "./opCompressor";
 
@@ -25,23 +26,21 @@ export class BatchManager {
     private pendingBatch: BatchMessage [] = [];
     private batchContentSize = 0;
 
-    // The actual limit is 1Mb (socket.io and Kafka limits)
-    // We can't estimate it fully, as we
-    // - do not know what properties relay service will add
-    // - we do not stringify final op, thus we do not know how much escaping will be added.
-    private static readonly hardLimit = 950 * 1024;
-
     public get length() { return this.pendingBatch.length; }
-    public get limit() { return BatchManager.hardLimit; }
-    public static get limit() { return BatchManager.hardLimit; }
+    public get limit() { return this.hardLimit; }
 
-    constructor(logger: ITelemetryLogger,
-                public readonly softLimit?: number,
-                private readonly compressionOptions?: ICompressionRuntimeOptions) {
-        this.opCompressor = new OpCompressor(logger);
+    constructor(
+        private readonly mc: MonitoringContext,
+        private readonly hardLimit: number,
+        public readonly softLimit?: number,
+        private readonly compressionOptions?: ICompressionRuntimeOptions,
+    ) {
+        this.opCompressor = new OpCompressor(mc.logger);
     }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
+
         const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
@@ -88,7 +87,7 @@ export class BatchManager {
     /**
      * Capture the pending state at this point
      */
-     public checkpoint() {
+    public checkpoint() {
         const startPoint = this.pendingBatch.length;
         return {
             rollback: (process: (message: BatchMessage) => void) => {
@@ -102,5 +101,19 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true
+            && this.pendingBatch.length > 0
+            && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
+            throw new GenericError(
+                "Submission of an out of order message",
+                /* error */ undefined,
+                {
+                    referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+                });
+        }
     }
 }

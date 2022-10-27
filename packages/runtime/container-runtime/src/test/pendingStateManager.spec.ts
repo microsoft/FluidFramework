@@ -7,7 +7,7 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { loggerToMonitoringContext, MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../batchManager";
 
@@ -35,7 +35,7 @@ describe("Pending State Manager", () => {
             rollbackContent = [];
             rollbackShouldThrow = false;
 
-            batchManager = new BatchManager(new TelemetryUTLogger());
+            batchManager = new BatchManager(loggerToMonitoringContext(new MockLogger()), 950 * 1024);
         });
 
         it("should do nothing when rolling back empty pending stack", () => {

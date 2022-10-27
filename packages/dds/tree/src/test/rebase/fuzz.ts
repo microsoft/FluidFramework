@@ -22,11 +22,12 @@ enum Operation {
  * to produce the final change. Must be greater or equal to 0.
  * @returns A random change resulting from the combination of several random changes.
  */
- export function generateFuzzyCombinedChange<TChange>(
+export function generateFuzzyCombinedChange<TChange>(
     rebaser: ChangeRebaser<TChange>,
     changeGenerator: (seed: number) => TChange,
     seed: number,
-    maxCombinations: number): TChange {
+    maxCombinations: number,
+): TChange {
     const random = makeRandom(seed);
     const rebase = rebaser.rebase.bind(rebaser);
     const compose = rebaser.compose.bind(rebaser);
@@ -52,7 +53,8 @@ enum Operation {
             case Operation.Invert:
                 change = invert(change);
                 break;
-            default: unreachableCase(operation);
+            default:
+                unreachableCase(operation);
         }
     }
     return change;

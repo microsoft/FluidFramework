@@ -14,6 +14,7 @@ import {
     Comparer,
     Heap,
     List,
+    ListNode,
     Stack,
 } from "./collections";
 import {
@@ -93,6 +94,7 @@ import {
     NodeAction,
     walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
+import type { TrackingGroup } from "./mergeTreeTracking";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -898,24 +900,28 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
+    private slideAckedRemovedSegmentReferences(segment: ISegment) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
-        assert(!!segment.localRefs, 0x2f2 /* Ref not in the segment localRefs */);
+        if (segment.localRefs?.empty !== false) {
+            return;
+        }
         const newSegment = this._getSlideToSegment(segment);
         if (newSegment) {
             const localRefs = newSegment.localRefs ??= new LocalReferenceCollection(newSegment);
             if (newSegment.ordinal < segment.ordinal) {
-                localRefs.addAfterTombstones(refsToSlide);
+                localRefs.addAfterTombstones(segment.localRefs);
             } else {
-                localRefs.addBeforeTombstones(refsToSlide);
+                localRefs.addBeforeTombstones(segment.localRefs);
             }
         } else {
-            for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.(ref);
-                segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.(ref);
+            for (const ref of segment.localRefs) {
+                if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
+                    ref.callbacks?.beforeSlide?.(ref);
+                    segment.localRefs?.removeLocalRef(ref);
+                    ref.callbacks?.afterSlide?.(ref);
+                }
             }
         }
         // TODO is it required to update the path lengths?
@@ -925,43 +931,36 @@ export class MergeTree {
         }
     }
 
-    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean):
-        LocalReferencePosition[] | undefined {
-        if (!segment.localRefs || segment.localRefs.empty) {
-            return undefined;
-        }
-        const refsToSlide: LocalReferencePosition[] = [];
-        const removedRefs: LocalReferencePosition[] = [];
-        for (const lref of segment.localRefs) {
-            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                continue;
-            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (!pending) {
-                    refsToSlide.push(lref);
-                }
-            } else {
-                // since we are pending, don't actually remove it,
-                // return the set of refs that will be removed on ack
-                //
-                if (!pending) {
-                    segment.localRefs.removeLocalRef(lref);
-                }
-                removedRefs.push(lref);
-            }
-        }
-        // Rethink implementation of keeping and sliding refs once other reference
-        // changes are complete. This works but is fragile and possibly slow.
-        if (!pending) {
-            this.slideReferences(segment, refsToSlide);
-        }
-        // return only the refs that have been entirely removed
-        return removedRefs.length > 0 ? removedRefs : undefined;
-    }
-
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
         return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)
             ? node.partialLengths!.getPartialLength(refSeq, clientId)
             : node.cachedLength;
+    }
+
+    /**
+     * Compute local partial length information
+     *
+     * Public only for use by internal tests
+     *
+     * @internal
+     */
+    public computeLocalPartials(refSeq: number) {
+        if (this.localPartialsComputed) {
+            return;
+        }
+
+        const rebaseCollabWindow = new CollaborationWindow();
+        rebaseCollabWindow.loadFrom(this.collabWindow);
+        if (refSeq < this.collabWindow.minSeq) {
+            rebaseCollabWindow.minSeq = refSeq;
+        }
+        this.root.partialLengths = PartialSequenceLengths.combine(
+            this.root,
+            rebaseCollabWindow,
+            true,
+            true,
+        );
+        this.localPartialsComputed = true;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
@@ -972,20 +971,7 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                if (!this.localPartialsComputed) {
-                    const rebaseCollabWindow = new CollaborationWindow();
-                    rebaseCollabWindow.loadFrom(this.collabWindow);
-                    if (refSeq < this.collabWindow.minSeq) {
-                        rebaseCollabWindow.minSeq = refSeq;
-                    }
-                    this.root.partialLengths = PartialSequenceLengths.combine(
-                        this.root,
-                        rebaseCollabWindow,
-                        true,
-                        true,
-                    );
-                    this.localPartialsComputed = true;
-                }
+                this.computeLocalPartials(refSeq);
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
@@ -1283,7 +1269,7 @@ export class MergeTree {
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
-                    this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
+                    this.slideAckedRemovedSegmentReferences(pendingSegment);
                 }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
@@ -1320,7 +1306,7 @@ export class MergeTree {
         let _segmentGroup = segmentGroup;
         if (_segmentGroup === undefined) {
             // TODO: review the cast
-            _segmentGroup = { segments: [], localSeq } as SegmentGroup;
+            _segmentGroup = { segments: [], localSeq, refSeq: this.collabWindow.currentSeq } as SegmentGroup;
             if (previousProps) {
                 _segmentGroup.previousProps = [];
             }
@@ -1949,8 +1935,7 @@ export class MergeTree {
         // these segments are already viewed as being removed locally and are not event-ed
         // so can slide non-StayOnRemove refs immediately
         localOverlapWithRefs.forEach(
-            (s) => this.slideReferences(s, Array.from(s.localRefs!)
-                .filter((localRef) => !refTypeIncludesFlag(localRef, ReferenceType.StayOnRemove))),
+            (s) => this.slideAckedRemovedSegmentReferences(s),
         );
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
@@ -1961,19 +1946,14 @@ export class MergeTree {
                     deltaSegments: removedSegments,
                 });
         }
-        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
         // these events are newly removed
         // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
-        removedSegments.forEach((rSeg) => {
-            const removedRefs = this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending);
-            if (segmentGroup && removedRefs) {
-                if (!segmentGroup.removedReferences) {
-                    segmentGroup.removedReferences = [];
-                }
-                segmentGroup.removedReferences.push(...removedRefs);
-            }
-        });
+        if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
+            removedSegments.forEach((rSeg) => {
+                this.slideAckedRemovedSegmentReferences(rSeg.segment);
+            });
+        }
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
@@ -1993,7 +1973,7 @@ export class MergeTree {
             }
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups?.pop?.();
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x3ee /* Unexpected segmentGroup in segment */);
 
                 assert(segment.removedClientIds !== undefined
                     && segment.removedClientIds[0] === this.collabWindow.clientId,
@@ -2016,16 +1996,6 @@ export class MergeTree {
                     this.blockUpdateLength(updateNode, UnassignedSequenceNumber, this.collabWindow.clientId);
                 }
             }
-            if (pendingSegmentGroup.removedReferences) {
-                for (const ref of pendingSegmentGroup.removedReferences) {
-                    const seg = ref.getSegment();
-                    if (!seg) {
-                        throw new Error("Cannot rollback reference without segment");
-                    }
-                    const localRefs = seg.localRefs ??= new LocalReferenceCollection(seg);
-                    localRefs.addLocalRef(ref, ref.getOffset());
-                }
-            }
         } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
             const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
@@ -2035,7 +2005,7 @@ export class MergeTree {
             let i = 0;
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups.pop?.();
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x3ef /* Unexpected segmentGroup in segment */);
 
                 const start = this.findRollbackPosition(segment);
                 if (op.type === MergeTreeDeltaType.INSERT) {
@@ -2093,11 +2063,11 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
+    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
-            this.localPartialsComputed = false;
-            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
+            this.localPartialsComputed = computeLocalPartials;
+            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur, computeLocalPartials);
         }
     }
 
@@ -2131,6 +2101,155 @@ export class MergeTree {
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
+    }
+
+    // Segments should either be removed remotely, removed locally, or inserted locally
+    private normalizeAdjacentSegments(affectedSegments: List<ISegment>): void {
+        // Eagerly demand this since we're about to shift elements in the list around
+        const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
+            parent: seg.parent,
+            index: seg.index,
+            ordinal: seg.ordinal,
+        }));
+
+        // Last segment which was not affected locally.
+        let lastLocalSegment = affectedSegments.last;
+        while (lastLocalSegment !== undefined && isRemovedAndAcked(lastLocalSegment.data)) {
+            lastLocalSegment = lastLocalSegment.prev;
+        }
+
+        if (!lastLocalSegment) {
+            return;
+        }
+
+        for (
+            let segmentToSlide: ListNode<ISegment> | undefined = lastLocalSegment,
+            nearerSegment = lastLocalSegment?.prev;
+            segmentToSlide !== undefined;
+            segmentToSlide = nearerSegment, nearerSegment = nearerSegment?.prev
+        ) {
+            // Slide iterCur forward as far as possible
+            if (isRemovedAndAcked(segmentToSlide.data)) {
+                // Slide past all segments that are not also remotely removed
+                affectedSegments.remove(segmentToSlide);
+                affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
+            } else if (isRemoved(segmentToSlide.data)) {
+                assert(segmentToSlide.data.localRemovedSeq !== undefined,
+                    "Removed segment that hasnt had its removal acked should be locally removed");
+                // Slide each locally removed item past all segments that have localSeq > lremoveItem.localSeq
+                // but not past remotely removed segments;
+                let cur = segmentToSlide;
+                let scan = cur.next;
+                while (scan !== undefined &&
+                    !isRemovedAndAcked(scan.data) &&
+                    scan.data.localSeq !== undefined &&
+                    scan.data.localSeq > segmentToSlide.data.localRemovedSeq
+                ) {
+                    cur = scan;
+                    scan = scan.next;
+                }
+                if (cur !== segmentToSlide) {
+                    affectedSegments.remove(segmentToSlide);
+                    affectedSegments.insertAfter(cur, segmentToSlide.data);
+                }
+            }
+        }
+
+        const newOrder = Array.from(affectedSegments.map(({ data }) => data));
+        newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)));
+        const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
+        for (const segment of newOrder) {
+            const { trackingCollection } = segment;
+            const trackingGroups = Array.from(trackingCollection.trackingGroups);
+            perSegmentTrackingGroups.set(segment, trackingGroups);
+            for (const group of trackingCollection.trackingGroups) {
+                trackingCollection.unlink(group);
+            }
+        }
+
+        for (let i = 0; i < newOrder.length; i++) {
+            const seg = newOrder[i];
+            const { parent, index, ordinal } = currentOrder[i];
+            parent?.assignChild(seg, index, false);
+            seg.ordinal = ordinal;
+        }
+
+        for (const [segment, groups] of perSegmentTrackingGroups.entries()) {
+            for (const group of groups) {
+                segment.trackingCollection.link(group);
+            }
+        }
+
+        // Finally, update internal node bookkeeping on ancestors of the swapped nodes.
+        // Toposort would improve this by a log factor, but probably not worth the added code size
+        const depths = new Map<IMergeNode, number>();
+        const computeDepth = (block: IMergeNode): number => {
+            if (!depths.has(block)) {
+                depths.set(
+                    block,
+                    block.parent === undefined ? 0 : (1 + computeDepth(block.parent)),
+                );
+            }
+            return depths.get(block)!;
+        };
+        newOrder.forEach(computeDepth);
+        for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
+            if (!node.isLeaf()) {
+                this.nodeUpdateLengthNewStructure(node, false);
+            }
+        }
+        newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)));
+    }
+
+    /**
+     * Normalizes the segments nearby `segmentGroup` to be ordered as they would if the op submitting `segmentGroup`
+     * is rebased to the current sequence number.
+     * This primarily affects the ordering of adjacent segments that were removed between the original submission of
+     * the local ops and now.
+     * Consider the following sequence of events:
+     * Initial state: "hi my friend" (seq: 0)
+     * - Client 1 inserts "good " to make "hi my good friend" (op1, refSeq: 0)
+     * - Client 2 deletes "my " to make "hi friend" (op2, refSeq: 0)
+     * - op2 is sequenced giving seq 1
+     * - Client 1 disconnects and reconnects at seq: 1.
+     *
+     * At this point in time, client 1 will have segments ["hi ", Removed"my ", Local"good ", "friend"].
+     * However, the rebased op that it submits will cause client 2 to have segments
+     * ["hi ", Local"good ", Removed"my ", "friend"].
+     *
+     * The difference in ordering can be problematic for tie-breaking concurrently inserted segments in some scenarios.
+     * Rather than incur extra work tie-breaking these scenarios for all clients, when client 1 rebases its operation,
+     * it can fix up its local state to align with what would be expected of the op it resubmits.
+     */
+    public normalizeSegmentsOnRebase(): void {
+        let currentRangeToNormalize = new List<ISegment>();
+        let rangeContainsLocalSegs = false;
+        let rangeContainsRemoteRemovedSegs = false;
+        const normalize = () => {
+            if (rangeContainsLocalSegs && rangeContainsRemoteRemovedSegs && currentRangeToNormalize.length > 1) {
+                this.normalizeAdjacentSegments(currentRangeToNormalize);
+            }
+        };
+        walkAllChildSegments(this.root, (seg) => {
+            if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
+                if (isRemovedAndAcked(seg)) {
+                    rangeContainsRemoteRemovedSegs = true;
+                }
+                if (seg.seq === UnassignedSequenceNumber) {
+                    rangeContainsLocalSegs = true;
+                }
+                currentRangeToNormalize.push(seg);
+            } else {
+                normalize();
+                currentRangeToNormalize = new List<ISegment>();
+                rangeContainsLocalSegs = false;
+                rangeContainsRemoteRemovedSegs = false;
+            }
+
+            return true;
+        });
+
+        normalize();
     }
 
     private blockUpdate(block: IMergeBlock) {

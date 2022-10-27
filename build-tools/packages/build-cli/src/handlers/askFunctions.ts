@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+
 import { getDefaultBumpTypeForBranch } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
