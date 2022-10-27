@@ -47,7 +47,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 
     React.useEffect(() => {
         function updateCounterValue(delta: number, newValue: number): void {
-            setCounterValue(newValue);
+            setCounterValue(Math.max(newValue, 0));
         }
 
         counter.on("incremented", updateCounterValue);
