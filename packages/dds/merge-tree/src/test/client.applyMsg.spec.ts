@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -654,6 +653,6 @@ describe("client.applyMsg", () => {
             c.applyMsg(op);
         }));
 
-        logger.validate();
+        logger.validate({ baseText: "DDDDDDcbD" });
     });
 });
