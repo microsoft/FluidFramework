@@ -200,13 +200,12 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
 
     /**
-     * Emitted when the first local change has been made, following a "saved" event.
+     * Emitted upon the first local change while the Container is in the "saved" state.
+     * That is, when {@link IContainer.isDirty} transitions from `true` to `false`.
      *
-     * @remarks
+     * @remarks Listener parameters:
      *
-     * The "saved" event will be emitted once all local changes have been acknowledged by the service.
-     *
-     * TODO: what does listener param represent in this case?
+     * - `dirty`: DEPRECATED. This parameter will be removed in a future release.
      *
      * @see {@link IContainer.isDirty}
      */
@@ -214,12 +213,11 @@ export interface IContainerEvents extends IEvent {
 
     /**
      * Emitted when all local changes/edits have been acknowledged by the service.
+     * I.e., when {@link IContainer.isDirty} transitions from `false` to `true`.
      *
-     * @remarks
+     * @remarks Listener parameters:
      *
-     * The "dirty" event will be emitted when the next local change has been made.
-     *
-     * TODO: what does listener param represent in this case?
+     * - `dirty`: DEPRECATED. This parameter will be removed in a future release.
      *
      * @see {@link IContainer.isDirty}
      */
