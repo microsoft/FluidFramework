@@ -437,9 +437,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         const other = this.forest.allocateCursor();
-        const path = this.getPath();
-        this.forest.moveCursorToPath(path, other, observer);
+        if (this.innerCursor.mode === CursorLocationType.Fields) {
+            const path = this.getFieldPath();
+            this.forest.moveCursorToPath(path.parent, other, observer);
+            other.enterField(path.field);
+        } else {
+            const path = this.getPath();
+            this.forest.moveCursorToPath(path, other, observer);
+        }
         return other;
     }
 
