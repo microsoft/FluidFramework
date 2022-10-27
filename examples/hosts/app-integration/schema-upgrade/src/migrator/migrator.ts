@@ -50,9 +50,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     private _preparedDetachedModel: IDetachedModel<IMigratableModel> | undefined;
 
     /**
-     * containerId of the new container we are trying to migrate to. This is stored for retry scenarios.
+     * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
+     * here to support retry scenarios.
      */
-     private _containerId: string | undefined;
+     private _preparedModelId: string | undefined;
 
     public constructor(
         private readonly modelLoader: IModelLoader<IMigratableModel>,
@@ -73,12 +74,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      * that a freshly-loaded migrated container is in collaborating state.
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
-        if (!this.connected) {
-            // If we are not connected we should wait until we reconnect and try again.
-            this.currentModel.migrationTool.once("connected", this.takeAppropriateActionForCurrentMigratable);
-            return;
-        }
-
         const migrationState = this._currentModel.migrationTool.migrationState;
         if (migrationState === "migrating") {
             this.ensureMigrating();
@@ -92,6 +87,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     private readonly ensureMigrating = () => {
         // ensureMigrating() is called when we reach the "migrating" state. This should likely only happen once, but
         // can happen multiple times if we disconnect during the migration process.
+
+        if (!this.connected) {
+            // If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
+            // machine, since its possible another client has already completed the migration by the time we reconnect.
+            this.currentModel.migrationTool.once("connected", this.takeAppropriateActionForCurrentMigratable);
+            return;
+        }
 
         if (this._migrationP !== undefined) {
             return;
@@ -180,13 +182,15 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                     return;
                 }
 
-                if (!isAssigned) {
-                    // If we are not assigned, then the migration was completed by another client and we can exit.
+                if (this.currentModel.migrationTool.newContainerId !== undefined) {
+                    // If newContainerId is already set, then another client already completed the migration.
                     return;
                 }
 
-                if (this._containerId === undefined) {
-                    this._containerId = await this._preparedDetachedModel.attach();
+                assert(isAssigned, "We should be assigned the migration task");
+
+                if (this._preparedModelId === undefined) {
+                    this._preparedModelId = await this._preparedDetachedModel.attach();
                 }
 
                 // Check to make sure we still have the task assignment.
@@ -195,7 +199,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                     return;
                 }
 
-                await migratable.migrationTool.finalizeMigration(this._containerId);
+                await migratable.migrationTool.finalizeMigration(this._preparedModelId);
 
                 this.currentModel.migrationTool.completeMigrationTask();
             };
@@ -274,7 +278,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Reset retry values
             this._preparedDetachedModel = undefined;
-            this._containerId = undefined;
+            this._preparedModelId = undefined;
 
             // Only once we've completely finished with the old migratable, start on the new one.
             this.takeAppropriateActionForCurrentMigratable();
