@@ -507,7 +507,10 @@ describe("editable-tree", () => {
         assert(isUnwrappedNode(simplePhonesNode));
         // assert its schema follows the primary field schema and get the primary key from it
         assert.equal([...simplePhonesNode].length, 1);
-        const simplePhonesSchema = simplePhonesNode[getTypeSymbol](undefined, false) as NamedTreeSchema;
+        const simplePhonesSchema = simplePhonesNode[getTypeSymbol](
+            undefined,
+            false,
+        ) as NamedTreeSchema;
         assert.deepEqual(simplePhonesSchema.extraLocalFields, emptyField);
         assert.deepEqual([...simplePhonesSchema.globalFields], []);
         assert.equal(simplePhonesSchema.extraGlobalFields, false);
