@@ -132,7 +132,7 @@ stages:
 
               SourceBranch=$(Build.SourceBranch)
               "
-              ##vso[task.setvariable variable=testPackageFilePattern;isOutput=true]'/fluidframework-sequence-*.tgz'
+              echo "##vso[task.setvariable variable=testPackageFilePattern;isOutput=true]/fluidframework-sequence-*.tgz"
 
         # Install
         - task: UseNode@1
