@@ -1,13 +1,13 @@
 {
-  "name": "@fluid-example/spaces",
+  "name": "@fluid-example/data-object-grid",
   "version": "2.0.0-internal.2.1.0",
   "private": true,
-  "description": "Spaces is a grid layout component",
+  "description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/apps/spaces"
+    "directory": "examples/apps/data-object-grid"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
