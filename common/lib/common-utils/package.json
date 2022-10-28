@@ -85,7 +85,6 @@
     "buffer": "^6.0.3",
     "events": "^3.1.0",
     "lodash": "^4.17.21",
-    "requestidlecallback-polyfill": "^1.0.2",
     "sha.js": "^2.4.11"
   },
   "devDependencies": {
