@@ -12,18 +12,19 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [--scheme semver|internal|virtualPatch] [-x
-    | --install | --commit |  |  | ] [-v]
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] [-t major|minor|patch | --exact <value>] [--scheme
+    semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
-  -t, --bumpType=<option>  (required) Bump the release group or package to the next version according to this bump type.
+  -t, --bumpType=<option>  Bump the release group or package to the next version according to this bump type.
                            <options: major|minor|patch>
   -v, --verbose            Verbose logging.
   -x, --skipChecks         Skip all checks.
   --[no-]commit            Commit changes to a new branch.
+  --exact=<value>          An exact string to use as the version. The string must be a valid semver string.
   --[no-]install           Update lockfiles by running 'npm install' automatically.
   --scheme=<option>        Override the version scheme used by the release group or package.
                            <options: semver|internal|virtualPatch>
