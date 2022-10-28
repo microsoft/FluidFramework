@@ -73,7 +73,6 @@ interface IDataObjectGridToolbarProps {
 export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
     (props: React.PropsWithChildren<IDataObjectGridToolbarProps>) => {
         const { editable, setEditable, addItem, registry } = props;
-        const toolbarItems: JSX.Element[] = [];
 
         const toolbarOptions: IToolbarOption[] = [...registry].map(([type, dataGridItemEntry]) => {
             return {
@@ -84,33 +83,25 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
             };
         });
 
-        // Add the edit button
-        toolbarItems.push(
-            <div key="edit" className="data-grid-toolbar-tool">
-                <Button
-                    id="edit"
-                    className="data-grid-toolbar-top-level-button"
-                    iconProps={{ iconName: "BullseyeTargetEdit" }}
-                    onClick={() => {
-                        const newEditableState = !editable;
-                        setEditable(newEditableState);
-                    }}
-                >
-                    {`Edit: ${editable}`}
-                </Button>
-            </div>,
-        );
-
-        toolbarItems.push(
-            <DataObjectGridToolbarAddItemPicker
-                key="items"
-                toolbarOptions={toolbarOptions}
-            />,
-        );
-
         return (
             <div className="data-grid-toolbar">
-                {toolbarItems}
+                <div key="edit" className="data-grid-toolbar-tool">
+                    <Button
+                        id="edit"
+                        className="data-grid-toolbar-top-level-button"
+                        iconProps={{ iconName: "BullseyeTargetEdit" }}
+                        onClick={() => {
+                            const newEditableState = !editable;
+                            setEditable(newEditableState);
+                        }}
+                    >
+                        {`Edit: ${editable}`}
+                    </Button>
+                </div>
+                <DataObjectGridToolbarAddItemPicker
+                    key="items"
+                    toolbarOptions={toolbarOptions}
+                />
             </div>
         );
     };
