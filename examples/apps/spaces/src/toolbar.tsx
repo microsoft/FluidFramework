@@ -28,37 +28,37 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
 
         const itemsButton = (
             <Button
-                iconProps={{ iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                iconProps={ { iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" } }
                 className="data-grid-toolbar-top-level-button"
-                onClick={() => setOpen(!open)}
+                onClick={ () => setOpen(!open) }
             >
-                {"Add Items"}
+                { "Add Items" }
             </Button>
         );
         const itemButtonList = toolbarOptions.map(
             (toolbarOption) => (
                 <Button
                     className="data-grid-toolbar-option-button"
-                    key={`toolbarButton-${toolbarOption.key}`}
-                    iconProps={{ iconName: toolbarOption.fabricIconName }}
-                    onClick={() => {
+                    key={ `toolbarButton-${toolbarOption.key}` }
+                    iconProps={ { iconName: toolbarOption.fabricIconName } }
+                    onClick={ () => {
                         toolbarOption.create();
                         setOpen(false);
-                    }}
+                    } }
                 >
-                    {toolbarOption.friendlyName}
+                    { toolbarOption.friendlyName }
                 </Button>
             ),
         );
 
         return (
             <Collapsible
-                open={open}
-                trigger={itemsButton}
+                open={ open }
+                trigger={ itemsButton }
                 className="data-grid-toolbar-tool"
                 openedClassName="data-grid-toolbar-tool"
             >
-                {itemButtonList}
+                { itemButtonList }
             </Collapsible>
         );
     };
@@ -89,18 +89,18 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
                     <Button
                         id="edit"
                         className="data-grid-toolbar-top-level-button"
-                        iconProps={{ iconName: "BullseyeTargetEdit" }}
-                        onClick={() => {
+                        iconProps={ { iconName: "BullseyeTargetEdit" } }
+                        onClick={ () => {
                             const newEditableState = !editable;
                             setEditable(newEditableState);
-                        }}
+                        } }
                     >
-                        {`Edit: ${editable}`}
+                        { `Edit: ${ editable }` }
                     </Button>
                 </div>
                 <DataObjectGridToolbarAddItemPicker
                     key="items"
-                    toolbarOptions={toolbarOptions}
+                    toolbarOptions={ toolbarOptions }
                 />
             </div>
         );

@@ -44,27 +44,27 @@ const EditPane: React.FC<IEditPaneProps> =
 
 interface IItemViewProps {
     url: string;
-    editable: boolean;
     getItemView(): Promise<JSX.Element | undefined>;
     removeItem(): void;
 }
 
 const ItemView: React.FC<IItemViewProps> =
     (props: React.PropsWithChildren<IItemViewProps>) => {
+        const { url, getItemView, removeItem } = props;
         const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 
         React.useEffect(() => {
-            props.getItemView()
+            getItemView()
                 .then(setItemView)
                 .catch((error) => console.error(`Error in getting item`, error));
-        }, [props.getItemView]);
+        }, [getItemView]);
 
         return (
             <div className="data-grid-item-view">
                 <div className="data-grid-embedded-item-wrapper">
-                    {itemView}
+                    { itemView }
                 </div>
-                <EditPane url={props.url} removeItem={props.removeItem} />
+                <EditPane url={ url } removeItem={ removeItem } />
             </div>
         );
     };
@@ -131,12 +131,11 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
             layout.i = item.id;
             layouts.push(layout);
             itemViews.push(
-                <div key={item.id} className="data-grid-item-view-wrapper">
+                <div key={ item.id } className="data-grid-item-view-wrapper">
                     <ItemView
-                        url={getUrlForItem(item.id)}
-                        editable={editable}
-                        getItemView={getItemView}
-                        removeItem={() => model.removeItem(item.id)}
+                        url={ getUrlForItem(item.id) }
+                        getItemView={ getItemView }
+                        removeItem={ () => model.removeItem(item.id) }
                     />
                 </div>,
             );
@@ -144,22 +143,22 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
 
         return (
             <ReactGridLayout
-                className={`data-grid-view${editable ? " editable" : ""}`}
-                cols={36}
-                rowHeight={50}
-                width={1800}
-                height={10000}
-                compactType={null} // null is required for the GridLayout
-                isDroppable={editable}
-                isDraggable={editable}
-                isResizable={editable}
-                preventCollision={true}
-                isRearrangeable={false}
-                onResizeStop={onGridChangeEvent}
-                onDragStop={onGridChangeEvent}
-                layout={layouts}
+                className={ `data-grid-view${ editable ? " editable" : "" }` }
+                cols={ 36 }
+                rowHeight={ 50 }
+                width={ 1800 }
+                height={ 10000 }
+                compactType={ null} // null is required for the GridLayou t
+                isDroppable={ editable }
+                isDraggable={ editable }
+                isResizable={ editable }
+                preventCollision={ true }
+                isRearrangeable={ false }
+                onResizeStop={ onGridChangeEvent }
+                onDragStop={ onGridChangeEvent }
+                layout={ layouts }
             >
-                {itemViews}
+                { itemViews }
             </ReactGridLayout>
         );
     };
@@ -175,17 +174,17 @@ export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (pro
     return (
         <div className="data-grid-view">
             <DataObjectGridToolbar
-                editable={editable}
-                setEditable={setEditable}
-                addItem={(type: string) => { model.addItem(type).catch(console.error); }}
-                registry={dataObjectRegistry}
+                editable={ editable }
+                setEditable={ setEditable }
+                addItem={ (type: string) => { model.addItem(type).catch(console.error); } }
+                registry={ dataObjectRegistry }
             />
             <DataObjectGridView
                 // TODO: Maybe can just pass in the views rather than making it go fetch
-                getUrlForItem={getDirectUrl}
-                model={model}
-                registry={dataObjectRegistry}
-                editable={editable}
+                getUrlForItem={ getDirectUrl }
+                model={ model }
+                registry={ dataObjectRegistry }
+                editable={ editable }
             />
         </div>
     );
