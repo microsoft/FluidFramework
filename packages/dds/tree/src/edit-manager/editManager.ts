@@ -62,7 +62,10 @@ export class EditManager<
      * @param id - The ID for the session associated with this `EditManager` instance.
      */
     public initSessionId(id: SessionId): void {
-        assert(this.localSessionId === undefined, 0x427 /* The session ID should only be set once */);
+        assert(
+            this.localSessionId === undefined,
+            0x427 /* The session ID should only be set once */,
+        );
         this.localSessionId = id;
     }
 

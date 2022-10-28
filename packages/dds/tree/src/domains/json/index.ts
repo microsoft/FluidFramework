@@ -12,5 +12,5 @@ export {
     jsonString,
     jsonNull,
     jsonBoolean,
-    jsonRoot
+    jsonRoot,
 } from "./jsonDomainSchema";
