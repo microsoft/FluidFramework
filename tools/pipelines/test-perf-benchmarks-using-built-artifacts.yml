@@ -57,6 +57,13 @@ parameters:
   type: string
   default: "@fluidframework/sequence"
 
+- name: memoryTestPackages
+  type: object
+  default:
+    - "@fluidframework/sequence"
+    - "@fluidframework/map"
+    - "@fluidframework/matrix"
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -96,6 +103,7 @@ stages:
           clean: true
 
         - task: Bash@3
+          name: Parameters
           displayName: Parameters
           inputs:
             targetType: 'inline'
@@ -123,6 +131,7 @@ stages:
                 testFileTarName=${{ variables.testFileTarName }}
 
               SourceBranch=$(Build.SourceBranch)
+              echo "##vso[task.setvariable variable=testPackageFilePattern;isOutput=true]${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz"
               "
 
         # Install
@@ -143,7 +152,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ variables.testPackageFilePattern }}"
+            patterns: "**/${{ Parameters.testPackageFilePattern }}"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
