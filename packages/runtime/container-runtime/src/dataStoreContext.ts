@@ -394,7 +394,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Load the handle to the data store's entryPoint to make sure that the entryPoint initialization function is
         // called and the entryPoint is fully initialized.
-        await channel.entryPoint?.get();
+        // await channel.entryPoint?.get();
     }
 
     /**
