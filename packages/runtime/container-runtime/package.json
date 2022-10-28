@@ -109,7 +109,7 @@
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
     "broken": {
-      "ClassDeclaration_ContainerRuntime": {"backCompat": false}
+      "ClassDeclaration_ContainerRuntime": {"backCompat": false, "forwardCompat": false}
     }
   }
 }
