@@ -144,11 +144,6 @@ export interface IContainerConfig {
      * Serialized state from a previous instance of this container
      */
     serializedContainerState?: IPendingContainerState;
-    /**
-     * Optional. Force all connections to start the connection mode as write instead of read.
-     * Setting to `true` enables write mode by default.
-     */
-    forceWriteMode?: boolean;
 }
 
 /**
@@ -344,7 +339,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ): Promise<Container> {
         const container = new Container(
             loader,
-            { forceWriteMode: (codeDetails.config?.forceWriteMode === "true") },
+            {},
             protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
@@ -560,7 +555,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     constructor(
         private readonly loader: Loader,
-        private readonly config: IContainerConfig,
+        config: IContainerConfig,
         private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         super((name, error) => {
@@ -1475,9 +1470,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.config.forceWriteMode === true) {
-            client.mode = "write";
-        }
+
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }

@@ -192,7 +192,6 @@ export class ConnectionManager implements IConnectionManager {
      * The current connection mode, initially read.
      */
     public get connectionMode(): ConnectionMode {
-        console.log("195", this.connection?.mode); // returns undefined when running test
         return this.connection?.mode ?? "read";
     }
 

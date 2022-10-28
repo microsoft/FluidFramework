@@ -73,9 +73,7 @@ export class TinyliciousClient {
         // no proposal.  So we'll use a fake proposal.
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
-            config: {
-                forceWriteMode: this.props?.forceWriteMode?.toString() ?? "false",
-            },
+            config: {},
         });
 
         const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");

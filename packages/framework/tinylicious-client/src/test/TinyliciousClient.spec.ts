@@ -11,6 +11,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
@@ -286,20 +287,16 @@ describe("TinyliciousClient", () => {
      * connectionMode to `write` while keeping the original behavior otherwise.
      */
      it.only("forceWriteMode set to true forces the container to join with write mode", async () => {
-        // const originaltinyliciousClient = new TinyliciousClient();
         const client = new TinyliciousClient({ forceWriteMode: true });
-        const containerSchema: ContainerSchema = {
-            initialObjects: {
-                map: SharedMap,
-            },
-        };
-        const { container } = await client.createContainer(containerSchema);
+        const { container } = await client.createContainer(schema);
         await container.attach();
 
-        const map1 = container.initialObjects.map as SharedMap;
+        const map1 = container.initialObjects.map1 as SharedMap;
         map1.set("newpair-id", "test");
 
         const castedFluidContainer: any = container;
+        await timeoutPromise((resolve) => container.once("connected", resolve));
         console.log("connectionMode", castedFluidContainer.container.connectionMode);
+        console.log("connected", castedFluidContainer.container.connected);
     });
 });
