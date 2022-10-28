@@ -650,7 +650,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSize: Number.POSITIVE_INFINITY,
+            compressionOptions = { minimumBatchSize: 1,
                                    compressionAlgorithm: CompressionAlgorithms.lz4 },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             enableOpReentryCheck = false,
@@ -1852,6 +1852,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
                 // version that has support for batches (submitBatchFn)
                 for (const message of batch) {
+                    // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
+                    if (message.metadata?.compressed) {
+                        delete message.metadata.compressed;
+                    }
+
                     clientSequenceNumber = this.context.submitFn(
                         MessageType.Operation,
                         message.deserializedContent,
