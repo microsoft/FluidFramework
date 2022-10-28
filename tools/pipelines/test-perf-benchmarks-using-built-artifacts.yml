@@ -103,7 +103,6 @@ stages:
           clean: true
 
         - task: Bash@3
-          name: Parameters
           displayName: Parameters
           inputs:
             targetType: 'inline'
@@ -132,7 +131,22 @@ stages:
 
               SourceBranch=$(Build.SourceBranch)
               "
+
+        - task: Bash@3
+          name: DeclareParam
+          displayName: Declare Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
               echo "##vso[task.setvariable variable=BOOP;isOutput=true]/fluidframework-sequence-*.tgz"
+
+
+        - task: Bash@3
+          displayName: Confirm parameter exists
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "BOOP=${{BOOP}}"
 
         # Install
         - task: UseNode@1
