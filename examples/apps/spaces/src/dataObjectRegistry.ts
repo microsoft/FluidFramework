@@ -80,7 +80,7 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
  */
 export interface IDataObjectGridItemEntry<T = any> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
-    // This might be done by integrating these items with the Spaces subcomponent registry?
+    // This might be done by integrating these items with the data grid subcomponent registry?
     create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
     getView: (serializableObject: Serializable<T>) => Promise<JSX.Element>;
     friendlyName: string;

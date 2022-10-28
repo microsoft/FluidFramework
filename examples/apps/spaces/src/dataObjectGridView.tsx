@@ -22,7 +22,7 @@ interface IEditButtonProps {
 const EditButton: React.FC<IEditButtonProps> =
     (props: React.PropsWithChildren<IEditButtonProps>) =>
         <button
-            className="spaces-edit-button"
+            className="data-grid-edit-button"
             onClick={props.clickCallback}
             onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
@@ -41,7 +41,7 @@ const EditPane: React.FC<IEditPaneProps> =
     (props: React.PropsWithChildren<IEditPaneProps>) => {
         const { url, removeItem } = props;
         return (
-            <div className="spaces-edit-pane">
+            <div className="data-grid-edit-pane">
                 <EditButton title="Delete" clickCallback={removeItem}>❌</EditButton>
                 <EditButton
                     title="Open in new window"
@@ -69,12 +69,12 @@ const ItemView: React.FC<IItemViewProps> =
         }, [props.getItemView]);
 
         return (
-            <div className="spaces-item-view">
+            <div className="data-grid-item-view">
                 {
                     props.editable &&
                     <EditPane url={props.url} removeItem={props.removeItem} />
                 }
-                <div className="spaces-embedded-item-wrapper">
+                <div className="data-grid-embedded-item-wrapper">
                     {itemView}
                 </div>
             </div>
@@ -143,7 +143,7 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
             layout.i = item.id;
             layouts.push(layout);
             itemViews.push(
-                <div key={item.id} className="spaces-item-view-wrapper">
+                <div key={item.id} className="data-grid-item-view-wrapper">
                     <ItemView
                         url={getUrlForItem(item.id)}
                         editable={editable}
@@ -156,7 +156,7 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
 
         return (
             <ReactGridLayout
-                className={`spaces-storage-view${editable ? " editable" : ""}`}
+                className={`data-grid-view${editable ? " editable" : ""}`}
                 cols={36}
                 rowHeight={50}
                 width={1800}
@@ -183,10 +183,9 @@ export interface IDataObjectGridAppViewProps {
 
 export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (props: IDataObjectGridAppViewProps) => {
     const { model, getDirectUrl } = props;
-    // TODO: Different editable behavior, not based on size
     const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);
     return (
-        <div className="spaces-view">
+        <div className="data-grid-view">
             <DataObjectGridToolbar
                 editable={editable}
                 setEditable={setEditable}

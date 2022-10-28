@@ -29,7 +29,7 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
         const itemsButton = (
             <Button
                 iconProps={{ iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                className="spaces-toolbar-top-level-button"
+                className="data-grid-toolbar-top-level-button"
                 onClick={() => setOpen(!open)}
             >
                 {"Add Items"}
@@ -38,7 +38,7 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
         const itemButtonList = toolbarOptions.map(
             (toolbarOption) => (
                 <Button
-                    className="spaces-toolbar-option-button"
+                    className="data-grid-toolbar-option-button"
                     key={`toolbarButton-${toolbarOption.key}`}
                     iconProps={{ iconName: toolbarOption.fabricIconName }}
                     onClick={() => {
@@ -55,8 +55,8 @@ const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItem
             <Collapsible
                 open={open}
                 trigger={itemsButton}
-                className="spaces-toolbar-tool"
-                openedClassName="spaces-toolbar-tool"
+                className="data-grid-toolbar-tool"
+                openedClassName="data-grid-toolbar-tool"
             >
                 {itemButtonList}
             </Collapsible>
@@ -75,21 +75,21 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
         const { editable, setEditable, addItem, registry } = props;
         const toolbarItems: JSX.Element[] = [];
 
-        const toolbarOptions: IToolbarOption[] = [...registry].map(([type, spacesItemEntry]) => {
+        const toolbarOptions: IToolbarOption[] = [...registry].map(([type, dataGridItemEntry]) => {
             return {
                 key: type,
                 create: () => addItem(type),
-                friendlyName: spacesItemEntry.friendlyName,
-                fabricIconName: spacesItemEntry.fabricIconName,
+                friendlyName: dataGridItemEntry.friendlyName,
+                fabricIconName: dataGridItemEntry.fabricIconName,
             };
         });
 
         // Add the edit button
         toolbarItems.push(
-            <div key="edit" className="spaces-toolbar-tool">
+            <div key="edit" className="data-grid-toolbar-tool">
                 <Button
                     id="edit"
-                    className="spaces-toolbar-top-level-button"
+                    className="data-grid-toolbar-top-level-button"
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => {
                         const newEditableState = !editable;
@@ -101,17 +101,15 @@ export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> =
             </div>,
         );
 
-        if (editable) {
-            toolbarItems.push(
-                <DataObjectGridToolbarAddItemPicker
-                    key="items"
-                    toolbarOptions={toolbarOptions}
-                />,
-            );
-        }
+        toolbarItems.push(
+            <DataObjectGridToolbarAddItemPicker
+                key="items"
+                toolbarOptions={toolbarOptions}
+            />,
+        );
 
         return (
-            <div className="spaces-toolbar">
+            <div className="data-grid-toolbar">
                 {toolbarItems}
             </div>
         );
