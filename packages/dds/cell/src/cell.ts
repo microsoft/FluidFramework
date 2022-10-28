@@ -243,12 +243,10 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     private applyInnerOp(content: ICellOperation) {
         switch (content.type) {
             case "setCell":
-                this.setCore(this.decode(content.value));
-                break;
+                return this.setCore(this.decode(content.value));
 
             case "deleteCell":
-                this.deleteCore();
-                break;
+                return this.deleteCore();
 
             default:
                 throw new Error("Unknown operation");
@@ -286,14 +284,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         }
     }
 
-    private setCore(value: Serializable<T>) {
+    private setCore(value: Serializable<T>): Serializable<T> | undefined {
         const previousLocalValue = this.get();
         this.data = value;
         this.emit("valueChanged", value);
         return previousLocalValue;
     }
 
-    private deleteCore() {
+    private deleteCore(): Serializable<T> | undefined {
         const previousLocalValue = this.get();
         this.data = undefined;
         this.emit("delete");
@@ -312,9 +310,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     protected applyStashedOp(content: unknown): unknown {
         const cellContent = content as ICellOperation;
-        this.applyInnerOp(cellContent);
-        ++this.messageId;
-        return this.messageId;
+        const previousValue = this.applyInnerOp(cellContent);
+        return createLocalOpMetadata(cellContent, this.getMessageId(), previousValue);
     }
 
     /**
