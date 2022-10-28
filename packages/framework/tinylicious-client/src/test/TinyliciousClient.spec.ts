@@ -311,7 +311,7 @@ describe("TinyliciousClient", () => {
      * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
      * connectionMode to `write` while keeping the original behavior otherwise.
      */
-    it.only("forceWriteMode set to true forces the container to join with write mode", async () => {
+    it("forceWriteMode set to true forces the container to join with write mode", async () => {
         const container = await createForceWriteModeTest({ forceWriteMode: true });
         assert.strictEqual(
             container.container.connectionMode,
