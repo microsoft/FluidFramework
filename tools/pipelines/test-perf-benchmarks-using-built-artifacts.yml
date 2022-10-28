@@ -166,7 +166,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ Parameters.BOOP }}"
+            patterns: "**/${{ DeclareParam.BOOP }}"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
