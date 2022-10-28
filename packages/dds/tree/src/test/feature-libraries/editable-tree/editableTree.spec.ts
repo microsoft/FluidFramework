@@ -38,7 +38,7 @@ import {
     FieldKinds,
     valueSymbol,
     isPrimitiveValue,
-    singleTextCursorNew,
+    singleTextCursor,
     isUnwrappedNode,
     emptyField,
     isEditableField,
@@ -70,7 +70,7 @@ import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
     const forest = buildForest(schemaRepo);
-    initializeForest(forest, data.map(singleTextCursorNew));
+    initializeForest(forest, data.map(singleTextCursor));
     return forest;
 }
 
@@ -155,7 +155,7 @@ describe("editable-tree", () => {
         assert(valueSymbol in hasValue);
     });
 
-    it("sequence roots are arrays", () => {
+    it("sequence roots are sequence fields", () => {
         const rootSchema = fieldSchema(FieldKinds.sequence, [optionalChildSchema.name]);
         const schemaData: SchemaData = {
             treeSchema: schemaMap,
@@ -314,7 +314,7 @@ describe("editable-tree", () => {
         const context = getEditableTreeContext(forest);
         assert(isUnwrappedNode(context.unwrappedRoot));
         assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
-        const child = context.unwrappedRoot[getWithoutUnwrappingSymbol]("child" as FieldKey);
+        const child = context.unwrappedRoot[getWithoutUnwrappingSymbol](brand("child"));
         assert(isEditableField(child));
         expectFieldEquals(forest.schema, child, [{ type: int32Schema.name, value: 1 }]);
         context.free();
@@ -363,7 +363,7 @@ describe("editable-tree", () => {
                 (e) =>
                     validateAssertionError(
                         e,
-                        "Cannot get a node by its index. Maybe this field is empty?",
+                        "A child node must exist at index to get it without unwrapping.",
                     ),
                 "Expected exception was not thrown",
             );
@@ -414,14 +414,12 @@ describe("editable-tree", () => {
         assert.deepEqual(cloned, { Mat: "Mat" });
         assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
         assert.equal(proxy.address.street, "treeStreet");
-        assert.equal(proxy.address.phones?.[1], 123456879);
         assert.equal(proxy.address.zip, undefined);
     });
 
     it("read upwards", () => {
         const [, proxy] = buildTestPerson();
         assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
-        assert.equal(proxy.address.phones?.[1], 123456879);
         assert.equal(proxy.address.street, "treeStreet");
         assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
         assert.equal(proxy.name, "Adam");
@@ -432,7 +430,6 @@ describe("editable-tree", () => {
         assert(isEditableField(proxy.address.phones));
         assert.equal(proxy.address.phones.length, 4);
         assert.equal(proxy.address.phones[1], 123456879);
-        assert.equal(proxy.address.phones.fieldKey, "phones" as FieldKey);
         const expectedPhones: Value[] = [
             "+49123456778",
             123456879,
@@ -464,6 +461,7 @@ describe("editable-tree", () => {
             "length",
             "fieldKey",
             "fieldSchema",
+            "primaryType",
         ]);
         const act = [...proxy.address.phones].map(
             (phone: UnwrappedEditableTree): Value | object => {
@@ -482,9 +480,9 @@ describe("editable-tree", () => {
 
     it("'getWithoutUnwraping' does not unwrap primary field", () => {
         const [, proxy] = buildTestPerson();
-        const phones = proxy.address[getWithoutUnwrappingSymbol]("phones" as FieldKey);
+        const phones = proxy.address[getWithoutUnwrappingSymbol](brand("phones"));
         const phonesPrimary = getPrimaryField(
-            proxy.address[getTypeSymbol]("phones" as FieldKey, false) as TreeSchema,
+            proxy.address[getTypeSymbol](brand("phones"), false) as TreeSchema,
         );
         assert(phonesPrimary !== undefined);
         const nodeWithPrimaryField = phones.getWithoutUnwrapping(0);

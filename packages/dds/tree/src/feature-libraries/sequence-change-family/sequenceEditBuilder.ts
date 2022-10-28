@@ -13,7 +13,7 @@ import {
     getDepth,
 } from "../../core";
 import { fail } from "../../util";
-import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Transposed as T } from "./changeset";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";

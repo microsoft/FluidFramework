@@ -114,16 +114,16 @@ Generates type tests based on the individual package settings in package.json.
 ```
 USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--exact <value> |  | [-s
-    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor | ]]
+    (--exact <value> |  | -s
+    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor)
     [--reset | ] [-v]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  [default: baseMinor] The type of version constraint to use for previous versions.
-                                    Only applies to the prepare phase.
+  -s, --versionConstraint=<option>  (required) The type of version constraint to use for previous versions. Only applies
+                                    to the prepare phase.
                                     <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
                                     previousMinor|baseMinor|baseMajor>
   -v, --verbose                     Verbose logging.

@@ -6,20 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import {
     IEditableForest,
-    ITreeSubscriptionCursor,
-    TreeNavigationResult,
     lookupGlobalFieldSchema,
-    Anchor,
     rootFieldKey,
-    symbolFromKey,
+    rootFieldKeySymbol,
+    moveToDetachedField,
+    FieldAnchor,
+    Anchor,
 } from "../../core";
-import {
-    BaseProxyTarget,
-    EditableField,
-    proxifyField,
-    ProxyTarget,
-    UnwrappedEditableField,
-} from "./editableTree";
+import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -65,24 +59,10 @@ export interface EditableTreeContext {
 }
 
 export class ProxyContext implements EditableTreeContext {
-    public readonly withCursors: Set<BaseProxyTarget> = new Set();
-    public readonly withAnchors: Set<BaseProxyTarget> = new Set();
-    /**
-     * A reference to `NeverAnchor` of `AnchorSet`.
-     * Used in `BaseProxyTarget` to indicate that the target is empty.
-     */
-    public readonly neverAnchor: Anchor;
-    /**
-     * A cursor which is freed.
-     * Used as a placeholder in `BaseProxyTarget` for empty targets.
-     */
-    public readonly neverCursor: ITreeSubscriptionCursor;
+    public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
+    public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
 
-    constructor(public readonly forest: IEditableForest) {
-        this.neverAnchor = forest.anchors.track(null);
-        this.neverCursor = forest.allocateCursor();
-        this.neverCursor.free();
-    }
+    constructor(public readonly forest: IEditableForest) {}
 
     public prepareForEdit(): void {
         for (const target of this.withCursors) {
@@ -113,14 +93,9 @@ export class ProxyContext implements EditableTreeContext {
     private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
-        const destination = this.forest.root(this.forest.rootField);
-        const result = this.forest.tryMoveCursorTo(destination, cursor);
-        const target = new ProxyTarget(
-            this,
-            result === TreeNavigationResult.Ok ? cursor : undefined,
-        );
+        moveToDetachedField(this.forest, cursor);
+        const proxifiedField = proxifyField(this, rootSchema, rootFieldKeySymbol, cursor, unwrap);
         cursor.free();
-        this.forest.anchors.forget(destination);
-        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), target, unwrap);
+        return proxifiedField;
     }
 }

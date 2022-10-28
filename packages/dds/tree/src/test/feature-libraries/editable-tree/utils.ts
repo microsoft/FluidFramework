@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
 import { FieldKey, genericTreeKeys, getGenericTreeField, JsonableTree } from "../../../tree";
 import { fail, brand } from "../../../util";
@@ -42,7 +43,7 @@ export function expectTreeEquals(
     const primary = getPrimaryField(expectedType);
     if (primary !== undefined) {
         assert(isEditableField(inputField));
-        assert.equal(inputField.getType(), expectedType.name);
+        assert.equal(inputField.primaryType, expectedType.name);
         // Handle inlined primary fields
         const expectedNodes = expected.fields?.[primary.key];
         if (expectedNodes === undefined) {
@@ -118,6 +119,17 @@ export function expectFieldEquals(
     const fieldKind = getFieldKind(field.fieldSchema);
     if (fieldKind.multiplicity !== Multiplicity.Sequence) {
         assert(field.length <= 1);
+    }
+    if (field.length === 0) {
+        assert.throws(
+            () => field.getWithoutUnwrapping(0),
+            (e) =>
+                validateAssertionError(
+                    e,
+                    "A child node must exist at index to get it without unwrapping.",
+                ),
+            "Expected exception was not thrown",
+        );
     }
     for (let index = 0; index < field.length; index++) {
         expectNodeEquals(schemaData, field.getWithoutUnwrapping(index), expected[index]);

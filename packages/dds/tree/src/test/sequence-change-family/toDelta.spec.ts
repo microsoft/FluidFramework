@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { singleTextCursor } from "../../feature-libraries";
 import {
     ProtoNode,
-    singleTextCursorNew,
     toDelta as toDeltaImpl,
     Transposed as T,
-} from "../../feature-libraries";
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta, ITreeCursorSynchronous } from "../../tree";
 import { brand, brandOpaque } from "../../util";
@@ -39,7 +40,7 @@ const content: ProtoNode[] = [
     },
 ];
 const contentCursor: ITreeCursorSynchronous[] = [
-    singleTextCursorNew({
+    singleTextCursor({
         type,
         value: 42,
         fields: { foo: [{ type, value: 43 }] },
@@ -391,7 +392,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 4242,
                         fields: {
@@ -431,7 +432,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                         fields: {
@@ -471,7 +472,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                         fields: {
@@ -508,7 +509,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [
-                    singleTextCursorNew({
+                    singleTextCursor({
                         type,
                         value: 42,
                     }),
