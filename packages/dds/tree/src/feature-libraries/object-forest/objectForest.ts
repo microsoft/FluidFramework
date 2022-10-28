@@ -31,6 +31,8 @@ import {
     MapTree,
     getMapTreeField,
     FieldAnchor,
+    afterChangeToken,
+    FieldUpPath,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -206,6 +208,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.invalidateDependents();
     }
 
+    // TODO: remove this workaround as soon as notification/eventing will be supported.
+    afterChange(): void {
+        this.invalidateDependents(afterChangeToken);
+    }
+
     tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
@@ -297,6 +304,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     private innerCursor?: CursorWithNode<MapTree>;
     public constructor(public readonly forest: ObjectForest) {
         super();
+    }
+    buildFieldAnchor(): FieldAnchor {
+        const path = this.getFieldPath();
+        const anchor =
+            path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
+        return { parent: anchor, fieldKey: path.field };
+    }
+    getFieldPath(): FieldUpPath {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        return this.innerCursor.getFieldPath();
     }
     get mode(): CursorLocationType {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
@@ -420,9 +437,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         const other = this.forest.allocateCursor();
-        const path = this.getPath();
-        this.forest.moveCursorToPath(path, other, observer);
+        if (this.innerCursor.mode === CursorLocationType.Fields) {
+            const path = this.getFieldPath();
+            this.forest.moveCursorToPath(path.parent, other, observer);
+            other.enterField(path.field);
+        } else {
+            const path = this.getPath();
+            this.forest.moveCursorToPath(path, other, observer);
+        }
         return other;
     }
 
@@ -452,4 +476,10 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
  */
 export function buildForest(schema: StoredSchemaRepository): IEditableForest {
     return new ObjectForest(schema);
+}
+
+// This must be used only in forestIndex and should never be exported elsewhere.
+// TODO: remove this workaround as soon as notification/eventing will be supported.
+export function afterChangeForest(forest: IEditableForest): void {
+    (forest as ObjectForest).afterChange();
 }

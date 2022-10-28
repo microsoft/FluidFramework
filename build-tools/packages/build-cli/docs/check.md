@@ -12,14 +12,14 @@ Checks that the dependencies between Fluid Framework packages are properly layer
 
 ```
 USAGE
-  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+  $ flub check layers --info <value> [--md <value>] [--dot <value>] [--logtime] [-v]
 
 FLAGS
   -v, --verbose   Verbose logging.
   --dot=<value>   Generate *.dot for GraphViz
-  --info=<value>  Path to the layer graph json file
+  --info=<value>  (required) Path to the layer graph json file
   --logtime       Display the current time on every status message for logging
-  --md=<value>    [default: .] Generate PACKAGES.md file at this path relative to repo root
+  --md=<value>    Generate PACKAGES.md file at this path relative to repo root
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.

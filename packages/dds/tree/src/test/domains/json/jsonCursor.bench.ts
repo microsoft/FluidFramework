@@ -41,7 +41,13 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
         // PERF: Nested array allocs make 'Object.entries()' ~2.4x slower than reading
         //       value via 'value[key]', even when destructuring. (node 14 x64)
         for (const key of Object.keys(obj)) {
-            result[key] = clone((obj as any)[key]);
+            // Like `result[key] = clone((obj as any)[key]);` but safe for when key == "__proto__"
+            Object.defineProperty(result, key, {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: clone((obj as any)[key]),
+            });
         }
         return result as J;
     }
