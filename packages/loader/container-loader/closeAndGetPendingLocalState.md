@@ -9,13 +9,13 @@ When closeAndGetPendingLocalState() is called it will return a serialized blob c
 
 The stashed changes blob can be used by passing it to `Loader.resolve()` when loading a new container. The container will then automatically submit the stashed changes when the Container reaches the "connected" state, if the changes were not originally successful.
 
-It's important that these blobs are not reused, since it can result in the same changes being submitted multiple times, possibly resulting in document corruption. Instead, closeAndGetPendingLocalState() should be called again on the new container, which will return a new blob containing all its pending changes, including any still-pending stashed changes it was loaded with.
+__It's important that these blobs are not reused, since it can result in the same changes being submitted multiple times, possibly resulting in document corruption.__ Instead, closeAndGetPendingLocalState() should be called again on the new container, which will return a new blob containing all its pending changes, including any still-pending stashed changes it was loaded with.
 
 ## How it works
 The blob contains ops and attachment blob uploads that were still pending whe the container was closed. It also contains the container's last client ID, a snapshot older than the reference sequence number of the oldest pending op, and all sequenced ops the container has processed since the snapshot.
 
-When the blob is supplied to `Loader.resolve()`, it will return a new container. This container will load from the snapshot in the blob, and "replay" the saved ops in the blob by processing them one by one.
-applyStashedOp() will be called for each stashed op after the op whose sequence number matches the stashed op's reference sequence number is processed (i.e., when the document is in the same state as when the op was originally made).
+When the blob is supplied to Loader.resolve(), it will return a new container. This container will load from the snapshot in the blob, and "replay" the saved ops in the blob by processing them one by one.
+`applyStashedOp()` will be called for each stashed op after the op whose sequence number matches the stashed op's reference sequence number is processed (i.e., when the document is in the same state as when the op was originally made).
 
 When the container connects to the delta stream and starts processing new ops, they are matched to stashed ops by client ID, so the container will not submit stashed ops that were originally successfully submitted.
 When it processes its own join op (i.e., reaches "connected" state), the container will have seen any previously successful stashed ops, and it is safe to resubmit any remaining stashed ops.

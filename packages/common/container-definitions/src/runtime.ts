@@ -92,10 +92,14 @@ export interface IRuntime extends IDisposable {
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
+    /* eslint-disable max-len */
     /**
      * Get pending local state in a serializable format to be given back to a newly loaded container
+     * @experimental
+     * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
      */
     getPendingLocalState(): unknown;
+    /* eslint-enable max-len */
 
     /**
      * Notify runtime that container is moving to "Attaching" state
