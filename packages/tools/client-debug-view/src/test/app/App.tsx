@@ -12,21 +12,21 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import {
-    ITinyliciousAudience,
-    TinyliciousClient,
-    TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
 import { ClientDebugView, CounterWidget } from "../../components";
+import {
+    ContainerInfo,
+    createFluidContainer,
+    loadExistingFluidContainer,
+} from "../ClientUtilities";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -49,104 +49,10 @@ const containerSchema: ContainerSchema = {
 };
 
 /**
- * Type returned from when creating / loading the Container.
- */
-interface ContainerLoadResult {
-    container: IFluidContainer;
-    services: TinyliciousContainerServices;
-}
-
-/**
- * Basic information about the container, as well as the associated audience.
- */
-interface ContainerInfo {
-    containerId: string;
-    container: IFluidContainer;
-    audience: ITinyliciousAudience;
-}
-
-/**
  * Helper function to read the container ID from the URL location.
  */
 function getContainerIdFromLocation(location: Location): string {
     return location.hash.slice(1);
-}
-
-/**
- * Create a new Container associated with the provided client, populates the initial test app data, and attaches
- * to the delta service.
- */
-async function createNewFluidContainer(client: TinyliciousClient): Promise<ContainerInfo> {
-    // Create the container
-    console.log("Creating new container...");
-    let createContainerResult: ContainerLoadResult;
-    try {
-        createContainerResult = await client.createContainer(containerSchema);
-    } catch (error) {
-        console.error(`Encountered error creating Fluid container:\n${error}`);
-        throw error;
-    }
-    console.log("Container created!");
-
-    const { container, services } = createContainerResult;
-
-    // Populate the container with initial app contents (*before* attaching)
-    console.log("Populating initial app data...");
-    await populateRootMap(container);
-    console.log("Initial data populated!");
-
-    // Attach container
-    console.log("Awaiting container attach...");
-    let containerId: string;
-    try {
-        containerId = await container.attach();
-    } catch (error) {
-        console.error(`Encountered error attaching Fluid container:\n${error}`);
-        throw error;
-    }
-    console.log("Fluid container attached!");
-
-    return {
-        container,
-        containerId,
-        audience: services.audience,
-    };
-}
-
-/**
- * Loads an existing Container for the given ID.
- */
-async function loadExistingFluidContainer(
-    client: TinyliciousClient,
-    containerId: string,
-): Promise<ContainerInfo> {
-    console.log("Loading existing container...");
-    let getContainerResult: ContainerLoadResult;
-    try {
-        getContainerResult = await client.getContainer(containerId, containerSchema);
-    } catch (error) {
-        console.error(`Encountered error loading Fluid container:\n${error}`);
-        throw error;
-    }
-    console.log("Container loaded!");
-
-    const { container, services } = getContainerResult;
-
-    if (container.connectionState !== ConnectionState.Connected) {
-        console.log("Connecting to container...");
-        await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-                resolve();
-            });
-        });
-        console.log("Connected!");
-    }
-
-    return {
-        container,
-        containerId,
-        audience: services.audience,
-    };
 }
 
 /**
@@ -194,9 +100,17 @@ function useContainerInfo(): ContainerInfo | undefined {
             let audience: ITinyliciousAudience;
             let containerId = getContainerIdFromLocation(window.location);
             if (containerId.length === 0) {
-                ({ container, audience, containerId } = await createNewFluidContainer(client));
+                ({ container, audience, containerId } = await createFluidContainer(
+                    client,
+                    containerSchema,
+                    populateRootMap,
+                ));
             } else {
-                ({ container, audience } = await loadExistingFluidContainer(client, containerId));
+                ({ container, audience } = await loadExistingFluidContainer(
+                    client,
+                    containerId,
+                    containerSchema,
+                ));
             }
 
             return { container, audience, containerId };
