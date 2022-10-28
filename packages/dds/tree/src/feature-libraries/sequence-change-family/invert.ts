@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
@@ -33,13 +34,13 @@ export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
  *
  * - Support for slices is not implemented.
  */
-export function invert(change: SequenceChangeset): SequenceChangeset {
+export function invert(change: TaggedChange<SequenceChangeset>): SequenceChangeset {
     // TODO: support the input change being a squash
     const opIdToTag = (id: OpId): ChangesetTag => {
         return DUMMY_INVERT_TAG;
     };
     return {
-        marks: invertFieldMarks(change.marks, opIdToTag),
+        marks: invertFieldMarks(change.change.marks, opIdToTag),
     };
 }
 

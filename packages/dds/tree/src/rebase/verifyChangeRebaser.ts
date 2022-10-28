@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeAnonChange } from "./rebaser";
 import { ChangeRebaser } from ".";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
@@ -95,9 +96,9 @@ export function verifyChangeRebaser<TChange>(
     changes: ReadonlySet<TChange>,
     isEquivalent: (a: TChange, b: TChange) => boolean,
 ): OutputType<TChange> {
-    const rebase = rebaser.rebase.bind(rebaser);
+    const rebase = (change: TChange, over: TChange) => rebaser.rebase(change, makeAnonChange(over));
     const compose = rebaser.compose.bind(rebaser);
-    const invert = rebaser.invert.bind(rebaser);
+    const invert = (change: TChange) => rebaser.invert(makeAnonChange(change));
 
     const output: OutputType<TChange> = {
         rebaseLeftDistributivity: [],
