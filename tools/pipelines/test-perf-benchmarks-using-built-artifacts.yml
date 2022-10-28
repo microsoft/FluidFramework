@@ -138,7 +138,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=BOOP;isOutput=true]`${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz`"
+              echo "##vso[task.setvariable variable=BOOP;isOutput=true]'`${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}`-*.tgz'"
 
 
         - task: Bash@3
