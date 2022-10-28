@@ -26,10 +26,15 @@
     opacity: 1;
     position: absolute;
     bottom: 0;
-    left: 0;
+    right: 0;
 }
 
-.data-grid-edit-button {
+.data-grid-button {
+    display: none;
     width: 2rem;
     height: 2rem;
+}
+
+.data-grid-item-view-wrapper:hover .data-grid-button, .editable .data-grid-button {
+    display: initial;
 }

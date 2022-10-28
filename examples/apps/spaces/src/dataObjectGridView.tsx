@@ -14,24 +14,6 @@ import "./dataObjectGridView.css";
 
 const ReactGridLayout = WidthProvider(RGL);
 
-interface IEditButtonProps {
-    clickCallback(): void;
-    title: string;
-}
-
-const EditButton: React.FC<IEditButtonProps> =
-    (props: React.PropsWithChildren<IEditButtonProps>) =>
-        <button
-            className="data-grid-edit-button"
-            onClick={props.clickCallback}
-            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                event.stopPropagation();
-            }}
-            title={props.title}
-        >
-            {props.children}
-        </button>;
-
 interface IEditPaneProps {
     url: string;
     removeItem(): void;
@@ -42,11 +24,20 @@ const EditPane: React.FC<IEditPaneProps> =
         const { url, removeItem } = props;
         return (
             <div className="data-grid-edit-pane">
-                <EditButton title="Delete" clickCallback={removeItem}>❌</EditButton>
-                <EditButton
+                <button
+                    className="data-grid-button"
+                    onClick={ removeItem }
+                    title="Delete"
+                >
+                    ❌
+                </button>
+                <button
+                    className="data-grid-button"
+                    onClick={ () => window.open(url, "_blank") }
                     title="Open in new window"
-                    clickCallback={() => window.open(url, "_blank")}
-                >↗️</EditButton>
+                >
+                    ↗️
+                </button>
             </div>
         );
     };
@@ -70,13 +61,10 @@ const ItemView: React.FC<IItemViewProps> =
 
         return (
             <div className="data-grid-item-view">
-                {
-                    props.editable &&
-                    <EditPane url={props.url} removeItem={props.removeItem} />
-                }
                 <div className="data-grid-embedded-item-wrapper">
                     {itemView}
                 </div>
+                <EditPane url={props.url} removeItem={props.removeItem} />
             </div>
         );
     };
