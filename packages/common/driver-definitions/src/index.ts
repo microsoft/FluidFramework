@@ -3,46 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-    DriverErrorType,
-    IAnyDriverError,
-    IDriverErrorBase,
-    IThrottlingWarning,
-    IGenericNetworkError,
-    IAuthorizationError,
-    ILocationRedirectionError,
-    IDriverBasicError,
-    DriverError
-} from "./driverError";
-
-
-export {
-    IDeltasFetchResult,
-    IDeltaStorageService,
-    IStreamResult,
-    IStream,
-    IDocumentDeltaStorageService,
-    FiveDaysMs,
-    IDocumentStorageServicePolicies,
-    IDocumentStorageService,
-    IDocumentDeltaConnectionEvents,
-    IDocumentDeltaConnection,
-    LoaderCachingPolicy,
-    IDocumentServicePolicies,
-    IDocumentService,
-    IDocumentServiceFactory,
-    ISummaryContext,
-    FetchSource,
-} from "./storage";
-
-export {
-    IResolvedUrl,
-    IResolvedUrlBase,
-    IWebResolvedUrl,
-    IFluidResolvedUrl,
-    IContainerPackageInfo,
-    IUrlResolver,
-    DriverPreCheckInfo,
-    DriverHeader,
-    IDriverHeader,
-} from "./urlResolver";
+/* eslint-disable no-restricted-syntax */
+export * from "./driverError";
+export * from "./storage";
+export * from "./urlResolver";
