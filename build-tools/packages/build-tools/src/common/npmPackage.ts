@@ -34,7 +34,7 @@ interface IPerson {
     url: string;
 }
 
-interface IPackage {
+export interface IPackage {
     name: string;
     version: string;
     private: boolean;

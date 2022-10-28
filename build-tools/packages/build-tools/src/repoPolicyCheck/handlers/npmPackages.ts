@@ -13,6 +13,7 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
+import { IPackage } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -26,6 +27,23 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
+
+/**
+ * An array of dependencies that should always use tilde dependency ranges instead of caret.
+ */
+const tildeDependencies = [
+    "@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser",
+    "eslint-config-prettier",
+    "eslint-plugin-eslint-comments",
+    "eslint-plugin-import",
+    "eslint-plugin-unicorn",
+    "eslint-plugin-unused-imports",
+    "eslint",
+    "prettier",
+    "typescript",
+    "webpack-dev-server",
+];
 
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
@@ -483,7 +501,7 @@ export const handlers: Handler[] = [
         match,
         handler: (file) => {
             let jsonStr: string;
-            let json;
+            let json: IPackage;
             try {
                 jsonStr = readFile(file);
                 json = JSON.parse(jsonStr);
@@ -492,6 +510,23 @@ export const handlers: Handler[] = [
             }
 
             const ret: string[] = [];
+
+            const { dependencies, devDependencies } = json;
+            if (dependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.dependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
+
+            if (devDependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.devDependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
 
             const { valid, validationResults } = runNpmJsonLint(json, file);
 
@@ -570,6 +605,13 @@ function runNpmJsonLint(json: any, file: string) {
 const defaultNpmPackageJsonLintConfig = {
     rules: {
         "no-repeated-dependencies": "error",
+        "prefer-caret-version-devDependencies": [
+            "error",
+            {
+                // These should all use tilde dependencies
+                exceptions: tildeDependencies,
+            },
+        ],
         "require-repository-directory": "error",
         "valid-values-name-scope": [
             "error",
