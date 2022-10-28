@@ -159,7 +159,7 @@ stages:
 
               # Target Branch variable (PR policy related)
               if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
-                echo "The target branch name:" $(targetBranchName)
+                echo "TargetBranchName=$(targetBranchName)"
               fi
 
               # Error checking
