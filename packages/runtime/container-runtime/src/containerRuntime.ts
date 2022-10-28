@@ -244,7 +244,7 @@ export interface ISummaryBaseConfiguration {
     compressionAlgorithm?: SummaryCompressionAlgorithms;
 
     /**
-     * The threshold value of the minimum number of bytes, the summary blob must have
+     * The threshold value of the minimum number of bytes the summary blob must have
      * to apply the compression.
      */
     minSizeToCompress?: number;
