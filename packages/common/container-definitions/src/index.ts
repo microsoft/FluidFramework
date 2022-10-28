@@ -9,7 +9,6 @@
  * @packageDocumentation
  */
 
-/* eslint-disable no-restricted-syntax */
 export * from "./audience";
 export * from "./browserPackage";
 export * from "./deltas";

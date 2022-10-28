@@ -138,7 +138,7 @@ export async function bumpPackageDependencies(
  * Bumps a release group or standalone package by the bumpType.
  *
  * @param context - The {@link Context}.
- * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
+ * @param bumpType - The bump type.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
  *

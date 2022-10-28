@@ -1110,7 +1110,7 @@ export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
     readonly computationName: string;
-    invalidateDependents(token?: InvalidationToken): void;
+    invalidateDependents(): void;
     // @sealed (undocumented)
     listDependents(): Set<Dependent>;
     // (undocumented)

@@ -54,8 +54,6 @@ interface ISetOpMetadata {
     rowHandle: Handle;
     colHandle: Handle;
     localSeq: number;
-    rowsRefSeq: number;
-    colsRefSeq: number;
 }
 
 /**
@@ -257,8 +255,6 @@ export class SharedMatrix<T = any>
         rowHandle: Handle,
         colHandle: Handle,
         localSeq = this.nextLocalSeq(),
-        rowsRefSeq = this.rows.getCollabWindow().currentSeq,
-        colsRefSeq = this.cols.getCollabWindow().currentSeq,
     ) {
         assert(this.isAttached(), 0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */);
 
@@ -273,8 +269,6 @@ export class SharedMatrix<T = any>
             rowHandle,
             colHandle,
             localSeq,
-            rowsRefSeq,
-            colsRefSeq,
         };
 
         this.submitLocalMessage(op, metadata);
@@ -513,16 +507,16 @@ export class SharedMatrix<T = any>
                 assert(content.type === MatrixOp.set, 0x020 /* "Unknown SharedMatrix 'op' type." */);
 
                 const setOp = content as ISetOp<T>;
-                const { rowHandle, colHandle, localSeq, rowsRefSeq, colsRefSeq } = localOpMetadata as ISetOpMetadata;
+                const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
                 // If there are more pending local writes to the same row/col handle, it is important
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
                 if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                    const row = this.rows.rebasePositionWithoutSegmentSlide(setOp.row, rowsRefSeq, localSeq);
-                    const col = this.cols.rebasePositionWithoutSegmentSlide(setOp.col, colsRefSeq, localSeq);
+                    const row = this.rows.handleToPosition(rowHandle, localSeq);
+                    const col = this.cols.handleToPosition(colHandle, localSeq);
 
-                    if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+                    if (row >= 0 && col >= 0) {
                         this.sendSetCellOp(
                             row,
                             col,
@@ -530,8 +524,6 @@ export class SharedMatrix<T = any>
                             rowHandle,
                             colHandle,
                             localSeq,
-                            rowsRefSeq,
-                            colsRefSeq,
                         );
                     }
                 }
@@ -718,8 +710,6 @@ export class SharedMatrix<T = any>
             const setOp = content as ISetOp<T>;
             const rowHandle = this.rows.getAllocatedHandle(setOp.row);
             const colHandle = this.cols.getAllocatedHandle(setOp.col);
-            const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
-            const colsRefSeq = this.cols.getCollabWindow().currentSeq;
             if (this.undo !== undefined) {
                 let oldValue = this.cells.getCell(rowHandle, colHandle);
                 if (oldValue === null) {
@@ -738,8 +728,6 @@ export class SharedMatrix<T = any>
                 rowHandle,
                 colHandle,
                 localSeq,
-                rowsRefSeq,
-                colsRefSeq,
             };
 
             this.pending.setCell(rowHandle, colHandle, localSeq);

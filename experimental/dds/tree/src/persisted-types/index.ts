@@ -57,6 +57,7 @@ export {
 	EditChunkContents,
 	EditChunkContents_0_1_1,
 	EditLogSummary,
+	editsPerChunk,
 	FluidEditHandle,
 	ghostSessionId,
 	InsertInternal,

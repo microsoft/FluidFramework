@@ -14,7 +14,7 @@ export interface IProvideFluidHandleContext {
 }
 
 /**
- * Describes a routing context from which other `IFluidHandleContext`s are defined.
+ * An IFluidHandleContext describes a routing context from which other IFluidHandleContexts are defined
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     /**
@@ -48,7 +48,7 @@ export interface IProvideFluidHandle {
 }
 
 /**
- * Handle to a shared {@link FluidObject}.
+ * Handle to a shared FluidObject
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to something? How do we support dds and datastores safely?

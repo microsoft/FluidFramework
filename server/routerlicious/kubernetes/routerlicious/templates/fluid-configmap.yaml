@@ -81,24 +81,24 @@ data:
                     "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
                     "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheAgeInMs }}
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheAgeInMs }}
                 },
                 "submitOps": {
                     "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
                     "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
                     "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheAgeInMs }}
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheAgeInMs }}
                 },
                 "submitSignal": {
                     "maxPerMs": {{ .Values.alfred.throttling.submitSignal.maxPerMs }},
                     "maxBurst": {{ .Values.alfred.throttling.submitSignal.maxBurst }},
                     "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minCooldownIntervalInMs }},
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheAgeInMs }}
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheAgeInMs }}
                 }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",

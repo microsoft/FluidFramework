@@ -1,0 +1,142 @@
+[
+	{
+		"absolutePath": "/_blobs/bfba28883f54cf13b23b0a9ebb780c5155da7a89",
+		"chunkContents": {
+			"version": "0.1.1",
+			"edits": [
+				{
+					"changes": [
+						{ "destination": 0, "source": [[1, 11, [2, [[3, 13, ["payload"]]]]]], "type": 5 },
+						{ "destination": 1, "source": [[4, 14, [5, [[7, 10]], 6, [[8, 15], 0, [9, 12]]]]], "type": 5 },
+						{
+							"source": 1,
+							"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
+							"type": 0
+						}
+					]
+				},
+				{
+					"changes": [
+						{
+							"source": {
+								"start": { "side": 0, "referenceSibling": 11 },
+								"end": { "side": 1, "referenceSibling": 11 }
+							},
+							"type": 1,
+							"destination": 0
+						},
+						{ "source": 0, "destination": { "side": 1, "referenceSibling": 10 }, "type": 0 }
+					]
+				},
+				{
+					"changes": [
+						{
+							"source": {
+								"start": { "side": 0, "referenceSibling": 12 },
+								"end": { "side": 1, "referenceSibling": 12 }
+							},
+							"type": 1
+						}
+					]
+				},
+				{ "changes": [{ "nodeToModify": 10, "payload": 0, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 1, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 2, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 3, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 4, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 5, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 6, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 7, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 8, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 9, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 10, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 11, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 12, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 13, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 14, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 15, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 16, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 17, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 18, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 19, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 20, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 21, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 22, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 23, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 24, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 25, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 26, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 27, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 28, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 29, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 30, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 31, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 32, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 33, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 34, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 35, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 36, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 37, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 38, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 39, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 40, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 41, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 42, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 43, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 44, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 45, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 46, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 47, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 48, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 49, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 50, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 51, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 52, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 53, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 54, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 55, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 56, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 57, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 58, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 59, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 60, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 61, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 62, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 63, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 64, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 65, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 66, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 67, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 68, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 69, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 70, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 71, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 72, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 73, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 74, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 75, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 76, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 77, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 78, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 79, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 80, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 81, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 82, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 83, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 84, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 85, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 86, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 87, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 88, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 89, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 90, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 91, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 92, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 93, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 94, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 95, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": 10, "payload": 96, "type": 3 }] }
+			]
+		}
+	}
+]

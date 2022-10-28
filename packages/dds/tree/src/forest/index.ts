@@ -10,7 +10,6 @@ export {
     isFieldLocation,
     ForestLocation,
     initializeForest,
-    afterChangeToken,
 } from "./editableForest";
 export {
     IForestSubscription,

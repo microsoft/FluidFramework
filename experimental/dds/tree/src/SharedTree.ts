@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from '@fluidframework/common-utils';
+import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -18,13 +19,22 @@ import {
 	createSingleBlobSummary,
 	IFluidSerializer,
 	ISharedObjectEvents,
+	serializeHandles,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
-import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
+import {
+	assert,
+	assertNotUndefined,
+	fail,
+	copyPropertyIfDefined,
+	noop,
+	RestOrArray,
+	unwrapRestOrArray,
+} from './Common';
+import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import {
 	EditId,
 	NodeId,
@@ -55,10 +65,14 @@ import {
 	DetachInternal,
 	Edit,
 	EditLogSummary,
+	EditChunkContents,
 	EditStatus,
+	EditWithoutId,
 	reservedIdCount,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
+	SharedTreeHandleOp,
+	SharedTreeNoOp,
 	SharedTreeOp,
 	SharedTreeOpType,
 	SharedTreeOp_0_0_2,
@@ -81,7 +95,7 @@ import {
 	newEditId,
 	walkTree,
 } from './EditUtilities';
-import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities';
+import { getNodeIdContext, NodeIdContext, NodeIdNormalizer, sequencedIdNormalizer } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
 import { RevisionView } from './RevisionView';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder';
@@ -454,6 +468,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
 	private encoder_0_1_1: SharedTreeEncoder_0_1_1;
 
+	/** Indicates if the client is the oldest member of the quorum. */
+	private currentIsOldest: boolean;
+
 	private readonly processEditResult = (editResult: EditStatus, editId: EditId): void => {
 		// TODO:#44859: Invalid results should be handled by the app
 		this.emit(SharedTree.eventFromEditResult(editResult), editId);
@@ -477,17 +494,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	};
 
 	private summarizeHistory: boolean;
+	private uploadEditChunks: boolean;
 
 	private getHistoryPolicy(options: SharedTreeOptions<WriteFormat, 'Forwards' | 'None'>): {
 		summarizeHistory: boolean;
+		uploadEditChunks: boolean;
 	} {
 		const noCompatOptions = options as SharedTreeOptions<WriteFormat, 'None'>;
 		return typeof noCompatOptions.summarizeHistory === 'object'
 			? {
 					summarizeHistory: true,
+					uploadEditChunks: noCompatOptions.summarizeHistory.uploadEditChunks,
 			  }
 			: {
 					summarizeHistory: noCompatOptions.summarizeHistory ?? false,
+					uploadEditChunks: false,
 			  };
 	}
 
@@ -512,6 +533,17 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_sharedTree_');
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
+		this.uploadEditChunks = historyPolicy.uploadEditChunks;
+
+		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
+		// which SharedTree does not have access to.
+		// TODO:#55900: Get rid of copy-pasted OldestClientObserver code
+		const quorum = this.runtime.getQuorum();
+		this.currentIsOldest = this.computeIsOldest();
+		quorum.on('addMember', this.updateOldest);
+		quorum.on('removeMember', this.updateOldest);
+		runtime.on('connected', this.updateOldest);
+		runtime.on('disconnected', this.updateOldest);
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
 		this.sequencedEditAppliedLogger = ChildLogger.create(
@@ -547,6 +579,23 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public getWriteFormat(): WriteFormat {
 		return this.writeFormat;
 	}
+
+	/**
+	 * Re-computes currentIsOldest and emits an event if it has changed.
+	 * TODO:#55900: Get rid of copy-pasted OldestClientObserver code
+	 */
+	private readonly updateOldest = () => {
+		const oldest = this.computeIsOldest();
+		if (this.currentIsOldest !== oldest) {
+			this.currentIsOldest = oldest;
+			if (oldest) {
+				this.emit('becameOldest');
+				this.logger.sendTelemetryEvent({ eventName: 'BecameOldestClient' });
+			} else {
+				this.emit('lostOldest');
+			}
+		}
+	};
 
 	/**
 	 * Computes the oldest client in the quorum, true by default if the container is detached and false by default if the client isn't connected.
@@ -681,6 +730,70 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
+	private deserializeHandle(serializedHandle: string): IFluidHandle<ArrayBufferLike> {
+		const deserializeHandle = this.serializer.parse(serializedHandle);
+		assert(typeof deserializeHandle === 'object');
+		return deserializeHandle as IFluidHandle<ArrayBufferLike>;
+	}
+
+	/**
+	 * Uploads the edit chunk and submits a `SharedTreeHandleOp`.
+	 * This method is fire-and-forget and will swallow any errors that occur during upload or the `onUploadComplete` hook.
+	 * If the upload or op submission does fail then a future client will attempt the submission instead.
+	 */
+	private uploadEditChunk(
+		edits: readonly EditWithoutId<ChangeInternal>[],
+		startRevision: number,
+		onUploadComplete?: () => void
+	): void {
+		this.uploadEditChunkAsync(edits, startRevision).then(onUploadComplete).catch(noop);
+	}
+
+	private async uploadEditChunkAsync(
+		edits: readonly EditWithoutId<ChangeInternal>[],
+		startRevision: number
+	): Promise<void> {
+		assert(this.writeFormat !== WriteFormat.v0_0_2, 'Edit chunking is not supported in v0_0_2');
+		// SPO attachment blob upload limit is set here:
+		// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=%2Fsts%2Fstsom%2FPrague%2FSPPragueProtocolConfig.cs&version=GBmaster&line=82&lineEnd=82&lineStartColumn=29&lineEndColumn=116&lineStyle=plain&_a=contents
+		// TODO:#59754: Create chunks based on data buffer size instead of number of edits
+		const blobUploadSizeLimit = 4194304;
+
+		try {
+			const chunkContents = this.encoder_0_1_1.encodeEditChunk(
+				edits,
+				sequencedIdNormalizer(this.idNormalizer),
+				this.interner
+			);
+			const serializedContents = serializeHandles(chunkContents, this.serializer, this.handle);
+			const buffer = IsoBuffer.from(serializedContents);
+			const bufferSize = buffer.byteLength;
+			assert(
+				bufferSize <= blobUploadSizeLimit,
+				`Edit chunk size ${bufferSize} is larger than blob upload size limit of ${blobUploadSizeLimit} bytes.`
+			);
+			const editHandle = await this.runtime.uploadBlob(buffer);
+			const handleOp: SharedTreeHandleOp = {
+				editHandle:
+					serializeHandles(editHandle, this.serializer, this.handle) ??
+					fail('Edit chunk handle could not be serialized.'),
+				startRevision,
+				type: SharedTreeOpType.Handle,
+				version: this.writeFormat,
+			};
+			this.submitOp(handleOp);
+			this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
+		} catch (error) {
+			// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
+			this.logger.sendErrorEvent(
+				{
+					eventName: 'EditChunkUploadFailure',
+				},
+				error
+			);
+		}
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
@@ -809,6 +922,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				const loadedSummaryIncludesHistory = typedSummary.currentTree !== undefined;
 				if (loadedSummaryIncludesHistory !== this.summarizeHistory) {
 					this.summarizeHistory = loadedSummaryIncludesHistory;
+					this.uploadEditChunks = loadedSummaryIncludesHistory;
 					this.encoder_0_1_1 = new SharedTreeEncoder_0_1_1(this.summarizeHistory);
 				}
 
@@ -829,6 +943,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				formatVersion: WriteFormat.v0_1_1,
 				historySize: editIds.length,
 				totalNumberOfChunks: editChunks.length,
+				uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
 			});
 		}
 
@@ -840,6 +955,34 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			this.processSequencedEditResult,
 			summary.version
 		);
+
+		if (this.runtime.connected) {
+			const noChunksReadyForUpload = this.editLog.getEditChunksReadyForUpload()[Symbol.iterator]().next().done;
+			if (noChunksReadyForUpload === undefined || !noChunksReadyForUpload) {
+				// A client does not become a member of the quorum until it is within the collaboration window.
+				//
+				// The collaboration window is the range from the minimum sequence number enforced by the server and head.
+				// When a client sends an op, they include the last sequence number the client has processed. We call this the reference
+				// sequence number.
+				//
+				// If there are no members in the quorum, we send a no op op in order to have this client added as a member to the quorum.
+				// This is required so we can ensure only the oldest client will upload blobs during summary load.
+				if (this.runtime.getQuorum().getMembers().size === 0) {
+					const noop: SharedTreeNoOp = {
+						type: SharedTreeOpType.NoOp,
+						version: this.writeFormat,
+					};
+
+					this.submitOp(noop);
+					this.logger.sendTelemetryEvent({ eventName: 'NoOpSent' });
+				} else if (this.currentIsOldest) {
+					this.uploadCatchUpBlobs();
+				}
+			}
+
+			// If this client becomes the oldest, it should take care of uploading catch up blobs.
+			this.on('becameOldest', () => this.uploadCatchUpBlobs());
+		}
 	}
 
 	private static eventFromEditResult(editStatus: EditStatus): SharedTreeDiagnosticEvent {
@@ -908,6 +1051,20 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
+	 * Upload any full chunks that have yet to be uploaded.
+	 */
+	private uploadCatchUpBlobs(): void {
+		if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
+			for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
+				this.uploadEditChunk(chunk, startRevision, () => {
+					this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
+					this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
+				});
+			}
+		}
+	}
+
+	/**
 	 * Compares this shared tree to another for equality. Should only be used for internal correctness testing.
 	 *
 	 * Equality means that the histories as captured by the EditLogs are equivalent.
@@ -973,8 +1130,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Update ops should only be processed if they're not the same version.
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
-				// Edit virtualization is no longer supported, log the event and ignore the op.
-				this.logger.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
+				const { editHandle, startRevision } = op;
+				const baseHandle = this.deserializeHandle(editHandle);
+				const decodedHandle: EditHandle<ChangeInternal> = {
+					get: async () => {
+						const contents = await baseHandle.get();
+						const parsedContents: EditChunkContents = JSON.parse(IsoBuffer.from(contents).toString());
+						return this.encoder_0_1_1.decodeEditChunk(
+							parsedContents,
+							sequencedIdNormalizer(this.idNormalizer),
+							this.interner
+						);
+					},
+					baseHandle,
+				};
+				this.editLog.processEditChunkHandle(decodedHandle, startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
 					this.idCompressor.finalizeCreationRange(op.idRange);
@@ -1060,6 +1230,22 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		if (wasLocalEdit) {
 			this.editLog.addSequencedEdit(edit, message);
+			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
+			if (compareSummaryFormatVersions(this.writeFormat, WriteFormat.v0_0_2) > 0 && this.uploadEditChunks) {
+				const lastPair = this.editLog.getLastEditChunk();
+				if (lastPair !== undefined) {
+					const [startRevision, chunk] = lastPair;
+					const edits = assertNotUndefined(chunk.edits);
+					if (edits.length === this.editLog.editsPerChunk) {
+						this.uploadEditChunk(edits, startRevision, () => {
+							this.logger.sendTelemetryEvent({
+								eventName: 'EditChunkUpload',
+								chunkSize: edits.length,
+							});
+						});
+					}
+				}
+			}
 		} else {
 			this.applyEditLocally(edit, message);
 		}
@@ -1088,6 +1274,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					// update op, they will be discarded. These edits are then re-submitted using the new format.
 					for (const edit of this.editLog.getLocalEdits()) {
 						this.submitEditOp(edit);
+					}
+
+					if (this.currentIsOldest) {
+						this.uploadCatchUpBlobs();
 					}
 				},
 				{
