@@ -116,7 +116,7 @@ USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
     (--exact <value> |  | -s
     ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor)
-    [--reset | ] [-v]
+    [--reset | ] [--generateInName] [-v]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.
@@ -130,6 +130,7 @@ FLAGS
   --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
                                     as-is. Only applies to the prepare phase.
   --generate                        Generates tests only. Doesn't prepare the package.json.
+  --[no-]generateInName             Includes .generated in the generated type test filenames.
   --packages                        Run on all independent packages in the repo.
   --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
                                     need to be run after preparation.
