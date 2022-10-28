@@ -481,7 +481,7 @@ describe("editable-tree", () => {
         assert.deepEqual(act, expectedPhones);
     });
 
-    it("'getWithoutUnwraping' does not unwrap primary fields", () => {
+    it("'getWithoutUnwrapping' does not unwrap primary fields", () => {
         const [, proxy] = buildTestPerson();
         // get the field having a node which follows the primary field schema
         const phonesField = proxy.address[getWithoutUnwrappingSymbol](brand("phones"));

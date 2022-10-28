@@ -368,7 +368,8 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return undefined;
     }
 
-    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField | EditableField {
+    public proxifyField(field: FieldKey, unwrap?: false): EditableField;
+    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField {
         const fieldSchema = getFieldSchema(
             field,
             this.context.forest.schema,
@@ -381,12 +382,12 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     public getWithoutUnwrapping(fieldKey: FieldKey): EditableField {
-        return this.proxifyField(fieldKey, false) as EditableField;
+        return this.proxifyField(fieldKey, false);
     }
 
     [Symbol.iterator](): IterableIterator<EditableField> {
         return this.getFieldKeys()
-            .map((fieldKey) => this.proxifyField(fieldKey, false) as EditableField)
+            .map((fieldKey) => this.proxifyField(fieldKey, false))
             .values();
     }
 }
