@@ -32,6 +32,7 @@ import {
     getMapTreeField,
     FieldAnchor,
     afterChangeToken,
+    FieldUpPath,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -304,6 +305,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     public constructor(public readonly forest: ObjectForest) {
         super();
     }
+    buildFieldAnchor(): FieldAnchor {
+        const path = this.getFieldPath();
+        const anchor =
+            path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
+        return { parent: anchor, fieldKey: path.field };
+    }
+    getFieldPath(): FieldUpPath {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        return this.innerCursor.getFieldPath();
+    }
     get mode(): CursorLocationType {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.mode;
@@ -426,9 +437,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         const other = this.forest.allocateCursor();
-        const path = this.getPath();
-        this.forest.moveCursorToPath(path, other, observer);
+        if (this.innerCursor.mode === CursorLocationType.Fields) {
+            const path = this.getFieldPath();
+            this.forest.moveCursorToPath(path.parent, other, observer);
+            other.enterField(path.field);
+        } else {
+            const path = this.getPath();
+            this.forest.moveCursorToPath(path, other, observer);
+        }
         return other;
     }
 

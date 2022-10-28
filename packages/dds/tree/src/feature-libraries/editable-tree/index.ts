@@ -10,7 +10,7 @@ export {
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
-    isArrayField,
+    isEditableField,
     isUnwrappedNode,
     proxyTargetSymbol,
     UnwrappedEditableTree,

@@ -11,6 +11,7 @@ import {
     CursorLocationType,
     ITreeCursorSynchronous,
     Value,
+    FieldUpPath,
 } from "../core";
 import { fail } from "../util";
 
@@ -143,11 +144,25 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
     public getPath(): UpPath | undefined {
         assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
-        // Even since in nodes mode
-        const length = this.indexStack.length;
+        return this.getOffsetPath(0);
+    }
+
+    public getFieldPath(): FieldUpPath {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        return {
+            field: this.getFieldKey(),
+            parent: this.getOffsetPath(1),
+        };
+    }
+
+    private getOffsetPath(offset: number): UpPath | undefined {
+        const length = this.indexStack.length - offset;
         if (length === 0) {
             return undefined; // At root
         }
+
+        assert(length > 0, "invalid offset to above root");
+        assert(length % 2 === 0, "offset path must point to node not field");
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -170,7 +185,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
         path = {
             parent: path,
-            parentIndex: this.index,
+            parentIndex: offset === 0 ? this.index : this.getStackedNodeIndex(length),
             parentField: this.getStackedFieldKey(length - 1),
         };
         return path;

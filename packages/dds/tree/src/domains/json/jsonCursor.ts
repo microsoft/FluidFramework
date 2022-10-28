@@ -118,7 +118,13 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             mapCursorFields(reader, (cursor) => {
                 const key = cursor.getFieldKey() as LocalFieldKey;
                 assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
-                result[key] = cursorToJsonObject(reader);
+                // like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
+                Object.defineProperty(result, key, {
+                    enumerable: true,
+                    configurable: true,
+                    writable: true,
+                    value: cursorToJsonObject(reader),
+                });
                 assert(!cursor.nextNode(), 0x421 /* expected exactly one node */);
             });
             return result;

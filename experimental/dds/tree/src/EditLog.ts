@@ -3,21 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
+import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
-import { Edit, EditLogSummary, editsPerChunk, EditWithoutId, FluidEditHandle } from './persisted-types';
-import { SharedTreeDiagnosticEvent } from './EventTypes';
+import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
 import type { ChangeCompressor } from './ChangeCompression';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
  * Supports fast lookup of edits by ID and enforces idempotence.
- * Edits are virtualized, however, edits added during the current session are guaranteed to be available
- * synchronously.
  * @public
  * @sealed
  */
@@ -50,17 +46,30 @@ export interface OrderedEditSet<TChange = unknown> {
 	/**
 	 * @returns the edit at the given index within this `OrderedEditSet`.
 	 */
+	tryGetEditAtIndex(index: number): Edit<TChange> | undefined;
+
+	/**
+	 * @returns the edit with the given identifier within this `OrderedEditSet`.
+	 */
+	tryGetEditFromId(editId: EditId): Edit<TChange> | undefined;
+
+	/**
+	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
+	 * @deprecated Edit virtualization is no longer supported. Don't use the asynchronous APIs. Instead, use {@link OrderedEditSet.tryGetEditFromId}.
+	 */
+	tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
+
+	/**
+	 * @returns the edit at the given index within this `OrderedEditSet`.
+	 * @deprecated Edit virtualization is no longer supported. Don't use the asynchronous APIs.
+	 */
 	getEditAtIndex(index: number): Promise<Edit<TChange>>;
 
 	/**
 	 * @returns the edit at the given index. Must have been added to the log during the current session.
+	 * @deprecated this will be removed in favor of {@link OrderedEditSet.tryGetEditAtIndex}
 	 */
 	getEditInSessionAtIndex(index: number): Edit<TChange>;
-
-	/**
-	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
-	 */
-	tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
 }
 
 /**
@@ -125,15 +134,16 @@ export interface EditLogEncoder {
 
 /**
  * A sequence of edits that may or may not need to be downloaded into the EditLog from an external service
+ * @deprecated Edit virtualization is no longer supported.
  */
 export interface EditChunk<TChange> {
 	handle?: EditHandle<TChange>;
 	edits?: EditWithoutId<TChange>[];
 }
-
 /**
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * This is typically implemented by a wrapper around an IFluidHandle<ArrayBufferLike>.
+ * @deprecated Edit virtualization is no longer supported.
  * @public
  */
 export interface EditHandle<TChange> {
@@ -153,13 +163,10 @@ export function separateEditAndId<TChange>(edit: Edit<TChange>): {
 	return { id: edit.id, editWithoutId };
 }
 
-function joinEditAndId<TChange>(id: EditId, edit: EditWithoutId<TChange>): Edit<TChange> {
-	return { id, ...edit };
-}
-
 /**
  * @param summary - The edit log summary to parse.
  * @returns the number of handles saved to the provided edit log summary.
+ * @deprecated Edit virtualization is no longer supported.
  */
 export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unknown, unknown>): number {
 	const { editChunks } = summary;
@@ -173,13 +180,6 @@ export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unk
 
 	return numberOfHandles;
 }
-
-/**
- * The number of blobs to be loaded in memory at any time.
- * TODO:#49901: Change cache size once the virtualized history summary format is being written.
- * This is so the summarizer doesn't have to reload every edit to generate summaries.
- */
-const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
 
 /**
  * Event fired when an edit is added to an `EditLog`.
@@ -207,28 +207,18 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private localEditSequence = 0;
 	private _minSequenceNumber = 0;
 
-	private readonly sequencedEditIds: EditId[];
-	private readonly editChunks: BTree<number, EditChunk<TChange>>;
+	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
-	private readonly loadedChunkCache: number[] = [];
-	private readonly indexOfFirstEditInSession: number;
-	private readonly maximumEvictableIndex: number;
+	private readonly indexOfFirstEditInMemory: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 	private readonly _editAddedHandlers: Set<EditAddedHandler<TChange>> = new Set();
 
-	private readonly logger?: ITelemetryLogger;
-
 	/**
-	 * The number of edits associated with each blob.
-	 */
-	public readonly editsPerChunk: number;
-
-	/**
-	 * @returns The index of the earliest edit available through `getEditInSessionAtIndex`.
+	 * @returns The index of the earliest edit stored in this log.
 	 */
 	public get earliestAvailableEditIndex(): number {
-		return this.maximumEvictableIndex + 1;
+		return this.indexOfFirstEditInMemory;
 	}
 
 	/**
@@ -245,41 +235,38 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public constructor(
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
-		logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		indexOfFirstEditInSession = summary.editIds.length
 	) {
 		super();
 		const { editChunks, editIds } = summary;
-		this.logger = logger;
-		this.editsPerChunk = editsPerChunk;
 
 		for (const handler of editAddedHandlers) {
 			this.registerEditAddedHandler(handler);
 		}
 
-		this.editChunks = new BTree<number, EditChunk<TChange>>(undefined, compareFiniteNumbers);
-
 		editChunks.forEach((editChunkOrHandle) => {
 			const { startRevision, chunk } = editChunkOrHandle;
 
-			if (isEditHandle(chunk)) {
-				this.editChunks.set(startRevision, { handle: chunk });
+			if (Array.isArray(chunk)) {
+				for (const [index, edit] of chunk.entries()) {
+					const editIndex = startRevision + index;
+					const id = editIds[editIndex];
+					this.sequencedEdits.push({ id, ...edit });
+					const encounteredEditId = this.allEditIds.get(id);
+					assert(encounteredEditId === undefined, 'Duplicate acked edit.');
+					this.allEditIds.set(id, { isLocal: false, index: editIndex });
+				}
 			} else {
-				this.editChunks.set(startRevision, { edits: chunk as EditWithoutId<TChange>[] });
+				// Ignore any edit handles, these edits are now unrecoverable.
+				// This should instead download the edit chunk and store them but history is not
+				// being used so we're going with the simpler solution.
+				this.logger?.sendErrorEvent({ eventName: 'UnexpectedEditHandleInSummary' });
 			}
 		});
 
-		this.sequencedEditIds = editIds.slice();
-
-		this.indexOfFirstEditInSession = indexOfFirstEditInSession;
-		this.maximumEvictableIndex = this.indexOfFirstEditInSession - 1;
-
-		this.sequencedEditIds.forEach((id, index) => {
-			const encounteredEditId = this.allEditIds.get(id);
-			assert(encounteredEditId === undefined, 'Duplicate acked edit.');
-			this.allEditIds.set(id, { isLocal: false, index });
-		});
+		this.indexOfFirstEditInMemory = indexOfFirstEditInSession;
 	}
 
 	/**
@@ -309,7 +296,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * The number of sequenced (acked) edits in the log.
 	 */
 	public get numberOfSequencedEdits(): number {
-		return this.sequencedEditIds.length;
+		return this.sequencedEdits.length;
 	}
 
 	/**
@@ -323,7 +310,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * {@inheritDoc OrderedEditSet.editIds}
 	 */
 	public get editIds(): EditId[] {
-		return this.sequencedEditIds.concat(this.localEdits.map(({ id }) => id));
+		return this.sequencedEdits.map(({ id }) => id).concat(this.localEdits.map(({ id }) => id));
 	}
 
 	/**
@@ -338,7 +325,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @returns true iff the revision is a sequenced revision (not local).
 	 */
 	public isSequencedRevision(revision: number): boolean {
-		return revision <= this.sequencedEditIds.length;
+		return revision <= this.sequencedEdits.length;
 	}
 
 	/**
@@ -380,114 +367,26 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			return this.localEdits[index - this.numberOfSequencedEdits].id;
 		}
 
-		return this.sequencedEditIds[index];
+		return this.sequencedEdits[index].id;
 	}
 
 	/**
-	 * {@inheritDoc OrderedEditSet.getEditAtIndex}
+	 * {@inheritDoc OrderedEditSet.tryGetEditAtIndex}
 	 */
-	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
+	public tryGetEditAtIndex(index: number): Edit<TChange> | undefined {
 		if (index < this.numberOfSequencedEdits) {
-			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.getPairOrNextLower(index));
-			const { handle, edits } = editChunk;
-
-			if (edits === undefined) {
-				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
-				const edits = await handle.get();
-
-				// Make sure the loaded edit chunk is the correct size. If a higher starting revison is set, the length is the difference of both.
-				// Otherwise, it means that there are no sequenced edits in memory so the length is the difference of the number of
-				// sequenced edits and the starting revision.
-				const nextKey = this.editChunks.nextHigherKey(index);
-				const expectedEditLength =
-					(nextKey === undefined ? this.numberOfSequencedEdits : nextKey) - startRevision;
-				assert(edits.length === expectedEditLength, 'The chunk does not contain the correct number of edits.');
-
-				editChunk.edits = edits;
-
-				this.addKeyToCache(startRevision);
-				return joinEditAndId(this.getIdAtIndex(index), edits[index - startRevision]);
-			}
-
-			return joinEditAndId(this.getIdAtIndex(index), edits[index - startRevision]);
+			return this.sequencedEdits[index];
 		}
 
 		return this.localEdits[index - this.numberOfSequencedEdits];
 	}
 
 	/**
-	 * {@inheritDoc OrderedEditSet.getEditInSessionAtIndex}
+	 * {@inheritDoc OrderedEditSet.tryGetEditFromId}
 	 */
-	public getEditInSessionAtIndex(index: number): Edit<TChange> {
-		assert(
-			index > this.maximumEvictableIndex,
-			'Edit to retrieve must have been added to the log during the current session.'
-		);
-
-		if (index < this.numberOfSequencedEdits) {
-			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.getPairOrNextLower(index));
-			const { edits } = editChunk;
-
-			return joinEditAndId(
-				this.getIdAtIndex(index),
-				assertNotUndefined(edits, 'Edits should not have been evicted.')[index - startRevision]
-			);
-		}
-
-		assert(index - this.numberOfSequencedEdits < this.localEdits.length, 'Edit to retrieve must be in the log.');
-		return this.localEdits[index - this.numberOfSequencedEdits];
-	}
-
-	/**
-	 * {@inheritDoc OrderedEditSet.tryGetEdit}
-	 */
-	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
-		try {
-			const index = this.getIndexOfId(editId);
-			return await this.getEditAtIndex(index);
-		} catch {
-			return undefined;
-		}
-	}
-
-	/**
-	 * @returns The edits of edit chunks that do not have associated edit handles, does not include the last edit chunk if it is not full.
-	 */
-	public *getEditChunksReadyForUpload(): Iterable<[number, readonly EditWithoutId<TChange>[]]> {
-		const maxStartRevision = this.editChunks.maxKey();
-
-		if (maxStartRevision === undefined) {
-			return;
-		}
-
-		for (const [startRevision, chunk] of this.editChunks.entries(undefined, [])) {
-			if (chunk.handle === undefined) {
-				const edits = assertNotUndefined(chunk.edits);
-
-				// If there is no handle, the chunk should either not be the last chunk or should be full if it is.
-				if (maxStartRevision !== startRevision || edits.length >= this.editsPerChunk) {
-					yield [startRevision, edits];
-				}
-			}
-		}
-	}
-
-	/**
-	 * Assigns provided handles to edit chunks based on chunk index specified.
-	 */
-	public processEditChunkHandle(chunkHandle: EditHandle<TChange>, startRevision: number): void {
-		const chunk = this.editChunks.get(startRevision);
-		if (chunk !== undefined) {
-			assertNotUndefined(
-				chunk.edits,
-				'A chunk handle op should not be received before the edit ops it corresponds to.'
-			);
-			chunk.handle = chunkHandle;
-			this.addKeyToCache(startRevision);
-		} else {
-			this.logger?.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
-			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
-		}
+	public tryGetEditFromId(editId: EditId): Edit<TChange> | undefined {
+		const index = this.tryGetIndexOfId(editId);
+		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
 
 	/**
@@ -526,8 +425,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		info?: EditSequencingInfo,
 		minSequenceNumber: number = 0
 	): void {
-		const { id, editWithoutId } = separateEditAndId(edit);
-
 		assert(
 			minSequenceNumber >= this.minSequenceNumber,
 			'Sequenced edits should carry a monotonically increasing min number'
@@ -550,6 +447,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		// 	++this.maximumEvictableIndex;
 		// }
 
+		const { id } = edit;
+
 		// Remove the edit from local edits if it exists.
 		const encounteredEditId = this.allEditIds.get(id);
 		if (encounteredEditId !== undefined) {
@@ -560,30 +459,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
-		// The starting revision for a newly created chunk.
-		const startRevision = this.numberOfSequencedEdits;
-		// The initial edits for a newly created chunk.
-		const edits: EditWithoutId<TChange>[] = [editWithoutId];
+		this.sequencedEdits.push(edit);
 
-		const lastPair = this.editChunks.nextLowerPair(undefined);
-		if (lastPair === undefined) {
-			this.editChunks.set(startRevision, { edits });
-		} else {
-			// Add to the last edit chunk if it has room and hasn't already been uploaded, otherwise create a new chunk.
-			// If the chunk has a corresponding handle, create a new chunk.
-			const { edits: lastEditChunk, handle } = lastPair[1];
-			if (handle === undefined && lastEditChunk !== undefined && lastEditChunk.length < this.editsPerChunk) {
-				lastEditChunk.push(editWithoutId);
-			} else {
-				assert(
-					handle !== undefined || lastEditChunk !== undefined,
-					'An edit chunk must have either a handle or a list of edits.'
-				);
-				this.editChunks.set(startRevision, { edits });
-			}
-		}
-
-		this.sequencedEditIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = {
 			index: this.numberOfSequencedEdits - 1,
 			isLocal: false,
@@ -591,16 +468,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		};
 		this.allEditIds.set(id, sequencedEditId);
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
-	}
-
-	/**
-	 * @returns The last edit chunk i.e. the chunk which the most recent sequenced edits have been placed into, as well as its starting revision.
-	 * Returns undefined iff there are no sequenced edits.
-	 * When defined, this chunk is guaranteed to contain at least one edit
-	 * (though it may be necessary to load the chunk via its handle to use it)
-	 */
-	public getLastEditChunk(): [startRevision: number, edits: EditChunk<TChange>] | undefined {
-		return this.editChunks.nextLowerPair(undefined);
 	}
 
 	/**
@@ -645,54 +512,56 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	public getEditLogSummary<TCompressedChange>(
 		compressEdit?: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
 	): EditLogSummary<TChange, FluidEditHandle> | EditLogSummary<TCompressedChange, FluidEditHandle> {
+		const editIds = this.sequencedEdits.map(({ id }) => id);
 		return compressEdit !== undefined
 			? {
-					editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => ({
-						startRevision,
-						chunk:
-							handle?.baseHandle ??
-							edits?.map((edit) => compressEdit(edit)) ??
-							fail('An edit chunk must have either a handle or a list of edits.'),
-					})),
-					editIds: this.sequencedEditIds,
+					editChunks:
+						this.sequencedEdits.length === 0
+							? []
+							: [
+									{
+										// Store all edits within a single "chunk"
+										startRevision: 0,
+										chunk: this.sequencedEdits.map((edit) => compressEdit(edit)),
+									},
+							  ],
+					editIds,
 			  }
 			: {
-					editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => ({
-						startRevision,
-						chunk:
-							handle?.baseHandle ??
-							edits ??
-							fail('An edit chunk must have either a handle or a list of edits.'),
-					})),
-					editIds: this.sequencedEditIds,
+					editChunks:
+						this.sequencedEdits.length === 0
+							? []
+							: [
+									{
+										// Store all edits within a single "chunk"
+										startRevision: 0,
+										chunk: this.sequencedEdits.map(({ changes }) => ({ changes })),
+									},
+							  ],
+					editIds,
 			  };
 	}
 
-	private addKeyToCache(newKey: number): void {
-		// Indices are only added to the cache if they are not higher than the maximum evicted index.
-		if (newKey <= this.maximumEvictableIndex) {
-			// If the new index is already in the cache, remove it first to update its last usage.
-			if (newKey in this.loadedChunkCache) {
-				this.loadedChunkCache.splice(this.loadedChunkCache.indexOf(newKey), 1);
-			}
-
-			this.loadedChunkCache.push(newKey);
-
-			// If the cache is out of space, evict the oldest index in the cache.
-			if (this.loadedChunkCache.length > loadedChunkCacheSize) {
-				const indexToEvict = assertNotUndefined(this.loadedChunkCache.shift());
-				const chunkToEvict = assertNotUndefined(
-					this.editChunks.get(indexToEvict),
-					'Chunk start revision added to cache should exist in the edit log.'
-				);
-				chunkToEvict.edits = undefined;
-			}
-		}
+	// APIS DEPRECATED DUE TO HISTORY'S PEACEFUL DEATH
+	/**
+	 * {@inheritDoc OrderedEditSet.tryGetEdit}
+	 */
+	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
+		const index = this.tryGetIndexOfId(editId);
+		return index !== undefined ? this.tryGetEditAtIndex(index) : undefined;
 	}
-}
 
-function isEditHandle<TChange>(
-	chunk: EditHandle<TChange> | readonly EditWithoutId<unknown>[]
-): chunk is EditHandle<TChange> {
-	return !Array.isArray(chunk);
+	/**
+	 * {@inheritDoc OrderedEditSet.getEditAtIndex}
+	 */
+	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
+		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
+	}
+
+	/**
+	 * {@inheritDoc OrderedEditSet.getEditInSessionAtIndex}
+	 */
+	public getEditInSessionAtIndex(index: number): Edit<TChange> {
+		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
+	}
 }

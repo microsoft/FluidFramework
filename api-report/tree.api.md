@@ -203,13 +203,21 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag;
 
 // @public
-export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+    readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    readonly fieldKey: FieldKey;
+    readonly fieldSchema: FieldSchema;
+    getWithoutUnwrapping(index: number): EditableTree;
+    readonly primaryType?: TreeSchemaIdentifier;
+}
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }
@@ -366,6 +374,12 @@ export const enum FieldScope {
 }
 
 // @public
+export interface FieldUpPath {
+    readonly field: FieldKey;
+    readonly parent: UpPath | undefined;
+}
+
+// @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
@@ -497,6 +511,9 @@ function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, inver
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
+export function isEditableField(field: UnwrappedEditableField): field is EditableField;
+
+// @public
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
     readonly root: UnwrappedEditableField;
@@ -516,6 +533,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
 
 // @public
+export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
+
+// @public
 export interface ITreeCursor {
     readonly chunkLength: number;
     readonly chunkStart: number;
@@ -529,6 +549,8 @@ export interface ITreeCursor {
     getFieldKey(): FieldKey;
     // (undocumented)
     getFieldLength(): number;
+    // (undocumented)
+    getFieldPath(): FieldUpPath;
     // (undocumented)
     getPath(): UpPath | undefined;
     readonly mode: CursorLocationType;
@@ -551,6 +573,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
+    buildFieldAnchor(): FieldAnchor;
     clear(): void;
     // (undocumented)
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
@@ -1148,9 +1171,9 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 // @public (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
-    change: TChangeset;
+    readonly change: TChangeset;
     // (undocumented)
-    revision: RevisionTag | undefined;
+    readonly revision: RevisionTag | undefined;
 }
 
 // @public (undocumented)
@@ -1242,14 +1265,13 @@ export interface TreeValue extends Serializable {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 // @public
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 // @public
 export interface UpPath {
-    // (undocumented)
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
