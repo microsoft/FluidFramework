@@ -88,9 +88,8 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
-          testPackageDir: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
-          testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-          testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
+          # testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+          # testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
           testFileTarName: sequence
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
@@ -118,9 +117,6 @@ stages:
                 releaseBuild=$(releaseBuildVar)
                 toolAbsolutePath=$(toolAbsolutePath)
                 artifactPipeline=$(artifactPipeline)
-                testPackageDir=$(testPackageDir)
-                testPackageFilePattern=$(testPackageFilePattern)
-                testPackagePathPattern=$(testPackagePathPattern)
                 feed=$(feed)
 
               Pipeline Parameters:
@@ -138,15 +134,16 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=BOOP;isOutput=true]${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz"
-
+              echo "##vso[task.setvariable variable=testPackageFilePattern;isOutput=true]${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              echo "##vso[task.setvariable variable=testPackagePathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(testPackageFilePattern)"
 
         - task: Bash@3
           displayName: Confirm parameter exists
           inputs:
             targetType: 'inline'
             script: |
-              echo "BOOP=$(DeclareParam.BOOP)"
+              echo "testPackageFilePattern=$(DeclareParam.testPackageFilePattern)"
+              echo "testPackagePathPattern=$(DeclareParam.testPackagePathPattern)"
 
         # Install
         - task: UseNode@1
@@ -166,7 +163,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/$(DeclareParam.BOOP)"
+            patterns: "**/$(DeclareParam.testPackageFilePattern)"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
@@ -198,10 +195,10 @@ stages:
               echo "always-auth=true" >> ./.npmrc
               cat .npmrc
 
-              if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
-                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+              if [[ `ls -1 $(DeclareParam.testPackagePathPattern) | wc -l` -eq 1 ]]; then
+                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(DeclareParam.testPackagePathPattern)`"
               else
-                ls -1 ${{ variables.testPackagePathPattern }}
+                ls -1 $(DeclareParam.testPackagePathPattern)
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
               fi
 
