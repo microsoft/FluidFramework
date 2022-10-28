@@ -1148,9 +1148,9 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 // @public (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
-    change: TChangeset;
+    readonly change: TChangeset;
     // (undocumented)
-    revision: RevisionTag | undefined;
+    readonly revision: RevisionTag | undefined;
 }
 
 // @public (undocumented)
