@@ -11,6 +11,7 @@ import {
     isInternalVersionRange,
     isInternalVersionScheme,
     toInternalScheme,
+    validateVersionScheme,
 } from "../internalVersionScheme";
 
 describe("internalScheme", () => {
@@ -27,6 +28,18 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.0.0-alpha.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-alpha.1.0.0`;
+            const result = isInternalVersionScheme(input, false, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-alpha.1.0.0.0 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-alpha.1.0.0.0`;
+            const result = isInternalVersionScheme(input, true, true);
+            assert.isTrue(result);
+        });
+
         it("1.1.1-internal.1.0.0 is not internal scheme (public must be 2.0.0+)", () => {
             const input = `1.1.1-internal.1.0.0`;
             const result = isInternalVersionScheme(input);
@@ -37,6 +50,12 @@ describe("internalScheme", () => {
             const input = `2.0.0-internal.1.1.0.0`;
             const result = isInternalVersionScheme(input);
             assert.isFalse(result);
+        });
+
+        it("validateVersionScheme: 2.0.0-dev.1.1.0.123 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-dev.1.1.0.123`;
+            const result = validateVersionScheme(input, true, "dev");
+            assert.isTrue(result);
         });
 
         it("2.0.0-internal.1.1.0.123 is a valid internal prerelease version", () => {
@@ -61,6 +80,18 @@ describe("internalScheme", () => {
             const input = `2.0.0-dev.1.1.0`;
             const result = isInternalVersionScheme(input, false, true);
             assert.isTrue(result);
+        });
+
+        it("2.0.0-dev.2.1.0.104414 is a valid internal version when prerelease and allowAnyPrereleaseId are true", () => {
+            const input = `2.0.0-dev.2.1.0.104414`;
+            const result = isInternalVersionScheme(input, true, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-dev.2.1.0.104414 is a not valid when prerelease is false and allowAnyPrereleaseId are true", () => {
+            const input = `2.0.0-dev.2.1.0.104414`;
+            const result = isInternalVersionScheme(input, false, true);
+            assert.isFalse(result);
         });
 
         it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
