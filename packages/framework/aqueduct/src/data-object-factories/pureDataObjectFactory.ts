@@ -59,14 +59,18 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     let runtimeClass = runtimeClassArg;
 
     // request mixin in
+    // runtimeClass = mixinRequestHandler(
+    //     async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+    //         const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.entryPoint?.get();
+    //         assert(maybeRouter !== undefined, "entryPoint should have been initialized by now");
+    //         assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entryPoint is not an IFluidRouter");
+    //         return maybeRouter?.IFluidRouter.request(request);
+    //     },
+    //     runtimeClass);
     runtimeClass = mixinRequestHandler(
-        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-            const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.entryPoint?.get();
-            assert(maybeRouter !== undefined, "entryPoint should have been initialized by now");
-            assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entryPoint is not an IFluidRouter");
-            return maybeRouter?.IFluidRouter.request(request);
-        },
-        runtimeClass);
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
+            (await PureDataObject.getDataObject(runtimeArg)).request(request),
+            runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
