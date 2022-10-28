@@ -27,12 +27,12 @@ import {
     IFluidContainer,
     IRootDataObject,
 } from "@fluidframework/fluid-static";
+import { IClient } from "@fluidframework/protocol-definitions";
 import {
     TinyliciousClientProps,
     TinyliciousContainerServices,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
-import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -73,7 +73,9 @@ export class TinyliciousClient {
         // no proposal.  So we'll use a fake proposal.
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
-            config: {},
+            config: {
+                forceWriteMode: this.props?.forceWriteMode?.toString() ?? "false",
+            },
         });
 
         const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
@@ -147,15 +149,20 @@ export class TinyliciousClient {
             user: { id: "" },
             mode: "write",
         };
-        const loader = new Loader({
+
+        const loaderProps: any = {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
-            options: {
-                client,
-            },
-        });
+        };
+
+        if (this.props?.forceWriteMode === true) {
+            loaderProps.options = { client };
+        }
+
+        const loader = new Loader(loaderProps);
+
         return loader;
     }
     // #endregion

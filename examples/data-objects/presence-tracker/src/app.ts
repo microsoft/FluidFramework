@@ -88,7 +88,7 @@ function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTrac
 
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
-    const client = new TinyliciousClient();
+    const client = new TinyliciousClient({ forceWriteMode: true });
     let container: IFluidContainer;
     let services: TinyliciousContainerServices;
     let containerId: string;

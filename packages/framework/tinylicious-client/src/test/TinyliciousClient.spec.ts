@@ -277,4 +277,29 @@ describe("TinyliciousClient", () => {
         await corruptedAliasOp(runtimeOf(do1), "alias");
         assert(await dataCorruption);
     });
+
+    /**
+     * Scenario: test if TinyliciousClient with forceWriteMode set to true forces the container to write.
+     * Original behaviour otherwise.
+     *
+     * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
+     * connectionMode to `write` while keeping the original behavior otherwise.
+     */
+     it.only("forceWriteMode set to true forces the container to join with write mode", async () => {
+        // const originaltinyliciousClient = new TinyliciousClient();
+        const client = new TinyliciousClient({ forceWriteMode: true });
+        const containerSchema: ContainerSchema = {
+            initialObjects: {
+                map: SharedMap,
+            },
+        };
+        const { container } = await client.createContainer(containerSchema);
+        await container.attach();
+
+        const map1 = container.initialObjects.map as SharedMap;
+        map1.set("newpair-id", "test");
+
+        const castedFluidContainer: any = container;
+        console.log("connectionMode", castedFluidContainer.container.connectionMode);
+    });
 });

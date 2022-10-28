@@ -128,6 +128,7 @@ export interface IContainerConfig {
     // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
+    forceWriteMode?: boolean;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
     serializedContainerState?: IPendingContainerState;
