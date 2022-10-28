@@ -146,7 +146,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "BOOP=${{BOOP}}"
+              echo "BOOP=${{DeclareParam.BOOP}}"
 
         # Install
         - task: UseNode@1
