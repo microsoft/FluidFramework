@@ -146,7 +146,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "BOOP=${{DeclareParam.BOOP}}"
+              echo "BOOP=$(DeclareParam.BOOP)"
 
         # Install
         - task: UseNode@1
@@ -166,7 +166,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ DeclareParam.BOOP }}"
+            patterns: "**/$(DeclareParam.BOOP)"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
