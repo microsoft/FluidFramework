@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries";
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 
 import {
@@ -117,18 +118,30 @@ export const cursorTestCases: [string, JsonableTree][] = [
  * @param factory - Creates the cursor to be tested with or without provided data.
  * @param dataFromCursor - Gets a JsonableTree from the provided cursor.
  */
-export function testJsonableTreeCursor(
+export function testJsonableTreeCursor<T>(
     cursorName: string,
-    factory: (data: JsonableTree) => ITreeCursor,
-    dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
+    cursorFactory: (data: T) => ITreeCursor,
+    dataFromCursor: (cursor: ITreeCursor) => T,
     testRooted = true,
 ): void {
+    function dataFromJsonableTree(data: JsonableTree): T {
+        // Use text cursor to provide input data
+        return dataFromCursor(singleTextCursor(data));
+    }
+
+    function factory(data: JsonableTree): ITreeCursor {
+        return cursorFactory(dataFromJsonableTree(data));
+    }
     describe(`${cursorName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
             for (const [name, data] of cursorTestCases) {
                 it(`${name}: ${JSON.stringify(data)}`, () => {
-                    const cursor = factory(data);
-                    const clone = dataFromCursor(cursor);
+                    const convertedData = dataFromJsonableTree(data);
+                    const cursor = cursorFactory(convertedData);
+                    const convertedClone = dataFromCursor(cursor);
+                    // This assumes `T` works with deepEqual.
+                    assert.deepEqual(convertedClone, convertedData);
+                    const clone = jsonableTreeFromCursor(cursor);
                     assert.deepEqual(clone, data);
                     // Check objects are actually json compatible
                     const text = JSON.stringify(clone);
@@ -137,6 +150,14 @@ export function testJsonableTreeCursor(
                 });
             }
         });
+
+        testCursors(
+            "default test data cursor testing",
+            cursorTestCases.map(([name, data]) => ({
+                cursorName: name,
+                cursor: factory(data),
+            })),
+        );
 
         // TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
         if (testRooted) {
