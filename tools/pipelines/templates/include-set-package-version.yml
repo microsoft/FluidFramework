@@ -102,6 +102,7 @@ steps:
       echo SETVERSION_VERSION=$SETVERSION_VERSION
       echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
       echo RELEASE_GROUP=$RELEASE_GROUP
+      echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
 
       if [ -f "lerna.json" ]; then
         flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
