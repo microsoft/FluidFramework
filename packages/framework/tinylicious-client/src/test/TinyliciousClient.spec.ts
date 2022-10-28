@@ -286,7 +286,7 @@ describe("TinyliciousClient", () => {
      * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
      * connectionMode to `write` while keeping the original behavior otherwise.
      */
-     it.only("forceWriteMode set to true forces the container to join with write mode", async () => {
+    it("forceWriteMode set to true forces the container to join with write mode", async () => {
         const client = new TinyliciousClient({ forceWriteMode: true });
         const { container } = await client.createContainer(schema);
         await container.attach();
@@ -295,8 +295,74 @@ describe("TinyliciousClient", () => {
         map1.set("newpair-id", "test");
 
         const castedFluidContainer: any = container;
-        await timeoutPromise((resolve) => container.once("connected", resolve));
-        console.log("connectionMode", castedFluidContainer.container.connectionMode);
-        console.log("connected", castedFluidContainer.container.connected);
+        await timeoutPromise((resolve) => container.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        assert.strictEqual(
+            castedFluidContainer.container.connectionMode,
+            "write",
+            "Container does not start with write mode by defaut when forceWriteMode set to true",
+        );
+
+        // test default case
+
+        const clientDefault = new TinyliciousClient();
+        const { container: containerDefault } = await clientDefault.createContainer(schema);
+        await containerDefault.attach();
+
+        const map1Default = containerDefault.initialObjects.map1 as SharedMap;
+        map1Default.set("newpair-id", "test");
+
+        const castedFluidContainerDefault: any = containerDefault;
+        await timeoutPromise((resolve) => containerDefault.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        assert.strictEqual(
+            castedFluidContainerDefault.container.connectionMode,
+            "read",
+            "Container does not start with write mode by defaut when forceWriteMode set to true",
+        );
+
+        // test false case
+
+        const clientFalse = new TinyliciousClient({ forceWriteMode: false });
+        const { container: containerFalse } = await clientFalse.createContainer(schema);
+        await containerFalse.attach();
+
+        const map1False = containerFalse.initialObjects.map1 as SharedMap;
+        map1False.set("newpair-id", "test");
+
+        const castedFluidContainerFalse: any = containerFalse;
+        await timeoutPromise((resolve) => containerFalse.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        assert.strictEqual(
+            castedFluidContainerFalse.container.connectionMode,
+            "read",
+            "Container does not start with write mode by defaut when forceWriteMode set to true",
+        );
+
+        // test undefined case
+
+        const clientUndefined = new TinyliciousClient({ forceWriteMode: undefined });
+        const { container: containerUndefined } = await clientUndefined.createContainer(schema);
+        await containerUndefined.attach();
+
+        const map1Undefined = containerFalse.initialObjects.map1 as SharedMap;
+        map1Undefined.set("newpair-id", "test");
+
+        const castedFluidContainerUndefined: any = containerUndefined;
+        await timeoutPromise((resolve) => containerUndefined.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        assert.strictEqual(
+            castedFluidContainerUndefined.container.connectionMode,
+            "read",
+            "Container does not start with write mode by defaut when forceWriteMode set to true",
+        );
     });
 });
