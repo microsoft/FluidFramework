@@ -6,5 +6,5 @@ module.exports = config({
     preMajor: true,
     gitRawCommitsOpts : {
         merges: null
-      }
+    }
 })
