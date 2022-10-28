@@ -753,6 +753,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             0x0ec /* "Unexpected value for previously processed message's sequence number" */);
 
         for (const message of messages) {
+            this.ops.push(message);
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
                 // Validate that we do not have data loss, i.e. sequencing is reset and started again
@@ -798,7 +799,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // becomes not accurate, as the gap existed before current batch, so we should just report "unknown".
         this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
     }
-
+    private readonly ops: any[] = [];
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
         assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
