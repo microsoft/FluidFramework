@@ -7,13 +7,8 @@ export { ConnectionState } from "./connectionState";
 export {
     Container,
     IContainerLoadOptions,
-    IContainerConfig,
-    IPendingContainerState,
     waitContainerToCatchUp,
 } from "./container";
-export {
-    ISerializableBlobContents,
-} from "./containerStorageAdapter";
 export {
     ICodeDetailsLoader,
     IDetachedBlobStorage,

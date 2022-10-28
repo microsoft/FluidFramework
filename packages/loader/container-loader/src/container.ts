@@ -137,7 +137,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
 }
 
-export interface IContainerConfig {
+interface IContainerConfig {
     resolvedUrl?: IFluidResolvedUrl;
     canReconnect?: boolean;
     /**

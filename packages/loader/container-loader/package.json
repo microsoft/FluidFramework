@@ -105,6 +105,19 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IPendingContainerState": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IPendingContainerState": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IContainerConfig": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

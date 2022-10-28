@@ -1027,7 +1027,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map.set(testKey, testValue);
         const pendingOps = container.closeAndGetPendingLocalState();
         // make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
-        assert(/referenceSequenceNumber[\w,^}]*0/.test(pendingOps));
+        assert(/referenceSequenceNumber[^\w,}]*0/.test(pendingOps));
 
         // load container with pending ops, which should resend the op not sent by previous container
         const container2 = await loader2.resolve({ url }, pendingOps);
@@ -1035,7 +1035,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         await ensureContainerConnected(container2);
         await provider2.ensureSynchronized();
-        // assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
     });
 });

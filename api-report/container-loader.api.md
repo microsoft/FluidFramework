@@ -55,6 +55,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
+    // Warning: (ae-forgotten-export) The symbol "IContainerConfig" needs to be exported by the entry point index.d.ts
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
@@ -92,6 +93,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "IPendingContainerState" needs to be exported by the entry point index.d.ts
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
@@ -121,16 +123,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @public (undocumented)
-export interface IContainerConfig {
-    // (undocumented)
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    resolvedUrl?: IFluidResolvedUrl;
-    serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
@@ -185,33 +177,12 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public
-export interface IPendingContainerState {
-    baseSnapshot: ISnapshotTree;
-    // (undocumented)
-    clientId?: string;
-    // (undocumented)
-    pendingRuntimeState: unknown;
-    savedOps: ISequencedDocumentMessage[];
-    snapshotBlobs: ISerializableBlobContents;
-    // (undocumented)
-    term: number;
-    // (undocumented)
-    url: string;
-}
-
 // @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
-}
-
-// @public
-export interface ISerializableBlobContents {
-    // (undocumented)
-    [id: string]: string;
 }
 
 // @public
