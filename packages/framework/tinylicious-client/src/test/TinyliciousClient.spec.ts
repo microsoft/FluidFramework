@@ -29,7 +29,7 @@ const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
         resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
     })))).then((all) => !all.includes(false));
 
-const createForceWriteByDefultTest = async (props?: {
+const createForceWriteModeTest = async (props?: {
     forceWriteMode?: boolean;
 }): Promise<any> => {
     const schema: ContainerSchema = {
@@ -312,7 +312,7 @@ describe("TinyliciousClient", () => {
      * connectionMode to `write` while keeping the original behavior otherwise.
      */
     it.only("forceWriteMode set to true forces the container to join with write mode", async () => {
-        const container = await createForceWriteByDefultTest({ forceWriteMode: true });
+        const container = await createForceWriteModeTest({ forceWriteMode: true });
         assert.strictEqual(
             container.container.connectionMode,
             "write",
@@ -320,7 +320,7 @@ describe("TinyliciousClient", () => {
         );
 
         // test default case
-        const defaultContainer = await createForceWriteByDefultTest();
+        const defaultContainer = await createForceWriteModeTest();
         assert.strictEqual(
             defaultContainer.container.connectionMode,
             "read",
@@ -328,7 +328,7 @@ describe("TinyliciousClient", () => {
         );
 
         // test false case
-        const falseContainer = await createForceWriteByDefultTest({ forceWriteMode: false });
+        const falseContainer = await createForceWriteModeTest({ forceWriteMode: false });
         assert.strictEqual(
             falseContainer.container.connectionMode,
             "read",
@@ -336,7 +336,7 @@ describe("TinyliciousClient", () => {
         );
 
         // test undefined case
-        const undefinedContainer = await createForceWriteByDefultTest({ forceWriteMode: undefined });
+        const undefinedContainer = await createForceWriteModeTest({ forceWriteMode: undefined });
         assert.strictEqual(
             undefinedContainer.container.connectionMode,
             "read",
