@@ -163,12 +163,12 @@
       }
     },
     "additionalLockfilePaths": [
-      "tools/telemetry-generator",
       "common/build/build-common",
       "common/build/eslint-config-fluid",
       "docs",
       "server/gitrest",
-      "server/historian"
+      "server/historian",
+      "tools/telemetry-generator"
     ]
   }
 }
