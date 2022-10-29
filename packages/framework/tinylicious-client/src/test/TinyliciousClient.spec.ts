@@ -12,7 +12,8 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { TinyliciousClient } from "..";
+import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { TinyliciousClient, TinyliciousClientProps } from "..";
 import { TestDataObject } from "./TestDataObject";
 
 const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
@@ -28,31 +29,6 @@ const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
     containers.map(async (c) => new Promise<boolean>((resolve) => c.once("disposed", (error) => {
         resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
     })))).then((all) => !all.includes(false));
-
-const createForceWriteModeTest = async (props?: {
-    forceWriteMode?: boolean;
-}): Promise<any> => {
-    const schema: ContainerSchema = {
-        initialObjects: {
-            map1: SharedMap,
-        },
-    };
-    const client = new TinyliciousClient(props);
-    const { container } = await client.createContainer(schema);
-    await container.attach();
-
-    const map1 = container.initialObjects.map1 as SharedMap;
-    map1.set("newpair-id", "test");
-
-    const castedFluidContainer: any = container;
-    await timeoutPromise((resolve) => container.once("connected", resolve), {
-        durationMs: 1000,
-        errorMsg: "container connect() timeout",
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return castedFluidContainer;
-};
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -305,40 +281,59 @@ describe("TinyliciousClient", () => {
     });
 
     /**
-     * Scenario: test if TinyliciousClient with forceWriteMode set to true forces the container to write.
-     * Original behaviour otherwise.
+     * Scenario: Test if TinyliciousClient with forceWriteMode set to true forces the container to write.
+     * Keep the original behaviour otherwise.
      *
      * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
-     * connectionMode to `write` while keeping the original behavior otherwise.
+     * connectionMode to `write` while keeping the original behavior if forceWriteMode is not set to true.
      */
     it("forceWriteMode set to true forces the container to join with write mode", async () => {
-        const container = await createForceWriteModeTest({ forceWriteMode: true });
+        const getConnectionModeFromTinyliciousClient = async (
+            props?: TinyliciousClientProps,
+        ): Promise<ConnectionMode> => {
+            const client = new TinyliciousClient(props);
+            const { container } = await client.createContainer(schema);
+            await container.attach();
+
+            const map1 = container.initialObjects.map1 as SharedMap;
+            map1.set("newpair-id", "test");
+
+            await timeoutPromise((resolve) => container.once("connected", resolve), {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            });
+
+            return (container as any).container.connectionMode as ConnectionMode;
+        };
+
+        // test forced write mode case
+        const forcedWriteConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: true });
         assert.strictEqual(
-            container.container.connectionMode,
+            forcedWriteConnectionMode,
             "write",
             "Container does not start with write mode by defaut when forceWriteMode set to true",
         );
 
         // test default case
-        const defaultContainer = await createForceWriteModeTest();
+        const defaultConnectionMode = await getConnectionModeFromTinyliciousClient();
         assert.strictEqual(
-            defaultContainer.container.connectionMode,
+            defaultConnectionMode,
             "read",
             "Container does not start with write mode by defaut when forceWriteMode set to true",
         );
 
         // test false case
-        const falseContainer = await createForceWriteModeTest({ forceWriteMode: false });
+        const falseConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: false });
         assert.strictEqual(
-            falseContainer.container.connectionMode,
+            falseConnectionMode,
             "read",
             "Container does not start with write mode by defaut when forceWriteMode set to true",
         );
 
         // test undefined case
-        const undefinedContainer = await createForceWriteModeTest({ forceWriteMode: undefined });
+        const undefinedConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: undefined });
         assert.strictEqual(
-            undefinedContainer.container.connectionMode,
+            undefinedConnectionMode,
             "read",
             "Container does not start with write mode by defaut when forceWriteMode set to true",
         );
