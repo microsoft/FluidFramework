@@ -4,25 +4,25 @@
 
 ## Overview
 
-This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents on the order of terabytes are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible.
+This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents much larger than memory are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible.
 
 The data that needs to be stored in order to fully capture the state of the tree is as follows:
 
 1. The nodes in the tree. This includes any metadata or attributes associated with each node (e.g. schema type, identity label) as well as the data payload of the node (i.e. its "value", if it has one)
-2. The child/parent relationships between the nodes in the tree.
+2. The hierarchical relationships between the nodes in the tree.
 3. The schema of the tree
 
 Optionally, some trees may store the following information depending on the needs of the clients and the strategy used for maintaining the tree's `history`:
 
-4. References to old summaries
+4. References to old views of the tree
 5. A log of operations
 6. History information that is localized to a particular part of the tree. The simplest way to store this information might be by including it on the nodes themselves.
 
 Finally,
 
-7. Any indexes or accelerations structures that, despite being derived from the state listed above, are cheaper to send across the network than to recompute on a client
+7. Any indexes or accelerations structures that, despite being derived from the state listed above, are cheaper to persist and incrementally update than to fully recompute on a client
 
-> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, and 5).
+> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, 5, 7).
 
 ## Virtualization and Incrementality
 
@@ -30,7 +30,7 @@ Existing Fluid DDSs generally assume that their documents will fit in entirety o
 
 > As presented above, the maximum size of a partial checkout is limited by a client machine's random access memory, but an optimization might expand that size to the amount of _disk_ space available to a client by using indexedDB to cache tree data. But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ disk, either because the document is impressively huge or [the disk is already pretty full](https://www.digitaltrends.com/gaming/why-are-video-games-so-big/).
 
-Allowing for partial checkouts of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it knows and cares about. Likewise, it must be able to update parts of the tree `incrementally` to minimize writes.
+Allowing for partial checkouts of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it knows and cares about. Likewise, it must be able to update parts of the tree incrementally to minimize writes.
 
 ## Blobs and Chunks
 
@@ -100,9 +100,9 @@ We assume that blobs are immutable and `content-addressable`. Therefore, the dat
 
 > Since blobs are immutable, chunks are too.
 
-> Not _every_ update to the tree needs to incur this cost. For example, one optimization could be to accumulate writes in a log that is shared across clients and only flushed to storage (incurring the spine update) every so often. Regardless, the blob updates need to happen eventually so this document will assume that they happen after every write for simplicity's sake.
+> Not _every_ update to the tree needs to incur this cost. For example, one optimization could be to accumulate writes in a log that is shared across clients and only flushed to storage (incurring the spine update) every so often. See the next section "Sparse Root Updates" for more details.
 
-Even though chunks/blobs are being replaced as they are rewritten, we need not throw away the previous chunks/blobs entirely. In fact, by preserving them, a tree can remember its previous versions, called `revisions`, which make up its `history`. Consider a tree made up of three chunks:
+Even though chunks/blobs are being replaced as they are rewritten, we need not throw away the previous chunks/blobs entirely. In fact, by preserving them a tree can remember its previous versions, called `revisions`, which make up its `history`. Consider a tree made up of three chunks:
 
 ```mermaid
 graph TD;
@@ -126,6 +126,8 @@ graph TD;
     A-->B
     A-->C
     C-->D
+    style A fill:#844
+    style B fill:#844
 ```
 
 Next, Chunk D is written to:
@@ -139,6 +141,10 @@ graph TD;
     A-->B
     A-->C
     C-->D
+    style A fill:#448
+    style B fill:#844
+    style C fill:#448
+    style D fill:#448
 ```
 
 Because a spine of the tree is always replaced, and a spine always contains the root, the root chunk of the tree is therefore replaced by every write. Since chunks are immutable, Chunk A and Chunk A' still remain the same (they point to Chunk B/C and Chunk B'/C, respectively) and thus contain the same tree state. This means that every revision is captured by a unique root chunk, and preserving the history of the tree is as simple as keeping around those chunks. The history of this tree is a list of references to the root chunks:
@@ -149,15 +155,87 @@ Revision | Root Chunk Key
 1        | A'
 2        | A''
 
-This implicitly forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous version and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine).
+This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous version and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine).
 
-### Node -> Chunk Lookup
+### Sparse Root Updates
 
-While some applications will want to begin at the root node in the tree and walk down/around to read data, many others will already know the shape and schema of the tree, already know where in the tree their data is, and want to access it as quickly as possible. The SharedTree will support such an operation by accepting a `path`: a route from the root of the tree that ends at a node. Every node in a given revision of the tree has a unique path.
+The immutability properties of such a copy-on-write chunk tree provide are beneficial, but they have a drawback; writes are expensive. Replacing the spine on every write means multiple chunks must be reuploaded for every edit. This cost can be reduced by updating the spine for only some edits, not all edits, and keeping a list of edits between those updates. For example, consider the following history of a tree. The tree has had 20 edits made to it, and therefore has 21 revisions (the 0th revision is the "empty tree" which precedes any edits).
 
-> A tree might provide other means for looking up nodes (e.g. by assigning every node a UUID and maintaining a UUID-to-node lookup index) that are more efficient in certain scenarios. But paths remain the _fundamental_ identifiers for nodes because every node in a tree has one implicitly, whether or not they are used or even recognized in the implementation.
+Revision     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+-------------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|----|----|----|----
+Edits        |   | A | B | C | D | E | F | G | H | I | J  | K  | L  | M  | N  | O  | P  | Q  | R  | S  | T
 
-The implementation of this operation could simply parse the path and walk from the root of the tree down to the target node. But this scales poorly for very deep trees, because the walk must download every chunk along the path down through the tree. As the operation descends, it will hit a chunk boundary every so often (depending on the average chunk size) and must wait for a download every time. The number of downloads is the depth of the target node divided by the average height of a chunk (a constant), so in the worst case (a leaf node) this is an O(D) operation where D is the depth of the tree. In terms of nodes, it's O(N) where N is the number of nodes in the tree since we can't assume anything about the shape of the tree.
+If the spine is re-uploaded on every edit then (even in the best case where the spine that changed has only a depth of 1 chunk) a client must upload at least 20 blobs to produce revision 20 from revision 0. Suppose that instead, the client only uploaded at every fifth edit:
+
+Revision     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+-------------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|----|----|----|----
+Edits        |   | A | B | C | D | E | F | G | H | I | J  | K  | L  | M  | N  | O  | P  | Q  | R  | S  | T
+Spine Update |   |   |   |   |   | * |   |   |   |   | *  |    |    |    |    | *  |    |    |    |    | *
+
+Now, a client most upload chunks only four times. To produce revision 1 from revision 0, a client does not update the spine but instead sends just edit A which is put in a log by all clients. Going from revision 1 to revision 2 sends edit B, revision 2 to 3 sends edit C, and so on until a client produces revision 5. At revision 5, the writing client uploads the current tree state, replacing all chunks which have changed since revision 0 (some union of spines). The client repeats this process only at every fifth edit, reducing the frequency of upload by a factor of five. However, this means that a client joining at a sequence number between two uploads must have access to all edits since the last upload. For example, a client who joins at sequence number 13 will download the state of the tree at revision 10 since that was the last uploaded state. It then applies edits K, L, and M to that state to be consistent at revision 13. This begs the question; where are these edits stored? One possibility is to store them in the summary. Specifically, every summary must contain all edits that have occurred since the last chunk upload before that summary. Any edits after that point will be delivered by the runtime.
+
+> This is the minimum requirement for storing edits for this scheme to work. A SharedTree that preserves its full history will need to store all of its edits anyway, and can query them for this scheme.
+
+> If the immutability constraint on blobs were relaxed, and blobs were instead mutable or even just _append-only_, then the edits could be stored in a blob of their own or in one of the uploaded tree chunks. This could reduce the number of edits retained between infrequent summaries.
+
+This scheme can be optimized by changing the frequency of chunk uploads. Rather than every five, it might be every 100 or 1000. An application or heuristic can choose this frequency based on the complexity of its edits and the performance characteristics that it desires.
+
+> This strategy feels analogous to the runtime's summarization process; every so often a "checkpoint" is uploaded. Catching up to a midpoint between checkpoints involves "playing back" intermediate edits. So, why not simply do the chunk uploads at summarization time? There are a few reasons:
+    1. Summarization frequency cannot be controlled or tuned by a DDS, so SharedTree cannot choose the upload frequency that is best for its document.
+    2. It might take too long to upload all the changed chunks, and the summary's timeout will be exceeded
+    3. When the upload finishes, all other clients need to be notified via an op that they can safely update their state to match the new uploaded state (e.g. update their chunks stored in memory, evict any caches that are now stale, etc.). Sending an op from the summary client is disallowed/discouraged.
+
+### Random Reads
+
+While some applications will want to begin at the root node in the tree and repeatedly walk down/over to read data, many others will already know the shape and schema of the logical tree, already know where in the tree their data is, and want to access it as quickly as possible. The SharedTree will support such an operation, called a `random read`, by accepting a `path`: a route from the root of the tree that ends at a node. Every node in a given revision of the tree has a unique path.
+
+> A tree might provide other means for looking up nodes (e.g. by assigning some nodes a UUID and maintaining a UUID-to-node lookup index) that are more efficient in certain scenarios. But paths remain the _fundamental_ identifiers for nodes because every node in a tree has one implicitly, whether or not they are used or even recognized in the implementation.
+
+### Tree Shapes
+
+The performance characteristics of random reads are dependent upon the shape of the tree. A tree that is wide and shallow can have its leaves accessed by very few chunk traversals:
+
+```mermaid
+graph TD;
+    A(Chunk A)
+    B(Chunk B)
+    C(Chunk C)
+    D(Chunk D)
+    E(Chunk E)
+    A-->B
+    A-->C
+    A-->D
+    A-->E
+    style A fill:#844
+    style C fill:#844
+```
+
+Given a path to a node in Chunk C (and starting at the root), a query will only download two chunks: Chunk A and Chunk C.
+
+> Leaf nodes in the logical tree are both the farthest nodes from the root as well as the location where applications typically store most of their data.
+
+Deeper trees are more problematic:
+
+```mermaid
+graph TD;
+    A(Chunk A)
+    B(Chunk B)
+    C(Chunk C)
+    D(Chunk D)
+    E(Chunk E)
+    A-->B-->C-->D-->E
+    style A fill:#844
+    style B fill:#844
+    style C fill:#844
+    style D fill:#844
+    style E fill:#844
+```
+
+Even though this tree has the same number of chunks as the tree above, it takes many more downloads (five) to get to the leaves.
+
+### Implementing a Random Read
+
+The implementation of a random read operation could simply parse the path and walk from the root of the tree down to the target node. But as demonstrated above, this scales poorly for very deep trees, because the walk must download every chunk along the path down through the tree. As the operation descends, it will hit a chunk boundary every so often (depending on the average chunk size) and must wait for a download every time. The number of downloads is the depth of the target node divided by the average height of a chunk (a constant), so in the worst case (a leaf node) this is an O(D) operation where D is the depth of the tree. In terms of nodes, it's O(N) where N is the number of nodes in the tree since we can't assume anything about the shape of the tree.
 
 The complexity for write operations is analogous. Changing the value of a node in the tree must rewrite the entire spine of chunks and blobs above, as previously discussed. So a write must upload just as many blobs as a read must download and has the same runtime O(D).
 
@@ -165,7 +243,7 @@ The next sections will explore some ways of organizing the tree data such that b
 
 ### Path-Based B-Tree
 
-This approach simply puts all the nodes in a B-tree (or similar data structure), using the path of each node as its key.
+This approach simply puts all the nodes in a key-value data structure optimized for sorted keys,like a B-tree or similar data structure, using the path of each node as its key.
 
 Consider a tree and the paths of each of its nodes:
 
@@ -186,7 +264,7 @@ Paths are sortable; for example, the paths above can be sorted lexically to orde
 
 > Other sorts are possible too, but this one allows for some helpful optimizations in the B-tree itself (see Potential Optimizations below).
 
-The path for each node and the data stored at each node can then be used as keys and values, respectively, in a key-value data structure optimized for sorted keys, like a B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk:
+The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk:
 
 Chunk | Nodes
 ------|------
@@ -196,17 +274,20 @@ Chunk | Nodes
 
 > Chunk 2 has more nodes than Chunks 1 and 3 because the contents of nodes A and D are larger than those of B and C.
 
+TODO: specify exactly where chunks are (don't forget interior nodes)
+
 TODO: How do the chunks re-balance if a node's payload increases in size and now the chunk is too full? Does data spill over into adjacent chunks (and spill over repeatedly, if necessary?)
 
 Advantages:
 
+* The lookup of any node by path requires at most `log(n)` chunk reads.
+* Editing a node requires at most `log(n)` chunk updates.
 * The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries.
-* The lookup of any node by path is `O(log(n))`.
-* A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see below).
+* A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see Potential Optimizations below).
 
 Drawbacks:
 
-* The chunking algorithm is inflexible. Some shapes of trees will need to jump around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape.
+* The chunking algorithm is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape.
 
 Potential Optimizations:
 
@@ -215,9 +296,24 @@ Potential Optimizations:
 
 ### SPICE Tree
 
-The Spatially Partitioned, Ideally Chunked Entity tree allows the tree to be chunked arbitrarily and then organizes those chunks in a tree that allows efficient lookup of any chunk.
+The Spatially Partitioned, Ideally Chunked Entity tree allows the logical tree to be chunked arbitrarily and then organizes those chunks within multiple trees of varying detail that allow efficient lookup of any chunk by path. The lookup algorithm is explained just below and demonstrates the approach at a high level.
 
-The design is best illustrated by example. Consider a tree:
+Advantages:
+
+* The lookup of any node by path requires at most `log(n)` chunk reads.
+* Editing a node requires at most `log(n)` chunk updates.
+* Chunks boundaries can be chosen arbitrarily with few restrictions. This means the tree can be optimized such that content which belong together semantically can be guaranteed to be downloaded and uploaded together, minimizing network traffic as a client walks around the tree.
+* The schema of the logical tree can be used to give hints for chunk boundaries. When a schema is knowledgeable about where the virtualization boundaries of the tree are, it can provide a better read API. Descending into child nodes within the same chunk is a synchronous operation, and only when crossing over a chunk boundary is it an asynchronous operation.
+
+Drawbacks:
+
+* The implementation is more complicated than other approaches, and requires a chunking algorithm which might also be complicated.
+
+#### Recursive Chunking
+
+The SPICE tree takes a large tree of nodes and breaks it into chunks; then, it takes the resulting tree of chunks and breaks _it_ into chunks, and repeats this process until there is only one chunk. Consider a tree of nodes:
+
+> The illustrations here use a perfectly balanced tree and place only a few nodes in each chunk, but in practice neither of these things need be the case. Most document trees that require use of a SPICE tree will be far larger, will not be balanced, and may put hundreds or thousands of nodes in each chunk (depending on the size of the content the nodes contain).
 
 ```mermaid
 graph TD;
@@ -294,10 +390,22 @@ graph TD;
     end
 ```
 
-Each chunk is labelled with the path to the root of the chunk:
+The resulting chunks (which also form a tree), are labelled using the combined paths of the nodes inside them:
 
-Chunk | Path
-------|-----
+```mermaid
+graph TD;
+    C1--0/0-->C2--0/0-->C3
+    C2--0/1-->C4
+    C1--0/1-->C5--0/0-->C6
+    C5--1/0-->C7
+    C1--1/0-->C8--0/0-->C9
+    C8--1/0-->C10
+    C1--1/1-->C11--0/0-->C12
+    C11--1/0-->C13
+```
+
+Chunk | Path to Chunk Root
+------|-------------------
 1     | ""
 2     | "0/0"
 3     | "0/0/0/0"
@@ -307,11 +415,99 @@ Chunk | Path
 7     | "0/1/1/0"
 8     | "1/0"
 9     | "1/0/0/0"
-10    | "1/0/0/0"
+10    | "1/0/1/0"
 11    | "1/1"
 12    | "1/1/0/0"
-13    | "1/1/0/0"
+13    | "1/1/1/0"
 
+Next, the chunking algorithm runs again, this time on the tree of chunks rather than a tree of nodes:
+
+```mermaid
+graph TD;
+    C1--0/0-->C2--0/0-->C3
+    C2--0/1-->C4
+    C1--0/1-->C5--0/0-->C6
+    C5--1/0-->C7
+    C1--1/0-->C8--0/0-->C9
+    C8--1/0-->C10
+    C1--1/1-->C11--0/0-->C12
+    C11--1/0-->C13
+    subgraph Chunk 1'
+    C1
+    end
+    subgraph Chunk 5'
+    C11
+    C12
+    C13
+    end
+    subgraph Chunk 4'
+    C8
+    C9
+    C10
+    end
+    subgraph Chunk 3'
+    C5
+    C6
+    C7
+    end
+    subgraph Chunk 2'
+    C2
+    C3
+    C4
+    end
+
+```
+
+The new chunks are labelled with the label of their root chunk:
+
+```mermaid
+graph TD;
+    C1'--0/0-->C2';
+    C1'--0/1-->C3';
+    C1'--1/0-->C4';
+    C1'--1/1-->C5';
+```
+
+Chunk | Path
+------|-----
+1     | ""
+2     | "0/0"
+3     | "0/1"
+4     | "1/0"
+5     | "1/1"
+
+This chunking process repeats:
+
+```mermaid
+graph TD;
+    subgraph Chunk 1''
+    C1'--0/0-->C2';
+    C1'--0/1-->C3';
+    C1'--1/0-->C4';
+    C1'--1/1-->C5';
+    end
+```
+
+Eventually, the result is just a single chunk.
+
+```mermaid
+graph TD;
+    C1''
+```
+
+Chunk | Path
+------|-----
+1     | ""
+
+In this way, the SPICE tree creates a sort of ["level of detail"](https://en.wikipedia.org/wiki/Level_of_detail_(computer_graphics)) structure, which can be "zoomed into" selectively to find certain items, in the way one finds data in something like a [quad tree](https://en.wikipedia.org/wiki/Quadtree) or similar structure. After this process, the only piece of state required for the tree to be fully queryable is the root chunk `C1''` since all other chunks and nodes are contained "within" it.
+
+#### Lookup Operations
+
+The path labels on each chunk are important, because they represent a common prefix shared by the paths of all nodes contained in that chunk (or all nodes contained in chunks with that chunk, etc.). A lookup operation that starts at the root knows into which chunk to descend by examining the labels and traversing those which match the target path. For example, suppose a query is made for node `P` via its path `1/0/0/0`. The query downloads `C1''`, as it is the only chunk, and discovers in its contents the root chunk of the next layer, `C1'`. `C1'` has four children with labels `0/0`, `0/1`, `1/0` and `1/1`. The path to `P`, `1/0/0/0` begins with `1/0`, so the query follows that edge to get `C4'`, which it then downloads. `C4'` contains as its root `C8`, which has two children with labels `0/0` and `1/0`. The query follows the next part of the path, `0/0` (the first half of the path, `1/0`, was consumed when going from `C1'` to `C4'`) to arrive at `C9`. It then downloads `C9` and inside finds `P` as the root node. Since there is no more path to consume, the query has arrived at its target node.
+
+A lookup of any node requires traversing through the "layers of chunks" in this way and will cause as many downloads as there are layers. Each layer differs in size from the previous layer by some (roughly) constant factor, and therefore the number of layers (and downloads) logarithmic with respect to the size of the tree. So a SPICE tree requires O(Log(N)) downloads, a great improvement over O(N).
+
+* For wide and shallow trees,
 ### Logical Node Tree
 
 The actual tree itself can be stored directly, with each node being a blob, and referring to each other node with a handle.
@@ -771,6 +967,7 @@ This is a good place leverage decision encapsulation to minimize the impact if w
 - Partial Checkout: a client loads only a portion of a tree, and can read/write only from/to that portion of the tree.
   > Note: Partial checkout might be necessary for performance reasons (e.g. if the full tree is too large to fit into the client's memory), or for privacy/security reasons (e.g. multiple clients share a tree but each is only allowed access to some part of it)
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
+- Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
 - Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
 - Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
 - Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
