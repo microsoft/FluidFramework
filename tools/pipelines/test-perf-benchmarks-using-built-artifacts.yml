@@ -142,7 +142,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=Pattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackagePath.Pattern)"
+              echo "##vso[task.setvariable variable=Pattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackageFile.Pattern)"
 
         - task: Bash@3
           displayName: Confirm Parameters
