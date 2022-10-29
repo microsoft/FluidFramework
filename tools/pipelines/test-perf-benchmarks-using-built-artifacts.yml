@@ -150,7 +150,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=File;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
+              echo "##vso[task.setvariable variable=FileName;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
 
         - task: Bash@3
           displayName: Confirm Parameters
@@ -159,7 +159,7 @@ stages:
             script: |
               echo "TestPackageFile.Pattern=$(TestPackageFile.Pattern)"
               echo "TestPackagePath.Pattern=$(TestPackagePath.Pattern)"
-              echo "TestPackageTar.File=$(TestPackageTar.File)"
+              echo "TestPackageTar.FileName=$(TestPackageTar.FileName)"
 
         # Install
         - task: UseNode@1
@@ -262,7 +262,7 @@ stages:
             targetType: 'inline'
             script: |
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/${{ TestPackageTar.File }}.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/${{ TestPackageTar.FileName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
 
