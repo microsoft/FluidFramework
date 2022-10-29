@@ -605,13 +605,6 @@ function runNpmJsonLint(json: any, file: string) {
 const defaultNpmPackageJsonLintConfig = {
     rules: {
         "no-repeated-dependencies": "error",
-        "prefer-caret-version-devDependencies": [
-            "error",
-            {
-                // These should all use tilde dependencies
-                exceptions: tildeDependencies,
-            },
-        ],
         "require-repository-directory": "error",
         "valid-values-name-scope": [
             "error",
