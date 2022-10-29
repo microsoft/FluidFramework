@@ -90,7 +90,7 @@ stages:
           artifactPipeline: Build - client packages
           # testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
           # testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
-          testFileTarName: sequence
+          # testFileTarName: sequence
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
           ${{ else }}:
@@ -145,12 +145,21 @@ stages:
               echo "##vso[task.setvariable variable=Pattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackageFile.Pattern)"
 
         - task: Bash@3
+          name: TestPackageTar
+          displayName: Declare TestPackageTar Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "##vso[task.setvariable variable=File;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
+
+        - task: Bash@3
           displayName: Confirm Parameters
           inputs:
             targetType: 'inline'
             script: |
               echo "TestPackageFile.Pattern=$(TestPackageFile.Pattern)"
-              echo "testPackagePathPattern=$(TestPackagePath.Pattern)"
+              echo "TestPackagePath.Pattern=$(TestPackagePath.Pattern)"
+              echo "TestPackageTar.File=$(TestPackageTar.File)"
 
         # Install
         - task: UseNode@1
@@ -253,7 +262,7 @@ stages:
             targetType: 'inline'
             script: |
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/${{ variables.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/${{ TestPackageTar.File }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
 
