@@ -32,6 +32,7 @@ import {
     moveToDetachedField,
 } from "../core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { afterChangeForest } from "./object-forest";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -75,6 +76,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
 
     newLocalState(changeDelta: Delta.Root): void {
         this.forest.applyDelta(changeDelta);
+        // TODO: remove this workaround as soon as notification/eventing will be supported.
+        afterChangeForest(this.forest);
     }
 
     /**
