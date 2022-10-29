@@ -187,11 +187,10 @@ describe("AzureClient", () => {
         const forcedWriteConnectionMode = (container as any).container
             .connectionMode as ConnectionMode;
 
-        // test forced write mode case
         assert.strictEqual(
             forcedWriteConnectionMode,
             "write",
-            "Container does not start with write mode by defaut when forceWriteMode set to true",
+            "Container does not start with write mode by defaut",
         );
     });
 });
