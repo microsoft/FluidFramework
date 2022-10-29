@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
+import { ConnectionMode } from "@fluidframework/protocol-definitions";
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
@@ -163,5 +164,34 @@ describe("AzureClient", () => {
         );
         // eslint-disable-next-line require-atomic-updates
         console.error = consoleErrorFn;
+    });
+
+    /**
+     * Scenario: Test if AzureClient starts with the container in `write` mode.
+     *
+     * Expected behavior: AzureClient creates a connected container in `write` mode.
+     */
+    it("creates a container in write mode", async () => {
+        const { container } = await client.createContainer(schema);
+        await container.attach();
+
+        const map1 = container.initialObjects.map1 as SharedMap;
+        map1.set("newpair-id", "test");
+
+        await timeoutPromise((resolve) => container.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        const forcedWriteConnectionMode = (container as any).container
+            .connectionMode as ConnectionMode;
+
+        // test forced write mode case
+        assert.strictEqual(
+            forcedWriteConnectionMode,
+            "write",
+            "Container does not start with write mode by defaut when forceWriteMode set to true",
+        );
     });
 });
