@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     FluidObject,
     IRequest,
@@ -65,7 +65,11 @@ import {
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    DataProcessingError,
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -190,6 +194,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    /**
+     * Tombstone is a temporary feature that prevents a data store from sending / receiving ops, signals and from
+     * loading.
+     */
+    private _tombstoned = false;
+    public get tombstoned() { return this._tombstoned; }
+
     public get attachState(): AttachState {
         return this._attachState;
     }
@@ -305,6 +316,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
+    public tombstone() {
+        if (this.tombstoned) {
+            return;
+        }
+
+        this._tombstoned = true;
+    }
+
     private rejectDeferredRealize(reason: string, packageName?: string): never {
         throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact } });
     }
@@ -381,7 +400,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * its new client ID when we are connecting or connected.
      */
     public setConnectionState(connected: boolean, clientId?: string) {
-        this.verifyNotClosed();
+        // ConnectionState should not fail in tombstone mode as this is internally run
+        this.verifyNotClosed("setConnectionState", false /* checkTombstone */);
 
         // Connection events are ignored if the store is not yet loaded
         if (!this.loaded) {
@@ -395,7 +415,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        this.verifyNotClosed();
+        this.verifyNotClosed("process", true, extractSafePropertiesFromMessage(messageArg));
 
         const innerContents = messageArg.contents as FluidDataStoreMessage;
         const message = {
@@ -417,7 +437,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
-        this.verifyNotClosed();
+        this.verifyNotClosed("processSignal");
 
         // Signals are ignored if the store is not yet loaded
         if (!this.loaded) {
@@ -582,7 +602,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
-        this.verifyNotClosed();
+        this.verifyNotClosed("submitMessage");
         assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
@@ -604,7 +624,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      *
      */
     public setChannelDirty(address: string): void {
-        this.verifyNotClosed();
+        this.verifyNotClosed("setChannelDirty");
 
         // Get the latest sequence number.
         const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
@@ -619,7 +639,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public submitSignal(type: string, content: any) {
-        this.verifyNotClosed();
+        this.verifyNotClosed("submitSignal");
+
         assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
@@ -732,9 +753,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channel.applyStashedOp(innerContents.content);
     }
 
-    private verifyNotClosed() {
+    private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
         if (this._disposed) {
-            throw new Error("Context is closed");
+            throw new Error(`Context is closed: Call site - ${callSite}!`);
+        }
+
+        if (checkTombstone && this.tombstoned) {
+            const messageString = `Context is tombstoned: Call site -  ${callSite}!`;
+            throw new DataCorruptionError(messageString, {
+                errorMessage: messageString,
+                ...safeTelemetryProps,
+            });
         }
     }
 
