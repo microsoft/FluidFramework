@@ -63,6 +63,13 @@ export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
 
 /**
+ * A symbol to get the field of a node without unwrapping in contexts where string keys are already in use for fields.
+ */
+export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
+    "editable-tree:getWithoutUnwrapping()",
+);
+
+/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
@@ -103,6 +110,11 @@ export interface EditableTree extends Iterable<EditableField> {
      * this should become an implementation detail and rbe removed from this API surface.
      */
     readonly [anchorSymbol]: Anchor;
+
+    /**
+     * Gets the field of this node by its key without unwrapping.
+     */
+    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
 
     /**
      * Fields of this node, indexed by their field keys.
@@ -356,7 +368,8 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return undefined;
     }
 
-    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField | EditableField {
+    public proxifyField(field: FieldKey, unwrap?: false): EditableField;
+    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField {
         const fieldSchema = getFieldSchema(
             field,
             this.context.forest.schema,
@@ -368,9 +381,13 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return proxifiedField;
     }
 
+    public getWithoutUnwrapping(fieldKey: FieldKey): EditableField {
+        return this.proxifyField(fieldKey, false);
+    }
+
     [Symbol.iterator](): IterableIterator<EditableField> {
         return this.getFieldKeys()
-            .map((fieldKey) => this.proxifyField(fieldKey, false) as EditableField)
+            .map((fieldKey) => this.proxifyField(fieldKey, false))
             .values();
     }
 }
@@ -397,6 +414,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.getAnchor();
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
+            case getWithoutUnwrappingSymbol:
+                return target.getWithoutUnwrapping.bind(target);
             default:
                 return undefined;
         }
@@ -423,6 +442,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case getTypeSymbol:
             case anchorSymbol:
             case Symbol.iterator:
+            case getWithoutUnwrappingSymbol:
                 return true;
             case valueSymbol:
                 // Could do `target.value !== ValueSchema.Nothing`
@@ -482,6 +502,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     configurable: true,
                     enumerable: false,
                     value: target[Symbol.iterator].bind(target),
+                    writable: false,
+                };
+            case getWithoutUnwrappingSymbol:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.getWithoutUnwrapping.bind(target),
                     writable: false,
                 };
             default:

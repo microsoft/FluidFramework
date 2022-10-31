@@ -80,8 +80,8 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    invert(changes: TChangeset): TChangeset;
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
@@ -216,6 +216,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
     [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [valueSymbol]: Value;
@@ -305,8 +306,8 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
-    invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
-    rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
 }
 
 // @public (undocumented)
@@ -404,6 +405,9 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 
 // @public
 export const getTypeSymbol: unique symbol;
+
+// @public
+export const getWithoutUnwrappingSymbol: unique symbol;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
@@ -505,7 +509,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @public
-function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
+function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -768,9 +772,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
-    invert(changes: FieldChangeMap): FieldChangeMap;
+    invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
-    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap;
+    rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void;
     // (undocumented)
@@ -982,10 +986,13 @@ interface Reattach extends HasOpId {
 }
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: Changeset<TNodeChange>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @public
+export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -1164,6 +1171,14 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
 
 // @public (undocumented)
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
+
+// @public (undocumented)
+export interface TaggedChange<TChangeset> {
+    // (undocumented)
+    readonly change: TChangeset;
+    // (undocumented)
+    readonly revision: RevisionTag | undefined;
+}
 
 // @public (undocumented)
 enum Tiebreak {

@@ -14,7 +14,7 @@ import {
     namedTreeSchema,
     ValueSchema,
     LocalFieldKey,
-    TreeSchema,
+    NamedTreeSchema,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
 import {
@@ -43,6 +43,7 @@ import {
     emptyField,
     isEditableField,
     UnwrappedEditableTree,
+    getWithoutUnwrappingSymbol,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -126,6 +127,7 @@ describe("editable-tree", () => {
         // Check for expected symbols:
         assert(proxyTargetSymbol in personProxy);
         assert(getTypeSymbol in personProxy);
+        assert(getWithoutUnwrappingSymbol in personProxy);
         // Check fields show up:
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
@@ -297,7 +299,7 @@ describe("editable-tree", () => {
         context.free();
     });
 
-    it("primitives are unwrapped under node", () => {
+    it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
         const rootSchema = fieldSchema(FieldKinds.value, [optionalChildSchema.name]);
         const schemaData: SchemaData = {
             treeSchema: schemaMap,
@@ -312,14 +314,11 @@ describe("editable-tree", () => {
         const context = getEditableTreeContext(forest);
         assert(isUnwrappedNode(context.unwrappedRoot));
         assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
-        // TODO: replace this with access to fields w/o unwrapping
-        for (const field of context.unwrappedRoot) {
-            assert.equal(field.fieldKey, "child" as FieldKey);
-            const child = field.getWithoutUnwrapping(0);
-            assert(isUnwrappedNode(child));
-            assert.equal(child[getTypeSymbol](undefined, true), int32Schema.name);
-            assert.equal(child[valueSymbol], 1);
-        }
+
+        // access without unwrapping
+        const child = context.unwrappedRoot[getWithoutUnwrappingSymbol](brand("child"));
+        assert(isEditableField(child));
+        expectFieldEquals(forest.schema, child, [{ type: int32Schema.name, value: 1 }]);
         context.free();
     });
 
@@ -466,6 +465,7 @@ describe("editable-tree", () => {
             "fieldSchema",
             "primaryType",
         ]);
+        assert.equal(proxy.address.phones.primaryType, phonesSchema.name);
         const act = [...proxy.address.phones].map(
             (phone: UnwrappedEditableTree): Value | object => {
                 if (isPrimitiveValue(phone)) {
@@ -481,17 +481,54 @@ describe("editable-tree", () => {
         assert.deepEqual(act, expectedPhones);
     });
 
-    it("'getWithoutUnwraping' does not unwrap primary field", () => {
+    it("'getWithoutUnwrapping' does not unwrap primary fields", () => {
         const [, proxy] = buildTestPerson();
-        assert(isEditableField(proxy.address.phones));
-        const forthNode = proxy.address.phones.getWithoutUnwrapping(3);
-        const primary = getPrimaryField(forthNode[getTypeSymbol](undefined, false) as TreeSchema);
-        assert(primary !== undefined);
-        const simplePhones = forthNode[primary.key];
+        // get the field having a node which follows the primary field schema
+        const phonesField = proxy.address[getWithoutUnwrappingSymbol](brand("phones"));
+        assert(isEditableField(phonesField));
+        assert.equal(phonesField.length, 1);
+        // get the primary key
+        const phonesType = proxy.address[getTypeSymbol](brand("phones"), false) as NamedTreeSchema;
+        const phonesPrimary = getPrimaryField(phonesType);
+        assert(phonesPrimary !== undefined);
+        // get the node with the primary field
+        const phonesNode = phonesField.getWithoutUnwrapping(0);
+        assert(isUnwrappedNode(phonesNode));
+        assert.equal([...phonesNode].length, 1);
+        // get the primary field
+        const phonesPrimaryField = phonesNode[getWithoutUnwrappingSymbol](phonesPrimary.key);
+        assert(isEditableField(phonesPrimaryField));
+        assert.equal(phonesPrimaryField.length, 4);
+        // assert the primary field has no primaryType if accessed without prior unwrapping
+        assert.equal(phonesPrimaryField.primaryType, undefined);
+
+        // get the sequence node with the primary field
+        const simplePhonesNode = phonesPrimaryField.getWithoutUnwrapping(3);
+        assert(isUnwrappedNode(simplePhonesNode));
+        // assert its schema follows the primary field schema and get the primary key from it
+        assert.equal([...simplePhonesNode].length, 1);
+        const simplePhonesSchema = simplePhonesNode[getTypeSymbol](
+            undefined,
+            false,
+        ) as NamedTreeSchema;
+        assert.deepEqual(simplePhonesSchema.extraLocalFields, emptyField);
+        assert.deepEqual([...simplePhonesSchema.globalFields], []);
+        assert.equal(simplePhonesSchema.extraGlobalFields, false);
+        assert.equal(simplePhonesSchema.localFields.size, 1);
+        const simplePhonesPrimaryKey = [...simplePhonesSchema.localFields.keys()][0];
+        // primary key must be the same across the schema
+        assert.equal(simplePhonesPrimaryKey, phonesPrimary.key);
+        // get the primary field
+        const simplePhonesPrimaryField = simplePhonesNode[simplePhonesPrimaryKey];
+        assert(isEditableField(simplePhonesPrimaryField));
+        assert.equal(simplePhonesPrimaryField.length, 2);
         const expectedPhones = ["112", "113"];
-        assert(isEditableField(simplePhones));
-        for (let i = 0; i < simplePhones.length; i++) {
-            assert.equal(simplePhones[i], expectedPhones[i]);
+        for (let i = 0; i < simplePhonesPrimaryField.length; i++) {
+            assert.equal(
+                simplePhonesPrimaryField.getWithoutUnwrapping(i)[valueSymbol],
+                expectedPhones[i],
+            );
+            assert.equal(simplePhonesPrimaryField[i], expectedPhones[i]);
         }
     });
 

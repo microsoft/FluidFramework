@@ -69,6 +69,8 @@ export {
     ICheckout,
     TransactionResult,
     FieldAnchor,
+    RevisionTag,
+    TaggedChange,
 } from "./core";
 
 export {
@@ -141,6 +143,7 @@ export {
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
+    getWithoutUnwrappingSymbol,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,
