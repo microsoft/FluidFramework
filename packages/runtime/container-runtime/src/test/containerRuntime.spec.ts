@@ -48,7 +48,6 @@ describe("Runtime", () => {
                     context: getMockContext() as IContainerContext,
                     registryEntries: [],
                     existing: false,
-                    requestHandler: undefined,
                     runtimeOptions: {},
                 });
 
@@ -56,14 +55,14 @@ describe("Runtime", () => {
             });
 
             it("Override default flush mode using options", async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: {
                         flushMode: FlushMode.Immediate,
                     },
-                );
+                });
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
             });
@@ -242,8 +241,7 @@ describe("Runtime", () => {
                         containerRuntime = await ContainerRuntime.loadRuntime({
                             context: getMockContext() as IContainerContext,
                             registryEntries: [],
-                            existing: false, // existing
-                            requestHandler: undefined, // requestHandler
+                            existing: false,
                             runtimeOptions: {
                                 summaryOptions: {
                                     summaryConfigOverrides: { state: "disabled" },
@@ -304,7 +302,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.loadRuntime({
                     context: mockContext as IContainerContext,
                     registryEntries: [],
-                    existing: false, // existing
+                    existing: false,
                     runtimeOptions: undefined,
                     containerScope: {},
             });
@@ -329,12 +327,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is attaching", async () => {
                 const mockContext = createMockContext(AttachState.Attaching, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -345,7 +344,7 @@ describe("Runtime", () => {
                 await ContainerRuntime.loadRuntime({
                     context: mockContext as IContainerContext,
                     registryEntries: [],
-                    existing: false, // existing
+                    existing: false,
                     requestHandler: undefined,
                     runtimeOptions: {},
                 });
@@ -423,8 +422,8 @@ describe("Runtime", () => {
                 containerRuntime = await ContainerRuntime.loadRuntime({
                     context: getMockContext() as IContainerContext,
                     registryEntries: [],
-                    existing: false, // existing
-                    requestHandler: undefined, // requestHandler
+                    existing: false,
+                    requestHandler: undefined,
                     runtimeOptions: {
                         summaryOptions: {
                             summaryConfigOverrides: {

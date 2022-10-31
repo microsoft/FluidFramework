@@ -654,15 +654,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             containerScope?: FluidObject;
         },
     ): Promise<ContainerRuntime> {
-        const { context, registryEntries, existing, requestHandler } = params;
-        let { runtimeOptions, containerScope } = params;
-        if (!runtimeOptions) {
-            runtimeOptions = {};
-        }
-        if (!containerScope) {
-            containerScope = context.scope;
-        }
-       // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
+        const { context, registryEntries, existing, requestHandler, runtimeOptions = {}, containerScope = {} } = params;
+        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
         const passLogger = backCompatContext.taggedLogger ??
