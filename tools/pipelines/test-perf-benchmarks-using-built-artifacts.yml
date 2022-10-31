@@ -154,7 +154,6 @@ stages:
               echo "
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ testPackage }}
                 Build=${{ parameters.taskBuild }}
 
               Task Variables:
