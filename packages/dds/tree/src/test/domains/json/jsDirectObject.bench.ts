@@ -8,7 +8,7 @@ import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-too
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { averageTwoValues, sumDirect } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
-import { generateCanada } from "./canada";
+import { Canada, generateCanada } from "./canada";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -81,7 +81,7 @@ export function jsObjectBench(
 
 function extractCoordinatesFromCanadaDirect(
     // TODO: export Canada type and use instead of any.
-    directObj: any,
+    directObj: Canada,
     calculate: (x: number, y: number) => void,
 ): void {
     for (const feature of directObj.features) {
