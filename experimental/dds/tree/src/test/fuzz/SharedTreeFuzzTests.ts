@@ -7,17 +7,17 @@ import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from 'chai';
 import {
-	AsyncGenerator,
-	chainAsync as chain,
-	describeFuzz,
-	makeRandom,
-	takeAsync as take,
-	performFuzzActionsAsync as performFuzzActionsBase,
+    AsyncGenerator,
+    chainAsync as chain,
+    describeFuzz,
+    makeRandom,
+    takeAsync as take,
+    performFuzzActionsAsync as performFuzzActionsBase,
 } from '@fluid-internal/stochastic-test-utils';
 import {
-	setUpLocalServerTestSharedTree,
-	testDocumentsPathBase,
-	withContainerOffline,
+    setUpLocalServerTestSharedTree,
+    testDocumentsPathBase,
+    withContainerOffline,
 } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
@@ -43,288 +43,288 @@ const adjustSeed = 0;
  * at a given filepath. This can be useful for debugging why a fuzz test may have failed.
  */
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
-	seed: number,
-	synchronizeAtEnd: boolean = true,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
+    generator: AsyncGenerator<Operation, FuzzTestState>,
+    seed: number,
+    synchronizeAtEnd: boolean = true,
+    saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const random = makeRandom(seed);
+    const random = makeRandom(seed);
 
-	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
-	const initialState: FuzzTestState = { random, passiveCollaborators: [], activeCollaborators: [] };
-	const finalState = await performFuzzActionsBase(
-		generator,
-		{
-			edit: async (state, operation) => {
-				const { index, contents } = operation;
-				const { tree } = state.activeCollaborators[index];
-				applyFuzzChange(tree, contents);
-				return state;
-			},
-			join: async (state, operation) => {
-				const { isObserver, summarizeHistory, writeFormat } = operation;
-				const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-					writeFormat,
-					summarizeHistory,
-					testObjectProvider: state.testObjectProvider,
-				});
-				(isObserver ? state.passiveCollaborators : state.activeCollaborators).push({ container, tree });
-				return { ...state, testObjectProvider };
-			},
-			leave: async (state, operation) => {
-				const { index, isObserver } = operation;
-				const treeList = isObserver ? state.passiveCollaborators : state.activeCollaborators;
-				treeList[index].container.close();
-				treeList.splice(index, 1);
-				return state;
-			},
-			stash: async (state, operation) => {
-				const { index, contents, writeFormat, summarizeHistory } = operation;
-				const testObjectProvider =
-					state.testObjectProvider ?? fail('Attempted to synchronize with undefined testObjectProvider');
+    // Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
+    const initialState: FuzzTestState = { random, passiveCollaborators: [], activeCollaborators: [] };
+    const finalState = await performFuzzActionsBase(
+        generator,
+        {
+            edit: async (state, operation) => {
+                const { index, contents } = operation;
+                const { tree } = state.activeCollaborators[index];
+                applyFuzzChange(tree, contents);
+                return state;
+            },
+            join: async (state, operation) => {
+                const { isObserver, summarizeHistory, writeFormat } = operation;
+                const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+                    writeFormat,
+                    summarizeHistory,
+                    testObjectProvider: state.testObjectProvider,
+                });
+                (isObserver ? state.passiveCollaborators : state.activeCollaborators).push({ container, tree });
+                return { ...state, testObjectProvider };
+            },
+            leave: async (state, operation) => {
+                const { index, isObserver } = operation;
+                const treeList = isObserver ? state.passiveCollaborators : state.activeCollaborators;
+                treeList[index].container.close();
+                treeList.splice(index, 1);
+                return state;
+            },
+            stash: async (state, operation) => {
+                const { index, contents, writeFormat, summarizeHistory } = operation;
+                const testObjectProvider =
+                    state.testObjectProvider ?? fail('Attempted to synchronize with undefined testObjectProvider');
 
-				const { container, tree } = state.activeCollaborators[index];
-				await testObjectProvider.ensureSynchronized();
-				const { pendingLocalState } = await withContainerOffline(testObjectProvider, container, () => {
-					applyFuzzChange(tree, contents);
-				});
+                const { container, tree } = state.activeCollaborators[index];
+                await testObjectProvider.ensureSynchronized();
+                const { pendingLocalState } = await withContainerOffline(testObjectProvider, container, () => {
+                    applyFuzzChange(tree, contents);
+                });
 
-				const {
-					container: newContainer,
-					tree: newTree,
-					testObjectProvider: newTestObjectProvider,
-				} = await setUpLocalServerTestSharedTree({
-					writeFormat,
-					summarizeHistory,
-					testObjectProvider,
-					pendingLocalState,
-				});
+                const {
+                    container: newContainer,
+                    tree: newTree,
+                    testObjectProvider: newTestObjectProvider,
+                } = await setUpLocalServerTestSharedTree({
+                    writeFormat,
+                    summarizeHistory,
+                    testObjectProvider,
+                    pendingLocalState,
+                });
 
-				state.activeCollaborators.splice(index, 1, { container: newContainer, tree: newTree });
-				await newTestObjectProvider.ensureSynchronized();
-				await newTestObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
-				return { ...state, testObjectProvider: newTestObjectProvider };
-			},
-			synchronize: async (state) => {
-				const { testObjectProvider } = state;
-				if (testObjectProvider === undefined) {
-					fail('Attempted to synchronize with undefined testObjectProvider');
-				}
-				await testObjectProvider.ensureSynchronized();
-				const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
-				if (trees.length > 1) {
-					const first = trees[0].tree;
-					for (let i = 1; i < trees.length; i++) {
-						const tree = trees[i].tree;
-						const editLogA = first.edits;
-						const editLogB = tree.edits;
-						const minEdits = Math.min(editLogA.length, editLogB.length);
-						for (let j = 0; j < minEdits - 1; j++) {
-							const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
-							const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
-							expect(editA.id).to.equal(editB.id);
-						}
-						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
-							.be.true;
+                state.activeCollaborators.splice(index, 1, { container: newContainer, tree: newTree });
+                await newTestObjectProvider.ensureSynchronized();
+                await newTestObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
+                return { ...state, testObjectProvider: newTestObjectProvider };
+            },
+            synchronize: async (state) => {
+                const { testObjectProvider } = state;
+                if (testObjectProvider === undefined) {
+                    fail('Attempted to synchronize with undefined testObjectProvider');
+                }
+                await testObjectProvider.ensureSynchronized();
+                const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
+                if (trees.length > 1) {
+                    const first = trees[0].tree;
+                    for (let i = 1; i < trees.length; i++) {
+                        const tree = trees[i].tree;
+                        const editLogA = first.edits;
+                        const editLogB = tree.edits;
+                        const minEdits = Math.min(editLogA.length, editLogB.length);
+                        for (let j = 0; j < minEdits - 1; j++) {
+                            const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
+                            const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
+                            expect(editA.id).to.equal(editB.id);
+                        }
+                        expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
+                            .be.true;
 
-						for (const node of tree.currentView) {
-							expect(tree.attributeNodeId(node.identifier)).to.equal(
-								first.attributeNodeId(
-									first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
-								)
-							);
-						}
-					}
-				}
-				return state;
-			},
-		},
-		initialState,
-		saveInfo
-	);
+                        for (const node of tree.currentView) {
+                            expect(tree.attributeNodeId(node.identifier)).to.equal(
+                                first.attributeNodeId(
+                                    first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
+                                )
+                            );
+                        }
+                    }
+                }
+                return state;
+            },
+        },
+        initialState,
+        saveInfo
+    );
 
-	if (synchronizeAtEnd) {
-		if (finalState.testObjectProvider !== undefined) {
-			await finalState.testObjectProvider.ensureSynchronized();
-			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.expectedNotFound.length).to.equal(0);
-			for (const event of events.unexpectedErrors) {
-				switch (event.eventName) {
-					// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
-					case 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure':
-					// TODO:#1120
-					case 'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound':
-					// Summary nacks can happen as part of normal operation and are handled by the framework
-					case 'fluid:telemetry:Summarizer:Running:SummaryNack':
-					case 'fluid:telemetry:Summarizer:summarizingError':
-					case 'fluid:telemetry:Summarizer:Running:Summarize_cancel':
-						break;
-					default:
-						expect.fail(`Unexpected error event: ${event.eventName}`);
-				}
-			}
-		}
-		const trees = [
-			...finalState.activeCollaborators.map(({ tree }) => tree),
-			...finalState.passiveCollaborators.map(({ tree }) => tree),
-		];
-		for (let i = 0; i < trees.length - 1; i++) {
-			expect(trees[i].equals(trees[i + 1]));
-		}
-	}
+    if (synchronizeAtEnd) {
+        if (finalState.testObjectProvider !== undefined) {
+            await finalState.testObjectProvider.ensureSynchronized();
+            const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
+            expect(events.expectedNotFound.length).to.equal(0);
+            for (const event of events.unexpectedErrors) {
+                switch (event.eventName) {
+                    // Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
+                    case 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure':
+                    // TODO:#1120
+                    case 'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound':
+                    // Summary nacks can happen as part of normal operation and are handled by the framework
+                    case 'fluid:telemetry:Summarizer:Running:SummaryNack':
+                    case 'fluid:telemetry:Summarizer:summarizingError':
+                    case 'fluid:telemetry:Summarizer:Running:Summarize_cancel':
+                        break;
+                    default:
+                        expect.fail(`Unexpected error event: ${event.eventName}`);
+                }
+            }
+        }
+        const trees = [
+            ...finalState.activeCollaborators.map(({ tree }) => tree),
+            ...finalState.passiveCollaborators.map(({ tree }) => tree),
+        ];
+        for (let i = 0; i < trees.length - 1; i++) {
+            expect(trees[i].equals(trees[i + 1]));
+        }
+    }
 
-	return finalState as Required<FuzzTestState>;
+    return finalState as Required<FuzzTestState>;
 }
 
 export function runSharedTreeFuzzTests(title: string): void {
-	// Some useful tips for debugging fuzz tests:
-	// - A JSON dump of the operation sequence can be written to disk by passing `true` for `saveOnFailure`.
-	// - Different shared-tree instances can be distinguished (e.g. in logs) by using `tree.getRuntime().clientId`
-	describeFuzz(title, ({ testCount }) => {
-		function runTest(
-			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
-			seed: number,
-			saveOnFailure?: boolean
-		): void {
-			it(`with seed ${seed}`, async () => {
-				const saveInfo =
-					saveOnFailure !== undefined
-						? { filepath: join(directory, `test-history-${seed}.json`), saveOnFailure }
-						: undefined;
-				if (saveInfo !== undefined && !existsSync(directory)) {
-					mkdirSync(directory);
-				}
-				await performFuzzActions(generatorFactory(), seed + adjustSeed, true, saveInfo);
-			}).timeout(10000);
-		}
+    // Some useful tips for debugging fuzz tests:
+    // - A JSON dump of the operation sequence can be written to disk by passing `true` for `saveOnFailure`.
+    // - Different shared-tree instances can be distinguished (e.g. in logs) by using `tree.getRuntime().clientId`
+    describeFuzz(title, ({ testCount }) => {
+        function runTest(
+            generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
+            seed: number,
+            saveOnFailure?: boolean
+        ): void {
+            it(`with seed ${seed}`, async () => {
+                const saveInfo =
+                    saveOnFailure !== undefined
+                        ? { filepath: join(directory, `test-history-${seed}.json`), saveOnFailure }
+                        : undefined;
+                if (saveInfo !== undefined && !existsSync(directory)) {
+                    mkdirSync(directory);
+                }
+                await performFuzzActions(generatorFactory(), seed + adjustSeed, true, saveInfo);
+            }).timeout(10000);
+        }
 
-		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number, testLength: number): void {
-			describe('using 0.0.2 and 0.1.1 trees', () => {
-				for (let seed = 0; seed < testsPerSuite; seed++) {
-					runTest(
-						() =>
-							take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
-						seed
-					);
-				}
-			});
+        function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number, testLength: number): void {
+            describe('using 0.0.2 and 0.1.1 trees', () => {
+                for (let seed = 0; seed < testsPerSuite; seed++) {
+                    runTest(
+                        () =>
+                            take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
+                        seed
+                    );
+                }
+            });
 
-			describe('using only version 0.0.2', () => {
-				for (let seed = 0; seed < testsPerSuite; seed++) {
-					runTest(
-						() =>
-							take(
-								testLength,
-								makeOpGenerator({
-									joinConfig: {
-										writeFormat: [WriteFormat.v0_0_2],
-										summarizeHistory: [summarizeHistory],
-									},
-								})
-							),
-						seed
-					);
-				}
-			});
+            describe('using only version 0.0.2', () => {
+                for (let seed = 0; seed < testsPerSuite; seed++) {
+                    runTest(
+                        () =>
+                            take(
+                                testLength,
+                                makeOpGenerator({
+                                    joinConfig: {
+                                        writeFormat: [WriteFormat.v0_0_2],
+                                        summarizeHistory: [summarizeHistory],
+                                    },
+                                })
+                            ),
+                        seed
+                    );
+                }
+            });
 
-			describe('using only version 0.1.1', () => {
-				for (let seed = 0; seed < testsPerSuite; seed++) {
-					runTest(
-						() =>
-							take(
-								testLength,
-								makeOpGenerator({
-									joinConfig: {
-										writeFormat: [WriteFormat.v0_1_1],
-										summarizeHistory: [summarizeHistory],
-									},
-								})
-							),
-						seed
-					);
-				}
-			});
+            describe('using only version 0.1.1', () => {
+                for (let seed = 0; seed < testsPerSuite; seed++) {
+                    runTest(
+                        () =>
+                            take(
+                                testLength,
+                                makeOpGenerator({
+                                    joinConfig: {
+                                        writeFormat: [WriteFormat.v0_1_1],
+                                        summarizeHistory: [summarizeHistory],
+                                    },
+                                })
+                            ),
+                        seed
+                    );
+                }
+            });
 
-			describe('upgrading halfway through', () => {
-				const maximumActiveCollaborators = 10;
-				const maximumPassiveCollaborators = 5;
-				const editConfig: EditGenerationConfig = { maxTreeSize: 1000 };
-				const generatorFactory = () =>
-					chain(
-						take(
-							testLength / 2 - 1,
-							makeOpGenerator({
-								editConfig,
-								joinConfig: {
-									maximumActiveCollaborators,
-									maximumPassiveCollaborators,
-									writeFormat: [WriteFormat.v0_0_2],
-									summarizeHistory: [summarizeHistory],
-								},
-							})
-						),
-						take(
-							1,
-							makeOpGenerator({
-								joinConfig: {
-									maximumActiveCollaborators: maximumActiveCollaborators + 1,
-									maximumPassiveCollaborators,
-									writeFormat: [WriteFormat.v0_1_1],
-									summarizeHistory: [summarizeHistory],
-								},
-								editWeight: 0,
-								joinWeight: 1,
-								leaveWeight: 0,
-								synchronizeWeight: 0,
-							})
-						),
-						take(
-							testLength / 2,
-							makeOpGenerator({
-								editConfig,
-								joinConfig: {
-									maximumActiveCollaborators,
-									maximumPassiveCollaborators,
-									summarizeHistory: [summarizeHistory],
-								},
-							})
-						)
-					);
-				for (let seed = 0; seed < testsPerSuite; seed++) {
-					runTest(generatorFactory, seed);
-				}
-			});
-		}
+            describe('upgrading halfway through', () => {
+                const maximumActiveCollaborators = 10;
+                const maximumPassiveCollaborators = 5;
+                const editConfig: EditGenerationConfig = { maxTreeSize: 1000 };
+                const generatorFactory = () =>
+                    chain(
+                        take(
+                            testLength / 2 - 1,
+                            makeOpGenerator({
+                                editConfig,
+                                joinConfig: {
+                                    maximumActiveCollaborators,
+                                    maximumPassiveCollaborators,
+                                    writeFormat: [WriteFormat.v0_0_2],
+                                    summarizeHistory: [summarizeHistory],
+                                },
+                            })
+                        ),
+                        take(
+                            1,
+                            makeOpGenerator({
+                                joinConfig: {
+                                    maximumActiveCollaborators: maximumActiveCollaborators + 1,
+                                    maximumPassiveCollaborators,
+                                    writeFormat: [WriteFormat.v0_1_1],
+                                    summarizeHistory: [summarizeHistory],
+                                },
+                                editWeight: 0,
+                                joinWeight: 1,
+                                leaveWeight: 0,
+                                synchronizeWeight: 0,
+                            })
+                        ),
+                        take(
+                            testLength / 2,
+                            makeOpGenerator({
+                                editConfig,
+                                joinConfig: {
+                                    maximumActiveCollaborators,
+                                    maximumPassiveCollaborators,
+                                    summarizeHistory: [summarizeHistory],
+                                },
+                            })
+                        )
+                    );
+                for (let seed = 0; seed < testsPerSuite; seed++) {
+                    runTest(generatorFactory, seed);
+                }
+            });
+        }
 
-		const testLength = 200;
-		describe('with no-history summarization', () => {
-			runMixedVersionTests(false, testCount, testLength);
-		});
+        const testLength = 200;
+        describe('with no-history summarization', () => {
+            runMixedVersionTests(false, testCount, testLength);
+        });
 
-		describe('with history summarization', () => {
-			runMixedVersionTests(true, testCount, testLength);
-		});
-	});
+        describe('with history summarization', () => {
+            runMixedVersionTests(true, testCount, testLength);
+        });
+    });
 }
 
 function applyFuzzChange(tree: SharedTree, contents: FuzzChange): void {
-	switch (contents.fuzzType) {
-		case 'insert':
-			tree.applyEdit(contents.build, contents.insert);
-			break;
+    switch (contents.fuzzType) {
+        case 'insert':
+            tree.applyEdit(contents.build, contents.insert);
+            break;
 
-		case 'delete':
-			tree.applyEdit(contents);
-			break;
+        case 'delete':
+            tree.applyEdit(contents);
+            break;
 
-		case 'move':
-			tree.applyEdit(contents.detach, contents.insert);
-			break;
+        case 'move':
+            tree.applyEdit(contents.detach, contents.insert);
+            break;
 
-		case 'setPayload':
-			tree.applyEdit(contents);
-			break;
-		default:
-			fail('Invalid edit.');
-	}
+        case 'setPayload':
+            tree.applyEdit(contents);
+            break;
+        default:
+            fail('Invalid edit.');
+    }
 }

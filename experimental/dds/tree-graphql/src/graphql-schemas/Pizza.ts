@@ -4,36 +4,36 @@
  */
 
 export const typeDefs = /* GraphQL */ `
-	type Query {
-		pizzas: [Pizza!]
-		drinks: [Drink!]
-		version: ID
-	}
+    type Query {
+        pizzas: [Pizza!]
+        drinks: [Drink!]
+        version: ID
+    }
 
-	type Pizza {
-		id: ID!
-		name: String!
-		price: Float!
-		base: PizzaBase
-		hasCheese: Boolean
-		toppings: [Topping!]
-		slices: Int
-	}
+    type Pizza {
+        id: ID!
+        name: String!
+        price: Float!
+        base: PizzaBase
+        hasCheese: Boolean
+        toppings: [Topping!]
+        slices: Int
+    }
 
-	type Topping {
-		name: String!
-		isVegetarian: Boolean!
-	}
+    type Topping {
+        name: String!
+        isVegetarian: Boolean!
+    }
 
-	enum PizzaBase {
-		MARINARA
-		GARLIC
-		PESTO
-	}
+    enum PizzaBase {
+        MARINARA
+        GARLIC
+        PESTO
+    }
 
-	enum Drink {
-		WATER
-		COKE
-		LEMONADE
-	}
+    enum Drink {
+        WATER
+        COKE
+        LEMONADE
+    }
 `;

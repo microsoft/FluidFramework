@@ -12,12 +12,12 @@ import { EditCommittedEventArguments, SharedTree } from './SharedTree';
 // while we decide on the correct layering for undo.
 
 export interface IRevertible {
-	revert();
-	discard();
+    revert();
+    discard();
 }
 
 export interface IUndoConsumer {
-	pushToCurrentOperation(revertible: IRevertible);
+    pushToCurrentOperation(revertible: IRevertible);
 }
 
 /**
@@ -25,43 +25,43 @@ export interface IUndoConsumer {
  * undo redo stack manager
  */
 export class SharedTreeUndoRedoHandler {
-	constructor(private readonly stackManager: IUndoConsumer) {}
+    constructor(private readonly stackManager: IUndoConsumer) {}
 
-	public attachTree(tree: SharedTree) {
-		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
-	}
-	public detachTree(tree: SharedTree) {
-		tree.off(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
-	}
+    public attachTree(tree: SharedTree) {
+        tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
+    }
+    public detachTree(tree: SharedTree) {
+        tree.off(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
+    }
 
-	private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments) => {
-		const { editId, local, tree } = eventArguments;
+    private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments) => {
+        const { editId, local, tree } = eventArguments;
 
-		if (local) {
-			this.stackManager.pushToCurrentOperation(
-				new SharedTreeRevertible(
-					editId,
-					assertNotUndefined(
-						tree,
-						'An edit committed event for a revertible edit should include the target SharedTree in its arguments.'
-					)
-				)
-			);
-		}
-	};
+        if (local) {
+            this.stackManager.pushToCurrentOperation(
+                new SharedTreeRevertible(
+                    editId,
+                    assertNotUndefined(
+                        tree,
+                        'An edit committed event for a revertible edit should include the target SharedTree in its arguments.'
+                    )
+                )
+            );
+        }
+    };
 }
 
 /**
  * Tracks a change on a shared tree and allows reverting it
  */
 export class SharedTreeRevertible implements IRevertible {
-	constructor(private readonly editId: EditId, private readonly tree: SharedTree) {}
+    constructor(private readonly editId: EditId, private readonly tree: SharedTree) {}
 
-	public revert() {
-		this.tree.revert(this.editId);
-	}
+    public revert() {
+        this.tree.revert(this.editId);
+    }
 
-	public discard() {
-		return;
-	}
+    public discard() {
+        return;
+    }
 }

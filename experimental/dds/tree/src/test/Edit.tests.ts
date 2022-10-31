@@ -44,34 +44,34 @@ import { refreshTestTree } from './utilities/TestUtilities';
 // });
 
 describe('deepCompareNodes', () => {
-	const testTree = refreshTestTree();
+    const testTree = refreshTestTree();
 
-	it('correctly compares two empty nodes', () => {
-		const nodeId = testTree.generateNodeId();
-		expect(deepCompareNodes(testTree.buildLeaf(nodeId), testTree.buildLeaf(nodeId))).to.be.true;
-	});
+    it('correctly compares two empty nodes', () => {
+        const nodeId = testTree.generateNodeId();
+        expect(deepCompareNodes(testTree.buildLeaf(nodeId), testTree.buildLeaf(nodeId))).to.be.true;
+    });
 
-	it('correctly compares two deeply equal nodes', () => {
-		const otherTree: ChangeNode = {
-			definition: testTree.definition,
-			identifier: testTree.identifier,
-			traits: {
-				left: [{ definition: testTree.left.definition, identifier: testTree.left.identifier, traits: {} }],
-				right: [{ definition: testTree.right.definition, identifier: testTree.right.identifier, traits: {} }],
-			},
-		};
-		expect(deepCompareNodes(testTree, otherTree)).to.be.true;
-	});
+    it('correctly compares two deeply equal nodes', () => {
+        const otherTree: ChangeNode = {
+            definition: testTree.definition,
+            identifier: testTree.identifier,
+            traits: {
+                left: [{ definition: testTree.left.definition, identifier: testTree.left.identifier, traits: {} }],
+                right: [{ definition: testTree.right.definition, identifier: testTree.right.identifier, traits: {} }],
+            },
+        };
+        expect(deepCompareNodes(testTree, otherTree)).to.be.true;
+    });
 
-	it('returns false for unequal nodes', () => {
-		expect(
-			deepCompareNodes(
-				testTree.buildLeaf(testTree.generateNodeId()),
-				testTree.buildLeaf(testTree.generateNodeId())
-			)
-		).to.be.false;
-		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
-		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
-		expect(deepCompareNodes(testTree, testTree.buildLeaf(testTree.identifier))).to.be.false;
-	});
+    it('returns false for unequal nodes', () => {
+        expect(
+            deepCompareNodes(
+                testTree.buildLeaf(testTree.generateNodeId()),
+                testTree.buildLeaf(testTree.generateNodeId())
+            )
+        ).to.be.false;
+        expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+        expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+        expect(deepCompareNodes(testTree, testTree.buildLeaf(testTree.identifier))).to.be.false;
+    });
 });

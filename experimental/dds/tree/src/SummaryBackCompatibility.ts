@@ -20,38 +20,38 @@ import { SharedTreeSummary, SharedTreeSummaryBase, SharedTreeSummary_0_0_2, Writ
  *
  */
 export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase {
-	let summary: Partial<SharedTreeSummaryBase>;
-	try {
-		summary = serializer.parse(jsonSummary);
-	} catch {
-		fail('Json syntax error in Summary');
-	}
+    let summary: Partial<SharedTreeSummaryBase>;
+    try {
+        summary = serializer.parse(jsonSummary);
+    } catch {
+        fail('Json syntax error in Summary');
+    }
 
-	if (typeof summary !== 'object') {
-		fail('Summary is not an object');
-	}
+    if (typeof summary !== 'object') {
+        fail('Summary is not an object');
+    }
 
-	const { version } = summary;
+    const { version } = summary;
 
-	if (version !== undefined) {
-		return { version, ...summary };
-	}
+    if (version !== undefined) {
+        return { version, ...summary };
+    }
 
-	fail('Missing fields on summary');
+    fail('Missing fields on summary');
 }
 
 /**
  * General statistics about summaries.
  */
 export interface SummaryStatistics extends ITelemetryProperties {
-	/** Format version the summary is written in. */
-	readonly formatVersion: string;
-	/** Number of edits. */
-	readonly historySize: number;
-	/** Number of edit chunks in the history. */
-	readonly totalNumberOfChunks?: number;
-	/** Number of chunks in the summary that have handles stored. */
-	readonly uploadedChunks?: number;
+    /** Format version the summary is written in. */
+    readonly formatVersion: string;
+    /** Number of edits. */
+    readonly historySize: number;
+    /** Number of edit chunks in the history. */
+    readonly totalNumberOfChunks?: number;
+    /** Number of chunks in the summary that have handles stored. */
+    readonly uploadedChunks?: number;
 }
 
 /**
@@ -59,40 +59,40 @@ export interface SummaryStatistics extends ITelemetryProperties {
  * @throws If statistics could not be obtained from the summary.
  */
 export function getSummaryStatistics(summary: SharedTreeSummaryBase): SummaryStatistics {
-	const { version } = summary;
+    const { version } = summary;
 
-	if (version === WriteFormat.v0_1_1) {
-		const { editHistory } = summary as SharedTreeSummary;
+    if (version === WriteFormat.v0_1_1) {
+        const { editHistory } = summary as SharedTreeSummary;
 
-		if (editHistory !== undefined) {
-			if (typeof editHistory !== 'object') {
-				fail('Edit history is not an object');
-			}
+        if (editHistory !== undefined) {
+            if (typeof editHistory !== 'object') {
+                fail('Edit history is not an object');
+            }
 
-			const { editChunks, editIds } = editHistory;
+            const { editChunks, editIds } = editHistory;
 
-			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
-			if (editChunks !== undefined && editIds !== undefined) {
-				return {
-					formatVersion: version,
-					historySize: editIds.length,
-					totalNumberOfChunks: editChunks.length,
-					uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
-				};
-			}
+            // TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
+            if (editChunks !== undefined && editIds !== undefined) {
+                return {
+                    formatVersion: version,
+                    historySize: editIds.length,
+                    totalNumberOfChunks: editChunks.length,
+                    uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
+                };
+            }
 
-			fail('Missing fields on edit log summary');
-		}
-	} else if (version === WriteFormat.v0_0_2) {
-		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
+            fail('Missing fields on edit log summary');
+        }
+    } else if (version === WriteFormat.v0_0_2) {
+        const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
-		return {
-			formatVersion: version,
-			historySize: sequencedEdits.length,
-		};
-	} else {
-		fail('Format version is not supported');
-	}
+        return {
+            formatVersion: version,
+            historySize: sequencedEdits.length,
+        };
+    } else {
+        fail('Format version is not supported');
+    }
 
-	fail('Missing fields on summary');
+    fail('Missing fields on summary');
 }

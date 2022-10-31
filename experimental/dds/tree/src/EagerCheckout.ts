@@ -15,24 +15,24 @@ import { EditCommittedEventArguments, SharedTree } from './SharedTree';
  * @sealed
  */
 export class EagerCheckout extends Checkout {
-	/**
-	 * @param tree - the tree
-	 */
-	public constructor(tree: SharedTree) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
-			this.emitChange();
-		});
-	}
+    /**
+     * @param tree - the tree
+     */
+    public constructor(tree: SharedTree) {
+        super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
+            this.emitChange();
+        });
+    }
 
-	protected get latestCommittedView(): RevisionView {
-		return this.tree.currentView;
-	}
+    protected get latestCommittedView(): RevisionView {
+        return this.tree.currentView;
+    }
 
-	public async waitForPendingUpdates(): Promise<void> {
-		return Promise.resolve();
-	}
+    public async waitForPendingUpdates(): Promise<void> {
+        return Promise.resolve();
+    }
 
-	public async waitForEditsToSubmit(): Promise<void> {
-		return Promise.resolve();
-	}
+    public async waitForEditsToSubmit(): Promise<void> {
+        return Promise.resolve();
+    }
 }

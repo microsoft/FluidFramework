@@ -17,22 +17,22 @@ import type { MutableStringInterner } from './StringInterner';
  * @internal
  */
 export interface SummaryContents {
-	readonly currentTree?: ChangeNode;
+    readonly currentTree?: ChangeNode;
 
-	/**
-	 * Information that can populate an edit log.
-	 */
-	readonly editHistory: EditLogSummary<ChangeInternal, EditHandle<ChangeInternal>>;
+    /**
+     * Information that can populate an edit log.
+     */
+    readonly editHistory: EditLogSummary<ChangeInternal, EditHandle<ChangeInternal>>;
 
-	/**
-	 * Information about all IDs compressed in the summary
-	 */
-	readonly idCompressor: IdCompressor;
+    /**
+     * Information about all IDs compressed in the summary
+     */
+    readonly idCompressor: IdCompressor;
 
-	/**
-	 * Interner pre-loaded with all definitions and labels from the summary.
-	 */
-	readonly interner: MutableStringInterner;
+    /**
+     * Interner pre-loaded with all definitions and labels from the summary.
+     */
+    readonly interner: MutableStringInterner;
 }
 
 /**
@@ -44,5 +44,5 @@ export interface SummaryContents {
  * @param bind - The object handle required to serialize handles in the summary
  */
 export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSerializer, bind: IFluidHandle): string {
-	return serializeHandles(summary, serializer, bind) ?? fail();
+    return serializeHandles(summary, serializer, bind) ?? fail();
 }

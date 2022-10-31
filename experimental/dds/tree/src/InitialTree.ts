@@ -12,7 +12,7 @@ import { ChangeNode_0_0_2 } from './persisted-types';
  * @public
  */
 export const initialTree: ChangeNode_0_0_2 = {
-	traits: {},
-	definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
-	identifier: legacySharedTreeInitialTreeId as StableNodeId,
+    traits: {},
+    definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
+    identifier: legacySharedTreeInitialTreeId as StableNodeId,
 };

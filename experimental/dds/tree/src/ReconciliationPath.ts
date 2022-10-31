@@ -15,15 +15,15 @@ import { TreeView } from './TreeView';
  * @public
  */
 export interface ReconciliationPath {
-	/**
-	 * The number of edits in the path.
-	 */
-	readonly length: number;
-	/**
-	 * Allows access to edit information.
-	 * @returns Reconciliation information for the edit at the given `index`.
-	 */
-	readonly [index: number]: ReconciliationEdit;
+    /**
+     * The number of edits in the path.
+     */
+    readonly length: number;
+    /**
+     * Allows access to edit information.
+     * @returns Reconciliation information for the edit at the given `index`.
+     */
+    readonly [index: number]: ReconciliationEdit;
 }
 
 /**
@@ -31,23 +31,23 @@ export interface ReconciliationPath {
  * @public
  */
 export interface ReconciliationEdit {
-	/**
-	 * The state before the edit was applied.
-	 */
-	readonly before: TreeView;
-	/**
-	 * The state after the edit was applied.
-	 */
-	readonly after: TreeView;
-	/**
-	 * The number of changes in the edit.
-	 */
-	readonly length: number;
-	/**
-	 * Allows access to change information.
-	 * @returns Reconciliation information for the change at the given `index`.
-	 */
-	readonly [index: number]: ReconciliationChange;
+    /**
+     * The state before the edit was applied.
+     */
+    readonly before: TreeView;
+    /**
+     * The state after the edit was applied.
+     */
+    readonly after: TreeView;
+    /**
+     * The number of changes in the edit.
+     */
+    readonly length: number;
+    /**
+     * Allows access to change information.
+     * @returns Reconciliation information for the change at the given `index`.
+     */
+    readonly [index: number]: ReconciliationChange;
 }
 
 /**
@@ -55,13 +55,13 @@ export interface ReconciliationEdit {
  * @public
  */
 export interface ReconciliationChange {
-	/**
-	 * The resolved change that was applied during the edit.
-	 * Resolved changes are guaranteed to be expressed with valid tree locations instead of anchors that need resolution.
-	 */
-	readonly resolvedChange: ChangeInternal;
-	/**
-	 * The resulting view from applying the resolved change.
-	 */
-	readonly after: TransactionView;
+    /**
+     * The resolved change that was applied during the edit.
+     * Resolved changes are guaranteed to be expressed with valid tree locations instead of anchors that need resolution.
+     */
+    readonly resolvedChange: ChangeInternal;
+    /**
+     * The resulting view from applying the resolved change.
+     */
+    readonly after: TransactionView;
 }

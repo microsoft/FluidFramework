@@ -5,20 +5,20 @@ To reduce bloat in common property names, we use the following union type of arr
 
 ```typescript
 export type CompressedTraits<TId extends OpSpaceNodeId, TPlaceholder extends number | never> = (
-	| InternedStringId
-	| TraitLabel
-	| (CompressedPlaceholderTree<TId, TPlaceholder> | TPlaceholder)[]
+    | InternedStringId
+    | TraitLabel
+    | (CompressedPlaceholderTree<TId, TPlaceholder> | TPlaceholder)[]
 )[];
 
 export type CompressedPlaceholderTree<TId extends OpSpaceNodeId, TPlaceholder extends number | never> =
-	| TPlaceholder
-	| [InternedStringId | Definition] // The node Definition's interned string ID
-	| [InternedStringId | Definition, TId]
-	| [
-			InternedStringId | Definition,
-			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
-	  ]
-	| [InternedStringId, TId, [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>];
+    | TPlaceholder
+    | [InternedStringId | Definition] // The node Definition's interned string ID
+    | [InternedStringId | Definition, TId]
+    | [
+          InternedStringId | Definition,
+          [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
+      ]
+    | [InternedStringId, TId, [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>];
 ```
 
 This type incorporates 4 major compression optimizations:
@@ -42,32 +42,32 @@ For example, this 0.0.2 summary:
 
 ```json
 {
-	"currentTree": {
-		"definition": "51c58718-47b9-4fe4-ad46-56312f3b9e86",
-		"identifier": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-		"traits": {
-			"e276f382-fa99-49a1-ae81-42001791c733": [
-				{
-					"definition": "node",
-					"identifier": "25de3875-9537-47ec-8699-8a85e772a509",
-					"traits": {
-						"left": [
-							{
-								"definition": "node",
-								"identifier": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": 248,
-								"traits": {}
-							},
-							{ "definition": "node", "identifier": "a083857d-a8e1-447a-ba7c-92fd0be9db2b", "traits": {} }
-						],
-						"right": [
-							{ "definition": "node", "identifier": "78849e85-cb7f-4b93-9fdc-18439c60fe30", "traits": {} }
-						]
-					}
-				}
-			]
-		}
-	}
+    "currentTree": {
+        "definition": "51c58718-47b9-4fe4-ad46-56312f3b9e86",
+        "identifier": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+        "traits": {
+            "e276f382-fa99-49a1-ae81-42001791c733": [
+                {
+                    "definition": "node",
+                    "identifier": "25de3875-9537-47ec-8699-8a85e772a509",
+                    "traits": {
+                        "left": [
+                            {
+                                "definition": "node",
+                                "identifier": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
+                                "payload": 248,
+                                "traits": {}
+                            },
+                            { "definition": "node", "identifier": "a083857d-a8e1-447a-ba7c-92fd0be9db2b", "traits": {} }
+                        ],
+                        "right": [
+                            { "definition": "node", "identifier": "78849e85-cb7f-4b93-9fdc-18439c60fe30", "traits": {} }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
 }
 ```
 
@@ -75,28 +75,28 @@ would be structurally compressed to:
 
 ```json
 {
-	"currentTree": [
-		"51c58718-47b9-4fe4-ad46-56312f3b9e86",
-		"24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-		[
-			"e276f382-fa99-49a1-ae81-42001791c733",
-			[
-				[
-					"node",
-					"25de3875-9537-47ec-8699-8a85e772a509",
-					[
-						"left",
-						[
-							["node", "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", [248]],
-							["node", "a083857d-a8e1-447a-ba7c-92fd0be9db2b"]
-						],
-						"right",
-						[["node", "78849e85-cb7f-4b93-9fdc-18439c60fe30"]]
-					]
-				]
-			]
-		]
-	]
+    "currentTree": [
+        "51c58718-47b9-4fe4-ad46-56312f3b9e86",
+        "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+        [
+            "e276f382-fa99-49a1-ae81-42001791c733",
+            [
+                [
+                    "node",
+                    "25de3875-9537-47ec-8699-8a85e772a509",
+                    [
+                        "left",
+                        [
+                            ["node", "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", [248]],
+                            ["node", "a083857d-a8e1-447a-ba7c-92fd0be9db2b"]
+                        ],
+                        "right",
+                        [["node", "78849e85-cb7f-4b93-9fdc-18439c60fe30"]]
+                    ]
+                ]
+            ]
+        ]
+    ]
 }
 ```
 
@@ -111,35 +111,35 @@ Applying this on top of the previous optimization would yield a summary resembli
 
 ```json
 {
-	"currentTree": [
-		0,
-		"24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-		[
-			1,
-			[
-				[
-					2,
-					"25de3875-9537-47ec-8699-8a85e772a509",
-					[
-						3,
-						[
-							[2, "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", [248]],
-							[2, "a083857d-a8e1-447a-ba7c-92fd0be9db2b"]
-						],
-						4,
-						[[2, "78849e85-cb7f-4b93-9fdc-18439c60fe30"]]
-					]
-				]
-			]
-		]
-	],
-	"internedStrings": [
-		"51c58718-47b9-4fe4-ad46-56312f3b9e86",
-		"e276f382-fa99-49a1-ae81-42001791c733",
-		"node",
-		"left",
-		"right"
-	]
+    "currentTree": [
+        0,
+        "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+        [
+            1,
+            [
+                [
+                    2,
+                    "25de3875-9537-47ec-8699-8a85e772a509",
+                    [
+                        3,
+                        [
+                            [2, "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", [248]],
+                            [2, "a083857d-a8e1-447a-ba7c-92fd0be9db2b"]
+                        ],
+                        4,
+                        [[2, "78849e85-cb7f-4b93-9fdc-18439c60fe30"]]
+                    ]
+                ]
+            ]
+        ]
+    ],
+    "internedStrings": [
+        "51c58718-47b9-4fe4-ad46-56312f3b9e86",
+        "e276f382-fa99-49a1-ae81-42001791c733",
+        "node",
+        "left",
+        "right"
+    ]
 }
 ```
 

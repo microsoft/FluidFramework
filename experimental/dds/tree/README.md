@@ -110,12 +110,12 @@ The `currentView` property on SharedTree is the easiest way to get the view of t
 
 ```typescript
 function getChildrenUnderTrait(sharedTree: SharedTree, parentId: NodeId, traitLabel: TraitLabel): TreeViewNode[] {
-	// Get the most up-to-date view of the tree at this moment.
-	const view = sharedTree.currentView;
-	// Get the IDs of children in some trait with `getTrait`:
-	const childIds = view.getTrait({ label: traitLabel, parent: parentId });
-	// Get the node for a given ID with `getViewNode`:
-	return childIds.map((id) => view.getViewNode(id));
+    // Get the most up-to-date view of the tree at this moment.
+    const view = sharedTree.currentView;
+    // Get the IDs of children in some trait with `getTrait`:
+    const childIds = view.getTrait({ label: traitLabel, parent: parentId });
+    // Get the node for a given ID with `getViewNode`:
+    return childIds.map((id) => view.getViewNode(id));
 }
 ```
 
@@ -127,10 +127,10 @@ If you want to inspect the tree at some state prior to the current view, SharedT
 
 ```typescript
 function getViewAfterEdit(sharedTree: SharedTree, editId: EditId): TreeView {
-	// First, find which revision corresponds to a given edit
-	const revision = sharedTree.edits.getIndexOfId(editId);
-	// Then, ask the logViewer to create a view at that specific revision
-	return sharedTree.logViewer.getRevisionViewInSession(revision);
+    // First, find which revision corresponds to a given edit
+    const revision = sharedTree.edits.getIndexOfId(editId);
+    // Then, ask the logViewer to create a view at that specific revision
+    return sharedTree.logViewer.getRevisionViewInSession(revision);
 }
 ```
 

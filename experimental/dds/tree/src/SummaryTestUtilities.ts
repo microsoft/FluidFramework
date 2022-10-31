@@ -13,14 +13,14 @@ import type { SharedTree } from './SharedTree';
  * @public
  */
 interface UploadedEditChunkContents {
-	/**
-	 * The handle path associated with the edit chunk.
-	 */
-	absolutePath: string;
-	/**
-	 * The edits uploaded as part of the edit chunk.
-	 */
-	chunkContents: EditChunkContents;
+    /**
+     * The handle path associated with the edit chunk.
+     */
+    absolutePath: string;
+    /**
+     * The edits uploaded as part of the edit chunk.
+     */
+    chunkContents: EditChunkContents;
 }
 
 /**
@@ -29,21 +29,21 @@ interface UploadedEditChunkContents {
  * @deprecated Edit virtualization is no longer supported. Do not use this.
  */
 export async function getUploadedEditChunkContents(sharedTree: SharedTree): Promise<UploadedEditChunkContents[]> {
-	const editChunks: UploadedEditChunkContents[] = [];
-	const { editChunks: editsOrHandles } = (sharedTree.edits as unknown as EditLog<ChangeInternal>).getEditLogSummary();
-	for (const { chunk } of editsOrHandles) {
-		if (!Array.isArray(chunk)) {
-			const handle = chunk as FluidEditHandle;
+    const editChunks: UploadedEditChunkContents[] = [];
+    const { editChunks: editsOrHandles } = (sharedTree.edits as unknown as EditLog<ChangeInternal>).getEditLogSummary();
+    for (const { chunk } of editsOrHandles) {
+        if (!Array.isArray(chunk)) {
+            const handle = chunk as FluidEditHandle;
 
-			const chunkContents: EditChunkContents = JSON.parse(IsoBuffer.from(await handle.get()).toString());
-			editChunks.push({
-				absolutePath: handle.absolutePath,
-				chunkContents,
-			});
-		}
-	}
+            const chunkContents: EditChunkContents = JSON.parse(IsoBuffer.from(await handle.get()).toString());
+            editChunks.push({
+                absolutePath: handle.absolutePath,
+                chunkContents,
+            });
+        }
+    }
 
-	return editChunks;
+    return editChunks;
 }
 
 /**
@@ -52,5 +52,5 @@ export async function getUploadedEditChunkContents(sharedTree: SharedTree): Prom
  * @public
  */
 export async function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string> {
-	return JSON.stringify(await getUploadedEditChunkContents(sharedTree));
+    return JSON.stringify(await getUploadedEditChunkContents(sharedTree));
 }

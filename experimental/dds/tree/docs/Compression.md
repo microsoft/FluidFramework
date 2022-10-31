@@ -117,19 +117,19 @@ For nodes we currently have `TreeNode` as defined by: (See actual source for for
 
 ```typescript
 export interface TraitMap<TChild> {
-	readonly [key: string]: TreeNodeSequence<TChild>;
+    readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 export type TreeNodeSequence<TChild> = readonly TChild[];
 
 export interface NodeData {
-	readonly payload?: Payload;
-	readonly definition: Definition;
-	readonly identifier: NodeId;
+    readonly payload?: Payload;
+    readonly definition: Definition;
+    readonly identifier: NodeId;
 }
 
 export interface TreeNode<TChild> extends NodeData {
-	readonly traits: TraitMap<TChild>;
+    readonly traits: TraitMap<TChild>;
 }
 ```
 
@@ -146,18 +146,18 @@ Adding support for UniformChunks means that `TChild` will become a `ChunkId` in 
 export type ChangeNode = TreeNode<ChangeNode | UniformChunk<ChunkSchemaId>>;
 
 export interface UniformChunk<TSchema> {
-	readonly data: Payload[];
-	// Schema. Runtime version would have some extra cached info compared to persisted.
-	readonly schema: TSchema;
-	// Id of this chunk, and also NodeId of first node in this chunk. Only needed here in persisted case.
-	readonly identifier: ChunkId;
+    readonly data: Payload[];
+    // Schema. Runtime version would have some extra cached info compared to persisted.
+    readonly schema: TSchema;
+    // Id of this chunk, and also NodeId of first node in this chunk. Only needed here in persisted case.
+    readonly identifier: ChunkId;
 }
 
 export interface ChunkSchema<TChild> {
-	readonly hasValue: boolean;
-	readonly definition: Definition;
-	// `traits` has to be a list not an object/map because order matters and objects might not preserve order though json.
-	readonly traits: readonly { readonly label: string; readonly schema: TChild; readonly count: number }[];
+    readonly hasValue: boolean;
+    readonly definition: Definition;
+    // `traits` has to be a list not an object/map because order matters and objects might not preserve order though json.
+    readonly traits: readonly { readonly label: string; readonly schema: TChild; readonly count: number }[];
 }
 ```
 

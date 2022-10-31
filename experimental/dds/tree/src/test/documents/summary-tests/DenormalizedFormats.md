@@ -16,11 +16,11 @@ A past revision of shared-tree produced summaries containing traits with no cont
 
 ```json
 {
-	"definition": "A",
-	"identifier": "89483af1-a533-5667-8e9c-2d318600cf09",
-	"traits": {
-		"trait": []
-	}
+    "definition": "A",
+    "identifier": "89483af1-a533-5667-8e9c-2d318600cf09",
+    "traits": {
+        "trait": []
+    }
 }
 ```
 
@@ -28,9 +28,9 @@ This was normalized to the following format as part of 0.0.2:
 
 ```json
 {
-	"definition": "A",
-	"identifier": "89483af1-a533-5667-8e9c-2d318600cf09",
-	"traits": {}
+    "definition": "A",
+    "identifier": "89483af1-a533-5667-8e9c-2d318600cf09",
+    "traits": {}
 }
 ```
 

@@ -14,7 +14,7 @@ import { TreeView } from './TreeView';
  * @param view - the view to convert
  */
 export function getChangeNodeFromView(view: TreeView): ChangeNode {
-	return getChangeNodeFromViewNode(view, view.root);
+    return getChangeNodeFromViewNode(view, view.root);
 }
 
 /**
@@ -25,54 +25,54 @@ export function getChangeNodeFromView(view: TreeView): ChangeNode {
  * the trait is first accessed.
  */
 export function getChangeNodeFromViewNode(view: TreeView, id: NodeId, lazyTraits = false): ChangeNode {
-	const node = view.getViewNode(id);
-	const nodeData = {
-		definition: node.definition,
-		identifier: node.identifier,
-	};
-	copyPropertyIfDefined(node, nodeData, 'payload');
+    const node = view.getViewNode(id);
+    const nodeData = {
+        definition: node.definition,
+        identifier: node.identifier,
+    };
+    copyPropertyIfDefined(node, nodeData, 'payload');
 
-	if (lazyTraits) {
-		return {
-			...nodeData,
-			get traits() {
-				return memoizeGetter(this, 'traits', makeTraits(view, node.traits, lazyTraits));
-			},
-		};
-	}
+    if (lazyTraits) {
+        return {
+            ...nodeData,
+            get traits() {
+                return memoizeGetter(this, 'traits', makeTraits(view, node.traits, lazyTraits));
+            },
+        };
+    }
 
-	return {
-		...nodeData,
-		traits: makeTraits(view, node.traits, lazyTraits),
-	};
+    return {
+        ...nodeData,
+        traits: makeTraits(view, node.traits, lazyTraits),
+    };
 }
 
 /** Given the traits of a TreeViewNode, return the corresponding traits on a Node */
 function makeTraits(
-	view: TreeView,
-	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
-	lazyTraits = false
+    view: TreeView,
+    traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
+    lazyTraits = false
 ): TraitMap<ChangeNode> {
-	const traitMap = {};
-	for (const [label, trait] of traits.entries()) {
-		if (lazyTraits) {
-			Object.defineProperty(traitMap, label, {
-				get() {
-					const treeNodeTrait = trait.map((id) => getChangeNodeFromViewNode(view, id, lazyTraits));
-					return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
-				},
-				configurable: true,
-				enumerable: true,
-			});
-		} else {
-			Object.defineProperty(traitMap, label, {
-				value: trait.map((id) => getChangeNodeFromViewNode(view, id, lazyTraits)),
-				enumerable: true,
-			});
-		}
-	}
+    const traitMap = {};
+    for (const [label, trait] of traits.entries()) {
+        if (lazyTraits) {
+            Object.defineProperty(traitMap, label, {
+                get() {
+                    const treeNodeTrait = trait.map((id) => getChangeNodeFromViewNode(view, id, lazyTraits));
+                    return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
+                },
+                configurable: true,
+                enumerable: true,
+            });
+        } else {
+            Object.defineProperty(traitMap, label, {
+                value: trait.map((id) => getChangeNodeFromViewNode(view, id, lazyTraits)),
+                enumerable: true,
+            });
+        }
+    }
 
-	return traitMap;
+    return traitMap;
 }
 
 /**
@@ -80,7 +80,7 @@ function makeTraits(
  * @param view - the view to convert
  */
 export function getChangeNode_0_0_2FromView(view: TreeView, idConverter: NodeIdConverter): ChangeNode_0_0_2 {
-	return getChangeNode_0_0_2FromViewNode(view, view.root, idConverter);
+    return getChangeNode_0_0_2FromViewNode(view, view.root, idConverter);
 }
 
 /**
@@ -92,21 +92,21 @@ export function getChangeNode_0_0_2FromView(view: TreeView, idConverter: NodeIdC
  * @deprecated Remove by March 2022
  */
 export function getChangeNode_0_0_2FromViewNode(
-	view: TreeView,
-	id: NodeId,
-	idConverter: NodeIdConverter
+    view: TreeView,
+    id: NodeId,
+    idConverter: NodeIdConverter
 ): ChangeNode_0_0_2 {
-	const node = view.getViewNode(id);
-	const nodeData = {
-		definition: node.definition,
-		identifier: idConverter.convertToStableNodeId(node.identifier),
-	};
-	copyPropertyIfDefined(node, nodeData, 'payload');
+    const node = view.getViewNode(id);
+    const nodeData = {
+        definition: node.definition,
+        identifier: idConverter.convertToStableNodeId(node.identifier),
+    };
+    copyPropertyIfDefined(node, nodeData, 'payload');
 
-	return {
-		...nodeData,
-		traits: makeTraits_0_0_2(view, node.traits, idConverter),
-	};
+    return {
+        ...nodeData,
+        traits: makeTraits_0_0_2(view, node.traits, idConverter),
+    };
 }
 
 /**
@@ -114,17 +114,17 @@ export function getChangeNode_0_0_2FromViewNode(
  * @deprecated Remove by march 2022
  */
 function makeTraits_0_0_2(
-	view: TreeView,
-	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
-	idConverter: NodeIdConverter
+    view: TreeView,
+    traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
+    idConverter: NodeIdConverter
 ): TraitMap<ChangeNode_0_0_2> {
-	const traitMap = {};
-	for (const [label, trait] of traits.entries()) {
-		Object.defineProperty(traitMap, label, {
-			value: trait.map((id) => getChangeNode_0_0_2FromViewNode(view, id, idConverter)),
-			enumerable: true,
-		});
-	}
+    const traitMap = {};
+    for (const [label, trait] of traits.entries()) {
+        Object.defineProperty(traitMap, label, {
+            value: trait.map((id) => getChangeNode_0_0_2FromViewNode(view, id, idConverter)),
+            enumerable: true,
+        });
+    }
 
-	return traitMap;
+    return traitMap;
 }

@@ -43,82 +43,82 @@ import { Payload } from './persisted-types';
  * @public
  */
 export function comparePayloads(a: Payload, b: Payload): boolean {
-	// === is not reflective because of how NaN is handled, so use Object.is instead.
-	// This treats -0 and +0 as different.
-	// Since -0 is not preserved in serialization round trips,
-	// it can be handed in any way that is reflective and commutative, so this is fine.
-	if (Object.is(a, b)) {
-		return true;
-	}
+    // === is not reflective because of how NaN is handled, so use Object.is instead.
+    // This treats -0 and +0 as different.
+    // Since -0 is not preserved in serialization round trips,
+    // it can be handed in any way that is reflective and commutative, so this is fine.
+    if (Object.is(a, b)) {
+        return true;
+    }
 
-	// Primitives which are equal would have early returned above, so now if the values are not both objects, they are unequal.
-	if (typeof a !== 'object' || typeof b !== 'object') {
-		return false;
-	}
+    // Primitives which are equal would have early returned above, so now if the values are not both objects, they are unequal.
+    if (typeof a !== 'object' || typeof b !== 'object') {
+        return false;
+    }
 
-	// null is of type object, and needs to be treated as distinct from the empty object.
-	// Handling it early also avoids type errors trying to access its keys.
-	// Rationale: 'undefined' payloads are reserved for future use (see 'SetValue' interface).
-	if (a === null || b === null) {
-		return false;
-	}
+    // null is of type object, and needs to be treated as distinct from the empty object.
+    // Handling it early also avoids type errors trying to access its keys.
+    // Rationale: 'undefined' payloads are reserved for future use (see 'SetValue' interface).
+    if (a === null || b === null) {
+        return false;
+    }
 
-	// Special case IFluidHandles, comparing them only by their absolutePath
-	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle` field that is set to the parent object.
-	{
-		const aHandle = a as IFluidHandle;
-		const bHandle = b as IFluidHandle;
-		if (aHandle.IFluidHandle === a) {
-			if (bHandle.IFluidHandle !== b) {
-				return false;
-			}
-			return a.absolutePath === b.absolutePath;
-		}
-	}
+    // Special case IFluidHandles, comparing them only by their absolutePath
+    // Detect them using JavaScript feature detection pattern: they have a `IFluidHandle` field that is set to the parent object.
+    {
+        const aHandle = a as IFluidHandle;
+        const bHandle = b as IFluidHandle;
+        if (aHandle.IFluidHandle === a) {
+            if (bHandle.IFluidHandle !== b) {
+                return false;
+            }
+            return a.absolutePath === b.absolutePath;
+        }
+    }
 
-	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
-	const aKeys = Object.keys(a);
-	const bKeys = Object.keys(b);
+    // Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
 
-	if (aKeys.length !== bKeys.length) {
-		return false;
-	}
+    if (aKeys.length !== bKeys.length) {
+        return false;
+    }
 
-	// make sure objects with numeric keys (or no keys) compare unequal to arrays.
-	if (a instanceof Array !== b instanceof Array) {
-		return false;
-	}
+    // make sure objects with numeric keys (or no keys) compare unequal to arrays.
+    if (a instanceof Array !== b instanceof Array) {
+        return false;
+    }
 
-	// Fluid Serialization (like Json) orders object fields arbitrarily, so reordering fields is not considered considered a change.
-	// Therefor the keys arrays must be sorted here.
-	if (!(a instanceof Array)) {
-		aKeys.sort();
-		bKeys.sort();
-	}
+    // Fluid Serialization (like Json) orders object fields arbitrarily, so reordering fields is not considered considered a change.
+    // Therefor the keys arrays must be sorted here.
+    if (!(a instanceof Array)) {
+        aKeys.sort();
+        bKeys.sort();
+    }
 
-	// First check keys are equal.
-	// This will often early exit, and thus is worth doing as a separate pass than recursive check.
-	if (!compareArrays(aKeys, bKeys)) {
-		return false;
-	}
+    // First check keys are equal.
+    // This will often early exit, and thus is worth doing as a separate pass than recursive check.
+    if (!compareArrays(aKeys, bKeys)) {
+        return false;
+    }
 
-	for (let i = 0; i < aKeys.length; i++) {
-		const aItem: Payload = a[aKeys[i]];
-		const bItem: Payload = b[bKeys[i]];
+    for (let i = 0; i < aKeys.length; i++) {
+        const aItem: Payload = a[aKeys[i]];
+        const bItem: Payload = b[bKeys[i]];
 
-		// The JavaScript feature detection pattern, used for IFluidHandle, uses a field that is set to the parent object.
-		// Detect this pattern and special case it to avoid infinite recursion.
-		const aSelf = Object.is(aItem, a);
-		const bSelf = Object.is(bItem, b);
-		if (aSelf !== bSelf) {
-			return false;
-		}
-		if (!aSelf) {
-			if (!comparePayloads(aItem, bItem)) {
-				return false;
-			}
-		}
-	}
+        // The JavaScript feature detection pattern, used for IFluidHandle, uses a field that is set to the parent object.
+        // Detect this pattern and special case it to avoid infinite recursion.
+        const aSelf = Object.is(aItem, a);
+        const bSelf = Object.is(bItem, b);
+        if (aSelf !== bSelf) {
+            return false;
+        }
+        if (!aSelf) {
+            if (!comparePayloads(aItem, bItem)) {
+                return false;
+            }
+        }
+    }
 
-	return true;
+    return true;
 }

@@ -5,13 +5,13 @@
 
 import type { Serializable } from '@fluidframework/datastore-definitions';
 import type {
-	EditId,
-	Definition,
-	NodeId,
-	StableNodeId,
-	TraitLabel,
-	DetachedSequenceId,
-	UuidString,
+    EditId,
+    Definition,
+    NodeId,
+    StableNodeId,
+    TraitLabel,
+    DetachedSequenceId,
+    UuidString,
 } from '../Identifiers';
 
 /**
@@ -34,8 +34,8 @@ import type {
  * @public
  */
 export enum Side {
-	Before = 0,
-	After = 1,
+    Before = 0,
+    After = 1,
 }
 
 /**
@@ -44,11 +44,11 @@ export enum Side {
  * @public
  */
 export interface Edit<TChange> extends EditBase<TChange> {
-	/**
-	 * Unique identifier for this edit. Must never be reused.
-	 * Used for referencing and de-duplicating edits.
-	 */
-	readonly id: EditId;
+    /**
+     * Unique identifier for this edit. Must never be reused.
+     * Used for referencing and de-duplicating edits.
+     */
+    readonly id: EditId;
 }
 
 /**
@@ -57,10 +57,10 @@ export interface Edit<TChange> extends EditBase<TChange> {
  * @public
  */
 export interface EditWithoutId<TChange> extends EditBase<TChange> {
-	/**
-	 * Used to explicitly state that EditWithoutId cannot contain an id and prevents type Edit from being assigned to type EditWithoutId.
-	 */
-	readonly id?: never;
+    /**
+     * Used to explicitly state that EditWithoutId cannot contain an id and prevents type Edit from being assigned to type EditWithoutId.
+     */
+    readonly id?: never;
 }
 
 /**
@@ -68,20 +68,20 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
  * @public
  */
 export interface EditBase<TChange> {
-	/**
-	 * Actual changes to apply.
-	 * Applied in order as part of a single transaction.
-	 */
-	readonly changes: readonly TChange[];
+    /**
+     * Actual changes to apply.
+     * Applied in order as part of a single transaction.
+     */
+    readonly changes: readonly TChange[];
 
-	/**
-	 * For edits which are being re-issued due to a conflict, the number of times this edit has already been attempted.
-	 * Undefined means 0.
-	 */
-	readonly pastAttemptCount?: number;
+    /**
+     * For edits which are being re-issued due to a conflict, the number of times this edit has already been attempted.
+     * Undefined means 0.
+     */
+    readonly pastAttemptCount?: number;
 
-	// Add more metadata fields as needed in the future.
-	// Include "high level"/"Domain Specific"/"Hierarchal" edits for application/domain use in implementing domain aware merge heuristics.
+    // Add more metadata fields as needed in the future.
+    // Include "high level"/"Domain Specific"/"Hierarchal" edits for application/domain use in implementing domain aware merge heuristics.
 }
 
 /**
@@ -104,7 +104,7 @@ export type Payload = Serializable;
  * @public
  */
 export interface TraitMap<TChild> {
-	readonly [key: string]: TreeNodeSequence<TChild>;
+    readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
 /**
@@ -118,7 +118,7 @@ export type TreeNodeSequence<TChild> = readonly TChild[];
  * @public
  */
 export interface HasTraits<TChild> {
-	readonly traits: TraitMap<TChild>;
+    readonly traits: TraitMap<TChild>;
 }
 
 /**
@@ -126,21 +126,21 @@ export interface HasTraits<TChild> {
  * @public
  */
 export interface NodeData<TId> {
-	/**
-	 * A payload of arbitrary serializable data
-	 */
-	readonly payload?: Payload;
+    /**
+     * A payload of arbitrary serializable data
+     */
+    readonly payload?: Payload;
 
-	/**
-	 * The meaning of this node.
-	 * Provides contexts/semantics for this node and its content.
-	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-	 */
-	readonly definition: Definition;
-	/**
-	 * Identifier which can be used to refer to this Node.
-	 */
-	readonly identifier: TId;
+    /**
+     * The meaning of this node.
+     * Provides contexts/semantics for this node and its content.
+     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+     */
+    readonly definition: Definition;
+    /**
+     * Identifier which can be used to refer to this Node.
+     */
+    readonly identifier: TId;
 }
 
 /**
@@ -159,8 +159,8 @@ export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPl
  * @public
  */
 export interface TraitLocationInternal_0_0_2 {
-	readonly parent: StableNodeId;
-	readonly label: TraitLabel;
+    readonly parent: StableNodeId;
+    readonly label: TraitLabel;
 }
 
 /**
@@ -174,43 +174,43 @@ export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
  * @public
  */
 export enum EditStatus {
-	/**
-	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
-	 * or contained a sequence of changes that could not possibly be applied sequentially without error
-	 * (e.g. an edit which tries to insert the same detached node twice).
-	 */
-	Malformed,
-	/**
-	 * The edit contained a well-formed sequence of changes that couldn't be applied to the current view,
-	 * generally because concurrent changes caused one or more merge conflicts.
-	 */
-	Invalid,
-	/**
-	 * The edit was applied to the current view successfully.
-	 */
-	Applied,
+    /**
+     * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
+     * or contained a sequence of changes that could not possibly be applied sequentially without error
+     * (e.g. an edit which tries to insert the same detached node twice).
+     */
+    Malformed,
+    /**
+     * The edit contained a well-formed sequence of changes that couldn't be applied to the current view,
+     * generally because concurrent changes caused one or more merge conflicts.
+     */
+    Invalid,
+    /**
+     * The edit was applied to the current view successfully.
+     */
+    Applied,
 }
 
 /**
  * Types of ops handled by SharedTree.
  */
 export enum SharedTreeOpType {
-	/** An op that includes edit information. */
-	Edit,
-	/** Includes a Fluid handle that corresponds to an edit chunk. */
-	Handle,
-	/** An op that does not affect the tree's state. */
-	NoOp,
-	/** Signals that SharedTree contents should be updated to match a new write format. */
-	Update,
+    /** An op that includes edit information. */
+    Edit,
+    /** Includes a Fluid handle that corresponds to an edit chunk. */
+    Handle,
+    /** An op that does not affect the tree's state. */
+    NoOp,
+    /** Signals that SharedTree contents should be updated to match a new write format. */
+    Update,
 }
 
 /**
  * SharedTreeOp containing a version stamp marking the write format of the tree which submitted it.
  */
 export interface VersionedOp<Version extends WriteFormat = WriteFormat> {
-	/** The supported SharedTree write version, see {@link WriteFormat}. */
-	readonly version: Version;
+    /** The supported SharedTree write version, see {@link WriteFormat}. */
+    readonly version: Version;
 }
 
 /**
@@ -222,7 +222,7 @@ export type SharedTreeOp_0_0_2 = SharedTreeEditOp_0_0_2 | SharedTreeNoOp | Share
  * Op which has no application semantics. This op can be useful for triggering other
  */
 export interface SharedTreeNoOp extends VersionedOp {
-	readonly type: SharedTreeOpType.NoOp;
+    readonly type: SharedTreeOpType.NoOp;
 }
 
 /**
@@ -232,16 +232,16 @@ export interface SharedTreeNoOp extends VersionedOp {
  * See docs/Breaking-Change-Migration.md for more details on the semantics of this op.
  */
 export interface SharedTreeUpdateOp extends VersionedOp {
-	readonly type: SharedTreeOpType.Update;
+    readonly type: SharedTreeOpType.Update;
 }
 
 /**
  * A SharedTree op that includes edit information, and optionally a list of interned strings.
  */
 export interface SharedTreeEditOp_0_0_2 extends VersionedOp<WriteFormat.v0_0_2> {
-	readonly type: SharedTreeOpType.Edit;
-	/** The collection of changes to apply. */
-	readonly edit: Edit<ChangeInternal_0_0_2>;
+    readonly type: SharedTreeOpType.Edit;
+    /** The collection of changes to apply. */
+    readonly edit: Edit<ChangeInternal_0_0_2>;
 }
 
 /**
@@ -249,20 +249,20 @@ export interface SharedTreeEditOp_0_0_2 extends VersionedOp<WriteFormat.v0_0_2> 
  * @public
  */
 export enum WriteFormat {
-	/** Stores all edits in their raw format. */
-	v0_0_2 = '0.0.2',
-	/** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
-	v0_1_1 = '0.1.1',
+    /** Stores all edits in their raw format. */
+    v0_0_2 = '0.0.2',
+    /** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
+    v0_1_1 = '0.1.1',
 }
 
 /**
  * The minimal information on a SharedTree summary. Contains the summary format version.
  */
 export interface SharedTreeSummaryBase {
-	/**
-	 * Field on summary under which version is stored.
-	 */
-	readonly version: WriteFormat;
+    /**
+     * Field on summary under which version is stored.
+     */
+    readonly version: WriteFormat;
 }
 
 /**
@@ -271,13 +271,13 @@ export interface SharedTreeSummaryBase {
  * @internal
  */
 export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
-	readonly version: WriteFormat.v0_0_2;
+    readonly version: WriteFormat.v0_0_2;
 
-	readonly currentTree: ChangeNode_0_0_2;
-	/**
-	 * A list of edits.
-	 */
-	readonly sequencedEdits: readonly Edit<ChangeInternal_0_0_2>[];
+    readonly currentTree: ChangeNode_0_0_2;
+    /**
+     * A list of edits.
+     */
+    readonly sequencedEdits: readonly Edit<ChangeInternal_0_0_2>[];
 }
 
 /**
@@ -285,12 +285,12 @@ export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
  * @public
  */
 export enum ChangeTypeInternal {
-	Insert,
-	Detach,
-	Build,
-	SetValue,
-	Constraint,
-	CompressedBuild,
+    Insert,
+    Detach,
+    Build,
+    SetValue,
+    Constraint,
+    CompressedBuild,
 }
 
 /**
@@ -298,11 +298,11 @@ export enum ChangeTypeInternal {
  * @public
  */
 export type ChangeInternal_0_0_2 =
-	| InsertInternal_0_0_2
-	| DetachInternal_0_0_2
-	| BuildInternal_0_0_2
-	| SetValueInternal_0_0_2
-	| ConstraintInternal_0_0_2;
+    | InsertInternal_0_0_2
+    | DetachInternal_0_0_2
+    | BuildInternal_0_0_2
+    | SetValueInternal_0_0_2
+    | ConstraintInternal_0_0_2;
 
 /**
  * {@inheritdoc BuildNode}
@@ -315,12 +315,12 @@ export type BuildNodeInternal_0_0_2 = TreeNode<BuildNodeInternal_0_0_2, StableNo
  * @public
  */
 export interface BuildInternal_0_0_2 {
-	/** {@inheritdoc Build.destination } */
-	readonly destination: DetachedSequenceId;
-	/** {@inheritdoc Build.source } */
-	readonly source: TreeNodeSequence<BuildNodeInternal_0_0_2>;
-	/** {@inheritdoc Build."type" } */
-	readonly type: typeof ChangeTypeInternal.Build;
+    /** {@inheritdoc Build.destination } */
+    readonly destination: DetachedSequenceId;
+    /** {@inheritdoc Build.source } */
+    readonly source: TreeNodeSequence<BuildNodeInternal_0_0_2>;
+    /** {@inheritdoc Build."type" } */
+    readonly type: typeof ChangeTypeInternal.Build;
 }
 
 /**
@@ -328,12 +328,12 @@ export interface BuildInternal_0_0_2 {
  * @public
  */
 export interface InsertInternal_0_0_2 {
-	/** {@inheritdoc (Insert:interface).destination } */
-	readonly destination: StablePlaceInternal_0_0_2;
-	/** {@inheritdoc (Insert:interface).source } */
-	readonly source: DetachedSequenceId;
-	/** {@inheritdoc (Insert:interface)."type" } */
-	readonly type: typeof ChangeTypeInternal.Insert;
+    /** {@inheritdoc (Insert:interface).destination } */
+    readonly destination: StablePlaceInternal_0_0_2;
+    /** {@inheritdoc (Insert:interface).source } */
+    readonly source: DetachedSequenceId;
+    /** {@inheritdoc (Insert:interface)."type" } */
+    readonly type: typeof ChangeTypeInternal.Insert;
 }
 
 /**
@@ -341,12 +341,12 @@ export interface InsertInternal_0_0_2 {
  * @public
  */
 export interface DetachInternal_0_0_2 {
-	/** {@inheritdoc Detach.destination } */
-	readonly destination?: DetachedSequenceId;
-	/** {@inheritdoc Detach.source } */
-	readonly source: StableRangeInternal_0_0_2;
-	/** {@inheritdoc Detach."type" } */
-	readonly type: typeof ChangeTypeInternal.Detach;
+    /** {@inheritdoc Detach.destination } */
+    readonly destination?: DetachedSequenceId;
+    /** {@inheritdoc Detach.source } */
+    readonly source: StableRangeInternal_0_0_2;
+    /** {@inheritdoc Detach."type" } */
+    readonly type: typeof ChangeTypeInternal.Detach;
 }
 
 /**
@@ -354,13 +354,13 @@ export interface DetachInternal_0_0_2 {
  * @public
  */
 export interface SetValueInternal_0_0_2 {
-	/** {@inheritdoc SetValue.nodeToModify } */
-	readonly nodeToModify: StableNodeId;
-	/** {@inheritdoc SetValue.payload } */
-	// eslint-disable-next-line @rushstack/no-new-null
-	readonly payload: Payload | null;
-	/** {@inheritdoc SetValue."type" } */
-	readonly type: typeof ChangeTypeInternal.SetValue;
+    /** {@inheritdoc SetValue.nodeToModify } */
+    readonly nodeToModify: StableNodeId;
+    /** {@inheritdoc SetValue.payload } */
+    // eslint-disable-next-line @rushstack/no-new-null
+    readonly payload: Payload | null;
+    /** {@inheritdoc SetValue."type" } */
+    readonly type: typeof ChangeTypeInternal.SetValue;
 }
 
 /**
@@ -368,22 +368,22 @@ export interface SetValueInternal_0_0_2 {
  * @public
  */
 export enum ConstraintEffect {
-	/**
-	 * Discard Edit.
-	 */
-	InvalidAndDiscard,
+    /**
+     * Discard Edit.
+     */
+    InvalidAndDiscard,
 
-	/**
-	 * Discard Edit, but record metadata that application may want to try and recover this change by recreating it.
-	 * Should this be the default policy for when another (non Constraint) change is invalid?
-	 */
-	InvalidRetry,
+    /**
+     * Discard Edit, but record metadata that application may want to try and recover this change by recreating it.
+     * Should this be the default policy for when another (non Constraint) change is invalid?
+     */
+    InvalidRetry,
 
-	/**
-	 * Apply the change, but flag it for possible reconsideration by the app
-	 * (applying it is better than not, but perhaps the high level logic could produce something better).
-	 */
-	ValidRetry,
+    /**
+     * Apply the change, but flag it for possible reconsideration by the app
+     * (applying it is better than not, but perhaps the high level logic could produce something better).
+     */
+    ValidRetry,
 }
 
 /**
@@ -391,22 +391,22 @@ export enum ConstraintEffect {
  * @public
  */
 export interface ConstraintInternal_0_0_2 {
-	/** {@inheritdoc Constraint.toConstrain } */
-	readonly toConstrain: StableRangeInternal_0_0_2;
-	/** {@inheritdoc Constraint.identityHash } */
-	readonly identityHash?: UuidString;
-	/** {@inheritdoc Constraint.length } */
-	readonly length?: number;
-	/** {@inheritdoc Constraint.contentHash } */
-	readonly contentHash?: UuidString;
-	/** {@inheritdoc Constraint.parentNode } */
-	readonly parentNode?: StableNodeId;
-	/** {@inheritdoc Constraint.label } */
-	readonly label?: TraitLabel;
-	/** {@inheritdoc Constraint.effect } */
-	readonly effect: ConstraintEffect;
-	/** {@inheritdoc Constraint."type" } */
-	readonly type: typeof ChangeTypeInternal.Constraint;
+    /** {@inheritdoc Constraint.toConstrain } */
+    readonly toConstrain: StableRangeInternal_0_0_2;
+    /** {@inheritdoc Constraint.identityHash } */
+    readonly identityHash?: UuidString;
+    /** {@inheritdoc Constraint.length } */
+    readonly length?: number;
+    /** {@inheritdoc Constraint.contentHash } */
+    readonly contentHash?: UuidString;
+    /** {@inheritdoc Constraint.parentNode } */
+    readonly parentNode?: StableNodeId;
+    /** {@inheritdoc Constraint.label } */
+    readonly label?: TraitLabel;
+    /** {@inheritdoc Constraint.effect } */
+    readonly effect: ConstraintEffect;
+    /** {@inheritdoc Constraint."type" } */
+    readonly type: typeof ChangeTypeInternal.Constraint;
 }
 
 /**
@@ -414,20 +414,20 @@ export interface ConstraintInternal_0_0_2 {
  * @public
  */
 export interface StablePlaceInternal_0_0_2 {
-	/**
-	 * {@inheritdoc (StablePlace:interface).side }
-	 */
-	readonly side: Side;
+    /**
+     * {@inheritdoc (StablePlace:interface).side }
+     */
+    readonly side: Side;
 
-	/**
-	 * {@inheritdoc (StablePlace:interface).referenceSibling }
-	 */
-	readonly referenceSibling?: StableNodeId;
+    /**
+     * {@inheritdoc (StablePlace:interface).referenceSibling }
+     */
+    readonly referenceSibling?: StableNodeId;
 
-	/**
-	 * {@inheritdoc (StablePlace:interface).referenceTrait }
-	 */
-	readonly referenceTrait?: TraitLocationInternal_0_0_2;
+    /**
+     * {@inheritdoc (StablePlace:interface).referenceTrait }
+     */
+    readonly referenceTrait?: TraitLocationInternal_0_0_2;
 }
 
 /**
@@ -435,8 +435,8 @@ export interface StablePlaceInternal_0_0_2 {
  * @public
  */
 export interface StableRangeInternal_0_0_2 {
-	/** {@inheritdoc (StableRange:interface).start } */
-	readonly start: StablePlaceInternal_0_0_2;
-	/** {@inheritdoc (StableRange:interface).end } */
-	readonly end: StablePlaceInternal_0_0_2;
+    /** {@inheritdoc (StableRange:interface).start } */
+    readonly start: StablePlaceInternal_0_0_2;
+    /** {@inheritdoc (StableRange:interface).end } */
+    readonly end: StablePlaceInternal_0_0_2;
 }

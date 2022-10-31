@@ -14,9 +14,9 @@ import { getNodeId } from './NodeIdUtilities';
  * @public
  */
 export interface HasVariadicTraits<TChild> {
-	readonly traits?: {
-		readonly [key: string]: TChild | TreeNodeSequence<TChild> | undefined;
-	};
+    readonly traits?: {
+        readonly [key: string]: TChild | TreeNodeSequence<TChild> | undefined;
+    };
 }
 
 /**
@@ -24,11 +24,11 @@ export interface HasVariadicTraits<TChild> {
  * @public
  */
 export enum ChangeType {
-	Insert,
-	Detach,
-	Build,
-	SetValue,
-	Constraint,
+    Insert,
+    Detach,
+    Build,
+    SetValue,
+    Constraint,
 }
 
 /**
@@ -57,9 +57,9 @@ export type BuildNode = BuildTreeNode | number;
  * See the SharedTree readme for more on the tree format.
  */
 export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
-	definition: string;
-	identifier?: NodeId;
-	payload?: Payload;
+    definition: string;
+    identifier?: NodeId;
+    payload?: Payload;
 }
 
 /**
@@ -72,9 +72,9 @@ export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
  * @public
  */
 export interface Build {
-	readonly destination: number;
-	readonly source: BuildNode | TreeNodeSequence<BuildNode>;
-	readonly type: typeof ChangeType.Build;
+    readonly destination: number;
+    readonly source: BuildNode | TreeNodeSequence<BuildNode>;
+    readonly type: typeof ChangeType.Build;
 }
 
 /**
@@ -83,9 +83,9 @@ export interface Build {
  * @public
  */
 export interface Insert {
-	readonly destination: StablePlace;
-	readonly source: number;
-	readonly type: typeof ChangeType.Insert;
+    readonly destination: StablePlace;
+    readonly source: number;
+    readonly type: typeof ChangeType.Insert;
 }
 
 /**
@@ -96,9 +96,9 @@ export interface Insert {
  * @public
  */
 export interface Detach {
-	readonly destination?: number;
-	readonly source: StableRange;
-	readonly type: typeof ChangeType.Detach;
+    readonly destination?: number;
+    readonly source: StableRange;
+    readonly type: typeof ChangeType.Detach;
 }
 
 /**
@@ -106,16 +106,16 @@ export interface Detach {
  * @public
  */
 export interface SetValue {
-	readonly nodeToModify: NodeId;
-	/**
-	 * Sets or clears the payload.
-	 * To improve ease of forwards compatibility, an explicit `null` value is used to represent the clearing of a payload.
-	 * SetValue may use `undefined` in future API versions to mean "don't change the payload" (which is useful if e.g. other
-	 * fields are added to SetValue that can be changed without altering the payload)
-	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	readonly payload: Payload | null;
-	readonly type: typeof ChangeType.SetValue;
+    readonly nodeToModify: NodeId;
+    /**
+     * Sets or clears the payload.
+     * To improve ease of forwards compatibility, an explicit `null` value is used to represent the clearing of a payload.
+     * SetValue may use `undefined` in future API versions to mean "don't change the payload" (which is useful if e.g. other
+     * fields are added to SetValue that can be changed without altering the payload)
+     */
+    // eslint-disable-next-line @rushstack/no-new-null
+    readonly payload: Payload | null;
+    readonly type: typeof ChangeType.SetValue;
 }
 
 /**
@@ -127,57 +127,57 @@ export interface SetValue {
  * @public
  */
 export interface Constraint {
-	/**
-	 * Selects a sequence of nodes which will be checked against the constraints specified by the optional fields.
-	 * If `toConstrain` is invalid, it will be treated like a constraint being unmet.
-	 * Depending on `effect` this may or may not make the Edit invalid.
-	 *
-	 * When a constraint is not met, the effects is specified by `effect`.
-	 */
-	readonly toConstrain: StableRange;
+    /**
+     * Selects a sequence of nodes which will be checked against the constraints specified by the optional fields.
+     * If `toConstrain` is invalid, it will be treated like a constraint being unmet.
+     * Depending on `effect` this may or may not make the Edit invalid.
+     *
+     * When a constraint is not met, the effects is specified by `effect`.
+     */
+    readonly toConstrain: StableRange;
 
-	/**
-	 * Require that the identities of all the nodes in toConstrain hash to this value.
-	 * Hash is order dependent.
-	 * TODO: implement and specify exact hash function.
-	 *
-	 * This is an efficient (O(1) space) way to constrain a sequence of nodes to have specific identities.
-	 */
-	readonly identityHash?: UuidString;
+    /**
+     * Require that the identities of all the nodes in toConstrain hash to this value.
+     * Hash is order dependent.
+     * TODO: implement and specify exact hash function.
+     *
+     * This is an efficient (O(1) space) way to constrain a sequence of nodes to have specific identities.
+     */
+    readonly identityHash?: UuidString;
 
-	/**
-	 * Require that the number of nodes in toConstrain is this value.
-	 */
-	readonly length?: number;
+    /**
+     * Require that the number of nodes in toConstrain is this value.
+     */
+    readonly length?: number;
 
-	/**
-	 * Require that the contents of all of the nodes in toConstrain hash to this value.
-	 * Hash is an order dependant deep hash, which includes all subtree content recursively.
-	 * TODO: implement and specify exact hash function.
-	 *
-	 * This is an efficient (O(1) space) way to constrain a sequence of nodes have exact values (transitively).
-	 */
-	readonly contentHash?: UuidString;
+    /**
+     * Require that the contents of all of the nodes in toConstrain hash to this value.
+     * Hash is an order dependant deep hash, which includes all subtree content recursively.
+     * TODO: implement and specify exact hash function.
+     *
+     * This is an efficient (O(1) space) way to constrain a sequence of nodes have exact values (transitively).
+     */
+    readonly contentHash?: UuidString;
 
-	/**
-	 * Require that parent under which toConstrain is located has this identifier.
-	 */
-	readonly parentNode?: NodeId;
+    /**
+     * Require that parent under which toConstrain is located has this identifier.
+     */
+    readonly parentNode?: NodeId;
 
-	/**
-	 * Require that the trait under which toConstrain is located has this label.
-	 */
-	readonly label?: TraitLabel;
+    /**
+     * Require that the trait under which toConstrain is located has this label.
+     */
+    readonly label?: TraitLabel;
 
-	/**
-	 * What to do if a constraint is not met.
-	 */
-	readonly effect: ConstraintEffect;
+    /**
+     * What to do if a constraint is not met.
+     */
+    readonly effect: ConstraintEffect;
 
-	/**
-	 * Marker for which kind of Change this is.
-	 */
-	readonly type: typeof ChangeType.Constraint;
+    /**
+     * Marker for which kind of Change this is.
+     */
+    readonly type: typeof ChangeType.Constraint;
 }
 
 // Note: Documentation of this constant is merged with documentation of the `Change` interface.
@@ -185,78 +185,78 @@ export interface Constraint {
  * @public
  */
 export const Change = {
-	build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number): Build => ({
-		destination,
-		source,
-		type: ChangeType.Build,
-	}),
+    build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number): Build => ({
+        destination,
+        source,
+        type: ChangeType.Build,
+    }),
 
-	insert: (source: number, destination: StablePlace): Insert => ({
-		destination,
-		source,
-		type: ChangeType.Insert,
-	}),
+    insert: (source: number, destination: StablePlace): Insert => ({
+        destination,
+        source,
+        type: ChangeType.Insert,
+    }),
 
-	detach: (source: StableRange, destination?: number): Detach => ({
-		destination,
-		source,
-		type: ChangeType.Detach,
-	}),
+    detach: (source: StableRange, destination?: number): Detach => ({
+        destination,
+        source,
+        type: ChangeType.Detach,
+    }),
 
-	setPayload: (nodeToModify: NodeId, payload: Payload): SetValue => ({
-		nodeToModify,
-		payload,
-		type: ChangeType.SetValue,
-	}),
+    setPayload: (nodeToModify: NodeId, payload: Payload): SetValue => ({
+        nodeToModify,
+        payload,
+        type: ChangeType.SetValue,
+    }),
 
-	clearPayload: (nodeToModify: NodeId): SetValue => ({
-		nodeToModify,
-		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
-		payload: null,
-		type: ChangeType.SetValue,
-	}),
+    clearPayload: (nodeToModify: NodeId): SetValue => ({
+        nodeToModify,
+        // Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
+        payload: null,
+        type: ChangeType.SetValue,
+    }),
 
-	constraint: (
-		toConstrain: StableRange,
-		effect: ConstraintEffect,
-		identityHash?: UuidString,
-		length?: number,
-		contentHash?: UuidString,
-		parentNode?: NodeId,
-		label?: TraitLabel
-	): Constraint => ({
-		toConstrain,
-		effect,
-		identityHash,
-		length,
-		contentHash,
-		parentNode,
-		label,
-		type: ChangeType.Constraint,
-	}),
+    constraint: (
+        toConstrain: StableRange,
+        effect: ConstraintEffect,
+        identityHash?: UuidString,
+        length?: number,
+        contentHash?: UuidString,
+        parentNode?: NodeId,
+        label?: TraitLabel
+    ): Constraint => ({
+        toConstrain,
+        effect,
+        identityHash,
+        length,
+        contentHash,
+        parentNode,
+        label,
+        type: ChangeType.Constraint,
+    }),
 
-	/** Helpers for making high-level composite operations */
+    /** Helpers for making high-level composite operations */
 
-	/**
-	 * @returns a change that deletes the supplied part of the tree.
-	 */
-	delete: (stableRange: StableRange): Change => Change.detach(stableRange),
+    /**
+     * @returns a change that deletes the supplied part of the tree.
+     */
+    delete: (stableRange: StableRange): Change => Change.detach(stableRange),
 
-	/**
-	 * @returns changes that insert 'nodes' into the specified location in the tree.
-	 */
-	insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
-		const build = Change.build(nodes, 0);
-		return [build, Change.insert(build.destination, destination)];
-	},
+    /**
+     * @returns changes that insert 'nodes' into the specified location in the tree.
+     */
+    insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
+        const build = Change.build(nodes, 0);
+        return [build, Change.insert(build.destination, destination)];
+    },
 
-	/**
-	 * @returns changes that moves the specified content to a new location in the tree.
-	 */
-	move: (source: StableRange, destination: StablePlace): Change[] => {
-		const detach = Change.detach(source, 0);
-		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
-	},
+    /**
+     * @returns changes that moves the specified content to a new location in the tree.
+     */
+    move: (source: StableRange, destination: StablePlace): Change[] => {
+        const detach = Change.detach(source, 0);
+        return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
+    },
 };
 
 /**
@@ -280,24 +280,24 @@ export const Change = {
  * @public
  */
 export interface StablePlace {
-	/**
-	 * Where this StablePlace is relative to the sibling (if specified), or an end of the trait (if no sibling specified).
-	 * If 'After' and there is no sibling, this StablePlace is after the front of the trait.
-	 * If 'Before' and there is no sibling, this StablePlace is before the back of the trait.
-	 */
-	readonly side: Side;
+    /**
+     * Where this StablePlace is relative to the sibling (if specified), or an end of the trait (if no sibling specified).
+     * If 'After' and there is no sibling, this StablePlace is after the front of the trait.
+     * If 'Before' and there is no sibling, this StablePlace is before the back of the trait.
+     */
+    readonly side: Side;
 
-	/**
-	 * The sibling to which this 'StablePlace' is anchored (by 'side').
-	 * If specified, referenceTrait must be unspecified.
-	 */
-	readonly referenceSibling?: NodeId;
+    /**
+     * The sibling to which this 'StablePlace' is anchored (by 'side').
+     * If specified, referenceTrait must be unspecified.
+     */
+    readonly referenceSibling?: NodeId;
 
-	/**
-	 * The trait to which this 'StablePlace' is anchored (by 'side').
-	 * If specified, referenceSibling must be unspecified.
-	 */
-	readonly referenceTrait?: TraitLocation;
+    /**
+     * The trait to which this 'StablePlace' is anchored (by 'side').
+     * If specified, referenceSibling must be unspecified.
+     */
+    readonly referenceTrait?: TraitLocation;
 }
 
 /**
@@ -312,8 +312,8 @@ export interface StablePlace {
  * @public
  */
 export interface StableRange {
-	readonly start: StablePlace;
-	readonly end: StablePlace;
+    readonly start: StablePlace;
+    readonly end: StablePlace;
 }
 
 /**
@@ -329,25 +329,25 @@ export interface StableRange {
  * @public
  */
 export const StablePlace = {
-	/**
-	 * @returns The location directly before `node`.
-	 */
-	before: (node: NodeData<NodeId> | NodeId): StablePlace => ({
-		side: Side.Before,
-		referenceSibling: getNodeId(node),
-	}),
-	/**
-	 * @returns The location directly after `node`.
-	 */
-	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
-	/**
-	 * @returns The location at the start of `trait`.
-	 */
-	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
-	/**
-	 * @returns The location at the end of `trait`.
-	 */
-	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
+    /**
+     * @returns The location directly before `node`.
+     */
+    before: (node: NodeData<NodeId> | NodeId): StablePlace => ({
+        side: Side.Before,
+        referenceSibling: getNodeId(node),
+    }),
+    /**
+     * @returns The location directly after `node`.
+     */
+    after: (node: NodeData<NodeId> | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
+    /**
+     * @returns The location at the start of `trait`.
+     */
+    atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
+    /**
+     * @returns The location at the end of `trait`.
+     */
+    atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
 };
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
@@ -355,36 +355,36 @@ export const StablePlace = {
  * @public
  */
 export const StableRange = {
-	/**
-	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
-	 * @example
-	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
-	 */
-	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
-		to: (end: StablePlace): StableRange => {
-			if (start.referenceTrait && end.referenceTrait) {
-				const message = 'StableRange must be constructed with endpoints from the same trait';
-				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
-				assert(start.referenceTrait.label === end.referenceTrait.label, message);
-			}
-			return { start, end };
-		},
-	}),
-	/**
-	 * @returns a `StableRange` which contains only the provided `node`.
-	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
-	 */
-	only: (node: NodeData<NodeId> | NodeId): StableRange => ({
-		start: StablePlace.before(node),
-		end: StablePlace.after(node),
-	}),
-	/**
-	 * @returns a `StableRange` which contains everything in the trait.
-	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
-	 * it does not use sibling anchoring.
-	 */
-	all: (trait: TraitLocation): StableRange => ({
-		start: StablePlace.atStartOf(trait),
-		end: StablePlace.atEndOf(trait),
-	}),
+    /**
+     * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+     * @example
+     * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+     */
+    from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
+        to: (end: StablePlace): StableRange => {
+            if (start.referenceTrait && end.referenceTrait) {
+                const message = 'StableRange must be constructed with endpoints from the same trait';
+                assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
+                assert(start.referenceTrait.label === end.referenceTrait.label, message);
+            }
+            return { start, end };
+        },
+    }),
+    /**
+     * @returns a `StableRange` which contains only the provided `node`.
+     * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
+     */
+    only: (node: NodeData<NodeId> | NodeId): StableRange => ({
+        start: StablePlace.before(node),
+        end: StablePlace.after(node),
+    }),
+    /**
+     * @returns a `StableRange` which contains everything in the trait.
+     * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
+     * it does not use sibling anchoring.
+     */
+    all: (trait: TraitLocation): StableRange => ({
+        start: StablePlace.atStartOf(trait),
+        end: StablePlace.atEndOf(trait),
+    }),
 };

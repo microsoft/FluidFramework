@@ -8,14 +8,14 @@ import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers'
 import { assert, fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
-	ChangeInternal,
-	ChangeTypeInternal,
-	DetachInternal,
-	SetValueInternal,
-	InsertInternal,
-	BuildNodeInternal,
-	Side,
-	StableRangeInternal,
+    ChangeInternal,
+    ChangeTypeInternal,
+    DetachInternal,
+    SetValueInternal,
+    InsertInternal,
+    BuildNodeInternal,
+    Side,
+    StableRangeInternal,
 } from './persisted-types';
 import { TransactionInternal } from './TransactionInternal';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
@@ -28,8 +28,8 @@ import { getChangeNodeFromViewNode } from './SerializationUtilities';
  * Events emitted from the history edit factory
  */
 export enum HistoryEditFactoryEvents {
-	MalformedEdit = 'malformedEdit',
-	MissingNodes = 'missingNodes',
+    MalformedEdit = 'malformedEdit',
+    MissingNodes = 'missingNodes',
 }
 
 /**
@@ -48,157 +48,157 @@ export enum HistoryEditFactoryEvents {
  * @internal
  */
 export function revert(
-	changes: readonly ChangeInternal[],
-	before: RevisionView,
-	logger?: ITelemetryLogger,
-	emit?: (event: string | symbol, ...args: any[]) => void
+    changes: readonly ChangeInternal[],
+    before: RevisionView,
+    logger?: ITelemetryLogger,
+    emit?: (event: string | symbol, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
-	const result: ChangeInternal[] = [];
+    const result: ChangeInternal[] = [];
 
-	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
-	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
+    const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
+    const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
 
-	// Open edit on revision to update it as changes are walked through
-	const editor = TransactionInternal.factory(before);
-	// Apply `edit`, generating an inverse as we go.
-	for (const change of changes) {
-		// Generate an inverse of each change
-		switch (change.type) {
-			case ChangeTypeInternal.Build: {
-				// Save nodes added to the detached state for use in future changes
-				const { destination, source } = change;
-				assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
-				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
-				builtNodes.set(
-					destination,
-					source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {
-						if (isDetachedSequenceId(curr)) {
-							const nodesForDetachedSequence =
-								builtNodes.get(curr) ?? fail('detached sequence must have associated built nodes');
+    // Open edit on revision to update it as changes are walked through
+    const editor = TransactionInternal.factory(before);
+    // Apply `edit`, generating an inverse as we go.
+    for (const change of changes) {
+        // Generate an inverse of each change
+        switch (change.type) {
+            case ChangeTypeInternal.Build: {
+                // Save nodes added to the detached state for use in future changes
+                const { destination, source } = change;
+                assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
+                assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
+                builtNodes.set(
+                    destination,
+                    source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {
+                        if (isDetachedSequenceId(curr)) {
+                            const nodesForDetachedSequence =
+                                builtNodes.get(curr) ?? fail('detached sequence must have associated built nodes');
 
-							ids.push(...nodesForDetachedSequence);
-						} else {
-							ids.push(curr.identifier);
-						}
-						return ids;
-					}, [])
-				);
-				break;
-			}
-			case ChangeTypeInternal.Insert: {
-				const { source } = change;
-				const nodesBuilt = builtNodes.get(source);
-				const nodesDetached = detachedNodes.get(source);
+                            ids.push(...nodesForDetachedSequence);
+                        } else {
+                            ids.push(curr.identifier);
+                        }
+                        return ids;
+                    }, [])
+                );
+                break;
+            }
+            case ChangeTypeInternal.Insert: {
+                const { source } = change;
+                const nodesBuilt = builtNodes.get(source);
+                const nodesDetached = detachedNodes.get(source);
 
-				if (nodesBuilt !== undefined) {
-					if (nodesBuilt.length === 0) {
-						builtNodes.delete(source);
-						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
-						continue;
-					}
-					result.unshift(createInvertedInsert(change, nodesBuilt));
-					builtNodes.delete(source);
-				} else if (nodesDetached !== undefined) {
-					if (nodesDetached.length === 0) {
-						detachedNodes.delete(source);
-						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
-						continue;
-					}
-					result.unshift(createInvertedInsert(change, nodesDetached, true));
-					detachedNodes.delete(source);
-				} else {
-					// Cannot revert an insert whose source is no longer available for inserting (i.e. not just built, and not detached)
-					if (emit !== undefined) {
-						emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
-					}
-					return undefined;
-				}
+                if (nodesBuilt !== undefined) {
+                    if (nodesBuilt.length === 0) {
+                        builtNodes.delete(source);
+                        logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+                        continue;
+                    }
+                    result.unshift(createInvertedInsert(change, nodesBuilt));
+                    builtNodes.delete(source);
+                } else if (nodesDetached !== undefined) {
+                    if (nodesDetached.length === 0) {
+                        detachedNodes.delete(source);
+                        logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+                        continue;
+                    }
+                    result.unshift(createInvertedInsert(change, nodesDetached, true));
+                    detachedNodes.delete(source);
+                } else {
+                    // Cannot revert an insert whose source is no longer available for inserting (i.e. not just built, and not detached)
+                    if (emit !== undefined) {
+                        emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
+                    }
+                    return undefined;
+                }
 
-				break;
-			}
-			case ChangeTypeInternal.Detach: {
-				const { destination } = change;
-				const invert = createInvertedDetach(change, editor.view);
-				if (invert === undefined) {
-					// Cannot revert a detach whose source does not exist in the tree
-					// TODO:68574: May not be possible once associated todo in `createInvertedDetach` is addressed
-					if (emit !== undefined) {
-						emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
-					}
-					return undefined;
-				}
-				const { invertedDetach, detachedNodeIds } = invert;
+                break;
+            }
+            case ChangeTypeInternal.Detach: {
+                const { destination } = change;
+                const invert = createInvertedDetach(change, editor.view);
+                if (invert === undefined) {
+                    // Cannot revert a detach whose source does not exist in the tree
+                    // TODO:68574: May not be possible once associated todo in `createInvertedDetach` is addressed
+                    if (emit !== undefined) {
+                        emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
+                    }
+                    return undefined;
+                }
+                const { invertedDetach, detachedNodeIds } = invert;
 
-				if (detachedNodeIds.length === 0) {
-					logger?.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
-					continue;
-				}
+                if (detachedNodeIds.length === 0) {
+                    logger?.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
+                    continue;
+                }
 
-				if (destination !== undefined) {
-					if (builtNodes.has(destination) || detachedNodes.has(destination)) {
-						// Malformed: destination was already used by a prior build or detach
-						if (emit !== undefined) {
-							emit(HistoryEditFactoryEvents.MalformedEdit, change, changes);
-						}
-						return undefined;
-					}
-					detachedNodes.set(destination, detachedNodeIds);
-				}
+                if (destination !== undefined) {
+                    if (builtNodes.has(destination) || detachedNodes.has(destination)) {
+                        // Malformed: destination was already used by a prior build or detach
+                        if (emit !== undefined) {
+                            emit(HistoryEditFactoryEvents.MalformedEdit, change, changes);
+                        }
+                        return undefined;
+                    }
+                    detachedNodes.set(destination, detachedNodeIds);
+                }
 
-				result.unshift(...invertedDetach);
-				break;
-			}
-			case ChangeTypeInternal.SetValue: {
-				const invert = createInvertedSetValue(change, editor.view);
-				if (invert === undefined) {
-					// Cannot revert a set for a node that does not exist in the tree
-					// TODO:68574: May not be possible once associated todo in `createInvertedSetValue` is addressed
-					if (emit !== undefined) {
-						emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
-					}
-					return undefined;
-				}
-				result.unshift(...invert);
-				break;
-			}
-			case ChangeTypeInternal.Constraint:
-				// TODO:#46759: Support Constraint in reverts
-				fail('Revert currently does not support Constraints');
-			default:
-				fail('Revert does not support the change type.');
-		}
+                result.unshift(...invertedDetach);
+                break;
+            }
+            case ChangeTypeInternal.SetValue: {
+                const invert = createInvertedSetValue(change, editor.view);
+                if (invert === undefined) {
+                    // Cannot revert a set for a node that does not exist in the tree
+                    // TODO:68574: May not be possible once associated todo in `createInvertedSetValue` is addressed
+                    if (emit !== undefined) {
+                        emit(HistoryEditFactoryEvents.MissingNodes, change, changes);
+                    }
+                    return undefined;
+                }
+                result.unshift(...invert);
+                break;
+            }
+            case ChangeTypeInternal.Constraint:
+                // TODO:#46759: Support Constraint in reverts
+                fail('Revert currently does not support Constraints');
+            default:
+                fail('Revert does not support the change type.');
+        }
 
-		// Update the revision
-		editor.applyChange(change);
-	}
+        // Update the revision
+        editor.applyChange(change);
+    }
 
-	editor.close();
-	return result;
+    editor.close();
+    return result;
 }
 
 /**
  * The inverse of an Insert is a Detach that starts before the leftmost node inserted and ends after the rightmost.
  */
 function createInvertedInsert(
-	insert: InsertInternal,
-	nodesInserted: readonly NodeId[],
-	saveDetached = false
+    insert: InsertInternal,
+    nodesInserted: readonly NodeId[],
+    saveDetached = false
 ): ChangeInternal {
-	const leftmostNode = nodesInserted[0];
-	const rightmostNode = nodesInserted[nodesInserted.length - 1];
+    const leftmostNode = nodesInserted[0];
+    const rightmostNode = nodesInserted[nodesInserted.length - 1];
 
-	const source: StableRangeInternal = {
-		start: {
-			referenceSibling: leftmostNode,
-			side: Side.Before,
-		},
-		end: {
-			referenceSibling: rightmostNode,
-			side: Side.After,
-		},
-	};
+    const source: StableRangeInternal = {
+        start: {
+            referenceSibling: leftmostNode,
+            side: Side.Before,
+        },
+        end: {
+            referenceSibling: rightmostNode,
+            side: Side.After,
+        },
+    };
 
-	return ChangeInternal.detach(source, saveDetached ? insert.source : undefined);
+    return ChangeInternal.detach(source, saveDetached ? insert.source : undefined);
 }
 
 /**
@@ -234,80 +234,80 @@ function createInvertedInsert(
  * Otherwise, the valid anchor to the left of the originally detached nodes is chosen.
  */
 function createInvertedDetach(
-	detach: DetachInternal,
-	viewBeforeChange: TreeView
+    detach: DetachInternal,
+    viewBeforeChange: TreeView
 ): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } | undefined {
-	const validatedSource = validateStableRange(viewBeforeChange, detach.source);
-	if (validatedSource.result !== RangeValidationResultKind.Valid) {
-		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
-		return undefined;
-	}
+    const validatedSource = validateStableRange(viewBeforeChange, detach.source);
+    if (validatedSource.result !== RangeValidationResultKind.Valid) {
+        // TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
+        return undefined;
+    }
 
-	const { start, end } = rangeFromStableRange(viewBeforeChange, validatedSource);
-	const { trait: referenceTrait } = start;
-	const nodes = viewBeforeChange.getTrait(referenceTrait);
+    const { start, end } = rangeFromStableRange(viewBeforeChange, validatedSource);
+    const { trait: referenceTrait } = start;
+    const nodes = viewBeforeChange.getTrait(referenceTrait);
 
-	const startIndex = viewBeforeChange.findIndexWithinTrait(start);
-	const endIndex = viewBeforeChange.findIndexWithinTrait(end);
-	const detachedNodeIds: NodeId[] = nodes.slice(startIndex, endIndex);
+    const startIndex = viewBeforeChange.findIndexWithinTrait(start);
+    const endIndex = viewBeforeChange.findIndexWithinTrait(end);
+    const detachedNodeIds: NodeId[] = nodes.slice(startIndex, endIndex);
 
-	const leftOfDetached = nodes.slice(0, startIndex);
+    const leftOfDetached = nodes.slice(0, startIndex);
 
-	let insertDestination: StablePlace;
+    let insertDestination: StablePlace;
 
-	if (start.side === Side.After) {
-		insertDestination =
-			start.sibling === undefined
-				? { side: Side.After, referenceTrait }
-				: { side: Side.After, referenceSibling: start.sibling };
-	} else if (end.side === Side.Before) {
-		insertDestination =
-			end.sibling === undefined
-				? { side: Side.Before, referenceTrait }
-				: { side: Side.Before, referenceSibling: end.sibling };
-	} else {
-		const referenceSibling = leftOfDetached.pop();
-		insertDestination = {
-			side: Side.After,
-			referenceSibling,
-			referenceTrait: referenceSibling === undefined ? referenceTrait : undefined,
-		};
-	}
+    if (start.side === Side.After) {
+        insertDestination =
+            start.sibling === undefined
+                ? { side: Side.After, referenceTrait }
+                : { side: Side.After, referenceSibling: start.sibling };
+    } else if (end.side === Side.Before) {
+        insertDestination =
+            end.sibling === undefined
+                ? { side: Side.Before, referenceTrait }
+                : { side: Side.Before, referenceSibling: end.sibling };
+    } else {
+        const referenceSibling = leftOfDetached.pop();
+        insertDestination = {
+            side: Side.After,
+            referenceSibling,
+            referenceTrait: referenceSibling === undefined ? referenceTrait : undefined,
+        };
+    }
 
-	if (detach.destination !== undefined) {
-		return {
-			invertedDetach: [ChangeInternal.insert(detach.destination, insertDestination)],
-			detachedNodeIds,
-		};
-	}
+    if (detach.destination !== undefined) {
+        return {
+            invertedDetach: [ChangeInternal.insert(detach.destination, insertDestination)],
+            detachedNodeIds,
+        };
+    }
 
-	const detachedSequenceId = 0 as DetachedSequenceId;
-	return {
-		invertedDetach: [
-			ChangeInternal.build(
-				detachedNodeIds.map((id) => getChangeNodeFromViewNode(viewBeforeChange, id)),
-				detachedSequenceId
-			),
-			ChangeInternal.insert(detachedSequenceId, insertDestination),
-		],
-		detachedNodeIds,
-	};
+    const detachedSequenceId = 0 as DetachedSequenceId;
+    return {
+        invertedDetach: [
+            ChangeInternal.build(
+                detachedNodeIds.map((id) => getChangeNodeFromViewNode(viewBeforeChange, id)),
+                detachedSequenceId
+            ),
+            ChangeInternal.insert(detachedSequenceId, insertDestination),
+        ],
+        detachedNodeIds,
+    };
 }
 
 /**
  * The inverse of a SetValue is a SetValue that sets the value to what it was prior to the change.
  */
 function createInvertedSetValue(setValue: SetValueInternal, viewBeforeChange: TreeView): ChangeInternal[] | undefined {
-	const { nodeToModify } = setValue;
-	const node = viewBeforeChange.tryGetViewNode(nodeToModify);
-	if (node === undefined) {
-		// TODO:68574: With a reference view, may be able to better resolve conflicting sets
-		return undefined;
-	}
+    const { nodeToModify } = setValue;
+    const node = viewBeforeChange.tryGetViewNode(nodeToModify);
+    if (node === undefined) {
+        // TODO:68574: With a reference view, may be able to better resolve conflicting sets
+        return undefined;
+    }
 
-	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
-	if (node.payload !== null) {
-		return [ChangeInternal.setPayload(nodeToModify, node.payload)];
-	}
-	return [ChangeInternal.clearPayload(nodeToModify)];
+    // Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
+    if (node.payload !== null) {
+        return [ChangeInternal.setPayload(nodeToModify, node.payload)];
+    }
+    return [ChangeInternal.clearPayload(nodeToModify)];
 }
