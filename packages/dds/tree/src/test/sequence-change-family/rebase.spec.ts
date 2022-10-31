@@ -9,6 +9,7 @@ import {
     SequenceChangeset,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -20,7 +21,7 @@ const tomb = "Dummy Changeset Tag";
 function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return sequenceChangeRebaser.rebase(change, base);
+    return sequenceChangeRebaser.rebase(change, makeAnonChange(base));
 }
 
 describe("SequenceChangeFamily - Rebase", () => {

@@ -234,12 +234,12 @@ export class PermutationVector extends Client {
             0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
-        //       the original operation to the current position for resubmitting.  This is probably the
+        //       the original operation to the current position for undo/redo scenarios.  This is probably the
         //       ideal solution, as we would no longer need to store row/col handles in the op metadata.
         //
         //       Failing that, we could avoid the O(n) search below by building a temporary map in the
         //       opposite direction from the handle to either it's current position or segment + offset
-        //       and reuse it for the duration of resubmission.  (Ideally, we would know when resubmission
+        //       and reuse it for the duration of undo/redo.  (Ideally, we would know when the undo/redo
         //       ended so we could discard this map.)
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain

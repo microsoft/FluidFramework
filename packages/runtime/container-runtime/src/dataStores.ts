@@ -629,7 +629,7 @@ export class DataStores implements IDisposable {
              */
             if (tombstone) {
                 const dataStore = this.contexts.get(dataStoreId);
-                assert(dataStore !== undefined, "No data store retrieved with specified id");
+                assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
                 // Delete the contexts of unused data stores.
                 dataStore.tombstone();
                 continue;
