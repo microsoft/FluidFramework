@@ -205,6 +205,7 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void): any;
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
+    // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
     (event: "attached", listener: () => void): any;
