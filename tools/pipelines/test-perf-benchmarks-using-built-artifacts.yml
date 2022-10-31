@@ -246,6 +246,54 @@ stages:
               tar -xvf $(Pipeline.Workspace)/test-files/$(TestPackage.TarFile).test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
+        - task: Bash@3
+          displayName: 'Run memory performance test'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            script: |
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm i ;
+              npm run test:memory-profiling:report;
+
+        - task: Bash@3
+          displayName: 'Log out memory test output work dir'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm install @ff-internal/aria-logger;
+              npm i;
+              npm run build:compile;
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
+              ls -la;
+
+        # - task: CopyFiles@2
+        #   inputs:
+        #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput
+        #     contents: '**'
+        #     targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput
+
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
+              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput;
+              ls -la;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Artifact - Perf tests output - memory usage'
+          inputs:
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput'
+            artifactName: 'perf-test-outputs_memory-usage'
+            condition: succeededOrFailed()
 
         # # Run performance tests
         # # - Add custom npm feeds to the tool's .npmrc file
@@ -298,52 +346,3 @@ stages:
         #     targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
         #     artifactName: 'perf-test-outputs_execution-time'
         #     condition: succeededOrFailed()
-
-        - task: Bash@3
-          displayName: 'Run memory performance test'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
-              npm run test:memory-profiling:report;
-
-        - task: Bash@3
-          displayName: 'Log out memory test output work dir'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
-            script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm install @ff-internal/aria-logger;
-              npm i;
-              npm run build:compile;
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
-              ls -la;
-
-        # - task: CopyFiles@2
-        #   inputs:
-        #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput
-        #     contents: '**'
-        #     targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput
-
-        - task: Bash@3
-          displayName: 'Write measurements to Aria/Kusto - memory usage'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
-            script: |
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }};
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
-              ls -la ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/memoryTestsOutput;
-              ls -la;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput;
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Artifact - Perf tests output - memory usage'
-          inputs:
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/.memoryTestsOutput'
-            artifactName: 'perf-test-outputs_memory-usage'
-            condition: succeededOrFailed()
