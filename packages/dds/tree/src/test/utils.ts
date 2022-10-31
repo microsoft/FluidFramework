@@ -19,7 +19,6 @@ import {
     summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import { Delta } from "../tree";
@@ -155,13 +154,12 @@ export class TestTreeProvider {
      * was set to true when calling the create() method.
      * @returns void after a summary has been resolved. May be called multiple times.
      */
-    public async summarize(): Promise<ISummaryTree> {
+    public async summarize(): Promise<void> {
         assert(
             this.summarizer !== undefined,
             "can't summarize because summarizeOnDemand was not set to true.",
         );
-        const { summaryTree } = await summarizeNow(this.summarizer, "TestTreeProvider");
-        return summaryTree;
+        await summarizeNow(this.summarizer, "TestTreeProvider");
     }
 
     public [Symbol.iterator](): IterableIterator<ISharedTree> {
