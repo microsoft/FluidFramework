@@ -144,11 +144,7 @@ export interface IContainerEvents extends IEvent {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void);
 
     /**
-     * TODO
-     *
-     * @remarks Listener parameters:
-     *
-     * - `codeDetails`: TODO
+     * @deprecated No replacement API intended.
      */
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
 
