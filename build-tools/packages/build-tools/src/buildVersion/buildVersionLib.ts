@@ -16,11 +16,17 @@
  * Output:
  *      The computed version output to the console.
  */
-
 import child_process from "child_process";
 import fs from "fs";
-import { changePreReleaseIdentifier, detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
+
+import {
+    changePreReleaseIdentifier,
+    detectVersionScheme,
+    getLatestReleaseFromList,
+    isInternalVersionScheme,
+} from "@fluid-tools/version-tools";
+
 import { Logger } from "../common/logging";
 
 /**
@@ -48,13 +54,13 @@ function parseFileVersion(fileVersion: string, buildId?: number) {
      */
     if (buildId) {
         // split the prerelease out
-        const r = releaseVersion.split('.');
+        const r = releaseVersion.split(".");
         if (r.length !== 3) {
             console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
             process.exit(9);
         }
         r[2] = (parseInt(r[2]) + buildId).toString();
-        releaseVersion = r.join('.');
+        releaseVersion = r.join(".");
     }
 
     return { releaseVersion, prereleaseVersion };
@@ -68,7 +74,11 @@ function getBuildSuffix(arg_release: boolean, build_num: string) {
 }
 
 /* A simpler CI version that append the build number at the end in the prerelease */
-function generateSimpleVersion(release_version: string, prerelease_version: string, build_suffix: string) {
+function generateSimpleVersion(
+    release_version: string,
+    prerelease_version: string,
+    build_suffix: string,
+) {
     // Generate the full version string
     if (prerelease_version) {
         if (build_suffix) {
@@ -87,17 +97,24 @@ function generateSimpleVersion(release_version: string, prerelease_version: stri
 /**
  * Generates a simpler version scheme used for some packages and prereleases.
  */
-export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean) {
+export function getSimpleVersion(
+    fileVersion: string,
+    argBuildNum: string,
+    argRelease: boolean,
+    patch: boolean,
+) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const buildId = patch ? parseInt(argBuildNum.split('.')[0]) : undefined;
+    const buildId = patch ? parseInt(argBuildNum.split(".")[0]) : undefined;
 
-    if(isInternalVersionScheme(fileVersion, /* allowPrereleases */ true)) {
-        if(patch) {
-            throw new Error(`Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`);
+    if (isInternalVersionScheme(fileVersion, /* allowPrereleases */ true)) {
+        if (patch) {
+            throw new Error(
+                `Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`,
+            );
         }
 
-        if(!argRelease) {
+        if (!argRelease) {
             fileVersion = changePreReleaseIdentifier(fileVersion, "dev");
         }
     }
@@ -115,7 +132,8 @@ type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
  * @param tags - An array of tags as strings.
  * @returns An array of tags that match the prefix.
  */
-const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(v => v.startsWith(`${prefix}_v`));
+const filterTags = (prefix: TagPrefix, tags: string[]): string[] =>
+    tags.filter((v) => v.startsWith(`${prefix}_v`));
 
 /**
  * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
@@ -126,7 +144,7 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(
  */
 function getVersions(prefix: TagPrefix) {
     const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
-    const tags = raw_tags.split(/\s+/g).map(t => t.trim());
+    const tags = raw_tags.split(/\s+/g).map((t) => t.trim());
     return getVersionsFromStrings(prefix, tags);
 }
 
@@ -162,13 +180,12 @@ export function getIsLatest(
 ) {
     let latestTaggedRelease: string;
 
-    if(input_tags?.length === 0) {
+    if (input_tags?.length === 0) {
         latestTaggedRelease = "0.0.0";
     }
 
-    let versions = input_tags === undefined
-        ? getVersions(prefix)
-        : getVersionsFromStrings(prefix, input_tags);
+    let versions =
+        input_tags === undefined ? getVersions(prefix) : getVersionsFromStrings(prefix, input_tags);
     versions = versions.filter((v) => {
         if (v === undefined) {
             return false;
@@ -182,7 +199,7 @@ export function getIsLatest(
     });
 
     latestTaggedRelease = getLatestReleaseFromList(versions);
-    if(versions.length === 0 || latestTaggedRelease === undefined) {
+    if (versions.length === 0 || latestTaggedRelease === undefined) {
         latestTaggedRelease = "0.0.0";
     }
 

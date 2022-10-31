@@ -2,31 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { Flags } from "@oclif/core";
 import { strict as assert } from "assert";
+import chalk from "chalk";
+import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
+import { writeJson } from "fs-extra";
+import inquirer from "inquirer";
 import path from "path";
+import sortJson from "sort-json";
+import { table } from "table";
+
 import { Context } from "@fluidframework/build-tools";
+
 import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionScheme,
     detectBumpType,
     detectVersionScheme,
     getVersionRange,
     isVersionBumpType,
-    ReleaseVersion,
-    VersionBumpType,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
-import { Flags } from "@oclif/core";
-import chalk from "chalk";
-import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
-import inquirer from "inquirer";
-import sortJson from "sort-json";
-import { table } from "table";
-import { writeJson } from "fs-extra";
+
 import { BaseCommand } from "../../base";
-import { filterVersionsOlderThan, getAllVersions, sortVersions, VersionDetails } from "../../lib";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
+import { VersionDetails, filterVersionsOlderThan, getAllVersions, sortVersions } from "../../lib";
 import { CommandLogger } from "../../logging";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
 const MAX_BUSINESS_DAYS_TO_CONSIDER_RECENT = 10;
 const DEFAULT_MIN_VERSION = "0.0.0";
@@ -53,20 +55,16 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
     static examples = [
         {
+            description: "Output all release report files to the current directory.",
+            command: "<%= config.bin %> <%= command.id %> -o .",
+        },
+        {
             description: "Generate a minimal release report and display it in the terminal.",
             command: "<%= config.bin %> <%= command.id %> ",
         },
         {
             description: "Generate a minimal release report and output it to stdout as JSON.",
             command: "<%= config.bin %> <%= command.id %> --json",
-        },
-        {
-            description: "Output a release report to 'report.json'.",
-            command: "<%= config.bin %> <%= command.id %> -o report.json",
-        },
-        {
-            description: "Output a full release report to 'report.json'.",
-            command: "<%= config.bin %> <%= command.id %> -f -o report.json",
         },
         {
             description: "List all the releases of the azure release group.",

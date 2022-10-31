@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const util = require("util");
-const { exec } = require('child_process');
-const msRestAzure = require("ms-rest-azure");
-const keyVault = require("azure-keyvault");
-const rcTools = require("@fluidframework/tool-utils");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import util from "util";
+import child_process from "child_process";
+import interactiveLogin from "ms-rest-azure";
+import KeyVaultClient from "azure-keyvault";
+import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
 const appendFile = util.promisify(fs.appendFile);
 
@@ -30,6 +30,7 @@ async function exportToShellRc(shellRc, entries) {
         entries.map(([key, value]) => `export ${key}=${quote(value)}`).join("\n")
     }\n`;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return appendFile(rcPath, stmts, "utf-8");
 }
 
@@ -61,7 +62,7 @@ async function saveEnv(env) {
             // For 'fish' we use 'set -xU', which dedupes and performs its own escaping.
             // Note that we must pass the 'shell' option, otherwise node will spawn '/bin/sh'.
             return Promise.all(
-                entries.map(([key, value]) => execAsync(`set -xU '${key}' '${value}'`, { shell }))
+                entries.map(async ([key, value]) => execAsync(`set -xU '${key}' '${value}'`, { shell })),
             );
         default:
             if (!process.platform === "win32") {
@@ -71,7 +72,7 @@ async function saveEnv(env) {
 
                 // On Windows, invoke 'setx' to update the user's persistent environment variables.
                 return Promise.all(
-                    entries.map(([key, value]) => execAsync(`setx ${key} ${quote(value)}`))
+                    entries.map(async ([key, value]) => execAsync(`setx ${key} ${quote(value)}`)),
                 );
             }
     }
@@ -83,15 +84,15 @@ async function getKeys(keyVaultClient, rc, vaultName) {
     const p = [];
     for (const secret of secretList) {
         if (secret.attributes.enabled) {
-            const secretName = secret.id.split('/').pop();
+            const secretName = secret.id.split("/").pop();
             // exclude secrets with automation prefix, which should only be used in automation
             if (!secretName.startsWith("automation")) {
                 p.push((async () => {
                     const response = await keyVaultClient.getSecret(vaultName, secretName);
-                    const envName = secretName.split('-').join('__'); // secret name can't contain underscores
+                    const envName = secretName.split("-").join("__"); // secret name can't contain underscores
                     console.log(`  ${envName}`);
                     rc.secrets[envName] = response.value;
-                })());;
+                })());
             }
         }
     }
@@ -101,7 +102,7 @@ async function getKeys(keyVaultClient, rc, vaultName) {
 
 async function execAsync(command, options) {
     return new Promise((res, rej) => {
-        exec(command, options, (err, stdout, stderr) => {
+        child_process.exec(command, options, (err, stdout, stderr) => {
             if (err) {
                 rej(err);
                 return;
@@ -116,7 +117,6 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
     static async get() {
-
         await execAsync("az ad signed-in-user show");
         return new AzCliKeyVaultClient();
 
@@ -131,22 +131,24 @@ class AzCliKeyVaultClient {
     }
 
     async getSecrets(vaultName) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return JSON.parse(await execAsync(`az keyvault secret list --vault-name ${vaultName}`));
     }
 
     async getSecret(vaultName, secretName) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return JSON.parse(await execAsync(`az keyvault secret show --vault-name ${vaultName} --name ${secretName}`));
     }
-};
+}
 
 class MsRestAzureKeyVaultClinet {
     static async get() {
-        const credentials = await msRestAzure.interactiveLogin();
+        const credentials = await interactiveLogin();
         return new MsRestAzureKeyVaultClinet(credentials);
     }
 
     constructor(credentials) {
-        this.client = new keyVault.KeyVaultClient(credentials);
+        this.client = new KeyVaultClient(credentials);
     }
 
     async getSecrets(vaultName) {
@@ -154,12 +156,12 @@ class MsRestAzureKeyVaultClinet {
     }
 
     async getSecret(vaultName, secretName) {
-        return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, '');
+        return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, "");
     }
 }
 
 async function getClient() {
-    return await AzCliKeyVaultClient.get();
+    return AzCliKeyVaultClient.get();
 
     // Disabling fallback to REST client while we decide how to streamline the getkeys tool
 
@@ -172,35 +174,36 @@ async function getClient() {
 }
 
 (async () => {
-    const rc = await rcTools.loadRC();
+    const rc = await loadRC();
 
     if (rc.secrets === undefined) {
         rc.secrets = {};
     }
 
-    // For debugging, change the following to 'false' to skip connecting to
+    // For debugging, change the following to 'false' and uncommented the if block to skip connecting to
     // Azure Key Vault and instead use the secrets cached in '~/.fluidtoolrc'.
-    if (true) {
-        const client = await getClient();
+    // if (true) {
+    const client = await getClient();
 
-        // Primary key vault for test/dev secrets shared by Microsoft-internal teams working on FF
-        await getKeys(client, rc, "prague-key-vault");
+    // Primary key vault for test/dev secrets shared by Microsoft-internal teams working on FF
+    await getKeys(client, rc, "prague-key-vault");
 
-        try {
-            // Key Vault with restricted access for the FF dev team only
-            await getKeys(client, rc, "ff-internal-dev-secrets");
-            console.log("\nNote: Default dev/test secrets overwritten with values from internal key vault.");
-        } catch (e) { }
-    }
+    try {
+        // Key Vault with restricted access for the FF dev team only
+        await getKeys(client, rc, "ff-internal-dev-secrets");
+        console.log("\nNote: Default dev/test secrets overwritten with values from internal key vault.");
+    } catch (e) { }
+    // }
 
     console.log(`\nWriting '${path.join(os.homedir(), ".fluidtoolrc")}'.`);
-    await rcTools.saveRC(rc);
+    await saveRC(rc);
     await saveEnv(rc.secrets);
 
-    console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`)
-})().catch(e => {
+    console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`);
+})().catch((e) => {
     if (e.message.includes("'az' is not recognized as an internal or external command")) {
         console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
+        // eslint-disable-next-line no-undef
         exit(0);
     }
 

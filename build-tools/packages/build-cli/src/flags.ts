@@ -2,15 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Flags } from "@oclif/core";
+import * as semver from "semver";
+
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 
 import {
     isVersionBumpType,
     isVersionBumpTypeExtended,
     isVersionScheme,
 } from "@fluid-tools/version-tools";
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
-import * as semver from "semver";
+
 import { DependencyUpdateType } from "./lib";
 import { isReleaseGroup } from "./releaseGroups";
 
@@ -18,7 +20,6 @@ import { isReleaseGroup } from "./releaseGroups";
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
  */
 export const rootPathFlag = Flags.build({
-    char: "r",
     description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
     env: "_FLUID_ROOT_",
     hidden: true,
@@ -165,7 +166,7 @@ export const checkFlags = {
     }),
     policyCheck: Flags.boolean({
         allowNo: true,
-        default: true,
+        default: true, // This value isn't used directly; the default is based on the branch. See comment in run method.
         description: "Check that the local repo complies with all policy.",
     }),
 };

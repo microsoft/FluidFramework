@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./quorum";
+export { IQuorum, IQuorumEvents } from "./interfaces";
+export { Quorum } from "./quorum";

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
+import { makeAnonChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -15,12 +16,14 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
-    return SF.invert(change, TestChange.invert);
+    return SF.invert(makeAnonChange(change), TestChange.invert);
 }
 
 function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
     deepFreeze(change);
-    return SF.invert(change, () => assert.fail("Unexpected call to child inverter"));
+    return SF.invert(makeAnonChange(change), () =>
+        assert.fail("Unexpected call to child inverter"),
+    );
 }
 
 describe("SequenceField - Invert", () => {
@@ -34,12 +37,8 @@ describe("SequenceField - Invert", () => {
     it("child changes", () => {
         const childChange = TestChange.mint([0], 1);
         const inverseChildChange = TestChange.invert(childChange);
-        const input: TestChangeset = [
-            { type: "Modify", changes: childChange },
-        ];
-        const expected: TestChangeset = [
-            { type: "Modify", changes: inverseChildChange },
-        ];
+        const input: TestChangeset = [{ type: "Modify", changes: childChange }];
+        const expected: TestChangeset = [{ type: "Modify", changes: inverseChildChange }];
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
@@ -49,7 +48,10 @@ describe("SequenceField - Invert", () => {
             {
                 type: "Insert",
                 id: 1,
-                content: [{ type, value: 42 }, { type, value: 43 }],
+                content: [
+                    { type, value: 42 },
+                    { type, value: 43 },
+                ],
             },
         ];
         const expected: SF.Changeset = [

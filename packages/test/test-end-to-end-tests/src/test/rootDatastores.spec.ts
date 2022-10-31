@@ -4,15 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestFluidObject,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-} from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+
 import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
     ContainerRuntime,
@@ -20,12 +14,18 @@ import {
     SummaryCollection,
     DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { Loader } from "@fluidframework/container-loader";
-import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+    ITestFluidObject,
+    ITestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
+} from "@fluidframework/test-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;

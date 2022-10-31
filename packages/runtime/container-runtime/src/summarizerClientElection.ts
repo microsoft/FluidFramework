@@ -77,7 +77,7 @@ export class SummarizerClientElection
                 // Log and elect a new summarizer client.
                 const opsSinceLastReport = sequenceNumber - this.lastReportedSeq;
                 if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
-                    this.logger.sendErrorEvent({
+                    this.logger.sendTelemetryEvent({
                         eventName: "ElectedClientNotSummarizing",
                         electedClientId,
                         lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,

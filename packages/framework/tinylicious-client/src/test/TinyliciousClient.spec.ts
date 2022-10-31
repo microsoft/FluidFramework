@@ -4,11 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import {
+    ContainerMessageType,
+} from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
+
+const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
+new Promise<boolean>((resolve, reject) => {
+    runtime.once("dispose", () => reject(new Error("Runtime disposed")));
+    (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
+}).catch((error) => new Error(error.message));
+
+const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
+    (dataObject as any).context.containerRuntime as IContainerRuntime;
+
+const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
+    containers.map(async (c) => new Promise<boolean>((resolve) => c.once("disposed", (error) => {
+        resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
+    })))).then((all) => !all.includes(false));
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -231,5 +249,32 @@ describe("TinyliciousClient", () => {
         map1.set("newpair-id", newPair.handle);
         const obj = await map1.get("newpair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
+    });
+
+    /**
+     * Scenario: test if FluidContainer emits error events with appropriate error type.
+     *
+     * Expected behavior: Injecting faulty op should force FluidContainer to close, while emitting
+     * error event.
+     */
+     it("can process data corruption events", async () => {
+        const dynamicSchema: ContainerSchema = {
+            initialObjects: {
+                do1: TestDataObject,
+            },
+        };
+
+        const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+        await createFluidContainer.attach();
+        await new Promise<void>((resolve, reject) => {
+            createFluidContainer.on("connected", () => {
+                resolve();
+            });
+        });
+
+        const do1 = createFluidContainer.initialObjects.do1 as TestDataObject;
+        const dataCorruption = allDataCorruption([createFluidContainer]);
+        await corruptedAliasOp(runtimeOf(do1), "alias");
+        assert(await dataCorruption);
     });
 });

@@ -9,7 +9,7 @@ import { ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { Delta, FieldKey } from "../../tree";
-import { brand, makeArray, RecursiveReadonly } from "../../util";
+import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
     AnchorRebaseData,
     TestAnchorSet,
@@ -34,7 +34,9 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(rebaser?: ChangeRebaser<TestChange>): ChangeFamily<unknown, TestChange> {
+function changeFamilyFactory(
+    rebaser?: ChangeRebaser<TestChange>,
+): ChangeFamily<unknown, TestChange> {
     const family = {
         rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
@@ -44,17 +46,17 @@ function changeFamilyFactory(rebaser?: ChangeRebaser<TestChange>): ChangeFamily<
     return family;
 }
 
-function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
+function editManagerFactory(options: {
+    rebaser?: ChangeRebaser<TestChange>;
+    sessionId?: SessionId;
+}): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
 } {
-    const family = changeFamilyFactory(rebaser);
+    const family = changeFamilyFactory(options.rebaser);
     const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
-        localSessionId,
-        family,
-        anchors,
-    );
+    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
+    manager.initSessionId(options.sessionId ?? localSessionId);
     return { manager, anchors };
 }
 
@@ -342,7 +344,30 @@ function runUnitTestScenario(
     rebaser?: ChangeRebaser<TestChange>,
 ): void {
     const run = () => {
-        const { manager, anchors } = editManagerFactory(rebaser);
+        const { manager, anchors } = editManagerFactory({ rebaser });
+        /**
+         * An `EditManager` that is kept up to date with all sequenced edits.
+         * Used as a source of summary data to spin-up `joiners`.
+         * This `EditManager` never has local changes.
+         */
+        const summarizer = editManagerFactory({ rebaser, sessionId: "Summarizer" }).manager;
+        /**
+         * A set of `EditManager`s spun-up based on summaries produced by `summarizer`.
+         * One such joiner is produced after every sequenced edit (i.e., after every "Ack" or "Pull" step).
+         * These are kept up to date with all sequenced edits.
+         * Used to check that summarization works properly.
+         */
+        const joiners: TestEditManager[] = [];
+        /**
+         * Local helper to update all the state that is dependent on the sequencing of new edits.
+         */
+        const recordSequencedEdit = (commit: TestCommit): void => {
+            trunk.push(commit.seqNumber);
+            summarizer.addSequencedChange(commit);
+            for (const j of joiners) {
+                j.addSequencedChange(commit);
+            }
+        };
         /**
          * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
          */
@@ -377,10 +402,11 @@ function runUnitTestScenario(
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        seq = iNextAck < acks.length
-                            ? acks[iNextAck].seq
-                            // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            : finalSequencedEdit + 1 + iNextAck - acks.length;
+                        seq =
+                            iNextAck < acks.length
+                                ? acks[iNextAck].seq
+                                : // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+                                  finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChange.mint(knownToLocal, seq);
@@ -402,12 +428,14 @@ function runUnitTestScenario(
                         fail("Invalid test scenario: no local commit to acknowledge");
                     }
                     if (commit.seqNumber !== seq) {
-                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
+                        fail(
+                            "Invalid test scenario: acknowledged commit does not mach oldest local change",
+                        );
                     }
                     // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
                     assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
-                    trunk.push(seq);
                     localRef = seq;
+                    recordSequencedEdit(commit);
                     break;
                 }
                 case "Pull": {
@@ -421,7 +449,10 @@ function runUnitTestScenario(
                      * Filter that includes changes that were local to the issuer of this commit.
                      */
                     const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-                        s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
+                        s.type === "Pull" &&
+                        s.seq > step.ref &&
+                        s.seq < step.seq &&
+                        s.from === step.from;
                     /**
                      * Changes that were known to the peer at the time it authored this commit.
                      */
@@ -452,20 +483,41 @@ function runUnitTestScenario(
                         // Verify that the test case was annotated with the right expectations.
                         assert.deepEqual(step.expectedDelta, expected);
                     }
-                    trunk.push(seq);
-                    knownToLocal = [
-                        ...trunk,
-                        ...localCommits.map((c) => c.seqNumber),
-                    ];
+                    recordSequencedEdit(commit);
+                    knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
                     localRef = seq;
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
             // Anchors should be kept up to date with the known intentions
             assert.deepEqual(anchors.intentions, knownToLocal);
             // The exposed trunk and local changes should reflect what is known to the local client
             checkChangeList(manager, knownToLocal);
+            checkChangeList(summarizer, trunk);
+
+            // Spin-up a new joiner whenever a summary client would have a different state.
+            // This assumes summary clients have no local changes, which may change in the future.
+            if (step.type !== "Push") {
+                const joiner = editManagerFactory({
+                    rebaser,
+                    sessionId: `Join${joiners.length}`,
+                }).manager;
+                const summary = clone(summarizer.getSummaryData());
+                joiner.loadSummaryData((data) => {
+                    data.trunk.push(...summary.trunk);
+                    for (const [k, v] of summary.branches) {
+                        data.branches.set(k, v);
+                    }
+                });
+                joiners.push(joiner);
+            }
+
+            // Verify that clients spun-up based on summaries are able to interpret new edits properly
+            for (const j of joiners) {
+                checkChangeList(j, trunk);
+            }
         }
     };
     if (title !== undefined) {
@@ -480,5 +532,8 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-    return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
+    return manager
+        .getTrunk()
+        .map((c) => c.changeset)
+        .concat(manager.getLocalChanges());
 }

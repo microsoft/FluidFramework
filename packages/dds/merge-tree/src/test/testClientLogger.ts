@@ -5,10 +5,14 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeTreeOp } from "../ops";
 import { TextSegment } from "../textSegment";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import { matchProperties, PropertySet } from "../properties";
+import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
+import { toRemovalInfo } from "../mergeTreeNodes";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
@@ -29,11 +33,14 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
 type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 
 export function createClientsAtInitialState<TClients extends ClientMap>(
-    initialState: string,
+    opts: {
+        initialState: string;
+        options?: PropertySet;
+    },
     ... clientIds: (string & keyof TClients)[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[]; } {
     const setup = (c: TestClient) => {
-        c.insertTextLocal(0, initialState);
+        c.insertTextLocal(0, opts.initialState);
         while (c.getText().includes("-")) {
             const index = c.getText().indexOf("-");
             c.removeRangeLocal(index, index + 1);
@@ -43,7 +50,7 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
     const clients: Partial<Record<keyof TClients, TestClient>> = {};
     for (const id of clientIds) {
         if (clients[id] === undefined) {
-            const client = new TestClient();
+            const client = new TestClient(opts.options);
             clients[id] = client;
             all.push(client);
             setup(client);
@@ -70,7 +77,7 @@ export class TestClientLogger {
     private ackedLine: string[] = [];
     private localLine: string[] = [];
     // initialize to private instance, so first real edit will create a new line
-    private lastOp: any | undefined = {};
+    private lastDeltaArgs: IMergeTreeDeltaOpArgs | undefined;
 
     constructor(
         private readonly clients: readonly TestClient[],
@@ -80,16 +87,18 @@ export class TestClientLogger {
         clients.forEach((c, i) => {
             logHeaders.push("op");
             logHeaders.push(`client ${c.longClientId}`);
-            const callback = (op: IMergeTreeDeltaOpArgs | undefined) => {
-                if (this.lastOp !== op?.op) {
+            const callback = (deltaArgs: IMergeTreeDeltaOpArgs | undefined) => {
+                if (this.lastDeltaArgs?.sequencedMessage !== deltaArgs?.sequencedMessage
+                    || this.lastDeltaArgs?.op !== deltaArgs?.op) {
                     this.addNewLogLine();
-                    this.lastOp = op?.op;
+                    this.lastDeltaArgs = deltaArgs;
                 }
                 const clientLogIndex = i * 2;
 
-                this.ackedLine[clientLogIndex] = op === undefined
+                this.ackedLine[clientLogIndex] = deltaArgs === undefined
                     ? ""
-                    : getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
+                    : getOpString(deltaArgs.sequencedMessage !== undefined
+                        ? { ...deltaArgs.sequencedMessage, contents: deltaArgs.op } : c.makeOpMessage(deltaArgs.op));
                 const segStrings = TestClientLogger.getSegString(c);
                 this.ackedLine[clientLogIndex + 1] = segStrings.acked;
                 this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -150,20 +159,63 @@ export class TestClientLogger {
         this.roundLogLines.push(this.localLine);
     }
 
-    public validate() {
-        const baseText = this.clients[0].getText();
+    public validate(opts?: {
+        clear?: boolean;
+        baseText?: string;
+        errorPrefix?: string;
+    }) {
+        const baseText = opts?.baseText ?? this.clients[0].getText();
+        const errorPrefix = opts?.errorPrefix ? `${opts?.errorPrefix}: ` : "";
+        // cache all the properties of client 0 for faster look up
+        const properties = Array.from({ length: this.clients[0].getLength() }).map(
+            (_, i) => this.clients[0].getPropertiesAtPosition(i));
         this.clients.forEach(
             (c) => {
-                if (c === this.clients[0]) { return; }
+                if (opts?.baseText === undefined && c === this.clients[0]) { return; }
+                // ensure all clients have seen the same ops
+                assert.equal(
+                    c.getCurrentSeq(),
+                    this.clients[0].getCurrentSeq(),
+                    `${errorPrefix}${c.longClientId} current seq does not match client ${this.clients[0].longClientId}`,
+                );
                 // Pre-check to avoid this.toString() in the string template
                 if (c.getText() !== baseText) {
                     assert.equal(
                         c.getText(),
                         baseText,
                         // eslint-disable-next-line max-len
-                        `\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
+                        `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId}`);
                 }
+
+                if (c === this.clients[0]) { return; }
+                let pos = 0;
+                depthFirstNodeWalk(
+                    c.mergeTree.root,
+                    c.mergeTree.root.children[0],
+                    undefined,
+                    (seg) => {
+                        if (toRemovalInfo(seg) === undefined) {
+                            const segProps = seg.properties;
+                            for (let i = 0; i < seg.cachedLength; i++) {
+                                if (!matchProperties(segProps, properties[pos + i])) {
+                                    assert.deepStrictEqual(
+                                        segProps,
+                                        properties[pos + i],
+                                        // eslint-disable-next-line max-len
+                                        `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId} properties at pos ${pos + i}`);
+                                }
+                            }
+                            pos += seg.cachedLength;
+                        }
+                    },
+                );
             });
+
+        if (opts?.clear === true) {
+            this.roundLogLines.splice(1, this.roundLogLines.length);
+            this.roundLogLines[0].forEach((v, i) => this.paddings[i] = v.length);
+            this.addNewLogLine(); // capture initial state
+        }
         return baseText;
     }
 
@@ -194,22 +246,38 @@ export class TestClientLogger {
         return str;
     }
 
+    public addLogsToError(e: unknown): Error {
+        if (e instanceof Error) {
+            e.message += `\n${this.toString()}`;
+            return e;
+        }
+
+        return new LoggingError(`${e}\n${this.toString()}`);
+    }
+
     private static getSegString(client: TestClient): { acked: string; local: string; } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];
+        let parent = nodes[0]?.parent;
         while (nodes.length > 0) {
             const node = nodes.shift();
             if (node) {
                 if (node.isLeaf()) {
                     if (TextSegment.is(node)) {
+                        if (node.parent !== parent) {
+                            if (acked.length > 0) {
+                                acked += " ";
+                                local += " ";
+                            }
+                            parent = node.parent;
+                        }
                         if (node.removedSeq) {
                             if (node.removedSeq === UnassignedSequenceNumber) {
                                 acked += "_".repeat(node.text.length);
-                                if (node.seq === UnassignedSequenceNumber) {
-                                    local += "*".repeat(node.text.length);
-                                }
-                                local += "-".repeat(node.text.length);
+                                local += node.seq === UnassignedSequenceNumber
+                                    ? "*".repeat(node.text.length)
+                                    : "-".repeat(node.text.length);
                             } else {
                                 acked += "-".repeat(node.text.length);
                                 local += " ".repeat(node.text.length);

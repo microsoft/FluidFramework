@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import {
     FlagInput,
@@ -12,6 +10,9 @@ import {
     PrettyPrintableError,
 } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
+
+import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+
 import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
@@ -95,16 +96,11 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
-                info: (msg: string | Error) => {
-                    this.info(msg.toString());
-                },
+                log: this.log.bind(this),
+                info: this.info.bind(this),
                 warning: this.warning.bind(this),
-                errorLog: (msg: string | Error) => {
-                    this.errorLog(msg);
-                },
-                verbose: (msg: string | Error) => {
-                    this.verbose(msg);
-                },
+                errorLog: this.errorLog.bind(this),
+                verbose: this.verbose.bind(this),
                 logHr: this.logHr.bind(this),
                 logIndent: this.logIndent.bind(this),
             };
@@ -151,29 +147,28 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
      */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
-        this.info(message);
+        this.log(message);
     }
 
     /**
      * Logs an informational message.
      */
-    public info(message: string | Error) {
+    public info(message: string | Error | undefined) {
         this.log(`INFO: ${message}`);
     }
 
     /**
      * Logs an error without exiting.
      */
-    public errorLog(message: string | Error) {
+    public errorLog(message: string | Error | undefined) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
     /**
      * Logs a warning.
      */
-    public warning(message: string | Error): string | Error {
+    public warning(message: string | Error | undefined): void {
         this.log(chalk.yellow(`WARNING: ${message}`));
-        return message;
     }
 
     /**
@@ -184,7 +179,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     }
 
     /**
-     * @deprecated Use {@link BaseCommand.warning}  or {@link BaseCommand.warningWithDebugTrace} instead.
+     * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
      */
     public warn(input: string | Error): string | Error {
         return super.warn(input);
@@ -246,7 +241,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     /**
      * Logs a verbose log statement.
      */
-    public verbose(message: string | Error): string | Error {
+    public verbose(message: string | Error | undefined): void {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
@@ -254,7 +249,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
                 this.log(chalk.red(`VERBOSE: ${message}`));
             }
         }
-
-        return message;
     }
 }

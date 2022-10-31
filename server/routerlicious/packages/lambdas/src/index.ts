@@ -3,12 +3,44 @@
  * Licensed under the MIT License.
  */
 
-export * from "./alfred";
-export * from "./broadcaster";
-export * from "./copier";
-export * from "./deli";
-export * from "./foreman";
-export * from "./scribe";
-export * from "./moira";
-export * from "./scriptorium";
-export * from "./utils";
+export { configureWebSocketServices } from "./alfred";
+export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
+export { CopierLambda, CopierLambdaFactory } from "./copier";
+export {
+	createDeliCheckpointManagerFromCollection,
+	DeliCheckpointReason,
+	DeliLambda,
+	DeliLambdaFactory,
+	ICheckpointParams,
+	IDeliCheckpointManager,
+	IDeliLambdaEvents,
+	OpEventType,
+} from "./deli";
+export { ForemanLambda, ForemanLambdaFactory } from "./foreman";
+export { MoiraLambda, MoiraLambdaFactory } from "./moira";
+export {
+	CheckpointManager,
+	ICheckpointManager,
+	ILatestSummaryState,
+	IPendingMessageReader,
+	ISummaryReader,
+	ISummaryWriter,
+	ISummaryWriteResponse,
+	ScribeLambda,
+	ScribeLambdaFactory,
+	SummaryReader,
+	SummaryWriter,
+} from "./scribe";
+export { ScriptoriumLambda, ScriptoriumLambdaFactory } from "./scriptorium";
+export {
+	createNackMessage,
+	createRoomJoinMessage,
+	createRoomLeaveMessage,
+	createSessionMetric,
+	generateClientId,
+	getRandomInt,
+	isDocumentSessionValid,
+	isDocumentValid,
+	logCommonSessionEndMetrics,
+	NoOpLambda,
+} from "./utils";

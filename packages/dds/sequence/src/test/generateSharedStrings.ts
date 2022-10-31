@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
 import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
