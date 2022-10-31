@@ -800,7 +800,7 @@ describe("Data Store Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        describe.only("Initialization", () => {
+        describe("Initialization", () => {
             it("rejects ids with forward slashes", async () => {
                 const invalidId = "beforeSlash/afterSlash";
                 const codeBlock = () => new LocalDetachedFluidDataStoreContext({
