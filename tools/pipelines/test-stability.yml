@@ -125,14 +125,6 @@ parameters:
   type: string
   default: ci:build
 
-- name: taskBuildDocs
-  type: boolean
-  default: false
-
-- name: taskLint
-  type: boolean
-  default: false
-
 - name: taskTest
   type: object
   default:
@@ -147,42 +139,10 @@ parameters:
   type: boolean
   default: true
 
-- name: namespace
-  type: boolean
-  default: true
-
-- name: buildNumberInPatch
-  type: string
-  default: false
-
-- name: publishOverride
-  displayName: Publish Override (default = based on branch)
-  type: string
-  default: default
-  values:
-    - default
-    - skip
-    - force
-
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
-
-- name: releaseBuildOverride
-  displayName: Release Build (default = not released)
-  type: string
-  default: none
-  values:
-    - none
-    - prerelease
-    - release
 
 - name: tagName
   type: string
@@ -208,12 +168,6 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
 - name: FORCE_COLOR
   value: 1
-- template: templates/include-vars.yml
-  parameters:
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
 
 stages:
   - ${{ each stageName in parameters.stageNames }}:
@@ -223,15 +177,12 @@ stages:
       jobs:
       - template: templates/include-test-stability.yml
         parameters:
-          publishOverride: ${{ parameters.publishOverride }}
-          releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-          nonScopedPackages: ${{ parameters.nonScopedPackages }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           buildDirectory: .
           tagName: ${{ parameters.tagName }}
           poolBuild: Large
           checkoutSubmodules: true
-          timeoutInMinutes: 1440
+          timeoutInMinutes: 360
           taskTest:
           - ci:test:mocha
           - ci:test:jest

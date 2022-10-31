@@ -24,10 +24,6 @@ parameters:
   default:
   - ci:test
 
-- name: poolCG
-  type: object
-  default: Small
-
 - name: poolBuild
   type: object
   default: Large
@@ -39,16 +35,6 @@ parameters:
 - name: buildNumberInPatch
   type: string
   default:
-
-- name: nonScopedPackages
-  type: object
-  default: []
-
-- name: publishOverride
-  type: string
-
-- name: releaseBuildOverride
-  type: string
 
 - name: tagName
   type: string
@@ -100,19 +86,6 @@ jobs:
             Test=${{ convertToJson(parameters.taskTest) }}
             BuildDoc=${{ parameters.taskBuildDocs }}
             TestCoverage=$(testCoverage)
-
-          Publish Parameters:
-            nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
-
-          Computed variables:
-            shouldPublish=${{ variables.shouldPublish }}
-            componentDetection=${{ variables.componentDetection }}
-            publish=${{ variables.publish }}
-            canRelease=${{ variables.canRelease }}
-            publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-            targetBranchName = $(System.PullRequest.TargetBranch)
-
-            release=$(release)"
 
           # Error checking
           if [[ "$(release)" == "release" ]]; then
