@@ -226,10 +226,10 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
         scribeCheckpointHeuristics: {
-            enable: true,
-            idleTime: 7 * 1000,
+            enable: false,
+            idleTime: 10 * 1000,
             maxTime: 1 * 60 * 1000,
-            maxMessages: 1000000,
+            maxMessages: 500,
         },
     },
     moira: {
