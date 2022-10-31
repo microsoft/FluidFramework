@@ -250,7 +250,12 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
         return false;
     }
 
-    return isInternalVersionScheme(minVer, allowAnyPrereleaseId, allowAnyPrereleaseId);
+    // if allowAnyPrereleaseId === true, then allowPrereleases is implied to be true
+    return isInternalVersionScheme(
+        minVer,
+        /* allowPrereleases */ allowAnyPrereleaseId,
+        allowAnyPrereleaseId,
+    );
 }
 
 /**
