@@ -231,7 +231,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{  replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
+                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
                 mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
@@ -319,12 +319,12 @@ stages:
                 echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
                 echo `ls $TEST_PACKAGE_PATH_PATTERN`
 
-                if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-                else
-                  ls -1 $TEST_PACKAGE_PATH_PATTERN
-                  echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
-                fi
+                # if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
+                # else
+                #   ls -1 $TEST_PACKAGE_PATH_PATTERN
+                #   echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
+                # fi
 
                 npm install $TEST_PACKAGE_TGZ
 
@@ -349,7 +349,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{  replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
+                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
                 mkdir ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
