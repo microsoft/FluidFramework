@@ -193,7 +193,7 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
-                TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN"
+                TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
                 echo $TEST_PACKAGE_FILE_PATTERN
                 echo $TEST_PACKAGE_PATH_PATTERN
