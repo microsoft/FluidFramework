@@ -372,7 +372,7 @@ stages:
             displayName: 'Run execution-time tests'
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
               script: |
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
@@ -388,7 +388,7 @@ stages:
                 npm install @ff-internal/aria-logger;
                 npm i;
                 npm run build:compile;
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }};
                 ls -la;
                 node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/benchmarkOutput';
 
