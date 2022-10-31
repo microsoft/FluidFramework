@@ -8,7 +8,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
     IContainerRuntimeOptions,
@@ -25,7 +25,6 @@ import { ITestObjectProvider,
 import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { FetchSource, ISummaryContext } from "@fluidframework/driver-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -66,6 +65,7 @@ class TestDataObject1 extends DataObject {
         this.matrix = await matrixHandle.get();
     }
 }
+
 const dataStoreFactory1 = new DataObjectFactory(
     TestDataObjectType1,
     TestDataObject1,
@@ -167,7 +167,7 @@ describeNoCompat("Summarizer fetches expected number of times",
 
         const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
         let getVersionsFunc = containerRuntime.storage.getVersions;
-        const funcSummary1 = async (versionId: string | null,
+        const getVersionsOverride = async (versionId: string | null,
             count: number,
             scenarioName?: string,
             fetchSource?: FetchSource,
@@ -178,7 +178,7 @@ describeNoCompat("Summarizer fetches expected number of times",
             fetchCount++;
             return response;
         };
-        containerRuntime.storage.getVersions = funcSummary1;
+        containerRuntime.storage.getVersions = getVersionsOverride;
 
         // Generate first Summary and close the summarizer.
         const summaryVersion = await waitForSummary(summarizer);
@@ -186,18 +186,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         return { fetchCount, summaryCount, summaryVersion };
     }
 
-    const loadContainer = async (
-        summaryVersion: string,
-        logger?: ITelemetryBaseLogger,
-    ): Promise<IContainer> => {
-        const requestHeader = {
-            [LoaderHeader.version]: summaryVersion,
-        };
-        const container = await provider.loadContainer(runtimeFactory, { logger }, requestHeader);
-        return container;
-    };
-
-    it("Summarizer does not fetch during first summary", async () => {
+    it("First Summary does not result in fetch", async () => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         const versionWrap = await incrementCellValueAndRunSummary(summarizer1, 1 /* expectedMatrixCellValue */);
@@ -248,7 +237,7 @@ describeNoCompat("Summarizer fetches expected number of times",
 
         const summarizer2 = await createSummarizer(provider, mainContainer);
         versionWrap = await incrementCellValueAndRunSummary(summarizer2, 4 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "There should be one fetch after second summary");
+        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
 
         versionWrap = await incrementCellValueAndRunSummary(summarizer2, 5 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
@@ -263,6 +252,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         assert(summaryVersion, "Summary version should be defined");
         summarizerClient.close();
 
+        // Add more summaries and we can have more recent ones.
         const secondSummarizer = await createSummarizer(provider, mainContainer);
         versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
@@ -272,8 +262,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         secondSummarizer.close();
 
         // Load summarizer from previous version triggers fetch.
-         const newContainer = await loadContainer(summaryVersion);
-         const newSummarizerClient = await createSummarizer(provider, newContainer, summaryVersion);
+         const newSummarizerClient = await createSummarizer(provider, mainContainer, summaryVersion);
          versionWrap = await incrementCellValueAndRunSummary(newSummarizerClient, 4 /* expectedMatrixCellValue */);
          assert(versionWrap.fetchCount === 1, "Single fetch should have happened once");
          assert(versionWrap.summaryVersion, "Summarizer should have happened");

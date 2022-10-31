@@ -2878,8 +2878,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 });
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
-            assert(latestSnapshotRefSeq >= summaryRefSeq,
-                    "Latest snapshot reference number should be greater than summaryRefSeq");
             summaryLogger.sendTelemetryEvent(
             {
                 eventName: "LatestSummaryRetrieved",
