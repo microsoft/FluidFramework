@@ -354,6 +354,8 @@ stages:
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
 
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
+
           # Run performance tests
           # - Add custom npm feeds to the tool's .npmrc file
           # - Authenticate to the custom npm feeds
@@ -375,7 +377,9 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
               script: |
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
-                npm i ;
+                npm i;
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }};
+                ls -la;
                 npm run test:benchmark:report;
 
           - task: Bash@3
