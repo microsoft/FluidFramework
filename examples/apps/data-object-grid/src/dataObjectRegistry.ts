@@ -20,7 +20,6 @@ import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-e
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
-import { Layout } from "react-grid-layout";
 
 const codeMirrorFactory = new SmdeFactory();
 const proseMirrorFactory = new ProseMirrorFactory();
@@ -79,51 +78,54 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 /**
  * A registry entry, with extra metadata.
  */
-export interface ISpacesItemEntry<T = any> {
+export interface IDataObjectGridItemEntry<T = any> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
-    // This might be done by integrating these items with the Spaces subcomponent registry?
+    // This might be done by integrating these items with the data grid subcomponent registry?
     create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
     getView: (serializableObject: Serializable<T>) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const clickerItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
     getView: getClickerView,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const codemirrorItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(codeMirrorFactory),
     getView: getCodeMirrorView,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const textboxItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(CollaborativeText.getFactory()),
     getView: getCollaborativeTextView,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const prosemirrorItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(proseMirrorFactory),
     getView: getProseMirrorView,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-const sliderCoordinateItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+const sliderCoordinateItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(Coordinate.getFactory()),
     getView: getSliderCoordinateView,
     friendlyName: "Coordinate",
     fabricIconName: "NumberSymbol",
 };
 
-export const spacesItemMap = new Map<string, ISpacesItemEntry>([
+/**
+ * The registry for our app, containing the options for data objects that can be inserted into the grid.
+ */
+export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry>([
     ["clicker", clickerItemEntry],
     ["codemirror", codemirrorItemEntry],
     ["textbox", textboxItemEntry],
@@ -131,30 +133,15 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
     ["slider-coordinate", sliderCoordinateItemEntry],
 ]);
 
-// This can go away if the item entries have a way to bring their own subregistries.
-export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
+/**
+ * The registry entries the container runtime will use to instantiate the data stores.
+ *
+ * @remarks This can go away if the item entries have a way to bring their own subregistries.
+ */
+export const registryEntries: NamedFluidDataStoreRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [codeMirrorFactory.type, Promise.resolve(codeMirrorFactory)],
     [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],
     [proseMirrorFactory.type, Promise.resolve(proseMirrorFactory)],
     Coordinate.getFactory().registryEntry,
 ]);
-
-interface ITemplate {
-    [type: string]: Layout[];
-}
-
-interface ITemplateDictionary {
-    [templateName: string]: ITemplate;
-}
-
-export const templateDefinitions: ITemplateDictionary = {
-    ["Collaborative Coding"]: {
-        ["codemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
-        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
-    },
-    ["Classroom"]: {
-        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
-        ["prosemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
-    },
-};
