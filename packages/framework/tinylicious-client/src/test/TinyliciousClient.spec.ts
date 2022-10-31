@@ -295,9 +295,6 @@ describe("TinyliciousClient", () => {
             const { container } = await client.createContainer(schema);
             await container.attach();
 
-            const map1 = container.initialObjects.map1 as SharedMap;
-            map1.set("newpair-id", "test");
-
             await timeoutPromise((resolve) => container.once("connected", resolve), {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
