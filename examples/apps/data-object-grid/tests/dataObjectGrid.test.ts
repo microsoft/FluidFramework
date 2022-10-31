@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("vltava", () => {
+describe("data-object-grid", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
@@ -17,7 +17,7 @@ describe("vltava", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it("There's text on the page", async () => {
-        await expect(page).toMatch("➕");
+    it("There's a button to be clicked", async () => {
+        await expect(page).toClick("button", { text: "Edit: true" });
     });
 });
