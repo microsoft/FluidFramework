@@ -650,11 +650,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Load the stores from a snapshot and returns the runtime.
-     * @param context - Context of the container.
-     * @param registryEntries - Mapping to the stores.
-     * @param existing - When loading from an existing snapshot
-     * @param requestHandler - Request handlers for the container runtime
-     * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param params - An object housing the runtime properties:
+     * - context - Context of the container.
+     * - registryEntries - Mapping to the stores.
+     * - existing - When loading from an existing snapshot
+     * - requestHandler - Request handlers for the container runtime
+     * - runtimeOptions - Additional options to be passed to the runtime
+     * - containerScope - runtime services provided with context
      */
      public static async loadRuntime(
         params: {
