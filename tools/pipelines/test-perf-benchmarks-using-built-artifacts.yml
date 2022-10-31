@@ -231,7 +231,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(testPackage, '@fluidframework/', '' ) }}"
+                TAR_FILE=${{ replace(testPackage, '@fluidframework/', '' ) }}
                 mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
