@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { unlinkSync } from "fs";
 import { EOL as newline } from "os";
 import path from "path";
 
@@ -88,6 +89,36 @@ export const handlers: Handler[] = [
             }
 
             return undefined;
+        },
+        resolver: (file, root): { resolved: boolean; message?: string } => {
+            const manifest = getPackageManifest(root);
+            // Add the root path (.) because a lockfile is expected there
+            const knownPaths: string[] = (manifest.additionalLockfilePaths ?? []).concat(".");
+
+            // Add paths to known monorepos and packages
+            const vals = Object.values(manifest.repoPackages)
+                .filter((p) => typeof p === "string")
+                .map((p) => p.toString());
+            knownPaths.push(...vals);
+
+            // Add paths from entries that are arrays
+            const arrayVals = Object.values(manifest.repoPackages)
+                .filter((p) => typeof p !== "string")
+                .map((p) => p);
+            for (const arr of arrayVals) {
+                if (Array.isArray(arr)) {
+                    knownPaths.push(...arr.map((p) => p.toString()));
+                }
+            }
+
+            if (path.basename(file) === "package-lock.json") {
+                if (!knownPaths.includes(path.dirname(file))) {
+                    unlinkSync(file);
+                    return {resolved: true, message: `Deleted unexpected package-lock.json file at: ${file}`};
+                }
+            }
+
+            return {resolved: true};
         },
     },
 ];
