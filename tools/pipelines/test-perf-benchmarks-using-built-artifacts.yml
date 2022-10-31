@@ -149,25 +149,10 @@ stages:
 
         - ${{ each testPackage in parameters.memoryTestPackages }}:
           - task: Bash@3
-            name: TestPackage
-            displayName: Declare TestPackage Parameters
-            inputs:
-              targetType: 'inline'
-              script: |
-                TESTPACKAGEFILEPATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
-                echo "##vso[task.setvariable variable=FilePattern;isOutput=true]$TESTPACKAGEFILEPATTERN"
-                echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$TESTPACKAGEFILEPATTERN"
-                echo "##vso[task.setvariable variable=TarFile;isOutput=true]${{ replace(testPackage, '@fluidframework/', '' ) }}"
-
-          - task: Bash@3
             displayName: Print Parameters
             inputs:
               targetType: 'inline'
               script: |
-                echo "TestPackage.FilePattern=$(TestPackage.FilePattern)"
-                echo "TestPackage.PathPattern=$(TestPackage.PathPattern)"
-                echo "TestPackage.TarFile=$(TestPackage.TarFile)"
-
                 echo "
                 Pipeline Parameters:
                   poolBuild=${{ parameters.poolBuild }}
@@ -197,9 +182,10 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: pack
-              patterns: "**/$(TestPackage.FilePattern)"
+              patterns: "**/`${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz`"
               path: $(Pipeline.Workspace)/client/pack
 
+          # Install test package
           - task: Bash@3
             name: Initialize
             displayName: Initialize
@@ -207,21 +193,17 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
-                if [[ `ls -1 $(TestPackage.PathPattern) | wc -l` -eq 1 ]]; then
-                  echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackage.PathPattern)`"
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN"
+
+                if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`"
                 else
-                  ls -1 $(TestPackage.PathPattern)
+                  ls -1 $TEST_PACKAGE_PATH_PATTERN
                   echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
                 fi
 
-          # Install test and logger package
-          - task: Npm@1
-            displayName: 'npm install'
-            inputs:
-              command: 'custom'
-              workingDir: ${{ variables.testWorkspace }}
-              customCommand: 'install $(Initialize.testPackageTgz)'
-              customRegistry: 'useNpmrc'
+                npm install $TEST_PACKAGE_TGZ
 
           # Download Test Files
           # Download Artifact - Test Files
@@ -244,8 +226,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                TAR_FILE=${{ replace(testPackage, '@fluidframework/', '' ) }}"
                 mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-                tar -xvf $(Pipeline.Workspace)/test-files/$(TestPackage.TarFile).test-files.tar -C $(Pipeline.Workspace)/test-files
+                tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
 
           - task: Bash@3
