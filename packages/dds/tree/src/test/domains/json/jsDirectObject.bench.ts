@@ -36,6 +36,9 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
     return typeof value !== "object" || value === null ? value : cloneObject(value);
 }
 
+/**
+ * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.
+ */
 export function jsObjectBench(
     data: {
         name: string;
@@ -80,7 +83,6 @@ export function jsObjectBench(
 }
 
 function extractCoordinatesFromCanadaDirect(
-    // TODO: export Canada type and use instead of any.
     directObj: Canada,
     calculate: (x: number, y: number) => void,
 ): void {
