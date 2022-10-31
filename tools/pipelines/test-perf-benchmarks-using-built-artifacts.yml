@@ -112,7 +112,6 @@ stages:
             script: |
               mkdir ${{ variables.testWorkspace }}
 
-
         - task: Bash@3
           displayName: Initialize npmrc
           inputs:
@@ -147,28 +146,30 @@ stages:
             workingFile: ${{ variables.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
-        - ${{ each testPackage in parameters.memoryTestPackages }}:
-          - task: Bash@3
-            displayName: Print Parameters
-            inputs:
-              targetType: 'inline'
-              script: |
-                echo "
-                Pipeline Parameters:
-                  poolBuild=${{ parameters.poolBuild }}
-                  testPackage=${{ testPackage }}
-                  Build=${{ parameters.taskBuild }}
+        - task: Bash@3
+          displayName: Print Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "
+              Pipeline Parameters:
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ testPackage }}
+                Build=${{ parameters.taskBuild }}
 
-                Task Variables:
-                  releaseBuild=$(releaseBuildVar)
-                  toolAbsolutePath=$(toolAbsolutePath)
-                  artifactPipeline=$(artifactPipeline)
-                  feed=$(feed)
-                  BuildDir=${{ variables.buildDirectory }}
-                  TestWorkspace=${{ variables.testWorkspace }}
+              Task Variables:
+                releaseBuild=$(releaseBuildVar)
+                toolAbsolutePath=$(toolAbsolutePath)
+                artifactPipeline=$(artifactPipeline)
+                feed=$(feed)
+                BuildDir=${{ variables.buildDirectory }}
+                TestWorkspace=${{ variables.testWorkspace }}
 
+              Build Params
                 SourceBranch=$(Build.SourceBranch)
-                "
+              "
+
+        - ${{ each testPackage in parameters.memoryTestPackages }}:
 
           # Download package artifacts
           - task: DownloadPipelineArtifact@2
@@ -285,54 +286,110 @@ stages:
               artifactName: 'perf-test-outputs_memory-usage'
               condition: succeededOrFailed()
 
-        # # Run performance tests
-        # # - Add custom npm feeds to the tool's .npmrc file
-        # # - Authenticate to the custom npm feeds
-        # # - Install the aria-logger package from the custom npm feeds
-        # # - Run execution-time tests
-        # # - Run memory-usage tests
-        # # - Process output files and send telemetry to Kusto
-        # - task: Npm@1
-        #   displayName: 'Run performance test - execution time'
-        #   inputs:
-        #     command: 'custom'
-        #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-        #     customCommand: 'run test:benchmark:report'
 
-        # # Copy files
-        # # Copy files from a source folder to a target folder using patterns matching file paths (not folder paths)
-        # - task: CopyFiles@2
-        #   inputs:
-        #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/**/benchmarkOutput/**\
-        #     #contents: '**'
-        #     targetFolder:  ${{ variables.buildDirectory }}/benchmarkOutput
-        #     #cleanTargetFolder: false # Optional
-        #     #overWrite: false # Optional
-        #     #flattenFolders: false # Optional
-        #     #preserveTimestamp: false # Optional
-        #     #retryCount: 0 # Optional
-        #     #ignoreMakeDirErrors: false # Optional
+        - ${{ each testPackage in parameters.executionTestPackages }}:
 
-        # # - task: Npm@1
-        # #   displayName: 'Consolidate output files - execution time'
-        # #   inputs:
-        # #     command: 'custom'
-        # #     workingDir: ${{ variables.buildDirectory }}
-        # #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
-        # # # modification is probably "look at node_modules for blah"
-        # - task: Bash@3
-        #   displayName: 'Write measurements to Aria/Kusto - execution time'
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: $(toolAbsolutePath)
-        #     script: |
-        #       npm i;
-        #       npm run build:compile;
-        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
+          # Download package artifacts
+          - task: DownloadPipelineArtifact@2
+            displayName: Download test package
+            inputs:
+              source: specific
+              project: internal
+              pipeline: ${{ variables.artifactPipeline }}
+              preferTriggeringPipeline: true
+              allowPartiallySucceededBuilds: true
+              runVersion: latestFromBranch
+              runBranch: $(Build.SourceBranch)
+              artifact: pack
+              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              path: $(Pipeline.Workspace)/client/pack
 
-        # - task: PublishPipelineArtifact@1
-        #   displayName: 'Publish Artifact - Perf tests output - execution time'
-        #   inputs:
-        #     targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
-        #     artifactName: 'perf-test-outputs_execution-time'
-        #     condition: succeededOrFailed()
+          # Install test package
+          - task: Bash@3
+            displayName: Install Test Package
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}
+              script: |
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
+
+                echo $TEST_PACKAGE_FILE_PATTERN
+                echo $TEST_PACKAGE_PATH_PATTERN
+
+                echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
+                echo `ls $TEST_PACKAGE_PATH_PATTERN`
+
+                if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
+                else
+                  ls -1 $TEST_PACKAGE_PATH_PATTERN
+                  echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
+                fi
+
+                npm install $TEST_PACKAGE_TGZ
+
+          # Download Test Files
+          # Download Artifact - Test Files
+          - task: DownloadPipelineArtifact@2
+            displayName: Download test files
+            inputs:
+              source: specific
+              project: internal
+              pipeline: ${{ variables.artifactPipeline }}
+              preferTriggeringPipeline: true
+              allowPartiallySucceededBuilds: true
+              runVersion: latestFromBranch
+              runBranch: $(Build.SourceBranch)
+              artifact: test-files
+              path: $(Pipeline.Workspace)/test-files
+
+          # Unpack test files
+          - task: Bash@3
+            displayName: Unpack test files
+            inputs:
+              targetType: 'inline'
+              script: |
+                TAR_FILE=${{  replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
+                mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+                tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
+                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+
+          # Run performance tests
+          # - Add custom npm feeds to the tool's .npmrc file
+          # - Authenticate to the custom npm feeds
+          # - Install the aria-logger package from the custom npm feeds
+          # - Run execution-time tests
+          # - Run memory-usage tests
+          # - Process output files and send telemetry to Kusto
+          - task: Npm@1
+            displayName: 'Run performance test - execution time'
+            inputs:
+              command: 'custom'
+              workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              customCommand: 'run test:benchmark:report'
+
+          # # - task: Npm@1
+          # #   displayName: 'Consolidate output files - execution time'
+          # #   inputs:
+          # #     command: 'custom'
+          # #     workingDir: ${{ variables.buildDirectory }}
+          # #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
+          # # # modification is probably "look at node_modules for blah"
+
+          - task: Bash@3
+            displayName: 'Write measurements to Aria/Kusto - execution time'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                npm i;
+                npm run build:compile;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/benchmarkOutput';
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Artifact - Perf tests output - execution time'
+            inputs:
+              targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
+              artifactName: 'perf-test-outputs_execution-time'
+              condition: succeededOrFailed()
