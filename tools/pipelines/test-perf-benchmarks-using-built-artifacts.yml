@@ -136,9 +136,9 @@ stages:
             script: |
               TESTPACKAGEFILEPATTERN=${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
               echo $TESTPACKAGEFILEPATTERN
-              echo $(TESTPACKAGEFILEPATTERN)
-              echo "##vso[task.setvariable variable=FilePattern;isOutput=true]`$(TESTPACKAGEFILEPATTERN)`"
-              echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/`$(TESTPACKAGEFILEPATTERN)`"
+              echo $TESTPACKAGEFILEPATTERN
+              echo "##vso[task.setvariable variable=FilePattern;isOutput=true]$TESTPACKAGEFILEPATTERN"
+              echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$TESTPACKAGEFILEPATTERN"
               echo "##vso[task.setvariable variable=TarFile;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
 
         - task: Bash@3
