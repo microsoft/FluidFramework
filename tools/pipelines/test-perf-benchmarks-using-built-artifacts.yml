@@ -202,7 +202,7 @@ stages:
                 echo `ls $TEST_PACKAGE_PATH_PATTERN`
 
                 if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`"
+                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
                 else
                   ls -1 $TEST_PACKAGE_PATH_PATTERN
                   echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
