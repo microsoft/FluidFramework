@@ -26,7 +26,12 @@ import {
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
-import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import {
+    Lumber,
+    LumberEventName,
+    BaseTelemetryProperties,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
@@ -70,6 +75,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             LumberEventName.SessionResult, this.serviceConfiguration);
         const sessionStartMetric = createSessionMetric(tenantId, documentId,
             LumberEventName.StartSessionResult, this.serviceConfiguration);
+
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+        };
 
         const messageMetaData = {
             documentId,
@@ -198,31 +208,31 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                         "lastAccessTime": Date.now(),
                     };
                     await this.collection.update(query, data, null);
-                    context.log?.info(
+                    Lumberjack.info(
                         `Marked session alive and active as false for closeType: ${JSON.stringify(closeType)}`,
-                        { messageMetaData },
-                    );
+                        lumberjackProperties);
                 }
             };
             handler().catch((e) => {
-                context.log?.error(
+                Lumberjack.error(
                     `Failed to handle session alive and active with exception ${e}`,
-                    { messageMetaData },
-                );
+                    lumberjackProperties);
             });
         });
 
-        // Fire-and-forget sessionActive update for session-boot performance.
+        // Fire-and-forget sessionAlive and sessionActive update for session-boot performance.
         // Worst case is that document is allowed to be deleted while active.
+        Lumberjack.info(`Deli Lambda is marking session as alive and active.`, lumberjackProperties);
         this.collection.update(
             { documentId, tenantId },
             {
+                "session.isSessionAlive": true,
                 "session.isSessionActive": true,
             },
             null,
         ).catch((error) => {
-            const errMsg = "Deli Lambda failed to mark session as active.";
-            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
+            const errMsg = "Deli Lambda failed to mark session as alive and active.";
+            Lumberjack.error(errMsg, lumberjackProperties);
         });
 
         return deliLambda;
