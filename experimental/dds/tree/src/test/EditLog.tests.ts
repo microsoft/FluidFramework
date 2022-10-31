@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { EditLog, separateEditAndId } from '../EditLog';
+import { EditLog, EditLogEvent, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
 import { Edit } from '../persisted-types';
@@ -12,7 +12,7 @@ import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 
-describe('EditLog', () => {
+describe.only('EditLog', () => {
 	const edit0 = newEdit([]);
 	const edit1 = newEdit([]);
 	const { id: id0, editWithoutId: editWithoutId0 } = separateEditAndId(edit0);
@@ -243,5 +243,41 @@ describe('EditLog', () => {
 		});
 
 		expect(log0.equals(differentLog)).to.be.false;
+	});
+
+	it('can configure a maximum size and evict edits once it grows larger than that size', () => {
+		const editLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const ids: EditId[] = [];
+
+		let numberOfPrepareForEvictionEvents = 0;
+
+		log.on(EditLogEvent.PrepareForEditEviction, () => {
+			numberOfPrepareForEvictionEvents++;
+		});
+
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, { sequenceNumber: i, referenceSequenceNumber: i - 1 });
+			ids.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(editLogSize, 'Only sequenced edits should be present.');
+
+		const newIds: EditId[] = [];
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, { sequenceNumber: i, referenceSequenceNumber: i - 1 });
+			newIds.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
+		}
+
+		log.evictEdits();
+
+		expect(log.editIds).to.deep.equal(newIds, 'Edit IDs should have been evicted.');
+		expect(log.length).equals(log.numberOfSequencedEdits).and.equals(editLogSize, 'Edits should have been evicted');
+		expect(numberOfPrepareForEvictionEvents).to.equal(editLogSize);
 	});
 });

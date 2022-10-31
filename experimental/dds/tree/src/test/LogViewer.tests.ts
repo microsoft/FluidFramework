@@ -14,7 +14,7 @@ import {
 	SequencedEditResultCallback,
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
-import { assert, copyPropertyIfDefined } from '../Common';
+import { assert, assertNotUndefined, copyPropertyIfDefined } from '../Common';
 import { initialTree } from '../InitialTree';
 import {
 	ChangeInternal,
@@ -159,13 +159,13 @@ function runLogViewerCorrectnessTests(
 
 		it('generates initialTree by default for the 0th revision', () => {
 			const viewer = viewerCreator(new EditLog(), simpleLogBaseView);
-			const headView = viewer.getRevisionViewInSession(0);
+			const headView = viewer.getRevisionViewInMemory(0);
 			expect(headView.equals(expectDefined(RevisionView.fromTree(initialTree, testTree))));
 		});
 
 		it('can be constructed from a non-empty EditLog', () => {
 			const viewer = viewerCreator(simpleLog, simpleLogBaseView);
-			const headView = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+			const headView = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(areRevisionViewsSemanticallyEqual(headView, testTree, simpleLogInitialView, testTree));
 			expect(headView.equals(simpleLogInitialView)).to.be.true;
 		});
@@ -174,18 +174,18 @@ function runLogViewerCorrectnessTests(
 			const baseView = expectDefined(RevisionView.fromTree(initialTree, testTree));
 			const numNodes = 10;
 			const viewer = viewerCreator(getLogWithNumEdits(testTree, numNodes), baseView);
-			const initialRevision = viewer.getRevisionViewInSession(0);
+			const initialRevision = viewer.getRevisionViewInMemory(0);
 			expect(initialRevision.equals(baseView)).to.be.true;
 			expect(initialRevision.size).to.equal(1);
-			const oneNodeView = viewer.getRevisionViewInSession(1);
+			const oneNodeView = viewer.getRevisionViewInMemory(1);
 			const testTrait = {
 				label: testTraitLabel,
 				parent: testTree.convertToNodeId(initialTree.identifier),
 			};
 			expect(oneNodeView.getTrait(testTrait).length).to.equal(1);
-			const twoNodeView = viewer.getRevisionViewInSession(2);
+			const twoNodeView = viewer.getRevisionViewInMemory(2);
 			expect(twoNodeView.getTrait(testTrait).length).to.equal(2);
-			const finalView = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+			const finalView = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(finalView.getTrait(testTrait).length).to.equal(numNodes);
 		});
 
@@ -198,12 +198,12 @@ function runLogViewerCorrectnessTests(
 			// and assert that none of the views differ from those created via pure Transaction APIs.
 			for (let i = 0; i <= simpleLog.length; i++) {
 				for (let j = 0; j <= mutableLog.length; j++) {
-					const viewerView = viewer.getRevisionViewInSession(j);
+					const viewerView = viewer.getRevisionViewInMemory(j);
 					expect(viewerView.equals(viewsForLog[j])).to.be.true;
 				}
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
-					const edit = simpleLog.getEditInSessionAtIndex(i);
+					const edit = assertNotUndefined(simpleLog.tryGetEditAtIndex(i));
 					mutableLog.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
 				}
 			}
@@ -213,7 +213,7 @@ function runLogViewerCorrectnessTests(
 			function getViewsFromViewer(viewer: LogViewer, lastRevision: number): RevisionView[] {
 				const views: RevisionView[] = [];
 				for (let i = 0; i <= lastRevision; i++) {
-					views.push(viewer.getRevisionViewInSession(i));
+					views.push(viewer.getRevisionViewInMemory(i));
 				}
 				return views;
 			}
@@ -248,7 +248,7 @@ function runLogViewerCorrectnessTests(
 				expectViewsAreEqual(logWithLocalEdits, viewer);
 				// Sequence a local edit
 				logWithLocalEdits.addSequencedEdit(
-					logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits),
+					assertNotUndefined(logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits)),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
 				++seqNumber;
@@ -258,7 +258,7 @@ function runLogViewerCorrectnessTests(
 	});
 }
 
-describe('CachingLogViewer', () => {
+describe.only('CachingLogViewer', () => {
 	// TODO: Dedupe? shared hook for getting all of this stuff?
 	let simpleLog: EditLog<ChangeInternal>;
 	let simpleLogBaseView: RevisionView;
@@ -307,7 +307,7 @@ describe('CachingLogViewer', () => {
 		}).to.throw('revision must correspond to the result of a SequencedEdit');
 	});
 
-	it('can be created with known revisions', async () => {
+	it.only('can be created with known revisions', async () => {
 		const views = getViewsForLog(simpleLog, simpleLogBaseView);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(
 			simpleLog,

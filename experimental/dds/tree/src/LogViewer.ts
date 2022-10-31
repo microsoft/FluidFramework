@@ -5,7 +5,7 @@
 
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
-import { EditLog, SequencedOrderedEditId } from './EditLog';
+import { EditLog, EditLogEvent, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
 import { Revision, RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
@@ -152,6 +152,8 @@ export interface LogViewer {
 	 * - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
 	 *
 	 * - revision Number.POSITIVE_INFINITY returns the newest revision.
+	 *
+	 * @deprecated Edit virtualization is no longer supported, use {@link LogViewer.getRevisionViewInMemory}
 	 */
 	getRevisionView(revision: Revision): Promise<RevisionView>;
 
@@ -166,8 +168,24 @@ export interface LogViewer {
 	 * - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
 	 *
 	 * - revision Number.POSITIVE_INFINITY returns the newest revision.
+	 *
+	 * @deprecated Edit virtualization is no longer supported so the 'inSession' APIs will be removed, use {@link LogViewer.getRevisionViewInMemory}
 	 */
 	getRevisionViewInSession(revision: Revision): RevisionView;
+
+	/**
+	 * Returns the `TreeView` output associated with the largest revision in `editLog` less than (but not equal to) the supplied revision.
+	 * Can only be used to retrieve revisions added during the current sessions.
+	 *
+	 * For example:
+	 *
+	 * - revision 0 returns the oldest edit in the log (which might be initialRevision).
+	 *
+	 * - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
+	 *
+	 * - revision Number.POSITIVE_INFINITY returns the newest revision.
+	 */
+	getRevisionViewInMemory(revision: Revision): RevisionView;
 }
 
 /**
@@ -191,6 +209,11 @@ export class CachingLogViewer implements LogViewer {
 	 * When a previously local edit is sequenced, this cache is adjusted to account for it, not invalidated.
 	 */
 	private readonly localRevisionCache = new Denque<AttemptedEditResultCacheEntry>();
+
+	/**
+	 * The oldest revision that corresponds to an edit stored in memory. No prior revisions need to be stored.
+	 */
+	private readonly oldestSequencedRevisionInMemory: EditCacheEntry;
 
 	/**
 	 * Cache of sequenced revisions.
@@ -269,6 +292,8 @@ export class CachingLogViewer implements LogViewer {
 			assert(this.log.isSequencedRevision(revision), 'revision must correspond to the result of a SequencedEdit');
 		});
 
+		this.oldestSequencedRevisionInMemory = this.getEditResultInMemory(0);
+
 		this.sequencedRevisionCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			minimumSequenceNumber,
@@ -277,6 +302,10 @@ export class CachingLogViewer implements LogViewer {
 		this.processEditStatus = processEditStatus ?? noop;
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
 		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
+
+		this.log.on(EditLogEvent.PrepareForEditEviction, () => {
+			this.evictCachedRevisions();
+		});
 	}
 
 	/**
@@ -320,22 +349,17 @@ export class CachingLogViewer implements LogViewer {
 		}
 	}
 
-	public async getEditResult(revision: Revision): Promise<EditCacheEntry> {
-		const startingPoint = this.getStartingPoint(revision);
-		const { startRevision } = startingPoint;
-		let current: EditCacheEntry = startingPoint;
-		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = await this.log.getEditAtIndex(i);
-			current = this.applyEdit(current.view, edit, i);
-		}
-		return current;
+	/**
+	 * {@inheritDoc LogViewer.getRevisionViewInMemory}
+	 */
+	public getRevisionViewInMemory(revision: number): RevisionView {
+		return this.getEditResultInMemory(revision).view;
 	}
 
-	public async getRevisionView(revision: Revision): Promise<RevisionView> {
-		return (await this.getEditResult(revision)).view;
-	}
-
-	public getEditResultInSession(revision: Revision): EditCacheEntry {
+	/**
+	 * TODO
+	 */
+	public getEditResultInMemory(revision: Revision): EditCacheEntry {
 		const startingPoint = this.getStartingPoint(revision);
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
@@ -344,10 +368,6 @@ export class CachingLogViewer implements LogViewer {
 			current = this.applyEdit(current.view, edit, i);
 		}
 		return current;
-	}
-
-	public getRevisionViewInSession(revision: Revision): RevisionView {
-		return this.getEditResultInSession(revision).view;
 	}
 
 	/**
@@ -369,6 +389,23 @@ export class CachingLogViewer implements LogViewer {
 	 */
 	public setKnownEditingResult(edit: Edit<ChangeInternal>, result: EditingResult): void {
 		this.cachedEditResult = { editId: edit.id, result };
+	}
+
+	private evictCachedRevisions(): void {
+		// TODO ensure the earliest revision that won't be evicted is cached. Prior revisions can be thrown away
+		const edits = this.log.evictEdits();
+
+		let current: EditCacheEntry = this.getStartingPoint(edits.length);
+		for (const edit of edits) {
+			current = this.applyEdit(current.view, edit, 0);
+		}
+
+		const oldestEditInMemory = this.log.tryGetEditAtIndex(0);
+		if (oldestEditInMemory !== undefined) {
+			current = this.applyEdit(current.view, oldestEditInMemory, 0);
+		}
+
+		// Evict any old revisions and update revision numbers
 	}
 
 	/**
@@ -566,7 +603,7 @@ export class CachingLogViewer implements LogViewer {
 	 * @returns Edit information for the earliest known sequenced edit.
 	 */
 	public earliestSequencedEditInSession(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
-		const earliestEditIndex = this.log.earliestAvailableEditIndex;
+		const earliestEditIndex = 0;
 		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
 		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {
 			const edit = this.log.getEditInSessionAtIndex(index);
@@ -653,5 +690,35 @@ export class CachingLogViewer implements LogViewer {
 			}
 		}
 		return undefined;
+	}
+
+	// DEPRECATED APIS
+
+	/**
+	 * @deprecated Edit virtualization is no longer supported, do not use the synchronous APIs.
+	 */
+	public async getEditResult(revision: Revision): Promise<EditCacheEntry> {
+		return this.getEditResultInMemory(revision);
+	}
+
+	/**
+	 * {@inheritDoc LogViewer.getRevisionView}
+	 */
+	public async getRevisionView(revision: Revision): Promise<RevisionView> {
+		return this.getEditResultInMemory(revision).view;
+	}
+
+	/**
+	 * @deprecated Edit virtualization is no longer supported, do not use the 'InSession' APIs.
+	 */
+	public getEditResultInSession(revision: Revision): EditCacheEntry {
+		return this.getEditResultInMemory(revision);
+	}
+
+	/**
+	 * {@inheritDoc LogViewer.getRevisionViewInSession}
+	 */
+	public getRevisionViewInSession(revision: Revision): RevisionView {
+		return this.getEditResultInMemory(revision).view;
 	}
 }

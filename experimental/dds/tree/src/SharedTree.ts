@@ -869,18 +869,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
-		const indexOfFirstEditInSession =
-			version === WriteFormat.v0_0_2 || (editHistory?.editIds.length === 1 && version === WriteFormat.v0_1_1)
-				? 0
-				: editHistory?.editIds.length;
 
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
-		const editLog = new EditLog(
-			editHistory,
-			this.logger,
-			this.editLog?.editAddedHandlers,
-			indexOfFirstEditInSession
-		);
+		const editLog = new EditLog(editHistory, this.logger, this.editLog?.editAddedHandlers);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
