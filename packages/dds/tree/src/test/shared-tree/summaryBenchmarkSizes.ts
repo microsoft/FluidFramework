@@ -6,6 +6,7 @@
 import assert from "assert";
 import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TransactionResult } from "../../checkout";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
@@ -26,43 +27,51 @@ enum TreeShape {
 // TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
     it("for an empty tree.", async () => {
-        const provider = await TestTreeProvider.create(1);
+        const provider = await TestTreeProvider.create(1, true);
         const tree = provider.trees[0];
-
         const { summary } = tree.getAttachSummary();
         const summaryString = JSON.stringify(summary);
         const summarySize = IsoBuffer.from(summaryString).byteLength;
-        assert(summarySize !== 0);
         assert(summarySize < 1000);
     });
     it("for a tree with 1 node.", async () => {
-        const summarySize = await getInsertsSummarySize(1, TreeShape.Wide);
-        assert(summarySize !== 0);
+        const summaryTree = await getInsertsSummaryTree(1, TreeShape.Wide);
+        const summaryString = JSON.stringify(summaryTree);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize > 1000);
         assert(summarySize < 2000);
     });
     it("for a wide tree with 10 nodes", async () => {
-        const summarySize = await getInsertsSummarySize(10, TreeShape.Wide);
-        assert(summarySize !== 0);
-        assert(summarySize < 3000);
+        const summaryTree = await getInsertsSummaryTree(10, TreeShape.Wide);
+        const summaryString = JSON.stringify(summaryTree);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize > 1000);
+        assert(summarySize < 10000);
     });
     it("for a wide tree with 100 nodes", async () => {
-        const summarySize = await getInsertsSummarySize(100, TreeShape.Wide);
-        assert(summarySize !== 0);
-        assert(summarySize < 20000);
+        const summaryTree = await getInsertsSummaryTree(100, TreeShape.Wide);
+        const summaryString = JSON.stringify(summaryTree);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize > 1000);
+        assert(summarySize < 50000);
     });
     it("for a deep tree with 10 nodes", async () => {
-        const summarySize = await getInsertsSummarySize(10, TreeShape.Deep);
-        assert(summarySize !== 0);
-        assert(summarySize < 3000);
+        const summaryTree = await getInsertsSummaryTree(10, TreeShape.Deep);
+        const summaryString = JSON.stringify(summaryTree);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize > 1000);
+        assert(summarySize < 20000);
     });
     it("for a deep tree with 100 nodes.", async () => {
-        const summarySize = await getInsertsSummarySize(100, TreeShape.Deep);
-        assert(summarySize !== 0);
-        assert(summarySize < 20000);
+        const summaryTree = await getInsertsSummaryTree(100, TreeShape.Deep);
+        const summaryString = JSON.stringify(summaryTree);
+        const summarySize = IsoBuffer.from(summaryString).byteLength;
+        assert(summarySize > 1000);
+        assert(summarySize < 1000000);
     });
     // TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
     it("rejected for deep tree with 1000 nodes", async () => {
-        await assert.rejects(getInsertsSummarySize(1000, TreeShape.Deep), {
+        await assert.rejects(getInsertsSummaryTree(1000, TreeShape.Deep), {
             message: "BatchTooLarge",
         });
     });
@@ -107,10 +116,10 @@ function setTestValuesWide(tree: ISharedTree, numberOfNodes: number): void {
  * @param shape - TreeShape enum to specify the shape of the tree
  * @returns the byte size of the tree's summary
  */
-export async function getInsertsSummarySize(
+export async function getInsertsSummaryTree(
     numberOfNodes: number,
     shape: TreeShape,
-): Promise<number> {
+): Promise<ISummaryTree> {
     const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
@@ -125,10 +134,9 @@ export async function getInsertsSummarySize(
         default:
             unreachableCase(shape);
     }
-    const summaryTree = await provider.summarize();
-    const summaryString = JSON.stringify(summaryTree);
-    const summarySize = IsoBuffer.from(summaryString).byteLength;
-    return summarySize;
+    await provider.ensureSynchronized();
+    const { summary } = tree.getAttachSummary(true);
+    return summary;
 }
 
 function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
