@@ -195,6 +195,12 @@ stages:
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN"
 
+                echo $TEST_PACKAGE_FILE_PATTERN
+                echo $TEST_PACKAGE_PATH_PATTERN
+
+                echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
+                echo `ls $TEST_PACKAGE_PATH_PATTERN`
+
                 if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
                   TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`"
                 else
