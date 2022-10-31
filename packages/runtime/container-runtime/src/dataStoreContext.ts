@@ -391,10 +391,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const channel = await factory.instantiateDataStore(this, existing);
         assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
         this.bindRuntime(channel);
-
-        // Load the handle to the data store's entryPoint to make sure that the entryPoint initialization function is
-        // called and the entryPoint is fully initialized.
-        // await channel.entryPoint?.get();
     }
 
     /**

@@ -67,10 +67,6 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
             return maybeRouter?.IFluidRouter.request(request);
         },
         runtimeClass);
-    // runtimeClass = mixinRequestHandler(
-    //     async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-    //         (await PureDataObject.getDataObject(runtimeArg)).request(request),
-    //         runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
