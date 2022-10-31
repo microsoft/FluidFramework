@@ -5,10 +5,8 @@
 
 export {
     cursorToJsonObject,
-    cursorToJsonObjectNew,
     jsonArray,
     jsonBoolean,
-    JsonCursor,
     jsonNull,
     jsonNumber,
     jsonObject,

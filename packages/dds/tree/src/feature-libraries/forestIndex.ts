@@ -19,7 +19,6 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    TreeNavigationResult,
     Index,
     SummaryElement,
     SummaryElementParser,
@@ -29,10 +28,11 @@ import {
     recordDependency,
     JsonableTree,
     Delta,
-    mapCursorFieldNew,
+    mapCursorField,
+    moveToDetachedField,
 } from "../core";
-import { singleTextCursor } from "./treeTextCursor";
-import { jsonableTreeFromCursorNew } from ".";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { afterChangeForest } from "./object-forest";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -76,6 +76,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
 
     newLocalState(changeDelta: Delta.Root): void {
         this.forest.applyDelta(changeDelta);
+        // TODO: remove this workaround as soon as notification/eventing will be supported.
+        afterChangeForest(this.forest);
     }
 
     /**
@@ -88,14 +90,9 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private getTreeString(): string {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
-        const rootAnchor = this.forest.root(this.forest.rootField);
-        const result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        const roots =
-            result === TreeNavigationResult.Ok
-                ? mapCursorFieldNew(this.cursor, jsonableTreeFromCursorNew)
-                : [];
+        moveToDetachedField(this.forest, this.cursor);
+        const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
         this.cursor.clear();
-
         return JSON.stringify(roots);
     }
 

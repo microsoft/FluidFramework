@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.4.9000",
+  "version": "0.5.0",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -22,7 +22,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:clean:manifest npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:genver && npm run clean:manifest && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "npm run build:commonjs",
     "build:docs": "api-extractor run --local",

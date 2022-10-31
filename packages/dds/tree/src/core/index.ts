@@ -26,6 +26,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -40,7 +41,7 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
@@ -50,7 +51,7 @@ export {
     genericTreeDeleteIfEmpty,
     getDepth,
     symbolIsFieldKey,
-    mapCursorFieldNew,
+    mapCursorField,
     mapCursorFields,
     isGlobalFieldKey,
     getMapTreeField,
@@ -63,7 +64,6 @@ export {
 } from "../tree";
 
 export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -72,9 +72,10 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-    mapCursorField,
     initializeForest,
+    FieldAnchor,
+    moveToDetachedField,
+    afterChangeToken,
 } from "../forest";
 
 export {
@@ -110,7 +111,13 @@ export {
     ProgressiveEditBuilderBase,
 } from "../change-family";
 
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "../rebase";
+export {
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    TaggedChange,
+    ChangesetFromChangeRebaser,
+} from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";
 
@@ -131,3 +138,12 @@ export {
     Compatibility,
     FieldAdapter,
 } from "../schema-view";
+
+export {
+    Branch,
+    Commit,
+    EditManager,
+    MutableSummaryData,
+    ReadonlySummaryData,
+    SessionId,
+} from "../edit-manager";
