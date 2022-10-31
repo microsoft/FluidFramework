@@ -129,28 +129,23 @@ stages:
               "
 
         - task: Bash@3
-          name: TestPackageFile
-          displayName: Declare TestPackageFile Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "##vso[task.setvariable variable=Pattern;isOutput=true]${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz"
-
-        - task: Bash@3
-          name: TestPackagePath
+          name: TestPackage
           displayName: Declare TestPackagePath Parameters
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=Pattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackageFile.Pattern)"
+              echo "##vso[task.setvariable variable=FilePattern;isOutput=true]${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackage.FilePattern)"
+              echo "##vso[task.setvariable variable=TarFile;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
 
         - task: Bash@3
           displayName: Confirm Parameters
           inputs:
             targetType: 'inline'
             script: |
-              echo "TestPackageFile.Pattern=$(TestPackageFile.Pattern)"
-              echo "TestPackagePath.Pattern=$(TestPackagePath.Pattern)"
+              echo "TestPackage.FilePattern=$(TestPackage.FilePattern)"
+              echo "TestPackage.PathPattern=$(TestPackage.PathPattern)"
+              echo "TestPackage.TarFile=$(TestPackage.TarFile)"
 
         # Install
         - task: UseNode@1
@@ -170,7 +165,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/$(TestPackageFile.Pattern)"
+            patterns: "**/$(TestPackage.FilePattern)"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
@@ -202,10 +197,10 @@ stages:
               echo "always-auth=true" >> ./.npmrc
               cat .npmrc
 
-              if [[ `ls -1 $(TestPackagePath.Pattern) | wc -l` -eq 1 ]]; then
-                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackagePath.Pattern)`"
+              if [[ `ls -1 $(TestPackage.PathPattern) | wc -l` -eq 1 ]]; then
+                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackage.PathPattern)`"
               else
-                ls -1 $(TestPackagePath.Pattern)
+                ls -1 $(TestPackage.PathPattern)
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
               fi
 
@@ -246,24 +241,14 @@ stages:
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files
 
-        - task: Bash@3
-          name: TestPackageTar
-          displayName: Declare TestPackageTar Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "##vso[task.setvariable variable=FileName;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
-
         # Unpack test files
         - task: Bash@3
           displayName: Unpack test files
           inputs:
             targetType: 'inline'
             script: |
-              echo "TestPackageTar.FileName=$(TestPackageTar.FileName)"
-
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$(TestPackageTar.FileName).test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/$(TestPackage.TarFile).test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
 
