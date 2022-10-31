@@ -131,13 +131,13 @@ export interface IContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void);
 
     /**
-     * TODO
+     * Fires when new container code details have been proposed, prior to acceptance.
      *
      * @remarks Listener parameters:
      *
-     * - `codeDetails`: TODO
+     * - `codeDetails`: The code details being proposed.
      *
-     * - `proposal`: TODO
+     * - `proposal`: NOT RECOMMENDED FOR USE.
      *
      * @see {@link IContainer.proposeCodeDetails}
      */
