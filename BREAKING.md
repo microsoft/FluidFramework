@@ -23,6 +23,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
 - [Remove iframe-driver](#remove-iframe-driver)
 - [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
+- [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
+- [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -40,6 +42,43 @@ The following fields are being removed from `ISummaryRuntimeOptions` as they bec
 `ISummaryRuntimeOptions.maxOpsSinceLastSummary`
 `ISummaryRuntimeOptions.summarizerClientElection`
 `ISummaryRuntimeOptions.summarizerOptions`
+
+### Op reentry will no longer be supported
+Submitting an op while processing an op will no longer be supported as it can lead to inconsistencies in the document and to DDS change events observing out-of-order changes. An example scenario is changing a DDS inside the handler for the `valueChanged` event of a DDS.
+
+The functionality is currently disabled but it can be enabled using the `IContainerRuntimeOptions.enableOpReentryCheck` property, which will eventually become the default. If the option is enabled, the functionality can be disabled at runtime using the `Fluid.ContainerRuntime.DisableOpReentryCheck` feature gate.
+
+With the feature enabled, If the runtime detects an op which was submitted in this manner, an error will be thrown and the current container will close.
+
+```ts
+sharedMap.on("valueChanged", (changed) => {
+    if (changed.key !== "key2") {
+        sharedMap.set("key2", "2");
+    }
+});
+
+sharedMap.set("key1", "1"); // executing this statement will cause an exception to be thrown
+```
+
+Other clients will not be affected.
+
+**As we are planning to enable this feature by default, we are advising our partners to use the `IContainerRuntimeOptions.enableOpReentryCheck` option to identify existing code using this pattern and to let us know in case the proposed API behavior is problematic.**
+
+### Remove ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+# 2.0.0-internal.2.1.0
+
+## 2.0.0-internal.2.1.0 Upcoming changes
+- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+
+### Deprecated ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+## 2.0.0-internal.2.1.0 Breaking changes
+
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
@@ -87,6 +126,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
 - [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [getMyself changed to return Myself object](#getMyself-changed-to-return-Myself-object)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -159,6 +199,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+### getMyself changed to return Myself object
+The `getMyself` method from the ServiceAudience class was updated to return a Myself object instead of an IMember. The Myself type extends the IMember interface to add a `currentConnection` string property.
 
 # 2.0.0-internal.1.3.0
 

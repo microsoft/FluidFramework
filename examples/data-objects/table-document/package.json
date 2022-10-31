@@ -66,6 +66,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.5.0-103719",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
@@ -95,5 +96,10 @@
         "library": "main"
       }
     }
+  },
+  "typeValidation": {
+    "disabled": true,
+    "version": "2.0.0-internal.2.1.0",
+    "broken": {}
   }
 }

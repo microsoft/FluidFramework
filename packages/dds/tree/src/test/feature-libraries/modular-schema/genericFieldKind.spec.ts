@@ -13,6 +13,7 @@ import {
     GenericChangeset,
     genericFieldKind,
 } from "../../../feature-libraries";
+import { makeAnonChange } from "../../../rebase";
 import { Delta, FieldKey } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
@@ -77,14 +78,18 @@ const childComposer = (nodeChanges: NodeChangeset[]): NodeChangeset => {
 
 const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
     const valueChange = valueChangeFromNodeChange(nodeChange);
-    const inverse = valueHandler.rebaser.invert(valueChange, unexpectedDelegate);
+    const inverse = valueHandler.rebaser.invert(makeAnonChange(valueChange), unexpectedDelegate);
     return nodeChangeFromValueChange(inverse);
 };
 
 const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): NodeChangeset => {
     const valueChangeA = valueChangeFromNodeChange(nodeChangeA);
     const valueChangeB = valueChangeFromNodeChange(nodeChangeB);
-    const rebased = valueHandler.rebaser.rebase(valueChangeA, valueChangeB, unexpectedDelegate);
+    const rebased = valueHandler.rebaser.rebase(
+        valueChangeA,
+        makeAnonChange(valueChangeB),
+        unexpectedDelegate,
+    );
     return nodeChangeFromValueChange(rebased);
 };
 
@@ -234,7 +239,7 @@ describe("Generic FieldKind", () => {
             ];
             const actual = genericFieldKind.changeHandler.rebaser.rebase(
                 changeA,
-                changeB,
+                makeAnonChange(changeB),
                 childRebaser,
             );
             assert.deepEqual(actual, expected);
@@ -273,7 +278,7 @@ describe("Generic FieldKind", () => {
             ];
             const actual = genericFieldKind.changeHandler.rebaser.rebase(
                 changeA,
-                changeB,
+                makeAnonChange(changeB),
                 childRebaser,
             );
             assert.deepEqual(actual, expected);
@@ -301,7 +306,10 @@ describe("Generic FieldKind", () => {
                 nodeChange: nodeChange2To1,
             },
         ];
-        const actual = genericFieldKind.changeHandler.rebaser.invert(forward, childInverter);
+        const actual = genericFieldKind.changeHandler.rebaser.invert(
+            makeAnonChange(forward),
+            childInverter,
+        );
         assert.deepEqual(actual, expected);
     });
 

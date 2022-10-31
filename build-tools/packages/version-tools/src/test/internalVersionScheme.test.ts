@@ -11,6 +11,7 @@ import {
     isInternalVersionRange,
     isInternalVersionScheme,
     toInternalScheme,
+    validateVersionScheme,
 } from "../internalVersionScheme";
 
 describe("internalScheme", () => {
@@ -27,6 +28,18 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.0.0-alpha.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-alpha.1.0.0`;
+            const result = isInternalVersionScheme(input, false, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-alpha.1.0.0.0 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-alpha.1.0.0.0`;
+            const result = isInternalVersionScheme(input, true, true);
+            assert.isTrue(result);
+        });
+
         it("1.1.1-internal.1.0.0 is not internal scheme (public must be 2.0.0+)", () => {
             const input = `1.1.1-internal.1.0.0`;
             const result = isInternalVersionScheme(input);
@@ -37,6 +50,12 @@ describe("internalScheme", () => {
             const input = `2.0.0-internal.1.1.0.0`;
             const result = isInternalVersionScheme(input);
             assert.isFalse(result);
+        });
+
+        it("validateVersionScheme: 2.0.0-dev.1.1.0.123 is valid when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-dev.1.1.0.123`;
+            const result = validateVersionScheme(input, true, "dev");
+            assert.isTrue(result);
         });
 
         it("2.0.0-internal.1.1.0.123 is a valid internal prerelease version", () => {
@@ -57,6 +76,24 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.0.0-dev.1.1.0 is a valid internal version when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-dev.1.1.0`;
+            const result = isInternalVersionScheme(input, false, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-dev.2.1.0.104414 is a valid internal version when prerelease and allowAnyPrereleaseId are true", () => {
+            const input = `2.0.0-dev.2.1.0.104414`;
+            const result = isInternalVersionScheme(input, true, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-dev.2.1.0.104414 is a not valid when prerelease is false and allowAnyPrereleaseId are true", () => {
+            const input = `2.0.0-dev.2.1.0.104414`;
+            const result = isInternalVersionScheme(input, false, true);
+            assert.isFalse(result);
+        });
+
         it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
             const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
             assert.isTrue(isInternalVersionRange(input));
@@ -65,6 +102,16 @@ describe("internalScheme", () => {
         it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
             const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
             assert.isTrue(isInternalVersionRange(input));
+        });
+
+        it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is not internal", () => {
+            const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
+            assert.isFalse(isInternalVersionRange(input));
+        });
+
+        it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
+            const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
+            assert.isTrue(isInternalVersionRange(input, true));
         });
 
         it(">=1.0.0 <2.0.0 is not internal", () => {
@@ -91,7 +138,16 @@ describe("internalScheme", () => {
             assert.strictEqual(calculated.version, expected);
         });
 
-        it("parses 2.0.0-internal.1.1.0.12345", () => {
+        it("parses 3.0.0-internal.1.0.0", () => {
+            const input = `3.0.0-internal.1.0.0`;
+            const expectedInt = `1.0.0`;
+            const expectedPub = `3.0.0`;
+            const [pubVer, intVer] = fromInternalScheme(input);
+            assert.strictEqual(intVer.version, expectedInt);
+            assert.strictEqual(pubVer.version, expectedPub);
+        });
+
+        it("throws on 2.0.0-internal.1.1.0.12345", () => {
             const input = `2.0.0-internal.1.1.0.12345`;
             const expected = `1.1.0-12345`;
             const [_, calculated] = fromInternalScheme(input, true);
@@ -103,6 +159,14 @@ describe("internalScheme", () => {
         it("throws on 2.0.0-alpha.1.0.0 (must use internal)", () => {
             const input = `2.0.0-alpha.1.0.0`;
             assert.throws(() => fromInternalScheme(input));
+        });
+
+        it("parses 2.0.0-alpha.1.0.0 when allowAnyPrereleaseId is true", () => {
+            const input = `2.0.0-alpha.1.0.0`;
+            const expected = `1.0.0`;
+            const [_, intVer, prereleaseId] = fromInternalScheme(input, false, true);
+            assert.strictEqual(intVer.version, expected);
+            assert.strictEqual(prereleaseId, "alpha");
         });
 
         it("throws on 1.1.1-alpha.1.0.0 (public must be 2.0.0+)", () => {
@@ -121,6 +185,13 @@ describe("internalScheme", () => {
             const input = `1.0.0`;
             const expected = `2.2.2-internal.1.0.0`;
             const calculated = toInternalScheme("2.2.2", input);
+            assert.strictEqual(calculated.version, expected);
+        });
+
+        it("converts 1.2.3 to internal version with public version 2.0.0, dev prerelease identifier", () => {
+            const input = `1.2.3`;
+            const expected = `2.0.0-dev.1.2.3`;
+            const calculated = toInternalScheme("2.0.0", input, false, "dev");
             assert.strictEqual(calculated.version, expected);
         });
 
@@ -195,6 +266,9 @@ describe("internalScheme", () => {
                     `2.0.0-dev.1.5.0.95400`,
                     `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`,
                 ),
+            );
+            assert.isFalse(
+                semver.satisfies(`2.0.0-dev.1.5.0`, `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`),
             );
         });
     });

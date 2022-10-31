@@ -9,8 +9,8 @@ import {
     FieldKinds,
     NodeChangeset,
     singleTextCursor,
-    singleTextCursorNew,
 } from "../../feature-libraries";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -112,7 +112,10 @@ describe("Value field changesets", () => {
             return nodeChange2;
         };
 
-        const inverted = fieldHandler.rebaser.invert(change1WithChildChange, childInverter);
+        const inverted = fieldHandler.rebaser.invert(
+            makeAnonChange(change1WithChildChange),
+            childInverter,
+        );
 
         assert.deepEqual(inverted.changes, nodeChange2);
     });
@@ -122,7 +125,11 @@ describe("Value field changesets", () => {
             assert.fail("Should not be called");
 
         assert.deepEqual(
-            fieldHandler.rebaser.rebase(change2, change1WithChildChange, childRebaser),
+            fieldHandler.rebaser.rebase(
+                change2,
+                makeAnonChange(change1WithChildChange),
+                childRebaser,
+            ),
             change2,
         );
     });
@@ -138,7 +145,7 @@ describe("Value field changesets", () => {
         const changeToRebase = fieldHandler.editor.buildChildChange(0, nodeChange2);
 
         assert.deepEqual(
-            fieldHandler.rebaser.rebase(changeToRebase, baseChange, childRebaser),
+            fieldHandler.rebaser.rebase(changeToRebase, makeAnonChange(baseChange), childRebaser),
             childChange3,
         );
     });
@@ -146,7 +153,7 @@ describe("Value field changesets", () => {
     it("can be represented as a delta", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
         ];
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
@@ -221,13 +228,19 @@ describe("Optional field changesets", () => {
             childChange: nodeChange2,
         };
 
-        assert.deepEqual(fieldHandler.rebaser.invert(change1, childInverter), expected);
+        assert.deepEqual(
+            fieldHandler.rebaser.invert(makeAnonChange(change1), childInverter),
+            expected,
+        );
     });
 
     it("can be rebased", () => {
         const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
             assert.fail("Should not be called");
-        assert.deepEqual(fieldHandler.rebaser.rebase(change3, change1, childRebaser), change2);
+        assert.deepEqual(
+            fieldHandler.rebaser.rebase(change3, makeAnonChange(change1), childRebaser),
+            change2,
+        );
     });
 
     it("can rebase child change", () => {
@@ -243,7 +256,7 @@ describe("Optional field changesets", () => {
         const expected: FieldKinds.OptionalChangeset = { childChange: nodeChange3 };
 
         assert.deepEqual(
-            fieldHandler.rebaser.rebase(changeToRebase, baseChange, childRebaser),
+            fieldHandler.rebaser.rebase(changeToRebase, makeAnonChange(baseChange), childRebaser),
             expected,
         );
     });
@@ -252,7 +265,7 @@ describe("Optional field changesets", () => {
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Insert,
-                content: [singleTextCursorNew(tree3)],
+                content: [singleTextCursor(tree3)],
             },
         ];
 
@@ -262,7 +275,7 @@ describe("Optional field changesets", () => {
     it("can be converted to a delta when replacing content", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree2)] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
         ];
 
         assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);

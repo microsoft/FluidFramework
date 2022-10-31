@@ -13,7 +13,7 @@ export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prer
 // @public
 export function bumpVersionScheme(version: string | semver.SemVer | undefined, bumpType: VersionBumpTypeExtended, scheme?: VersionScheme): semver.SemVer;
 
-// @public (undocumented)
+// @public
 export function changePreReleaseIdentifier(version: semver.SemVer | string, newIdentifier: string): string;
 
 // @public
@@ -23,7 +23,7 @@ export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.Sem
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme;
 
 // @public
-export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean): [publicVersion: semver.SemVer, internalVersion: semver.SemVer];
+export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string];
 
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
@@ -38,7 +38,7 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
-export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean): boolean;
+export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): boolean;
 
 // @public
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;
@@ -59,7 +59,7 @@ export type ReleaseVersion = string;
 export function sortVersions(versionList: string[], allowPrereleases?: boolean): string[];
 
 // @public
-export function toInternalScheme(publicVersion: semver.SemVer | string, version: semver.SemVer | string, allowPrereleases?: boolean): semver.SemVer;
+export function toInternalScheme(publicVersion: semver.SemVer | string, version: semver.SemVer | string, allowPrereleases?: boolean, prereleaseIdentifier?: string): semver.SemVer;
 
 // @public
 export function toVirtualPatchScheme(version: semver.SemVer | string): semver.SemVer;

@@ -19,18 +19,35 @@ import { FieldKey } from "./types";
  */
 export interface UpPath {
     /**
-     * @returns the parent, or undefined in the case where this path is a member of a detached sequence.
+     * The parent, or undefined in the case where this path is a member of a detached sequence.
      */
     readonly parent: UpPath | undefined;
     /**
      * The Field under which this path points.
-     * Note that if `parent` returns `undefined`, this key is a LocalFieldKey that corresponds to a detached sequence.
+     * Note that if `parent` returns `undefined`, this key corresponds to a detached sequence.
      */
     readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
     /**
      * The index within `parentField` this path is pointing to.
      */
     readonly parentIndex: number; // TODO: field index branded type?
+}
+
+/**
+ * Path from a field in the tree upward.
+ *
+ * See {@link UpPath}.
+ */
+export interface FieldUpPath {
+    /**
+     * The parent, or undefined in the case where this path is to a detached sequence.
+     */
+    readonly parent: UpPath | undefined;
+    /**
+     * The Field to which this path points.
+     * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
+     */
+    readonly field: FieldKey; // TODO: Type information, including when in DetachedField.
 }
 
 /**

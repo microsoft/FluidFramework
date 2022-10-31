@@ -7,6 +7,7 @@ export {
     DefaultChangeFamily,
     defaultChangeFamily,
     DefaultEditBuilder,
+    IDefaultEditBuilder,
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
@@ -19,7 +20,7 @@ export {
     EditableTreeOrPrimitive,
     getEditableTreeContext,
     getTypeSymbol,
-    isArrayField,
+    isEditableField,
     isPrimitive,
     isPrimitiveValue,
     isUnwrappedNode,
@@ -33,63 +34,8 @@ export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest, ObjectForest } from "./object-forest";
 export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
-export {
-    ChangesetTag,
-    ClientId,
-    DUMMY_INVERSE_VALUE,
-    DUMMY_INVERT_TAG,
-    Effects,
-    GapCount,
-    getAttachLength,
-    getInputLength,
-    getOutputLength,
-    HasLength,
-    HasOpId,
-    isAttach,
-    isDetachMark,
-    isEqualGapEffect,
-    isEqualGaps,
-    isEqualPlace,
-    isGapEffectMark,
-    isObjMark,
-    isReattach,
-    isSkipMark,
-    isTomb,
-    MarkListFactory,
-    NodeCount,
-    NodePath,
-    OpId,
-    PlacePath,
-    ProtoNode,
-    RangeType,
-    sequenceChangeEncoder,
-    SequenceChangeFamily,
-    sequenceChangeFamily,
-    SequenceChangeRebaser,
-    sequenceChangeRebaser,
-    SequenceChangeset,
-    SequenceEditBuilder,
-    Skip,
-    splitMarkOnInput,
-    splitMarkOnOutput,
-    Tiebreak,
-    toDelta,
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    tryExtendMark,
-} from "./sequence-change-family";
 export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
-export {
-    singleTextCursor as singleTextCursorNew,
-    jsonableTreeFromCursor as jsonableTreeFromCursorNew,
-} from "./treeTextCursor";
-export {
-    jsonableTreeFromCursor,
-    RootedTextCursor,
-    singleTextCursor,
-    TextCursor,
-} from "./treeTextCursorLegacy";
+export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -129,3 +75,11 @@ import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
 export { applyModifyToTree, mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+
+export {
+    EditManagerIndex,
+    CommitEncoder,
+    commitEncoderFromChangeEncoder,
+    parseSummary as loadSummary,
+    stringifySummary as encodeSummary,
+} from "./editManagerIndex";
