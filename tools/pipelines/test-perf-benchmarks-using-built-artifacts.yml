@@ -57,13 +57,13 @@ parameters:
   type: object
   default:
     - "@fluidframework/sequence"
-    # - "@fluidframework/map"
-    # - "@fluidframework/matrix"
+    - "@fluidframework/map"
+    - "@fluidframework/matrix"
 
 - name: executionTestPackages
   type: object
   default:
-    - "@fluid-experimental/tree"
+    # - "@fluid-experimental/tree"
     # - "@fluid-internal/tree"
 
 variables:
