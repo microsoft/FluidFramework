@@ -94,7 +94,7 @@ steps:
 # TODO: AB#2415
 - ${{ if or(eq(parameters.tagName, 'gitrest'), eq(parameters.tagName, 'historian'), eq(parameters.tagName, 'server')) }}:
   - task: Bash@3
-    displayName: Update Package Version
+    displayName: Update Package Version (old)
     env:
       VERSION_RELEASE: $(release)
       RELEASE_GROUP: ${{ parameters.tagName }}
@@ -115,7 +115,7 @@ steps:
         fi
 - ${{ if and(ne(parameters.tagName, 'gitrest'), ne(parameters.tagName, 'historian'), ne(parameters.tagName, 'server')) }}:
   - task: Bash@3
-    displayName: Update Package Version
+    displayName: Update Package Version (new)
     env:
       VERSION_RELEASE: $(release)
       RELEASE_GROUP: ${{ parameters.tagName }}
