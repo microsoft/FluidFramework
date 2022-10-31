@@ -176,7 +176,7 @@ export async function bumpReleaseGroup(
 
     // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
     // for the internal version scheme, the range needs to be a >= < range.
-    if (scheme === "internal") {
+    if (scheme === "internal" || scheme === "internalPrerelease") {
         const range = getVersionRange(translatedVersion, "^");
         if (releaseGroupOrPackage instanceof MonoRepo) {
             const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;

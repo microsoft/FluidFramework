@@ -14,16 +14,6 @@
                 "min": 0,
                 "max": 150000
             },
-            "offline": {
-                "delayMs": {
-                    "min": 0,
-                    "max": 150000
-                },
-                "durationMs": {
-                    "min": 5000,
-                    "max": 15000
-                }
-            },
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
@@ -123,16 +113,6 @@
             "faultInjectionMs": {
                 "min": 0,
                 "max": 10000
-            },
-            "offline": {
-                "delayMs": {
-                    "min": 0,
-                    "max": 30000
-                },
-                "durationMs": {
-                    "min": 5000,
-                    "max": 15000
-                }
             },
             "totalBlobCount": 300,
             "blobSize": 10240,
