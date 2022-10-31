@@ -243,6 +243,20 @@ describe("internalScheme", () => {
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
         });
 
+        it("caret ^ dependency equivalent for prerelease/dev versions", () => {
+            const input = `2.0.0-dev.1.2.3.12345`;
+            const expected = `>=2.0.0-dev.1.2.3.12345 <2.0.0-dev.2.0.0`;
+            const range = getVersionRange(input, "^");
+            assert.strictEqual(range, expected);
+        });
+
+        it("tilde ~ dependency equivalent for prerelease/dev versions", () => {
+            const input = `2.0.0-dev.1.2.3.12345`;
+            const expected = `>=2.0.0-dev.1.2.3.12345 <2.0.0-dev.1.3.0`;
+            const range = getVersionRange(input, "~");
+            assert.strictEqual(range, expected);
+        });
+
         /**
          * Builds that are produced from dev builds or other non-release builds don't have the "internal" prerelease
          * identifier intentionally to ensure they don't satisfy the caret/tilde-equivalent semver ranges we provide to
