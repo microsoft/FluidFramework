@@ -212,7 +212,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             });
         });
 
-        // Fire-and-forget sessionActive update for session-boot performance.
+        // Fire-and-forget sessionAlive and sessionActive update for session-boot performance.
         // Worst case is that document is allowed to be deleted while active.
         this.collection.update(
             { documentId, tenantId },
@@ -222,7 +222,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             },
             null,
         ).catch((error) => {
-            const errMsg = "Deli Lambda failed to mark session as active.";
+            const errMsg = "Deli Lambda failed to mark session as alive and active.";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
         });
 
