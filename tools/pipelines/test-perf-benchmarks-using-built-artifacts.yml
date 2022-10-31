@@ -170,7 +170,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/$(DeclareParam.testPackageFilePattern)"
+            patterns: "**/$(TestPackageFile.Pattern)"
             path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
@@ -202,10 +202,10 @@ stages:
               echo "always-auth=true" >> ./.npmrc
               cat .npmrc
 
-              if [[ `ls -1 $(DeclareParam.testPackagePathPattern) | wc -l` -eq 1 ]]; then
-                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(DeclareParam.testPackagePathPattern)`"
+              if [[ `ls -1 $(TestPackagePath.Pattern) | wc -l` -eq 1 ]]; then
+                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackagePath.Pattern)`"
               else
-                ls -1 $(DeclareParam.testPackagePathPattern)
+                ls -1 $(TestPackagePath.Pattern)
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
               fi
 
