@@ -609,8 +609,9 @@ export class DataStores implements IDisposable {
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param tombstone - set the objects corresponding to routes as tombstones.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]) {
+    public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -620,6 +621,20 @@ export class DataStores implements IDisposable {
             }
             const dataStoreId = pathParts[1];
             assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+
+            /**
+             * When running GC in tombstone mode, datastore contexts are tombstoned. Tombstoned datastore contexts
+             * enable testing scenarios with accessing deleted content without actually deleting content from
+             * summaries.
+             */
+            if (tombstone) {
+                const dataStore = this.contexts.get(dataStoreId);
+                assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
+                // Delete the contexts of unused data stores.
+                dataStore.tombstone();
+                continue;
+            }
+
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.

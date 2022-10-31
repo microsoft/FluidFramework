@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { InvalidationToken } from "../dependency-tracking";
 import {
     AnchorSet,
     FieldKey,
@@ -34,6 +35,16 @@ export interface IEditableForest extends IForestSubscription {
      */
     applyDelta(delta: Delta.Root): void;
 }
+
+/**
+ * This `InvalidationToken` is used to indicate that the invalidation of Dependents happens after the Delta is applied to the forest.
+ * It is a workaround i.e. definitely a misuse of the invalidation system in an absence of alternative notification/eventing system.
+ */
+// TODO: remove together with `afterChangeForest` as soon as notification/eventing will be supported.
+export const afterChangeToken: InvalidationToken = new InvalidationToken(
+    "forest:afterChange",
+    false,
+);
 
 export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
     // TODO: maybe assert forest is empty?

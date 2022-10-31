@@ -74,6 +74,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
             exclusive: ["generate"],
         }),
+        generateInName: Flags.boolean({
+            description: "Includes .generated in the generated type test filenames.",
+            default: true,
+            allowNo: true,
+        }),
         ...BaseCommand.flags,
     };
 
@@ -191,7 +196,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                         } else if (runGenerate === true && packageData.oldVersions.length > 0) {
                             // eslint-disable-next-line @typescript-eslint/no-shadow
                             const start = Date.now();
-                            await generateTests(packageData)
+                            await generateTests(packageData, flags.generateInName)
                                 .then((s) =>
                                     output.push(
                                         `dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`,
