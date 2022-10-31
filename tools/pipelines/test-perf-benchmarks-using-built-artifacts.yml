@@ -53,16 +53,18 @@ parameters:
   type: string
   default: client
 
-- name: testPackage
-  type: string
-  default: "@fluidframework/sequence"
-
 - name: memoryTestPackages
   type: object
   default:
     - "@fluidframework/sequence"
-    - "@fluidframework/map"
-    - "@fluidframework/matrix"
+    # - "@fluidframework/map"
+    # - "@fluidframework/matrix"
+
+- name: executionTestPackages
+  type: object
+  default:
+    - "@fluid-experimental/tree"
+    # - "@fluid-internal/tree"
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -77,7 +79,6 @@ variables:
 
 stages:
   # Install / Build / Test Stage
-  # end-to-end tests local server
   - stage: build
     displayName: Run tests
     jobs:
@@ -145,7 +146,6 @@ stages:
           inputs:
             workingFile: ${{ variables.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
-
 
         - ${{ each testPackage in parameters.memoryTestPackages }}:
           - task: Bash@3
@@ -231,7 +231,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(testPackage, '@fluidframework/', '' ) }}
+                TAR_FILE=${{  replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
                 mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
