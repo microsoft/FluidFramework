@@ -361,12 +361,36 @@ stages:
           # - Run execution-time tests
           # - Run memory-usage tests
           # - Process output files and send telemetry to Kusto
-          - task: Npm@1
-            displayName: 'Run performance test - execution time'
+          # - task: Npm@1
+          #   displayName: 'Run performance test - execution time'
+          #   inputs:
+          #     command: 'custom'
+          #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
+          #     customCommand: 'run test:benchmark:report'
+
+          - task: Bash@3
+            displayName: 'Run execution-time tests'
             inputs:
-              command: 'custom'
-              workingDir: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
-              customCommand: 'run test:benchmark:report'
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              script: |
+                cp ${{ variables.testWorkspace }}/.npmrc . ;
+                npm i ;
+                npm run test:benchmark:report;
+
+          - task: Bash@3
+            displayName: 'Write measurements to Aria/Kusto - execution time'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                cp ${{ variables.testWorkspace }}/.npmrc . ;
+                npm install @ff-internal/aria-logger;
+                npm i;
+                npm run build:compile;
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
+                ls -la;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/benchmarkOutput';
 
           # # - task: Npm@1
           # #   displayName: 'Consolidate output files - execution time'
@@ -376,15 +400,15 @@ stages:
           # #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
           # # # modification is probably "look at node_modules for blah"
 
-          - task: Bash@3
-            displayName: 'Write measurements to Aria/Kusto - execution time'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(toolAbsolutePath)
-              script: |
-                npm i;
-                npm run build:compile;
-                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/benchmarkOutput';
+          # - task: Bash@3
+          #   displayName: 'Write measurements to Aria/Kusto - execution time'
+          #   inputs:
+          #     targetType: 'inline'
+          #     workingDirectory: $(toolAbsolutePath)
+          #     script: |
+          #       npm i;
+          #       npm run build:compile;
+          #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/benchmarkOutput';
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Artifact - Perf tests output - execution time'
