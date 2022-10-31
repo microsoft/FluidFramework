@@ -287,7 +287,7 @@ stages:
               condition: succeededOrFailed()
 
 
-        - ${{ each testPackage in parameters.executionTestPackages }}:
+        - ${{ each execTestPackage in parameters.executionTestPackages }}:
 
           # Download package artifacts
           - task: DownloadPipelineArtifact@2
@@ -301,7 +301,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: pack
-              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              patterns: "**/${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
@@ -311,7 +311,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
-                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
                 echo $TEST_PACKAGE_FILE_PATTERN
@@ -324,7 +324,7 @@ stages:
                   TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
                 else
                   ls -1 $TEST_PACKAGE_PATH_PATTERN
-                  echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
+                  echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
                 fi
 
                 npm install $TEST_PACKAGE_TGZ
@@ -350,10 +350,10 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{  replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
-                mkdir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+                TAR_FILE=${{  replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ) }}
+                mkdir ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
 
           # Run performance tests
           # - Add custom npm feeds to the tool's .npmrc file
@@ -366,7 +366,7 @@ stages:
             displayName: 'Run performance test - execution time'
             inputs:
               command: 'custom'
-              workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              workingDir: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
               customCommand: 'run test:benchmark:report'
 
           # # - task: Npm@1
@@ -385,7 +385,7 @@ stages:
               script: |
                 npm i;
                 npm run build:compile;
-                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/benchmarkOutput';
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/benchmarkOutput';
 
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Artifact - Perf tests output - execution time'
