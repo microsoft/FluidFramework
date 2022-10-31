@@ -90,11 +90,33 @@ steps:
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-# Don't use "flub bump" for gitrest, historian, and routerlicious temporarily
 # TODO: AB#2415
-- ${{ if or(eq(parameters.tagName, 'gitrest'), eq(parameters.tagName, 'historian'), eq(parameters.tagName, 'server')) }}:
+# Only use `flub` for the client build, because there are issues with `flub` in the other cases and only the client
+# build uses a version scheme that lerna and npm don't handle correctly.
+- ${{ if eq(parameters.tagName, 'client') }}:
   - task: Bash@3
-    displayName: Update Package Version (old)
+    displayName: Update Package Version (flub)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        echo SETVERSION_VERSION=$SETVERSION_VERSION
+        echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+        echo RELEASE_GROUP=$RELEASE_GROUP
+        echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
+
+        if [ -f "lerna.json" ]; then
+          flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
+        else
+          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+        fi
+
+- ${{ if ne(parameters.tagName, 'client') }}:
+  - task: Bash@3
+    displayName: Update Package Version (lerna)
     env:
       VERSION_RELEASE: $(release)
       RELEASE_GROUP: ${{ parameters.tagName }}
@@ -110,26 +132,6 @@ steps:
             exit $?
           fi
           npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-        else
-          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-        fi
-- ${{ if and(ne(parameters.tagName, 'gitrest'), ne(parameters.tagName, 'historian'), ne(parameters.tagName, 'server')) }}:
-  - task: Bash@3
-    displayName: Update Package Version (new)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo SETVERSION_VERSION=$SETVERSION_VERSION
-        echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
-        echo RELEASE_GROUP=$RELEASE_GROUP
-        echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
-
-        if [ -f "lerna.json" ]; then
-          flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
         else
           npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
