@@ -26,6 +26,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -110,7 +111,13 @@ export {
     ProgressiveEditBuilderBase,
 } from "../change-family";
 
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "../rebase";
+export {
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    TaggedChange,
+    ChangesetFromChangeRebaser,
+} from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";
 

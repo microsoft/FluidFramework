@@ -23,7 +23,7 @@ const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
  * value must always match this constant.
  */
-const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
+export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
@@ -162,7 +162,7 @@ export function toInternalScheme(
  *
  * This function is not typically used. {@link isInternalVersionScheme} is more useful since it does not throw.
  */
-function validateVersionScheme(
+export function validateVersionScheme(
     // eslint-disable-next-line @rushstack/no-new-null
     version: semver.SemVer | string | null,
     allowPrereleases = false,
@@ -217,12 +217,10 @@ export function isInternalVersionScheme(
     allowAnyPrereleaseId = false,
 ): boolean {
     const parsedVersion = semver.parse(version);
+    const prereleaseId = allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER;
+
     try {
-        validateVersionScheme(
-            parsedVersion,
-            allowPrereleases,
-            allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER,
-        );
+        validateVersionScheme(parsedVersion, allowPrereleases, prereleaseId);
     } catch (error) {
         return false;
     }

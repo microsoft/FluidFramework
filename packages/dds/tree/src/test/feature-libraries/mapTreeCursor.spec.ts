@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries";
+import { mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
 import { testJsonableTreeCursor } from "../cursorTestSuite";
 
-testJsonableTreeCursor("textTreeFormat", singleTextCursor, jsonableTreeFromCursor);
+testJsonableTreeCursor("mapTreeCursor", singleMapTreeCursor, mapTreeFromCursor);

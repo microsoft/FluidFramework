@@ -19,7 +19,6 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
         md: Flags.string({
             description: `Generate ${packagesMdFileName} file at this path relative to repo root`,
             required: false,
-            default: ".", // default is repo root (relative path to repo root)
         }),
         dot: Flags.file({
             description: "Generate *.dot for GraphViz",
@@ -27,7 +26,8 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
         }),
         info: Flags.file({
             description: "Path to the layer graph json file",
-            required: false,
+            required: true,
+            exists: true,
         }),
         logtime: Flags.boolean({
             description: "Display the current time on every status message for logging",

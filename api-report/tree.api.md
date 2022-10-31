@@ -80,8 +80,8 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    invert(changes: TChangeset): TChangeset;
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
@@ -203,13 +203,22 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 const DUMMY_INVERT_TAG: ChangesetTag;
 
 // @public
-export type EditableField = readonly [FieldSchema, FieldKey, readonly EditableTree[]];
+export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+    readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    readonly fieldKey: FieldKey;
+    readonly fieldSchema: FieldSchema;
+    getWithoutUnwrapping(index: number): EditableTree;
+    readonly primaryType?: TreeSchemaIdentifier;
+}
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: FieldKey, nameOnly?: boolean) => NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
+    [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }
@@ -297,8 +306,8 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
-    invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
-    rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
 }
 
 // @public (undocumented)
@@ -366,6 +375,12 @@ export const enum FieldScope {
 }
 
 // @public
+export interface FieldUpPath {
+    readonly field: FieldKey;
+    readonly parent: UpPath | undefined;
+}
+
+// @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
@@ -390,6 +405,9 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 
 // @public
 export const getTypeSymbol: unique symbol;
+
+// @public
+export const getWithoutUnwrappingSymbol: unique symbol;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
@@ -491,10 +509,13 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @public
-function invert<TNodeChange>(change: Changeset<TNodeChange>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
+function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+// @public
+export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @public
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
@@ -516,6 +537,9 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
 
 // @public
+export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
+
+// @public
 export interface ITreeCursor {
     readonly chunkLength: number;
     readonly chunkStart: number;
@@ -529,6 +553,8 @@ export interface ITreeCursor {
     getFieldKey(): FieldKey;
     // (undocumented)
     getFieldLength(): number;
+    // (undocumented)
+    getFieldPath(): FieldUpPath;
     // (undocumented)
     getPath(): UpPath | undefined;
     readonly mode: CursorLocationType;
@@ -551,6 +577,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
+    buildFieldAnchor(): FieldAnchor;
     clear(): void;
     // (undocumented)
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
@@ -745,9 +772,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
-    invert(changes: FieldChangeMap): FieldChangeMap;
+    invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
-    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap;
+    rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void;
     // (undocumented)
@@ -959,10 +986,13 @@ interface Reattach extends HasOpId {
 }
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: Changeset<TNodeChange>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @public
+export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -1143,6 +1173,14 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 
 // @public (undocumented)
+export interface TaggedChange<TChangeset> {
+    // (undocumented)
+    readonly change: TChangeset;
+    // (undocumented)
+    readonly revision: RevisionTag | undefined;
+}
+
+// @public (undocumented)
 enum Tiebreak {
     // (undocumented)
     Left = 0,
@@ -1231,14 +1269,13 @@ export interface TreeValue extends Serializable {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 // @public
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 // @public
 export interface UpPath {
-    // (undocumented)
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;

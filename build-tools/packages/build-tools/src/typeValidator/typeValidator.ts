@@ -24,6 +24,7 @@ program
         "-g|--generateOnly",
         "This only generates the tests. If does not prepare the package.json",
     )
+    .option("--generateInName", "Includes .generated in the output filename.")
     .option("-v|--verbose", "Verbose logging mode")
     .parse(process.argv);
 
@@ -76,7 +77,7 @@ async function run(): Promise<boolean> {
                         program.preinstallOnly === undefined
                     ) {
                         const start = Date.now();
-                        await generateTests(packageData)
+                        await generateTests(packageData, program.generateInName ?? false)
                             .then((s) =>
                                 output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`),
                             )
