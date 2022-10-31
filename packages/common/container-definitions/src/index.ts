@@ -10,7 +10,7 @@
  */
 
 export { IAudience, IAudienceOwner } from "./audience";
-export { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage";
+export { IFluidBrowserPackage, IFluidBrowserPackageEnvironment, isFluidBrowserPackage } from "./browserPackage";
 export {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -42,6 +42,8 @@ export {
     IHostLoader,
     ILoader,
     ILoaderHeader,
+    ILoaderOptions,
+    IPendingLocalState,
     IProvideLoader,
     IResolvedFluidCodeDetails,
     ISnapshotTreeWithBlobContents,
