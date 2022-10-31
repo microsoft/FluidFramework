@@ -34,7 +34,7 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate -s baseMinor -d ."
   },
   "dependencies": {
     "@fluidframework/protocol-definitions": "^1.1.0",
