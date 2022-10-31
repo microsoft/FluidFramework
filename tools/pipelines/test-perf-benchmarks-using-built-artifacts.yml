@@ -145,21 +145,12 @@ stages:
               echo "##vso[task.setvariable variable=Pattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$(TestPackageFile.Pattern)"
 
         - task: Bash@3
-          name: TestPackageTar
-          displayName: Declare TestPackageTar Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "##vso[task.setvariable variable=FileName;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
-
-        - task: Bash@3
           displayName: Confirm Parameters
           inputs:
             targetType: 'inline'
             script: |
               echo "TestPackageFile.Pattern=$(TestPackageFile.Pattern)"
               echo "TestPackagePath.Pattern=$(TestPackagePath.Pattern)"
-              echo "TestPackageTar.FileName=$(TestPackageTar.FileName)"
 
         # Install
         - task: UseNode@1
@@ -255,12 +246,22 @@ stages:
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files
 
+        - task: Bash@3
+          name: TestPackageTar
+          displayName: Declare TestPackageTar Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "##vso[task.setvariable variable=FileName;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
+
         # Unpack test files
         - task: Bash@3
           displayName: Unpack test files
           inputs:
             targetType: 'inline'
             script: |
+              echo "TestPackageTar.FileName=$(TestPackageTar.FileName)"
+
               mkdir ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ TestPackageTar.FileName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
