@@ -182,7 +182,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: pack
-              patterns: "**/`${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz`"
+              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
