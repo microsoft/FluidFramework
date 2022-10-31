@@ -219,7 +219,7 @@ export interface EditableTree extends Iterable<EditableField> {
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
-    readonly [typeSymbol]: NamedTreeSchema;
+    readonly [typeSymbol]: TreeSchema;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }

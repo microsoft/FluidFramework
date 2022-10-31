@@ -15,7 +15,7 @@ import {
     FieldSchema,
     LocalFieldKey,
     TreeSchemaIdentifier,
-    NamedTreeSchema,
+    TreeSchema,
     ValueSchema,
     lookupTreeSchema,
     mapCursorField,
@@ -90,7 +90,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * The type of the node.
      * If this node is well-formed, it must follow this schema.
      */
-    readonly [typeSymbol]: NamedTreeSchema;
+    readonly [typeSymbol]: TreeSchema;
 
     /**
      * Value stored on this node.
@@ -299,12 +299,8 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return this.cursor.type;
     }
 
-    get type(): NamedTreeSchema {
-        const typeName = this.typeName;
-        return {
-            name: typeName,
-            ...lookupTreeSchema(this.context.forest.schema, typeName),
-        };
+    get type(): TreeSchema {
+        return lookupTreeSchema(this.context.forest.schema, this.typeName);
     }
 
     get value(): Value {
@@ -712,7 +708,7 @@ function inProxyOrUnwrap(
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
     if (unwrap && !isFieldProxyTarget(target)) {
-        const nodeType = target.type;
+        const { type: nodeType, typeName: nodeTypeName } = target;
         if (isPrimitive(nodeType)) {
             const nodeValue = target.cursor.value;
             if (isPrimitiveValue(nodeValue)) {
@@ -730,7 +726,7 @@ function inProxyOrUnwrap(
                 target.context,
                 primary.schema,
                 target.cursor,
-                nodeType.name,
+                nodeTypeName,
             );
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
