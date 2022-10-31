@@ -214,6 +214,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Fire-and-forget sessionAlive and sessionActive update for session-boot performance.
         // Worst case is that document is allowed to be deleted while active.
+        context.log?.info(
+            `Deli Lambda is marking session as alive and active as true.`,
+            { messageMetaData },
+        );
         this.collection.update(
             { documentId, tenantId },
             {
