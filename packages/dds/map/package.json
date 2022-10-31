@@ -30,7 +30,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "postpack": "cd dist && tar -cvf ../map.test-files.tar ./test",
+    "postpack": "cd src/test && tar -cvf ../map.test-files.tar ./test",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:memory": "mocha --config .mocharc.memory.js",
