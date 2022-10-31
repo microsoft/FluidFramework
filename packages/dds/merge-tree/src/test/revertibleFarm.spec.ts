@@ -25,9 +25,9 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 
  const defaultOptions = {
     initialOps: 5,
-    minLength: { min: 1, max: 256, growthFunc: (i) => i * i },
-    concurrentOpsWithRevert: { min: 0, max: 8 },
-    revertOps: { min: 1, max: 16 },
+    minLength: { min: 2, max: 2, growthFunc: (i) => i * i },
+    concurrentOpsWithRevert: { min: 1, max: 1 },
+    revertOps: { min: 32, max: 32 },
     ackBeforeRevert: [
         "None",
         "Some",
@@ -44,7 +44,7 @@ describe("MergeTree.Client", () => {
             doOverRange(defaultOptions.revertOps, defaultOptions.growthFunc, (revertOps) => {
                 for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
                     // eslint-disable-next-line max-len
-                    it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
+                    it.only(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
                         const mt = random.engines.mt19937();
                         mt.seedWithArray([
                             0xDEADBEEF,
