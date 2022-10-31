@@ -34,7 +34,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "postpack": "cd dist && tar -cvf ../tree.test-files.tar ./test",
+    "postpack": "cd src/test && tar -cvf ../tree.test-files.tar ./test",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
