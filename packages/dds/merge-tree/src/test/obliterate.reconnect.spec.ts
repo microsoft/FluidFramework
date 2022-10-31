@@ -246,7 +246,7 @@ describe("obliterate", () => {
             helper.logger.validate();
         });
 
-        it.skip("does not delete remote insert when between local insert+obliterate", () => {
+        it("does not delete remote insert when between local insert+obliterate", () => {
             const helper = new ReconnectTestHelper();
 
             helper.insertText("C", 0, "A");
@@ -257,6 +257,7 @@ describe("obliterate", () => {
             helper.processAllOps();
 
             assert.equal(helper.clients.A.getText(), "X");
+            assert.equal(helper.clients.B.getText(), "X");
             assert.equal(helper.clients.C.getText(), "X");
 
             helper.logger.validate();
@@ -294,5 +295,21 @@ describe("obliterate", () => {
 
             helper.logger.validate();
         });
+    });
+
+    it("deletes segment inserted into locally obliterated segment", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("C", 0, "A");
+        helper.insertText("B", 0, "X");
+        helper.insertText("C", 0, "B");
+        helper.obliterateRange("C", 0, 2);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "");
+        assert.equal(helper.clients.B.getText(), "");
+        assert.equal(helper.clients.C.getText(), "");
+
+        helper.logger.validate();
     });
 });

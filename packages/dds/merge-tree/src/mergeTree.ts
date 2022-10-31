@@ -1779,15 +1779,21 @@ export class MergeTree {
                 };
 
                 forwardExcursion(newSegment, findAdjacentMovedSegment);
-                const furtherMovedSegment = movedSegment;
+                const rightMovedSegment = movedSegment;
 
-                movedSegment = undefined;
+                movedSegment = undefined as ISegment | undefined;
                 backwardExcursion(newSegment, findAdjacentMovedSegment);
-                const nearerMovedSegment = movedSegment;
+                const leftMovedSegment = movedSegment;
 
-                if (nearerMovedSegment && furtherMovedSegment) {
-                    const nearMoveInfo = toMoveInfo(nearerMovedSegment);
-                    const farMoveInfo = toMoveInfo(furtherMovedSegment);
+                const movedInSameSeq = leftMovedSegment
+                    && rightMovedSegment
+                    && (leftMovedSegment.movedSeq === -1 && rightMovedSegment.movedSeq === -1
+                    ? leftMovedSegment.localMovedSeq === rightMovedSegment.localMovedSeq
+                    : leftMovedSegment.movedSeq === rightMovedSegment.movedSeq);
+
+                if (leftMovedSegment && rightMovedSegment && movedInSameSeq) {
+                    const nearMoveInfo = toMoveInfo(leftMovedSegment);
+                    const farMoveInfo = toMoveInfo(rightMovedSegment);
                     // The inserted segment could potentially be adjacent to two different moved regions.
                     // We mark it as moved using the info from the earlier such operation.
                     const moveInfo = minMoveDist(nearMoveInfo, farMoveInfo);
@@ -2063,9 +2069,9 @@ export class MergeTree {
             if (existingMoveInfo !== undefined) {
                 _overwrite = true;
                 if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
-                    // we removed this locally, but someone else removed it first
+                    // we moved this locally, but someone else moved it first
                     // so put them at the head of the list
-                    // The list isn't ordered, but we keep the first removal at the head
+                    // The list isn't ordered, but we keep the first move at the head
                     // for partialLengths bookkeeping purposes
                     existingMoveInfo.movedClientIds.unshift(clientId);
 
