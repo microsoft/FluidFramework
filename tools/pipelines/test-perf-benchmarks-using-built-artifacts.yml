@@ -187,8 +187,7 @@ stages:
 
           # Install test package
           - task: Bash@3
-            name: Initialize
-            displayName: Initialize
+            displayName: Install Test Package
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
