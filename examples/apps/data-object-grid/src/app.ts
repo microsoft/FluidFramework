@@ -11,8 +11,9 @@ import { DataObjectGridContainerRuntimeFactory, IDataObjectGridAppModel } from "
 import { DataObjectGridAppView } from "./dataObjectGridView";
 
 /**
- * This is a helper function for loading the page. It's required because getting the Fluid Container
- * requires making async calls.
+ * Start the app and render.
+ *
+ * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
     const tinyliciousModelLoader = new TinyliciousModelLoader<IDataObjectGridAppModel>(

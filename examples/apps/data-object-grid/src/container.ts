@@ -10,6 +10,12 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid";
 
+/**
+ * The data model for our application.
+ *
+ * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
+ * complex models.
+ */
 export interface IDataObjectGridAppModel {
     readonly dataObjectGrid: IDataObjectGrid;
 }
@@ -20,6 +26,9 @@ class DataObjectGridAppModel implements IDataObjectGridAppModel {
 
 const dataObjectGridId = "data-object-grid";
 
+/**
+ * The runtime factory for our Fluid container.
+ */
 export class DataObjectGridContainerRuntimeFactory
     extends ModelContainerRuntimeFactory<IDataObjectGridAppModel> {
     constructor() {

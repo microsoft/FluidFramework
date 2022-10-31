@@ -87,14 +87,6 @@ export interface IDataObjectGridItemEntry<T = any> {
     fabricIconName: string;
 }
 
-export interface IToolbarOption {
-    // Unique key for React
-    key: string;
-    create: () => void;
-    friendlyName: string;
-    fabricIconName: string;
-}
-
 const clickerItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
     getView: getClickerView,
@@ -130,6 +122,9 @@ const sliderCoordinateItemEntry: IDataObjectGridItemEntry<ISingleHandleItem> = {
     fabricIconName: "NumberSymbol",
 };
 
+/**
+ * The registry for our app, containing the options for data objects that can be inserted into the grid.
+ */
 export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry>([
     ["clicker", clickerItemEntry],
     ["codemirror", codemirrorItemEntry],
@@ -138,7 +133,11 @@ export const dataObjectRegistry = new Map<string, IDataObjectGridItemEntry>([
     ["slider-coordinate", sliderCoordinateItemEntry],
 ]);
 
-// This can go away if the item entries have a way to bring their own subregistries.
+/**
+ * The registry entries the container runtime will use to instantiate the data stores.
+ *
+ * @remarks This can go away if the item entries have a way to bring their own subregistries.
+ */
 export const registryEntries: NamedFluidDataStoreRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [codeMirrorFactory.type, Promise.resolve(codeMirrorFactory)],

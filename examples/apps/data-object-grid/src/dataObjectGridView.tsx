@@ -77,7 +77,7 @@ interface IDataObjectGridViewProps {
     editable: boolean;
 }
 
-export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
+const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
     (props: React.PropsWithChildren<IDataObjectGridViewProps>) => {
         const { getUrlForItem, model, registry, editable } = props;
         // Again stronger typing would be good
@@ -163,11 +163,25 @@ export const DataObjectGridView: React.FC<IDataObjectGridViewProps> =
         );
     };
 
+/**
+ * React props for our app's view.
+ */
 export interface IDataObjectGridAppViewProps {
+    /**
+     * The app's model to render.
+     */
     readonly model: IDataObjectGrid;
+    /**
+     * The view provides a button to direct link to each individual data object.  The host can specify the URL format
+     * that should be used for these direct links here (and should then also specifically load and render the
+     * requested data object in response to loading with that URL).
+     */
     readonly getDirectUrl: (id: string) => string;
 }
 
+/**
+ * The main React view for the app.
+ */
 export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (props: IDataObjectGridAppViewProps) => {
     const { model, getDirectUrl } = props;
     const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);

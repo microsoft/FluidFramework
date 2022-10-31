@@ -11,11 +11,20 @@ import {
 } from "office-ui-fabric-react";
 import {
     IDataObjectGridItemEntry,
-    IToolbarOption,
 } from "./dataObjectRegistry";
 import "./toolbar.css";
 
 initializeIcons();
+
+interface IToolbarOption {
+    /**
+     * Unique key for React
+     */
+    key: string;
+    create: () => void;
+    friendlyName: string;
+    fabricIconName: string;
+}
 
 interface IDataObjectGridToolbarAddItemPickerProps {
     toolbarOptions: IToolbarOption[];

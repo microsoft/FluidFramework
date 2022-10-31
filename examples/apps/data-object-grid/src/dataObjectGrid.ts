@@ -19,12 +19,36 @@ import {
     dataObjectRegistry,
 } from "./dataObjectRegistry";
 
+/**
+ * Interface for the data object grid data object.
+ *
+ * Generally acts like a collection (get/add/remove) but additionally permits modifying the associated layout
+ * for a given member of the collection as well as retrieving an appropriate view for a given item.
+ */
 export interface IDataObjectGrid extends EventEmitter {
+    /**
+     * Retrieve all stored items in the grid.
+     */
     readonly getItems: () => IDataObjectGridItem[];
+    /**
+     * Retrive a specific stored item in the grid.
+     */
     readonly getItem: (id: string) => IDataObjectGridItem | undefined;
+    /**
+     * Add an item of the given type to the grid.
+     */
     readonly addItem: (type: string) => Promise<string>;
+    /**
+     * Remove the specified item from the grid.
+     */
     readonly removeItem: (id: string) => void;
+    /**
+     * Change the layout of the specified item.
+     */
     readonly updateLayout: (id: string, newLayout: Layout) => void;
+    /**
+     * Get a React element view of the specified item.
+     */
     readonly getViewForItem: (item: IDataObjectGridItem) => Promise<JSX.Element>;
 }
 

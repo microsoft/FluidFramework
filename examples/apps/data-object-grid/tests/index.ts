@@ -3,39 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { SpacesContainer } from "../src/container";
-import { Spaces, SpacesView } from "../src/fluid-object";
-
-// Since this is a single page Fluid application we are generating a new document id
-// if one was not provided
-let createNew = false;
-if (window.location.hash.length === 0) {
-    createNew = true;
-    window.location.hash = Date.now().toString();
-}
-const documentId = window.location.hash.substring(1);
+import { DataObjectGridContainerRuntimeFactory, IDataObjectGridAppModel } from "../src/container";
+import { DataObjectGridAppView } from "../src/dataObjectGridView";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLElement, createNewFlag: boolean) {
-    // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
-    // to store ops.
-    const container = await getSessionStorageContainer(documentId, SpacesContainer, createNewFlag);
+ async function createContainerAndRenderInElement(element: HTMLElement) {
+    const sessionStorageModelLoader = new SessionStorageModelLoader<IDataObjectGridAppModel>(
+        new StaticCodeLoader(new DataObjectGridContainerRuntimeFactory()),
+    );
 
-    // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<Spaces>(container);
+    let id: string;
+    let model: IDataObjectGridAppModel;
 
-    // For now we will just reach into the FluidObject to render it
+    if (location.hash.length === 0) {
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
+        const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+        model = createResponse.model;
+        id = await createResponse.attach();
+    } else {
+        id = location.hash.substring(1);
+        model = await sessionStorageModelLoader.loadExisting(id);
+    }
+
+    // update the browser URL and the window title with the actual container ID
+    location.hash = id;
+    document.title = id;
+
+    // Render it
     ReactDOM.render(
-        React.createElement(SpacesView, { model: defaultObject }),
+        React.createElement(
+            DataObjectGridAppView,
+            { model: model.dataObjectGrid, getDirectUrl: (itemId: string) => `?item=${itemId}#${id}` },
+        ),
         element,
     );
 
@@ -52,13 +61,13 @@ async function setup() {
     if (leftElement === null) {
         throw new Error("sbs-left does not exist");
     }
-    await createContainerAndRenderInElement(leftElement, createNew);
+    await createContainerAndRenderInElement(leftElement);
     const rightElement = document.getElementById("sbs-right");
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
     // The second time we don't need to createNew because we know a Container exists.
-    await createContainerAndRenderInElement(rightElement, false);
+    await createContainerAndRenderInElement(rightElement);
 }
 
 setup().catch((e) => {
