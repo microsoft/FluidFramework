@@ -86,6 +86,7 @@ jobs:
             Test=${{ convertToJson(parameters.taskTest) }}
             BuildDoc=${{ parameters.taskBuildDocs }}
             TestCoverage=$(testCoverage)
+          "
 
           # Error checking
           if [[ "$(release)" == "release" ]]; then
