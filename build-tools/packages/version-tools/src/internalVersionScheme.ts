@@ -267,9 +267,7 @@ export function bumpInternalVersion(
 ): semver.SemVer {
     validateVersionScheme(version, true, undefined);
     const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
-    console.log(intVer.version);
     const newIntVer = bumpType === "current" ? intVer : intVer.inc(bumpType);
-    console.log(newIntVer.version);
     return toInternalScheme(pubVer, newIntVer, true, prereleaseId);
 }
 
