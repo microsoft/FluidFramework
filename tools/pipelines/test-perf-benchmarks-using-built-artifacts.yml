@@ -264,7 +264,7 @@ stages:
             inputs:
               sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
               contents: '**'
-              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput
+              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ testPackage }}
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
@@ -279,7 +279,7 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
           inputs:
-            targetPath: '${{ variables.testWorkspace }}/.memoryTestsOutput'
+            targetPath: '${{ variables.testWorkspace }}/memoryTestsOutput'
             artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()
 
