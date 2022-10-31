@@ -88,9 +88,6 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
-          # testPackageFilePattern: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-          # testPackagePathPattern: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
-          # testFileTarName: sequence
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
           ${{ else }}:
@@ -101,75 +98,11 @@ stages:
         - checkout: self
           clean: true
 
-        - task: Bash@3
-          displayName: Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Show all task group conditions
-
-              echo "
-              Pipeline Parameters:
-                poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ parameters.testPackage }}
-
-              Task Variables:
-                releaseBuild=$(releaseBuildVar)
-                toolAbsolutePath=$(toolAbsolutePath)
-                artifactPipeline=$(artifactPipeline)
-                feed=$(feed)
-
-              Pipeline Parameters:
-                BuildDir=${{ variables.buildDirectory }}
-                Build=${{ parameters.taskBuild }}
-                TestWorkspace=${{ variables.testWorkspace }}
-                testFileTarName=${{ variables.testFileTarName }}
-
-              SourceBranch=$(Build.SourceBranch)
-              "
-
-        - task: Bash@3
-          name: TestPackage
-          displayName: Declare TestPackagePath Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              TESTPACKAGEFILEPATTERN=${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-              echo $TESTPACKAGEFILEPATTERN
-              echo $TESTPACKAGEFILEPATTERN
-              echo "##vso[task.setvariable variable=FilePattern;isOutput=true]$TESTPACKAGEFILEPATTERN"
-              echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$TESTPACKAGEFILEPATTERN"
-              echo "##vso[task.setvariable variable=TarFile;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
-
-        - task: Bash@3
-          displayName: Confirm Parameters
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "TestPackage.FilePattern=$(TestPackage.FilePattern)"
-              echo "TestPackage.PathPattern=$(TestPackage.PathPattern)"
-              echo "TestPackage.TarFile=$(TestPackage.TarFile)"
-
         # Install
         - task: UseNode@1
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-
-        # Download package artifacts
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
-            artifact: pack
-            patterns: "**/$(TestPackage.FilePattern)"
-            path: $(Pipeline.Workspace)/client/pack
 
         - task: Bash@3
           displayName: Create test directory
@@ -178,9 +111,9 @@ stages:
             script: |
               mkdir ${{ variables.testWorkspace }}
 
+
         - task: Bash@3
-          name: Initialize
-          displayName: Initialize
+          displayName: Initialize npmrc
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}
@@ -200,13 +133,6 @@ stages:
               echo "always-auth=true" >> ./.npmrc
               cat .npmrc
 
-              if [[ `ls -1 $(TestPackage.PathPattern) | wc -l` -eq 1 ]]; then
-                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackage.PathPattern)`"
-              else
-                ls -1 $(TestPackage.PathPattern)
-                echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
-              fi
-
         # Auth to internal feed
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
@@ -219,6 +145,72 @@ stages:
           inputs:
             workingFile: ${{ variables.testWorkspace }}/.npmrc
             customEndpoint: 'Office Packages - Readonly'
+
+        - task: Bash@3
+          name: TestPackage
+          displayName: Declare TestPackage Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              TESTPACKAGEFILEPATTERN=${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+              echo "##vso[task.setvariable variable=FilePattern;isOutput=true]$TESTPACKAGEFILEPATTERN"
+              echo "##vso[task.setvariable variable=PathPattern;isOutput=true]$(Pipeline.Workspace)/client/pack/scoped/$TESTPACKAGEFILEPATTERN"
+              echo "##vso[task.setvariable variable=TarFile;isOutput=true]${{ replace(parameters.testPackage, '@fluidframework/', '' ) }}"
+
+        - task: Bash@3
+          displayName: Print Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "TestPackage.FilePattern=$(TestPackage.FilePattern)"
+              echo "TestPackage.PathPattern=$(TestPackage.PathPattern)"
+              echo "TestPackage.TarFile=$(TestPackage.TarFile)"
+
+              echo "
+              Pipeline Parameters:
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ parameters.testPackage }}
+                Build=${{ parameters.taskBuild }}
+
+              Task Variables:
+                releaseBuild=$(releaseBuildVar)
+                toolAbsolutePath=$(toolAbsolutePath)
+                artifactPipeline=$(artifactPipeline)
+                feed=$(feed)
+                BuildDir=${{ variables.buildDirectory }}
+                TestWorkspace=${{ variables.testWorkspace }}
+
+              SourceBranch=$(Build.SourceBranch)
+              "
+
+        # Download package artifacts
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test package
+          inputs:
+            source: specific
+            project: internal
+            pipeline: ${{ variables.artifactPipeline }}
+            preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: pack
+            patterns: "**/$(TestPackage.FilePattern)"
+            path: $(Pipeline.Workspace)/client/pack
+
+        - task: Bash@3
+          name: Initialize
+          displayName: Initialize
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}
+            script: |
+              if [[ `ls -1 $(TestPackage.PathPattern) | wc -l` -eq 1 ]]; then
+                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls $(TestPackage.PathPattern)`"
+              else
+                ls -1 $(TestPackage.PathPattern)
+                echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+              fi
 
         # Install test and logger package
         - task: Npm@1
