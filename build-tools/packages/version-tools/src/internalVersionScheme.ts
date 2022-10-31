@@ -250,7 +250,12 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
         return false;
     }
 
-    return isInternalVersionScheme(minVer, false, allowAnyPrereleaseId);
+    // if allowAnyPrereleaseId === true, then allowPrereleases is implied to be true
+    return isInternalVersionScheme(
+        minVer,
+        /* allowPrereleases */ allowAnyPrereleaseId,
+        allowAnyPrereleaseId,
+    );
 }
 
 /**
@@ -265,10 +270,10 @@ export function bumpInternalVersion(
     version: semver.SemVer | string,
     bumpType: VersionBumpTypeExtended,
 ): semver.SemVer {
-    validateVersionScheme(version);
-    const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, false, true);
+    validateVersionScheme(version, true, undefined);
+    const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
     const newIntVer = bumpType === "current" ? intVer : intVer.inc(bumpType);
-    return toInternalScheme(pubVer, newIntVer, false, prereleaseId);
+    return toInternalScheme(pubVer, newIntVer, true, prereleaseId);
 }
 
 /**
@@ -290,7 +295,7 @@ export function getVersionRange(
     version: semver.SemVer | string,
     maxAutomaticBump: "minor" | "patch" | "~" | "^",
 ): string {
-    validateVersionScheme(version, false, undefined);
+    validateVersionScheme(version, true, undefined);
 
     const lowVersion = version;
     let highVersion: semver.SemVer;
