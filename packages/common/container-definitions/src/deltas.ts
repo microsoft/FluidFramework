@@ -216,15 +216,21 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void);
 
     /**
-     * TODO
+     * Emitted immediately after processing an incoming operation (op).
+     *
+     * @remarks Listener parameters:
+     *
+     * - `message`: The op that was processed.
+     *
+     * @internal
      */
     (event: "op", listener: (task: T) => void);
 
     /**
      * TODO
      *
-     * @param count - number of events (T) processed before becoming idle
-     * @param duration - amount of time it took to process elements (milliseconds).
+     * @param count - The number of events (T) processed before becoming idle.
+     * @param duration - The amount of time it took to process elements (in milliseconds).
      *
      * @see {@link IDeltaQueue.idle}
      */
