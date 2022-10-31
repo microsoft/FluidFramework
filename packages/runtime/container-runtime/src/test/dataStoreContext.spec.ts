@@ -29,7 +29,6 @@ import {
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
     channelsTreeName,
-    ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
@@ -760,6 +759,7 @@ describe("Data Store Context Tests", () => {
         let factory: IFluidDataStoreFactory;
         const makeLocallyVisibleFn = () => {};
         let containerRuntime: ContainerRuntime;
+        let provideDsRuntimeWithFailingEntrypoint = false;
 
         beforeEach(async () => {
             const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
@@ -783,10 +783,21 @@ describe("Data Store Context Tests", () => {
                 getBaseGCDetailsFn,
             );
 
+            const failingEntryPoint = new FluidObjectHandle<FluidObject>(
+                new LazyPromise(async () => {
+                    throw new Error("Simulating failure when initializing EntryPoint");
+                }),
+                "",
+                undefined as unknown as IFluidHandleContext,
+            );
+
             factory = {
                 type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
+                instantiateDataStore: async (context: IFluidDataStoreContext, existing: boolean) =>
+                    provideDsRuntimeWithFailingEntrypoint
+                        ? new MockFluidDataStoreRuntime({ entryPoint: failingEntryPoint })
+                        : new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
@@ -800,7 +811,7 @@ describe("Data Store Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        describe("Initialization", () => {
+        describe.only("Initialization", () => {
             it("rejects ids with forward slashes", async () => {
                 const invalidId = "beforeSlash/afterSlash";
                 const codeBlock = () => new LocalDetachedFluidDataStoreContext({
@@ -831,8 +842,7 @@ describe("Data Store Context Tests", () => {
                             runtime: containerRuntime,
                             storage,
                             scope,
-                            // createSummarizerNodeFn,
-                            createSummarizerNodeFn: (a, b, c) => undefined as unknown as ISummarizerNodeWithGC,
+                            createSummarizerNodeFn,
                             makeLocallyVisibleFn,
                             snapshotTree: undefined,
                             isRootDataStore: false,
@@ -854,52 +864,23 @@ describe("Data Store Context Tests", () => {
 
                 it("because of entryPoint that fails to initialize", async () => {
                     let exceptionOccurred = false;
-
-                    // TODO : move this to the beforeEach, with an extra property so I can define when I want the
-                    // DSRuntime to give me a failing entrypoint?
-                    const factoryInTest = {
-                        type: "store-type",
-                        get IFluidDataStoreFactory() { return factoryInTest; },
-                        instantiateDataStore: async (context: IFluidDataStoreContext) =>
-                            new MockFluidDataStoreRuntime(
-                                undefined,
-                                new FluidObjectHandle<FluidObject>(
-                                    new LazyPromise(async () => {
-                                        throw new Error("Simulating failure when initializing EntryPoint");
-                                    }),
-                                    "",
-                                    undefined as unknown as IFluidHandleContext,
-                                ),
-                            ),
-                    };
-                    const registry: IFluidDataStoreRegistry = {
-                        get IFluidDataStoreRegistry() { return registry; },
-                        get: async (pkg) => (pkg === factoryInTest.type ? factoryInTest : undefined),
-                    };
-
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    const containerRuntimeInTest = {
-                        IFluidDataStoreRegistry: registry,
-                        on: (event, listener) => { },
-                        logger: new TelemetryNullLogger(),
-                    } as ContainerRuntime;
+                    provideDsRuntimeWithFailingEntrypoint = true;
 
                     localDataStoreContext = new LocalDetachedFluidDataStoreContext({
                             id: dataStoreId,
-                            pkg: [factoryInTest.type],
-                            runtime: containerRuntimeInTest,
+                            pkg: [factory.type],
+                            runtime: containerRuntime,
                             storage,
                             scope,
-                            // createSummarizerNodeFn,
-                            createSummarizerNodeFn: (a, b, c) => undefined as unknown as ISummarizerNodeWithGC,
+                            createSummarizerNodeFn,
                             makeLocallyVisibleFn,
                             snapshotTree: undefined,
                             isRootDataStore: false,
                         },
                     );
 
-                    const dataStore = await factoryInTest.instantiateDataStore(localDataStoreContext);
-                    await localDataStoreContext.attachRuntime(factoryInTest, dataStore)
+                    const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+                    await localDataStoreContext.attachRuntime(factory, dataStore)
                         .catch((error) => {
                             assert.strictEqual(
                                 error.message,

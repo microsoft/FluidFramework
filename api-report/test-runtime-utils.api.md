@@ -342,7 +342,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
-    }, entryPoint?: IFluidHandle<FluidObject>);
+        entryPoint?: IFluidHandle<FluidObject>;
+    });
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)

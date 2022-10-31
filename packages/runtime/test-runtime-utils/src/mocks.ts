@@ -377,17 +377,16 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(
-        overrides?: { clientId?: string; },
-        entryPoint?: IFluidHandle<FluidObject>) {
+        overrides?: {
+            clientId?: string;
+            entryPoint?: IFluidHandle<FluidObject>;
+        }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
-
-        if (entryPoint) {
-            this.entryPoint = entryPoint;
-        }
+        this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
     }
 
-    public readonly entryPoint?: IFluidHandle<FluidObject> = new MockHandle(null, "", "");
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
