@@ -260,30 +260,28 @@ stages:
                 ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
                 ls -la;
 
-          # - task: CopyFiles@2
-          #   inputs:
-          #     sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
-          #     contents: '**'
-          #     targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/memoryTestsOutput
-
-          - task: Bash@3
-            displayName: 'Write measurements to Aria/Kusto - memory usage'
+          - task: CopyFiles@2
             inputs:
-              targetType: 'inline'
-              workingDirectory: $(toolAbsolutePath)
-              script: |
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/memoryTestsOutput;
-                ls -la;
-                node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
+              sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
+              contents: '**'
+              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput
 
-          - task: PublishPipelineArtifact@1
-            displayName: 'Publish Artifact - Perf tests output - memory usage'
-            inputs:
-              targetPath: '${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput'
-              artifactName: 'perf-test-outputs_memory-usage'
-              condition: succeededOrFailed()
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              ls -la;
+              ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Artifact - Perf tests output - memory usage'
+          inputs:
+            targetPath: '${{ variables.testWorkspace }}/.memoryTestsOutput'
+            artifactName: 'perf-test-outputs_memory-usage'
+            condition: succeededOrFailed()
 
 
         # - ${{ each execTestPackage in parameters.executionTestPackages }}:
