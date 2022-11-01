@@ -51,6 +51,11 @@ import {
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import {
+    FieldProxyTarget,
+    NodeProxyTarget,
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/editable-tree/editableTree";
+import {
     fullSchemaData,
     PersonType,
     personSchema,
@@ -90,59 +95,177 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
 }
 
 describe("editable-tree", () => {
-    it("can use `Object.keys` and `getOwnPropertyDescriptor` with EditableTree", () => {
+    it("can use `Object.keys` and `Reflect.ownKeys` with EditableTree", () => {
         const [, proxy] = buildTestPerson();
         assert(isUnwrappedNode(proxy));
 
         assert.equal(Object.keys(proxy).length, 5);
-        assert.deepEqual([...Object.keys(proxy)], ["name", "age", "salary", "friends", "address"]);
-
-        // `getOwnPropertyDescriptor` unwraps fields
-        for (const key of Object.keys(proxy)) {
-            const fieldKey: FieldKey = brand(key);
-            const descriptor = Object.getOwnPropertyDescriptor(proxy, key);
-            assert(descriptor !== undefined);
-            let expected = proxy[fieldKey];
-            // This block is not needed for the test.
-            // It reveals the values of non-primitive nodes,
-            // which are otherwise "hidden" behind a proxy.
-            // Usefull for debugging.
-            if (isUnwrappedNode(descriptor.value)) {
-                descriptor.value = clone(descriptor.value);
-                expected = clone(expected);
+        {
+            const expectedKeys = new Set(["name", "age", "salary", "friends", "address"]);
+            for (const key of Object.keys(proxy)) {
+                assert(expectedKeys.delete(key));
             }
-            assert.deepEqual(descriptor, {
-                configurable: true,
-                enumerable: true,
-                value: expected,
-                writable: false,
-            });
+            assert.equal(expectedKeys.size, 0);
         }
-        // property descriptors for utility symbols
-        [
-            proxyTargetSymbol,
-            getWithoutUnwrappingSymbol,
-            typeNameSymbol,
-            typeSymbol,
-            valueSymbol,
-            anchorSymbol,
-            Symbol.iterator,
-        ].forEach((symbol: symbol) => {
-            const descriptor = Object.getOwnPropertyDescriptor(proxy, symbol);
-            assert(descriptor !== undefined);
-            const value = Reflect.get(proxy, symbol);
+
+        assert.equal(Reflect.ownKeys(proxy).length, 5);
+        {
+            const expectedKeys = new Set(["name", "age", "salary", "friends", "address"]);
+            for (const key of Reflect.ownKeys(proxy)) {
+                assert(typeof key === "string");
+                assert(expectedKeys.delete(key));
+            }
+            assert.equal(expectedKeys.size, 0);
+        }
+    });
+
+    it("`getOwnPropertyDescriptor` unwraps fields", () => {
+        const [, proxy] = buildTestPerson();
+        assert(isUnwrappedNode(proxy));
+
+        // primitive field is unwrapped into value
+        const nameDescriptor = Object.getOwnPropertyDescriptor(proxy, "name");
+        assert(nameDescriptor !== undefined);
+        assert.deepEqual(nameDescriptor, {
+            configurable: true,
+            enumerable: true,
+            value: "Adam",
+            writable: false,
+        });
+
+        // non-primitive field is unwrapped into node
+        const fieldKey: FieldKey = brand("address");
+        const addressDescriptor = Object.getOwnPropertyDescriptor(proxy, "address");
+        assert(addressDescriptor !== undefined);
+        let expected = proxy[getWithoutUnwrappingSymbol](fieldKey).getWithoutUnwrapping(0);
+        // This block is not needed for the test.
+        // It reveals the values of non-primitive nodes,
+        // which are otherwise "hidden" behind a proxy.
+        // Usefull for debugging.
+        if (isUnwrappedNode(addressDescriptor.value)) {
+            addressDescriptor.value = clone(addressDescriptor.value);
+            expected = clone(expected);
+        }
+        assert.deepEqual(addressDescriptor, {
+            configurable: true,
+            enumerable: true,
+            value: expected,
+            writable: false,
+        });
+    });
+
+    it("can use `getOwnPropertyDescriptor` for symbols of EditableTree", () => {
+        const [, proxy] = buildTestPerson();
+        assert(isUnwrappedNode(proxy));
+        const nameField = proxy[getWithoutUnwrappingSymbol](brand("name"));
+        const nameNode = nameField.getWithoutUnwrapping(0);
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, proxyTargetSymbol);
+            assert(descriptor?.value instanceof NodeProxyTarget);
             const expected = {
                 configurable: true,
                 enumerable: false,
-                value,
+                value: Reflect.get(nameNode, proxyTargetSymbol),
                 writable: false,
             };
-            if (typeof value === "function") {
-                delete descriptor.value;
-                delete expected.value;
-            }
             assert.deepEqual(descriptor, expected);
-        });
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, getWithoutUnwrappingSymbol);
+            assert(typeof descriptor?.value === "function");
+            delete descriptor.value;
+            assert.deepEqual(descriptor, {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+            });
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, valueSymbol);
+            assert.deepEqual(descriptor, {
+                configurable: true,
+                enumerable: false,
+                value: "Adam",
+                writable: false,
+            });
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, typeNameSymbol);
+            assert.deepEqual(descriptor, {
+                configurable: true,
+                enumerable: false,
+                value: stringSchema.name,
+                writable: false,
+            });
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, typeSymbol);
+            assert.deepEqual(descriptor, {
+                configurable: true,
+                enumerable: false,
+                value: stringSchema,
+                writable: false,
+            });
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, Symbol.iterator);
+            assert(typeof descriptor?.value === "function");
+            delete descriptor.value;
+            const expected = {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+            };
+            assert.deepEqual(descriptor, expected);
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, anchorSymbol);
+            assert(descriptor !== undefined);
+            const expected = {
+                configurable: true,
+                enumerable: false,
+                value: Reflect.get(nameNode, anchorSymbol),
+                writable: false,
+            };
+            assert.deepEqual(descriptor, expected);
+        }
+    });
+
+    it("can use `getOwnPropertyDescriptor` for symbols of EditableField", () => {
+        const [, proxy] = buildTestPerson();
+        assert(isUnwrappedNode(proxy));
+        const nameField = proxy[getWithoutUnwrappingSymbol](brand("name"));
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameField, proxyTargetSymbol);
+            assert(descriptor?.value instanceof FieldProxyTarget);
+            const expected = {
+                configurable: true,
+                enumerable: false,
+                value: Reflect.get(nameField, proxyTargetSymbol),
+                writable: false,
+            };
+            assert.deepEqual(descriptor, expected);
+        }
+
+        {
+            const descriptor = Object.getOwnPropertyDescriptor(nameField, Symbol.iterator);
+            assert(typeof descriptor?.value === "function");
+            delete descriptor.value;
+            const expected = {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+            };
+            assert.deepEqual(descriptor, expected);
+        }
     });
 
     it("`typeSymbol` and `typeNameSymbol` work as expected", () => {

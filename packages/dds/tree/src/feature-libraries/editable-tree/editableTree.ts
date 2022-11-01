@@ -277,7 +277,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
  */
-class NodeProxyTarget extends ProxyTarget<Anchor> {
+export class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
         super(context, cursor);
@@ -500,7 +500,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
+export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
@@ -657,18 +657,21 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         target: FieldProxyTarget,
         key: string | symbol,
     ): PropertyDescriptor | undefined => {
+        // We generally don't want to allow users of the proxy to reconfigure all the properties,
+        // but it is a TypeError to return non-configurable for properties that do not exist on target,
+        // so they must return true.
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
                     return {
-                        configurable: false,
+                        configurable: true,
                         enumerable: false,
                         value: target,
                         writable: false,
                     };
                 case Symbol.iterator:
                     return {
-                        configurable: false,
+                        configurable: true,
                         enumerable: false,
                         value: target[Symbol.iterator].bind(target),
                         writable: false,
@@ -677,9 +680,6 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             }
         } else {
             if (editableFieldPropertySet.has(key)) {
-                // We generally don't want to allow users of the proxy to reconfigure all the properties,
-                // but it is a TypeError to return non-configurable for properties that do not exist on target,
-                // so they must return true.
                 return {
                     configurable: true,
                     enumerable: false,
