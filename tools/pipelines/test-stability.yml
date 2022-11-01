@@ -117,10 +117,6 @@ parameters:
   - Test99
   - Test100
 
-- name: buildDirectory
-  type: string
-  default: .
-
 - name: taskBuild
   type: string
   default: ci:build
@@ -147,10 +143,6 @@ parameters:
 - name: tagName
   type: string
   default: TestStability
-
-- name: includeInternalVersions
-  type: boolean
-  default: false
 
 schedules:
   - cron: "00 03 * * SUN"
@@ -180,13 +172,8 @@ stages:
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           buildDirectory: .
           tagName: ${{ parameters.tagName }}
-          poolBuild: Large
-          checkoutSubmodules: true
+          poolBuild: ${{ parameters.poolBuild }}
+          checkoutSubmodules: ${{ parameters.checkoutSubmodules }}
           timeoutInMinutes: 360
-          taskTest:
-          - ci:test:mocha
-          - ci:test:jest
-          - ci:test:realsvc:local
-          - ci:test:realsvc:tinylicious
-          - ci:test:stress:tinylicious
-          - test:copyresults
+          taskBuild : ${{ parameters.taskBuild }}
+          taskTest: ${{ parameters.taskTest }}

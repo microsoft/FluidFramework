@@ -11,10 +11,6 @@ parameters:
   type: string
   default: ci:build
 
-- name: taskBuildDocs
-  type: boolean
-  default: true
-
 - name: taskLint
   type: boolean
   default: true
@@ -84,7 +80,6 @@ jobs:
             Build=${{ parameters.taskBuild }}
             Lint=${{ parameters.taskLint }}
             Test=${{ convertToJson(parameters.taskTest) }}
-            BuildDoc=${{ parameters.taskBuildDocs }}
             TestCoverage=$(testCoverage)
           "
 
