@@ -282,7 +282,9 @@ describe("TinyliciousClient", () => {
 
     /**
      * Scenario: Test if TinyliciousClient with forceWriteMode set to true forces the container to write mode.
-     * Keep the original behaviour otherwise.
+     * Keep the original behaviour otherwise. The flag forceWriteMode will attempt to change the mode to write when
+     * starting a connection, but if the write permission is not available or the file is read only, mode will set
+     * to read.
      *
      * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
      * connectionMode to `write` while keeping the original behavior if forceWriteMode is not set to true.
@@ -290,49 +292,110 @@ describe("TinyliciousClient", () => {
     it("forces the container to connect with write mode when forceWriteMode is set to true ", async () => {
         const getConnectionModeFromTinyliciousClient = async (
             props?: TinyliciousClientProps,
-        ): Promise<ConnectionMode> => {
+            containerId?: string
+        ): Promise<{ mode: ConnectionMode; containerId: string; }> => {
             const client = new TinyliciousClient(props);
-            const { container } = await client.createContainer(schema);
-            await container.attach();
+            let container: IFluidContainer;
+            let newContainerId: string;
+            if (containerId === undefined) {
+                ({ container } = await client.createContainer(schema));
+                newContainerId = await container.attach();
+                await timeoutPromise(
+                    (resolve) => container.once("connected", resolve),
+                    {
+                        durationMs: 1000,
+                        errorMsg: "container connect() timeout",
+                    }
+                );
+            } else {
+                ({ container } = await client.getContainer(containerId, schema));
+                newContainerId = containerId;
+            }
 
-            await timeoutPromise((resolve) => container.once("connected", resolve), {
-                durationMs: 1000,
-                errorMsg: "container connect() timeout",
-            });
-
-            return (container as any).container.connectionMode as ConnectionMode;
+            return {
+                mode: (container as any).container.connectionMode as ConnectionMode,
+                containerId: newContainerId,
+            };
         };
 
-        // test forced write mode case
-        const forcedWriteConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: true });
+        const [
+            createForcedWriteContainer,
+            createNoPropsContainer,
+            createFalseFlagContainer,
+            createUndefinedFlagContainer,
+        ] = await Promise.all([
+            getConnectionModeFromTinyliciousClient({ forceWriteMode: true }),
+            getConnectionModeFromTinyliciousClient(),
+            getConnectionModeFromTinyliciousClient({ forceWriteMode: false }),
+            getConnectionModeFromTinyliciousClient({ forceWriteMode: undefined }),
+        ]);
+
+        const [
+            getForcedWriteContainer,
+            getNoPropsContainer,
+            getFalseFlagContainer,
+            getUndefinedFlagContainer,
+        ] = await Promise.all([
+            getConnectionModeFromTinyliciousClient(
+                { forceWriteMode: true },
+                createForcedWriteContainer.containerId
+            ),
+            getConnectionModeFromTinyliciousClient(
+                undefined,
+                createNoPropsContainer.containerId
+            ),
+            getConnectionModeFromTinyliciousClient(
+                { forceWriteMode: false },
+                createFalseFlagContainer.containerId
+            ),
+            getConnectionModeFromTinyliciousClient(
+                { forceWriteMode: undefined },
+                createUndefinedFlagContainer.containerId
+            ),
+        ]);
+
         assert.strictEqual(
-            forcedWriteConnectionMode,
+            createForcedWriteContainer.mode,
             "write",
-            "Container does not start with write mode by defaut when forceWriteMode set to true",
+            "Creating a container which forceWriteMode was set to true is not in write mode"
+        );
+        assert.strictEqual(
+            getForcedWriteContainer.mode,
+            "write",
+            "Getting a container which forceWriteMode was set to true is not in write mode"
         );
 
-        // test default case
-        const defaultConnectionMode = await getConnectionModeFromTinyliciousClient();
         assert.strictEqual(
-            defaultConnectionMode,
+            createNoPropsContainer.mode,
             "read",
-            "Container does not start with write mode by defaut when forceWriteMode set to true",
+            "Creating a container without props is not in read mode"
+        );
+        assert.strictEqual(
+            getNoPropsContainer.mode,
+            "read",
+            "Getting a container without props is not in read mode"
         );
 
-        // test false case
-        const falseConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: false });
         assert.strictEqual(
-            falseConnectionMode,
+            createFalseFlagContainer.mode,
             "read",
-            "Container does not start with write mode by defaut when forceWriteMode set to true",
+            "Creating a container which forceWriteMode was set to false is not in read mode"
+        );
+        assert.strictEqual(
+            getFalseFlagContainer.mode,
+            "read",
+            "Getting a container which forceWriteMode was set to false is not in read mode"
         );
 
-        // test undefined case
-        const undefinedConnectionMode = await getConnectionModeFromTinyliciousClient({ forceWriteMode: undefined });
         assert.strictEqual(
-            undefinedConnectionMode,
+            createUndefinedFlagContainer.mode,
             "read",
-            "Container does not start with write mode by defaut when forceWriteMode set to true",
+            "Creating a container which forceWriteMode was set to undefined is not in read mode"
+        );
+        assert.strictEqual(
+            getUndefinedFlagContainer.mode,
+            "read",
+            "Getting a container which forceWriteMode was set to undefined is not in read mode"
         );
     });
 });
