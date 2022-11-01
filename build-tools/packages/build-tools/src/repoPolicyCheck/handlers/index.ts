@@ -9,11 +9,13 @@ import { handler as dockerfilePackageHandler } from "./dockerfilePackages";
 import { handler as fluidCaseHandler } from "./fluidCase";
 import { handlers as lockfilesHandlers } from "./lockfiles";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages";
+import { handler as peerDepsHandler } from "./peerDependencies";
 
 /**
  * declared file handlers
  */
 export const policyHandlers: Handler[] = [
+    peerDepsHandler,
     ...copyrightFileHeaderHandlers,
     ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
