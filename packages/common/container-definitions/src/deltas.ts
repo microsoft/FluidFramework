@@ -115,10 +115,13 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "processTime", listener: (latency: number) => void);
 
     /**
-     * Emitted once we've received the connect_document_success message from the server.
-     * This happens prior to the client's join message (if there is a join message).
+     * Emitted when the {@link IContainer} completes connecting to the Fluid service.
      *
-     * @remarks Listener parameters:
+     * @remarks
+     * This occurs once we've received the connect_document_success message from the server,
+     * and happens prior to the client's join message (if there is a join message).
+     *
+     * Listener parameters:
      *
      * - `details`: TODO
      *
@@ -127,7 +130,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
     /**
-     * TODO
+     * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
      *
      * @remarks Listener parameters:
      *
