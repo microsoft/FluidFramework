@@ -251,11 +251,11 @@ stages:
             action: 'Run a Docker command'
             customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
-        - task: PublishBuildArtifacts@1
+        - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
           inputs:
-            PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
-            ArtifactName: pack
+            targetPath: '$(System.DefaultWorkingDirectory)/pack'
+            artifactName: pack
             publishLocation: 'Container'
 
       # Lint
