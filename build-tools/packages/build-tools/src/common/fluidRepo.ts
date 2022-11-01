@@ -19,12 +19,12 @@ export interface IPackageManifest {
             [key: string]: ScriptDependencies;
         };
     };
-    additionalLockfilePaths?: string[];
     generatorName?: string;
     policy?: PolicyConfig;
 }
 
 export interface PolicyConfig {
+    additionalLockfilePaths?: string[];
     dependencies?: {
         requireTilde?: string[];
     };
