@@ -148,7 +148,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public getFieldPath(): FieldUpPath {
-        assert(this.mode === CursorLocationType.Fields, 0x443 /* must be in fields mode */);
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         return {
             field: this.getFieldKey(),
             parent: this.getOffsetPath(1),
@@ -161,8 +161,8 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
             return undefined; // At root
         }
 
-        assert(length > 0, 0x444 /* invalid offset to above root */);
-        assert(length % 2 === 0, 0x445 /* offset path must point to node not field */);
+        assert(length > 0, "invalid offset to above root");
+        assert(length % 2 === 0, "offset path must point to node not field");
 
         // Perf Note:
         // This is O(depth) in tree.
