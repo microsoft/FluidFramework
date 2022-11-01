@@ -857,5 +857,13 @@ export const shortCodeMap = {
     "0x43f": "Cursor must be current to be used",
     "0x440": "Cursor must be current to be used",
     "0x441": "Cursor must be current to be used",
-    "0x442": "No data store retrieved with specified id"
+    "0x442": "No data store retrieved with specified id",
+    "0x443": "must be in fields mode",
+    "0x444": "invalid offset to above root",
+    "0x445": "offset path must point to node not field",
+    "0x446": "must be in nodes mode",
+    "0x447": "must be in fields mode",
+    "0x448": "A child node must exist at index to get it without unwrapping.",
+    "0x449": "Cursor must be current to be used",
+    "0x44a": "Cursor must be current to be used"
 };
