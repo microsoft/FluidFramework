@@ -211,7 +211,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
     // @internal (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(op: any): unknown;
     clear(): void;
     countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;

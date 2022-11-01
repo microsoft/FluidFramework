@@ -7,7 +7,7 @@ import { brand, Brand, Invariant } from "../util";
 import { AnchorSet } from "../tree";
 
 /**
- * A way to refer to a particular revision within a given {@link Rebaser} instance.
+ * A way to refer to a particular revision within a given `Rebaser` instance.
  */
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
@@ -107,8 +107,7 @@ export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>
 /**
  * Rebasing logic for a particular kind of change.
  *
- * This interface is designed to be easy to implement.
- * Use {@link Rebaser} for an ergonomic wrapper around this.
+ * This interface is used to provide rebase policy to `Rebaser`.
  *
  * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
  * - `compose([])` is the identity element.
@@ -151,7 +150,7 @@ export interface ChangeRebaser<TChangeset> {
      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
      * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeset): TChangeset;
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -167,12 +166,21 @@ export interface ChangeRebaser<TChangeset> {
      * - `rebase(a, compose([]))` is equal to `a`.
      * - `rebase(compose([]), a)` is equal to `a`.
      */
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+}
+
+export interface TaggedChange<TChangeset> {
+    readonly revision: RevisionTag | undefined;
+    readonly change: TChangeset;
+}
+
+export function makeAnonChange<T>(change: T): TaggedChange<T> {
+    return { revision: undefined, change };
 }
 
 export interface FinalChange {
