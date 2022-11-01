@@ -10,6 +10,7 @@ import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { options } from "../fluidBuild/options";
+import { IPackageManifest } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import {
@@ -64,13 +65,7 @@ export interface IPackage {
     cpu: string[];
     [key: string]: any;
 
-    fluidBuild?: {
-        buildDependencies: {
-            merge?: {
-                [key: string]: ScriptDependencies;
-            };
-        };
-    };
+    fluidBuild?: IPackageManifest;
 }
 
 export class Package {

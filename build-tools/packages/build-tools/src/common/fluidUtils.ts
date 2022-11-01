@@ -8,7 +8,7 @@ import * as path from "path";
 import { commonOptions } from "./commonOptions";
 import { IPackageManifest } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+import { existsSync, lookUpDirAsync, readJsonAsync, readJsonSync, realpathAsync } from "./utils";
 
 const { verbose } = defaultLogger;
 
@@ -103,6 +103,10 @@ export async function getResolvedFluidRoot() {
 }
 
 export function getPackageManifest(rootDir: string): IPackageManifest {
-    const pkgString = fs.readFileSync(`${rootDir}/package.json`);
-    return JSON.parse(pkgString as any).fluidBuild;
+    const jsonPath = path.join(rootDir, "package.json");
+    if (!existsSync(jsonPath)) {
+        throw new Error(`Root package.json not found in: ${rootDir}`);
+    }
+    const pkgJson = readJsonSync(jsonPath);
+    return pkgJson?.fluidBuild;
 }

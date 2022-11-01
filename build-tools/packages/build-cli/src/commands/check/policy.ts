@@ -284,8 +284,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
         try {
             this.routeToHandlers(filePath, handlerRegex, handlers);
-        } catch {
-            throw new Error("Line error");
+        } catch (error: any) {
+            throw new Error(`Line error: ${error}`);
         }
 
         CheckPolicy.processed++;

@@ -7,14 +7,26 @@ import * as path from "path";
 import { getPackageManifest } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
-import { Package, Packages } from "./npmPackage";
+import { Package, Packages, ScriptDependencies } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 
 export interface IPackageManifest {
     repoPackages: {
         [name: string]: IFluidRepoPackageEntry;
     };
+    buildDependencies?: {
+        merge?: {
+            [key: string]: ScriptDependencies;
+        };
+    };
     generatorName?: string;
+    policy?: PolicyConfig;
+}
+
+export interface PolicyConfig {
+    dependencies?: {
+        requireTilde?: string[];
+    };
 }
 
 export interface IFluidRepoPackage {

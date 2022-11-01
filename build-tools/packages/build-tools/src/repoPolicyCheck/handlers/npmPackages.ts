@@ -13,6 +13,8 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
+import { IPackageManifest } from "../../common/fluidRepo";
+import { getPackageManifest } from "../../common/fluidUtils";
 import { IPackage } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
@@ -31,19 +33,14 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * An array of dependencies that should always use tilde dependency ranges instead of caret.
  */
-const tildeDependencies = [
-    "@typescript-eslint/eslint-plugin",
-    "@typescript-eslint/parser",
-    "eslint-config-prettier",
-    "eslint-plugin-eslint-comments",
-    "eslint-plugin-import",
-    "eslint-plugin-unicorn",
-    "eslint-plugin-unused-imports",
-    "eslint",
-    "prettier",
-    "typescript",
-    "webpack-dev-server",
-];
+let _tildeDependencies: string[] | undefined;
+
+const getTildeDependencies = (manifest: IPackageManifest | undefined) => {
+    if (_tildeDependencies === undefined) {
+        _tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
+    }
+    return _tildeDependencies;
+};
 
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
@@ -499,7 +496,7 @@ export const handlers: Handler[] = [
     {
         name: "npm-package-json-lint",
         match,
-        handler: (file) => {
+        handler: (file, root) => {
             let jsonStr: string;
             let json: IPackage;
             try {
@@ -512,6 +509,8 @@ export const handlers: Handler[] = [
             const ret: string[] = [];
 
             const { dependencies, devDependencies } = json;
+            const manifest = getPackageManifest(root);
+            const tildeDependencies = getTildeDependencies(manifest);
             if (dependencies !== undefined) {
                 for (const [dep, ver] of Object.entries(json.dependencies)) {
                     if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
