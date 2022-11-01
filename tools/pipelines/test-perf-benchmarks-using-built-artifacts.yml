@@ -351,7 +351,7 @@ stages:
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
 
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
 
           # Run performance tests
           # - Add custom npm feeds to the tool's .npmrc file
