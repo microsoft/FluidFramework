@@ -5,6 +5,7 @@
 
 module.exports = {
     ...require("@fluidframework/build-common/prettier.config.cjs"),
+    useTabs: false, // build-common 1.2.0, change to true when prettier config is applied globally
     importOrder: [
         "^node:(.*)$", // Special-case `node:` imports
         "<THIRD_PARTY_MODULES>",
