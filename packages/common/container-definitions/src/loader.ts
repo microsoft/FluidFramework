@@ -368,17 +368,29 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Provides the current state of the container's connection to the ordering service
+     * Provides the current state of the container's connection to the ordering service.
+     *
+     * @remarks Consumers can listen for state changes via the "connected" and "disconnected" events.
      */
     readonly connectionState: ConnectionState;
 
     /**
-     * Attempts to connect the container to the delta stream and process ops
+     * Attempts to connect the container to the delta stream and process ops.
+     *
+     * @remarks
+     *
+     * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Connected}, and the
+     * "connected" event will be fired if/when connection succeeds.
      */
     connect(): void;
 
     /**
-     * Disconnects the container from the delta stream and stops processing ops
+     * Disconnects the container from the delta stream and stops processing ops.
+     *
+     * @remarks
+     *
+     * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Disconnected}, and the
+     * "disconnected" event will be fired when disconnection completes.
      */
     disconnect(): void;
 
@@ -391,7 +403,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * The server provided ID of the client.
      *
      * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).Connected},
-     * otherwise undefined.
+     * otherwise will be `undefined`.
      */
     readonly clientId?: string | undefined;
 

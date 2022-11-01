@@ -67,20 +67,12 @@ export interface IDeltaSender {
 /* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaManagerEvents extends IEvent {
     /**
-     * TODO
-     *
-     * @remarks Listener parameters:
-     *
-     * - `messageBuffer`: TODO
+     * @deprecated No replacement API intended.
      */
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
 
     /**
-     * TODO
-     *
-     * @remarks Listener parameters:
-     *
-     * - `message`: TODO
+     * @deprecated No replacement API intended.
      */
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
 
