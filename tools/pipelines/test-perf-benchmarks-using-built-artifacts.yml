@@ -367,14 +367,6 @@ stages:
                 ls -la;
                 npm run test:benchmark:report;
 
-          # - task: Npm@1
-          #   displayName: 'Consolidate output files - execution time'
-          #   inputs:
-          #     command: 'custom'
-          #     workingDir: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
-          #     customCommand: 'run test:benchmark:copyresults' # grab this script and write it as a bash file and then manually call that script
-          #   # modification is probably "look at node_modules for blah"
-
           - task: CopyFiles@2
             displayName: 'Consolidate output files - execution time'
             inputs:
