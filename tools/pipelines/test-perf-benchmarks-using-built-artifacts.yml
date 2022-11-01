@@ -245,7 +245,6 @@ stages:
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 ls -la;
-                npm run build;
                 npm run build:test;
                 npm run test:memory-profiling:report;
 
