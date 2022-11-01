@@ -255,15 +255,15 @@ describe("internalScheme", () => {
         });
 
         it("caret ^ dependency equivalent for prerelease/dev versions", () => {
-            const input = `2.0.0-dev.3.1.0.105091`;
-            const expected = `>=2.0.0-dev.3.1.0.105091 <2.0.0-dev.4.0.0`;
+            const input = `2.0.0-dev.3.0.0.105091`;
+            const expected = `>=2.0.0-dev.3.0.0.105091 <2.0.0-dev.4.0.0`;
             const range = getVersionRange(input, "^");
             assert.strictEqual(range, expected);
         });
 
         it("tilde ~ dependency equivalent for prerelease/dev versions", () => {
             const input = `2.0.0-dev.3.1.0.105091`;
-            const expected = `>=2.0.0-dev.3.1.0.105091 <2.0.0-dev.3.1.0`;
+            const expected = `>=2.0.0-dev.3.1.0.105091 <2.0.0-dev.3.2.0`;
             const range = getVersionRange(input, "~");
             assert.strictEqual(range, expected);
         });

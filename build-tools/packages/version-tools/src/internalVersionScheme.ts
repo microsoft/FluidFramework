@@ -173,12 +173,16 @@ export function validateVersionScheme(
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
-    if(parsedVersion.prerelease.length === 0) {
+    if (parsedVersion.prerelease.length === 0) {
         throw new Error(`No prerelease section in ${version}`);
     }
 
-    if(typeof parsedVersion.prerelease[0] !== "string") {
-        throw new TypeError(`Expected a string; found a ${typeof parsedVersion.prerelease[0]} instead: ${parsedVersion.prerelease[0]}`);
+    if (typeof parsedVersion.prerelease[0] !== "string") {
+        throw new TypeError(
+            `Expected a string; found a ${typeof parsedVersion.prerelease[0]} instead: ${
+                parsedVersion.prerelease[0]
+            }`,
+        );
     }
 
     if (prereleaseIdentifier !== undefined) {
@@ -280,7 +284,14 @@ export function bumpInternalVersion(
 ): semver.SemVer {
     validateVersionScheme(version, true, undefined);
     const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
-    const newIntVer = bumpType === "current" ? intVer : intVer.inc(bumpType);
+
+    const newIntVer =
+        bumpType === "current"
+            ? intVer
+            : semver.inc(`${intVer.major}.${intVer.minor}.${intVer.patch}`, bumpType);
+
+    assert(newIntVer !== null, `newIntVer should not be null: ${version}`);
+
     return toInternalScheme(pubVer, newIntVer, true, prereleaseId);
 }
 
