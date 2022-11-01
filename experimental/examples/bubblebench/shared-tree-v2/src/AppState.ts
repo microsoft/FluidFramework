@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IAppState, makeBubble } from "@fluid-example/bubblebench-common";
+import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
 import { brand, ISharedTree, JsonableTree } from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
@@ -54,7 +54,7 @@ export class AppState implements IAppState {
                 clientId: [
                     { type: stringSchema.name, value: `${Math.random()}` },
                 ],
-                color: [{ type: stringSchema.name, value: "red" }], // TODO: repalce with common random color method
+                color: [{ type: stringSchema.name, value: randomColor() }],
                 bubbles: [],
             },
         };
@@ -70,7 +70,7 @@ export class AppState implements IAppState {
                     y: [{ type: int32Schema.name, value: bubble.y }],
                     r: [{ type: int32Schema.name, value: bubble.r }],
                     vx: [{ type: int32Schema.name, value: bubble.vx }],
-                    vy: [{ type: int32Schema.name, value: bubble.y }],
+                    vy: [{ type: int32Schema.name, value: bubble.vy }],
                 },
             });
         }

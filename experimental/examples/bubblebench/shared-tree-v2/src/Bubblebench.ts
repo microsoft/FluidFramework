@@ -27,7 +27,7 @@ export class Bubblebench extends DataObject {
     protected async initializingFirstTime() {
         this.maybeTree = Bubblebench.treeFactory.create(
             this.runtime,
-            "bubbleBench",
+            Math.random().toString(),
         ); // Is this correct?
 
         // initialize the schema of the shared tree to that of the Bubblebench AppState
@@ -50,14 +50,15 @@ export class Bubblebench extends DataObject {
             return TransactionResult.Apply;
         });
 
-        this.root.set("bubbleBench", this.maybeTree.handle);
+        // This line will fail with the error 0x17b /* "Channel to be binded should be in not bounded set" */);
+        // this.root.set("tree-v2", this.maybeTree.handle);
     }
 
     // What is the replacement for this method?
     protected async initializingFromExisting() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.maybeTree = await this.root
-            .get<IFluidHandle<ISharedTree>>("bubbleBench")!
+            .get<IFluidHandle<ISharedTree>>("tree-v2")!
             .get();
     }
 

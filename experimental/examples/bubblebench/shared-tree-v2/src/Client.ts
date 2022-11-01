@@ -62,7 +62,7 @@ export class Client implements IClient {
                 y: [{ type: int32Schema.name, value: bubble.y }],
                 r: [{ type: int32Schema.name, value: bubble.r }],
                 vx: [{ type: int32Schema.name, value: bubble.vx }],
-                vy: [{ type: int32Schema.name, value: bubble.y }],
+                vy: [{ type: int32Schema.name, value: bubble.vy }],
             },
         };
         this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
