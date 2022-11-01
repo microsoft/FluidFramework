@@ -155,7 +155,7 @@ Revision | Root Chunk Key
 1        | A'
 2        | A''
 
-This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous version and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine).
+This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision.
 
 ### Sparse Root Updates
 
@@ -180,10 +180,10 @@ Now, a client most upload chunks only four times. To produce revision 1 from rev
 
 This scheme can be optimized by changing the frequency of chunk uploads. Rather than every five, it might be every 100 or 1000. An application or heuristic can choose this frequency based on the complexity of its edits and the performance characteristics that it desires.
 
-> This strategy feels analogous to the runtime's summarization process; every so often a "checkpoint" is uploaded. Catching up to a midpoint between checkpoints involves "playing back" intermediate edits. So, why not simply do the chunk uploads at summarization time? There are a few reasons:
+> This strategy feels analogous to the runtime's summarization process. Every so often a "checkpoint" is uploaded and catching up to a midpoint between checkpoints involves "playing back" intermediate edits. So, why not simply do the chunk uploads at summarization time? There are a few reasons:
     1. Summarization frequency cannot be controlled or tuned by a DDS, so SharedTree cannot choose the upload frequency that is best for its document.
-    2. It might take too long to upload all the changed chunks, and the summary's timeout will be exceeded
-    3. When the upload finishes, all other clients need to be notified via an op that they can safely update their state to match the new uploaded state (e.g. update their chunks stored in memory, evict any caches that are now stale, etc.). Sending an op from the summary client is disallowed/discouraged.
+    2. It might take too long to upload all the changed chunks, and the summary's timeout will be exceeded.
+    3. When the upload finishes, all other clients should to be notified via an op that they can safely update their state to match the new uploaded state (e.g. update their chunks stored in memory, evict any caches that are now stale, etc.). Sending an op from the summarizing client is disallowed/discouraged.
 
 ### Random Reads
 
@@ -214,7 +214,7 @@ Given a path to a node in Chunk C (and starting at the root), a query will only 
 
 > Leaf nodes in the logical tree are both the farthest nodes from the root as well as the location where applications typically store most of their data.
 
-Deeper trees are more problematic:
+Deeper, narrower trees are more problematic:
 
 ```mermaid
 graph TD;
@@ -235,11 +235,13 @@ Even though this tree has the same number of chunks as the tree above, it takes 
 
 ### Implementing a Random Read
 
-The implementation of a random read operation could simply parse the path and walk from the root of the tree down to the target node. But as demonstrated above, this scales poorly for very deep trees, because the walk must download every chunk along the path down through the tree. As the operation descends, it will hit a chunk boundary every so often (depending on the average chunk size) and must wait for a download every time. The number of downloads is the depth of the target node divided by the average height of a chunk (a constant), so in the worst case (a leaf node) this is an O(D) operation where D is the depth of the tree. In terms of nodes, it's O(N) where N is the number of nodes in the tree since we can't assume anything about the shape of the tree.
+The implementation of a random read operation could simply parse the path and walk from the root of the tree down to the target node. But as demonstrated above, this scales poorly for very deep trees, because the walk must download every chunk along the path down through the tree. As the operation descends, it will hit a chunk boundary every so often (depending on the average chunk size) and must wait for a download every time. The number of downloads is the depth of the target node divided by the average height of a chunk (a constant), so in the worst case (a leaf node) this is an `O(D)` operation where D is the depth of the tree. In terms of nodes, it's `O(N)` where N is the number of nodes in the tree since we can't assume anything about the shape of the tree.
 
-The complexity for write operations is analogous. Changing the value of a node in the tree must rewrite the entire spine of chunks and blobs above, as previously discussed. So a write must upload just as many blobs as a read must download and has the same runtime O(D).
+### Write Amplification
 
-The next sections will explore some ways of organizing the tree data such that both reads and writes can be reduced to O(log(D)) for any shape of tree.
+The complexity for write operations is analogous to reads. Changing the value of a node in the tree must rewrite the entire spine of chunks and blobs above, as previously discussed. So a write must upload just as many blobs as a read must download and has the same runtime `O(D)` and `O(N)`.
+
+The next sections will explore some ways of organizing the tree data such that both reads and writes can be bounded to `O(log(D))` for any shape of tree.
 
 ### Path-Based B-Tree
 
@@ -249,8 +251,9 @@ Consider a tree and the paths of each of its nodes:
 
 ```mermaid
 graph TD;
-    A--edge 1-->B;
-    A--edge 2-->C--edge 3-->D;
+    A--1-->B;
+    A--2-->C--3-->D--4-->E;
+    D--5-->F;
 ```
 
  Node | Path
@@ -259,20 +262,20 @@ graph TD;
    B  | "1"
    C  | "2"
    D  | "2/3"
+   E  | "2/3/4"
+   F  | "2/3/5"
 
-Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D]` (an in-order traversal of the tree).
+Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D, E, F]` (an in-order traversal of the tree).
 
 > Other sorts are possible too, but this one allows for some helpful optimizations in the B-tree itself (see Potential Optimizations below).
 
-The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk:
+The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk (in this case, every two):
 
 Chunk | Nodes
 ------|------
-1     | [A]
-2     | [B, C]
-3     | [D]
-
-> Chunk 2 has more nodes than Chunks 1 and 3 because the contents of nodes A and D are larger than those of B and C.
+1     | [A, B]
+2     | [C, D]
+3     | [E, F]
 
 TODO: specify exactly where chunks are (don't forget interior nodes)
 
