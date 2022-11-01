@@ -212,6 +212,10 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     /**
      * TODO
+     *
+     * @remarks Listener parameters:
+     *
+     * - `task`: TODO.
      */
     (event: "push", listener: (task: T) => void);
 
@@ -220,9 +224,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `message`: The op that was processed.
-     *
-     * @internal
+     * - `task`: TODO.
      */
     (event: "op", listener: (task: T) => void);
 

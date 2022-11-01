@@ -211,7 +211,6 @@ export interface IContainerEvents extends IEvent {
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "warning", listener: (error: ContainerWarning) => void): any;
-    // @internal
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
@@ -290,7 +289,6 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 // @public
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void): any;
-    // @internal
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
