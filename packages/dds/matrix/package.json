@@ -32,7 +32,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "postpack": "cd src/test && tar -cvf ../matrix.test-files.tar ./test",
+    "postpack": "cd src && tar -cvf ../matrix.test-files.tar ./test",
     "stress": "mocha --recursive dist/test/**/*.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --fgrep stress-loop",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml --exit",
