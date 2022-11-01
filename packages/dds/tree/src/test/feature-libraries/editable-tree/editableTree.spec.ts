@@ -103,6 +103,10 @@ describe("editable-tree", () => {
             const descriptor = Object.getOwnPropertyDescriptor(proxy, key);
             assert(descriptor !== undefined);
             let expected = proxy[fieldKey];
+            // This block is not needed for the test.
+            // It reveals the values of non-primitive nodes,
+            // which are otherwise "hidden" behind a proxy.
+            // Usefull for debugging.
             if (isUnwrappedNode(descriptor.value)) {
                 descriptor.value = clone(descriptor.value);
                 expected = clone(expected);
