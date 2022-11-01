@@ -92,8 +92,6 @@ export interface IDeltaManagerEvents extends IEvent {
      * - `message`: The op that was processed.
      *
      * - `processingTime`: TODO
-     *
-     * @internal
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
