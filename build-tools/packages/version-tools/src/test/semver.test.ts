@@ -12,6 +12,8 @@ import {
     isPrereleaseVersion,
 } from "../semver";
 
+import { isTestVersion } from "../testScheme";
+
 describe("semver", () => {
     describe("detect constraint types", () => {
         it("patch constraint", () => {
@@ -673,6 +675,14 @@ describe("semver", () => {
         it("2.0.0-internal.1.0.0.2345 = true", () => {
             const input = `2.0.0-internal.1.0.0.2345`;
             const result = isPrereleaseVersion(input);
+            assert.isTrue(result);
+        });
+    });
+
+    describe("isTestVersion", () => {
+        it("0.0.0-105091-test = true", () => {
+            const input = `0.0.0-105091-test`;
+            const result = isTestVersion(input);
             assert.isTrue(result);
         });
     });
