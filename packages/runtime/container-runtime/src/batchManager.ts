@@ -29,10 +29,10 @@ export class BatchManager {
     private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
 
+    public get empty() { return this.pendingBatch.length === 0; }
     public get length() { return this.pendingBatch.length; }
-    public get limit() { return this.options.hardLimit; }
 
-    constructor(private readonly options: IBatchManagerOptions) { }
+    constructor(public readonly options: IBatchManagerOptions) { }
 
     public push(message: BatchMessage): boolean {
         this.checkReferenceSequenceNumber(message);
@@ -54,7 +54,7 @@ export class BatchManager {
             return false;
         }
 
-        if (socketMessageSize >= this.limit) {
+        if (socketMessageSize >= this.options.hardLimit) {
             return false;
         }
 
@@ -62,8 +62,6 @@ export class BatchManager {
         this.pendingBatch.push(message);
         return true;
     }
-
-    public get empty() { return this.pendingBatch.length === 0; }
 
     public popBatch() {
         const batch = this.pendingBatch;

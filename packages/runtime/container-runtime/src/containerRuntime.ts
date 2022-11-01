@@ -2746,7 +2746,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             {
                                 opSize: message.contents.length,
                                 count: this.pendingAttachBatch.length,
-                                limit: this.pendingAttachBatch.limit,
+                                limit: this.pendingAttachBatch.options.hardLimit,
                             });
                     }
                 }
@@ -2758,7 +2758,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         {
                             opSize: message.contents.length,
                             count: this.pendingBatch.length,
-                            limit: this.pendingBatch.limit,
+                            limit: this.pendingBatch.options.hardLimit,
                         });
                 }
                 if (!this.currentlyBatching()) {

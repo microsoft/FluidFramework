@@ -95,6 +95,10 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_MockLogger": {
+        "forwardCompat": false
+      }
+    }
   }
 }
