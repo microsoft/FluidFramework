@@ -89,7 +89,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * - `message`: The op that was processed.
      *
-     * - `processingTime`: TODO
+     * - `processingTime`: TODO (also specify units)
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
@@ -103,7 +103,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `latency`: TODO
+     * - `latency`: TODO (also specify units)
      *
      * @internal
      */
