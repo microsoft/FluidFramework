@@ -3,15 +3,44 @@
  * Licensed under the MIT License.
  */
 import { unlinkSync } from "fs";
-import { EOL as newline } from "os";
 import path from "path";
 
+import { IFluidRepoPackageEntry, IPackageManifest } from "../../common/fluidRepo";
 import { getPackageManifest } from "../../common/fluidUtils";
 import { Handler, readFile } from "../common";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
 const versionPattern = /"lockfileVersion"\s*:\s*\b1\b/g;
+
+let _knownPaths: string[] | undefined;
+
+const getKnownPaths = (manifest: IPackageManifest) => {
+    if (_knownPaths === undefined) {
+        // Add the root path (.) because a lockfile is expected there
+        _knownPaths = ["."];
+
+        // Add additional paths from the manifest
+        _knownPaths.push(...(manifest.additionalLockfilePaths ?? []));
+
+        // Add paths to known monorepos and packages
+        const vals = Object.values(manifest.repoPackages).filter(
+            (p) => typeof p === "string",
+        ) as string[];
+        _knownPaths.push(...vals);
+
+        // Add paths from entries that are arrays
+        const arrayVals = Object.values(manifest.repoPackages).filter(
+            (p) => typeof p !== "string",
+        ) as IFluidRepoPackageEntry[];
+        for (const arr of arrayVals) {
+            if (Array.isArray(arr)) {
+                _knownPaths.push(...arr.map((p) => p.toString()));
+            }
+        }
+    }
+    return _knownPaths;
+};
 
 export const handlers: Handler[] = [
     {
@@ -56,69 +85,31 @@ export const handlers: Handler[] = [
         match: lockFilePattern,
         handler: (file, root) => {
             const manifest = getPackageManifest(root);
-            // Add the root path (.) because a lockfile is expected there
-            const knownPaths: string[] = (manifest.additionalLockfilePaths ?? []).concat(".");
+            const knownPaths: string[] = getKnownPaths(manifest);
 
-            // Add paths to known monorepos and packages
-            const vals = Object.values(manifest.repoPackages)
-                .filter((p) => typeof p === "string")
-                .map((p) => p.toString());
-            knownPaths.push(...vals);
-
-            // Add paths from entries that are arrays
-            const arrayVals = Object.values(manifest.repoPackages)
-                .filter((p) => typeof p !== "string")
-                .map((p) => p);
-            for (const arr of arrayVals) {
-                if (Array.isArray(arr)) {
-                    knownPaths.push(...arr.map((p) => p.toString()));
-                }
-            }
-
-            const returnData: string[] = [];
             if (path.basename(file) === "package-lock.json") {
                 if (!knownPaths.includes(path.dirname(file))) {
-                    returnData.push(`Unexpected package-lock.json file at: ${file}`);
+                    return `Unexpected package-lock.json file at: ${file}`;
                 }
-            }
-
-            if (returnData.length > 1) {
-                return `${returnData.join(newline)}`;
-            } else if (returnData.length === 1) {
-                return returnData[0];
             }
 
             return undefined;
         },
         resolver: (file, root): { resolved: boolean; message?: string } => {
             const manifest = getPackageManifest(root);
-            // Add the root path (.) because a lockfile is expected there
-            const knownPaths: string[] = (manifest.additionalLockfilePaths ?? []).concat(".");
-
-            // Add paths to known monorepos and packages
-            const vals = Object.values(manifest.repoPackages)
-                .filter((p) => typeof p === "string")
-                .map((p) => p.toString());
-            knownPaths.push(...vals);
-
-            // Add paths from entries that are arrays
-            const arrayVals = Object.values(manifest.repoPackages)
-                .filter((p) => typeof p !== "string")
-                .map((p) => p);
-            for (const arr of arrayVals) {
-                if (Array.isArray(arr)) {
-                    knownPaths.push(...arr.map((p) => p.toString()));
-                }
-            }
+            const knownPaths: string[] = getKnownPaths(manifest);
 
             if (path.basename(file) === "package-lock.json") {
                 if (!knownPaths.includes(path.dirname(file))) {
                     unlinkSync(file);
-                    return {resolved: true, message: `Deleted unexpected package-lock.json file at: ${file}`};
+                    return {
+                        resolved: true,
+                        message: `Deleted unexpected package-lock.json file at: ${file}`,
+                    };
                 }
             }
 
-            return {resolved: true};
+            return { resolved: true };
         },
     },
 ];
