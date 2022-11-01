@@ -313,7 +313,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly closed: boolean;
 
     /**
-     * Whether or not there there are any local changes that have not been saved.
+     * Whether or not there are any local changes that have not been saved.
      *
      * @remarks
      *
