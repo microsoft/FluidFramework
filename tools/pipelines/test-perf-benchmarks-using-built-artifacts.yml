@@ -168,120 +168,121 @@ stages:
                 SourceBranch=$(Build.SourceBranch)
               "
 
-        # - ${{ each testPackage in parameters.memoryTestPackages }}:
+        - ${{ each testPackage in parameters.memoryTestPackages }}:
 
-        #   # Download package artifacts
-        #   - task: DownloadPipelineArtifact@2
-        #     displayName: Download test package
-        #     inputs:
-        #       source: specific
-        #       project: internal
-        #       pipeline: ${{ variables.artifactPipeline }}
-        #       preferTriggeringPipeline: true
-        #       allowPartiallySucceededBuilds: true
-        #       runVersion: latestFromBranch
-        #       runBranch: $(Build.SourceBranch)
-        #       artifact: pack
-        #       patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
-        #       path: $(Pipeline.Workspace)/client/pack
+          # Download package artifacts
+          - task: DownloadPipelineArtifact@2
+            displayName: Download test package
+            inputs:
+              source: specific
+              project: internal
+              pipeline: ${{ variables.artifactPipeline }}
+              preferTriggeringPipeline: true
+              allowPartiallySucceededBuilds: true
+              runVersion: latestFromBranch
+              runBranch: $(Build.SourceBranch)
+              artifact: pack
+              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              path: $(Pipeline.Workspace)/client/pack
 
-        #   # Install test package
-        #   - task: Bash@3
-        #     displayName: Install Test Package
-        #     inputs:
-        #       targetType: 'inline'
-        #       workingDirectory: ${{ variables.testWorkspace }}
-        #       script: |
-        #         TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
-        #         TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
+          # Install test package
+          - task: Bash@3
+            displayName: Install Test Package
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}
+              script: |
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
-        #         echo $TEST_PACKAGE_FILE_PATTERN
-        #         echo $TEST_PACKAGE_PATH_PATTERN
+                echo $TEST_PACKAGE_FILE_PATTERN
+                echo $TEST_PACKAGE_PATH_PATTERN
 
-        #         echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-        #         echo `ls $TEST_PACKAGE_PATH_PATTERN`
+                echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
+                echo `ls $TEST_PACKAGE_PATH_PATTERN`
 
-        #         if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-        #           TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-        #         else
-        #           ls -1 $TEST_PACKAGE_PATH_PATTERN
-        #           echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
-        #         fi
+                if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
+                else
+                  ls -1 $TEST_PACKAGE_PATH_PATTERN
+                  echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
+                fi
 
-        #         npm install $TEST_PACKAGE_TGZ
+                npm install $TEST_PACKAGE_TGZ
 
-        #   # Download Test Files
-        #   # Download Artifact - Test Files
-        #   - task: DownloadPipelineArtifact@2
-        #     displayName: Download test files
-        #     inputs:
-        #       source: specific
-        #       project: internal
-        #       pipeline: ${{ variables.artifactPipeline }}
-        #       preferTriggeringPipeline: true
-        #       allowPartiallySucceededBuilds: true
-        #       runVersion: latestFromBranch
-        #       runBranch: $(Build.SourceBranch)
-        #       artifact: test-files
-        #       path: $(Pipeline.Workspace)/test-files
+          # Download Test Files
+          # Download Artifact - Test Files
+          - task: DownloadPipelineArtifact@2
+            displayName: Download test files
+            inputs:
+              source: specific
+              project: internal
+              pipeline: ${{ variables.artifactPipeline }}
+              preferTriggeringPipeline: true
+              allowPartiallySucceededBuilds: true
+              runVersion: latestFromBranch
+              runBranch: $(Build.SourceBranch)
+              artifact: test-files
+              path: $(Pipeline.Workspace)/test-files
 
-        #   # Unpack test files
-        #   - task: Bash@3
-        #     displayName: Unpack test files
-        #     inputs:
-        #       targetType: 'inline'
-        #       script: |
-        #         TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
-        #         mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-        #         tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-        #         mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+          # Unpack test files
+          - task: Bash@3
+            displayName: Unpack test files
+            inputs:
+              targetType: 'inline'
+              script: |
+                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
+                mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+                tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
+                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
 
-        #   - task: Bash@3
-        #     displayName: 'Run memory performance test'
-        #     inputs:
-        #       targetType: 'inline'
-        #       workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-        #       script: |
-        #         cp ${{ variables.testWorkspace }}/.npmrc . ;
-        #         npm i ;
-        #         npm run test:memory-profiling:report;
+          - task: Bash@3
+            displayName: 'Run memory performance test'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              script: |
+                cp ${{ variables.testWorkspace }}/.npmrc . ;
+                npm i ;
+                npm run build;
+                npm run test:memory-profiling:report;
 
-        #   - task: Bash@3
-        #     displayName: 'Log out memory test output work dir'
-        #     inputs:
-        #       targetType: 'inline'
-        #       workingDirectory: $(toolAbsolutePath)
-        #       script: |
-        #         cp ${{ variables.testWorkspace }}/.npmrc . ;
-        #         npm install @ff-internal/aria-logger;
-        #         npm i;
-        #         npm run build:compile;
-        #         ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
-        #         ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
-        #         ls -la;
+          - task: Bash@3
+            displayName: 'Log out memory test output work dir'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                cp ${{ variables.testWorkspace }}/.npmrc . ;
+                npm install @ff-internal/aria-logger;
+                npm i;
+                npm run build:compile;
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
+                ls -la;
 
-        #   - task: CopyFiles@2
-        #     inputs:
-        #       sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
-        #       contents: '**'
-        #       targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
+              contents: '**'
+              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
-        # - task: Bash@3
-        #   displayName: 'Write measurements to Aria/Kusto - memory usage'
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: $(toolAbsolutePath)
-        #     script: |
-        #       ls -la;
-        #       ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
-        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              ls -la;
+              ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
 
-        # - task: PublishPipelineArtifact@1
-        #   displayName: 'Publish Artifact - Perf tests output - memory usage'
-        #   inputs:
-        #     targetPath: '${{ variables.testWorkspace }}/memoryTestsOutput'
-        #     artifactName: 'perf-test-outputs_memory-usage'
-        #     condition: succeededOrFailed()
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Artifact - Perf tests output - memory usage'
+          inputs:
+            targetPath: '${{ variables.testWorkspace }}/memoryTestsOutput'
+            artifactName: 'perf-test-outputs_memory-usage'
+            condition: succeededOrFailed()
 
         - ${{ each execTestPackage in parameters.executionTestPackages }}:
 
