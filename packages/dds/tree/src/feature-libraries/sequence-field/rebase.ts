@@ -51,7 +51,6 @@ function rebaseMarkList<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): MarkList<TNodeChange> {
-    console.debug("Rebasing");
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
@@ -61,13 +60,11 @@ function rebaseMarkList<TNodeChange>(
         let currMark: Mark<TNodeChange> | undefined = currIter.peek();
         let baseMark: Mark<TNodeChange> | undefined = baseIter.peek();
 
-        console.debug("Iterating");
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
                 "Loop condition should prevent both iterators from being empty",
             );
-            console.debug("Processing curr 1");
             if (baseDetachOffset > 0 && isAttach(currMark)) {
                 currIter.pop();
                 handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
@@ -79,7 +76,6 @@ function rebaseMarkList<TNodeChange>(
                 baseMark !== undefined,
                 "Loop condition should prevent both iterators from being empty",
             );
-            console.debug("Processing base 1");
             baseIter.pop();
             if (isRelevantToLineage(baseMark)) {
                 baseDetachOffset += getInputLength(baseMark);
@@ -88,17 +84,14 @@ function rebaseMarkList<TNodeChange>(
             }
         } else if (isAttach(currMark)) {
             if (isAttach(baseMark) && isAttachAfterBaseAttach(currMark, baseMark)) {
-                console.debug("Processing base attach 1");
                 baseIter.pop();
                 factory.pushOffset(getOutputLength(baseMark));
             } else {
-                console.debug("Processing curr attach 1");
                 // TODO: Handle tiebreaking is baseMark is also an attach.
                 currIter.pop();
                 handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
             }
         } else if (isAttach(baseMark)) {
-            console.debug("Processing base attach 2");
             baseIter.pop();
             factory.pushOffset(getOutputLength(baseMark));
         } else {
@@ -107,7 +100,6 @@ function rebaseMarkList<TNodeChange>(
             // Despite that, it's not necessarily true that they affect the same range in that document
             // field because they may be of different lengths.
             // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
-            console.debug("Processing both ranges");
             currIter.pop();
             baseIter.pop();
             const currMarkLength = getInputLength(currMark);
