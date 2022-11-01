@@ -194,7 +194,13 @@ export interface IContainerEvents extends IEvent {
     /**
      * Emitted immediately after processing an incoming operation (op).
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Note: this event is not intended for general use.
+     * Prefer to listen to events on the appropriate ultimate recipients of the ops, rather than listening to the
+     * ops directly on the {@link IContainer}.
+     *
+     * Listener parameters:
      *
      * - `message`: The op that was processed.
      */
