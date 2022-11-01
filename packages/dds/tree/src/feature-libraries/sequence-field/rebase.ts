@@ -136,7 +136,6 @@ function rebaseMarkList<TNodeChange>(
         updateLineage(lineageRequests, baseRevision);
     }
 
-    console.debug("Processing remainder");
     for (const currMark of currIter) {
         factory.push(currMark);
     }
@@ -232,7 +231,6 @@ interface LineageRequest<T> {
 }
 
 function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) {
-    console.debug("Updating lineage");
     for (const request of requests) {
         const mark = request.mark;
         if (mark.lineage === undefined) {
