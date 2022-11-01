@@ -173,6 +173,14 @@ export function validateVersionScheme(
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
+    if(parsedVersion.prerelease.length === 0) {
+        throw new Error(`No prerelease section in ${version}`);
+    }
+
+    if(typeof parsedVersion.prerelease[0] !== "string") {
+        throw new TypeError(`Expected a string; found a ${typeof parsedVersion.prerelease[0]} instead: ${parsedVersion.prerelease[0]}`);
+    }
+
     if (prereleaseIdentifier !== undefined) {
         // the "prerelease identifier" is the first section of the prerelease field
         const prereleaseId = parsedVersion.prerelease[0];

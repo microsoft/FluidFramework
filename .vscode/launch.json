@@ -28,11 +28,11 @@
             ],
             "type": "node",
             "args": [
-                "release",
-                "-g",
+                "bump",
                 "client",
-                "-v",
-                "--no-policyCheck",
+                "--exact",
+                "2.0.0-dev.3.0.0.105091",
+                "-xv",
             ],
         },
         {
