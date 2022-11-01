@@ -35,7 +35,7 @@ export class AnchorSet {
 }
 
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange>;
+type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -424,6 +424,8 @@ interface HasOpId {
 // @public (undocumented)
 interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
+    // (undocumented)
+    lineage?: LineageEvent[];
     tiebreak?: Tiebreak;
 }
 
@@ -633,6 +635,13 @@ export const jsonString: NamedTreeSchema;
 // @public (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
+// @public (undocumented)
+interface LineageEvent {
+    readonly offset: number;
+    // (undocumented)
+    readonly revision: RevisionTag;
+}
+
 // @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
@@ -745,7 +754,7 @@ interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFi
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
@@ -902,7 +911,7 @@ export interface NodeData {
 }
 
 // @public (undocumented)
-type NodeMark = Detach | Reattach;
+type NodeMark = Detach;
 
 // @public (undocumented)
 type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
@@ -972,7 +981,7 @@ enum RangeType {
 }
 
 // @public (undocumented)
-interface Reattach extends HasOpId {
+interface Reattach extends HasOpId, HasPlaceFields {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1062,6 +1071,7 @@ declare namespace SequenceField {
         TreeForestPath,
         TreeRootPath,
         Skip_2 as Skip,
+        LineageEvent,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
@@ -1152,7 +1162,7 @@ export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
 type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
 
 // @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Tomb | Modify_2<TNodeChange> | Detach | Reattach | ModifyReattach<TNodeChange> | ModifyDetach<TNodeChange>;
+type SizedObjectMark<TNodeChange = NodeChangeType> = Tomb | Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
 
 // @public
 type Skip = number;

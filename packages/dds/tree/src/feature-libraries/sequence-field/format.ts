@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree } from "../../core";
+import { JsonableTree, RevisionTag } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
@@ -23,8 +23,6 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Tomb
     | Modify<TNodeChange>
     | Detach
-    | Reattach
-    | ModifyReattach<TNodeChange>
     | ModifyDetach<TNodeChange>;
 
 export interface Tomb {
@@ -59,6 +57,17 @@ export interface HasPlaceFields {
      * Omit if `Tiebreak.Right` for terseness.
      */
     tiebreak?: Tiebreak;
+
+    lineage?: LineageEvent[];
+}
+
+export interface LineageEvent {
+    readonly revision: RevisionTag;
+
+    /**
+     * The position of this mark within the range of detached nodes in this revision
+     */
+    readonly offset: number;
 }
 
 export interface Insert extends HasOpId, HasPlaceFields {
@@ -89,9 +98,11 @@ export type Attach<TNodeChange = NodeChangeType> =
     | Insert
     | ModifyInsert<TNodeChange>
     | MoveIn
-    | ModifyMoveIn<TNodeChange>;
+    | ModifyMoveIn<TNodeChange>
+    | Reattach
+    | ModifyReattach<TNodeChange>;
 
-export type NodeMark = Detach | Reattach;
+export type NodeMark = Detach;
 
 export interface Detach extends HasOpId {
     tomb?: ChangesetTag;
@@ -105,12 +116,13 @@ export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     changes: TNodeChange;
 }
 
-export interface Reattach extends HasOpId {
+// TODO: Reattach and ModifyReattach shouldn't have tiebreak field
+export interface Reattach extends HasOpId, HasPlaceFields {
     type: "Revive" | "Return";
     tomb: ChangesetTag;
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
+export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
     type: "MRevive" | "MReturn";
     tomb: ChangesetTag;
     changes: TNodeChange;

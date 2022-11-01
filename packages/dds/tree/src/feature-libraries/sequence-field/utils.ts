@@ -29,11 +29,12 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
     return (
-        isObjMark(mark) &&
-        (mark.type === "Insert" ||
-            mark.type === "MInsert" ||
-            mark.type === "MoveIn" ||
-            mark.type === "MMoveIn")
+        (isObjMark(mark) &&
+            (mark.type === "Insert" ||
+                mark.type === "MInsert" ||
+                mark.type === "MoveIn" ||
+                mark.type === "MMoveIn")) ||
+        isReattach(mark)
     );
 }
 
@@ -58,10 +59,14 @@ export function getAttachLength(attach: Attach): number {
     switch (type) {
         case "MInsert":
         case "MMoveIn":
+        case "MRevive":
+        case "MReturn":
             return 1;
         case "Insert":
             return attach.content.length;
         case "MoveIn":
+        case "Revive":
+        case "Return":
             return attach.count;
         default:
             unreachableCase(type);
@@ -125,13 +130,9 @@ export function getInputLength(mark: Mark<unknown>): number {
     const type = mark.type;
     switch (type) {
         case "Tomb":
-        case "Revive":
-        case "Return":
         case "Delete":
         case "MoveOut":
             return mark.count;
-        case "MReturn":
-        case "MRevive":
         case "Modify":
         case "MDelete":
         case "MMoveOut":
@@ -172,13 +173,9 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
         case "Modify":
         case "MDelete":
         case "MMoveOut":
-        case "MReturn":
-        case "MRevive":
             fail(`Unable to split ${type} mark of length 1`);
         case "Delete":
         case "MoveOut":
-        case "Return":
-        case "Revive":
         case "Tomb":
             return [
                 { ...markObj, count: length },

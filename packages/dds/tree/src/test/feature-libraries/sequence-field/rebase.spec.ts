@@ -4,8 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import { Delta } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange } from "../../../rebase";
+
+// eslint-disable-next-line import/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field";
+import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -15,10 +19,23 @@ import { cases, TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
+function toDelta(change: TestChangeset): Delta.MarkList {
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+}
+
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
     return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
+}
+
+function rebaseTagged(
+    change: TaggedChange<TestChangeset>,
+    base: TaggedChange<TestChangeset>,
+): TaggedChange<TestChangeset> {
+    deepFreeze(change);
+    deepFreeze(base);
+    return tagChange(SF.rebase(change.change, base, TestChange.rebase), change.revision);
 }
 
 describe("SequenceField - Rebase", () => {
@@ -352,4 +369,50 @@ describe("SequenceField - Rebase", () => {
         ];
         assert.deepEqual(actual, expected);
     });
+
+    it("concurrent inserts ↷ delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const insertB = tagChange(createInsertChangeset(0, 1), brand(2));
+        const insertC = tagChange(createInsertChangeset(1, 1), brand(3));
+        const insertB2 = rebaseTagged(insertB, delA);
+        const insertC2 = rebaseTagged(insertC, delA);
+        const insertC3 = rebaseTagged(insertC2, insertB2);
+        const expected = createInsertChangeset(1, 1);
+        assertDeltaEqual(insertC3.change, expected);
+    });
 });
+
+function assertDeltaEqual(actual: TestChangeset, expected: TestChangeset) {
+    assert.deepEqual(toDelta(actual), toDelta(expected));
+}
+
+function createInsertChangeset(index: number, size: number): TestChangeset {
+    const content = [];
+    while (content.length < size) {
+        content.push({ type, value: content.length });
+    }
+
+    const insertMark: SF.Insert = {
+        type: "Insert",
+        id: 0,
+        content,
+    };
+
+    const factory = new MarkListFactory<TestChange>();
+    factory.pushOffset(index);
+    factory.pushContent(insertMark);
+    return factory.list;
+}
+
+function createDeleteChangeset(startIndex: number, size: number): TestChangeset {
+    const deleteMark: SF.Detach = {
+        type: "Delete",
+        id: 0,
+        count: size,
+    };
+
+    const factory = new MarkListFactory<TestChange>();
+    factory.pushOffset(startIndex);
+    factory.pushContent(deleteMark);
+    return factory.list;
+}
