@@ -74,6 +74,7 @@
     "@fluidframework/build-tools": "^0.5.0",
     "@fluidframework/bundle-size-tools": "^0.5.0",
     "@oclif/core": "^1.9.5",
+    "@oclif/plugin-autocomplete": "^1.3.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
@@ -149,6 +150,7 @@
       "-V"
     ],
     "plugins": [
+      "@oclif/plugin-autocomplete",
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
       "@oclif/plugin-not-found"
