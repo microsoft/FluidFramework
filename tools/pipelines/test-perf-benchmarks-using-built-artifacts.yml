@@ -264,7 +264,7 @@ stages:
             inputs:
               sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
               contents: '**'
-              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ testPackage }}
+              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
