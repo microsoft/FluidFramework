@@ -21,7 +21,7 @@ const getKnownPaths = (manifest: IPackageManifest) => {
         _knownPaths = ["."];
 
         // Add additional paths from the manifest
-        _knownPaths.push(...(manifest.additionalLockfilePaths ?? []));
+        _knownPaths.push(...(manifest.policy?.additionalLockfilePaths ?? []));
 
         // Add paths to known monorepos and packages
         const vals = Object.values(manifest.repoPackages).filter(
