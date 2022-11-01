@@ -11,9 +11,6 @@ export {
     InvalidationToken,
     recordDependency,
     SimpleDependee,
-} from "./dependency-tracking";
-
-export {
     EmptyKey,
     FieldKey,
     TreeType,
@@ -22,6 +19,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -36,15 +34,11 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
-    ITreeCursorNew,
+    ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
     AnchorLocator,
-} from "./tree";
-
-export {
-    ITreeCursor,
     TreeNavigationResult,
     IEditableForest,
     IForestSubscription,
@@ -53,10 +47,6 @@ export {
     ForestLocation,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
-    SynchronousNavigationResult,
-} from "./forest";
-
-export {
     LocalFieldKey,
     GlobalFieldKey,
     TreeSchemaIdentifier,
@@ -71,7 +61,17 @@ export {
     SchemaData,
     SchemaPolicy,
     SchemaDataAndPolicy,
-} from "./schema-stored";
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    ProgressiveEditBuilderBase,
+    ChangeRebaser,
+    ICheckout,
+    TransactionResult,
+    FieldAnchor,
+    RevisionTag,
+    TaggedChange,
+} from "./core";
 
 export {
     Brand,
@@ -94,20 +94,7 @@ export {
 } from "./util";
 
 export {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
-    ProgressiveEditBuilderBase,
-} from "./change-family";
-
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "./rebase";
-
-export { ICheckout, TransactionResult } from "./checkout";
-
-export {
     cursorToJsonObject,
-    JsonCursor,
-    cursorToJsonObjectNew,
     singleJsonCursor,
     jsonArray,
     jsonBoolean,
@@ -120,12 +107,8 @@ export {
 
 export {
     buildForest,
-    TextCursor,
-    jsonableTreeFromCursor,
-    singleTextCursor,
     emptyField,
     neverTree,
-    FieldKinds,
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
@@ -148,6 +131,8 @@ export {
     isNeverField,
     FullSchemaPolicy,
     UnwrappedEditableField,
+    isUnwrappedNode,
+    isEditableField,
     EditableTreeContext,
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
@@ -158,32 +143,15 @@ export {
     getTypeSymbol,
     valueSymbol,
     proxyTargetSymbol,
+    getWithoutUnwrappingSymbol,
     defaultSchemaPolicy,
-    singleTextCursorNew,
-    jsonableTreeFromCursorNew,
+    jsonableTreeFromCursor,
     PrimitiveValue,
-    SequenceEditBuilder,
-    SequenceChangeset,
-    DefaultEditBuilder,
-    DefaultChangeset,
+    IDefaultEditBuilder,
     ValueFieldEditBuilder,
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
     SequenceField,
-    NodePath,
-    PlacePath,
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    OpId,
-    Skip,
-    ChangesetTag,
-    Effects,
-    Tiebreak,
-    ProtoNode,
-    GapCount,
-    HasOpId,
-    NodeCount,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

@@ -112,6 +112,8 @@ stages:
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
           releaseBuildVar: $[variables.releaseBuild]
+          ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+            targetBranchName: $(System.PullRequest.TargetBranch)
         steps:
         # Setup
         - checkout: self
@@ -152,9 +154,13 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
+
+              # Target Branch variable (PR policy related)
+              if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
+                echo "TargetBranchName=$(targetBranchName)"
+              fi
 
               # Error checking
               if [[ "$(release)" == "release" ]]; then
@@ -383,13 +389,11 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
+              TARGET_BRANCH_NAME: ${{ variables.targetBranchName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
-              script: |
-                echo $(System.PullRequest.TargetBranch)
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:

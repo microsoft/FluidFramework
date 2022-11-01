@@ -12,14 +12,14 @@ Checks that the dependencies between Fluid Framework packages are properly layer
 
 ```
 USAGE
-  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+  $ flub check layers --info <value> [--md <value>] [--dot <value>] [--logtime] [-v]
 
 FLAGS
   -v, --verbose   Verbose logging.
   --dot=<value>   Generate *.dot for GraphViz
-  --info=<value>  Path to the layer graph json file
+  --info=<value>  (required) Path to the layer graph json file
   --logtime       Display the current time on every status message for logging
-  --md=<value>    [default: .] Generate PACKAGES.md file at this path relative to repo root
+  --md=<value>    Generate PACKAGES.md file at this path relative to repo root
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
@@ -31,15 +31,18 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
+  $ flub check policy -e <value> [-D <value> | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ] [-v]
 
 FLAGS
-  -d, --handler=<value>     Filter handler names by <regex>
-  -e, --exclusions=<value>  (required) Path to the exclusions.json file
-  -f, --fix                 Fix errors if possible
-  -p, --path=<value>        Filter file paths by <regex>
-  -v, --verbose             Verbose logging.
-  --stdin                   Get file from stdin
+  -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple
+                                   handlers.
+  -d, --handler=<value>            Filter handler names by <regex>.
+  -e, --exclusions=<value>         (required) Path to the exclusions.json file.
+  -f, --fix                        Fix errors if possible.
+  -p, --path=<value>               Filter file paths by <regex>.
+  -v, --verbose                    Verbose logging.
+  --listHandlers                   List all policy handlers by name.
+  --stdin                          Read list of files from stdin.
 
 DESCRIPTION
   Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
