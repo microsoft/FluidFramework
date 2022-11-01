@@ -375,8 +375,8 @@ stages:
           - task: CopyFiles@2
             displayName: 'Consolidate output files - execution time'
             inputs:
-              sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}node_modules/@fluid-tools/benchmark/
-              contents: '**/'
+              sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/node_modules/@fluid-tools/benchmark/
+              contents: '**'
               targetFolder: ${{ variables.testWorkspace }}/benchmarkOutput/${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
         - task: Bash@3
