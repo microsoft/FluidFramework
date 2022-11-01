@@ -161,6 +161,14 @@
           "tinylicious"
         ]
       }
-    }
+    },
+    "additionalLockfilePaths": [
+      "common/build/build-common",
+      "common/build/eslint-config-fluid",
+      "docs",
+      "server/gitrest",
+      "server/historian",
+      "tools/telemetry-generator"
+    ]
   }
 }
