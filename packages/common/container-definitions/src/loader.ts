@@ -183,11 +183,17 @@ export interface IContainerEvents extends IEvent {
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 
     /**
-     * TODO
+     * Emitted when the container encounters a state which may lead to errors, which may be actionable by the consumer.
      *
-     * @remarks Listener parameters:
+     * @remarks
      *
-     * - `error`: TODO
+     * Note: this event is not intended for general use.
+     * The longer-term intention is to surface warnings more directly on the APIs that produce them.
+     * For now, use of this should be avoided when possible.
+     *
+     * Listener parameters:
+     *
+     * - `error`: The warning describing the encountered state.
      */
     (event: "warning", listener: (error: ContainerWarning) => void);
 
