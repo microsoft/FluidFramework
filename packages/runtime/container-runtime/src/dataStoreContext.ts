@@ -547,6 +547,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Update the used routes in this data store's summarizer node.
         this.summarizerNode.updateUsedRoutes(usedRoutes);
 
+        // If a datastore is referenced again, we will untombstone these routes.
+        if (this.tombstoned) {
+            this._tombstoned = false;
+        }
+
         /**
          * Store the used routes to update the channel if the data store is not loaded yet. If the used routes changed
          * since the previous run, the data store will be loaded during summarize since the used state changed. So, it's
