@@ -29,7 +29,7 @@ export const handler: Handler = {
             pkgJson.peerDependencies["fluid-framework"] !==
             pkgJson.peerDependencies["@fluidframework/core-interfaces"]
         ) {
-            return `azure-client peerDependencies are invalid: ${pkgJson.peerDependencies["fluid-framework"]}`;
+            return `azure-client peerDependencies are invalid: fluid-framework = ${pkgJson.peerDependencies["fluid-framework"]} -- expected ${pkgJson.peerDependencies["@fluidframework/core-interfaces"]}`;
         }
 
         return undefined;
