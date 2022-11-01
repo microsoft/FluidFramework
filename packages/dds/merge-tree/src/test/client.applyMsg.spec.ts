@@ -249,7 +249,7 @@ describe("client.applyMsg", () => {
         const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
         clients.forEach((c) => c.applyMsg(initialMsg));
-        logger.validate();
+        logger.validate({ baseText: "-hello world" });
 
         const messages = [
             client.makeOpMessage(client.insertTextLocal(0, "L"), ++seq),
@@ -263,7 +263,7 @@ describe("client.applyMsg", () => {
             clients.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "RLhello world" });
     });
 
     it("intersecting insert after local delete", () => {
@@ -282,7 +282,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "cb" });
     });
 
     it("conflicting insert after shared delete", () => {
@@ -301,7 +301,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "CB" });
     });
 
     it("local remove followed by conflicting insert", () => {
@@ -322,7 +322,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "cb" });
     });
 
     it("intersecting insert with un-acked insert and delete", () => {
@@ -341,7 +341,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "bc" });
     });
 
     it("conflicting insert over local delete", () => {
@@ -360,7 +360,7 @@ describe("client.applyMsg", () => {
             });
         }
         const logger = new TestClientLogger(clients.all);
-        logger.validate();
+        logger.validate({ baseText: "CC" });
 
         messages.push(
             clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq),
@@ -371,7 +371,7 @@ describe("client.applyMsg", () => {
             const msg = messages.shift()!;
             clients.all.forEach((c) => c.applyMsg(msg));
         }
-        logger.validate();
+        logger.validate({ baseText: "CCBBBC" });
     });
 
     it("Local insert after acked local delete", () => {
@@ -401,7 +401,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "CB" });
     });
 
     it("Remote Remove before conflicting insert", () => {
@@ -426,7 +426,7 @@ describe("client.applyMsg", () => {
             clients.all.forEach((c) => c.applyMsg(msg));
         }
 
-        logger.validate();
+        logger.validate({ baseText: "CB" });
     });
 
     it("Conflicting inserts at deleted segment position", () => {
@@ -451,7 +451,7 @@ describe("client.applyMsg", () => {
                     }
                 });
         }
-        logger.validate();
+        logger.validate({ baseText: "ab" });
     });
 
     it("Inconsistent shared string after pausing connection #9703", () => {
@@ -480,7 +480,7 @@ describe("client.applyMsg", () => {
                     }
                 });
         }
-        logger.validate();
+        logger.validate({ baseText: "ayzXd" });
     });
 
     it("regenerate annotate op over removed range", () => {
@@ -653,6 +653,6 @@ describe("client.applyMsg", () => {
             c.applyMsg(op);
         }));
 
-        logger.validate();
+        logger.validate({ baseText: "DDDDDDcbD" });
     });
 });

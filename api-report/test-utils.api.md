@@ -73,6 +73,12 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 // @public (undocumented)
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<ISummarizer>;
 
+// @public (undocumented)
+export function createSummarizerWithContainer(provider: ITestObjectProvider, absoluteUrl: string | undefined, testContainerConfig: ITestContainerConfig, summaryVersion?: string): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
 // @public
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
     new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {

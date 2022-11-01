@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.4.9000",
+  "version": "0.5.0",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -22,7 +22,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:clean:manifest npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:genver && npm run clean:manifest && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "npm run tsc && npm run build:copy",
     "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
     "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
@@ -70,9 +70,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.9000",
-    "@fluidframework/build-tools": "^0.4.9000",
-    "@fluidframework/bundle-size-tools": "^0.4.9000",
+    "@fluid-tools/version-tools": "^0.5.0",
+    "@fluidframework/build-tools": "^0.5.0",
+    "@fluidframework/bundle-size-tools": "^0.5.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",

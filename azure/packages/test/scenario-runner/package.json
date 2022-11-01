@@ -25,7 +25,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "start": "node ./dist/orchestratorRunner.js --config v2",
+    "start": "node ./dist/orchestratorRunner.js --config v1",
     "start:server": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:realsvc": "npm run test:realsvc:tinylicious",
@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/js-yaml": "^4.0.5",
     "@types/mocha": "^9.1.1",

@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "console";
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
-import { Anchor, DetachedField, ITreeCursor } from "../tree";
+import {
+    Anchor,
+    DetachedField,
+    detachedFieldAsKey,
+    FieldKey,
+    ITreeCursor,
+    rootField,
+} from "../tree";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -36,18 +44,10 @@ export interface IForestSubscription extends Dependee {
      */
     readonly schema: StoredSchemaRepository;
 
-    readonly rootField: DetachedField;
-
     /**
      * Allocates a cursor in the "cleared" state.
      */
     allocateCursor(): ITreeSubscriptionCursor;
-
-    /**
-     * Anchor at the beginning of a root field.
-     * Will incur cost to maintain across edits until freed.
-     */
-    root(range: DetachedField): Anchor;
 
     /**
      * Frees an Anchor, stopping tracking its position across edits.
@@ -61,11 +61,60 @@ export interface IForestSubscription extends Dependee {
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
-    tryMoveCursorTo(
+    tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent,
     ): TreeNavigationResult;
+
+    /**
+     * It is an error not to free `cursorToMove` before the next edit.
+     * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
+     */
+    tryMoveCursorToField(
+        destination: FieldAnchor,
+        cursorToMove: ITreeSubscriptionCursor,
+    ): TreeNavigationResult;
+}
+
+/**
+ * @param field - defaults to {@link rootField}.
+ * @returns anchor to `field`.
+ */
+export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
+    return {
+        parent: undefined,
+        fieldKey: detachedFieldAsKey(field),
+    };
+}
+
+/**
+ * @param field - defaults to {@link rootField}.
+ * @returns anchor to `field`.
+ */
+export function moveToDetachedField(
+    forest: IForestSubscription,
+    cursorToMove: ITreeSubscriptionCursor,
+    field: DetachedField = rootField,
+): void {
+    const result = forest.tryMoveCursorToField(rootAnchor(field), cursorToMove);
+    assert(
+        result === TreeNavigationResult.Ok,
+        0x42d /* Navigation to detached fields should never fail */,
+    );
+}
+
+/**
+ * Anchor to a field.
+ * This is structurally based on the parent, so it will move only as the parent moves.
+ */
+export interface FieldAnchor {
+    /**
+     * Node above this field.
+     * If `undefined`, field is a detached field.
+     */
+    parent: Anchor | undefined;
+    fieldKey: FieldKey;
 }
 
 /**
@@ -106,8 +155,18 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Nodes`.
      */
     buildAnchor(): Anchor;
+
+    /**
+     * Construct a `FieldAnchor` which the IForestSubscription will keep rebased to `current`.
+     * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Fields`.
+     */
+    buildFieldAnchor(): FieldAnchor;
 
     /**
      * Current state.

@@ -7,14 +7,19 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { ObjectForest } from "../feature-libraries/object-forest";
+import { ObjectForest } from "../../feature-libraries/object-forest";
 
 import {
     fieldSchema,
     InMemoryStoredSchemaRepository,
     StoredSchemaRepository,
-} from "../schema-stored";
-import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
+} from "../../schema-stored";
+import {
+    IEditableForest,
+    initializeForest,
+    moveToDetachedField,
+    TreeNavigationResult,
+} from "../../forest";
 import {
     jsonNumber,
     jsonObject,
@@ -22,17 +27,28 @@ import {
     jsonRoot,
     singleJsonCursor,
     cursorToJsonObject,
-} from "../domains";
-import { recordDependency } from "../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath, rootFieldKey } from "../tree";
-import { brand } from "../util";
+} from "../../domains";
+import { recordDependency } from "../../dependency-tracking";
+import {
+    clonePath,
+    Delta,
+    JsonableTree,
+    UpPath,
+    rootFieldKey,
+    mapCursorField,
+    rootFieldKeySymbol,
+    ITreeCursor,
+} from "../../tree";
+import { brand } from "../../util";
 import {
     defaultSchemaPolicy,
     FieldKinds,
     isNeverField,
+    jsonableTreeFromCursor,
     singleTextCursor,
-} from "../feature-libraries";
-import { MockDependent } from "./utils";
+} from "../../feature-libraries";
+import { MockDependent } from "../utils";
+import { testJsonableTreeCursor } from "../cursorTestSuite";
 
 /**
  * Generic forest test suite
@@ -67,15 +83,12 @@ function testForest(
                     initializeForest(forest, [singleJsonCursor(data)]);
 
                     const reader = forest.allocateCursor();
-                    assert.equal(
-                        forest.tryMoveCursorTo(forest.root(forest.rootField), reader),
-                        TreeNavigationResult.Ok,
-                    );
+                    moveToDetachedField(forest, reader);
 
                     // copy data from reader into json object and compare to data.
-                    const copy = cursorToJsonObject(reader);
+                    const copy = mapCursorField(reader, cursorToJsonObject);
                     reader.free();
-                    assert.deepEqual(copy, data);
+                    assert.deepEqual(copy, [data]);
                 });
             }
         });
@@ -84,16 +97,15 @@ function testForest(
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree = { type: jsonNumber.name, value: 1 };
             initializeForest(forest, [singleTextCursor(content)]);
-            const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
             // TODO: make type-safe
-            const rootField = detachedFieldAsKey(forest.rootField);
-            const delta: Delta.Root = new Map([[rootField, [setValue]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
             forest.applyDelta(delta);
 
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
+            moveToDetachedField(forest, reader);
+            assert(reader.firstNode());
 
             assert.equal(reader.value, 2);
         });
@@ -102,17 +114,15 @@ function testForest(
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree = { type: jsonNumber.name, value: 1 };
             initializeForest(forest, [singleTextCursor(content)]);
-            const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
             // TODO: make type-safe
-            const rootField = detachedFieldAsKey(forest.rootField);
-            const delta: Delta.Root = new Map([[rootField, [setValue]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
             forest.applyDelta(delta);
 
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
-
+            moveToDetachedField(forest, reader);
+            assert(reader.firstNode());
             assert.equal(reader.value, undefined);
         });
 
@@ -123,18 +133,17 @@ function testForest(
                 { type: jsonNumber.name, value: 2 },
             ];
             initializeForest(forest, content.map(singleTextCursor));
-            const anchor = forest.root(forest.rootField);
 
             // TODO: does does this select what to delete?
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-            const rootField = detachedFieldAsKey(forest.rootField);
-            const delta: Delta.Root = new Map([[rootField, [0, mark]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
             // TODO: make type-safe
             forest.applyDelta(delta);
 
             // Inspect resulting tree: should just have `2`.
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
+            moveToDetachedField(forest, reader);
+            assert(reader.firstNode());
             assert.equal(reader.value, 2);
             assert.equal(reader.nextNode(), false);
         });
@@ -157,10 +166,9 @@ function testForest(
             ];
             initializeForest(forest, content.map(singleTextCursor));
 
-            const rootAnchor = forest.root(forest.rootField);
-
             const cursor = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(rootAnchor, cursor), TreeNavigationResult.Ok);
+            moveToDetachedField(forest, cursor);
+            assert(cursor.firstNode());
             const parentAnchor = cursor.buildAnchor();
             cursor.enterField(brand("data"));
             cursor.enterNode(0);
@@ -172,7 +180,6 @@ function testForest(
             cursor.exitField();
             const parentAnchor2 = cursor.buildAnchor();
 
-            const rootPath = clonePath(forest.anchors.locate(rootAnchor));
             const parentPath = clonePath(forest.anchors.locate(parentAnchor));
             const childPath1 = clonePath(forest.anchors.locate(childAnchor1));
             const childPath2 = clonePath(forest.anchors.locate(childAnchor2));
@@ -180,11 +187,10 @@ function testForest(
 
             const expectedParent: UpPath = {
                 parent: undefined,
-                parentField: detachedFieldAsKey(forest.rootField),
+                parentField: rootFieldKeySymbol,
                 parentIndex: 0,
             };
 
-            assert.deepStrictEqual(rootPath, expectedParent);
             assert.deepStrictEqual(parentPath, expectedParent);
             assert.deepStrictEqual(parentPath2, expectedParent);
 
@@ -203,16 +209,15 @@ function testForest(
             assert.deepStrictEqual(childPath1, expectedChild1);
             assert.deepStrictEqual(childPath2, expectedChild2);
 
-            assert.equal(forest.tryMoveCursorTo(parentAnchor, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorToNode(parentAnchor, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, undefined);
-            assert.equal(forest.tryMoveCursorTo(childAnchor1, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorToNode(childAnchor1, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, 1);
-            assert.equal(forest.tryMoveCursorTo(childAnchor2, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorToNode(childAnchor2, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, 2);
 
             // Cleanup is not required for this test (since anchor set will go out of scope here),
             // But make sure it works:
-            forest.anchors.forget(rootAnchor);
             forest.anchors.forget(parentAnchor);
             forest.anchors.forget(childAnchor1);
             forest.anchors.forget(childAnchor2);
@@ -234,8 +239,7 @@ function testForest(
                     content: content.map(singleTextCursor),
                 };
                 // TODO: make type-safe
-                const rootField = detachedFieldAsKey(forest.rootField);
-                const delta: Delta.Root = new Map([[rootField, [insert]]]);
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [insert]]]);
 
                 assert.deepEqual(dependent.tokens, []);
                 forest.applyDelta(delta);
@@ -257,6 +261,22 @@ function testForest(
             });
         });
     });
+
+    testJsonableTreeCursor(
+        "object-forest cursor",
+        (data): ITreeCursor => {
+            const forest = factory(
+                new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+            );
+            initializeForest(forest, [singleTextCursor(data)]);
+            const cursor = forest.allocateCursor();
+            moveToDetachedField(forest, cursor);
+            assert(cursor.firstNode());
+            return cursor;
+        },
+        jsonableTreeFromCursor,
+        false,
+    );
 
     // TODO: implement and test fine grained invalidation.
 }

@@ -23,7 +23,6 @@ declare function get_old_TypeAliasDeclaration_AliasResult():
 declare function use_current_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<current.AliasResult>);
 use_current_TypeAliasDeclaration_AliasResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_AliasResult());
 
 /*
@@ -37,6 +36,30 @@ declare function use_old_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<old.AliasResult>);
 use_old_TypeAliasDeclaration_AliasResult(
     get_current_TypeAliasDeclaration_AliasResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_BindState():
+    TypeOnly<old.BindState>;
+declare function use_current_EnumDeclaration_BindState(
+    use: TypeOnly<current.BindState>);
+use_current_EnumDeclaration_BindState(
+    get_old_EnumDeclaration_BindState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_BindState():
+    TypeOnly<current.BindState>;
+declare function use_old_EnumDeclaration_BindState(
+    use: TypeOnly<old.BindState>);
+use_old_EnumDeclaration_BindState(
+    get_current_EnumDeclaration_BindState());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -276,7 +299,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>);
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -361,7 +383,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>);
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -374,7 +395,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>);
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -400,7 +420,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -426,7 +445,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -648,18 +666,6 @@ use_old_InterfaceDeclaration_IGarbageCollectionState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInboundSignalMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInboundSignalMessage():
@@ -835,7 +841,6 @@ declare function get_old_InterfaceDeclaration_ISummarizerNode():
 declare function use_current_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<current.ISummarizerNode>);
 use_current_InterfaceDeclaration_ISummarizerNode(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -848,7 +853,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerNode():
 declare function use_old_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<old.ISummarizerNode>);
 use_old_InterfaceDeclaration_ISummarizerNode(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -909,7 +913,6 @@ declare function get_old_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<current.ISummarizerNodeWithGC>);
 use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*
@@ -922,7 +925,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<old.ISummarizerNodeWithGC>);
 use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*

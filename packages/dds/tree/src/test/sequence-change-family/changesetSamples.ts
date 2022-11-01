@@ -4,7 +4,12 @@
  */
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
-import { ChangesetTag, Effects, Transposed as T } from "../../feature-libraries";
+import {
+    ChangesetTag,
+    Effects,
+    Transposed as T,
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
 
 /**
  * Interface used solely to annotate samples with clarifying information.
