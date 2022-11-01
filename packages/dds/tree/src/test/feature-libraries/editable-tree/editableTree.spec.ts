@@ -173,7 +173,10 @@ describe("editable-tree", () => {
         }
 
         {
-            const descriptor = Object.getOwnPropertyDescriptor(nameNode, getWithoutUnwrappingSymbol);
+            const descriptor = Object.getOwnPropertyDescriptor(
+                nameNode,
+                getWithoutUnwrappingSymbol,
+            );
             assert(typeof descriptor?.value === "function");
             delete descriptor.value;
             assert.deepEqual(descriptor, {
