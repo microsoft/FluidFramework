@@ -392,8 +392,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      *
      * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).Connected},
      * otherwise undefined.
-     *
-     * @alpha
      */
     readonly clientId?: string | undefined;
 

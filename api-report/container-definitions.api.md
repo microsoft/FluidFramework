@@ -125,7 +125,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
     readonly audience: IAudience;
-    // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
