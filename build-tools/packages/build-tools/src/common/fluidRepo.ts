@@ -19,6 +19,7 @@ export interface IPackageManifest {
             [key: string]: ScriptDependencies;
         };
     };
+    additionalLockfilePaths?: string[];
     generatorName?: string;
     policy?: PolicyConfig;
 }

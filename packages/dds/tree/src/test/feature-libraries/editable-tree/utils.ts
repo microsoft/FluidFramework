@@ -20,6 +20,7 @@ import {
     EditableTree,
     isEditableField,
     isPrimitive,
+    getWithoutUnwrappingSymbol,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -159,6 +160,8 @@ export function expectNodeEquals(
         assert(expectedFields.delete(field.fieldKey));
         const expectedField = getGenericTreeField(expected, field.fieldKey, false);
         expectFieldEquals(schemaData, field, expectedField);
+        const fieldByKey = node[getWithoutUnwrappingSymbol](field.fieldKey);
+        expectFieldEquals(schemaData, fieldByKey, expectedField);
     }
     assert(expectedFields.size === 0);
 }

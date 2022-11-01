@@ -213,8 +213,8 @@ export async function getSession(
         return convertSessionToFreshSession(newSession, lumberjackProperties);
     }
 
-    if (existingSession.isSessionAlive) {
-        // Existing session is considered alive/discovered, so return to consumer as-is.
+    if (existingSession.isSessionAlive || existingSession.isSessionActive) {
+        // Existing session is considered alive/discovered or active, so return to consumer as-is.
         return existingSession;
     }
 
