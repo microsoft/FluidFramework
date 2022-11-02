@@ -221,7 +221,13 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     /**
      * Emitted immediately after processing an incoming operation (op).
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Note: this event is not intended for general use.
+     * Prefer to listen to events on the appropriate ultimate recipients of the ops, rather than listening to the
+     * ops directly on the {@link IDeltaQueue}.
+     *
+     * Listener parameters:
      *
      * - `task`: TODO.
      */
