@@ -24,7 +24,7 @@ import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
  *
  * - "virtualPatch" is the 0.36.1002 scheme.
  */
-export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "test" | "virtualPatch";
+export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
 
 /**
  * A typeguard to check if a string is a {@link VersionScheme}.
@@ -34,7 +34,6 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme {
         scheme === "semver" ||
         scheme === "internal" ||
         scheme === "internalPrerelease" ||
-        scheme === "test" ||
         scheme === "virtualPatch"
     );
 }
