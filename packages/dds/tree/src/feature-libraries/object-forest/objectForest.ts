@@ -300,8 +300,8 @@ type ObjectField = MapTree[];
  * (which can be undefined when cleared), instead of sub-classing it.
  */
 class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
-
     state: ITreeSubscriptionCursorState;
+
     /**
      * @param forest - forest this cursor navigates
      * @param innerCursor - underlying cursor implementation this wraps. `undefined` when state is not `Current`
