@@ -54,7 +54,7 @@ steps:
   inputs:
     targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
     artifactName: 'api-extractor-combined'
-    publishLocation: 'Container'
+    publishLocation: 'pipeline'
 
 - task: ArchiveFiles@2
   inputs:

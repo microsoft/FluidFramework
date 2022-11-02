@@ -256,7 +256,7 @@ stages:
           inputs:
             targetPath: '$(System.DefaultWorkingDirectory)/pack'
             artifactName: pack
-            publishLocation: 'Container'
+            publishLocation: 'pipeline'
 
       # Lint
       - ${{ if eq(parameters.lint, true) }}:

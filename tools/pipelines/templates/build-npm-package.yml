@@ -345,21 +345,21 @@ stages:
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/pack'
               artifactName: 'pack'
-              publishLocation: 'Container'
+              publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Test Files
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
               artifactName: 'test-files'
-              publishLocation: 'Container'
+              publishLocation: 'pipeline'
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/logs'
               artifactName: 'tinyliciousLog'
-              publishLocation: 'Container'
+              publishLocation: 'pipeline'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
@@ -375,13 +375,8 @@ stages:
             inputs:
               targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               artifactname: 'bundleAnalysis'
-              publishLocation: 'Container'
-              condition:
-              and(
-                succeeded(),
-                ne(variables['Build.Reason'], 'PullRequest'),
-                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
-              )
+              publishLocation: 'pipeline'
+              condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true))
 
           - task: Npm@1
             displayName: run bundle size comparison
