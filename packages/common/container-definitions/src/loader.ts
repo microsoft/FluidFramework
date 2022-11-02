@@ -324,11 +324,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Whether or not there are any local changes that have not been saved.
-     *
-     * @remarks
-     *
-     * Closing the Container in this state results in data loss for user.
-     * The Container usually gets into this situation due to loss of connectivity.
      */
     readonly isDirty: boolean;
 
