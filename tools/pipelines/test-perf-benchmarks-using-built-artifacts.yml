@@ -166,6 +166,17 @@ stages:
                 SourceBranch=$(Build.SourceBranch)
               "
 
+        - task: Bash@3
+          displayName: 'Install aria-logger'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm install @ff-internal/aria-logger;
+              npm i;
+              npm run build:compile;
+
         # Download Test Files
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
@@ -261,10 +272,8 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm install @ff-internal/aria-logger;
-              npm i;
-              npm run build:compile;
+              echo "Write the following benchmark output to Aria/Kusto"
+              ls -la ${{ variables.testWorkspace }}/benchmarkOutput;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
@@ -355,6 +364,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
+              echo "Write the following benchmark output to Aria/Kusto"
               ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
 
