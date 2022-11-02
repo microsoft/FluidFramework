@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { EmptyKey, ITreeCursor, singleJsonCursor, cursorToJsonObject } from "../../..";
-import { CursorLocationType, FieldKey, mapCursorFields } from "../../../tree";
+import { CursorLocationType, FieldKey, mapCursorFields, rootFieldKeySymbol } from "../../../tree";
 import { brand } from "../../../util";
-import { testCursors } from "../../cursor.spec";
+import { testCursors } from "../../cursorTestSuite";
 
 const testCases = [
     ["null", [null]],
@@ -29,6 +29,17 @@ const testCases = [
                 a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [0] }],
             },
             [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
+        ],
+    ],
+    [
+        "problematic field names",
+        [
+            {
+                ["__proto__"]: 1,
+                [""]: 2,
+                hasOwnProperty: 3,
+                toString: 4,
+            },
         ],
     ],
 ];
@@ -64,7 +75,25 @@ describe("JsonCursor", () => {
         const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
         const getKeysAsSet = (cursor: ITreeCursor) => new Set(mapCursorFields(cursor, getFieldKey));
 
+        function doesNotHaveKeys(cursor: ITreeCursor, keys: (string | FieldKey)[]): void {
+            const actualKeys = getKeysAsSet(cursor);
+            for (const key of keys) {
+                assert(!actualKeys.has(key as FieldKey));
+                cursor.enterField(key as FieldKey);
+                assert(!cursor.firstField());
+            }
+        }
+
+        const unexpectedKeys = [
+            "__proto__",
+            rootFieldKeySymbol,
+            "hasOwnProperty",
+            "toString",
+            "toFixed",
+        ];
+
         it("object", () => {
+            doesNotHaveKeys(singleJsonCursor({}), unexpectedKeys);
             assert.deepEqual(getKeysAsSet(singleJsonCursor({})), new Set());
             assert.deepEqual(getKeysAsSet(singleJsonCursor({ x: {} })), new Set(["x"]));
             assert.deepEqual(
@@ -74,22 +103,26 @@ describe("JsonCursor", () => {
         });
 
         it("array", () => {
+            doesNotHaveKeys(singleJsonCursor([]), unexpectedKeys);
             assert.deepEqual(getKeysAsSet(singleJsonCursor([])), new Set([]));
             assert.deepEqual(getKeysAsSet(singleJsonCursor([0])), new Set([EmptyKey]));
             assert.deepEqual(getKeysAsSet(singleJsonCursor(["test", {}])), new Set([EmptyKey]));
         });
 
         it("string", () => {
+            doesNotHaveKeys(singleJsonCursor("x"), unexpectedKeys);
             assert.deepEqual(getKeysAsSet(singleJsonCursor("")), new Set());
             assert.deepEqual(getKeysAsSet(singleJsonCursor("test")), new Set());
         });
 
         it("number", () => {
+            doesNotHaveKeys(singleJsonCursor(0), unexpectedKeys);
             assert.deepEqual(getKeysAsSet(singleJsonCursor(0)), new Set());
             assert.deepEqual(getKeysAsSet(singleJsonCursor(6.5)), new Set());
         });
 
         it("boolean", () => {
+            doesNotHaveKeys(singleJsonCursor(true), unexpectedKeys);
             assert.deepEqual(getKeysAsSet(singleJsonCursor(false)), new Set());
             assert.deepEqual(getKeysAsSet(singleJsonCursor(true)), new Set());
         });

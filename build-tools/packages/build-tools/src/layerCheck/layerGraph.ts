@@ -8,6 +8,7 @@ import * as path from "path";
 
 import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
+import { readJsonSync } from "../common/utils";
 
 const { verbose } = defaultLogger;
 
@@ -566,8 +567,8 @@ ${lines.join(newline)}
     }
 
     public static load(root: string, packages: Packages, info?: string): LayerGraph {
-        const layerInfoFile = require(info ??
-            path.join(__dirname, "..", "..", "data", "layerInfo.json"));
-        return new LayerGraph(root, layerInfoFile, packages);
+        const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
+        const layerData: ILayerInfoFile = readJsonSync(layerInfoFile);
+        return new LayerGraph(root, layerData, packages);
     }
 }

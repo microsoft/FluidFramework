@@ -2,10 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
@@ -19,14 +15,14 @@ export interface AzureClientConfig {
     tenantId?: string;
 }
 
-export interface ContainerTrafficSchema {
+export interface DocSchema {
     initialObjects: { [key: string]: string };
     dynamicObjects?: { [key: string]: string };
 }
 
 export interface DocCreatorRunnerConfig {
     connectionConfig: AzureClientConfig;
-    schema: ContainerTrafficSchema;
+    schema: DocSchema;
     numDocs: number;
     clientStartDelayMs: number;
 }
