@@ -232,7 +232,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
+                TAR_FILE=${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
@@ -347,7 +347,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
+                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
