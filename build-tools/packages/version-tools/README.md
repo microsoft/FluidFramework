@@ -85,9 +85,39 @@ USAGE
 # Commands
 
 <!-- commands -->
+* [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
 * [`fluv help [COMMAND]`](#fluv-help-command)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
+
+## `fluv autocomplete [SHELL]`
+
+display autocomplete installation instructions
+
+```
+USAGE
+  $ fluv autocomplete [SHELL] [-r]
+
+ARGUMENTS
+  SHELL  shell type
+
+FLAGS
+  -r, --refresh-cache  Refresh cache (ignores displaying instructions)
+
+DESCRIPTION
+  display autocomplete installation instructions
+
+EXAMPLES
+  $ fluv autocomplete
+
+  $ fluv autocomplete bash
+
+  $ fluv autocomplete zsh
+
+  $ fluv autocomplete --refresh-cache
+```
+
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.3.5/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMAND]`
 
