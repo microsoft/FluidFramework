@@ -163,6 +163,7 @@ export class SnapshotV1 {
             if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength); }
         };
 
+        // TODO: Also record attribution info here if on segments
         let prev: ISegment | undefined;
         const extractSegment = (segment: ISegment) => {
             // Elide segments that do not need to be included in the snapshot.  A segment may be elided if

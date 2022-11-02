@@ -114,14 +114,6 @@ export class PermutationSegment extends BaseSegment {
             : asPerm.start === this.start + this.cachedLength;
     }
 
-    public append(segment: ISegment) {
-        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
-        this.cachedLength += segment.cachedLength;
-    }
-
     protected createSplitSegmentAt(pos: number) {
         assert(0 < pos && pos < this.cachedLength, 0x026 /* "Trying to split segment at out-of-bounds position!" */);
 

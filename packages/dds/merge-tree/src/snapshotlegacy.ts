@@ -13,10 +13,9 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { AttributionCollection } from "./attributionCollection";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import {
-    ISegment,
-} from "./mergeTreeNodes";
+import { ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { matchProperties } from "./properties";
 import {
@@ -36,6 +35,13 @@ interface SnapshotHeader {
     minSeq?: number;
 }
 
+export interface SerializedAttributionBlob {
+    keys: unknown[];
+    posBreakpoints: number[];
+    /* Total length; only necessary for validation */
+    length: number;
+}
+
 /**
  * @internal
  */
@@ -43,6 +49,7 @@ export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
     private static readonly catchupOps = "catchupOps";
+    public static readonly attribution = "attribution";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -56,6 +63,7 @@ export class SnapshotLegacy {
     private seq: number | undefined;
     private segments: IJSONSegment[] | undefined;
     private segmentLengths: number[] | undefined;
+    private attributionBlob: SerializedAttributionBlob | undefined;
     private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
@@ -140,6 +148,13 @@ export class SnapshotLegacy {
                 serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs));
         }
 
+        if (this.attributionBlob !== undefined && this.attributionBlob.keys.length > 0) {
+            builder.addBlob(
+                this.mergeTree.options?.attributionBlobName ?? SnapshotLegacy.attribution,
+                serializer ? serializer.stringify(this.attributionBlob, bind) : JSON.stringify(this.attributionBlob),
+            );
+        }
+
         return builder.getSummaryTree();
     }
 
@@ -188,6 +203,8 @@ export class SnapshotLegacy {
             this.segments!.push(segment.toJSONObject());
             this.segmentLengths!.push(segment.cachedLength);
         });
+
+        this.attributionBlob = AttributionCollection.serializeAttributionCollections(segs);
 
         // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
         // When this condition happens, we might not write out all segments in getSeqLengthSegs()

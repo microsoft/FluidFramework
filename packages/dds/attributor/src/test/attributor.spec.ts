@@ -67,12 +67,17 @@ describe("Attributor", () => {
 		});
 	});
 
-	it("Throws on attempt to retrieve user information for an invalid key", () => {
+	it("getAttributionInfo throws on attempt to retrieve user information for an invalid key", () => {
 		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
 		assert.throws(
 			() => attributor.getAttributionInfo(42),
 			/Requested attribution information for unstored key/,
 			"invalid key should throw",
 		);
+	});
+
+	it("tryGetAttributionInfo returns undefined to retrieve user information for an invalid key", () => {
+		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
+		assert.equal(attributor.tryGetAttributionInfo(42), undefined);
 	});
 });

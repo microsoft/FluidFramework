@@ -17,6 +17,8 @@ export interface AttributionInfo {
 export interface IAttributor {
 	getAttributionInfo(key: number): AttributionInfo;
 
+	tryGetAttributionInfo(key: number): AttributionInfo | undefined;
+
 	serialize(): string;
 }
 
@@ -69,12 +71,15 @@ export class Attributor implements IAttributor {
 	}
 
 	public getAttributionInfo(key: number): AttributionInfo {
-		const result = this.keyToInfo.get(key);
-		// TODO: This error handling is awkward; this message doesn't make it clear what went wrong.
+		const result = this.tryGetAttributionInfo(key);
 		if (!result) {
 			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
 		}
 		return result;
+	}
+
+	public tryGetAttributionInfo(key: number): AttributionInfo | undefined {
+		return this.keyToInfo.get(key);
 	}
 
 	public serialize(): string {

@@ -362,6 +362,7 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => {
+	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
 	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just
@@ -422,7 +423,7 @@ class DataTable<T> {
 
 const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
 
-describe("SharedString Attribution", () => {
+describe.only("SharedString Attribution", () => {
 	/**
 	 * This test suite is aimed at assessing the overhead of storing attribution information in a document.
 	 * See 'documents/README.md' for more details.

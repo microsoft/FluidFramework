@@ -21,7 +21,7 @@ describe("MergeTree", () => {
     let currentSequenceNumber: number;
 
     const annotateStart = 1;
-    const markerPosition = annotateStart + 2;
+    const markerPosition = annotateStart + 4;
     const annotateEnd = markerPosition + 2;
     const splitPos = Math.floor((annotateEnd - annotateStart) / 2) + annotateStart;
 
@@ -143,7 +143,7 @@ describe("MergeTree", () => {
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
-                    const splitSegment = segment.splitAt(splitPos) as BaseSegment;
+                    const splitSegment = segment.splitAt(splitPos - annotateStart) as BaseSegment;
 
                     assert.equal(splitSegment.properties?.propertySource, "local");
                 });

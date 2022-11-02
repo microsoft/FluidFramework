@@ -11,6 +11,9 @@
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {
+    AttributionCollection,
+} from "./attributionCollection";
+import {
     Comparer,
     Heap,
     List,
@@ -51,7 +54,7 @@ import {
 	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
- } from "./mergeTreeNodes";
+} from "./mergeTreeNodes";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -640,6 +643,7 @@ export class MergeTree {
                         }
                         prevSegment = undefined;
                     } else {
+                        assert(segment.seq !== UnassignedSequenceNumber, "dangerous");
                         if (segment.seq! <= this.collabWindow.minSeq) {
                             const canAppend = prevSegment
                                 && prevSegment.canAppend(segment)
@@ -1616,6 +1620,7 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
+                newSegment.attribution = new AttributionCollection(newSegment.seq, newSegment.cachedLength);
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
                     if (markerId) {
