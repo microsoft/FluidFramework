@@ -245,7 +245,7 @@ stages:
               script: |
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
-                npm run build;
+                npm run build:test;
                 echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}";
                 ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }};
                 echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist";
