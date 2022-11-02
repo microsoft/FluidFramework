@@ -157,9 +157,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             bumpArg = bumpType;
         }
 
+        // Update the scheme based on the new version, unless it was passed in explicitly
+        scheme = flags.scheme ?? detectVersionScheme(newVersion);
+
         this.logHr();
         this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
         this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
+        this.log(`Scheme: ${chalk.cyan(scheme)}`);
         this.log(`Versions: ${newVersion} <== ${repoVersion}`);
         this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
         this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
