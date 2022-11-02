@@ -101,6 +101,4 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
         .help()
         .demandCommand().argv;
 }
-
-fluidRunner();
 /* eslint-enable max-len */
