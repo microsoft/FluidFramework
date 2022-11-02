@@ -24,6 +24,7 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
+lockBehavior: sequential
 stages:
   # end-to-end tests local server
   - stage:
@@ -57,6 +58,9 @@ stages:
   - stage:
     displayName: e2e - routerlicious
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-r11s-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -83,6 +87,9 @@ stages:
   - stage:
     displayName: e2e - frs
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-frs-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -109,6 +116,9 @@ stages:
   - stage:
     displayName:  e2e - odsp
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
