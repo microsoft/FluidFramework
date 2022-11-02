@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
 import {
 	CachingLogViewer,
+	CachingLogViewerDiagnosticEvents,
 	EditStatusCallback,
 	LogViewer,
 	SequencedEditResult,
@@ -277,12 +278,14 @@ describe.only('CachingLogViewer', () => {
 		baseView: RevisionView,
 		editStatusCallback?: EditStatusCallback,
 		sequencedEditResultCallback?: SequencedEditResultCallback,
-		knownRevisions?: [number, RevisionView][]
+		initialRevision?: [number, RevisionView]
 	): CachingLogViewer {
 		return new CachingLogViewer(
 			log,
 			baseView,
-			knownRevisions?.map((pair) => [pair[0], { view: pair[1], result: EditStatus.Applied }]),
+			initialRevision !== undefined
+				? [initialRevision[0], { view: initialRevision[1], status: EditStatus.Applied, steps: [] }]
+				: undefined,
 			editStatusCallback,
 			sequencedEditResultCallback,
 			log.numberOfSequencedEdits
@@ -294,7 +297,8 @@ describe.only('CachingLogViewer', () => {
 	it('detects non-integer revisions when setting revision views', async () => {
 		expect(() => {
 			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-				[2.4, simpleLogInitialView],
+				2.4,
+				simpleLogInitialView,
 			]);
 		}).to.throw('revision must be an integer');
 	});
@@ -302,24 +306,24 @@ describe.only('CachingLogViewer', () => {
 	it('detects out-of-bounds revisions when setting revision views', async () => {
 		expect(() => {
 			return getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, undefined, undefined, [
-				[1000, simpleLogInitialView],
+				1000,
+				simpleLogInitialView,
 			]);
 		}).to.throw('revision must correspond to the result of a SequencedEdit');
 	});
 
-	it.only('can be created with known revisions', async () => {
+	it('can be created with an initial revision', async () => {
 		const views = getViewsForLog(simpleLog, simpleLogBaseView);
+		const initialRevision = 0;
 		const viewer = getCachingLogViewerAssumeAppliedEdits(
 			simpleLog,
 			simpleLogBaseView,
 
 			undefined,
 			undefined,
-			Array.from(views.keys()).map((revision) => [revision, views[revision]])
+			[initialRevision, views[initialRevision]]
 		);
-		for (let i = simpleLog.length; i >= 0; i--) {
-			expect(viewer.getRevisionViewInSession(i).equals(views[i])).to.be.true;
-		}
+		expect(viewer.getRevisionViewInMemory(initialRevision).equals(views[initialRevision])).to.be.true;
 	});
 
 	async function requestAllRevisionViews(viewer: CachingLogViewer, log: EditLog<ChangeInternal>): Promise<void> {
@@ -535,7 +539,7 @@ describe.only('CachingLogViewer', () => {
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
-		const before = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const before = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		const edit = newEdit([]);
 		log.addLocalEdit(edit);
 		viewer.setKnownEditingResult(edit, {
@@ -545,7 +549,7 @@ describe.only('CachingLogViewer', () => {
 			after: arbitraryRevisionView,
 			steps: [],
 		});
-		const after = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const after = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([true]);
 		expect(after).equal(arbitraryRevisionView);
 	});
@@ -620,6 +624,54 @@ describe.only('CachingLogViewer', () => {
 		expect(editsProcessed).deep.equal([false, true, false]);
 	});
 
+	it('caches the oldest in memory revision when edits are evicted', async () => {
+		let editsProcessed = 0;
+		let editsEvicted = 0;
+		let retainedRevision = 0;
+		const editLogSize = 10;
+		const log = new EditLog<ChangeInternal>(undefined, undefined, undefined, editLogSize);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, () => editsProcessed++);
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		viewer.on(CachingLogViewerDiagnosticEvents.RevisionRetained, (revision) => {
+			retainedRevision = revision;
+		});
+
+		// Add enough edits to the log to start evicting
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, { sequenceNumber: i, referenceSequenceNumber: i - 1 });
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(editLogSize, 'Only sequenced edits should be present.');
+
+		// Add more edits so that the oldest get evicted
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			const sequenceNumber = editLogSize + 1;
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber: sequenceNumber - 1,
+			});
+			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
+		}
+
+		// Check to see that the revision was retained
+		expect(editsEvicted).to.equal(editLogSize);
+		expect(retainedRevision).to.equal(editLogSize);
+
+		// Make sure retrieving the latest revision is possible after edit eviction
+		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
+		// There should be 10 edits processed since the evicted ones would not be included
+		expect(editsProcessed).to.equal(editLogSize);
+	});
+
 	describe('Callbacks', () => {
 		function getViewer(): {
 			log: EditLog<ChangeInternal>;
@@ -628,8 +680,12 @@ describe.only('CachingLogViewer', () => {
 		} {
 			const log = getTestTreeLog(testTree);
 			const events: SequencedEditResult[] = [];
-			const viewer = new CachingLogViewer(log, simpleLogBaseView, [], undefined, (args: SequencedEditResult) =>
-				events.push(args)
+			const viewer = new CachingLogViewer(
+				log,
+				simpleLogBaseView,
+				undefined,
+				undefined,
+				(args: SequencedEditResult) => events.push(args)
 			);
 			return { log, viewer, events };
 		}
@@ -715,7 +771,7 @@ describe.only('CachingLogViewer', () => {
 		}
 
 		function minimalLogViewer(): CachingLogViewer {
-			return new CachingLogViewer(new EditLog(), simpleLogBaseView, []);
+			return new CachingLogViewer(new EditLog(), simpleLogBaseView);
 		}
 
 		it('tracks the earliest sequenced edit in the session', () => {

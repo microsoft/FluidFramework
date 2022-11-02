@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { EditLog, EditLogEvent, separateEditAndId } from '../EditLog';
+import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
 import { Edit } from '../persisted-types';
@@ -90,7 +90,7 @@ describe.only('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		const editFromId0 = await log.tryGetEdit(id0);
+		const editFromId0 = log.tryGetEditFromId(id0);
 		const editFromId1 = await log.tryGetEdit(id1);
 
 		expect(editFromId0).to.not.be.undefined;
@@ -250,10 +250,52 @@ describe.only('EditLog', () => {
 		const log = new EditLog(undefined, undefined, undefined, editLogSize);
 		const ids: EditId[] = [];
 
-		let numberOfPrepareForEvictionEvents = 0;
+		let editsEvicted = 0;
 
-		log.on(EditLogEvent.PrepareForEditEviction, () => {
-			numberOfPrepareForEvictionEvents++;
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber: i,
+				referenceSequenceNumber: i - 1,
+			});
+			ids.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(editLogSize, 'Only sequenced edits should be present.');
+
+		const newIds: EditId[] = [];
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			const sequenceNumber = editLogSize + 1;
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber: sequenceNumber - 1,
+			});
+			newIds.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
+		}
+
+		expect(log.editIds).to.deep.equal(newIds, 'Edit IDs should have been evicted.');
+		expect(log.length).equals(log.numberOfSequencedEdits).and.equals(editLogSize, 'Edits should have been evicted');
+		expect(editsEvicted).to.equal(editLogSize);
+	});
+
+	it('does not evict edits within the collaboration window', () => {
+		const editLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const ids: EditId[] = [];
+
+		let editsEvicted = 0;
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
 		});
 
 		for (let i = 0; i < editLogSize; i++) {
@@ -266,18 +308,23 @@ describe.only('EditLog', () => {
 			.equals(log.numberOfSequencedEdits)
 			.and.equals(editLogSize, 'Only sequenced edits should be present.');
 
-		const newIds: EditId[] = [];
+		const minimumSequenceNumber = 5;
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
-			log.addSequencedEdit(edit, { sequenceNumber: i, referenceSequenceNumber: i - 1 });
-			newIds.push(edit.id);
+			log.addSequencedEdit(edit, {
+				sequenceNumber: editLogSize + i,
+				referenceSequenceNumber: i - 1,
+				minimumSequenceNumber,
+			});
 			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
 		}
 
-		log.evictEdits();
-
-		expect(log.editIds).to.deep.equal(newIds, 'Edit IDs should have been evicted.');
-		expect(log.length).equals(log.numberOfSequencedEdits).and.equals(editLogSize, 'Edits should have been evicted');
-		expect(numberOfPrepareForEvictionEvents).to.equal(editLogSize);
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(
+				editLogSize + minimumSequenceNumber,
+				'Only edits outside the collab window should have been evicted'
+			);
+		expect(editsEvicted).to.equal(editLogSize - minimumSequenceNumber);
 	});
 });

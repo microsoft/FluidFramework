@@ -106,14 +106,36 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
 export type SharedTreeOptions<
 	WF extends WriteFormat,
 	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'
-> = Omit<
-	WF extends WriteFormat.v0_0_2
-		? SharedTreeOptions_0_0_2
-		: WF extends WriteFormat.v0_1_1
-		? SharedTreeOptions_0_1_1
-		: never,
-	HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
->;
+> = SharedTreeBaseOptions &
+	Omit<
+		WF extends WriteFormat.v0_0_2
+			? SharedTreeOptions_0_0_2
+			: WF extends WriteFormat.v0_1_1
+			? SharedTreeOptions_0_1_1
+			: never,
+		HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
+	>;
+
+/**
+ * Configuration options for SharedTree that are independent of write format versions.
+ * @public
+ */
+export interface SharedTreeBaseOptions {
+	/**
+	 * The target number of sequenced edits that the tree will try to store in memory.
+	 * Depending on eviction frequency and the collaboration window, there can be more edits in memory at a given time.
+	 * Edits in the collaboration window are not evicted.
+	 *
+	 * The size is set to infinity by default, meaning that all edits in session are kept within memory.
+	 */
+	inMemoryHistorySize?: number;
+	/**
+	 * The rate a which edits are evicted from memory. This is a factor of the inMemoryHistorySize.
+	 * For example, with the default frequency of 2 and a size of 10, the log will evict once it reaches 20 sequenced edits down to 10 edits,
+	 * also keeping any that are still in the collaboration window.
+	 */
+	editEvictionFrequency?: number;
+}
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
@@ -430,6 +452,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * The log of completed edits for this SharedTree.
 	 */
 	private editLog: EditLog<ChangeInternal>;
+	private readonly editLogSize?: number;
+	private readonly editEvictionFrequency?: number;
 
 	/**
 	 * As an implementation detail, SharedTree uses a log viewer that caches views of different revisions.
@@ -522,6 +546,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
 		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
+		this.editLogSize = options.inMemoryHistorySize;
+		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
 			{
 				editChunks: [],
@@ -871,23 +897,28 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.cachingLogViewer?.detachFromEditLog();
 
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
-		const editLog = new EditLog(editHistory, this.logger, this.editLog?.editAddedHandlers);
+		const editLog = new EditLog(
+			editHistory,
+			this.logger,
+			this.editLog?.editAddedHandlers,
+			this.editLogSize,
+			this.editEvictionFrequency
+		);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		});
 
-		let knownRevisions: [number, EditCacheEntry][] | undefined;
+		let initialRevision: [number, EditCacheEntry] | undefined;
 		if (currentTree !== undefined) {
 			const currentView = RevisionView.fromTree(currentTree);
-			// TODO:#47830: Store multiple checkpoints in summary.
-			knownRevisions = [[editLog.length, { view: currentView }]];
+			initialRevision = [editLog.length, { view: currentView }];
 		}
 
 		const logViewer = new CachingLogViewer(
 			editLog,
 			RevisionView.fromTree(initialTree, this),
-			knownRevisions,
+			initialRevision,
 			editStatusCallback,
 			sequencedEditResultCallback,
 			0

@@ -4,8 +4,10 @@
  */
 
 import Denque from 'denque';
+import { IEvent } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { assert, fail, noop } from './Common';
-import { EditLog, EditLogEvent, SequencedOrderedEditId } from './EditLog';
+import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
 import { Revision, RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
@@ -189,13 +191,28 @@ export interface LogViewer {
 }
 
 /**
+ * Events reported by {@link CachingLogViewer} for diagnostics or testing purposes.
+ */
+export enum CachingLogViewerDiagnosticEvents {
+	RevisionRetained = 'revisionRetained',
+}
+
+/**
+ * Events which may be emitted by {@link CachingLogViewer}
+ * @public
+ */
+export interface ICachingLogViewerEvents extends IEvent {
+	(event: CachingLogViewerDiagnosticEvents.RevisionRetained, listener: (revision: Revision) => void);
+}
+
+/**
  * Creates views for revisions associated with an EditLog and caches the results.
  *
  * Does so by listening for edits added to the log. If the underlying EditLog or its listeners need to be reused beyond the lifetime of
  * a CachingLogViewer instance, that instance should be disposed with `detachFromEditLog` to ensure it is garbage-collectable.
  * @internal
  */
-export class CachingLogViewer implements LogViewer {
+export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents> implements LogViewer {
 	public readonly log: EditLog<ChangeInternal>;
 
 	/**
@@ -209,11 +226,6 @@ export class CachingLogViewer implements LogViewer {
 	 * When a previously local edit is sequenced, this cache is adjusted to account for it, not invalidated.
 	 */
 	private readonly localRevisionCache = new Denque<AttemptedEditResultCacheEntry>();
-
-	/**
-	 * The oldest revision that corresponds to an edit stored in memory. No prior revisions need to be stored.
-	 */
-	private readonly oldestSequencedRevisionInMemory: EditCacheEntry;
 
 	/**
 	 * Cache of sequenced revisions.
@@ -272,8 +284,8 @@ export class CachingLogViewer implements LogViewer {
 	 * Create a new LogViewer
 	 * @param log - the edit log which revisions will be based on.
 	 * @param baseTree - the tree used in the view corresponding to the 0th revision.
-	 * @param knownRevisions - a set of [sequencedRevision, view] pairs that are known (have been precomputed) at construction time.
-	 * These revisions are guaranteed to never be evicted from the cache.
+	 * @param initialRevision - a [sequencedRevision, view] pair that is known (been precomputed) at construction time.
+	 * This revision is guaranteed to never be evicted from the cache unless it is replaced as the oldest in memory revision.
 	 * @param expensiveValidation - Iff true, additional correctness assertions will be run during LogViewer operations.
 	 * @param processEditStatus - called after applying an edit.
 	 * @param processSequencedEditResult - called after applying a sequenced edit.
@@ -281,31 +293,32 @@ export class CachingLogViewer implements LogViewer {
 	public constructor(
 		log: EditLog<ChangeInternal>,
 		baseView: RevisionView,
-		knownRevisions: [Revision, EditCacheEntry][] = [],
+		initialRevision?: [Revision, EditCacheEntry],
 		processEditStatus: EditStatusCallback = noop,
 		processSequencedEditResult: SequencedEditResultCallback = noop,
 		minimumSequenceNumber = 0
 	) {
+		super();
 		this.log = log;
-		knownRevisions.forEach(([revision]) => {
-			assert(Number.isInteger(revision), 'revision must be an integer');
-			assert(this.log.isSequencedRevision(revision), 'revision must correspond to the result of a SequencedEdit');
-		});
-
-		this.oldestSequencedRevisionInMemory = this.getEditResultInMemory(0);
+		if (initialRevision !== undefined) {
+			assert(Number.isInteger(initialRevision[0]), 'revision must be an integer');
+			assert(
+				this.log.isSequencedRevision(initialRevision[0]),
+				'revision must correspond to the result of a SequencedEdit'
+			);
+		}
 
 		this.sequencedRevisionCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			minimumSequenceNumber,
-			[...knownRevisions, [0, { view: baseView }]]
+			initialRevision ?? [0, { view: baseView }]
 		);
 		this.processEditStatus = processEditStatus ?? noop;
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
 		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
 
-		this.log.on(EditLogEvent.PrepareForEditEviction, () => {
-			this.evictCachedRevisions();
-		});
+		// Registers a handler that is called when edits are evicted
+		this.log.registerEditEvictionHandler(this.evictCachedRevisions.bind(this));
 	}
 
 	/**
@@ -357,7 +370,7 @@ export class CachingLogViewer implements LogViewer {
 	}
 
 	/**
-	 * TODO
+	 * @returns the {@link EditCacheEntry} for the requested revision
 	 */
 	public getEditResultInMemory(revision: Revision): EditCacheEntry {
 		const startingPoint = this.getStartingPoint(revision);
@@ -391,21 +404,16 @@ export class CachingLogViewer implements LogViewer {
 		this.cachedEditResult = { editId: edit.id, result };
 	}
 
-	private evictCachedRevisions(): void {
-		// TODO ensure the earliest revision that won't be evicted is cached. Prior revisions can be thrown away
-		const edits = this.log.evictEdits();
-
-		let current: EditCacheEntry = this.getStartingPoint(edits.length);
-		for (const edit of edits) {
-			current = this.applyEdit(current.view, edit, 0);
-		}
-
-		const oldestEditInMemory = this.log.tryGetEditAtIndex(0);
-		if (oldestEditInMemory !== undefined) {
-			current = this.applyEdit(current.view, oldestEditInMemory, 0);
-		}
-
-		// Evict any old revisions and update revision numbers
+	/**
+	 * Handler that is called before the stored edit log evicts any edits.
+	 * This caches the revision that corresponds to the edit that will be the oldest in memory after eviction
+	 * to ensure that there is always a base revision that any in memory edit can be applied to.
+	 */
+	private evictCachedRevisions(editsToEvict: number): void {
+		const revisionToRetain = this.log.earliestAvailableEditIndex + editsToEvict;
+		const cacheEntry: EditCacheEntry = this.getEditResultInMemory(revisionToRetain);
+		this.sequencedRevisionCache.cacheRetainedValue(revisionToRetain, cacheEntry);
+		this.emit(CachingLogViewerDiagnosticEvents.RevisionRetained, revisionToRetain);
 	}
 
 	/**
@@ -702,7 +710,7 @@ export class CachingLogViewer implements LogViewer {
 	}
 
 	/**
-	 * {@inheritDoc LogViewer.getRevisionView}
+	 * @deprecated Edit virtualization is no longer supported, use {@link LogViewer.getRevisionViewInMemory}
 	 */
 	public async getRevisionView(revision: Revision): Promise<RevisionView> {
 		return this.getEditResultInMemory(revision).view;
@@ -716,7 +724,7 @@ export class CachingLogViewer implements LogViewer {
 	}
 
 	/**
-	 * {@inheritDoc LogViewer.getRevisionViewInSession}
+	 * @deprecated Edit virtualization is no longer supported, use {@link LogViewer.getRevisionViewInMemory}
 	 */
 	public getRevisionViewInSession(revision: Revision): RevisionView {
 		return this.getEditResultInMemory(revision).view;
