@@ -6,9 +6,6 @@
 import { strict as assert } from "assert";
 import { Delta } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-
-// eslint-disable-next-line import/no-internal-modules
-import { MarkListFactory } from "../../../feature-libraries/sequence-field";
 import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
@@ -418,7 +415,7 @@ function createInsertChangeset(index: number, size: number): TestChangeset {
         content,
     };
 
-    const factory = new MarkListFactory<TestChange>();
+    const factory = new SF.MarkListFactory<TestChange>();
     factory.pushOffset(index);
     factory.pushContent(insertMark);
     return factory.list;
@@ -431,7 +428,7 @@ function createDeleteChangeset(startIndex: number, size: number): TestChangeset 
         count: size,
     };
 
-    const factory = new MarkListFactory<TestChange>();
+    const factory = new SF.MarkListFactory<TestChange>();
     factory.pushOffset(startIndex);
     factory.pushContent(deleteMark);
     return factory.list;
