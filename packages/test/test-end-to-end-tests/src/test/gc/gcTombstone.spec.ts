@@ -211,7 +211,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
         {
             eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "Context is tombstoned: Call site -  process!",
+            error: "Context is tombstoned! Call site [process]",
             errorType: "dataCorruptionError",
         },
     ],
@@ -247,7 +247,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert(summarizingContainer.closed === true, `Summarizing container should close.`);
         assert(closeError !== undefined, `Expecting an error!`);
         assert(closeError.errorType === "dataCorruptionError");
-        assert(closeError.message === "Context is tombstoned: Call site -  process!");
+        assert(closeError.message === "Context is tombstoned! Call site [process]");
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -256,7 +256,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
         {
             eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "Context is tombstoned: Call site -  process!",
+            error: "Context is tombstoned! Call site [process]",
             errorType: "dataCorruptionError",
         },
     ],
@@ -295,7 +295,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert(summarizingContainer.closed === true, `Summarizing container should close.`);
         assert(closeError !== undefined, `Expecting an error!`);
         assert(closeError.errorType === "dataCorruptionError");
-        assert(closeError.message === "Context is tombstoned: Call site -  process!");
+        assert(closeError.message === "Context is tombstoned! Call site [process]");
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -397,7 +397,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-    itExpects("Handle request for tombstoned datastores fails in summarizing container loaded after sweep timeout",
+    itExpects("Handle request for tombstoned datastores fails in summarizing container loaded before sweep timeout",
     [
         { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
         {

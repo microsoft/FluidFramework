@@ -420,7 +420,7 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, wait: boolean, viaHandle: boolean = false): Promise<FluidDataStoreContext> {
+    public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
         const request = { url: id };
         if (context === undefined) {
