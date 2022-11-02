@@ -105,7 +105,11 @@ export interface IDeltaManagerEvents extends IEvent {
     /**
      * TODO
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Note: this event is not intended for external use.
+     *
+     * Listener parameters:
      *
      * - `latency`: TODO (also specify units)
      *
