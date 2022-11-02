@@ -27,7 +27,7 @@ trigger:
     include:
     - tools/benchmark
     - tools/telemetry-generator
-    - tools/pipelines/test-perf-benchmarks-using-built-atifacts.yml  # update with this files name
+    - tools/pipelines/test-perf-benchmarks-using-built-atifacts.yml
 
 parameters:
 - name: taskBuild
@@ -205,6 +205,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
+                echo "Install ${{ execTestPackage }}"
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
@@ -229,6 +230,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                echo "Unpack test files for ${{ execTestPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
@@ -240,6 +242,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
               script: |
+                echo "Run execution-time tests for ${{ execTestPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
                 npm run build:test;
@@ -296,6 +299,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
+                echo "Install ${{ testPackage }}"
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
@@ -320,6 +324,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                echo "Unpack test files for ${{ testPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
@@ -331,25 +336,12 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
               script: |
+                echo "Run memory performance test for ${{ testPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 ls -la;
                 npm run build:test;
                 npm run test:memory-profiling:report;
-
-          - task: Bash@3
-            displayName: 'Log out memory test output work dir'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(toolAbsolutePath)
-              script: |
-                cp ${{ variables.testWorkspace }}/.npmrc . ;
-                npm install @ff-internal/aria-logger;
-                npm i;
-                npm run build:compile;
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
-                ls -la;
 
           - task: CopyFiles@2
             inputs:
@@ -363,7 +355,6 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              ls -la;
               ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
 
