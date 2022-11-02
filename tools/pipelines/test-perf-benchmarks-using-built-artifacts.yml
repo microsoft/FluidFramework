@@ -238,7 +238,7 @@ stages:
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
 
           - task: Bash@3
-            displayName: 'Install package and build:test for execution-time tests'
+            displayName: 'Run execution-time tests'
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
@@ -246,13 +246,6 @@ stages:
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
                 npm run build:test;
-
-          - task: Bash@3
-            displayName: 'Run execution-time tests'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
-              script: |
                 npm run test:benchmark:report;
 
           - task: CopyFiles@2
@@ -336,7 +329,7 @@ stages:
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
 
           - task: Bash@3
-            displayName: 'Install and build:test for memory performance test'
+            displayName: 'Run memory performance test'
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -345,13 +338,6 @@ stages:
                 npm i ;
                 ls -la;
                 npm run build:test;
-
-          - task: Bash@3
-            displayName: 'Run memory performance test'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-              script: |
                 npm run test:memory-profiling:report;
 
           - task: Bash@3
