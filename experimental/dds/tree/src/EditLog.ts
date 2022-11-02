@@ -546,7 +546,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			handler(numberOfEditsToEvict);
 		}
 
-        // Remove the edits and move up the earliest available index
+		// Remove the edits and move up the earliest available index
 		this.sequencedEdits.splice(0, numberOfEditsToEvict);
 		this._earliestAvailableEditIndex += numberOfEditsToEvict;
 	}
