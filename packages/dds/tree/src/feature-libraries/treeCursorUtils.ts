@@ -25,6 +25,16 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
      * Only valid when `mode` is `Nodes`.
      */
     getNode(): TNode;
+
+    /**
+     * Create a copy of this cursor which navigates independently,
+     * and is initially located at the same place as this one.
+     *
+     * Depending on the cursor implementation this may be significantly faster
+     * than other ways to copy the cursor
+     * (such as creating a new one and walking the path from this one).
+     */
+    fork(): CursorWithNode<TNode>;
 }
 
 /**
@@ -34,7 +44,7 @@ export function singleStackTreeCursor<TNode>(
     root: TNode,
     adapter: CursorAdapter<TNode>,
 ): CursorWithNode<TNode> {
-    return new StackCursor(root, adapter);
+    return new StackCursor(adapter, [], [], [root], 0);
 }
 
 /**
@@ -81,30 +91,25 @@ export abstract class SynchronousCursor {
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
     /**
-     * Indices traversed to visit this node: does not include current level (which is stored in `index`).
-     * Even indexes are of nodes and odd indexes are for fields.
-     */
-    private readonly indexStack: number[] = [];
-    /**
-     * Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-     * Even indexes are of nodes and odd indexes are for fields.
-     */
-    private readonly siblingStack: SiblingsOrKey<TNode>[] = [];
-
-    private siblings: SiblingsOrKey<TNode>;
-
-    /**
-     * Index into `siblings`.
-     */
-    private index: number;
-
-    /**
      * Might start at special root where fields are detached sequences.
+     *
+     * @param adapter - policy logic.
+     * @param siblingStack - Stack of collections of siblings along the path through the tree:
+     * does not include current level (which is stored in `siblings`).
+     * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
+     * are for fields keys on a node.
+     * @param indexStack - Stack of indices into the corosponding levels in `siblingStack`.
+     * @param siblings - Siblings at the current level (not included in `siblingStack`).
+     * @param index - Index into `siblings`.
      */
-    public constructor(root: TNode, private readonly adapter: CursorAdapter<TNode>) {
+    public constructor(
+        private readonly adapter: CursorAdapter<TNode>,
+        private readonly siblingStack: SiblingsOrKey<TNode>[],
+        private readonly indexStack: number[],
+        private siblings: SiblingsOrKey<TNode>,
+        private index: number,
+    ) {
         super();
-        this.siblings = [root];
-        this.index = 0;
     }
 
     public getFieldKey(): FieldKey {
@@ -189,6 +194,18 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
             parentField: this.getStackedFieldKey(length - 1),
         };
         return path;
+    }
+
+    public fork(): StackCursor<TNode> {
+        // Siblings arrays are not modified during navigation and do not need be be copied.
+        // This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
+        return new StackCursor<TNode>(
+            this.adapter,
+            [...this.siblingStack],
+            [...this.indexStack],
+            this.siblings,
+            this.index,
+        );
     }
 
     public enterField(key: FieldKey): void {
