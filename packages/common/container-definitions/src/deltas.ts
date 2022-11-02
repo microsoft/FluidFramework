@@ -26,9 +26,13 @@ export interface IConnectionDetails {
     version: string;
     initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
+
     /**
-     * Last known sequence number to ordering service at the time of connection
-     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * Last known sequence number to ordering service at the time of connection.
+     *
+     * @remarks
+     *
+     * It may lap actual last sequence number (quite a bit, if container is very active).
      * But it's the best information for client to figure out how far it is behind, at least
      * for "read" connections. "write" connections may use own "join" op to similar information,
      * that is likely to be more up-to-date.
@@ -125,7 +129,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * - `details`: TODO
      *
-     * - `opsBehind`: TODO
+     * - `opsBehind`: The count of ops
      */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
