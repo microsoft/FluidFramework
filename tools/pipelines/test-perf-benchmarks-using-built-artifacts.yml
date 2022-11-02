@@ -224,7 +224,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: test-files
-              path: $(Pipeline.Workspace)/test-files/${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}.test-files.tar
+              path: $(Pipeline.Workspace)/test-files/
 
           # Unpack test files
           - task: Bash@3
@@ -339,7 +339,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: test-files
-              path: $(Pipeline.Workspace)/test-files/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}.test-files.tar
+              path: $(Pipeline.Workspace)/test-files/
 
           # Unpack test files
           - task: Bash@3
