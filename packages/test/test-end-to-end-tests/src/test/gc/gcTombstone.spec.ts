@@ -430,4 +430,53 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         assert(response.status === 404);
         assert(response.value.startsWith(`Datastore removed by gc`));
     });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Can untombstone datastores by storing a handle",
+    [
+        { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
+        {
+            error: "TombstonedDataStoreRequested",
+            eventName: "fluid:telemetry:ContainerRuntime:TombstonedDataStoreRequested",
+            viaHandle: true,
+        },
+    ],
+    async () => {
+        const {
+            unreferencedId,
+            summarizingContainer,
+            summarizer,
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+
+        // Wait enough time so that the datastore is sweep ready
+        await delay(waitLessThanSweepTimeoutMs);
+
+        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+        // The datastore should be tombstoned now
+        await summarize(summarizer);
+
+        // Note: if a user makes a request that looks like this, we will also think that the request is via handle
+        const request: IRequest = { url: unreferencedId, headers: { [RuntimeHeaders.viaHandle]: true } };
+        const response = await dataObject._context.IFluidHandleContext.resolveHandle(request);
+
+        assert(response !== undefined, `Expecting a response!`);
+        assert(response.status === 404);
+        assert(response.value.startsWith(`Datastore removed by gc`));
+
+        const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
+        mainDataObject._root.set("store", dataObject.handle);
+
+        // The datastore should be untombstoned now
+        const { summaryVersion } = await summarize(summarizer);
+        const untombstonedDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+        untombstonedDataObject._root.set("can send", "op");
+        untombstonedDataObject._runtime.submitSignal("can submit", "signal");
+        const container = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
+        const sendDataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
+        sendDataObject._root.set("can receive", "an op");
+        sendDataObject._runtime.submitSignal("can receive", "a signal");
+        await provider.ensureSynchronized();
+    });
 });
