@@ -234,10 +234,13 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "op", listener: (task: T) => void);
 
     /**
-     * TODO
+     * Emitted when the queue of events to process is emptied.
      *
-     * @param count - The number of events (T) processed before becoming idle.
-     * @param duration - The amount of time it took to process elements (in milliseconds).
+     * @remarks Listener parameters:
+     *
+     * - `count`: The number of events (`T`) processed before becoming idle.
+     *
+     * - `duration`: The amount of time it took to process elements (in milliseconds).
      *
      * @see {@link IDeltaQueue.idle}
      */
@@ -260,12 +263,14 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     length: number;
 
     /**
-     * Flag indicating whether or not the queue is idle
+     * Flag indicating whether or not the queue is idle.
+     * I.e. there are no remaining messages to processes.
      */
     idle: boolean;
 
     /**
-     * Pauses processing on the queue
+     * Pauses processing on the queue.
+     *
      * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;
