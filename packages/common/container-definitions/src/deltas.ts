@@ -115,7 +115,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "processTime", listener: (latency: number) => void);
 
     /**
-     * Emitted when the {@link IContainer} completes connecting to the Fluid service.
+     * Emitted when the {@link IDeltaManager} completes connecting to the Fluid service.
      *
      * @remarks
      * This occurs once we've received the connect_document_success message from the server,
@@ -130,7 +130,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
     /**
-     * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
+     * Emitted when the {@link IDeltaManager} becomes disconnected from the Fluid service.
      *
      * @remarks Listener parameters:
      *
