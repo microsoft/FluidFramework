@@ -179,6 +179,8 @@ export interface IContainerEvents extends IEvent {
      * @remarks Listener parameters:
      *
      * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
+     *
+     * @see {@link IContainer.close}
      */
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
 
@@ -328,7 +330,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly isDirty: boolean;
 
     /**
-     * Closes the container
+     * Closes the container.
+     *
+     * @param error - If the container is being closed due to error, this provides details about the error that
+     * resulted in closing it.
      */
     close(error?: ICriticalContainerError): void;
 
@@ -402,7 +407,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     disconnect(): void;
 
     /**
-     * The audience information for all clients currently associated with the document in the current session
+     * The audience information for all clients currently associated with the document in the current session.
      */
     readonly audience: IAudience;
 
