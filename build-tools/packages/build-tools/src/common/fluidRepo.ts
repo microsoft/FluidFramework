@@ -14,6 +14,7 @@ export interface IPackageManifest {
     repoPackages: {
         [name: string]: IFluidRepoPackageEntry;
     };
+    additionalLockfilePaths?: string[];
     generatorName?: string;
 }
 
