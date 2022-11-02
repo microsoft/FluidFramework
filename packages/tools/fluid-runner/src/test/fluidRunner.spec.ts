@@ -136,7 +136,8 @@ describe("custom fluidFileConverter provided", () => {
             assert.strictEqual(exportFile.status, 1,
                 `Process was not exited with code 1. Error: [${exportFile.stderr}]`);
             assert.notStrictEqual(exportFile.stderr, "", "Expect some error output");
-            assert(exportFile.stderr.includes("cannot both be provided"), `unexpected error message [${exportFile.stderr}]`);
+            assert(exportFile.stderr.includes("cannot both be provided"),
+                `unexpected error message [${exportFile.stderr}]`);
         });
     });
 });
