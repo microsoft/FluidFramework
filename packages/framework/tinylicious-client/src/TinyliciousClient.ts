@@ -48,7 +48,7 @@ export class TinyliciousClient {
      * @param props - Optional. Properties for initializing a new TinyliciousClient instance
      */
     constructor(private readonly props?: TinyliciousClientProps) {
-        const tokenProvider = new InsecureTinyliciousTokenProvider();
+        const tokenProvider = new InsecureTinyliciousTokenProvider(this.props?.scopes);
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             this.props?.connection?.port,
             this.props?.connection?.domain,

@@ -12,7 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
@@ -189,7 +189,6 @@ describe("TinyliciousClient", () => {
         const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
-        console.log(valueGet, valueCreate);
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
     });
 
@@ -285,37 +284,71 @@ describe("TinyliciousClient", () => {
     });
 
     /**
-     * Scenario: Test if TinyliciousClient with forceWriteMode set to true forces the container to write mode.
-     * Keep the original behaviour otherwise. The flag forceWriteMode will attempt to change the mode to write when
-     * starting a connection, but if the write permission is not available or the file is read only, mode will set
-     * to read.
+     * Scenario: Test if TinyliciousClient starts the container in write mode. TinyliciousClient will attempt
+     * to start the connection in write mode, but if the write permission is not available or the file is read
+     * only, mode will be read.
      *
-     * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
-     * connectionMode to `write` while keeping the original behavior if forceWriteMode is not set to true.
+     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `write`
      */
     it("can create a container in write mode", async () => {
         const { container } = await tinyliciousClient.createContainer(schema);
         const containerId = await container.attach();
+        await timeoutPromise((resolve) => container.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+
+        const { container: containerGet } = await tinyliciousClient.getContainer(
+            containerId,
+            schema
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "write",
+            "Creating a container is not in write mode"
+        );
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container is not in write mode"
+        );
+    });
+    /**
+     * Scenario: Test if TinyliciousClient with only read permission starts the container in read mode.
+     * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
+     * is not available or the file is read only, mode will be read.
+     *
+     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
+     */
+    it("can create a container with only read permission in read mode", async () => {
+        const docReadPermissionClient = new TinyliciousClient({
+            scopes: [ScopeType.DocRead],
+        });
+        const { container: readPermissionContainer } = await docReadPermissionClient.createContainer(schema);
+        const containerId = await readPermissionContainer.attach();
         await timeoutPromise(
-            (resolve) => container.once("connected", resolve),
+            (resolve) => readPermissionContainer.once("connected", resolve),
             {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
             }
         );
-
-        const { container: recievedContainer } = await tinyliciousClient.getContainer(containerId, schema);
+        const { container: containerGet } = await tinyliciousClient.getContainer(
+            containerId,
+            schema
+        );
 
         assert.strictEqual(
-            connectionModeOf(container),
-            "write",
-            "Creating a container which forceWriteMode was set to true is not in write mode"
+            connectionModeOf(readPermissionContainer),
+            "read",
+            "Creating a container with only read permission is not in read mode"
         );
+
         assert.strictEqual(
-            connectionModeOf(recievedContainer),
-            "write",
-            "Getting a container which forceWriteMode was set to true is not in write mode"
+            connectionModeOf(containerGet),
+            "read",
+            "Getting a container with only read permission is not in read mode"
         );
-        // console.log(container);
     });
 });

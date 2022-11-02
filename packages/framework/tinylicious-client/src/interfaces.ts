@@ -4,7 +4,7 @@
  */
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IUser } from "@fluidframework/protocol-definitions";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export {
@@ -25,6 +25,10 @@ export interface TinyliciousClientProps {
      * Optional. A logger instance to receive diagnostic messages.
      */
     logger?: ITelemetryBaseLogger;
+    /**
+     * Optional. Override InsecureTinyliciousTokenProvider's permissions.
+     */
+    scopes?: ScopeType[];
 }
 
 /**
