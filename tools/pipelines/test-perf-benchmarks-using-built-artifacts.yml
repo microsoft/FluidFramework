@@ -246,15 +246,6 @@ stages:
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
                 npm run build:test;
-                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}";
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }};
-                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist";
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist;
-                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test";
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test;
-                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test/domains/json";
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test/domains/json;
-
                 npm run test:benchmark:report;
 
           - task: CopyFiles@2
