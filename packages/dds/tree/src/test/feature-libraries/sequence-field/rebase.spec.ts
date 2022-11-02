@@ -31,11 +31,19 @@ function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
 
 function rebaseTagged(
     change: TaggedChange<TestChangeset>,
-    base: TaggedChange<TestChangeset>,
+    ...base: TaggedChange<TestChangeset>[]
 ): TaggedChange<TestChangeset> {
     deepFreeze(change);
     deepFreeze(base);
-    return tagChange(SF.rebase(change.change, base, TestChange.rebase), change.revision);
+
+    let currChange = change;
+    for (const baseChange of base) {
+        currChange = tagChange(
+            SF.rebase(currChange.change, baseChange, TestChange.rebase),
+            change.revision,
+        );
+    }
+    return currChange;
 }
 
 describe("SequenceField - Rebase", () => {
@@ -375,10 +383,22 @@ describe("SequenceField - Rebase", () => {
         const insertB = tagChange(createInsertChangeset(0, 1), brand(2));
         const insertC = tagChange(createInsertChangeset(1, 1), brand(3));
         const insertB2 = rebaseTagged(insertB, delA);
-        const insertC2 = rebaseTagged(insertC, delA);
-        const insertC3 = rebaseTagged(insertC2, insertB2);
+        const insertC2 = rebaseTagged(insertC, delA, insertB2);
         const expected = createInsertChangeset(1, 1);
-        assertDeltaEqual(insertC3.change, expected);
+        assertDeltaEqual(insertC2.change, expected);
+    });
+
+    it("concurrent inserts ↷ connected delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const delB = tagChange(createDeleteChangeset(1, 1), brand(2));
+        const delC = tagChange(createDeleteChangeset(0, 1), brand(3));
+
+        const insertD = tagChange(createInsertChangeset(0, 1), brand(2));
+        const insertE = tagChange(createInsertChangeset(3, 1), brand(3));
+        const insertD2 = rebaseTagged(insertD, delA, delB, delC);
+        const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+        const expected = createInsertChangeset(1, 1);
+        assertDeltaEqual(insertE2.change, expected);
     });
 });
 
