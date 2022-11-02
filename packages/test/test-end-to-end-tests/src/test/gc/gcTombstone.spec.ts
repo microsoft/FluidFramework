@@ -299,6 +299,79 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Send signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
+    [
+        { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
+    ],
+    async () => {
+        const {
+            unreferencedId,
+            summarizingContainer,
+            summarizer,
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+
+        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+        // production application - causes a sweep ready loaded error
+        const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+
+        // The datastore should be tombstoned now
+        await summarize(summarizer);
+
+        // Sending a signal froma a testDataObject substantiated from the request pattern should fail!
+        assert.throws(() => dataObject._runtime.submitSignal("send", "signal"),
+            (error) => {
+                const correctErrorType = error.errorType === "dataCorruptionError";
+                const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
+                return correctErrorType && correctErrorMessage;
+            },
+            `Should not be able to send signals for a tombstoned datastore.`,
+        );
+    });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Receive signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
+    [
+        { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
+        {
+            eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "Context is tombstoned! Call site [processSignal]",
+            errorType: "dataCorruptionError",
+        },
+    ],
+    async () => {
+        const {
+            unreferencedId,
+            summarizingContainer,
+            summarizer,
+            summaryVersion,
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+        // Setup close validation
+        let closeError: IErrorBase | undefined;
+        summarizingContainer.on("closed", (error) => {
+            closeError = error;
+        });
+
+        // The datastore should be tombstoned now
+        await summarize(summarizer);
+
+        // We load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
+        const container = await provider.loadTestContainer(testContainerConfig, { summaryVersion });
+        // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+        // production application
+        // This does not cause a sweep ready changed error as the container has loaded from a summary before sweep
+        // ready was set
+        const dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
+
+        // Receive a signal by sending it from another container
+        dataObject._runtime.submitSignal("send a signal to be received", "signal");
+        await provider.ensureSynchronized();
+        assert(summarizingContainer.closed === true, `Summarizing container should close.`);
+        assert(closeError !== undefined, `Expecting an error!`);
+        assert(closeError.errorType === "dataCorruptionError");
+        assert(closeError.message === "Context is tombstoned! Call site [processSignal]");
+    });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     itExpects("Requesting tombstoned datastores fails in summarizing container loaded after sweep timeout",
     [
         {
