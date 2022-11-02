@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
@@ -173,11 +173,11 @@ describe("AzureClient", () => {
 
 
     /**
-     * Scenario: Test if TinyliciousClient starts the container in write mode. TinyliciousClient will attempt
+     * Scenario: Test if AzureClient starts the container in write mode. AzureClient will attempt
      * to start the connection in write mode, but if the write permission is not available or the file is read
      * only, mode will be read.
      *
-     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `write`
+     * Expected behavior: The container should start with the connectionMode in `write`.
      */
      it("can create a container in write mode", async () => {
         const { container } = await client.createContainer(schema);
@@ -201,6 +201,82 @@ describe("AzureClient", () => {
             connectionModeOf(containerGet),
             "write",
             "Getting a container is not in write mode"
+        );
+    });
+
+    /**
+     * Scenario: Test if AzureClient with only read permission starts the container in read mode.
+     * AzureClient will attempt to start the connection in write mode, but if the write permission
+     * is not available or the file is read only, mode will be read.
+     *
+     * Expected behavior: The container should start with the connectionMode in `read`.
+     */
+     it("can create a container with only read permission in read mode", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (client as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
+
+        const { container } = await client.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            }
+        );
+        const { container: containerGet } = await client.getContainer(
+            containerId,
+            schema
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "read",
+            "Creating a container with only read permission is not in read mode"
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "read",
+            "Getting a container with only read permission is not in read mode"
+        );
+    });
+
+    /**
+     * Scenario: Test if AzureClient with only write permission starts the container in write mode.
+     * AzureClient will attempt to start the connection in write mode, but if the write permission
+     * is not available or the file is read only, mode will be read.
+     *
+     * Expected behavior: The container should start with the connectionMode in `write`.
+     */
+    it("can create a container with only write permission in write mode", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (client as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
+
+        const { container } = await client.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            }
+        );
+        const { container: containerGet } = await client.getContainer(
+            containerId,
+            schema
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "write",
+            "Creating a container with only write permission is not in write mode"
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container with only write permission is not in write mode"
         );
     });
 });
