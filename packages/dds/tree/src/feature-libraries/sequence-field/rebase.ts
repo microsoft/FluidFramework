@@ -10,6 +10,7 @@ import {
     getInputLength,
     getOutputLength,
     isAttach,
+    isDetachMark,
     isModify,
     isSkipMark,
     splitMarkOnInput,
@@ -221,8 +222,7 @@ function compareLineages(
 }
 
 function isRelevantToLineage<TNodeChange>(mark: Mark<TNodeChange>): boolean {
-    // TODO
-    return !isSkipMark(mark) && mark.type === "Delete";
+    return isDetachMark(mark);
 }
 
 interface LineageRequest<T> {
