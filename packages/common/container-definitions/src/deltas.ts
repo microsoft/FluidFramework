@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Contract representing the result of a newly established connection to the server for syncing deltas
+ * Contract representing the result of a newly established connection to the server for syncing deltas.
  */
 export interface IConnectionDetails {
     clientId: string;
@@ -93,7 +93,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * - `message`: The op that was processed.
      *
-     * - `processingTime`: TODO (also specify units)
+     * - `processingTime`: TODO: what exactly is this measuring (also specify units)?
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
@@ -127,9 +127,10 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * Listener parameters:
      *
-     * - `details`: TODO
+     * - `details`: Connection metadata.
      *
-     * - `opsBehind`: The count of ops
+     * - `opsBehind`: An estimate of far behind the client is relative to the service in terms of ops.
+     * Will not be specified if an estimate cannot be determined.
      */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
 
