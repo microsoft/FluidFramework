@@ -173,11 +173,9 @@ import { buildSummaryStorageAdapter } from "./summaryStorageAdapter";
 import { CompressionSummaryStorageHooks } from "./summaryStorageCompressionHooks";
 import { ScheduleManager } from "./scheduleManager";
 
-export enum SummaryCompressionAlgorithms {
+export enum SummaryCompressionAlgorithm {
     None = 1,
     LZ4 = 2,
-    // Deflate at present unsupported!
-    Deflate = 3,
 }
 
 export enum ContainerMessageType {
@@ -242,7 +240,7 @@ export interface ISummaryBaseConfiguration {
     /**
      * Defines the compression algorithm which should be used for compression of summaries.
      */
-    compressionAlgorithm?: SummaryCompressionAlgorithms;
+    compressionAlgorithm?: SummaryCompressionAlgorithm;
 
     /**
      * The threshold value of the minimum number of bytes the summary blob must have
@@ -714,20 +712,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
         } = runtimeOptions;
 
-        const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
-        const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
-        const summaryConfiguration: ISummaryConfigurationHeuristics =
-            ContainerRuntime.buildSummaryConfiguration(runtimeOptions) as ISummaryConfigurationHeuristics;
-        let storage = !pendingRuntimeState ?
-            context.storage :
-            new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
-        if (summaryConfiguration?.compressionAlgorithm !== undefined) {
-            storage = buildSummaryStorageAdapter(storage,
-                [new CompressionSummaryStorageHooks(
-                    summaryConfiguration.compressionAlgorithm,
-                    summaryConfiguration.minSizeToCompress,
-                    summaryConfiguration.isUseB64OnCompressed)],
-            );
+        const pendingRuntimeState = context.pendingLocalState as
+            | IPendingRuntimeState
+            | undefined;
+        const baseSnapshot: ISnapshotTree | undefined =
+            pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
+
+        const summaryConfiguration = ContainerRuntime.buildSummaryConfiguration(runtimeOptions);
+        const summaryConfigurationHeuristic =
+            summaryOptions.summaryConfigOverrides?.state === "enabled"
+                ? summaryConfiguration as ISummaryConfigurationHeuristics
+                : undefined;
+
+        let storage = !pendingRuntimeState
+            ? context.storage
+            : new SerializedSnapshotStorage(() => {
+                  return context.storage;
+              }, pendingRuntimeState.snapshotBlobs);
+        if (summaryConfigurationHeuristic?.compressionAlgorithm !== undefined) {
+            storage = buildSummaryStorageAdapter(storage, [
+                new CompressionSummaryStorageHooks(
+                    summaryConfigurationHeuristic.compressionAlgorithm,
+                    summaryConfigurationHeuristic.minSizeToCompress,
+                    summaryConfigurationHeuristic.isUseB64OnCompressed
+                ),
+            ]);
             /*
             if (summaryConfiguration?.compressionAlgorithm === SummaryCompressionAlgorithms.None) {
                 console.log("SUMMARY COMPRESSION DISABLED / DECOMPRESSION ENABLED");
@@ -814,6 +823,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             storage,
+            summaryConfiguration,
             requestHandler,
         );
 
@@ -1050,9 +1060,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly _storage: IDocumentStorageService,
+        private readonly summaryConfiguration: ISummaryConfiguration,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        private readonly summaryConfiguration: ISummaryConfiguration =
-            ContainerRuntime.buildSummaryConfiguration(runtimeOptions),
     ) {
         super();
         this.messageAtLastSummary = metadata?.message;

@@ -763,8 +763,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 // @public (undocumented)
 export enum SummaryCompressionAlgorithms {
     // (undocumented)
-    Deflate = 3,
-    // (undocumented)
     LZ4 = 2,
     // (undocumented)
     None = 1

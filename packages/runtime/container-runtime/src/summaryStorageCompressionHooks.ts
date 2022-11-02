@@ -14,7 +14,7 @@ import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 // import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks } from "./summaryStorageAdapter";
 import { SummaryStorageHooks } from "./summaryStorageAdapter";
 import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
-import { SummaryCompressionAlgorithms } from "./containerRuntime";
+import { SummaryCompressionAlgorithm } from "./containerRuntime";
 
 const algorithmKey = "ALG";
 const defaultMinSizeToCompress = 500;
@@ -30,37 +30,58 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     private readonly blobReplacer = (input: any, context: any) => {
         if (input.type === SummaryType.Blob) {
             const summaryBlob: ISummaryBlob = input;
-            const decompressed: Uint8Array = typeof summaryBlob.content === "string" ?
-                new TextEncoder().encode(summaryBlob.content) : summaryBlob.content;
-            if (this._minSizeToCompress !== undefined && decompressed.length < this._minSizeToCompress) {
+            const decompressed: Uint8Array =
+                typeof summaryBlob.content === "string"
+                    ? new TextEncoder().encode(summaryBlob.content)
+                    : summaryBlob.content;
+            if (
+                this._minSizeToCompress !== undefined &&
+                decompressed.length < this._minSizeToCompress
+            ) {
                 return input;
             }
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
             let newSummaryBlob;
-            if (this._isUseB64OnCompressed !== undefined && this._isUseB64OnCompressed) {
+            if (
+                this._isUseB64OnCompressed !== undefined &&
+                this._isUseB64OnCompressed
+            ) {
                 // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
                 // fails on assertion at 2 different generations of the hash which do not lead to
                 // the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
-                const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
-                const compressedEncoded = new TextEncoder().encode(compressedString);
-                newSummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
+                const compressedString = Uint8ArrayToString(
+                    IsoBuffer.from(compressed),
+                    "base64"
+                );
+                const compressedEncoded = new TextEncoder().encode(
+                    compressedString
+                );
+                newSummaryBlob = {
+                    type: SummaryType.Blob,
+                    content: compressedEncoded,
+                };
             } else {
-            // This line will replace the 3 lines above when the bug is fixed.
-            // const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed)};
-                newSummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed) };
+                // This line will replace the 3 lines above when the bug is fixed.
+                // const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed)};
+                newSummaryBlob = {
+                    type: SummaryType.Blob,
+                    content: IsoBuffer.from(compressed),
+                };
             }
             return newSummaryBlob;
         } else {
             return input;
         }
     };
-    constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined,
+    constructor(
+        private readonly _algorithm: SummaryCompressionAlgorithm | undefined,
         private readonly _minSizeToCompress: number | undefined,
-        private readonly _isUseB64OnCompressed: boolean | undefined) {
-            if (this._minSizeToCompress === undefined) {
-                this._minSizeToCompress = defaultMinSizeToCompress;
-            }
+        private readonly _isUseB64OnCompressed: boolean | undefined
+    ) {
+        if (this._minSizeToCompress === undefined) {
+            this._minSizeToCompress = defaultMinSizeToCompress;
         }
+    }
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
         return this.encodeBlob(file);
     }
@@ -77,15 +98,26 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
      * New ISummaryBlob is created with the new string content obtained in the above step and the
      * old blob is replaced by this new blob in the ISummaryTree.
      */
-    public onPreUploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext):
-    { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
+    public onPreUploadSummaryWithContext(
+        summary: ISummaryTree,
+        context: ISummaryContext
+    ): { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
         console.log("Using Summary Compression : UploadSummaryWithContext ");
-        return { prepSummary: recursivelyReplace(summary, this.blobReplacer, context), prepContext: context };
+        return {
+            prepSummary: recursivelyReplace(
+                summary,
+                this.blobReplacer,
+                context
+            ),
+            prepContext: context,
+        };
     }
     /**
      * TODO: This method is not yet implemented
      */
-    public onPostGetSnapshotTree(tree: ISnapshotTree | null): ISnapshotTree | null {
+    public onPostGetSnapshotTree(
+        tree: ISnapshotTree | null
+    ): ISnapshotTree | null {
         return tree;
     }
     /**
@@ -97,27 +129,21 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
 
     private encodeBlob(file: ArrayBufferLike): ArrayBufferLike {
         let compressed: ArrayBufferLike;
-        if (this._algorithm === undefined || this._algorithm === SummaryCompressionAlgorithms.None) {
+        if (
+            this._algorithm === undefined ||
+            this._algorithm === SummaryCompressionAlgorithm.None
+        ) {
             return file;
         } else {
-            if (this._algorithm === SummaryCompressionAlgorithms.Deflate) {
-                compressed = file;
-                this.throwDeflateUnsupported();
+            if (this._algorithm === SummaryCompressionAlgorithm.LZ4) {
+                compressed = compress(file) as ArrayBufferLike;
             } else {
-                if (this._algorithm === SummaryCompressionAlgorithms.LZ4) {
-                    compressed = compress(file) as ArrayBufferLike;
-                } else {
-                    throw Error(`Unknown Algorithm ${this._algorithm}`);
-                }
+                throw Error(`Unknown Algorithm ${this._algorithm}`);
             }
         }
         const headerBuilder: BlobHeaderBuilder = new BlobHeaderBuilder();
         headerBuilder.addField(algorithmKey, this._algorithm.toString(10));
         return writeBlobHeader(headerBuilder.build(), compressed);
-    }
-
-    private throwDeflateUnsupported() {
-        throw new Error("Deflate not supported");
     }
 
     private decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
@@ -128,7 +154,9 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             // where the binary blob representation inside ISummaryTree causes assertion issues
             // with the hash comparison we need to be prepared that the blob together with the
             // blob header is base64 encoded. We need to try whether it is the case.
-            const compressedString = new TextDecoder().decode(compressedEncoded);
+            const compressedString = new TextDecoder().decode(
+                compressedEncoded
+            );
             compressedEncoded = IsoBuffer.from(compressedString, "base64");
             header = readBlobHeader(compressedEncoded);
             if (!header) {
@@ -138,15 +166,11 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         let decompressed: ArrayBufferLike;
         const input = skipHeader(compressedEncoded);
         const myAlgorithm = Number(header.getValue(algorithmKey));
-        if (myAlgorithm === SummaryCompressionAlgorithms.Deflate) {
-            decompressed = input;
-            this.throwDeflateUnsupported();
-        } else
-            if (myAlgorithm === SummaryCompressionAlgorithms.LZ4) {
-                decompressed = decompress(input) as ArrayBufferLike;
-            } else {
-                throw Error(`Unknown Algorithm ${this._algorithm}`);
-            }
+        if (myAlgorithm === SummaryCompressionAlgorithm.LZ4) {
+            decompressed = decompress(input) as ArrayBufferLike;
+        } else {
+            throw Error(`Unknown Algorithm ${this._algorithm}`);
+        }
         return decompressed;
     }
 }

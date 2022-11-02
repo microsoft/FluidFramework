@@ -17,12 +17,12 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle, ISummaryTree, IVersion, SummaryType }
     from "@fluidframework/protocol-definitions";
 import {
-    ContainerRuntime, SummaryCompressionAlgorithms, ISummaryRuntimeOptions,
+    ContainerRuntime, SummaryCompressionAlgorithm, ISummaryRuntimeOptions,
 } from "../containerRuntime";
 import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
 import { buildSummaryStorageAdapter } from "../summaryStorageAdapter";
 
-function genOptions(alg: SummaryCompressionAlgorithms | undefined) {
+function genOptions(alg: SummaryCompressionAlgorithm | undefined) {
     const summaryOptions: ISummaryRuntimeOptions = {
         summaryConfigOverrides: {
             compressionAlgorithm: alg,
@@ -56,48 +56,48 @@ describe("Compression", () => {
     describe("Compression Symetrical Hook Test", () => {
         it("LZ4 enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
             runEncDecAtHooks(hook);
         });
         it("None enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
             runEncDecAtHooks(hook);
         });
     });
     describe("Compression Summary Tree Upload Hook Test", () => {
         it("LZ4 upload / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
             runTreeUploadAndDecAtHooks(hook);
         });
         it("None upload / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
             runTreeUploadAndDecAtHooks(hook);
         });
     });
     describe("Compression Symetrical Adapter Test", () => {
         it("LZ4 enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
             runEncDecAtAdapter(hook);
         });
         it("None enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
             runEncDecAtAdapter(hook);
         });
     });
     describe("Compression Summary Tree Upload Adapter Test", () => {
         it("LZ4 enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.LZ4, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
             runTreeUploadAndDecAtAdapter(hook);
         });
         it("None enc / dec", async () => {
             const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithms.None, 500, false);
+                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
                 runTreeUploadAndDecAtAdapter(hook);
         });
     });
@@ -118,7 +118,7 @@ describe("Compression", () => {
             });
             const mockContext = buildMockContext();
             it("LZ4 config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.LZ4);
+                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithm.LZ4);
                 containerRuntime = await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
@@ -130,25 +130,10 @@ describe("Compression", () => {
                 assert.strictEqual(wrapper.hasHooks, true);
                 const multihook = wrapper.hooks;
                 const hook: CompressionSummaryStorageHooks = multihook.hooks[0];
-                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithms.LZ4);
-            });
-            it("Deflate config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.Deflate);
-                containerRuntime = await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    { summaryOptions: summaryOpt }, // runtimeOptions
-                );
-
-                const wrapper = containerRuntime.storage as any;
-                assert.strictEqual(wrapper.hasHooks, true);
-                const multihook = wrapper.hooks;
-                const hook: CompressionSummaryStorageHooks = multihook.hooks[0];
-                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithms.Deflate);
+                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithm.LZ4);
             });
             it("None config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithms.None);
+                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithm.None);
                 containerRuntime = await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
@@ -160,7 +145,7 @@ describe("Compression", () => {
                 assert.strictEqual(wrapper.hasHooks, true);
                 const multihook = wrapper.hooks;
                 const hook: CompressionSummaryStorageHooks = multihook.hooks[0];
-                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithms.None);
+                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithm.None);
             });
             it("Empty config", async () => {
                 const summaryOpt: ISummaryRuntimeOptions = genOptions(undefined);
