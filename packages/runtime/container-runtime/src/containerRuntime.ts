@@ -843,6 +843,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private ensureNoDataModelChangesCalls = 0;
 
     /**
+     * Tracks the number of detected reentrant ops to report,
+     * in order to self-throttle the telemetry events.
+     *
+     * This should be removed as part of ADO:2322
+     */
+    private opReentryCallsToReport = 5;
+
+    /**
      * Invokes the given callback and expects that no ops are submitted
      * until execution finishes. If an op is submitted, an error will be raised.
      *
@@ -1016,8 +1024,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // latency of processing a batch.
         // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
         // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
-        this.pendingBatch = new BatchManager(this.mc, runtimeOptions.maxBatchSizeInBytes);
+        this.pendingAttachBatch = new BatchManager({
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+            softLimit: 64 * 1024,
+        });
+        this.pendingBatch = new BatchManager({
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+        });
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -2720,7 +2735,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             {
                                 opSize: message.contents.length,
                                 count: this.pendingAttachBatch.length,
-                                limit: this.pendingAttachBatch.limit,
+                                limit: this.pendingAttachBatch.options.hardLimit,
                             });
                     }
                 }
@@ -2732,7 +2747,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         {
                             opSize: message.contents.length,
                             count: this.pendingBatch.length,
-                            limit: this.pendingBatch.limit,
+                            limit: this.pendingBatch.options.hardLimit,
                         });
                 }
                 if (!this.currentlyBatching()) {
@@ -2784,7 +2799,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private verifyCanSubmitOps() {
-        if (this.enableOpReentryCheck && this.ensureNoDataModelChangesCalls > 0) {
+        if (this.ensureNoDataModelChangesCalls > 0) {
+            if (this.opReentryCallsToReport > 0) {
+                this.mc.logger.sendTelemetryEvent(
+                    { eventName: "Op reentry detected" },
+                    // We need to capture the call stack in order to inspect the source of this usage pattern
+                    new GenericError("Op reentry detected"),
+                );
+                this.opReentryCallsToReport--;
+            }
+
             // Creating ops while processing ops can lead
             // to undefined behavior and events observed in the wrong order.
             // For example, we have two callbacks registered for a DDS, A and B.
@@ -2797,7 +2821,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             //
             // The runtime must enforce op coherence by not allowing ops to be submitted
             // while ops are being processed.
-            throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+            if (this.enableOpReentryCheck) {
+                throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+            }
         }
     }
 

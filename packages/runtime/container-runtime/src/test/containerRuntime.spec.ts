@@ -23,6 +23,7 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ContainerMessageType, ContainerRuntime } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -215,20 +216,23 @@ describe("Runtime", () => {
 
         describe("Op reentry enforcement", () => {
             let containerRuntime: ContainerRuntime;
-            const getMockContext = ((settings: Record<string, ConfigTypes>): Partial<IContainerContext> => ({
+            const getMockContext = (
+                settings: Record<string, ConfigTypes> = {},
+                logger: ITelemetryLogger = new MockLogger(),
+            ): Partial<IContainerContext> => ({
                 attachState: AttachState.Attached,
                 deltaManager: new MockDeltaManager(),
                 quorum: new MockQuorumClients(),
                 taggedLogger:
-                    mixinMonitoringContext(new MockLogger(), configProvider(settings)) as unknown as MockLogger,
+                    mixinMonitoringContext(logger, configProvider(settings)) as unknown as MockLogger,
                 clientDetails: { capabilities: { interactive: true } },
                 closeFn: (_error?: ICriticalContainerError): void => { },
                 updateDirtyContainerState: (_dirty: boolean) => { },
-            }));
+            });
 
             it("By default, don't enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext({}) as IContainerContext,
+                    getMockContext() as IContainerContext,
                     [],
                     undefined, // requestHandler
                     {}, // runtimeOptions
@@ -250,7 +254,7 @@ describe("Runtime", () => {
 
             it("If option enabled, enforce the op reentry check", async () => {
                 containerRuntime = await ContainerRuntime.load(
-                    getMockContext({}) as IContainerContext,
+                    getMockContext() as IContainerContext,
                     [],
                     undefined, // requestHandler
                     {
@@ -293,6 +297,28 @@ describe("Runtime", () => {
                             containerRuntime.submitDataStoreOp("id", "test"),
                         ),
                     ));
+            });
+
+            it("Report at most 5 reentrant ops", async () => {
+                const mockLogger = new MockLogger();
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext({}, mockLogger) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                mockLogger.clear();
+                containerRuntime.ensureNoDataModelChanges(() => {
+                    for (let i = 0; i < 10; i++) {
+                        containerRuntime.submitDataStoreOp("id", "test");
+                    }
+                });
+
+                // We expect only 5 events
+                mockLogger.assertMatchStrict(Array.from(Array(5).keys()).map(() => ({
+                    eventName: "ContainerRuntime:Op reentry detected",
+                })));
             });
         });
 
