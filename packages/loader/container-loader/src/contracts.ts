@@ -155,10 +155,16 @@ export interface IConnectionManagerFactoryArgs {
 
     /**
      * Called whenever connection type changes from writable to read-only or vice versa.
+     *
+     * @remarks
+     *
      * Connection can be read-only if user has no edit permissions, or if container forced
      * connection to be read-only.
      * This should not be confused with "read" / "write"connection mode which is internal
      * optimization.
+     *
+     * @param readonly - Whether or not the container is now read-only.
+     * `undefined` indicates that user permissions are not yet known.
      */
     readonly readonlyChangeHandler: (readonly?: boolean) => void;
 }
