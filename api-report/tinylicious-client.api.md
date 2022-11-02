@@ -45,7 +45,6 @@ export default TinyliciousClient;
 // @public
 export interface TinyliciousClientProps {
     connection?: TinyliciousConnectionConfig;
-    forceWriteMode?: boolean;
     logger?: ITelemetryBaseLogger;
 }
 

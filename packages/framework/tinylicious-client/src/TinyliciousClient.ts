@@ -148,18 +148,13 @@ export class TinyliciousClient {
             mode: "write",
         };
 
-        const loaderProps: any = {
+        const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
-        };
-
-        if (this.props?.forceWriteMode === true) {
-            loaderProps.options = { client };
-        }
-
-        const loader = new Loader(loaderProps);
+            options: { client }
+        });
 
         return loader;
     }

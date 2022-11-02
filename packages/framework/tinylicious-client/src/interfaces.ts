@@ -25,11 +25,6 @@ export interface TinyliciousClientProps {
      * Optional. A logger instance to receive diagnostic messages.
      */
     logger?: ITelemetryBaseLogger;
-    /**
-     * Optional. Force all connections to start the connection mode as write instead of read.
-     * Setting to `true` enables write mode by default.
-     */
-    forceWriteMode?: boolean;
 }
 
 /**

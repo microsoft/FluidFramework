@@ -13,7 +13,7 @@ import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { ConnectionMode } from "@fluidframework/protocol-definitions";
-import { TinyliciousClient, TinyliciousClientProps } from "..";
+import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
 const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
@@ -24,6 +24,9 @@ new Promise<boolean>((resolve, reject) => {
 
 const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
     (dataObject as any).context.containerRuntime as IContainerRuntime;
+
+const connectionModeOf = (container: IFluidContainer) =>
+    (container as any).container.connectionMode as ConnectionMode;
 
 const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
     containers.map(async (c) => new Promise<boolean>((resolve) => c.once("disposed", (error) => {
@@ -186,6 +189,7 @@ describe("TinyliciousClient", () => {
         const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
+        console.log(valueGet, valueCreate);
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
     });
 
@@ -289,113 +293,29 @@ describe("TinyliciousClient", () => {
      * Expected behavior: Setting forceWriteMode to true in TinyliciousClientProps should force the container's
      * connectionMode to `write` while keeping the original behavior if forceWriteMode is not set to true.
      */
-    it("forces the container to connect with write mode when forceWriteMode is set to true ", async () => {
-        const getConnectionModeFromTinyliciousClient = async (
-            props?: TinyliciousClientProps,
-            containerId?: string
-        ): Promise<{ mode: ConnectionMode; containerId: string; }> => {
-            const client = new TinyliciousClient(props);
-            let container: IFluidContainer;
-            let newContainerId: string;
-            if (containerId === undefined) {
-                ({ container } = await client.createContainer(schema));
-                newContainerId = await container.attach();
-                await timeoutPromise(
-                    (resolve) => container.once("connected", resolve),
-                    {
-                        durationMs: 1000,
-                        errorMsg: "container connect() timeout",
-                    }
-                );
-            } else {
-                ({ container } = await client.getContainer(containerId, schema));
-                newContainerId = containerId;
+    it("can create a container in write mode", async () => {
+        const { container } = await tinyliciousClient.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
             }
+        );
 
-            return {
-                mode: (container as any).container.connectionMode as ConnectionMode,
-                containerId: newContainerId,
-            };
-        };
-
-        const [
-            createForcedWriteContainer,
-            createNoPropsContainer,
-            createFalseFlagContainer,
-            createUndefinedFlagContainer,
-        ] = await Promise.all([
-            getConnectionModeFromTinyliciousClient({ forceWriteMode: true }),
-            getConnectionModeFromTinyliciousClient(),
-            getConnectionModeFromTinyliciousClient({ forceWriteMode: false }),
-            getConnectionModeFromTinyliciousClient({ forceWriteMode: undefined }),
-        ]);
-
-        const [
-            getForcedWriteContainer,
-            getNoPropsContainer,
-            getFalseFlagContainer,
-            getUndefinedFlagContainer,
-        ] = await Promise.all([
-            getConnectionModeFromTinyliciousClient(
-                { forceWriteMode: true },
-                createForcedWriteContainer.containerId
-            ),
-            getConnectionModeFromTinyliciousClient(
-                undefined,
-                createNoPropsContainer.containerId
-            ),
-            getConnectionModeFromTinyliciousClient(
-                { forceWriteMode: false },
-                createFalseFlagContainer.containerId
-            ),
-            getConnectionModeFromTinyliciousClient(
-                { forceWriteMode: undefined },
-                createUndefinedFlagContainer.containerId
-            ),
-        ]);
+        const { container: recievedContainer } = await tinyliciousClient.getContainer(containerId, schema);
 
         assert.strictEqual(
-            createForcedWriteContainer.mode,
+            connectionModeOf(container),
             "write",
             "Creating a container which forceWriteMode was set to true is not in write mode"
         );
         assert.strictEqual(
-            getForcedWriteContainer.mode,
+            connectionModeOf(recievedContainer),
             "write",
             "Getting a container which forceWriteMode was set to true is not in write mode"
         );
-
-        assert.strictEqual(
-            createNoPropsContainer.mode,
-            "read",
-            "Creating a container without props is not in read mode"
-        );
-        assert.strictEqual(
-            getNoPropsContainer.mode,
-            "read",
-            "Getting a container without props is not in read mode"
-        );
-
-        assert.strictEqual(
-            createFalseFlagContainer.mode,
-            "read",
-            "Creating a container which forceWriteMode was set to false is not in read mode"
-        );
-        assert.strictEqual(
-            getFalseFlagContainer.mode,
-            "read",
-            "Getting a container which forceWriteMode was set to false is not in read mode"
-        );
-
-        assert.strictEqual(
-            createUndefinedFlagContainer.mode,
-            "read",
-            "Creating a container which forceWriteMode was set to undefined is not in read mode"
-        );
-        assert.strictEqual(
-            getUndefinedFlagContainer.mode,
-            "read",
-            "Getting a container which forceWriteMode was set to undefined is not in read mode"
-        );
+        // console.log(container);
     });
 });
