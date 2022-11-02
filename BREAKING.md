@@ -37,6 +37,7 @@ The following legacy events and event parameters have been marked as deprecated:
     - "submitOp": Event deprecated in its entirety. No replacement API recommended.
     - "allSentOpsAckd": Event deprecated in its entirety. Use "saved" event instead.
     - "processTime": Event deprecated in its entirety. No replacement API recommended.
+    - "pong": Event deprecated in its entirety. No replacement API recommended.
 
 ## 2.0.0-internal.2.1.0 Breaking changes
 
