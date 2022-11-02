@@ -323,26 +323,24 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
      */
     it("can create a container with only read permission in read mode", async () => {
-        const docReadPermissionClient = new TinyliciousClient();
+        (tinyliciousClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
 
-        (docReadPermissionClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
-
-        const { container: readPermissionContainer } = await docReadPermissionClient.createContainer(schema);
-        const containerId = await readPermissionContainer.attach();
+        const { container } = await tinyliciousClient.createContainer(schema);
+        const containerId = await container.attach();
         await timeoutPromise(
-            (resolve) => readPermissionContainer.once("connected", resolve),
+            (resolve) => container.once("connected", resolve),
             {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
             }
         );
-        const { container: containerGet } = await docReadPermissionClient.getContainer(
+        const { container: containerGet } = await tinyliciousClient.getContainer(
             containerId,
             schema
         );
 
         assert.strictEqual(
-            connectionModeOf(readPermissionContainer),
+            connectionModeOf(container),
             "read",
             "Creating a container with only read permission is not in read mode"
         );
@@ -362,26 +360,24 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
      */
     it("can create a container with only write permission in write mode", async () => {
-        const docWritePermissionClient = new TinyliciousClient();
+        (tinyliciousClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
 
-        (docWritePermissionClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
-
-        const { container: readPermissionContainer } = await docWritePermissionClient.createContainer(schema);
-        const containerId = await readPermissionContainer.attach();
+        const { container } = await tinyliciousClient.createContainer(schema);
+        const containerId = await container.attach();
         await timeoutPromise(
-            (resolve) => readPermissionContainer.once("connected", resolve),
+            (resolve) => container.once("connected", resolve),
             {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
             }
         );
-        const { container: containerGet } = await docWritePermissionClient.getContainer(
+        const { container: containerGet } = await tinyliciousClient.getContainer(
             containerId,
             schema
         );
 
         assert.strictEqual(
-            connectionModeOf(readPermissionContainer),
+            connectionModeOf(container),
             "write",
             "Creating a container with only write permission is not in write mode"
         );
