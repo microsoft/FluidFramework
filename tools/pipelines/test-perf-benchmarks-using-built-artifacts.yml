@@ -250,8 +250,10 @@ stages:
                 ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }};
                 echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist";
                 ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist;
-                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/domains/json";
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/domains/json;
+                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test";
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test;
+                echo "ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test/domains/json";
+                ls -la ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test/domains/json;
 
                 npm run test:benchmark:report;
 
