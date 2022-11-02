@@ -314,6 +314,7 @@ describe("TinyliciousClient", () => {
             "Getting a container is not in write mode"
         );
     });
+
     /**
      * Scenario: Test if TinyliciousClient with only read permission starts the container in read mode.
      * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
@@ -334,7 +335,7 @@ describe("TinyliciousClient", () => {
                 errorMsg: "container connect() timeout",
             }
         );
-        const { container: containerGet } = await tinyliciousClient.getContainer(
+        const { container: containerGet } = await docReadPermissionClient.getContainer(
             containerId,
             schema
         );
