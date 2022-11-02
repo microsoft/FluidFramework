@@ -134,16 +134,16 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `reason`: TODO
+     * - `reason`: Describes the reason for which the
      */
     (event: "disconnect", listener: (reason: string) => void);
 
     /**
-     * TODO
+     * Emitted when read/write permissions change.
      *
      * @remarks Listener parameters:
      *
-     * - `readonly`: TODO
+     * - `readonly`: Whether or not the delta manager is now read-only.
      */
     (event: "readonly", listener: (readonly: boolean) => void);
 }
