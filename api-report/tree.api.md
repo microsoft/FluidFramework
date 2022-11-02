@@ -424,7 +424,6 @@ interface HasOpId {
 // @public (undocumented)
 interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
-    // (undocumented)
     lineage?: LineageEvent[];
     tiebreak?: Tiebreak;
 }

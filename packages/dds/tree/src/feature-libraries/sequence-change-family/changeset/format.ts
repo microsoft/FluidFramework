@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, RevisionTag, TreeValue } from "../../../core";
+import { JsonableTree, TreeValue } from "../../../core";
 
 // TODOs:
 // Clipboard
@@ -107,16 +107,6 @@ export namespace Transposed {
          * Indicates a prior concurrent slice-delete that the target place was affected by.
          */
         scorch?: PriorOp;
-
-        /**
-         * Record of relevant information about changes this mark has been rebased over.
-         */
-        lineage?: LineageEvent[];
-    }
-
-    export interface LineageEvent {
-        readonly revision: RevisionTag;
-        readonly offset: number;
     }
 
     export interface GapEffectPolicy {

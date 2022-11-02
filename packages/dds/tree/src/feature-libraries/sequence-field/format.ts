@@ -58,6 +58,9 @@ export interface HasPlaceFields {
      */
     tiebreak?: Tiebreak;
 
+    /**
+     * Record of relevant information about changes this mark has been rebased over.
+     */
     lineage?: LineageEvent[];
 }
 
