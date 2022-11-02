@@ -63,7 +63,7 @@ parameters:
 - name: executionTestPackages
   type: object
   default:
-    - "@fluid-internal/tree"
+    # - "@fluid-internal/tree"
     - "@fluid-experimental/tree"
 
 variables:
