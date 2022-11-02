@@ -228,7 +228,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void);
 
     /**
-     * Emitted immediately after processing an incoming operation (op).
+     * Emitted immediately after processing an enqueued task and removing it from the queue.
      *
      * @remarks
      *
@@ -238,7 +238,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
      *
      * Listener parameters:
      *
-     * - `task`: TODO.
+     * - `task`: The task that was processed.
      */
     (event: "op", listener: (task: T) => void);
 
