@@ -23,7 +23,7 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
+import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray, assertNotUndefined } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -613,7 +613,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the current view of the tree.
 	 */
 	public get currentView(): RevisionView {
-		return this.logViewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		return this.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -1135,7 +1135,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = this.editLog.getEditInSessionAtIndex(i);
+				const edit = assertNotUndefined(this.editLog.tryGetEditAtIndex(i));
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1148,13 +1148,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(this.editLog.getEditInSessionAtIndex(i));
+				this.internStringsFromEdit(assertNotUndefined(this.editLog.tryGetEditAtIndex(i)));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
 			// IDs for every ID in the view via the ghost compressor.
 			// The same logic applies for the string interner.
-			for (const node of this.logViewer.getRevisionViewInSession(this.editLog.numberOfSequencedEdits)) {
+			for (const node of this.logViewer.getRevisionViewInMemory(this.editLog.numberOfSequencedEdits)) {
 				ghostContext.generateNodeId(this.convertToStableNodeId(node.identifier));
 				this.interner.getOrCreateInternedId(node.definition);
 				for (const label of [...node.traits.keys()].sort()) {
@@ -1333,8 +1333,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = this.edits.getEditInSessionAtIndex(index);
-		const before = this.logViewer.getRevisionViewInSession(index);
+		const edit = assertNotUndefined(this.edits.tryGetEditAtIndex(index), 'edit not found');
+		const before = this.logViewer.getRevisionViewInMemory(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {
 			return undefined;

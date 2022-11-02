@@ -6,7 +6,7 @@
 import Denque from 'denque';
 import { IEvent } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-import { assert, fail, noop } from './Common';
+import { assert, assertNotUndefined, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
 import { Revision, RevisionValueCache } from './RevisionValueCache';
@@ -377,7 +377,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.getEditInSessionAtIndex(i);
+			const edit = assertNotUndefined(this.log.tryGetEditAtIndex(i), 'edit not found');
 			current = this.applyEdit(current.view, edit, i);
 		}
 		return current;
@@ -557,7 +557,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					cached = true;
 					const orderedId = this.log.getOrderedEditId(editId);
 					if (orderedId.isLocal === false && orderedId.sequenceInfo !== undefined) {
-						const earliestSequenced = this.earliestSequencedEditInSession();
+						const earliestSequenced = this.earliestSequencedEditInMemory();
 						if (earliestSequenced !== undefined) {
 							const earliestEditSequenceNumber = earliestSequenced.sequenceNumber;
 							const targetSequenceNumber = Math.max(
@@ -610,14 +610,16 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	/**
 	 * @returns Edit information for the earliest known sequenced edit.
 	 */
-	public earliestSequencedEditInSession(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
+	public earliestSequencedEditInMemory(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
 		const earliestEditIndex = 0;
 		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
 		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {
-			const edit = this.log.getEditInSessionAtIndex(index);
-			const editOrderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
-			if (editOrderedId.sequenceInfo !== undefined) {
-				return { edit, sequenceNumber: editOrderedId.sequenceInfo.sequenceNumber };
+			const edit = this.log.tryGetEditAtIndex(index);
+			if (edit !== undefined) {
+				const editOrderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
+				if (editOrderedId.sequenceInfo !== undefined) {
+					return { edit, sequenceNumber: editOrderedId.sequenceInfo.sequenceNumber };
+				}
 			}
 		}
 		return undefined;
@@ -627,11 +629,11 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns Edit result information for the edit at the given `index`.
 	 */
 	private getEditResultFromIndex(index: number): CachedEditingResult {
-		const edit = this.log.getEditInSessionAtIndex(index);
-		const before = this.getRevisionViewInSession(index);
-		const resultAfter = this.getEditResultInSession(index + 1);
+		const edit = assertNotUndefined(this.log.tryGetEditAtIndex(index), 'edit does not exist in memory');
+		const before = this.getRevisionViewInMemory(index);
+		const resultAfter = this.getEditResultInMemory(index + 1);
 		if (resultAfter.status === undefined) {
-			fail('The status of every edit in session should be known');
+			fail('The status of every edit in memory should be known');
 		}
 		return resultAfter.status === EditStatus.Applied
 			? {
@@ -658,42 +660,44 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * Undefined if no sequenced edit occurred at or prior to the given sequenceNumber.
 	 */
 	public getEditResultFromSequenceNumber(sequenceNumber: number): CachedEditingResult | undefined {
-		const earliestSequenced = this.earliestSequencedEditInSession();
+		const earliestSequenced = this.earliestSequencedEditInMemory();
 		if (earliestSequenced !== undefined && sequenceNumber >= earliestSequenced.sequenceNumber) {
 			const lowestIndex = this.log.getIndexOfId(earliestSequenced.edit.id);
 			const highestIndex = this.log.numberOfSequencedEdits - 1;
 			for (let index = highestIndex; index >= lowestIndex; --index) {
-				const edit = this.log.getEditInSessionAtIndex(index);
-				const orderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
-				// If `orderedId.sequenceInfo.sequenceNumber` is equal to the requested `sequenceNumber` then we have found the edit of
-				// interest and simply return its associated information.
-				// Note that the check bellow also is also satisfied if `orderedId.sequenceInfo.sequenceNumber`is lower than the requested
-				// `sequenceNumber`. This can happen when the edit for the requested `sequenceNumber` has either not yet been received or
-				// has been processed by a different DDS (several DDSes can share the same stream of operations and will only see those
-				// relevant to them). In such cases, we return the edit info for the last known edit before that.
-				if (orderedId.sequenceInfo && orderedId.sequenceInfo.sequenceNumber <= sequenceNumber) {
-					const before = this.getRevisionViewInSession(index);
-					const resultAfter = this.getEditResultInSession(index + 1);
-					if (resultAfter.status === undefined) {
-						fail('The status of every edit in session should be known');
+				const edit = this.log.tryGetEditAtIndex(index);
+				if (edit !== undefined) {
+					const orderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
+					// If `orderedId.sequenceInfo.sequenceNumber` is equal to the requested `sequenceNumber` then we have found the edit of
+					// interest and simply return its associated information.
+					// Note that the check bellow also is also satisfied if `orderedId.sequenceInfo.sequenceNumber`is lower than the requested
+					// `sequenceNumber`. This can happen when the edit for the requested `sequenceNumber` has either not yet been received or
+					// has been processed by a different DDS (several DDSes can share the same stream of operations and will only see those
+					// relevant to them). In such cases, we return the edit info for the last known edit before that.
+					if (orderedId.sequenceInfo && orderedId.sequenceInfo.sequenceNumber <= sequenceNumber) {
+						const before = this.getRevisionViewInMemory(index);
+						const resultAfter = this.getEditResultInMemory(index + 1);
+						if (resultAfter.status === undefined) {
+							fail('The status of every edit in session should be known');
+						}
+						return resultAfter.status === EditStatus.Applied
+							? {
+									id: edit.id,
+									status: EditStatus.Applied,
+									before,
+									changes: edit.changes,
+									view: resultAfter.view,
+									steps: resultAfter.steps,
+							  }
+							: {
+									id: edit.id,
+									status: resultAfter.status,
+									failure: resultAfter.failure,
+									before,
+									view: resultAfter.view,
+									changes: edit.changes,
+							  };
 					}
-					return resultAfter.status === EditStatus.Applied
-						? {
-								id: edit.id,
-								status: EditStatus.Applied,
-								before,
-								changes: edit.changes,
-								view: resultAfter.view,
-								steps: resultAfter.steps,
-						  }
-						: {
-								id: edit.id,
-								status: resultAfter.status,
-								failure: resultAfter.failure,
-								before,
-								view: resultAfter.view,
-								changes: edit.changes,
-						  };
 				}
 			}
 		}

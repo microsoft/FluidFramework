@@ -134,7 +134,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 function getViewsForLog(log: EditLog<ChangeInternal>, baseView: RevisionView): RevisionView[] {
 	const views: RevisionView[] = [baseView];
 	for (let i = 0; i < log.length; i++) {
-		const edit = log.getEditInSessionAtIndex(i);
+		const edit = assertNotUndefined(log.tryGetEditAtIndex(i));
 		const result = TransactionInternal.factory(views[i]).applyChanges(edit.changes).close();
 		if (result.status === EditStatus.Applied) {
 			views.push(result.after);
@@ -259,7 +259,7 @@ function runLogViewerCorrectnessTests(
 	});
 }
 
-describe.only('CachingLogViewer', () => {
+describe('CachingLogViewer', () => {
 	// TODO: Dedupe? shared hook for getting all of this stuff?
 	let simpleLog: EditLog<ChangeInternal>;
 	let simpleLogBaseView: RevisionView;
@@ -326,9 +326,9 @@ describe.only('CachingLogViewer', () => {
 		expect(viewer.getRevisionViewInMemory(initialRevision).equals(views[initialRevision])).to.be.true;
 	});
 
-	async function requestAllRevisionViews(viewer: CachingLogViewer, log: EditLog<ChangeInternal>): Promise<void> {
+	function requestAllRevisionViews(viewer: CachingLogViewer, log: EditLog<ChangeInternal>): void {
 		for (let i = 0; i <= log.length; i++) {
-			await viewer.getRevisionView(i);
+			viewer.getRevisionViewInMemory(i);
 		}
 	}
 
@@ -337,12 +337,12 @@ describe.only('CachingLogViewer', () => {
 		const viewer = getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, () => editsProcessed++);
 		assert(simpleLog.length < CachingLogViewer.sequencedCacheSizeMax);
 
-		await requestAllRevisionViews(viewer, simpleLog);
+		requestAllRevisionViews(viewer, simpleLog);
 		expect(editsProcessed).to.equal(simpleLog.length);
 
 		// Ask for every view; no edit application should occur, since the views will be cached.
 		for (let i = 0; i <= simpleLog.length; i++) {
-			await viewer.getRevisionView(i);
+			viewer.getRevisionViewInMemory(i);
 		}
 		expect(editsProcessed).to.equal(simpleLog.length);
 	});
@@ -364,24 +364,19 @@ describe.only('CachingLogViewer', () => {
 		const viewer = getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView, () => editsProcessed++);
 		assert(simpleLog.length < CachingLogViewer.sequencedCacheSizeMax);
 
-		await requestAllRevisionViews(viewer, simpleLog);
+		requestAllRevisionViews(viewer, simpleLog);
 		expect(editsProcessed).to.equal(simpleLog.length);
 
-		expect((await viewer.getEditResult(0)).status).equals(undefined);
-		expect((await viewer.getEditResult(1)).status).equals(EditStatus.Applied);
-		expect((await viewer.getEditResult(2)).status).equals(EditStatus.Applied);
-		expect((await viewer.getEditResult(3)).status).equals(EditStatus.Invalid);
-
-		expect(viewer.getEditResultInSession(0).status).equals(undefined);
-		expect(viewer.getEditResultInSession(1).status).equals(EditStatus.Applied);
-		expect(viewer.getEditResultInSession(2).status).equals(EditStatus.Applied);
-		expect(viewer.getEditResultInSession(3).status).equals(EditStatus.Invalid);
+		expect(viewer.getEditResultInMemory(0).status).equals(undefined);
+		expect(viewer.getEditResultInMemory(1).status).equals(EditStatus.Applied);
+		expect(viewer.getEditResultInMemory(2).status).equals(EditStatus.Applied);
+		expect(viewer.getEditResultInMemory(3).status).equals(EditStatus.Invalid);
 	});
 
 	it('caches the highest revision', async () => {
 		const viewer = getCachingLogViewerAssumeAppliedEdits(simpleLog, simpleLogBaseView);
 		expect(viewer.highestRevisionCached()).to.be.false;
-		await requestAllRevisionViews(viewer, simpleLog);
+		requestAllRevisionViews(viewer, simpleLog);
 		expect(viewer.highestRevisionCached()).to.be.true;
 		simpleLog.addLocalEdit(
 			newEdit(
@@ -417,16 +412,16 @@ describe.only('CachingLogViewer', () => {
 		);
 		viewer.setMinimumSequenceNumber(log.length + 1); // simulate all edits being subject to eviction
 
-		await requestAllRevisionViews(viewer, log);
+		requestAllRevisionViews(viewer, log);
 		expect(editsProcessed).to.equal(log.length);
 
 		editsProcessed = 0;
 		for (let i = CachingLogViewer.sequencedCacheSizeMax + 1; i <= log.length; i++) {
-			await viewer.getRevisionView(i);
+			viewer.getRevisionViewInMemory(i);
 		}
 		expect(editsProcessed).to.equal(0);
 
-		await viewer.getRevisionView(CachingLogViewer.sequencedCacheSizeMax);
+		viewer.getRevisionViewInMemory(CachingLogViewer.sequencedCacheSizeMax);
 		expect(editsProcessed).to.equal(CachingLogViewer.sequencedCacheSizeMax);
 	});
 
@@ -442,17 +437,17 @@ describe.only('CachingLogViewer', () => {
 		// Simulate all clients being caught up.
 		viewer.setMinimumSequenceNumber(log.numberOfSequencedEdits);
 
-		await requestAllRevisionViews(viewer, log);
+		requestAllRevisionViews(viewer, log);
 		expect(editsProcessed).to.equal(log.length);
 
 		editsProcessed = 0;
 		for (let i = 0; i <= CachingLogViewer.sequencedCacheSizeMax; i++) {
-			await viewer.getRevisionView(i);
+			viewer.getRevisionViewInMemory(i);
 		}
 		expect(editsProcessed).to.equal(CachingLogViewer.sequencedCacheSizeMax);
 
 		editsProcessed = 0;
-		await viewer.getRevisionView(log.numberOfSequencedEdits);
+		viewer.getRevisionViewInMemory(log.numberOfSequencedEdits);
 		expect(editsProcessed).to.equal(0);
 	});
 
@@ -466,13 +461,13 @@ describe.only('CachingLogViewer', () => {
 		);
 		assert(logWithLocalEdits.length < CachingLogViewer.sequencedCacheSizeMax);
 
-		await requestAllRevisionViews(viewer, logWithLocalEdits);
+		requestAllRevisionViews(viewer, logWithLocalEdits);
 		expect(editsProcessed).to.equal(logWithLocalEdits.length);
 
 		// Local edits should now be cached until next remote sequenced edit arrives
 		editsProcessed = 0;
 		for (let i = logWithLocalEdits.numberOfSequencedEdits + 1; i <= logWithLocalEdits.length; i++) {
-			await viewer.getRevisionView(i);
+			viewer.getRevisionViewInMemory(i);
 			expect(editsProcessed).to.equal(0);
 		}
 
@@ -487,19 +482,19 @@ describe.only('CachingLogViewer', () => {
 				)
 			)
 		);
-		await requestAllRevisionViews(viewer, logWithLocalEdits);
+		requestAllRevisionViews(viewer, logWithLocalEdits);
 		expect(editsProcessed).to.equal(1);
 
 		editsProcessed = 0;
 		let seqNumber = 1;
 		while (logWithLocalEdits.numberOfLocalEdits > 0) {
 			logWithLocalEdits.addSequencedEdit(
-				logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits),
+				assertNotUndefined(logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits)),
 				{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 			);
 			++seqNumber;
-			await viewer.getRevisionView(logWithLocalEdits.numberOfSequencedEdits); // get the latest (just added) sequenced edit
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY); // get the last view, which is a local revision
+			viewer.getRevisionViewInMemory(logWithLocalEdits.numberOfSequencedEdits); // get the latest (just added) sequenced edit
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY); // get the last view, which is a local revision
 			expect(editsProcessed).to.equal(0);
 		}
 	});
@@ -514,8 +509,8 @@ describe.only('CachingLogViewer', () => {
 		);
 
 		// Request twice, should only process edits once
-		viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
-		viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
+		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(logWithLocalEdits.length);
 
 		// Remote edit arrives
@@ -529,7 +524,7 @@ describe.only('CachingLogViewer', () => {
 			),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
-		viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(logWithLocalEdits.numberOfLocalEdits + 1);
 	});
 
@@ -569,7 +564,7 @@ describe.only('CachingLogViewer', () => {
 			after: arbitraryRevisionView,
 			steps: [],
 		});
-		const after = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const after = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false]);
 		expect(after).not.equal(arbitraryRevisionView);
 	});
@@ -580,7 +575,7 @@ describe.only('CachingLogViewer', () => {
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
-		const before = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const before = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		const edit = newEdit([]);
 		log.addLocalEdit(edit);
 		viewer.setKnownEditingResult(newEdit([]), {
@@ -590,7 +585,7 @@ describe.only('CachingLogViewer', () => {
 			after: arbitraryRevisionView,
 			steps: [],
 		});
-		const after = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const after = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false]);
 		expect(after).not.equal(arbitraryRevisionView);
 	});
@@ -606,7 +601,7 @@ describe.only('CachingLogViewer', () => {
 		const edit3 = newEdit([]);
 		log.addLocalEdit(edit1);
 
-		const before = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const before = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false]);
 		log.addLocalEdit(edit2);
 		viewer.setKnownEditingResult(edit2, {
@@ -616,11 +611,11 @@ describe.only('CachingLogViewer', () => {
 			after: arbitraryRevisionView,
 			steps: [],
 		});
-		const after = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		const after = viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false, true]);
 		expect(after).equal(arbitraryRevisionView);
 		log.addLocalEdit(edit3);
-		viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false, true, false]);
 	});
 
@@ -709,16 +704,16 @@ describe.only('CachingLogViewer', () => {
 
 		it('processSequencedEditResult is called when a sequenced edit is applied', async () => {
 			const { log, events, viewer } = getViewer();
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			events.splice(0);
 
 			// Non-sequenced edit should not trigger a call
 			const invalidEdit = addInvalidEdit(log);
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(0);
 
 			log.addSequencedEdit(invalidEdit, { sequenceNumber: 3, referenceSequenceNumber: 2 });
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(1);
 			expect(events[0].edit.id).equals(invalidEdit.id);
 			expect(events[0].wasLocal).equals(true);
@@ -732,7 +727,7 @@ describe.only('CachingLogViewer', () => {
 				)
 			);
 			log.addSequencedEdit(validEdit1, { sequenceNumber: 3, referenceSequenceNumber: 2 });
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(2);
 			expect(events[1].edit.id).equals(validEdit1.id);
 			expect(events[1].wasLocal).equals(false);
@@ -746,7 +741,7 @@ describe.only('CachingLogViewer', () => {
 				)
 			);
 			log.addSequencedEdit(validEdit2, { sequenceNumber: 4, referenceSequenceNumber: 2 });
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(3);
 			expect(events[2].edit.id).equals(validEdit2.id);
 			expect(events[2].wasLocal).equals(false);
@@ -776,24 +771,24 @@ describe.only('CachingLogViewer', () => {
 
 		it('tracks the earliest sequenced edit in the session', () => {
 			const logViewer = minimalLogViewer();
-			expect(logViewer.earliestSequencedEditInSession()).undefined;
+			expect(logViewer.earliestSequencedEditInMemory()).undefined;
 
 			// Non-sequenced edit
 			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
-			expect(logViewer.earliestSequencedEditInSession()).undefined;
+			expect(logViewer.earliestSequencedEditInMemory()).undefined;
 
 			// First sequenced edit
 			const edit = addFakeEdit(logViewer, 123);
 			const expected = { edit, sequenceNumber: 123 };
-			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+			expect(logViewer.earliestSequencedEditInMemory()).deep.equals(expected);
 
 			// Non-sequenced edit
 			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
-			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+			expect(logViewer.earliestSequencedEditInMemory()).deep.equals(expected);
 
 			// Second sequenced edit
 			addFakeEdit(logViewer, 456);
-			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+			expect(logViewer.earliestSequencedEditInMemory()).deep.equals(expected);
 		});
 
 		it('can provide edit results for sequenced edits', () => {

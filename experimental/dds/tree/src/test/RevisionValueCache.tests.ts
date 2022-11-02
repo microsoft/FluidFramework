@@ -10,7 +10,7 @@ import { RevisionValueCache } from '../RevisionValueCache';
 type DummyValue = number;
 const dummyValue = -1;
 
-describe.only('RevisionValueCache', () => {
+describe('RevisionValueCache', () => {
 	function closestEntry(cache: RevisionValueCache<DummyValue>, revision: number): number {
 		return (cache.getClosestEntry(revision) ?? fail('No prior revision'))[0];
 	}

@@ -12,7 +12,7 @@ import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 
-describe.only('EditLog', () => {
+describe('EditLog', () => {
 	const edit0 = newEdit([]);
 	const edit1 = newEdit([]);
 	const { id: id0, editWithoutId: editWithoutId0 } = separateEditAndId(edit0);
@@ -80,8 +80,8 @@ describe.only('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect((await log.getEditAtIndex(0)).id).to.equal(id0);
-		expect((await log.getEditAtIndex(1)).id).to.equal(id1);
+		expect(log.tryGetEditAtIndex(0)?.id).to.equal(id0);
+		expect(log.tryGetEditAtIndex(1)?.id).to.equal(id1);
 	});
 
 	it('can get an edit from an edit id', async () => {
@@ -91,7 +91,7 @@ describe.only('EditLog', () => {
 		const log = new EditLog({ editChunks, editIds });
 
 		const editFromId0 = log.tryGetEditFromId(id0);
-		const editFromId1 = await log.tryGetEdit(id1);
+		const editFromId1 = log.tryGetEditFromId(id1);
 
 		expect(editFromId0).to.not.be.undefined;
 		expect(editFromId1).to.not.be.undefined;
@@ -170,7 +170,7 @@ describe.only('EditLog', () => {
 
 		log.addLocalEdit(edit0);
 		expect(log.numberOfLocalEdits).to.equal(1);
-		let editFromId0 = await log.tryGetEdit(id0);
+		let editFromId0 = log.tryGetEditFromId(id0);
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain local edit.');
 
@@ -178,7 +178,7 @@ describe.only('EditLog', () => {
 		expect(log.length).to.equal(1);
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
-		editFromId0 = await log.tryGetEdit(id0);
+		editFromId0 = log.tryGetEditFromId(id0);
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain sequenced edit.');
 	});
