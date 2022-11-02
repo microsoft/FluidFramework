@@ -54,7 +54,7 @@ describe("detectVersionScheme", () => {
         assert.strictEqual(detectVersionScheme(input), expected);
     });
 
-   it("detects >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0 is internal", () => {
+    it("detects >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0 is internal", () => {
         const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`;
         const expected = "internal";
         assert.strictEqual(detectVersionScheme(input), expected);
