@@ -618,6 +618,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     /**
+     * @deprecated - use loadRuntime instead.
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -633,6 +634,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
+        let existingFlag = true;
+        if (!existing) {
+            existingFlag = false;
+        }
+        return this.loadRuntime({
+            context,
+            registryEntries,
+            existing: existingFlag,
+            requestHandler,
+            runtimeOptions,
+            containerScope,
+        });
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param params - An object housing the runtime properties:
+     * - context - Context of the container.
+     * - registryEntries - Mapping to the stores.
+     * - existing - When loading from an existing snapshot
+     * - requestHandler - Request handlers for the container runtime
+     * - runtimeOptions - Additional options to be passed to the runtime
+     * - containerScope - runtime services provided with context
+     */
+     public static async loadRuntime(
+        params: {
+            context: IContainerContext;
+            registryEntries: NamedFluidDataStoreRegistryEntries;
+            existing: boolean;
+            requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+            runtimeOptions?: IContainerRuntimeOptions;
+            containerScope?: FluidObject;
+        },
+    ): Promise<ContainerRuntime> {
+        const { context, registryEntries, existing, requestHandler, runtimeOptions = {}, containerScope = {} } = params;
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;

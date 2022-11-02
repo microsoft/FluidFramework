@@ -49,25 +49,25 @@ describe("Runtime", () => {
             });
 
             it("Default flush mode", async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {}, // runtimeOptions
-                );
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: {},
+                });
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
             });
 
             it("Override default flush mode using options", async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: {
                         flushMode: FlushMode.Immediate,
                     },
-                );
+                });
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
             });
@@ -111,11 +111,11 @@ describe("Runtime", () => {
 
                     beforeEach(async () => {
                         mockContext = getMockContext();
-                        containerRuntime = await ContainerRuntime.load(
-                            mockContext as IContainerContext,
-                            [],
-                            undefined, // requestHandler
-                            {
+                        containerRuntime = await ContainerRuntime.loadRuntime({
+                            context: mockContext as IContainerContext,
+                            registryEntries: [],
+                            existing: false,
+                            runtimeOptions: {
                                 summaryOptions: {
                                     summaryConfigOverrides: {
                                         state: "disabled",
@@ -123,7 +123,7 @@ describe("Runtime", () => {
                                 },
                                 flushMode,
                             },
-                        );
+                        });
                         containerErrors.length = 0;
                         submittedOpsMetdata.length = 0;
                         opFakeSequenceNumber = 1;
@@ -345,17 +345,17 @@ describe("Runtime", () => {
                     }));
 
                     beforeEach(async () => {
-                        containerRuntime = await ContainerRuntime.load(
-                            getMockContext() as IContainerContext,
-                            [],
-                            undefined, // requestHandler
-                            {
+                        containerRuntime = await ContainerRuntime.loadRuntime({
+                            context: getMockContext() as IContainerContext,
+                            registryEntries: [],
+                            existing: false,
+                            runtimeOptions: {
                                 summaryOptions: {
                                     summaryConfigOverrides: { state: "disabled" },
                                 },
                                 flushMode,
                             },
-                        );
+                        });
                         containerErrors.length = 0;
                     });
 
@@ -406,12 +406,13 @@ describe("Runtime", () => {
             it("should NOT be set to dirty if context is attached with no pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    runtimeOptions: undefined,
+                    containerScope: {},
+            });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
             });
@@ -419,12 +420,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is attached with pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, true);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+            });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -432,12 +434,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is attaching", async () => {
                 const mockContext = createMockContext(AttachState.Attaching, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -445,12 +448,13 @@ describe("Runtime", () => {
             it("should be set to dirty if context is detached", async () => {
                 const mockContext = createMockContext(AttachState.Detached, false);
                 const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
-                await ContainerRuntime.load(
-                    mockContext as IContainerContext,
-                    [],
-                    undefined,
-                    {},
-                );
+                await ContainerRuntime.loadRuntime({
+                    context: mockContext as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
@@ -521,18 +525,20 @@ describe("Runtime", () => {
 
             beforeEach(async () => {
                 containerErrors.length = 0;
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {
+
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {
                         summaryOptions: {
                             summaryConfigOverrides: {
                                 state: "disabled",
                             },
                         },
                     },
-                );
+                });
             });
 
             function patchRuntime(
@@ -687,12 +693,13 @@ describe("Runtime", () => {
             });
 
             before(async () => {
-                containerRuntime = await ContainerRuntime.load(
-                    getMockContext() as IContainerContext,
-                    [],
-                    undefined, // requestHandler
-                    {}, // runtimeOptions
-                );
+                containerRuntime = await ContainerRuntime.loadRuntime({
+                    context: getMockContext() as IContainerContext,
+                    registryEntries: [],
+                    existing: false,
+                    requestHandler: undefined,
+                    runtimeOptions: {},
+                });
             });
 
             it("cannot create detached root data store with slashes in id", async () => {
