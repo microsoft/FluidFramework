@@ -219,11 +219,11 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 /* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     /**
-     * TODO
+     * Emitted when a task is enqueued.
      *
      * @remarks Listener parameters:
      *
-     * - `task`: TODO.
+     * - `task`: The task being enqueued.
      */
     (event: "push", listener: (task: T) => void);
 
@@ -243,7 +243,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "op", listener: (task: T) => void);
 
     /**
-     * Emitted when the queue of events to process is emptied.
+     * Emitted when the queue of tasks to process is emptied.
      *
      * @remarks Listener parameters:
      *
