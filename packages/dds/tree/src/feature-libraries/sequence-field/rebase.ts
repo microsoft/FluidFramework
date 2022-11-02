@@ -79,7 +79,7 @@ function rebaseMarkList<TNodeChange>(
             baseIter.pop();
             if (isRelevantToLineage(baseMark)) {
                 baseDetachOffset += getInputLength(baseMark);
-            } else {
+            } else if (!isAttach(baseMark)) {
                 break;
             }
         } else if (isAttach(currMark)) {
