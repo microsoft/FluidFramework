@@ -27,7 +27,7 @@ trigger:
     include:
     - tools/benchmark
     - tools/telemetry-generator
-    - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
+    - tools/pipelines/test-perf-benchmarks-using-built-atifacts.yml  # update with this files name
 
 parameters:
 - name: taskBuild
