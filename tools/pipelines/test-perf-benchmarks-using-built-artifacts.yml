@@ -64,7 +64,7 @@ parameters:
   type: object
   default:
     - "@fluid-internal/tree"
-    # - "@fluid-experimental/tree"
+    - "@fluid-experimental/tree"
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
