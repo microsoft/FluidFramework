@@ -15,6 +15,7 @@ import { generateToken } from "./generateToken";
  * It simply makes examples where authentication is not relevant easier to bootstrap.
  */
 export class InsecureTokenProvider implements ITokenProvider {
+    private readonly scopes?: ScopeType[];
     constructor(
         /**
          * Private server tenantKey for generating tokens.
@@ -38,7 +39,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
@@ -58,7 +59,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
