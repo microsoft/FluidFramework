@@ -93,7 +93,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * - `message`: The op that was processed.
      *
-     * - `processingTime`: TODO: what exactly is this measuring (also specify units)?
+     * - `processingTime`: The amount of time it took to process the inbound operation (op), expressed in milliseconds.
      */
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
 
