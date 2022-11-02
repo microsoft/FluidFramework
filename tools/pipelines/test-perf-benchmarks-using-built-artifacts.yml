@@ -169,6 +169,21 @@ stages:
                 SourceBranch=$(Build.SourceBranch)
               "
 
+        # Download Test Files
+        # Download Artifact - Test Files
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test files
+          inputs:
+            source: specific
+            project: internal
+            pipeline: ${{ variables.artifactPipeline }}
+            preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: test-files
+            path: $(Pipeline.Workspace)/test-files/
+
         - ${{ each execTestPackage in parameters.executionTestPackages }}:
 
           # Download package artifacts
@@ -210,21 +225,6 @@ stages:
                 # fi
 
                 npm install $TEST_PACKAGE_TGZ
-
-          # Download Test Files
-          # Download Artifact - Test Files
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test files
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
-              artifact: test-files
-              path: $(Pipeline.Workspace)/test-files/
 
           # Unpack test files
           - task: Bash@3
@@ -316,21 +316,6 @@ stages:
                 fi
 
                 npm install $TEST_PACKAGE_TGZ
-
-          # Download Test Files
-          # Download Artifact - Test Files
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test files
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
-              artifact: test-files
-              path: $(Pipeline.Workspace)/test-files/
 
           # Unpack test files
           - task: Bash@3
