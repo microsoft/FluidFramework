@@ -12,7 +12,6 @@ import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
 export { ITelemetryBaseEvent }
@@ -47,7 +46,6 @@ export default TinyliciousClient;
 export interface TinyliciousClientProps {
     connection?: TinyliciousConnectionConfig;
     logger?: ITelemetryBaseLogger;
-    scopes?: ScopeType[];
 }
 
 // @public

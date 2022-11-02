@@ -4,7 +4,7 @@
  */
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { IUser } from "@fluidframework/protocol-definitions";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export {
