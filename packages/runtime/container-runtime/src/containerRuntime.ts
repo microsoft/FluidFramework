@@ -723,7 +723,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions.summaryConfigOverrides?.state === "enabled"
                 ? summaryConfiguration as ISummaryConfigurationHeuristics
                 : undefined;
-
         let storage = !pendingRuntimeState
             ? context.storage
             : new SerializedSnapshotStorage(() => {
