@@ -10,7 +10,7 @@ import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { cases, TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -382,7 +382,7 @@ describe("SequenceField - Rebase", () => {
         const insertB2 = rebaseTagged(insertB, delA);
         const insertC2 = rebaseTagged(insertC, delA, insertB2);
         const expected = createInsertChangeset(1, 1);
-        assertDeltaEqual(insertC2.change, expected);
+        checkDeltaEquality(insertC2.change, expected);
     });
 
     it("concurrent inserts ↷ connected delete", () => {
@@ -395,12 +395,12 @@ describe("SequenceField - Rebase", () => {
         const insertD2 = rebaseTagged(insertD, delA, delB, delC);
         const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
         const expected = createInsertChangeset(1, 1);
-        assertDeltaEqual(insertE2.change, expected);
+        checkDeltaEquality(insertE2.change, expected);
     });
 });
 
-function assertDeltaEqual(actual: TestChangeset, expected: TestChangeset) {
-    assert.deepEqual(toDelta(actual), toDelta(expected));
+function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+    assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
 function createInsertChangeset(index: number, size: number): TestChangeset {
