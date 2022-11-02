@@ -232,7 +232,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
+                TAR_FILE=${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
@@ -262,7 +262,7 @@ stages:
             inputs:
               sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/node_modules/@fluid-tools/benchmark/dist/.output/
               contents: '**'
-              targetFolder: ${{ variables.testWorkspace }}/benchmarkOutput/${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
+              targetFolder: ${{ variables.testWorkspace }}/benchmarkOutput/${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - execution time'
@@ -347,7 +347,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
+                TAR_FILE=${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
                 mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
@@ -382,7 +382,7 @@ stages:
             inputs:
               sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
               contents: '**'
-              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ), '/', '-') }}
+              targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
