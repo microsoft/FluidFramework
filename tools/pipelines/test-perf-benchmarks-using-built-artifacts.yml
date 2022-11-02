@@ -184,22 +184,37 @@ stages:
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files/
 
+        # Download package artifacts
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test package
+          inputs:
+            source: specific
+            project: internal
+            pipeline: ${{ variables.artifactPipeline }}
+            preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: pack
+            patterns: "+(**/fluid-internal-tree-*.tgz|**/fluid-experimental-tree-*.tgz|**/fluidframework-sequence-*.tgz|**/fluidframework-map-*.tgz|**/fluidframework-matrix-*.tgz)"
+            path: $(Pipeline.Workspace)/client/pack
+
         - ${{ each execTestPackage in parameters.executionTestPackages }}:
 
           # Download package artifacts
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test package
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
-              artifact: pack
-              patterns: "**/${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz"
-              path: $(Pipeline.Workspace)/client/pack
+          # - task: DownloadPipelineArtifact@2
+          #   displayName: Download test package
+          #   inputs:
+          #     source: specific
+          #     project: internal
+          #     pipeline: ${{ variables.artifactPipeline }}
+          #     preferTriggeringPipeline: true
+          #     allowPartiallySucceededBuilds: true
+          #     runVersion: latestFromBranch
+          #     runBranch: $(Build.SourceBranch)
+          #     artifact: pack
+          #     patterns: "**/${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz"
+          #     path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
           - task: Bash@3
@@ -277,20 +292,20 @@ stages:
 
         - ${{ each testPackage in parameters.memoryTestPackages }}:
 
-          # Download package artifacts
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test package
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
-              artifact: pack
-              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
-              path: $(Pipeline.Workspace)/client/pack
+          # # Download package artifacts
+          # - task: DownloadPipelineArtifact@2
+          #   displayName: Download test package
+          #   inputs:
+          #     source: specific
+          #     project: internal
+          #     pipeline: ${{ variables.artifactPipeline }}
+          #     preferTriggeringPipeline: true
+          #     allowPartiallySucceededBuilds: true
+          #     runVersion: latestFromBranch
+          #     runBranch: $(Build.SourceBranch)
+          #     artifact: pack
+          #     patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
+          #     path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
           - task: Bash@3
