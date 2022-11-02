@@ -94,17 +94,18 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
      * Might start at special root where fields are detached sequences.
      *
      * @param adapter - policy logic.
-     * @param indexStack - Indices traversed to visit this node: does not include current level (which is stored in `index`).
-     * Even indexes are of nodes and odd indexes are for fields.
-     * @param siblingStack - Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-     * Even indexes are of nodes and odd indexes are for fields.
-     * @param siblings - Siblings at the current level (not included in siblingStack).
+     * @param siblingStack - Stack of collections of siblings along the path through the tree:
+     * does not include current level (which is stored in `siblings`).
+     * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
+     * are for fields keys on a node.
+     * @param indexStack - Stack of indices into the corosponding levels in `siblingStack`.
+     * @param siblings - Siblings at the current level (not included in `siblingStack`).
      * @param index - Index into `siblings`.
      */
     public constructor(
         private readonly adapter: CursorAdapter<TNode>,
-        private readonly indexStack: number[],
         private readonly siblingStack: SiblingsOrKey<TNode>[],
+        private readonly indexStack: number[],
         private siblings: SiblingsOrKey<TNode>,
         private index: number,
     ) {
@@ -196,12 +197,12 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public fork(): StackCursor<TNode> {
+        // Siblings arrays are not modified during navigation and do not need be be copied.
+        // This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
         return new StackCursor<TNode>(
             this.adapter,
-            [...this.indexStack],
-            // Siblings arrays are not modified during navigation and do not need be be copied.
-            // This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
             [...this.siblingStack],
+            [...this.indexStack],
             this.siblings,
             this.index,
         );
