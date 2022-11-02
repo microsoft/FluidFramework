@@ -17,11 +17,8 @@ import { v4 as uuid } from "uuid";
  * to get up and running.
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
-    /**
-     * Creates a new token provider using scopes parameters.
-     * @param scopes - Optional. Scopes to provide to the token
-     */
-    constructor(private readonly scopes?: ScopeType[]) {}
+    private readonly scopes?: ScopeType[];
+
     public async fetchOrdererToken(
         tenantId: string,
         documentId?: string
