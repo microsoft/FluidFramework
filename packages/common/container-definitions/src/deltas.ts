@@ -134,7 +134,7 @@ export interface IDeltaManagerEvents extends IEvent {
      *
      * @remarks Listener parameters:
      *
-     * - `reason`: Describes the reason for which the
+     * - `reason`: Describes the reason for which the delta manager was disconnected.
      */
     (event: "disconnect", listener: (reason: string) => void);
 
