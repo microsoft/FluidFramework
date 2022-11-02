@@ -373,6 +373,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns the {@link EditCacheEntry} for the requested revision
 	 */
 	public getEditResultInMemory(revision: Revision): EditCacheEntry {
+        assert(revision >= this.log.earliestAvailableEditIndex, 'revision not stored in memory');
 		const startingPoint = this.getStartingPoint(revision);
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
