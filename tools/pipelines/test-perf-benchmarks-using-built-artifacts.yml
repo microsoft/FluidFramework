@@ -5,8 +5,6 @@ name: $(Build.BuildId)
 
 pr: none
 
-trigger: none
-
 resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
