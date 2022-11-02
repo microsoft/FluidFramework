@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { ConnectionMode } from "@fluidframework/protocol-definitions";
 import { generateUser } from "@fluidframework/server-services-client";
@@ -24,6 +24,11 @@ function createAzureClient(): AzureClient {
     };
     return new AzureClient({ connection: connectionProps });
 }
+
+const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    (container as any).container.connectionMode as ConnectionMode;
+
 
 describe("AzureClient", () => {
     const connectTimeoutMs = 1000;
@@ -166,31 +171,36 @@ describe("AzureClient", () => {
         console.error = consoleErrorFn;
     });
 
+
     /**
-     * Scenario: Test if AzureClient starts with the container in `write` mode.
+     * Scenario: Test if TinyliciousClient starts the container in write mode. TinyliciousClient will attempt
+     * to start the connection in write mode, but if the write permission is not available or the file is read
+     * only, mode will be read.
      *
-     * Expected behavior: AzureClient creates a connected container in `write` mode.
+     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `write`
      */
-    it("creates a container in write mode", async () => {
+     it("can create a container in write mode", async () => {
         const { container } = await client.createContainer(schema);
-        await container.attach();
-
-        const map1 = container.initialObjects.map1 as SharedMap;
-        map1.set("newpair-id", "test");
-
+        const containerId = await container.attach();
         await timeoutPromise((resolve) => container.once("connected", resolve), {
             durationMs: 1000,
             errorMsg: "container connect() timeout",
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-        const forcedWriteConnectionMode = (container as any).container
-            .connectionMode as ConnectionMode;
+        const { container: containerGet } = await client.getContainer(
+            containerId,
+            schema
+        );
 
         assert.strictEqual(
-            forcedWriteConnectionMode,
+            connectionModeOf(container),
             "write",
-            "Container does not start with write mode by defaut",
+            "Creating a container is not in write mode"
+        );
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container is not in write mode"
         );
     });
 });
