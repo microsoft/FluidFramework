@@ -542,10 +542,11 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 				? collaborationWindowStartIndex
 				: numberOfExtraneousEdits;
 
-		// Move the oldest edit to the list of evictable edits
 		for (const handler of this._editEvictionHandlers) {
 			handler(numberOfEditsToEvict);
 		}
+
+        // Remove the edits and move up the earliest available index
 		this.sequencedEdits.splice(0, numberOfEditsToEvict);
 		this._earliestAvailableEditIndex += numberOfEditsToEvict;
 	}
