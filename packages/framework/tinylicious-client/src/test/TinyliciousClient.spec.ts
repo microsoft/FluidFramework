@@ -323,9 +323,10 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
      */
     it("can create a container with only read permission in read mode", async () => {
-        const docReadPermissionClient = new TinyliciousClient({
-            scopes: [ScopeType.DocRead],
-        });
+        const docReadPermissionClient = new TinyliciousClient();
+
+        (docReadPermissionClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
+
         const { container: readPermissionContainer } = await docReadPermissionClient.createContainer(schema);
         const containerId = await readPermissionContainer.attach();
         await timeoutPromise(
@@ -350,6 +351,45 @@ describe("TinyliciousClient", () => {
             connectionModeOf(containerGet),
             "read",
             "Getting a container with only read permission is not in read mode"
+        );
+    });
+
+    /**
+     * Scenario: Test if TinyliciousClient with only write permission starts the container in write mode.
+     * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
+     * is not available or the file is write only, mode will be write.
+     *
+     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
+     */
+    it("can create a container with only write permission in write mode", async () => {
+        const docWritePermissionClient = new TinyliciousClient();
+
+        (docWritePermissionClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
+
+        const { container: readPermissionContainer } = await docWritePermissionClient.createContainer(schema);
+        const containerId = await readPermissionContainer.attach();
+        await timeoutPromise(
+            (resolve) => readPermissionContainer.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            }
+        );
+        const { container: containerGet } = await docWritePermissionClient.getContainer(
+            containerId,
+            schema
+        );
+
+        assert.strictEqual(
+            connectionModeOf(readPermissionContainer),
+            "write",
+            "Creating a container with only write permission is not in write mode"
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container with only write permission is not in write mode"
         );
     });
 });

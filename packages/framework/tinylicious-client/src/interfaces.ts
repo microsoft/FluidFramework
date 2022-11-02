@@ -25,10 +25,6 @@ export interface TinyliciousClientProps {
      * Optional. A logger instance to receive diagnostic messages.
      */
     logger?: ITelemetryBaseLogger;
-    /**
-     * Optional. Override InsecureTinyliciousTokenProvider's permissions.
-     */
-    scopes?: ScopeType[];
 }
 
 /**
