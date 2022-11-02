@@ -7,30 +7,29 @@ pr: none
 
 trigger: none
 
-# Uncomment when we're done manually triggering
-# resources:
-#   pipelines:
-#   - pipeline: client   # Name of the pipeline resource
-#     source: Build - client packages
-#     trigger:
-#       branches:
-#       - release/*
-#       - main
-#       - next
-#       - lts
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
 
-# trigger:
-#   branches:
-#     include:
-#     - release/*
-#     - main
-#     - next
-#     - lts
-#   paths:
-#     include:
-#     - tools/benchmark
-#     - tools/telemetry-generator
-#     - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
+trigger:
+  branches:
+    include:
+    - release/*
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - tools/benchmark
+    - tools/telemetry-generator
+    - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
 
 parameters:
 - name: taskBuild
