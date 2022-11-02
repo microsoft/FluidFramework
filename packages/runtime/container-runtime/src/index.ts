@@ -23,7 +23,7 @@ export {
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
-    SummaryCompressionAlgorithm as SummaryCompressionAlgorithms,
+    SummaryCompressionAlgorithm,
     ICompressionRuntimeOptions,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
