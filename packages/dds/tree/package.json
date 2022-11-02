@@ -1,7 +1,6 @@
 {
   "name": "@fluid-internal/tree",
   "version": "2.0.0-internal.2.1.0",
-  "private": true,
   "description": "Tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,6 +33,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "postpack": "cd src && tar -cvf ../tree.test-files.tar ./test",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
