@@ -352,6 +352,30 @@ use_old_TypeAliasDeclaration_LoadableObjectRecord(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_MemberChangedListener": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_MemberChangedListener():
+    TypeOnly<old.MemberChangedListener<any>>;
+declare function use_current_TypeAliasDeclaration_MemberChangedListener(
+    use: TypeOnly<current.MemberChangedListener<any>>);
+use_current_TypeAliasDeclaration_MemberChangedListener(
+    get_old_TypeAliasDeclaration_MemberChangedListener());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_MemberChangedListener": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_MemberChangedListener():
+    TypeOnly<current.MemberChangedListener<any>>;
+declare function use_old_TypeAliasDeclaration_MemberChangedListener(
+    use: TypeOnly<old.MemberChangedListener<any>>);
+use_old_TypeAliasDeclaration_MemberChangedListener(
+    get_current_TypeAliasDeclaration_MemberChangedListener());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RootDataObject": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RootDataObject():

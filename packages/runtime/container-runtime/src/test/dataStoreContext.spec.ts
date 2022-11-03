@@ -335,6 +335,24 @@ describe("Data Store Context Tests", () => {
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
             });
+
+            it("can tombstone a local datastore", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["TestComp", "SubComp"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: false,
+                });
+
+                assert.doesNotThrow(() => {
+                    localDataStoreContext.tombstone();
+                }, `Local dataStores should not throw on tombstone`);
+            });
         });
     });
 
@@ -701,6 +719,33 @@ describe("Data Store Context Tests", () => {
                     summaryFormatVersion: 2,
                 };
                 updateReferencedStateTest();
+            });
+
+            it("can successfully tombstone a remote datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    trees: {},
+                };
+
+                remoteDataStoreContext = new RemoteFluidDataStoreContext({
+                    id: dataStoreId,
+                    snapshotTree,
+                    getBaseGCDetails: async () => undefined,
+                    runtime: containerRuntime,
+                    storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                });
+                assert.doesNotThrow(() => {
+                    remoteDataStoreContext.tombstone();
+                }, `Should be able to tombstone a non-root remote datastore!`);
             });
         });
     });

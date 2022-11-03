@@ -114,22 +114,23 @@ Generates type tests based on the individual package settings in package.json.
 ```
 USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--exact <value> |  | [-s
-    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor | ]]
-    [--reset | ] [-v]
+    (--exact <value> |  | -s
+    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor)
+    [--reset | ] [--generateInName] [-v]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  [default: baseMinor] The type of version constraint to use for previous versions.
-                                    Only applies to the prepare phase.
+  -s, --versionConstraint=<option>  (required) The type of version constraint to use for previous versions. Only applies
+                                    to the prepare phase.
                                     <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
                                     previousMinor|baseMinor|baseMajor>
   -v, --verbose                     Verbose logging.
   --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
                                     as-is. Only applies to the prepare phase.
   --generate                        Generates tests only. Doesn't prepare the package.json.
+  --[no-]generateInName             Includes .generated in the generated type test filenames.
   --packages                        Run on all independent packages in the repo.
   --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
                                     need to be run after preparation.
