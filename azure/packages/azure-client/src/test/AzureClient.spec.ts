@@ -16,22 +16,13 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 import { AzureClient } from "../AzureClient";
 import { AzureLocalConnectionConfig } from "../interfaces";
 
-function createAzureClient(): AzureClient {
+function createAzureClient(scopes?: ScopeType[]): AzureClient {
     const connectionProps: AzureLocalConnectionConfig = {
-        tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-        endpoint: "http://localhost:7070",
-        type: "local",
-    };
-    return new AzureClient({ connection: connectionProps });
-}
-
-const createAzureClientWithScopes = (scopes: ScopeType[]): AzureClient => {
-    const connection: AzureLocalConnectionConfig = {
         tokenProvider: new InsecureTokenProvider("fooBar", generateUser(), scopes),
         endpoint: "http://localhost:7070",
         type: "local",
     };
-    return new AzureClient({ connection });
+    return new AzureClient({ connection: connectionProps });
 }
 
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
@@ -180,35 +171,6 @@ describe("AzureClient", () => {
     });
 
     /**
-     * Scenario: Test if AzureClient starts the container in write mode. AzureClient will attempt
-     * to start the connection in write mode, but if the write permission is not available or the file is read
-     * only, mode will be read.
-     *
-     * Expected behavior: The container should start with the connectionMode in `write`.
-     */
-    it("can create a container in write mode", async () => {
-        const { container } = await client.createContainer(schema);
-        const containerId = await container.attach();
-        await timeoutPromise((resolve) => container.once("connected", resolve), {
-            durationMs: 1000,
-            errorMsg: "container connect() timeout",
-        });
-
-        const { container: containerGet } = await client.getContainer(containerId, schema);
-
-        assert.strictEqual(
-            connectionModeOf(container),
-            "write",
-            "Creating a container is not in write mode",
-        );
-        assert.strictEqual(
-            connectionModeOf(containerGet),
-            "write",
-            "Getting a container is not in write mode",
-        );
-    });
-
-    /**
      * Scenario: Test if AzureClient with only read permission starts the container in read mode.
      * AzureClient will attempt to start the connection in write mode, but if the write permission
      * is not available or the file is read only, mode will be read.
@@ -216,7 +178,7 @@ describe("AzureClient", () => {
      * Expected behavior: The container should start with the connectionMode in `read`.
      */
     it("can create a container with only read permission in read mode", async () => {
-        const readOnlyAzureClient = createAzureClientWithScopes([ScopeType.DocRead]);
+        const readOnlyAzureClient = createAzureClient([ ScopeType.DocRead ]);
 
         const { container } = await readOnlyAzureClient.createContainer(schema);
         const containerId = await container.attach();
@@ -224,7 +186,10 @@ describe("AzureClient", () => {
             durationMs: 1000,
             errorMsg: "container connect() timeout",
         });
-        const { container: containerGet } = await readOnlyAzureClient.getContainer(containerId, schema);
+        const { container: containerGet } = await readOnlyAzureClient.getContainer(
+            containerId,
+            schema,
+        );
 
         assert.strictEqual(
             connectionModeOf(container),
@@ -240,22 +205,25 @@ describe("AzureClient", () => {
     });
 
     /**
-     * Scenario: Test if AzureClient with only write permission starts the container in write mode.
+     * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
      * AzureClient will attempt to start the connection in write mode, but if the write permission
      * is not available or the file is read only, mode will be read.
      *
      * Expected behavior: The container should start with the connectionMode in `write`.
      */
-    it("can create a container with only write permission in write mode", async () => {
-        const writeOnlyAzureClient = createAzureClientWithScopes([ScopeType.DocWrite]);
+    it("can create a container with read and write permissions in write mode", async () => {
+        const readWriteAzureClient = createAzureClient([ ScopeType.DocRead, ScopeType.DocWrite ]);
 
-        const { container } = await writeOnlyAzureClient.createContainer(schema);
+        const { container } = await readWriteAzureClient.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise((resolve) => container.once("connected", resolve), {
             durationMs: 1000,
             errorMsg: "container connect() timeout",
         });
-        const { container: containerGet } = await writeOnlyAzureClient.getContainer(containerId, schema);
+        const { container: containerGet } = await readWriteAzureClient.getContainer(
+            containerId,
+            schema,
+        );
 
         assert.strictEqual(
             connectionModeOf(container),
