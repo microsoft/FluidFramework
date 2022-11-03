@@ -26,18 +26,32 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 
 ### Deprecated events and event parameters on IContainer and IDeltaManager
 
-The following legacy events and event parameters have been marked as deprecated:
+The following legacy events and event parameters have been marked as deprecated due to being legacy and/or unsupported API patterns:
 
 - IContainerEvents
-    - "contextChanged": Event deprecated in its entirety. No replacement API recommended.
-    - "dirty": Event parameter "dirty" deprecated. The parameter is unneeded, as the event itself signals the current "dirty" state (true).
-    - "saved": Event parameter "dirty" deprecated. The parameter is unneeded, as the event itself signals the current "dirty" state (false).
+    - "contextChanged": Event deprecated in its entirety.
+        - Represents a legacy design that is mostly no longer supported (only ever emitted during Container instantiation, and there are no recommended patterns for consuming it).
+          No replacement API recommended.
+    - "dirty": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (true).
+    - "saved": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (false).
 - IDeltaManagerEvents
-    - "prepareSend": Event deprecated in its entirety. No replacement API recommended.
-    - "submitOp": Event deprecated in its entirety. No replacement API recommended.
-    - "allSentOpsAckd": Event deprecated in its entirety. Use "saved" event instead.
-    - "processTime": Event deprecated in its entirety. No replacement API recommended.
-    - "pong": Event deprecated in its entirety. No replacement API recommended.
+    - "prepareSend": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "submitOp": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "allSentOpsAckd": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          Use "saved" event instead.
+    - "processTime": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+    - "pong": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
 
 ## 2.0.0-internal.2.1.0 Breaking changes
 
