@@ -218,12 +218,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            const pendingIds = this.pendingCompletedTasks.get(taskId);
-            if (pendingIds !== undefined && pendingIds.length > 0) {
-                // Ignore the volunteer op if we know this task is about to be completed
-                return;
-            }
-            this.addClientToQueue(taskId, clientId);
+            this.processVolunteerOp(taskId, clientId);
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -238,7 +233,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.removeClientFromQueue(taskId, clientId);
+            this.processAbandonOp(taskId, clientId);
         });
 
         this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -262,9 +257,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
             if (!local) {
-                this.taskQueues.delete(taskId);
-                this.completedWatcher.emit("completed", taskId);
-                this.emit("completed", taskId);
+                this.processCompleteOp(taskId);
             }
         });
 
@@ -355,11 +348,46 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * TODO
+     */
+    private processVolunteerOp(taskId: string, clientId: string) {
+        const pendingIds = this.pendingCompletedTasks.get(taskId);
+        if (pendingIds !== undefined && pendingIds.length > 0) {
+            // Ignore the volunteer op if we know this task is about to be completed
+            return;
+        }
+        this.addClientToQueue(taskId, clientId);
+    }
+
+    /**
+     * TODO
+     */
+    private processAbandonOp(taskId: string, clientId: string) {
+        this.removeClientFromQueue(taskId, clientId);
+    }
+
+    /**
+     * TODO
+     */
+    private processCompleteOp(taskId: string) {
+        this.taskQueues.delete(taskId);
+        this.completedWatcher.emit("completed", taskId);
+        this.emit("completed", taskId);
+    }
+
+    /**
      * {@inheritDoc ITaskManager.volunteerForTask}
      */
     public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
         if (this.assigned(taskId)) {
+            return true;
+        }
+
+        if (!this.isAttached()) {
+            // Simulate auto-ack in detached scenario
+            assert(this.runtime.clientId !== undefined, "clientId is undefined");
+            this.processVolunteerOp(taskId, this.runtime.clientId);
             return true;
         }
 
@@ -425,7 +453,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         if (!this.queued(taskId)) {
-            // TODO simulate auto-ack in detached scenario
             this.submitVolunteerOp(taskId);
         }
         return lockAcquireP;
@@ -478,10 +505,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.connectionWatcher.on("disconnect", disconnectHandler);
         this.completedWatcher.on("completed", checkIfCompleted);
 
-        if (!this.connected) {
+        if (!this.isAttached()) {
+            // Simulate auto-ack in detached scenario
+            assert(this.runtime.clientId !== undefined, "clientId is undefined");
+            this.processVolunteerOp(taskId, this.runtime.clientId);
+        } else if (!this.connected) {
+            // If we are disconnected (and attached), wait to be connected and submit volunteer op
             disconnectHandler();
         } else if (!this.assigned(taskId) && !this.queued(taskId)) {
-            // TODO simulate auto-ack in detached scenario
             submitVolunteerOp();
         }
         this.subscribedTasks.add(taskId);
@@ -499,8 +530,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return;
         }
 
-        // TODO simulate auto-ack in detached scenario
         if (!this.isAttached()) {
+            // Simulate auto-ack in detached scenario
+            assert(this.runtime.clientId !== undefined, "clientId is undefined");
+            this.processAbandonOp(taskId, this.runtime.clientId);
+            this.abandonWatcher.emit("abandon", taskId);
             return;
         }
 
@@ -515,7 +549,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * {@inheritDoc ITaskManager.assigned}
      */
     public assigned(taskId: string) {
-        if (!this.connected) {
+        if (this.isAttached() && !this.connected) {
             return false;
         }
 
@@ -529,12 +563,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * {@inheritDoc ITaskManager.queued}
      */
     public queued(taskId: string) {
-        if (!this.connected) {
+        if (this.isAttached() && !this.connected) {
             return false;
         }
 
-        assert(this.runtime.clientId !== undefined,
-            0x07f /* "clientId undefined" */); // TODO, handle disconnected/detached case
+        assert(this.runtime.clientId !== undefined, 0x07f /* "clientId undefined" */);
 
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
@@ -558,6 +591,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     public complete(taskId: string): void {
         if (!this.assigned(taskId)) {
             throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
+        }
+
+        if (!this.isAttached()) {
+            // Simulate auto-ack in detached scenario
+            this.processCompleteOp(taskId);
+            return;
         }
 
         if (!this.connected) {
