@@ -11,25 +11,20 @@
  * @returns A promise pertaining to the callback that was passed in.
  */
 export async function scheduleIdleTask<T>(callback: () => T, timeout: number): Promise<T> {
-    // Check for the availability
-    return typeof globalThis.requestIdleCallback === "function"
-        ? new Promise<T>((resolve, reject) => {
-              const doLowPriorityTask = (): void => {
-                  try {
-                      resolve(callback());
-                  } catch (err: any) {
-                      reject(err);
-                  }
-              };
-              requestIdleCallback(doLowPriorityTask, { timeout });
-          })
-        : new Promise<T>((resolve, reject) => {
-              setTimeout(() => {
-                  try {
-                      resolve(callback());
-                  } catch (e) {
-                      reject(e);
-                  }
-              }, timeout);
-          });
+
+    return new Promise<T>((resolve, reject) => {
+        const doLowPriorityTask = (): void => {
+            try {
+                resolve(callback());
+            } catch (err: any) {
+                reject(err);
+            }
+        };
+        // Check for the availability
+        if (typeof globalThis.requestIdleCallback === "function") {
+            requestIdleCallback(doLowPriorityTask, { timeout });
+        } else {
+            setTimeout(doLowPriorityTask, timeout);
+        }
+    });
 }
