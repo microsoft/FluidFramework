@@ -19,9 +19,10 @@ import {
     isPrimitiveValue,
     isPrimitive,
     getPrimaryField,
-    getArrayOwnKeys,
+    getOwnArrayKeys,
     getFieldKind,
     getFieldSchema,
+    keyIsValidIndex,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import {
@@ -92,10 +93,27 @@ describe("editable-tree utilities", () => {
     });
 
     it("get array-like keys", () => {
-        assert.deepEqual(getArrayOwnKeys(1), Object.getOwnPropertyNames([""]));
-        assert.deepEqual(getArrayOwnKeys(0), Object.getOwnPropertyNames([]));
-        // TODO: make sure "length" is not configurable/enumerable when implementing proxy for arrayed fields
-        assert.deepEqual(getArrayOwnKeys(1), [...Object.keys([""]), "length"]);
-        assert.deepEqual(getArrayOwnKeys(0), [...Object.keys([]), "length"]);
+        assert.deepEqual(getOwnArrayKeys(1), Object.getOwnPropertyNames([""]));
+        assert.deepEqual(getOwnArrayKeys(0), Object.getOwnPropertyNames([]));
+        assert.deepEqual(getOwnArrayKeys(1), [...Object.keys([""]), "length"]);
+        assert.deepEqual(getOwnArrayKeys(0), [...Object.keys([]), "length"]);
+    });
+
+    it("key is a valid array index", () => {
+        assert.equal(keyIsValidIndex(0, 1), true);
+        assert.equal(keyIsValidIndex(0, 0), false);
+        assert.equal(keyIsValidIndex("0", 1), true);
+        assert.equal(keyIsValidIndex("0", 0), false);
+        assert.equal(keyIsValidIndex("0.0", 1), false);
+        assert.equal(keyIsValidIndex(-1, 2), false);
+        assert.equal(keyIsValidIndex("-1", 2), false);
+        assert.equal(keyIsValidIndex("-1.5", 2), false);
+        assert.equal(keyIsValidIndex("1.5", 2), false);
+        assert.equal(keyIsValidIndex("1.x", 2), false);
+        assert.equal(keyIsValidIndex("-1.x", 2), false);
+        assert.equal(keyIsValidIndex(NaN, 1), false);
+        assert.equal(keyIsValidIndex(Infinity, 1), false);
+        assert.equal(keyIsValidIndex("NaN", 1), false);
+        assert.equal(keyIsValidIndex("Infinity", 1), false);
     });
 });

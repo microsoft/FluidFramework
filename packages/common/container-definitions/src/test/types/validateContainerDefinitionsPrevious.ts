@@ -40,18 +40,6 @@ use_old_EnumDeclaration_AttachState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConnectionState": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConnectionState():
@@ -120,18 +108,6 @@ declare function use_old_TypeAliasDeclaration_ConnectionState_Connected(
     use: TypeOnly<old.ConnectionState.Connected>);
 use_old_TypeAliasDeclaration_ConnectionState_Connected(
     get_current_TypeAliasDeclaration_ConnectionState_Connected());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -256,6 +232,54 @@ use_old_InterfaceDeclaration_IAudience(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAudienceOwner": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAudienceOwner():
+    TypeOnly<old.IAudienceOwner>;
+declare function use_current_InterfaceDeclaration_IAudienceOwner(
+    use: TypeOnly<current.IAudienceOwner>);
+use_current_InterfaceDeclaration_IAudienceOwner(
+    get_old_InterfaceDeclaration_IAudienceOwner());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAudienceOwner": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAudienceOwner():
+    TypeOnly<current.IAudienceOwner>;
+declare function use_old_InterfaceDeclaration_IAudienceOwner(
+    use: TypeOnly<old.IAudienceOwner>);
+use_old_InterfaceDeclaration_IAudienceOwner(
+    get_current_InterfaceDeclaration_IAudienceOwner());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IBatchMessage": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IBatchMessage():
+    TypeOnly<old.IBatchMessage>;
+declare function use_current_InterfaceDeclaration_IBatchMessage(
+    use: TypeOnly<current.IBatchMessage>);
+use_current_InterfaceDeclaration_IBatchMessage(
+    get_old_InterfaceDeclaration_IBatchMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IBatchMessage": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IBatchMessage():
+    TypeOnly<current.IBatchMessage>;
+declare function use_old_InterfaceDeclaration_IBatchMessage(
+    use: TypeOnly<old.IBatchMessage>);
+use_old_InterfaceDeclaration_IBatchMessage(
+    get_current_InterfaceDeclaration_IBatchMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICodeAllowList():
@@ -304,18 +328,6 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ICodeLoader": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnectionDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnectionDetails():
@@ -335,7 +347,6 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: TypeOnly<old.IConnectionDetails>);
 use_old_InterfaceDeclaration_IConnectionDetails(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
@@ -372,7 +383,6 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>);
 use_current_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*

@@ -4,19 +4,21 @@
  */
 
 export {
-    getEditableTreeContext,
+    anchorSymbol,
+    typeSymbol,
+    typeNameSymbol,
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
+    isEditableField,
+    isUnwrappedNode,
+    proxyTargetSymbol,
     UnwrappedEditableTree,
     UnwrappedEditableField,
-    getTypeSymbol,
     valueSymbol,
-    anchorSymbol,
-    proxyTargetSymbol,
-    isUnwrappedNode,
+    getWithoutUnwrappingSymbol,
 } from "./editableTree";
 
-export { EditableTreeContext } from "./editableTreeContext";
+export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
 export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";

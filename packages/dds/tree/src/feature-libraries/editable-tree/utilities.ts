@@ -4,16 +4,20 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { EmptyKey, FieldKey, isGlobalFieldKey, keyFromSymbol, Value } from "../../tree";
 import { fail } from "../../util";
 import {
+    EmptyKey,
+    FieldKey,
+    isGlobalFieldKey,
+    keyFromSymbol,
+    Value,
     TreeSchema,
     ValueSchema,
     FieldSchema,
     LocalFieldKey,
     SchemaDataAndPolicy,
     lookupGlobalFieldSchema,
-} from "../../schema-stored";
+} from "../../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -64,7 +68,10 @@ export function getFieldSchema(
     if (isGlobalFieldKey(field)) {
         return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
     }
-    assert(schema !== undefined, "The field is a local field, a parent schema is required.");
+    assert(
+        schema !== undefined,
+        0x423 /* The field is a local field, a parent schema is required. */,
+    );
     return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
@@ -104,6 +111,12 @@ export function adaptWithProxy<From extends object, To extends object>(
     return new Proxy<From>(target, proxyHandler as ProxyHandler<From>) as unknown as To;
 }
 
-export function getArrayOwnKeys(length: number): string[] {
+export function getOwnArrayKeys(length: number): string[] {
     return Object.getOwnPropertyNames(Array.from(Array(length)));
+}
+
+export function keyIsValidIndex(key: string | number, length: number): boolean {
+    const index = Number(key);
+    if (typeof key === "string" && String(index) !== key) return false;
+    return Number.isInteger(index) && 0 <= index && index < length;
 }
