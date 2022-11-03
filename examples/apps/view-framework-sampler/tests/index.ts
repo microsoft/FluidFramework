@@ -12,7 +12,7 @@ import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "../src/c
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
- async function createContainerAndRenderInElement(element: HTMLDivElement) {
+async function createContainerAndRenderInElement(element: HTMLDivElement) {
     const sessionStorageModelLoader = new SessionStorageModelLoader<IDiceRollerAppModel>(
         new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
     );

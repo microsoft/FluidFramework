@@ -16,7 +16,7 @@ import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
  * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
  * complex models.
  */
- export interface IDiceRollerAppModel {
+export interface IDiceRollerAppModel {
     readonly diceRoller: IDiceRoller;
 }
 
@@ -43,18 +43,18 @@ export class DiceRollerContainerRuntimeFactory
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const inventoryList = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
-        await inventoryList.trySetAlias(diceRollerId);
+        const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+        await diceRoller.trySetAlias(diceRollerId);
     }
 
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
     protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const dataObjectGrid = await requestFluidObject<IDiceRoller>(
+        const diceRoller = await requestFluidObject<IDiceRoller>(
             await runtime.getRootDataStore(diceRollerId),
             "",
         );
-        return new DiceRollerAppModel(dataObjectGrid);
+        return new DiceRollerAppModel(diceRoller);
     }
 }
