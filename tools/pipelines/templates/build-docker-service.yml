@@ -316,7 +316,7 @@ stages:
           inputs:
             targetPath: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
             artifactName: _api-extractor-temp
-            publishLocation: 'Container'
+            publishLocation: 'pipeline'
 
     # Build
     - task: Docker@2

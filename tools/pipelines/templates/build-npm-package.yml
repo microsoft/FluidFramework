@@ -409,7 +409,7 @@ stages:
             inputs:
               targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
               artifactName: '_api-extractor-temp'
-              publishLocation: 'Container'
+              publishLocation: 'pipeline'
 
         - task: Bash@3
           displayName: Check for extraneous modified files
