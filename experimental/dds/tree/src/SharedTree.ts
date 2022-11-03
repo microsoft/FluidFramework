@@ -130,7 +130,7 @@ export interface SharedTreeBaseOptions {
 	 */
 	inMemoryHistorySize?: number;
 	/**
-	 * The rate a which edits are evicted from memory. This is a factor of the inMemoryHistorySize.
+	 * The rate at which edits are evicted from memory. This is a factor of the inMemoryHistorySize.
 	 * For example, with the default frequency of 2 and a size of 10, the log will evict once it reaches 20 sequenced edits down to 10 edits,
 	 * also keeping any that are still in the collaboration window.
 	 */

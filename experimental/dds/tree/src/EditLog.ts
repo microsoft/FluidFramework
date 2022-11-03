@@ -222,7 +222,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	/**
 	 * @returns The index of the earliest edit stored in this log.
-	 * Edit indices are unique and monotonically increasing.
+	 * Edit indices are unique and strictly increasing within the session.
 	 */
 	public get earliestAvailableEditIndex(): number {
 		return this._earliestAvailableEditIndex;
@@ -243,7 +243,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @param editLogSize - The target number of sequenced edits that the log will try to store in memory.
 	 * Depending on eviction frequency and the collaboration window, there can be more edits in memory at a given time.
 	 * Edits greater than or equal to the `minSequenceNumber` (aka in the collaboration window) are not evicted.
-	 * @param evictionFrequency - The rate a which edits are evicted from memory. This is a factor of the editLogSize.
+	 * @param evictionFrequency - The rate at which edits are evicted from memory. This is a factor of the editLogSize.
 	 * For example, with the default frequency of 2 and a size of 10, the log will evict once it reaches 20 sequenced edits down to 10 edits,
 	 * also keeping any that are still in the collaboration window.
 	 * @param editEvictionHandlers - Handlers that are called before edits are evicted from memory. This provides a chance for
@@ -510,7 +510,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		this.allEditIds.set(id, sequencedEditId);
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
-		// Check if an edits need to be evicted due to this addition
+		// Check if any edits need to be evicted due to this addition
 		if (this.numberOfSequencedEdits >= this.evictionFrequency * this.editLogSize) {
 			this.evictEdits();
 		}

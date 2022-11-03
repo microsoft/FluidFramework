@@ -177,7 +177,7 @@ export interface LogViewer {
 
 	/**
 	 * Returns the `TreeView` output associated with the largest revision in `editLog` less than (but not equal to) the supplied revision.
-	 * Can only be used to retrieve revisions added during the current sessions.
+	 * Can only be used to retrieve revisions added during the current session that have not been evicted from `editLog`.
 	 *
 	 * For example:
 	 *
@@ -612,7 +612,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns Edit information for the earliest known sequenced edit.
 	 */
 	public earliestSequencedEditInMemory(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
-		const earliestEditIndex = 0;
+		const earliestEditIndex = this.log.earliestAvailableEditIndex;
 		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
 		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {
 			const edit = this.log.tryGetEditAtIndex(index);
@@ -708,7 +708,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	// DEPRECATED APIS
 
 	/**
-	 * @deprecated Edit virtualization is no longer supported, do not use the synchronous APIs.
+	 * @deprecated Edit virtualization is no longer supported, do not use the asynchronous APIs.
 	 */
 	public async getEditResult(revision: Revision): Promise<EditCacheEntry> {
 		return this.getEditResultInMemory(revision);
