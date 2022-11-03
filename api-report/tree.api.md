@@ -123,6 +123,9 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public
+export const createFieldSymbol: unique symbol;
+
 // @public (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -206,26 +209,30 @@ const DUMMY_INVERT_TAG: ChangesetTag;
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
     getWithoutUnwrapping(index: number): EditableTree;
+    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly primaryType?: TreeSchemaIdentifier;
 }
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
+    [createFieldSymbol](fieldKey: FieldKey, newContent: ITreeCursor): EditableField | undefined;
     [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: TreeSchema;
-    readonly [valueSymbol]: Value;
+    [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }
 
 // @public
 export interface EditableTreeContext {
+    attachAfterHandler(afterHandler: (this: EditableTreeContext) => void): void;
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;

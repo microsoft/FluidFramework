@@ -145,6 +145,7 @@ export {
     valueSymbol,
     proxyTargetSymbol,
     getWithoutUnwrappingSymbol,
+    createFieldSymbol,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,

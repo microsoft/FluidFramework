@@ -69,7 +69,6 @@ import {
     int32Schema,
     schemaMap,
     personData,
-    Int32,
 } from "./mockData";
 import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
 
@@ -94,7 +93,7 @@ function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
     return [schema, proxy as PersonType];
 }
 
-describe("editable-tree", () => {
+describe("editable-tree: read-only", () => {
     it("can use `Object.keys` and `Reflect.ownKeys` with EditableTree", () => {
         const [, proxy] = buildTestPerson();
         assert(isUnwrappedNode(proxy));
@@ -130,7 +129,7 @@ describe("editable-tree", () => {
             configurable: true,
             enumerable: true,
             value: "Adam",
-            writable: false,
+            writable: true,
         });
 
         // non-primitive field is unwrapped into node
@@ -151,6 +150,16 @@ describe("editable-tree", () => {
             enumerable: true,
             value: expected,
             writable: false,
+        });
+
+        // primitive node of a sequence field is unwrapped into value
+        const nodeDescriptor = Object.getOwnPropertyDescriptor(proxy.address.phones, 0);
+        assert(nodeDescriptor !== undefined);
+        assert.deepEqual(nodeDescriptor, {
+            configurable: true,
+            enumerable: true,
+            value: "+49123456778",
+            writable: true,
         });
     });
 
@@ -487,7 +496,7 @@ describe("editable-tree", () => {
                 configurable: true,
                 enumerable: true,
                 value: "global foo",
-                writable: false,
+                writable: true,
             },
         );
         assert.equal(
@@ -721,23 +730,5 @@ describe("editable-tree", () => {
             );
             assert.equal(simplePhonesPrimaryField[i], expectedPhones[i]);
         }
-    });
-
-    it("update property", () => {
-        const newAge: Int32 = brand(32);
-        const [, proxy] = buildTestPerson();
-        assert.throws(() => (proxy.age = newAge), "Not implemented");
-    });
-
-    it("add property", () => {
-        const [, proxy] = buildTestPerson();
-        assert.throws(() => (proxy.address.zip = "999"), "Not implemented");
-    });
-
-    it("delete property", () => {
-        const [, proxy] = buildTestPerson();
-        assert.throws(() => {
-            delete proxy.address.zip;
-        }, "Not implemented");
     });
 });

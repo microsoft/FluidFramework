@@ -13,7 +13,7 @@ import {
     SchemaData,
     GlobalFieldKey,
 } from "../../../schema-stored";
-import { EmptyKey, rootFieldKey, JsonableTree } from "../../../tree";
+import { EmptyKey, rootFieldKey, JsonableTree, symbolFromKey, GlobalFieldKeySymbol } from "../../../tree";
 import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
@@ -67,8 +67,9 @@ export const phonesSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
-const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
+export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
+export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(globalFieldKeySequencePhones);
+export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
 
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
@@ -94,7 +95,7 @@ export const personSchema = namedTreeSchema({
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.value, [int32Schema.name]),
         salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
-        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
+        friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.value, [addressSchema.name]),
     },
     extraLocalFields: emptyField,
