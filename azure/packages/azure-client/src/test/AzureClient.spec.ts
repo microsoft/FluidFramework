@@ -25,15 +25,6 @@ function createAzureClient(): AzureClient {
     return new AzureClient({ connection: connectionProps });
 }
 
-const createAzureClientWithScopes = (scopes: ScopeType[]): AzureClient => {
-    const connection: AzureLocalConnectionConfig = {
-        tokenProvider: new InsecureTokenProvider("fooBar", generateUser(), scopes),
-        endpoint: "http://localhost:7070",
-        type: "local",
-    };
-    return new AzureClient({ connection });
-}
-
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     (container as any).container.connectionMode as ConnectionMode;
@@ -216,15 +207,16 @@ describe("AzureClient", () => {
      * Expected behavior: The container should start with the connectionMode in `read`.
      */
     it("can create a container with only read permission in read mode", async () => {
-        const readOnlyAzureClient = createAzureClientWithScopes([ScopeType.DocRead]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (client as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
 
-        const { container } = await readOnlyAzureClient.createContainer(schema);
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise((resolve) => container.once("connected", resolve), {
             durationMs: 1000,
             errorMsg: "container connect() timeout",
         });
-        const { container: containerGet } = await readOnlyAzureClient.getContainer(containerId, schema);
+        const { container: containerGet } = await client.getContainer(containerId, schema);
 
         assert.strictEqual(
             connectionModeOf(container),
@@ -247,15 +239,16 @@ describe("AzureClient", () => {
      * Expected behavior: The container should start with the connectionMode in `write`.
      */
     it("can create a container with only write permission in write mode", async () => {
-        const writeOnlyAzureClient = createAzureClientWithScopes([ScopeType.DocWrite]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (client as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
 
-        const { container } = await writeOnlyAzureClient.createContainer(schema);
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise((resolve) => container.once("connected", resolve), {
             durationMs: 1000,
             errorMsg: "container connect() timeout",
         });
-        const { container: containerGet } = await writeOnlyAzureClient.getContainer(containerId, schema);
+        const { container: containerGet } = await client.getContainer(containerId, schema);
 
         assert.strictEqual(
             connectionModeOf(container),
