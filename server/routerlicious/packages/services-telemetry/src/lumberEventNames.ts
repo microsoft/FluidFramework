@@ -35,5 +35,6 @@ export enum LumberEventName {
     ConnectDocumentGetClients = "ConnectDocumentGetClients",
     ConnectDocumentOrdererConnection = "ConnectDocumentOrdererConnection",
     CreateDocumentUpdateDocumentCollection = "CreateDocumentUpdateDocumentCollection",
+    CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
     HttpRequest = "HttpRequest",
 }

@@ -124,7 +124,6 @@ export class DocumentStorage implements IDocumentStorage {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
-        const messageMetaData = { documentId, tenantId };
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,
             [BaseTelemetryProperties.documentId]: documentId,
@@ -137,28 +136,33 @@ export class DocumentStorage implements IDocumentStorage {
         const uploadManager = this.enableWholeSummaryUpload ?
             new WholeSummaryUploadManager(gitManager) :
             new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
-        const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
 
-        winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
-        Lumberjack.info(`Tree reference: ${JSON.stringify(handle)}`, lumberjackProperties);
+        const initialSummaryUploadMetric =
+            Lumberjack.newLumberMetric(LumberEventName.CreateDocInitialSummaryWrite, lumberjackProperties);
+        try {
+            const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
+            let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
-        if (!this.enableWholeSummaryUpload) {
-            const commitParams: ICreateCommitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "dummy@microsoft.com",
-                    name: "Routerlicious Service",
-                },
-                message: "New document",
-                parents: [],
-                tree: handle,
-            };
+            if (!this.enableWholeSummaryUpload) {
+                const commitParams: ICreateCommitParams = {
+                    author: {
+                        date: new Date().toISOString(),
+                        email: "dummy@microsoft.com",
+                        name: "Routerlicious Service",
+                    },
+                    message: "New document",
+                    parents: [],
+                    tree: handle,
+                };
 
-            const commit = await gitManager.createCommit(commitParams);
-            await gitManager.createRef(documentId, commit.sha);
-
-            winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
-            Lumberjack.info(`Commit sha: ${JSON.stringify(commit.sha)}`, lumberjackProperties);
+                const commit = await gitManager.createCommit(commitParams);
+                await gitManager.createRef(documentId, commit.sha);
+                initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(commit.sha)}`;
+            }
+            initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
+        } catch (error: any) {
+            initialSummaryUploadMetric.error("Error during initial summary upload", error);
+            throw error;
         }
 
         const deli: Omit<IDeliState, "epoch"> = {
@@ -197,9 +201,9 @@ export class DocumentStorage implements IDocumentStorage {
             isSessionActive: false,
         };
 
-        const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
-        winston.info(message, { messageMetaData });
-        Lumberjack.info(message, lumberjackProperties);
+        Lumberjack.info(
+            `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,
+            lumberjackProperties);
 
         const updateDocumentCollectionMetric =
             Lumberjack.newLumberMetric(LumberEventName.CreateDocumentUpdateDocumentCollection, lumberjackProperties);
