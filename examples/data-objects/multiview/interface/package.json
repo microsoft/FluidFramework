@@ -26,8 +26,6 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },
@@ -47,7 +45,6 @@
     "rimraf": "^2.6.2",
     "ts-loader": "^9.3.0",
     "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0",
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "~4.6.0",

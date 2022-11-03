@@ -39,8 +39,6 @@
     "test:realsvc:local:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit --timeout 10000",
     "test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:local:run",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
