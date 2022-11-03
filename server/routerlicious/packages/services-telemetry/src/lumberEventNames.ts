@@ -31,5 +31,9 @@ export enum LumberEventName {
 
     // Miscellaneous
     ConnectDocument = "ConnectDocument",
+    ConnectDocumentAddClient = "ConnectDocumentAddClient",
+    ConnectDocumentGetClients = "ConnectDocumentGetClients",
+    ConnectDocumentOrdererConnection = "ConnectDocumentOrdererConnection",
+    CreateDocumentUpdateDocumentCollection = "CreateDocumentUpdateDocumentCollection",
     HttpRequest = "HttpRequest",
 }

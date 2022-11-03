@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
@@ -201,8 +201,12 @@ export class DocumentStorage implements IDocumentStorage {
         winston.info(message, { messageMetaData });
         Lumberjack.info(message, lumberjackProperties);
 
-        const collection = await this.databaseManager.getDocumentCollection();
-        const result = await collection.findOrCreate(
+        const updateDocumentCollectionMetric =
+            Lumberjack.newLumberMetric(LumberEventName.CreateDocumentUpdateDocumentCollection, lumberjackProperties);
+
+        try {
+            const collection = await this.databaseManager.getDocumentCollection();
+            const result = await collection.findOrCreate(
             {
                 documentId,
                 tenantId,
@@ -216,8 +220,12 @@ export class DocumentStorage implements IDocumentStorage {
                 tenantId,
                 version: "0.1",
             });
-
-        return result;
+            updateDocumentCollectionMetric.success("Successfully updated document collection");
+            return result;
+        } catch (error: any) {
+            updateDocumentCollectionMetric.error("Error updating document collection", error);
+            throw error;
+        }
     }
 
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
