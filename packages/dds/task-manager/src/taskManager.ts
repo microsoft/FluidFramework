@@ -218,7 +218,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.processVolunteerOp(taskId, clientId);
+            this.onVolunteerAck(taskId, clientId);
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -233,7 +233,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.processAbandonOp(taskId, clientId);
+            this.onAbandonAck(taskId, clientId);
         });
 
         this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -257,7 +257,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
             if (!local) {
-                this.processCompleteOp(taskId);
+                this.onCompleteAck(taskId);
             }
         });
 
@@ -347,10 +347,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
-    /**
-     * TODO
-     */
-    private processVolunteerOp(taskId: string, clientId: string) {
+    private onVolunteerAck(taskId: string, clientId: string) {
         const pendingIds = this.pendingCompletedTasks.get(taskId);
         if (pendingIds !== undefined && pendingIds.length > 0) {
             // Ignore the volunteer op if we know this task is about to be completed
@@ -359,17 +356,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.addClientToQueue(taskId, clientId);
     }
 
-    /**
-     * TODO
-     */
-    private processAbandonOp(taskId: string, clientId: string) {
+    private onAbandonAck(taskId: string, clientId: string) {
         this.removeClientFromQueue(taskId, clientId);
     }
 
-    /**
-     * TODO
-     */
-    private processCompleteOp(taskId: string) {
+    private onCompleteAck(taskId: string) {
         this.taskQueues.delete(taskId);
         this.completedWatcher.emit("completed", taskId);
         this.emit("completed", taskId);
@@ -387,7 +378,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.runtime.clientId !== undefined, "clientId is undefined");
-            this.processVolunteerOp(taskId, this.runtime.clientId);
+            this.onVolunteerAck(taskId, this.runtime.clientId);
             return true;
         }
 
@@ -508,7 +499,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.runtime.clientId !== undefined, "clientId is undefined");
-            this.processVolunteerOp(taskId, this.runtime.clientId);
+            this.onVolunteerAck(taskId, this.runtime.clientId);
         } else if (!this.connected) {
             // If we are disconnected (and attached), wait to be connected and submit volunteer op
             disconnectHandler();
@@ -533,7 +524,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.runtime.clientId !== undefined, "clientId is undefined");
-            this.processAbandonOp(taskId, this.runtime.clientId);
+            this.onAbandonAck(taskId, this.runtime.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
         }
@@ -595,7 +586,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            this.processCompleteOp(taskId);
+            this.onCompleteAck(taskId);
             return;
         }
 
