@@ -34,7 +34,7 @@ interface SweepReadyUsageDetectionConfig {
  * Feature gate key to enable closing the container if SweepReady objects are used.
  * Value should contain keywords "interactiveClient" and/or "summarizer" to enable detection in each container type
  */
- const sweepReadyUsageDetectionSetting = {
+const sweepReadyUsageDetectionSetting = {
     read(config: IConfigProvider): SweepReadyUsageDetectionConfig {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
@@ -61,7 +61,7 @@ interface SweepReadyUsageDetectionConfig {
  */
 export class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
     /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
+    public errorType: string = "garbageObjectUsedError";
 }
 
 /**
@@ -139,7 +139,7 @@ export class SweepReadyUsageDetectionHandler {
         }
 
         const error = new SweepReadyUsageError(
-            "SweepReady object used in Non-Summarizer Client",
+            "Object used after garbage collected",
             { errorDetails: JSON.stringify({ ...errorProps, config, usageType, lastCloseTime, skipClosureForXDays }) },
         );
         if (shouldClose) {

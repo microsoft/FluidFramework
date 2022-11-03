@@ -15,7 +15,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+import { extractLogSafeErrorProperties, generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -39,11 +39,12 @@ export function exceptionToResponse(err: any): IResponse {
     // Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
     const errWithStack = generateErrorWithStack();
 
+    const { message, stack } = extractLogSafeErrorProperties(err, false);
     return {
         mimeType: "text/plain",
         status,
-        value: `${err}`,
-        get stack() { return ((err?.stack) as (string | undefined)) ?? errWithStack.stack; },
+        value: message,
+        get stack() { return stack ?? errWithStack.stack; },
     };
 }
 

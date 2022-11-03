@@ -999,7 +999,7 @@ describe("Garbage Collection Tests", () => {
                 assert(!mockLogger.events.some((event) => event.eventName !== loadedEventName && event.unrefTime === unrefTime), "shouldn't see any unreference events besides Loaded");
                 mockLogger.assertMatch([{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, unrefTime }], "all events not generated as expected");
 
-                const expectedErrorType = sweepReadyUsageErrorExpected ? "unreferencedObjectUsedAfterGarbageCollected" : "N/A";
+                const expectedErrorType = sweepReadyUsageErrorExpected ? "garbageObjectUsedError" : "N/A";
                 assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
             }
 
