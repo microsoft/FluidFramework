@@ -24,7 +24,7 @@ async function execute(_container: IContainer, _options?: string): Promise<strin
     return executeResult;
 }
 
-async function getFluidExport(): Promise<IFluidFileConverter> {
+function getFluidExport(): IFluidFileConverter {
     return {
         getCodeLoader,
         execute,

@@ -734,7 +734,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         seqNumberFrom: number,
         localSeq: number,
     ): number | undefined {
-        assert(localSeq <= this._mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x424 /* localSeq greater than collab window */);
         const { clientId } = this.getCollabWindow();
         const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         if (segment === undefined && offset === undefined) {
@@ -742,9 +742,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         }
 
         // if segment is undefined, it slid off the string
-        assert(segment !== undefined, "No segment found");
+        assert(segment !== undefined, 0x425 /* No segment found */);
 
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x426 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 

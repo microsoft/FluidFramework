@@ -19,8 +19,9 @@ export {
     EditableTreeContext,
     EditableTreeOrPrimitive,
     getEditableTreeContext,
-    getTypeSymbol,
-    isArrayField,
+    typeSymbol,
+    typeNameSymbol,
+    isEditableField,
     isPrimitive,
     isPrimitiveValue,
     isUnwrappedNode,
@@ -29,6 +30,7 @@ export {
     UnwrappedEditableField,
     UnwrappedEditableTree,
     valueSymbol,
+    getWithoutUnwrappingSymbol,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

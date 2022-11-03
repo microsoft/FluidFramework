@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { BatchMessage } from "./batchManager";
 import { CompressionAlgorithms, ContainerRuntimeMessage } from "./containerRuntime";
@@ -15,9 +16,12 @@ import { CompressionAlgorithms, ContainerRuntimeMessage } from "./containerRunti
  * op to reserve sequence numbers.
  */
 export class OpCompressor {
+    private readonly logger;
     private compressedBatchCount = 0;
 
-    constructor(private readonly logger: ITelemetryLogger) {}
+    constructor(logger: ITelemetryLogger) {
+        this.logger = ChildLogger.create(logger, "OpCompressor");
+    }
 
     public compressBatch(batch: BatchMessage[], originalLength: number): BatchMessage[] {
         const batchToSend: BatchMessage[] = [];

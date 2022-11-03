@@ -338,7 +338,7 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 - Try extending the demo with more Fluid DDSes and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
-- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
+- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/react-starter-template).
 
 {{< callout tip >}}
 
