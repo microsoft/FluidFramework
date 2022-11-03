@@ -32,7 +32,14 @@ import {
     valueSymbol,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
-import { fullSchemaData, personData, PersonType, schemaMap, stringSchema } from "./mockData";
+import {
+    ComplexPhoneType,
+    fullSchemaData,
+    personData,
+    PersonType,
+    schemaMap,
+    stringSchema,
+} from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);
@@ -81,12 +88,37 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
-    it("cannot set value of a non-primitive field using assignment", async () => {
+    it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         const person = trees[0].root as PersonType;
         assert.throws(
             () => (person.friends = { kate: "kate" }),
+            (e) => validateAssertionError(e, "The value is not primitive"),
+            "Expected exception was not thrown",
+        );
+        assert.throws(
+            () => {
+                assert(isEditableField(person.address.phones));
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                person.address.phones[2] = {} as ComplexPhoneType;
+            },
             (e) => validateAssertionError(e, "Cannot set a value of a non-primitive field"),
+            "Expected exception was not thrown",
+        );
+        assert.throws(
+            () => {
+                assert(isUnwrappedNode(person));
+                person[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0)[valueSymbol] = 1;
+            },
+            (e) => validateAssertionError(e, "Expected string"),
+            "Expected exception was not thrown",
+        );
+        assert.throws(
+            () => {
+                assert(isUnwrappedNode(person));
+                person[getWithoutUnwrappingSymbol](brand("age")).getWithoutUnwrapping(0)[valueSymbol] = "some";
+            },
+            (e) => validateAssertionError(e, "Expected number"),
             "Expected exception was not thrown",
         );
         trees[0].context.free();

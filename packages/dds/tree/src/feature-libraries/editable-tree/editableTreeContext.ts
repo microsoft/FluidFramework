@@ -75,14 +75,14 @@ export interface EditableTreeContext {
      * either this context or any other context or client using this document,
      * is committed successfully.
      */
-    attachAfterChangeHandler(afterChangeHandler: (this: EditableTreeContext) => void): void;
+    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
 }
 
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     private readonly observer: Dependent;
-    private readonly afterChangeHandlers: Set<(this: EditableTreeContext) => void> = new Set();
+    private readonly afterChangeHandlers: Set<(context: EditableTreeContext) => void> = new Set();
 
     constructor(
         public readonly forest: IEditableForest,
@@ -142,13 +142,15 @@ export class ProxyContext implements EditableTreeContext {
         return proxifiedField;
     }
 
-    public attachAfterChangeHandler(afterHandler: (this: EditableTreeContext) => void): void {
-        this.afterChangeHandlers.add(afterHandler);
+    public attachAfterChangeHandler(
+        afterChangeHandler: (context: EditableTreeContext) => void,
+    ): void {
+        this.afterChangeHandlers.add(afterChangeHandler);
     }
 
     private handleAfterChange(): void {
         for (const afterChangeHandler of this.afterChangeHandlers) {
-            afterChangeHandler.call(this);
+            afterChangeHandler(this);
         }
     }
 

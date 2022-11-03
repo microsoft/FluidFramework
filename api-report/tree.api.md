@@ -232,7 +232,7 @@ export interface EditableTree extends Iterable<EditableField> {
 
 // @public
 export interface EditableTreeContext {
-    attachAfterChangeHandler(afterChangeHandler: (this: EditableTreeContext) => void): void;
+    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;
