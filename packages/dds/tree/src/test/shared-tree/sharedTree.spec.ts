@@ -2,19 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { fail, strict as assert } from "assert";
-import {
-    FieldKinds,
-    singleTextCursor,
-    anchorSymbol,
-    isUnwrappedNode,
-    valueSymbol,
-    getSchemaString,
-    typeNameSymbol,
-} from "../../feature-libraries";
+import { strict as assert } from "assert";
+import { FieldKinds, singleTextCursor, getSchemaString } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
-    FieldKey,
     JsonableTree,
     rootFieldKey,
     rootFieldKeySymbol,
@@ -309,143 +300,6 @@ describe("SharedTree", () => {
                 readCursor.free();
             }
         });
-    });
-
-    it("can edit using editable-tree", async () => {
-        const provider = await TestTreeProvider.create(1);
-        const [sharedTree] = provider.trees;
-
-        // Currently EditableTree does not have a way to hold onto fields/sequences across edits, only nodes, so insert a node to get started.
-
-        // Insert node
-        initializeTestTreeWithValue(sharedTree, 1);
-
-        // Locate node to edit using EditableTree API
-        const editable = sharedTree.root;
-        assert(isUnwrappedNode(editable));
-        const anchor = editable[anchorSymbol];
-
-        // Check value we will edit is what we initialized it to.
-        assert.equal(editable[valueSymbol], 1);
-
-        // Perform an edit
-        sharedTree.runTransaction((forest, editor) => {
-            // Perform an edit
-            const path = sharedTree.locate(anchor) ?? fail("anchor should exist");
-            sharedTree.context.prepareForEdit();
-            editor.setValue(path, 2);
-
-            // Check that the edit is reflected in the EditableTree
-            assert.equal(editable[valueSymbol], 2);
-
-            sharedTree.context.prepareForEdit();
-            return TransactionResult.Apply;
-        });
-
-        // Check that the edit is reflected in the EditableTree after the transaction.
-        assert.equal(editable[valueSymbol], 2);
-    });
-
-    it("can insert optional child field", async () => {
-        const childKey: FieldKey = brand("optionalChild");
-        const value = "42";
-        const provider = await TestTreeProvider.create(2);
-        const [tree1, tree2] = provider.trees;
-
-        initializeTestTreeWithValue(tree1, 1);
-        await provider.ensureSynchronized();
-
-        assert(isUnwrappedNode(tree1.root));
-        const anchor = tree1.root[anchorSymbol];
-        tree1.runTransaction((forest, editor) => {
-            tree1.context.prepareForEdit();
-            const field = editor.optionalField(tree1.locate(anchor), childKey);
-            const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-            field.set(writeCursor, true);
-            return TransactionResult.Apply;
-        });
-
-        assert(childKey in tree1.root);
-        const child = tree1.root[childKey];
-        assert(isUnwrappedNode(child));
-        assert.equal(child[valueSymbol], value);
-        assert.equal(child[typeNameSymbol], "TestValue");
-
-        await provider.ensureSynchronized();
-        assert(isUnwrappedNode(tree2.root));
-        assert(childKey in tree2.root);
-        const child2 = tree2.root[childKey];
-        assert(isUnwrappedNode(child2));
-        assert.equal(child2[valueSymbol], value);
-        tree1.context.free();
-        tree2.context.free();
-    });
-
-    it("can insert value child field", async () => {
-        const childKey: FieldKey = brand("valueChild");
-        const value = "42";
-        const provider = await TestTreeProvider.create(2);
-        const [tree1, tree2] = provider.trees;
-
-        const hasNoFields = namedTreeSchema({
-            name: brand("HasNoFields"),
-            extraLocalFields: fieldSchema(FieldKinds.sequence),
-        });
-        const hasValueField = namedTreeSchema({
-            name: brand("HasValueField"),
-            localFields: {
-                [childKey]: fieldSchema(FieldKinds.value, [hasNoFields.name]),
-            },
-            extraLocalFields: fieldSchema(FieldKinds.sequence),
-        });
-
-        const schema: SchemaData = {
-            treeSchema: new Map([
-                [hasNoFields.name, hasNoFields],
-                [hasValueField.name, hasValueField],
-            ]),
-            globalFieldSchema: new Map(),
-        };
-        const initialState = {
-            type: hasValueField.name,
-            fields: {
-                [childKey]: [
-                    {
-                        type: hasNoFields.name,
-                        value: 1,
-                    },
-                ],
-            },
-        };
-        initializeTestTree(tree1, initialState, schema);
-        await provider.ensureSynchronized();
-
-        assert(isUnwrappedNode(tree1.root));
-        const anchor = tree1.root[anchorSymbol];
-        tree1.runTransaction((forest, editor) => {
-            tree1.context.prepareForEdit();
-            const field = editor.valueField(tree1.locate(anchor), childKey);
-            const writeCursor = singleTextCursor({ type: hasNoFields.name, value });
-            field.set(writeCursor);
-            return TransactionResult.Apply;
-        });
-
-        assert(childKey in tree1.root);
-        const child = tree1.root[childKey];
-        assert(isUnwrappedNode(child));
-        assert.equal(child[valueSymbol], value);
-        assert.equal(child[typeNameSymbol], hasNoFields.name);
-
-        await provider.ensureSynchronized();
-        assert(isUnwrappedNode(tree2.root));
-        assert(childKey in tree2.root);
-        const child2 = tree2.root[childKey];
-        assert(isUnwrappedNode(child2));
-        assert.equal(child2[valueSymbol], value);
-        assert.equal(child2[typeNameSymbol], hasNoFields.name);
-
-        tree1.context.free();
-        tree2.context.free();
     });
 });
 

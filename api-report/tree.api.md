@@ -220,7 +220,6 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
-    readonly [anchorSymbol]: Anchor;
     [createFieldSymbol](fieldKey: FieldKey, newContent: ITreeCursor): EditableField | undefined;
     [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;

@@ -13,7 +13,6 @@ export {
     SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 export {
-    anchorSymbol,
     EditableField,
     EditableTree,
     EditableTreeContext,

@@ -62,11 +62,6 @@ export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
- * A symbol to get the anchor of a node in contexts where string keys are already in use for fields.
- */
-export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
-
-/**
  * A symbol to get the field of a node without unwrapping in contexts where string keys are already in use for fields.
  */
 export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
@@ -83,8 +78,6 @@ export const createFieldSymbol: unique symbol = Symbol("editable-tree:newFieldSy
  *
  * When iterating, only visits non-empty fields.
  * To discover empty fields, inspect the schema using {@link typeSymbol}.
- *
- * TODO: support editing.
  */
 export interface EditableTree extends Iterable<EditableField> {
     /**
@@ -109,16 +102,6 @@ export interface EditableTree extends Iterable<EditableField> {
      * but the presence of this symbol can be used to separate EditableTrees from other types.
      */
     readonly [proxyTargetSymbol]: object;
-
-    /**
-     * Anchor to this node.
-     * Valid as long as this EditableTree's context is not freed.
-     * Might not point to any node if this node is deleted from the document.
-     *
-     * TODO: When a proper editing API is exposed on EditableTree directly,
-     * this should become an implementation detail and rbe removed from this API surface.
-     */
-    readonly [anchorSymbol]: Anchor;
 
     /**
      * Gets the field of this node by its key without unwrapping.
@@ -473,8 +456,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.value;
             case proxyTargetSymbol:
                 return target;
-            case anchorSymbol:
-                return target.getAnchor();
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
             case getWithoutUnwrappingSymbol:
@@ -530,7 +511,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case proxyTargetSymbol:
             case typeSymbol:
             case typeNameSymbol:
-            case anchorSymbol:
             case Symbol.iterator:
             case getWithoutUnwrappingSymbol:
                 return true;
@@ -586,13 +566,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     configurable: true,
                     enumerable: false,
                     value: target.value,
-                    writable: false,
-                };
-            case anchorSymbol:
-                return {
-                    configurable: true,
-                    enumerable: false,
-                    value: target.getAnchor(),
                     writable: false,
                 };
             case Symbol.iterator:
