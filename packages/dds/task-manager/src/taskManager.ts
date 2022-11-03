@@ -584,17 +584,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
         }
 
-        if (!this.isAttached()) {
-            // Simulate auto-ack in detached scenario
-            this.onCompleteAck(taskId);
-            return;
+        // If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
+        // we are attached. Additionally, we don't need to check if we are connected while detached.
+        if (this.isAttached()) {
+            if (!this.connected) {
+                throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
+            }
+            this.submitCompleteOp(taskId);
         }
 
-        if (!this.connected) {
-            throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
-        }
-
-        this.submitCompleteOp(taskId);
         this.taskQueues.delete(taskId);
         this.completedWatcher.emit("completed", taskId);
         this.emit("completed", taskId);
