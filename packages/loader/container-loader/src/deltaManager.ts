@@ -218,8 +218,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
-        // message contents may be null or undefined
-        if (contents) {
+        if (contents !== undefined && contents !== null) {
             this.opsSize += contents.length;
         }
 
