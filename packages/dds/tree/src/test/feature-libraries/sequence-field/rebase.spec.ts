@@ -390,8 +390,8 @@ describe("SequenceField - Rebase", () => {
         const delB = tagChange(createDeleteChangeset(1, 1), brand(2));
         const delC = tagChange(createDeleteChangeset(0, 1), brand(3));
 
-        const insertD = tagChange(createInsertChangeset(0, 1), brand(2));
-        const insertE = tagChange(createInsertChangeset(3, 1), brand(3));
+        const insertD = tagChange(createInsertChangeset(0, 1), brand(4));
+        const insertE = tagChange(createInsertChangeset(3, 1), brand(5));
         const insertD2 = rebaseTagged(insertD, delA, delB, delC);
         const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
         const expected = createInsertChangeset(1, 1);
