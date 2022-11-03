@@ -55,7 +55,7 @@ export interface HasPlaceFields {
 
     /**
      * Record of relevant information about changes this mark has been rebased over.
-     *
+     * Events are stored in the order in which they were rebased over.
      */
     lineage?: LineageEvent[];
 }
