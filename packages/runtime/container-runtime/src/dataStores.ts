@@ -32,6 +32,7 @@ import {
     convertSnapshotTreeToSummaryTree,
     convertToSummaryTree,
     create404Response,
+    createResponseError,
     responseToException,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -419,12 +420,23 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
+    public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
+        const request = { url: id };
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
-            const request = { url: id };
             throw responseToException(create404Response(request), request);
+        }
+
+        if (context.tombstoned) {
+            // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
+            this.logger.sendErrorEvent({
+                eventName: "TombstonedDataStoreRequested",
+                url: request.url,
+                viaHandle,
+            });
+            // The requested data store is removed by gc. Throw a 404 gc response exception.
+            throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
         }
 
         return context;

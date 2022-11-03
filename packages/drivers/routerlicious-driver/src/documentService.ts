@@ -33,6 +33,7 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
+// eslint-disable-next-line import/namespace
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
