@@ -3,22 +3,22 @@
 
 ### ⚠ BREAKING CHANGES
 
-* **build-cli:** The `--info` flag is now required.
-* **build-cli:** The `-p` flag has been changed to specify a package
+* **bump:deps:** The `-p` flag has been changed to specify a package
 name, which is consistent with
 other commands. Use `--prerelease` to replace former uses of `-p`.
+* **check:layers:** The `--info` flag is now required.
 
 ### Features
 
-* **build-cli:** Add --exact flag to bump command ([#12667](https://github.com/microsoft/FluidFramework/issues/12667)) ([4121187](https://github.com/microsoft/FluidFramework/commit/4121187e77a1c9be34a41138a7254e32e14af149)), closes [/github.com/microsoft/FluidFramework/blob/9080963a1194be9d02fdfec69026cb482a1cabfa/tools/pipelines/templates/include-set-package-version.yml#L92-L112](https://github.com/microsoft//github.com/microsoft/FluidFramework/blob/9080963a1194be9d02fdfec69026cb482a1cabfa/tools/pipelines/templates/include-set-package-version.yml/issues/L92-L112)
+* **build-cli:** Add --exact flag to bump command ([#12667](https://github.com/microsoft/FluidFramework/issues/12667)) ([4121187](https://github.com/microsoft/FluidFramework/commit/4121187e77a1c9be34a41138a7254e32e14af149))
 * **build-cli:** Add `merge info` command ([#12437](https://github.com/microsoft/FluidFramework/issues/12437)) ([6bceb77](https://github.com/microsoft/FluidFramework/commit/6bceb7762398bd4b42396b77e67773fd3958d87b))
 * **build-cli:** Add autocomplete support for bash and zsh ([#12748](https://github.com/microsoft/FluidFramework/issues/12748)) ([429840d](https://github.com/microsoft/FluidFramework/commit/429840df20faca04bf48fea4131c65da5d882c69))
 * **build-cli:** Add handler exclusion and listing to check policy command ([#12648](https://github.com/microsoft/FluidFramework/issues/12648)) ([0435b82](https://github.com/microsoft/FluidFramework/commit/0435b82ec14e81aa7ebfd46e30a8bdfb4080d512))
-* **build-cli:** Configurable type test generation ([#12507](https://github.com/microsoft/FluidFramework/issues/12507)) ([e3506f8](https://github.com/microsoft/FluidFramework/commit/e3506f8cad0f43860c3b5bb17f2bd2b76290d8d8))
 * **build-tools:** Add conventional commits deps and helper script ([#12261](https://github.com/microsoft/FluidFramework/issues/12261)) ([e7c61a0](https://github.com/microsoft/FluidFramework/commit/e7c61a043bcf64d724319a95f7df5ba4695db482))
-* **build-tools:** Support pnpm-workspace.yaml as workspace source ([#12252](https://github.com/microsoft/FluidFramework/issues/12252)) ([45c9f4f](https://github.com/microsoft/FluidFramework/commit/45c9f4fb191fd04e95cc19d4e90756ca3aa93e78))
+* **fluid-build:** Support pnpm-workspace.yaml as workspace source ([#12252](https://github.com/microsoft/FluidFramework/issues/12252)) ([45c9f4f](https://github.com/microsoft/FluidFramework/commit/45c9f4fb191fd04e95cc19d4e90756ca3aa93e78))
 * **check:policy:** Add policy handler to check for extraneous lockfiles ([#12726](https://github.com/microsoft/FluidFramework/issues/12726)) ([a477941](https://github.com/microsoft/FluidFramework/commit/a4779411b17a2d459ae885e896e98265b143eb1a)), closes [#9956](https://github.com/microsoft/FluidFramework/issues/9956)
 * **check:policy:** Add policy to check for correct dependency types ([#12724](https://github.com/microsoft/FluidFramework/issues/12724)) ([fe6d4c2](https://github.com/microsoft/FluidFramework/commit/fe6d4c2985ff23b8f7ecfc532abe2728501e79dc)), closes [/github.com/microsoft/FluidFramework/pull/9966#discussion_r853523526](https://github.com/microsoft//github.com/microsoft/FluidFramework/pull/9966/issues/discussion_r853523526)
+* **generate:typetests:** Configurable type test generation ([#12507](https://github.com/microsoft/FluidFramework/issues/12507)) ([e3506f8](https://github.com/microsoft/FluidFramework/commit/e3506f8cad0f43860c3b5bb17f2bd2b76290d8d8))
 
 
 ### Bug Fixes
