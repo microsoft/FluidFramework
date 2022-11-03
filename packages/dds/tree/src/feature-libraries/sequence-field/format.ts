@@ -54,31 +54,37 @@ export interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
 
     /**
-     * Omit if `Tiebreak.Right` for terseness.
-     */
-    tiebreak?: Tiebreak;
-
-    /**
      * Record of relevant information about changes this mark has been rebased over.
+     *
      */
     lineage?: LineageEvent[];
 }
 
+export interface HasTiebreakPolicy extends HasPlaceFields {
+    /**
+     * Omit if `Tiebreak.Right` for terseness.
+     */
+    tiebreak?: Tiebreak;
+}
+
+/**
+ * Represents a position within a contiguous range of nodes detached by a single changeset.
+ */
 export interface LineageEvent {
     readonly revision: RevisionTag;
 
     /**
-     * The position of this mark within the range of detached nodes in this revision
+     * The position of this mark within a range of nodes which were detached in this revision.
      */
     readonly offset: number;
 }
 
-export interface Insert extends HasOpId, HasPlaceFields {
+export interface Insert extends HasOpId, HasTiebreakPolicy {
     type: "Insert";
     content: ProtoNode[];
 }
 
-export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
     type: "MInsert";
     content: ProtoNode;
     changes: TNodeChange;
@@ -119,7 +125,6 @@ export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     changes: TNodeChange;
 }
 
-// TODO: Reattach and ModifyReattach shouldn't have tiebreak field
 export interface Reattach extends HasOpId, HasPlaceFields {
     type: "Revive" | "Return";
     tomb: ChangesetTag;

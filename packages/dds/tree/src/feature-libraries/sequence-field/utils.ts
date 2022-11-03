@@ -8,8 +8,9 @@ import { fail } from "../../util";
 import {
     Attach,
     Detach,
-    HasPlaceFields,
+    HasTiebreakPolicy,
     Insert,
+    LineageEvent,
     Mark,
     Modify,
     ModifyDetach,
@@ -74,13 +75,33 @@ export function getAttachLength(attach: Attach): number {
 }
 
 /**
- * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
+ * @returns `true` iff `lhs` and `rhs`'s `HasTiebreakPolicy` fields are structurally equal.
  */
 export function isEqualPlace(
-    lhs: Readonly<HasPlaceFields>,
-    rhs: Readonly<HasPlaceFields>,
+    lhs: Readonly<HasTiebreakPolicy>,
+    rhs: Readonly<HasTiebreakPolicy>,
 ): boolean {
-    return lhs.heed === rhs.heed && lhs.tiebreak === rhs.tiebreak;
+    return (
+        lhs.heed === rhs.heed &&
+        lhs.tiebreak === rhs.tiebreak &&
+        areSameLineage(lhs.lineage ?? [], rhs.lineage ?? [])
+    );
+}
+
+function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boolean {
+    if (lineage1.length !== lineage2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < lineage1.length; i++) {
+        const event1 = lineage1[i];
+        const event2 = lineage2[i];
+        if (event1.revision !== event2.revision || event1.offset !== event2.offset) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**

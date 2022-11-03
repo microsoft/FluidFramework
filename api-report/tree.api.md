@@ -425,6 +425,10 @@ interface HasOpId {
 interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
     lineage?: LineageEvent[];
+}
+
+// @public (undocumented)
+interface HasTiebreakPolicy extends HasPlaceFields {
     tiebreak?: Tiebreak;
 }
 
@@ -473,7 +477,7 @@ interface Insert<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Insert_2 extends HasOpId, HasPlaceFields {
+interface Insert_2 extends HasOpId, HasTiebreakPolicy {
     // (undocumented)
     content: ProtoNode_2[];
     // (undocumented)
@@ -634,7 +638,7 @@ export const jsonString: NamedTreeSchema;
 // @public (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
-// @public (undocumented)
+// @public
 interface LineageEvent {
     readonly offset: number;
     // (undocumented)
@@ -735,7 +739,7 @@ interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
 }
 
 // @public (undocumented)
-interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
@@ -1044,6 +1048,7 @@ declare namespace SequenceField {
         HasOpId,
         HasLength,
         HasPlaceFields,
+        HasTiebreakPolicy,
         Insert_2 as Insert,
         Mark_2 as Mark,
         MarkList_2 as MarkList,

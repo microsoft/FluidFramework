@@ -55,6 +55,7 @@ function rebaseMarkList<TNodeChange>(
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
+
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
     while (!baseIter.done || !currIter.done) {
@@ -88,7 +89,6 @@ function rebaseMarkList<TNodeChange>(
                 baseIter.pop();
                 factory.pushOffset(getOutputLength(baseMark));
             } else {
-                // TODO: Handle tiebreaking is baseMark is also an attach.
                 currIter.pop();
                 handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
             }
@@ -189,7 +189,13 @@ function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): b
         return true;
     }
 
-    // TODO: Handle tiebreak
+    // TODO: Handle tiebreaking, including support for the following scenario
+    // Staring state: a b
+    // A1) Delete a b
+    // A2) Insert c
+    // B) Insert x between a and b
+    // Instead of using B's tiebreak policy, we should first consider the relative positions of a, b, and c if A1 were undone.
+    // The best outcome seems to be that c is positioned relative to ab according to A2's tiebreak policy.
     return false;
 }
 
