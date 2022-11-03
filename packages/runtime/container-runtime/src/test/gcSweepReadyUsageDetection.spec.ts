@@ -21,7 +21,7 @@ describe("Garbage Collection Tests", () => {
 
     describe("SweepReady Usage Detection", () => {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const sweepReadyUsageErrorType = "unreferencedObjectUsedAfterGarbageCollected";
+        const sweepReadyUsageErrorType = "garbageObjectUsedError";
 
         let mockLogger: MockLogger = new MockLogger();
         let closeErrors: (ICriticalContainerError)[] = [];
@@ -208,7 +208,7 @@ describe("Garbage Collection Tests", () => {
                 it("setting contains 'interactiveClientCrashOnLoad' - throws with Loaded usage just once (due to skip)", () => {
                     assert.throws(
                         () => createHandler().usageDetectedInInteractiveClient("Loaded", {}),
-                        (e) => e.errorType === "unreferencedObjectUsedAfterGarbageCollected",
+                        (e) => e.errorType === "garbageObjectUsedError",
                         "Expected the proper error to be thrown");
                     mockLogger.assertMatch([{ eventName: "SweepReadyObject_FailToLoad" }], "expected error log");
                     assert.equal(closeErrors.length, 0, "Shouldn't close the whole container when failing load");
