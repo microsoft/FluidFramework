@@ -4,7 +4,6 @@
 
 ```ts
 
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -1128,7 +1127,7 @@ export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
 }

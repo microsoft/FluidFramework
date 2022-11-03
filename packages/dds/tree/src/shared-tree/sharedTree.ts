@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannel,
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
@@ -205,7 +204,7 @@ export class SharedTreeFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
+    ): Promise<ISharedTree> {
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
