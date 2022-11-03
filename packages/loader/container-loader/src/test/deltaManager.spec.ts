@@ -68,6 +68,8 @@ describe("Loader", () => {
 
                 const tracker = new CollabWindowTracker(
                     (type: MessageType) => {
+                        // back-compat: There is a bug in 1.2 runtime where clients cannot handle
+                        // ops whose contents are undefined
                         deltaManager.submit(type, null as any);
                         // CollabWindowTracker expects every op submitted (including noops) to result in this call:
                         tracker.stopSequenceNumberUpdate();
