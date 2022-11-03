@@ -1740,7 +1740,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessage(type);
+                        this.submitMessage(type, null as any);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,

@@ -68,7 +68,7 @@ describe("Loader", () => {
 
                 const tracker = new CollabWindowTracker(
                     (type: MessageType) => {
-                        deltaManager.submit(type);
+                        deltaManager.submit(type, null as any);
                         // CollabWindowTracker expects every op submitted (including noops) to result in this call:
                         tracker.stopSequenceNumberUpdate();
                     },
@@ -147,13 +147,13 @@ describe("Loader", () => {
                 function assertOneValidNoOp(messages: IDocumentMessage[]) {
                     assert.strictEqual(1, messages.length);
                     assert.strictEqual(MessageType.NoOp, messages[0].type);
-                    assert.strictEqual(undefined, messages[0].contents);
+                    assert.strictEqual(null, messages[0].contents);
                 }
 
                 function assertOneValidAcceptOp(messages: IDocumentMessage[]) {
                     assert.strictEqual(1, messages.length);
                     assert.strictEqual(MessageType2.Accept, messages[0].type);
-                    assert.strictEqual(undefined, messages[0].contents);
+                    assert.strictEqual(null, messages[0].contents);
                 }
 
                 it("Infinite frequency parameters disables periodic noops completely", async () => {
