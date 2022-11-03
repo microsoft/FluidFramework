@@ -69,6 +69,9 @@ export interface HasTiebreakPolicy extends HasPlaceFields {
 
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
+ * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
+ * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
+ * same detach.
  */
 export interface LineageEvent {
     readonly revision: RevisionTag;
