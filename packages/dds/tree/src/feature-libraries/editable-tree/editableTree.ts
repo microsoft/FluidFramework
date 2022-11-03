@@ -9,14 +9,13 @@ import {
     Anchor,
     FieldKey,
     symbolIsFieldKey,
-    IEditableForest,
     TreeNavigationResult,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     FieldSchema,
     LocalFieldKey,
     TreeSchemaIdentifier,
-    NamedTreeSchema,
+    TreeSchema,
     ValueSchema,
     lookupTreeSchema,
     mapCursorField,
@@ -38,7 +37,7 @@ import {
     keyIsValidIndex,
     getOwnArrayKeys,
 } from "./utilities";
-import { EditableTreeContext, ProxyContext } from "./editableTreeContext";
+import { ProxyContext } from "./editableTreeContext";
 
 /**
  * A symbol for extracting target from editable-tree proxies.
@@ -47,10 +46,14 @@ import { EditableTreeContext, ProxyContext } from "./editableTreeContext";
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
- * A symbol to get a function, which returns the type of a node in contexts
- * where string keys are already in use for fields.
+ * A symbol to get the type of a node in contexts where string keys are already in use for fields.
  */
-export const getTypeSymbol: unique symbol = Symbol("editable-tree:getType()");
+export const typeSymbol: unique symbol = Symbol("editable-tree:type");
+
+/**
+ * A symbol to get the type name of a node in contexts where string keys are already in use for fields.
+ */
+export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 
 /**
  * A symbol to get the value of a node in contexts where string keys are already in use for fields.
@@ -73,21 +76,21 @@ export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
- * To discover empty fields, inspect the schema using {@link getTypeSymbol}.
+ * To discover empty fields, inspect the schema using {@link typeSymbol}.
  *
  * TODO: support editing.
  */
 export interface EditableTree extends Iterable<EditableField> {
     /**
-     * A function to get the type of a node.
-     * If this node is well-formed, it must follow this schema.
-     * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
-     * @param nameOnly - if true, returns only the type identifier
+     * The name of the node type.
      */
-    [getTypeSymbol](
-        key?: FieldKey,
-        nameOnly?: boolean,
-    ): NamedTreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [typeNameSymbol]: TreeSchemaIdentifier;
+
+    /**
+     * The type of the node.
+     * If this node is well-formed, it must follow this schema.
+     */
+    readonly [typeSymbol]: TreeSchema;
 
     /**
      * Value stored on this node.
@@ -274,7 +277,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
  */
-class NodeProxyTarget extends ProxyTarget<Anchor> {
+export class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
         assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
         super(context, cursor);
@@ -292,36 +295,12 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         this.context.forest.anchors.forget(anchor);
     }
 
-    public getType(
-        key?: FieldKey,
-        nameOnly = true,
-    ): NamedTreeSchema | TreeSchemaIdentifier | undefined {
-        let typeName: TreeSchemaIdentifier | undefined = this.cursor.type;
-        if (key !== undefined) {
-            // TODO: remove option to use this for getting field types:
-            // Once fields are properly wrapped, get the field, and get its type.
+    get typeName(): TreeSchemaIdentifier {
+        return this.cursor.type;
+    }
 
-            const fieldKind = this.lookupFieldKind(key);
-            if (fieldKind.multiplicity === Multiplicity.Sequence) {
-                return undefined;
-            }
-
-            this.cursor.enterField(key);
-            const types = mapCursorField(this.cursor, (c) => c.type);
-            this.cursor.exitField();
-            assert(types.length <= 1, 0x3c5 /* invalid non sequence */);
-            typeName = types[0];
-        }
-        if (nameOnly) {
-            return typeName;
-        }
-        if (typeName) {
-            return {
-                name: typeName,
-                ...lookupTreeSchema(this.context.forest.schema, typeName),
-            };
-        }
-        return undefined;
+    get type(): TreeSchema {
+        return lookupTreeSchema(this.context.forest.schema, this.typeName);
     }
 
     get value(): Value {
@@ -329,13 +308,7 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     public lookupFieldKind(field: FieldKey): FieldKind {
-        return getFieldKind(
-            getFieldSchema(
-                field,
-                this.context.forest.schema,
-                this.getType(undefined, false) as NamedTreeSchema,
-            ),
-        );
+        return getFieldKind(getFieldSchema(field, this.context.forest.schema, this.type));
     }
 
     public getFieldKeys(): FieldKey[] {
@@ -354,8 +327,7 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
      * @returns the key, if any, of the primary array field.
      */
     public getPrimaryArrayKey(): { key: LocalFieldKey; schema: FieldSchema } | undefined {
-        const nodeType = this.getType(undefined, false) as NamedTreeSchema;
-        const primary = getPrimaryField(nodeType);
+        const primary = getPrimaryField(this.type);
         if (primary === undefined) {
             return undefined;
         }
@@ -368,15 +340,12 @@ class NodeProxyTarget extends ProxyTarget<Anchor> {
         return undefined;
     }
 
-    public proxifyField(field: FieldKey, unwrap?: false): EditableField;
-    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField {
-        const fieldSchema = getFieldSchema(
-            field,
-            this.context.forest.schema,
-            this.getType(undefined, false) as NamedTreeSchema,
-        );
+    public proxifyField(field: FieldKey, unwrap: false): EditableField;
+    public proxifyField(field: FieldKey, unwrap?: true): UnwrappedEditableField;
+    public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField | EditableField {
+        const fieldSchema = getFieldSchema(field, this.context.forest.schema, this.type);
         this.cursor.enterField(field);
-        const proxifiedField = proxifyField(this.context, fieldSchema, field, this.cursor, unwrap);
+        const proxifiedField = proxifyField(this.context, fieldSchema, this.cursor, unwrap);
         this.cursor.exitField();
         return proxifiedField;
     }
@@ -404,8 +373,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
         }
         // utility symbols
         switch (key) {
-            case getTypeSymbol:
-                return target.getType.bind(target);
+            case typeSymbol:
+                return target.type;
+            case typeNameSymbol:
+                return target.typeName;
             case valueSymbol:
                 return target.value;
             case proxyTargetSymbol:
@@ -439,7 +410,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
         // utility symbols
         switch (key) {
             case proxyTargetSymbol:
-            case getTypeSymbol:
+            case typeSymbol:
+            case typeNameSymbol:
             case anchorSymbol:
             case Symbol.iterator:
             case getWithoutUnwrappingSymbol:
@@ -476,11 +448,18 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
         switch (key) {
             case proxyTargetSymbol:
                 return { configurable: true, enumerable: false, value: target, writable: false };
-            case getTypeSymbol:
+            case typeSymbol:
                 return {
                     configurable: true,
                     enumerable: false,
-                    value: target.getType.bind(target),
+                    value: target.type,
+                    writable: false,
+                };
+            case typeNameSymbol:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.typeName,
                     writable: false,
                 };
             case valueSymbol:
@@ -521,7 +500,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
+export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
@@ -568,7 +547,9 @@ class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField
     /**
      * Returns a node (unwrapped by default, see {@link UnwrappedEditableTree}) by its index.
      */
-    public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree {
+    public proxifyNode(index: number, unwrap: false): EditableTree;
+    public proxifyNode(index: number, unwrap?: true): UnwrappedEditableTree;
+    public proxifyNode(index: number, unwrap = true): UnwrappedEditableTree | EditableTree {
         this.cursor.enterNode(index);
         const target = new NodeProxyTarget(this.context, this.cursor);
         this.cursor.exitNode();
@@ -583,7 +564,7 @@ class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField
             keyIsValidIndex(index, this.length),
             "A child node must exist at index to get it without unwrapping.",
         );
-        return this.proxifyNode(index, false) as EditableTree;
+        return this.proxifyNode(index, false);
     }
 
     /**
@@ -676,18 +657,21 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         target: FieldProxyTarget,
         key: string | symbol,
     ): PropertyDescriptor | undefined => {
+        // We generally don't want to allow users of the proxy to reconfigure all the properties,
+        // but it is a TypeError to return non-configurable for properties that do not exist on target,
+        // so they must return true.
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
                     return {
-                        configurable: false,
+                        configurable: true,
                         enumerable: false,
                         value: target,
                         writable: false,
                     };
                 case Symbol.iterator:
                     return {
-                        configurable: false,
+                        configurable: true,
                         enumerable: false,
                         value: target[Symbol.iterator].bind(target),
                         writable: false,
@@ -696,9 +680,6 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             }
         } else {
             if (editableFieldPropertySet.has(key)) {
-                // We generally don't want to allow users of the proxy to reconfigure all the properties,
-                // but it is a TypeError to return non-configurable for properties that do not exist on target,
-                // so they must return true.
                 return {
                     configurable: true,
                     enumerable: false,
@@ -727,7 +708,7 @@ function inProxyOrUnwrap(
 ): UnwrappedEditableTree {
     // Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
     if (unwrap && !isFieldProxyTarget(target)) {
-        const nodeType = target.getType(undefined, false) as NamedTreeSchema;
+        const { type: nodeType, typeName: nodeTypeName } = target;
         if (isPrimitive(nodeType)) {
             const nodeValue = target.cursor.value;
             if (isPrimitiveValue(nodeValue)) {
@@ -745,7 +726,7 @@ function inProxyOrUnwrap(
                 target.context,
                 primary.schema,
                 target.cursor,
-                nodeType.name,
+                nodeTypeName,
             );
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
@@ -758,7 +739,6 @@ function inProxyOrUnwrap(
 /**
  * @param context - the common context of the field.
  * @param fieldSchema - the FieldSchema of the field.
- * @param fieldKey - the key of the field. Used to visualize the tree.
  * @param cursor - the cursor, which must point to the field being proxified.
  * @param unwrap - if true, the field is unwrapped (see {@link UnwrappedEditableField}),
  * otherwise always returns the field as {@link EditableField}.
@@ -766,7 +746,6 @@ function inProxyOrUnwrap(
 export function proxifyField(
     context: ProxyContext,
     fieldSchema: FieldSchema,
-    fieldKey: FieldKey,
     cursor: ITreeSubscriptionCursor,
     unwrap: boolean,
 ): UnwrappedEditableField {
@@ -789,16 +768,6 @@ export function proxifyField(
         return proxifiedNode;
     }
     return undefined;
-}
-
-/**
- * A simple API for a Forest to interact with the tree.
- *
- * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
- */
-export function getEditableTreeContext(forest: IEditableForest): EditableTreeContext {
-    return new ProxyContext(forest);
 }
 
 /**
