@@ -195,7 +195,7 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
     tag: string;
@@ -203,7 +203,7 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
     // (undocumented)
     category: string;
@@ -211,19 +211,19 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
     // (undocumented)
     eventName: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -231,7 +231,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
@@ -239,13 +239,13 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
@@ -259,7 +259,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 // @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public
+// @public @deprecated (undocumented)
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @public

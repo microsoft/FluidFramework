@@ -104,6 +104,9 @@
       },
       "ClassDeclaration_MockLogger": {
         "forwardCompat": false
+      },
+      "TypeAliasDeclaration_TelemetryEventPropertyTypes": {
+        "backCompat": false
       }
     }
   }

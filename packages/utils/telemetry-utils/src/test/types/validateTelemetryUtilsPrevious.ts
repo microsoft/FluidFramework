@@ -833,6 +833,30 @@ use_old_FunctionDeclaration_safeRaiseEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SampledTelemetryHelper": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_SampledTelemetryHelper():
+    TypeOnly<old.SampledTelemetryHelper>;
+declare function use_current_ClassDeclaration_SampledTelemetryHelper(
+    use: TypeOnly<current.SampledTelemetryHelper>);
+use_current_ClassDeclaration_SampledTelemetryHelper(
+    get_old_ClassDeclaration_SampledTelemetryHelper());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SampledTelemetryHelper": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_SampledTelemetryHelper():
+    TypeOnly<current.SampledTelemetryHelper>;
+declare function use_old_ClassDeclaration_SampledTelemetryHelper(
+    use: TypeOnly<old.SampledTelemetryHelper>);
+use_old_ClassDeclaration_SampledTelemetryHelper(
+    get_current_ClassDeclaration_SampledTelemetryHelper());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_sessionStorageConfigProvider": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_sessionStorageConfigProvider():
@@ -925,6 +949,7 @@ declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes():
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
     use: TypeOnly<old.TelemetryEventPropertyTypes>);
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes());
 
 /*
