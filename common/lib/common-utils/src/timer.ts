@@ -200,13 +200,20 @@ export class Timer implements ITimer {
         if (restart !== undefined) {
             // Restart with remaining time
             const remainingTime = this.calculateRemainingTime(restart);
-            this.startCore(remainingTime, () => restart.handler(), restart.duration);
-        } else {
-            // Run clear first, in case the handler decides to start again
-            const handler = this.runningState.handler;
-            this.clear();
-            handler();
+
+            if (remainingTime > 0)
+            {
+                this.startCore(remainingTime, () => restart.handler(), restart.duration);
+                return;
+            }
+            // If remainingTime were not a postive integer, we don't want to defer and schedule
+            // another task. Execute the handler now.
         }
+
+        // Run clear first, in case the handler decides to start again
+        const handler = this.runningState.handler;
+        this.clear();
+        handler();
     }
 
     private calculateRemainingTime(runningTimeout: ITimeout): number {
