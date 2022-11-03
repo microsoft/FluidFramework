@@ -686,7 +686,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSize: 1,
+            compressionOptions = { minimumBatchSize: Number.POSITIVE_INFINITY,
                                    compressionAlgorithm: CompressionAlgorithms.lz4 },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             enableOpReentryCheck = false,
