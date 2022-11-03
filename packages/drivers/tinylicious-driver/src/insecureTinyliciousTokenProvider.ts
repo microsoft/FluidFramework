@@ -19,14 +19,19 @@ import { v4 as uuid } from "uuid";
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
     constructor(
         /**
-         * Optional. Override of scopes.
+         * Optional. Override of scopes. If a param is not provided, InsecureTinyliciousTokenProvider
+         * will use the default scopes which are document read, write and summarizer write.
+         *
+         * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+         *
+         * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
          */
         private readonly scopes?: ScopeType[],
     ) {}
 
     public async fetchOrdererToken(
         tenantId: string,
-        documentId?: string
+        documentId?: string,
     ): Promise<ITokenResponse> {
         return {
             fromCache: true,
@@ -36,7 +41,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 
     public async fetchStorageToken(
         tenantId: string,
-        documentId: string
+        documentId: string,
     ): Promise<ITokenResponse> {
         return {
             fromCache: true,
@@ -73,7 +78,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
             null,
             JSON.stringify({ alg: "HS256", typ: "JWT" }),
             claims,
-            utf8Key
+            utf8Key,
         );
     }
 }

@@ -285,43 +285,11 @@ describe("TinyliciousClient", () => {
     });
 
     /**
-     * Scenario: Test if TinyliciousClient starts the container in write mode. TinyliciousClient will attempt
-     * to start the connection in write mode, but if the write permission is not available or the file is read
-     * only, mode will be read.
-     *
-     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `write`
-     */
-    it("can create a container in write mode", async () => {
-        const { container } = await tinyliciousClient.createContainer(schema);
-        const containerId = await container.attach();
-        await timeoutPromise((resolve) => container.once("connected", resolve), {
-            durationMs: 1000,
-            errorMsg: "container connect() timeout",
-        });
-
-        const { container: containerGet } = await tinyliciousClient.getContainer(
-            containerId,
-            schema
-        );
-
-        assert.strictEqual(
-            connectionModeOf(container),
-            "write",
-            "Creating a container is not in write mode"
-        );
-        assert.strictEqual(
-            connectionModeOf(containerGet),
-            "write",
-            "Getting a container is not in write mode"
-        );
-    });
-
-    /**
      * Scenario: Test if TinyliciousClient with only read permission starts the container in read mode.
      * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
-     * is not available or the file is read only, mode will be read.
+     * is not available or the file is read only, the connection mode will be read.
      *
-     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
+     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `read`
      */
     it("can create a container with only read permission in read mode", async () => {
         const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
@@ -334,35 +302,35 @@ describe("TinyliciousClient", () => {
             {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
-            }
+            },
         );
         const { container: containerGet } = await client.getContainer(
             containerId,
-            schema
+            schema,
         );
 
         assert.strictEqual(
             connectionModeOf(container),
             "read",
-            "Creating a container with only read permission is not in read mode"
+            "Creating a container with only read permission is not in read mode",
         );
 
         assert.strictEqual(
             connectionModeOf(containerGet),
             "read",
-            "Getting a container with only read permission is not in read mode"
+            "Getting a container with only read permission is not in read mode",
         );
     });
 
     /**
-     * Scenario: Test if TinyliciousClient with only write permission starts the container in write mode.
-     * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
-     * is not available or the file is write only, mode will be write.
+     * Scenario: Test if TinyliciousClient with read and write permissions starts the container in write mode.
+     * TinyliciousClient will attempt to start the connection in write mode, but if the file is read only,
+     * the connection mode will be read.
      *
-     * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
+     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `write`
      */
-    it("can create a container with only write permission in write mode", async () => {
-        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocWrite]);
+    it("can create a container with read and write permissions in write mode", async () => {
+        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead, ScopeType.DocWrite]);
         const client = new TinyliciousClient({ connection: { tokenProvider } });
 
         const { container } = await client.createContainer(schema);
@@ -372,23 +340,23 @@ describe("TinyliciousClient", () => {
             {
                 durationMs: 1000,
                 errorMsg: "container connect() timeout",
-            }
+            },
         );
         const { container: containerGet } = await client.getContainer(
             containerId,
-            schema
+            schema,
         );
 
         assert.strictEqual(
             connectionModeOf(container),
             "write",
-            "Creating a container with only write permission is not in write mode"
+            "Creating a container with only write permission is not in write mode",
         );
 
         assert.strictEqual(
             connectionModeOf(containerGet),
             "write",
-            "Getting a container with only write permission is not in write mode"
+            "Getting a container with only write permission is not in write mode",
         );
     });
 });
