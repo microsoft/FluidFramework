@@ -13,7 +13,13 @@ import {
     SchemaData,
     GlobalFieldKey,
 } from "../../../schema-stored";
-import { EmptyKey, rootFieldKey, JsonableTree, symbolFromKey, GlobalFieldKeySymbol } from "../../../tree";
+import {
+    EmptyKey,
+    rootFieldKey,
+    JsonableTree,
+    symbolFromKey,
+    GlobalFieldKeySymbol,
+} from "../../../tree";
 import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
@@ -68,8 +74,12 @@ export const phonesSchema = namedTreeSchema({
 });
 
 export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
-export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(globalFieldKeySequencePhones);
-export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
+export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(
+    globalFieldKeySequencePhones,
+);
+export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [
+    stringSchema.name,
+]);
 
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
