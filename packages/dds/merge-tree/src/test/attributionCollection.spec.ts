@@ -12,11 +12,10 @@ import {
     performFuzzActions,
     take,
 } from "@fluid-internal/stochastic-test-utils";
-import { AttributionCollection } from "../attributionCollection";
+import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
 import { BaseSegment, ISegment } from "../mergeTreeNodes";
-import { SerializedAttributionBlob } from "../snapshotlegacy";
 
-describe.only("AttributionCollection", () => {
+describe("AttributionCollection", () => {
     describe(".getAtOffset", () => {
         describe("on a collection with a single entry", () => {
             const collection = new AttributionCollection<string>("foo", 5);
@@ -192,7 +191,7 @@ describe.only("AttributionCollection", () => {
     describe("serializeAttributionCollections and populateAttributionCollections round-trip", () => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const seg = (length: number): ISegment => ({ cachedLength: length }) as ISegment;
-        const testCases: { name: string; blob: SerializedAttributionBlob; segments: ISegment[]; }[] = [
+        const testCases: { name: string; blob: SerializedAttributionCollection; segments: ISegment[]; }[] = [
             {
                 name: "single key",
                 blob: {

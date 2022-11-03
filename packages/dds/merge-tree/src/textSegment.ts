@@ -81,7 +81,7 @@ export class TextSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        assert(TextSegment.is(segment), "can only append text segments to text segments");
+        assert(TextSegment.is(segment), "can only append text segment");
         super.append(segment);
         this.text += segment.text;
     }

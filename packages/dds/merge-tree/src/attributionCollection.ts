@@ -8,6 +8,13 @@ import { RedBlackTree } from "./collections";
 import { compareNumbers, ISegment } from "./mergeTreeNodes";
 import { SerializedAttributionBlob } from "./snapshotlegacy";
 
+export interface SerializedAttributionCollection {
+    keys: unknown[];
+    posBreakpoints: number[];
+    /* Total length; only necessary for validation */
+    length: number;
+}
+
 export class AttributionCollection<T> {
     private readonly entries: RedBlackTree<number, T> = new RedBlackTree(compareNumbers);
 
@@ -77,7 +84,7 @@ export class AttributionCollection<T> {
      */
     public static populateAttributionCollections(
         segments: Iterable<ISegment>,
-        summary: SerializedAttributionBlob,
+        summary: SerializedAttributionCollection,
     ): void {
         const { keys, posBreakpoints } = summary;
         assert(keys.length === posBreakpoints.length && keys.length > 0, "Invalid attribution summary blob provided");
@@ -99,11 +106,11 @@ export class AttributionCollection<T> {
     }
 
     /**
-     * Condenses attribution information on consecutive segments into a `SerializedAttributionBlob`
+     * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
      */
     public static serializeAttributionCollections(
         segments: Iterable<ISegment>,
-    ): SerializedAttributionBlob {
+    ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
         const keys: unknown[] = [];
         let mostRecentAttributionKey: unknown | undefined;
@@ -131,7 +138,7 @@ export class AttributionCollection<T> {
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
             "Expected either all segments or no segments to have attribution information.");
 
-        const blobContents: SerializedAttributionBlob = { keys, posBreakpoints, length: cumulativePos };
+        const blobContents: SerializedAttributionCollection = { keys, posBreakpoints, length: cumulativePos };
         return blobContents;
     }
 }

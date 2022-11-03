@@ -19,6 +19,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -68,6 +69,8 @@ export {
     ICheckout,
     TransactionResult,
     FieldAnchor,
+    RevisionTag,
+    TaggedChange,
 } from "./core";
 
 export {
@@ -128,6 +131,8 @@ export {
     isNeverField,
     FullSchemaPolicy,
     UnwrappedEditableField,
+    isUnwrappedNode,
+    isEditableField,
     EditableTreeContext,
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
@@ -135,9 +140,11 @@ export {
     EditableField,
     isPrimitiveValue,
     isPrimitive,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
     valueSymbol,
     proxyTargetSymbol,
+    getWithoutUnwrappingSymbol,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,
