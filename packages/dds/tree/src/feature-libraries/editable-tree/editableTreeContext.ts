@@ -215,7 +215,7 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - the Forest
- * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases
+ * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
