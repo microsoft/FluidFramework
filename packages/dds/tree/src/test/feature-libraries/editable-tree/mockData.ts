@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree } from "../../../feature-libraries";
+import { emptyField, FieldKinds, EditableTree, EditableField } from "../../../feature-libraries";
 import {
     namedTreeSchema,
     ValueSchema,
@@ -45,9 +45,14 @@ export const complexPhoneSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-// This schema is really unnecessary: it could just use a sequence field instead.
-// Array nodes are only needed when you want polymorphism over array vs not-array.
-// Using this tests handling of array nodes (though it makes this example not cover other use of sequence fields).
+export const simplePhonesSchema = namedTreeSchema({
+    name: brand("Test:SimplePhones-1.0.0"),
+    localFields: {
+        [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
+    },
+    extraLocalFields: emptyField,
+});
+
 export const phonesSchema = namedTreeSchema({
     name: brand("Test:Phones-1.0.0"),
     localFields: {
@@ -55,15 +60,9 @@ export const phonesSchema = namedTreeSchema({
             stringSchema.name,
             int32Schema.name,
             complexPhoneSchema.name,
+            // array of arrays
+            simplePhonesSchema.name,
         ]),
-    },
-    extraLocalFields: emptyField,
-});
-
-export const simplePhonesSchema = namedTreeSchema({
-    name: brand("Test:SimplePhones-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
     extraLocalFields: emptyField,
 });
@@ -77,7 +76,6 @@ export const addressSchema = namedTreeSchema({
         street: fieldSchema(FieldKinds.value, [stringSchema.name]),
         zip: fieldSchema(FieldKinds.optional, [stringSchema.name, int32Schema.name]),
         phones: fieldSchema(FieldKinds.optional, [phonesSchema.name]),
-        simplePhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
     globalFields: [globalFieldKeySequencePhones],
@@ -159,15 +157,14 @@ export type ComplexPhoneType = EditableTree & {
     prefix: string;
 };
 
-export type PhonesType = (number | string | ComplexPhoneType)[];
+export type SimplePhonesType = EditableField & string[];
 
-export type SimplePhonesType = string[];
+export type PhonesType = EditableField & (number | string | ComplexPhoneType | SimplePhonesType)[];
 
 export type AddressType = EditableTree & {
     street: string;
     zip?: string;
     phones?: PhonesType;
-    simplePhones?: SimplePhonesType;
     sequencePhones?: SimplePhonesType;
 };
 
@@ -211,15 +208,16 @@ export const personData: JsonableTree = {
                                             prefix: [{ value: "0123", type: stringSchema.name }],
                                         },
                                     },
+                                    {
+                                        type: simplePhonesSchema.name,
+                                        fields: {
+                                            [EmptyKey]: [
+                                                { type: stringSchema.name, value: "112" },
+                                                { type: stringSchema.name, value: "113" },
+                                            ],
+                                        },
+                                    },
                                 ],
-                            },
-                        },
-                    ],
-                    simplePhones: [
-                        {
-                            type: simplePhonesSchema.name,
-                            fields: {
-                                [EmptyKey]: [{ type: stringSchema.name, value: "112" }],
                             },
                         },
                     ],

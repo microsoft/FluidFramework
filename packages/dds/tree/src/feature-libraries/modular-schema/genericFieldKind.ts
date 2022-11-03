@@ -14,14 +14,21 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    referenceFreeFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
 /**
- * A field-agnostic change to a single element of a field.
+ * A field-kind-agnostic change to a single node within a field.
  */
 export interface GenericChange {
+    /**
+     * Index within the field of the changed node.
+     */
     index: number;
+    /**
+     * Change to the node.
+     */
     nodeChange: NodeChangeset;
 }
 
@@ -30,6 +37,7 @@ export interface GenericChange {
  */
 export interface EncodedGenericChange {
     index: number;
+    // TODO: this format needs more documentation (ideally in the form of more specific types).
     nodeChange: JsonCompatibleReadOnly;
 }
 
@@ -47,7 +55,7 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-    rebaser: {
+    rebaser: referenceFreeFieldChangeRebaser({
         compose: (
             changes: GenericChangeset[],
             composeChildren: NodeChangeComposer,
@@ -113,18 +121,16 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             rebased.push(...change.slice(iChange));
             return rebased;
         },
-    },
+    }),
     encoder: {
         encodeForJson(
             formatVersion: number,
             change: GenericChangeset,
             encodeChild: NodeChangeEncoder,
         ): JsonCompatibleReadOnly {
-            // Would use `change.map(...)` but the type system doesn't accept it
-            const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = [];
-            for (const { index, nodeChange } of change) {
-                encoded.push({ index, nodeChange: encodeChild(nodeChange) });
-            }
+            const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = change.map(
+                ({ index, nodeChange }) => ({ index, nodeChange: encodeChild(nodeChange) }),
+            );
             return encoded;
         },
         decodeJson: (

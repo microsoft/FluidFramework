@@ -76,7 +76,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
             const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
             assert(
                 field !== undefined,
-                "explicit undefined fields should not be preserved in JSON",
+                0x41e /* explicit undefined fields should not be preserved in JSON */,
             );
             return [field];
         }
@@ -105,7 +105,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         case jsonNumber.name:
         case jsonBoolean.name:
         case jsonString.name:
-            assert(isPrimitiveValue(reader.value), "expected a primitive value");
+            assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
             return reader.value as JsonCompatible;
         case jsonArray.name: {
             reader.enterField(EmptyKey);
@@ -117,14 +117,20 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             const result: JsonCompatible = {};
             mapCursorFields(reader, (cursor) => {
                 const key = cursor.getFieldKey() as LocalFieldKey;
-                assert(cursor.firstNode(), "expected non-empty field");
-                result[key] = cursorToJsonObject(reader);
-                assert(!cursor.nextNode(), "expected exactly one node");
+                assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
+                // like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
+                Object.defineProperty(result, key, {
+                    enumerable: true,
+                    configurable: true,
+                    writable: true,
+                    value: cursorToJsonObject(reader),
+                });
+                assert(!cursor.nextNode(), 0x421 /* expected exactly one node */);
             });
             return result;
         }
         default: {
-            assert(type === jsonNull.name, "unexpected type");
+            assert(type === jsonNull.name, 0x422 /* unexpected type */);
             return null;
         }
     }

@@ -17,6 +17,7 @@ import {
     NodeChangeset,
     genericFieldKind,
 } from "../../../feature-libraries";
+import { makeAnonChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
@@ -47,8 +48,8 @@ const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
     compose: (changes, composeChild) => composeChild(changes),
-    invert: (change, invertChild) => invertChild(change),
-    rebase: (change, base, rebaseChild) => rebaseChild(change, base),
+    invert: (change, invertChild) => invertChild(change.change),
+    rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -339,7 +340,7 @@ describe("ModularChangeFamily", () => {
                 [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
             ]);
 
-            assert.deepEqual(family.invert(rootChange1a), expectedInverse);
+            assert.deepEqual(family.invert(makeAnonChange(rootChange1a)), expectedInverse);
         });
 
         it("generic", () => {
@@ -352,26 +353,35 @@ describe("ModularChangeFamily", () => {
                 [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
             ]);
 
-            assert.deepEqual(family.invert(rootChange1aGeneric), expectedInverse);
+            assert.deepEqual(family.invert(makeAnonChange(rootChange1aGeneric)), expectedInverse);
         });
     });
 
     describe("rebase", () => {
         it("rebase specific ↷ specific", () => {
-            assert.deepEqual(family.rebase(rootChange1b, rootChange1a), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
+                rootChange2,
+            );
         });
 
         it("rebase specific ↷ generic", () => {
-            assert.deepEqual(family.rebase(rootChange1b, rootChange1aGeneric), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
+                rootChange2,
+            );
         });
 
         it("rebase generic ↷ specific", () => {
-            assert.deepEqual(family.rebase(rootChange1bGeneric, rootChange1a), rootChange2);
+            assert.deepEqual(
+                family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
+                rootChange2,
+            );
         });
 
         it("rebase generic ↷ generic", () => {
             assert.deepEqual(
-                family.rebase(rootChange1bGeneric, rootChange1aGeneric),
+                family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
                 rootChange2Generic,
             );
         });

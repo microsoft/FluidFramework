@@ -15,6 +15,17 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.1.0
+
+## 2.0.0-internal.2.1.0 Upcoming changes
+- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+
+### Deprecated ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+## 2.0.0-internal.2.1.0 Breaking changes
+
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
@@ -62,6 +73,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
 - [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [getMyself changed to return Myself object](#getMyself-changed-to-return-Myself-object)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -134,6 +146,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
+
+### getMyself changed to return Myself object
+The `getMyself` method from the ServiceAudience class was updated to return a Myself object instead of an IMember. The Myself type extends the IMember interface to add a `currentConnection` string property.
 
 # 2.0.0-internal.1.3.0
 

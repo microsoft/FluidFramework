@@ -136,18 +136,6 @@ use_old_FunctionDeclaration_createOdspUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_currentReadVersion": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_currentReadVersion": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_encodeOdspFluidDataStoreLocator": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
@@ -676,18 +664,6 @@ use_old_FunctionDeclaration_prefetchLatestSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ReadBuffer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ReadBuffer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ShareLinkFetcherProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ShareLinkFetcherProps():
@@ -732,18 +708,6 @@ declare function use_old_EnumDeclaration_SharingLinkHeader(
     use: TypeOnly<old.SharingLinkHeader>);
 use_old_EnumDeclaration_SharingLinkHeader(
     get_current_EnumDeclaration_SharingLinkHeader());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_snapshotMinReadVersion": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_snapshotMinReadVersion": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
