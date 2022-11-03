@@ -372,11 +372,16 @@ stages:
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifacts - bundle-analysis
+            condition:
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest'),
+                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
+              )
             inputs:
               targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               artifactname: 'bundleAnalysis'
               publishLocation: 'pipeline'
-              condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true))
 
           - task: Npm@1
             displayName: run bundle size comparison
