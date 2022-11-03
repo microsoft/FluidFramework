@@ -279,7 +279,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
+        assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
         super(context, cursor);
     }
 
@@ -511,7 +511,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
-        assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+        assert(cursor.mode === CursorLocationType.Fields, 0x44d /* must be in fields mode */);
         super(context, cursor);
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
@@ -562,7 +562,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public getWithoutUnwrapping(index: number): EditableTree {
         assert(
             keyIsValidIndex(index, this.length),
-            "A child node must exist at index to get it without unwrapping.",
+            0x44e /* A child node must exist at index to get it without unwrapping. */,
         );
         return this.proxifyNode(index, false);
     }

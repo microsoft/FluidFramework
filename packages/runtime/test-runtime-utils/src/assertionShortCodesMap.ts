@@ -740,7 +740,6 @@ export const shortCodeMap = {
     "0x3c2": "free should remove all anchors",
     "0x3c3": "EditableTree should have an anchor if it does not have a cursor",
     "0x3c4": "It is invalid to access an EditableTree node which no longer exists",
-    "0x3c5": "invalid non sequence",
     "0x3c7": "undefined` values not allowed for primitive field",
     "0x3c8": "invalid non sequence",
     "0x3c9": "no batch markup on single message",
@@ -857,5 +856,19 @@ export const shortCodeMap = {
     "0x43f": "Cursor must be current to be used",
     "0x440": "Cursor must be current to be used",
     "0x441": "Cursor must be current to be used",
-    "0x442": "No data store retrieved with specified id"
+    "0x442": "No data store retrieved with specified id",
+    "0x443": "Requested offset should be valid",
+    "0x444": "Collection should have at least one entry",
+    "0x445": "Invalid attribution summary blob provided",
+    "0x446": "Expected either all segments or no segments to have attribution information.",
+    "0x447": "can only append text segment",
+    "0x448": "can only append to another run segment",
+    "0x449": "must be in fields mode",
+    "0x44a": "invalid offset to above root",
+    "0x44b": "offset path must point to node not field",
+    "0x44c": "must be in nodes mode",
+    "0x44d": "must be in fields mode",
+    "0x44e": "A child node must exist at index to get it without unwrapping.",
+    "0x44f": "Cursor must be current to be used",
+    "0x450": "Cursor must be current to be used"
 };
