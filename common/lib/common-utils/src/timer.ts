@@ -201,8 +201,7 @@ export class Timer implements ITimer {
             // Restart with remaining time
             const remainingTime = this.calculateRemainingTime(restart);
 
-            if (remainingTime > 0)
-            {
+            if (remainingTime > 0) {
                 this.startCore(remainingTime, () => restart.handler(), restart.duration);
                 return;
             }
