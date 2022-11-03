@@ -13,6 +13,7 @@ import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
@@ -323,9 +324,10 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
      */
     it("can create a container with only read permission in read mode", async () => {
-        (tinyliciousClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocRead];
+        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
+        const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-        const { container } = await tinyliciousClient.createContainer(schema);
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise(
             (resolve) => container.once("connected", resolve),
@@ -334,7 +336,7 @@ describe("TinyliciousClient", () => {
                 errorMsg: "container connect() timeout",
             }
         );
-        const { container: containerGet } = await tinyliciousClient.getContainer(
+        const { container: containerGet } = await client.getContainer(
             containerId,
             schema
         );
@@ -360,9 +362,10 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClientProps should start the container's with the connectionMode in `read`
      */
     it("can create a container with only write permission in write mode", async () => {
-        (tinyliciousClient as any).documentServiceFactory.tokenProvider.scopes = [ScopeType.DocWrite];
+        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocWrite]);
+        const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-        const { container } = await tinyliciousClient.createContainer(schema);
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise(
             (resolve) => container.once("connected", resolve),
@@ -371,7 +374,7 @@ describe("TinyliciousClient", () => {
                 errorMsg: "container connect() timeout",
             }
         );
-        const { container: containerGet } = await tinyliciousClient.getContainer(
+        const { container: containerGet } = await client.getContainer(
             containerId,
             schema
         );

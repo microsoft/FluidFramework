@@ -5,7 +5,7 @@
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
-
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 // Re-export so developers can build loggers without pulling in common-definitions
 export {
     ITelemetryBaseEvent,
@@ -44,6 +44,13 @@ export interface TinyliciousConnectionConfig {
      * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
      */
     domain?: string;
+
+    /**
+     * Optional. Override of tokenProvider.
+     *
+     * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
+     */
+    tokenProvider?: ITokenProvider;
 }
 
 /**
