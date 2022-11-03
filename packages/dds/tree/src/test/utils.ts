@@ -6,6 +6,11 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import {
+    IChannelAttributes,
+    IChannelServices,
+    IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalServerTestDriver } from "@fluidframework/test-drivers";
 import {
@@ -75,6 +80,8 @@ export class TestTreeProvider {
     /**
      * Create a new {@link TestTreeProvider} with a number of trees pre-initialized.
      * @param trees - the number of trees to initialize this provider with. This is the same as calling
+     * @param summarizeOnDemand - if `true`, summaries will only be made when `TestTreeProvider.summarize` is called.
+     * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
      * {@link create} followed by {@link createTree} _trees_ times.
      *
      * @example
@@ -85,14 +92,17 @@ export class TestTreeProvider {
      * await trees.ensureSynchronized();
      * ```
      */
-    public static async create(trees = 0, summarizeOnDemand = false): Promise<ITestTreeProvider> {
+    public static async create(
+        trees = 0,
+        summarizeOnDemand = false,
+        factory: SharedTreeFactory = new SharedTreeFactory(),
+    ): Promise<ITestTreeProvider> {
         // The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
         assert(
             !(trees === 0 && summarizeOnDemand),
             "trees must be >= 1 to allow summarization on demand",
         );
 
-        const factory = new SharedTreeFactory();
         const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
         const driver = new LocalServerTestDriver();
         const objProvider = new TestObjectProvider(
@@ -236,4 +246,37 @@ export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void
     const aTree = mapFieldMarks(a, mapTreeFromCursor);
     const bTree = mapFieldMarks(b, mapTreeFromCursor);
     assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * A test helper that allows custom code to be injected when a tree is created/loaded.
+ */
+export class SharedTreeTestFactory extends SharedTreeFactory {
+    /**
+     * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
+     * @param onLoad - Called once for each tree that is loaded from a summary.
+     */
+    public constructor(
+        private readonly onCreate: (tree: ISharedTree) => void,
+        private readonly onLoad?: (tree: ISharedTree) => void,
+    ) {
+        super();
+    }
+
+    public override async load(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        services: IChannelServices,
+        channelAttributes: Readonly<IChannelAttributes>,
+    ): Promise<ISharedTree> {
+        const tree = await super.load(runtime, id, services, channelAttributes);
+        this.onLoad?.(tree);
+        return tree;
+    }
+
+    public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+        const tree = super.create(runtime, id);
+        this.onCreate(tree);
+        return tree;
+    }
 }
