@@ -9,6 +9,7 @@
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
+ * @deprecated - TelemetryEventPropertyTypeExt should be used instead
  * Property types that can be logged.
  *
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
@@ -18,6 +19,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 /**
+ * @deprecated - ITaggedTelemetryPropertyTypeExt should be used instead
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
@@ -28,6 +30,7 @@ export interface ITaggedTelemetryPropertyType {
 }
 
 /**
+ * @deprecated ITelemetryPropertiesExt should be used instead
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryProperties {
@@ -35,6 +38,7 @@ export interface ITelemetryProperties {
 }
 
 /**
+ * @deprecated - ITelemetryBaseEventExt should be used instead
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
@@ -46,6 +50,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 }
 
 /**
+ * @deprecated - ITelemetryBaseLoggerExt should be used instead
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  */
@@ -54,6 +59,7 @@ export interface ITelemetryBaseLogger {
 }
 
 /**
+ * @deprecated - ITelemetryGenericEventExt should be used instead
  * Informational (non-error) telemetry event
  * Maps to category = "generic"
  */
@@ -63,6 +69,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 }
 
 /**
+ * @deprecated - ITelemetryErrorEventExt should be used instead
  * Error telemetry event.
  * Maps to category = "error"
  */
@@ -71,6 +78,7 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
 }
 
 /**
+ * @deprecated - ITelemetryPerformanceEventExt should be used instead
  * Performance telemetry event.
  * Maps to category = "performance"
  */
@@ -89,6 +97,7 @@ export interface ILoggingError extends Error {
 }
 
 /**
+ * @deprecated - ITelemetryLoggerExt should be used instead
  * ITelemetryLogger interface contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
