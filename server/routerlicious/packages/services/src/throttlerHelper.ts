@@ -99,16 +99,11 @@ export class ThrottlerHelper implements IThrottlerHelper {
         throttlingMetric: IThrottlingMetrics,
         usageStorageId: string,
         usageData: IUsageData) {
-        if (usageStorageId && usageData) {
-            await this.throttleAndUsageStorageManager.setThrottlingMetricAndUsageData(
+        await (usageStorageId && usageData ? this.throttleAndUsageStorageManager.setThrottlingMetricAndUsageData(
                 id,
                 throttlingMetric,
                 usageStorageId,
-                usageData);
-        } else {
-            // update stored throttling metric
-            await this.throttleAndUsageStorageManager.setThrottlingMetric(id, throttlingMetric);
-        }
+                usageData) : this.throttleAndUsageStorageManager.setThrottlingMetric(id, throttlingMetric));
     }
 
     private getThrottlerResponseFromThrottlingMetrics(throttlingMetric: IThrottlingMetrics): IThrottlerResponse {

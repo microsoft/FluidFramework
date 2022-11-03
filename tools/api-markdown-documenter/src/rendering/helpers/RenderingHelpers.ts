@@ -25,20 +25,29 @@ import {
     DocSection,
 } from "@microsoft/tsdoc";
 
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
+import {
+    DocAlert,
+    DocAlertType,
+    DocEmphasisSpan,
+    DocHeading,
+    DocList,
+    ListKind,
+} from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
+    getDeprecatedBlock,
     getExampleBlocks,
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
     getReturnsBlock,
+    getSeeBlocks,
     getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
@@ -61,8 +70,7 @@ export function renderSignature(
     if (apiItem instanceof ApiDeclaredItem) {
         const signatureExcerpt = apiItem.getExcerptWithModifiers();
         if (signatureExcerpt !== "") {
-            const docNodes: DocNode[] = [];
-            docNodes.push(
+            const docNodes: DocNode[] = [
                 renderHeading(
                     {
                         title: "Signature",
@@ -70,14 +78,12 @@ export function renderSignature(
                     },
                     config,
                 ),
-            );
-            docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
-                    code: apiItem.getExcerptWithModifiers(),
+                    code: signatureExcerpt,
                     language: "typescript",
                 }),
-            );
+            ];
 
             const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
             if (renderedHeritageTypes !== undefined) {
@@ -88,6 +94,42 @@ export function renderSignature(
         }
     }
     return undefined;
+}
+
+/**
+ * Renders a section for an API item's {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks.
+ *
+ * @remarks Displayed as a "See also" heading, followed by the contents of the API item's `@see` comment blocks
+ * merged into a single section.
+ *
+ * @param apiItem - The API item whose `@see` comment blocks will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ */
+export function renderSeeAlso(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    const seeBlocks = getSeeBlocks(apiItem);
+    if (seeBlocks === undefined || seeBlocks.length === 0) {
+        return undefined;
+    }
+
+    const docNodes: DocNode[] = [];
+    docNodes.push(
+        renderHeading(
+            { title: "See also", id: `${getQualifiedApiItemName(apiItem)}-see-also` },
+            config,
+        ),
+    );
+
+    // Merge `@see` blocks together
+    for (const seeBlock of seeBlocks) {
+        docNodes.push(...seeBlock.nodes);
+    }
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -245,8 +287,8 @@ export function renderTypeParameters(
                         configuration: config.tsdocConfiguration,
                         text: ": ",
                     }),
+                    ...typeParameter.tsdocTypeParamBlock.content.nodes,
                 );
-                paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
 
             listItemNodes.push(
@@ -302,13 +344,15 @@ export function renderExcerptWithHyperlinks(
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
         // discard any newlines and let the renderer do normal word-wrapping.
-        const unwrappedTokenText: string = token.text.replace(/[\r\n]+/g, " ");
+        const unwrappedTokenText: string = token.text.replace(/[\n\r]+/g, " ");
 
         let wroteHyperlink = false;
 
         // If it's hyperlink-able, then append a DocLinkTag
         if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
             const apiItemResult: IResolveDeclarationReferenceResult =
+                // False positive
+                // eslint-disable-next-line unicorn/no-useless-undefined
                 config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
             if (apiItemResult.resolvedApiItem) {
@@ -374,8 +418,8 @@ export function renderBreadcrumb(
             docNodes.push(separator);
         }
 
-        const link = getLinkForApiItem(hierarchyItem, config);
-        docNodes.push(renderLink(link, config));
+        const ancestorLink = getLinkForApiItem(hierarchyItem, config);
+        docNodes.push(renderLink(ancestorLink, config));
 
         writtenAnythingYet = true;
     }
@@ -426,19 +470,20 @@ export function renderHeading(
  *
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox {
+export function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocNoteBox({ configuration: config.tsdocConfiguration }, [
+    return new DocAlert(
+        { configuration: config.tsdocConfiguration, type: DocAlertType.Danger },
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
             new DocPlainText({
                 configuration: config.tsdocConfiguration,
                 text: betaWarning,
             }),
         ]),
-    ]);
+    );
 }
 
 /**
@@ -495,24 +540,21 @@ export function renderThrowsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        const throwsBlocks = getThrowsBlocks(apiItem);
-        if (throwsBlocks === undefined || throwsBlocks.length === 0) {
-            return undefined;
-        }
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                {
-                    title: "Throws",
-                    id: `${getQualifiedApiItemName(apiItem)}-throws`,
-                },
-                config,
-            ),
-            ...throwsBlocks,
-        ]);
+    const throwsBlocks = getThrowsBlocks(apiItem);
+    if (throwsBlocks === undefined || throwsBlocks.length === 0) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            {
+                title: "Throws",
+                id: `${getQualifiedApiItemName(apiItem)}-throws`,
+            },
+            config,
+        ),
+        ...throwsBlocks,
+    ]);
 }
 
 /**
@@ -530,20 +572,23 @@ export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (
-        apiItem instanceof ApiDocumentedItem &&
-        apiItem.tsdocComment?.deprecatedBlock !== undefined
-    ) {
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            new DocNoteBox(
-                {
-                    configuration: config.tsdocConfiguration,
-                },
-                [...apiItem.tsdocComment.deprecatedBlock.content.nodes],
-            ),
-        ]);
+    const deprecatedBlock = getDeprecatedBlock(apiItem);
+    if (deprecatedBlock === undefined) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocAlert(
+            {
+                configuration: config.tsdocConfiguration,
+                type: DocAlertType.Warning,
+                title: "Deprecated",
+            },
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                ...deprecatedBlock.nodes,
+            ]),
+        ),
+    ]);
 }
 
 /**
@@ -576,12 +621,9 @@ export function renderExamplesSection(
     }
 
     const exampleSections: DocSection[] = [];
-    for (let i = 0; i < exampleBlocks.length; i++) {
+    for (const [i, exampleBlock] of exampleBlocks.entries()) {
         exampleSections.push(
-            renderExampleSection(
-                { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
-                config,
-            ),
+            renderExampleSection({ apiItem, content: exampleBlock, exampleNumber: i + 1 }, config),
         );
     }
 
@@ -700,35 +742,34 @@ export function renderReturnsSection(
         }
     }
 
-    if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
+    if (
+        ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
+        apiItem.returnTypeExcerpt.text.trim() !== "" &&
         // Special case to detect when the return type is `void`.
         // We will skip declaring the return type in this case.
-        if (apiItem.returnTypeExcerpt.text.trim() !== "void") {
-            const renderedTypeExcerpt = renderExcerptWithHyperlinks(
-                apiItem.returnTypeExcerpt,
-                config,
-            );
-            if (renderedTypeExcerpt !== undefined) {
-                docSections.push(
-                    new DocSection({ configuration: config.tsdocConfiguration }, [
-                        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                            new DocEmphasisSpan(
-                                {
+        apiItem.returnTypeExcerpt.text.trim() !== "void"
+    ) {
+        const renderedTypeExcerpt = renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config);
+        if (renderedTypeExcerpt !== undefined) {
+            docSections.push(
+                new DocSection({ configuration: config.tsdocConfiguration }, [
+                    new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                        new DocEmphasisSpan(
+                            {
+                                configuration: config.tsdocConfiguration,
+                                bold: true,
+                            },
+                            [
+                                new DocPlainText({
                                     configuration: config.tsdocConfiguration,
-                                    bold: true,
-                                },
-                                [
-                                    new DocPlainText({
-                                        configuration: config.tsdocConfiguration,
-                                        text: "Return type: ",
-                                    }),
-                                ],
-                            ),
-                            ...renderedTypeExcerpt,
-                        ]),
+                                    text: "Return type: ",
+                                }),
+                            ],
+                        ),
+                        ...renderedTypeExcerpt,
                     ]),
-                );
-            }
+                ]),
+            );
         }
     }
 
@@ -796,7 +837,7 @@ export function renderChildDetailsSection(
         // Also only render the section if it actually has contents to render (to avoid empty headings).
         if (
             !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
-            childSection.items.length !== 0
+            childSection.items.length > 0
         ) {
             const renderedChildSection = renderChildrenUnderHeading(
                 childSection.items,

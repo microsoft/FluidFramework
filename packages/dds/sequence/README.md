@@ -156,7 +156,7 @@ specified range. Setting a property key to null will remove that property from t
 ### Sequence delta event
 
 Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
-affected by the operation, the type of the operation, and the properties that were changes by the operation.
+affected by the operation, the type of the operation, and the properties that were changed by the operation.
 
 ```typescript
 sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
@@ -375,6 +375,24 @@ The following example illustrates these properties and highlights the major APIs
     comments.removeIntervalById(comment.getIntervalId());
 ```
 
+## SharedString
+
+SharedString is a specialized data structure for handling collaborative text. It is based on a more general
+Sequence data structure but has additional features that make working with text easier.
+
+In addition to text, a SharedString can also contain markers.
+Markers can be used to store metadata at positions within the text, like a reference to an image or Fluid object that should be rendered with the text.
+
+Both markers and text are stored as segments in the SharedString.
+Text segments will be split and merged when modifications are made to the SharedString and will therefore have variable length
+matching the length of the text content they contain.
+Marker segments are never split or merged, and always have a length of 1.
+
+The length of the SharedString will be the combined length of all the text and marker segments.
+Just like with other sequences, when talking about positions in a SharedString we use the terms near and far.
+The nearest position in a SharedString is 0, and the farthest position is its length.
+When comparing two positions the nearer positions is closer to 0, and the farther position is closer to the length.
+
 ### Intervals vs. markers
 
 Interval endpoints and markers both implement *ReferencePosition* and seem to serve a similar function so it's not obvious how they differ and why you would choose one or the other.
@@ -393,23 +411,6 @@ Using the interval collection API has two main benefits:
     which is less user-friendly.
     If the ops were submitted using standard insert and delete APIs instead, there would be some potential for data loss if the delete
     operation ended up acknowledged by the server but the insert operation did not.
-
-## SharedString
-
-The SharedString is a specialized data structure for handling collaborative text. It is based on a more general
-Sequence data structure but has additional features that make working with text easier.
-
-In addition to text, a SharedString can also contain markers. Markers can be used to store metadata at positions within
-the text, like the details of an image or Fluid object that should be rendered with the text.
-
-Both markers and text are stored as segments in the SharedString. Text segments will be split and merged when
-modifications are made to the SharedString and will therefore have variable length matching the length of the text
-content they contain. Marker segments are never split or merged, and always have a length of 1.
-
-The length of the SharedString will be the combined length of all the text and marker segments. Just like with other
-sequences, when talking about positions in a SharedString we use the terms near and far. The nearest position in a
-SharedString is 0, and the farthest position is its length. When comparing two positions the nearer positions is closer
-to 0, and the farther position is closer to the length.
 
 ### Examples
 

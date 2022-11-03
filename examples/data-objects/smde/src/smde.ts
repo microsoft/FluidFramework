@@ -192,7 +192,7 @@ export class Smde extends EventEmitter implements
     }
 }
 
-class SmdeFactory implements IFluidDataStoreFactory {
+export class SmdeFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/smde";
     public readonly type = SmdeFactory.type;
 
@@ -218,5 +218,3 @@ class SmdeFactory implements IFluidDataStoreFactory {
         return runtime;
     }
 }
-
-export const fluidExport = new SmdeFactory();

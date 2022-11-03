@@ -4,9 +4,14 @@
  */
 
 import { EventEmitter } from "events";
+import { Provider } from "nconf";
 import { safelyParseJSON } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
+
+export interface IPartitionLambdaPlugin {
+    create(config: Provider): Promise<IPartitionLambdaFactory>;
+}
 
 /**
  * Reasons why a lambda is closing
@@ -33,6 +38,13 @@ export interface IContextErrorData {
      * Indicates whether the error is recoverable and the lambda should be restarted.
      */
     restart: boolean;
+
+    /**
+     * Indicates if the document should be marked as corrupt.
+     * Further messages will be dead-lettered.
+     * It should be set to the message that caused the corruption.
+     */
+    markAsCorrupt?: IQueuedMessage;
 
     tenantId?: string;
     documentId?: string;

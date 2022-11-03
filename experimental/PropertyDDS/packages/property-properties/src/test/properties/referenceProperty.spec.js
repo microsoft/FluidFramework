@@ -2,14 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions  */
-/* eslint-disable max-nested-callbacks */
+
 /**
- * @fileoverview In this file, we will test the reference properties
- *    described in /src/properties/referenceProperty.js,
- *                 /src/properties/referenceArrayProperty.js,
- *                 /src/properties/referenceMapProperty.js
+ * @fileoverview In this file, we will test the reference properties described in...
+ *
+ * - /src/properties/referenceProperty.js
+ *
+ * - /src/properties/referenceArrayProperty.js
+ *
+ * - /src/properties/referenceMapProperty.js
  */
+
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { BaseProperty } = require('../..');

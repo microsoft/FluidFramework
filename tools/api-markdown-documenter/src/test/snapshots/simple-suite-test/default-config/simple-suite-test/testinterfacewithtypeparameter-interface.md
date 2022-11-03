@@ -1,6 +1,6 @@
 # TestInterfaceWithTypeParameter
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
 
 Test interface with generic type parameter
 

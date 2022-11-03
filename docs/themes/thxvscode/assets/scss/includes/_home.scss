@@ -1,5 +1,12 @@
 .home {
   /*----- Hero Section -----*/
+
+  #main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
   .jumbotron {
     overflow: hidden; // Don't let full bleed video put srollbars in browser
     background-color: $header-background;
@@ -50,7 +57,7 @@
       position: relative;
       &::after {
         $triangle-size: 1.4rem;
-        content: '';
+        content: "";
         width: $triangle-size;
         height: $triangle-size;
         display: block;
@@ -100,7 +107,7 @@
           position: absolute;
           right: 0;
           top: 0;
-        //   background-image: url(/assets/icons/chevronDown.svg);
+          //   background-image: url(/assets/icons/chevronDown.svg);
           background-size: 16px 16px;
           background-repeat: no-repeat;
           background-position: 50%;
@@ -138,10 +145,10 @@
           }
         }
 
-        &.win .primary-buttons .dlink[data-os='win'] {
+        &.win .primary-buttons .dlink[data-os="win"] {
           display: inline-block;
         }
-        &.osx .primary-buttons .dlink[data-os='osx'] {
+        &.osx .primary-buttons .dlink[data-os="osx"] {
           display: inline-block;
         }
         &.linux .primary-buttons .linux {
@@ -184,7 +191,7 @@
 
         #download-matrix {
           white-space: nowrap;
-          background: #F2F2F2;
+          background: #f2f2f2;
           border: 2px $accent-primary solid;
           position: absolute;
           z-index: 1;
@@ -238,7 +245,7 @@
             }
 
             .insiders-column {
-              background: #E3E3E3;
+              background: #e3e3e3;
             }
             td {
               vertical-align: top;
@@ -286,14 +293,13 @@
             }
 
             #other-downloads {
-              border-top: 1px solid rgba(55,52,117,0.25);
+              border-top: 1px solid rgba(55, 52, 117, 0.25);
 
               td {
                 padding-top: 8px;
                 padding-bottom: 8px;
                 font-size: 14px;
               }
-
             }
           }
         }
@@ -323,7 +329,7 @@
     }
 
     .hero-img {
-    //   background-image: url('/assets/home/home-screenshot-mac.png');
+      //   background-image: url('/assets/home/home-screenshot-mac.png');
       width: 100%;
       margin-top: 30px;
       margin-bottom: 30px;
@@ -347,7 +353,7 @@
     font-family: $black;
     text-align: center;
     .value-prop-icon {
-    //   background-image: url('/assets/icons/valueprops-top-sprite.svg');
+      //   background-image: url('/assets/icons/valueprops-top-sprite.svg');
       background-repeat: no-repeat;
       width: 5rem;
       height: 5rem;

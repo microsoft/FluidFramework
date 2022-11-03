@@ -11,4 +11,11 @@ declare global {
     export const getTestLogger: (() => ITelemetryBufferedLogger) | undefined;
 }
 
-export * from "./interfaces";
+export {
+	DriverEndpoint,
+	ITelemetryBufferedLogger,
+	ITestDriver,
+	OdspEndpoint,
+	RouterliciousEndpoint,
+	TestDriverTypes,
+} from "./interfaces";

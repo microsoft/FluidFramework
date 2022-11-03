@@ -6,14 +6,14 @@
 import { KafkaResources, KafkaResourcesFactory } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaResourcesFactory } from "@fluidframework/server-services-ordering-rdkafka";
 import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
-import { IResourcesFactory } from "@fluidframework/server-services-core";
+import { IPartitionLambdaPlugin, IResourcesFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 /**
  * A generic kafka resources factory that picks rdkafka / kafka-node based on the config
  */
 export class OrderingResourcesFactory implements IResourcesFactory<KafkaResources> {
-    constructor(private readonly name: string, private readonly lambdaModule: string) {
+    constructor(private readonly name: string, private readonly lambdaModule: string | IPartitionLambdaPlugin) {
     }
 
     public async create(config: Provider): Promise<KafkaResources> {

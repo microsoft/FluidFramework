@@ -291,7 +291,7 @@ export class BenchmarkReporter {
 
     /**
      * The Benchmark object contains a lot of data we don't need and also has vague names, so
-     *  this method extracts the necessary data and provides friendlier names.
+     * this method extracts the necessary data and provides friendlier names.
      */
     private outputFriendlyObjectFromBenchmark(
         benchmarkName: string,

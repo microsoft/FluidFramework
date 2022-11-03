@@ -22,14 +22,17 @@ import { forceType } from "./utilities";
 import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
 
 /**
- * This symbol is available on properties proxied via the PropertyProxy.[[proxify]] method.
+ * This symbol is available on properties proxied via {@link PropertyProxy.proxify}.
  */
 export const proxySymbol = Symbol("property-proxy");
+
 /**
- * Class that contains the [[proxify]] and [[getParentOfReferencedProperty]] methods.
+ * Namespace that contains the {@link PropertyProxy.proxify} and {@link PropertyProxy.getParentOfReferencedProperty}
+ * functions.
+ *
  * @public
  */
-
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PropertyProxy {
     /**
      * This utility function returns the parent property of a referenced property.
@@ -63,12 +66,9 @@ export namespace PropertyProxy {
                     referencedPropertyParent = property.getRoot().get(tokens);
                 } else {
                     const parent = property.getParent() as ContainerProperty;
-                    if (types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)) {
-                        referencedPropertyParent = parent
-                            .resolvePath(path.slice(0, path.lastIndexOf("[")));
-                    } else {
-                        referencedPropertyParent = parent.get(tokens);
-                    }
+                    referencedPropertyParent = types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)
+                        ? parent.resolvePath(path.slice(0, path.lastIndexOf("[")))
+                        : parent.get(tokens);
                 }
             } else {
                 const parent = property.getParent() as ContainerProperty;
@@ -101,6 +101,7 @@ export namespace PropertyProxy {
      *
      * Insertion of new properties into the workspace is triggered
      * if the specified property name does not yet exist on the parent and the parent is dynamic.
+     *
      * @example
      * ```typescript
      * // The data can be accessed and modified using standard JavaScript syntax. Operations directly
@@ -124,9 +125,11 @@ export namespace PropertyProxy {
      * console.log(proxiedArray.toString()); // 4,3,2,1
      * console.log(workspace.get('someArray').getValues().toString()); // 4,3,2,1
      * ```
+     *
      * @param property - The BaseProperty to be proxied.
      *
-     * returns the newly created proxy if `property` is of a non-primitive type otherwise the value.
+     * @returns The newly created proxy if `property` is of a non-primitive type otherwise the value.
+     *
      * @public
      */
     export function proxify<T extends PropertyTypes>(property: T): ProxyType<T> {

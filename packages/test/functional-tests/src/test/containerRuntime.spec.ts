@@ -19,7 +19,11 @@ import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
-import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
+// ADO:1981
+// eslint-disable-next-line import/no-internal-modules
+import { ScheduleManager } from "@fluidframework/container-runtime/dist/scheduleManager";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaScheduler } from "@fluidframework/container-runtime/dist/deltaScheduler";
 
 describe("Container Runtime", () => {
     /**
@@ -110,6 +114,7 @@ describe("Container Runtime", () => {
             scheduleManager = new ScheduleManager(
                 deltaManager,
                 emitter,
+                () => "test-client", // clientId,
                 DebugLogger.create("fluid:testScheduleManager"),
             );
 

@@ -9,9 +9,11 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedMap.
+ *
  * - Modify the set method to call the setInterceptionCallback before calling set on the underlying SharedMap.
+ *
  * - The setInterceptionCallback and the call to the underlying SharedMap are wrapped around an
- *   orderSequentially call to batch any operations that might happen in the callback.
+ * orderSequentially call to batch any operations that might happen in the callback.
  *
  * @param sharedMap - The underlying SharedMap
  * @param context - The IFluidDataStoreContext that will be used to call orderSequentially

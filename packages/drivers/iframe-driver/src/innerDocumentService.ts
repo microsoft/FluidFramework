@@ -19,10 +19,12 @@ import { ICombinedDriver } from "./outerDocumentServiceFactory";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
  */
 export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      */
     public static async create(
         proxyObject: ICombinedDriver,
@@ -41,7 +43,15 @@ export class InnerDocumentService implements IDocumentService {
 
     private constructor(
         private readonly outerProxy: ICombinedDriver,
+        /**
+         * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming
+         * release
+         */
         public readonly resolvedUrl: IResolvedUrl,
+        /**
+         * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming
+         * release
+         */
         public clientId: string,
         logger?: ITelemetryBaseLogger) {
         // Use a combined logger with the provided and the outer proxy's
@@ -50,10 +60,14 @@ export class InnerDocumentService implements IDocumentService {
         this.logger.addLogger(outerProxy.logger);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public dispose() {}
 
     /**
      * Connects to a storage endpoint for snapshot service.
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns returns the document storage service for routerlicious driver.
      */
@@ -63,6 +77,7 @@ export class InnerDocumentService implements IDocumentService {
 
     /**
      * Connects to a delta storage endpoint for getting ops between a range.
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns returns the document delta storage service for routerlicious driver.
      */
@@ -74,6 +89,7 @@ export class InnerDocumentService implements IDocumentService {
 
     /**
      * Connects to a delta stream endpoint for emitting ops.
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */

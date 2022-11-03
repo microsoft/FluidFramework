@@ -14,10 +14,13 @@ import { ReadAndParseBlob } from "../utils";
 
 /**
  * Return value of refreshSummaryAck function. There can be three different scenarios based on the passed params:
+ *
  * 1. The latest summary was not udpated.
+ *
  * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
+ *
  * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
- *    latest summary is updated based on the downloaded snapshot which is also returned.
+ * latest summary is updated based on the downloaded snapshot which is also returned.
  */
 export type RefreshSummaryResult = {
     latestSummaryUpdated: false;

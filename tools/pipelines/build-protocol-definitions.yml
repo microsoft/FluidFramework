@@ -69,4 +69,4 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/protocol-definitions
     tagName: protocol-definitions
-    taskTest: false
+    taskTest: [] # no tests

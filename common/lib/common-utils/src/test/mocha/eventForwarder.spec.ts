@@ -27,6 +27,7 @@ describe("Loader", () => {
                 });
 
                 afterEach(() => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!forwarder.disposed) {
                         forwarder.dispose();
                     }

@@ -20,7 +20,7 @@ import { TransformedEvent } from '@fluidframework/common-definitions';
 // @public
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
@@ -259,7 +259,7 @@ export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTime
 // @public
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;

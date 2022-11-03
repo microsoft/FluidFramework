@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
-import { getPackageDetails, PackageDetails } from "./packageJson";
+import { Node, Project, ts } from "ts-morph";
 
-export interface PackageAndTypeData{
+import { PackageDetails, getPackageDetails } from "./packageJson";
+
+export interface PackageAndTypeData {
     packageDetails: PackageDetails;
     typeData: TypeData[];
     project: Project;
@@ -19,15 +19,15 @@ export interface TypeData {
     readonly node: Node;
 }
 
-export function getFullTypeName(typeData: TypeData){
-    return `${typeData.kind}_${typeData.name}`
+export function getFullTypeName(typeData: TypeData) {
+    return `${typeData.kind}_${typeData.name}`;
 }
 
-export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
-    if(Node.isJSDocableNode(data.node)) {
-        for(const doc of data.node.getJsDocs()){
-            for(const tag of doc.getTags()){
-                if(tag.getTagName() === tagName){
+export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal") {
+    if (Node.isJSDocableNode(data.node)) {
+        for (const doc of data.node.getJsDocs()) {
+            for (const tag of doc.getTags()) {
+                if (tag.getTagName() === tagName) {
                     return true;
                 }
             }
@@ -36,8 +36,7 @@ export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
     return false;
 }
 
-function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
-
+function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
     /*
         handles namespaces e.g.
         export namespace foo{
@@ -47,11 +46,11 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         this will prefix foo and generate two type data:
         foo.first and foo.second
     */
-    if (Node.isNamespaceDeclaration(node)){
-        const typeData: TypeData[]=[];
-        for(const s of node.getStatements()){
+    if (Node.isNamespaceDeclaration(node)) {
+        const typeData: TypeData[] = [];
+        for (const s of node.getStatements()) {
             // only get type data for nodes that are exported from the namespace
-            if(Node.isExportableNode(s) && s.isExported()){
+            if (Node.isExportableNode(s) && s.isExported()) {
                 typeData.push(...getNodeTypeData(s, node.getName()));
             }
         }
@@ -63,62 +62,72 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         this just grabs the declarations: foo:number=0 and bar:number
         which we can make type data from
     */
-    if(Node.isVariableStatement(node)){
-        const typeData: TypeData[]=[];
-        for(const dec of node.getDeclarations()){
+    if (Node.isVariableStatement(node)) {
+        const typeData: TypeData[] = [];
+        for (const dec of node.getDeclarations()) {
             typeData.push(...getNodeTypeData(dec, namespacePrefix));
         }
-        return typeData
-    }
-
-    if(Node.isIdentifier(node)){
-        const typeData: TypeData[]=[];
-        node.getDefinitionNodes().forEach(
-            (d)=>typeData.push(...getNodeTypeData(d, namespacePrefix)));
         return typeData;
     }
 
-    if (Node.isClassDeclaration(node)
-        || Node.isEnumDeclaration(node)
-        || Node.isInterfaceDeclaration(node)
-        || Node.isTypeAliasDeclaration(node)
-        || Node.isVariableDeclaration(node)
-        || Node.isFunctionDeclaration(node)
+    if (Node.isIdentifier(node)) {
+        const typeData: TypeData[] = [];
+        node.getDefinitionNodes().forEach((d) =>
+            typeData.push(...getNodeTypeData(d, namespacePrefix)),
+        );
+        return typeData;
+    }
+
+    if (
+        Node.isClassDeclaration(node) ||
+        Node.isEnumDeclaration(node) ||
+        Node.isInterfaceDeclaration(node) ||
+        Node.isTypeAliasDeclaration(node) ||
+        Node.isVariableDeclaration(node) ||
+        Node.isFunctionDeclaration(node)
     ) {
-        const name = namespacePrefix !== undefined
-            ? `${namespacePrefix}.${node.getName()}`
-            : node.getName()!;
+        const name =
+            namespacePrefix !== undefined
+                ? `${namespacePrefix}.${node.getName()}`
+                : node.getName()!;
 
-        const typeData: TypeData[] = [{
-            name,
-            kind: node.getKindName(),
-            node,
-        }];
+        const typeData: TypeData[] = [
+            {
+                name,
+                kind: node.getKindName(),
+                node,
+            },
+        ];
         return typeData;
     }
 
-    throw new Error(`Unknown Export Kind: ${node.getKindName()}`)
+    throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
 }
 
-export function toTypeString(prefix: string, typeData: TypeData){
+export function toTypeString(prefix: string, typeData: TypeData) {
     const node = typeData.node;
     let typeParams: string | undefined;
-    if(Node.isInterfaceDeclaration(node)
-        || Node.isTypeAliasDeclaration(node)
-        || Node.isClassDeclaration(node)
-    ){
+    if (
+        Node.isInterfaceDeclaration(node) ||
+        Node.isTypeAliasDeclaration(node) ||
+        Node.isClassDeclaration(node)
+    ) {
         // does the type take generics that don't have defaults?
-        if(node.getTypeParameters().length > 0
-            && node.getTypeParameters().some((tp)=>tp.getDefault() === undefined)
-        ){
+        if (
+            node.getTypeParameters().length > 0 &&
+            node.getTypeParameters().some((tp) => tp.getDefault() === undefined)
+        ) {
             // it's really hard to build the right type for a generic,
             // so for now we'll just pass any, as it will always work
-            typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
+            typeParams = `<${node
+                .getTypeParameters()
+                .map(() => "any")
+                .join(",")}>`;
         }
     }
 
-    const typeStringBase =`${prefix}.${typeData.name}${typeParams ?? ""}`;
-    switch(node.getKind()){
+    const typeStringBase = `${prefix}.${typeData.name}${typeParams ?? ""}`;
+    switch (node.getKind()) {
         case ts.SyntaxKind.VariableDeclaration:
         case ts.SyntaxKind.FunctionDeclaration:
         case ts.SyntaxKind.Identifier:
@@ -134,17 +143,17 @@ function tryFindDependencyPath(packageDir: string, dependencyName: string) {
     // for lerna mono-repos we may need to look for the hoisted packages
     //
     let testPath = packageDir;
-    while(!fs.existsSync(`${testPath}/node_modules/${dependencyName}/package.json`)
-        && !fs.existsSync(`${testPath}/lerna.json`
-    )){
-        testPath += "/.."
+    while (
+        !fs.existsSync(`${testPath}/node_modules/${dependencyName}/package.json`) &&
+        !fs.existsSync(`${testPath}/lerna.json`)
+    ) {
+        testPath += "/..";
     }
-    return `${testPath}/node_modules/${dependencyName}`
+    return `${testPath}/node_modules/${dependencyName}`;
 }
 
-function getIndexSourceFile(basePath: string){
-
-    const tsConfigPath: string =`${basePath}/tsconfig.json`;
+function getIndexSourceFile(basePath: string) {
+    const tsConfigPath: string = `${basePath}/tsconfig.json`;
 
     if (fs.existsSync(tsConfigPath)) {
         const project = new Project({
@@ -152,43 +161,46 @@ function getIndexSourceFile(basePath: string){
             tsConfigFilePath: tsConfigPath,
         });
 
-        return {project, file: project.getSourceFileOrThrow("index.ts")};
-
-    }else{
+        return { project, file: project.getSourceFileOrThrow("index.ts") };
+    } else {
         const project = new Project({
             skipFileDependencyResolution: true,
         });
-        project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`)
-        return {project, file: project.getSourceFileOrThrow("index.d.ts")};
+        project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`);
+        return { project, file: project.getSourceFileOrThrow("index.d.ts") };
     }
-
 }
 
-export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
-
-    const basePath = dependencyName === undefined
-        ? packageDir
-        : tryFindDependencyPath(packageDir, dependencyName);
+export async function generateTypeDataForProject(
+    packageDir: string,
+    dependencyName: string | undefined,
+): Promise<PackageAndTypeData> {
+    const basePath =
+        dependencyName === undefined
+            ? packageDir
+            : tryFindDependencyPath(packageDir, dependencyName);
 
     if (!fs.existsSync(`${basePath}/package.json`)) {
-        throw new Error(`package.json does not exist at ${basePath}.\nYou may need to install the package via npm install.`)
+        throw new Error(
+            `package.json does not exist at ${basePath}.\nYou may need to install the package via npm install.`,
+        );
     }
-    const {project, file} = getIndexSourceFile(basePath);
+    const { project, file } = getIndexSourceFile(basePath);
     const typeData = new Map<string, TypeData>();
     const exportedDeclarations = file.getExportedDeclarations();
-    for(const declarations of exportedDeclarations.values()){
-        for(const dec of declarations){
-           getNodeTypeData(dec).forEach((td)=> {
-               const fullName = getFullTypeName(td);
-               typeData.set(fullName, td);
-           })
+    for (const declarations of exportedDeclarations.values()) {
+        for (const dec of declarations) {
+            getNodeTypeData(dec).forEach((td) => {
+                const fullName = getFullTypeName(td);
+                typeData.set(fullName, td);
+            });
         }
     }
 
     const packageDetails = await getPackageDetails(basePath);
     return {
         packageDetails,
-        typeData: Array.from(typeData.values()).sort((a,b)=>a.name.localeCompare(b.name)),
+        typeData: Array.from(typeData.values()).sort((a, b) => a.name.localeCompare(b.name)),
         project,
     };
 }

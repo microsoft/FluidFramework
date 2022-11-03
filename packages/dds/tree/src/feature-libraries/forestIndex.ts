@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import {
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import {
     ITelemetryContext,
     ISummaryTreeWithStats,
@@ -13,14 +16,27 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
-    IEditableForest, initializeForest, ITreeSubscriptionCursor, TreeNavigationResult,
-} from "../forest";
-import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { JsonableTree, Delta } from "../tree";
-import { jsonableTreeFromCursor } from "./treeTextCursor";
+    IEditableForest,
+    initializeForest,
+    ITreeSubscriptionCursor,
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+    cachedValue,
+    ICachedValue,
+    recordDependency,
+    JsonableTree,
+    Delta,
+    mapCursorField,
+    moveToDetachedField,
+} from "../core";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { afterChangeForest } from "./object-forest";
 
-/** The storage key for the blob in the summary containing tree data */
+/**
+ * The storage key for the blob in the summary containing tree data
+ */
 const treeBlobKey = "ForestTree";
 
 /**
@@ -42,7 +58,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     // Note that if invalidation happens when these promises are running, you may get stale results.
     private readonly treeBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
-    public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
+    public constructor(
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly forest: IEditableForest,
+    ) {
         this.cursor = this.forest.allocateCursor();
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
@@ -57,6 +76,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
 
     newLocalState(changeDelta: Delta.Root): void {
         this.forest.applyDelta(changeDelta);
+        // TODO: remove this workaround as soon as notification/eventing will be supported.
+        afterChangeForest(this.forest);
     }
 
     /**
@@ -69,16 +90,9 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private getTreeString(): string {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
-        const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: JsonableTree[] = [];
-        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
-        while (result === TreeNavigationResult.Ok) {
-            roots.push(jsonableTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1);
-        }
+        moveToDetachedField(this.forest, this.cursor);
+        const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, 0x34b /* Unsupported navigation result */);
-
         return JSON.stringify(roots);
     }
 
@@ -121,13 +135,16 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         };
     }
 
-    public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
+    public async load(
+        services: IChannelStorageService,
+        parse: SummaryElementParser,
+    ): Promise<void> {
         if (await services.contains(treeBlobKey)) {
             const treeBuffer = await services.readBlob(treeBlobKey);
             const treeBufferString = bufferToString(treeBuffer, "utf8");
             const tree = parse(treeBufferString) as string;
-            const placeholderTree = JSON.parse(tree) as JsonableTree[];
-            initializeForest(this.forest, placeholderTree);
+            const jsonableTree = JSON.parse(tree) as JsonableTree[];
+            initializeForest(this.forest, jsonableTree.map(singleTextCursor));
         }
     }
 }

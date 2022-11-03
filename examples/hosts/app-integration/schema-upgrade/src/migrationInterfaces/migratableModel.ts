@@ -32,8 +32,8 @@ export interface IImportExportModel<ImportType, ExportType> {
     exportData: () => Promise<ExportType>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMigratableModelEvents extends IEvent {
+    (event: "connected", listener: () => void);
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
@@ -45,6 +45,11 @@ export interface IMigratableModel
      * The tool that will be used to facilitate the migration.
      */
     readonly migrationTool: IMigrationTool;
+
+    /**
+     * Returns if the runtime is currently connected.
+     */
+    connected(): boolean;
 
     /**
      * Close the model, rendering it inoperable and closing connections.

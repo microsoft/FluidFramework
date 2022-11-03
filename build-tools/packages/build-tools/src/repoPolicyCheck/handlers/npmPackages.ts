@@ -2,25 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { EOL as newline } from "os";
+import * as child_process from "child_process";
 import fs from "fs";
-import replace from "replace-in-file";
-import path from "path";
 import { pathExistsSync } from "fs-extra";
-import { NpmPackageJsonLint } from "npm-package-json-lint";
 import merge from "lodash.merge";
+import { NpmPackageJsonLint } from "npm-package-json-lint";
+import { EOL as newline } from "os";
+import path from "path";
+import * as readline from "readline";
+import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
-import {
-    Handler,
-    readFile,
-    writeFile,
-} from "../common";
 
-const licenseId = 'MIT';
-const author = 'Microsoft and contributors';
-const repository = 'https://github.com/microsoft/FluidFramework.git';
-const homepage = 'https://fluidframework.com';
+import { IPackageManifest } from "../../common/fluidRepo";
+import { getPackageManifest } from "../../common/fluidUtils";
+import { IPackage } from "../../common/npmPackage";
+import { Handler, readFile, writeFile } from "../common";
+
+const licenseId = "MIT";
+const author = "Microsoft and contributors";
+const repository = "https://github.com/microsoft/FluidFramework.git";
+const homepage = "https://fluidframework.com";
 const trademark = `
 ## Trademark
 
@@ -28,6 +29,18 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
+
+/**
+ * An array of dependencies that should always use tilde dependency ranges instead of caret.
+ */
+let _tildeDependencies: string[] | undefined;
+
+const getTildeDependencies = (manifest: IPackageManifest | undefined) => {
+    if (_tildeDependencies === undefined) {
+        _tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
+    }
+    return _tildeDependencies;
+};
 
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
@@ -40,9 +53,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  */
 function packageMustPublishToNPM(name: string): boolean {
     return (
-        name.startsWith("@fluidframework/")
-        || name === "fluid-framework"
-        || name === "tinylicious"
+        name.startsWith("@fluidframework/") || name === "fluid-framework" || name === "tinylicious"
     );
 }
 
@@ -54,10 +65,10 @@ function packageMustPublishToNPM(name: string): boolean {
 function packageMustPublishToInternalFeedOnly(name: string): boolean {
     return (
         // TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-        name === "@fluid-internal/test-app-insights-logger"
-        || name === "@fluid-internal/test-service-load"
+        name === "@fluid-internal/test-app-insights-logger" ||
+        name === "@fluid-internal/test-service-load" ||
         // Most examples should be private, but table-document needs to publish internally for legacy compat
-        || name === "@fluid-example/table-document"
+        name === "@fluid-example/table-document"
     );
 }
 
@@ -66,10 +77,14 @@ function packageMustPublishToInternalFeedOnly(name: string): boolean {
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
 function packageMayChooseToPublishToNPM(name: string): boolean {
-    return (
-        name.startsWith("@fluid-experimental/")
-        || name.startsWith("@fluid-tools/")
-    );
+    return name.startsWith("@fluid-experimental/") || name.startsWith("@fluid-tools/");
+}
+
+/**
+ * Whether the package has the option to publish to an internal feed if it chooses.
+ */
+function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
+    return name.startsWith("@fluid-internal/") || name.startsWith("@fluid-msinternal/");
 }
 
 /**
@@ -78,9 +93,10 @@ function packageMayChooseToPublishToNPM(name: string): boolean {
  */
 function packageMustBePrivate(name: string): boolean {
     return !(
-        packageMustPublishToNPM(name)
-        || packageMustPublishToInternalFeedOnly(name)
-        || packageMayChooseToPublishToNPM(name)
+        packageMustPublishToNPM(name) ||
+        packageMayChooseToPublishToNPM(name) ||
+        packageMustPublishToInternalFeedOnly(name) ||
+        packageMayChooseToPublishToInternalFeedOnly(name)
     );
 }
 
@@ -88,38 +104,38 @@ function packageMustBePrivate(name: string): boolean {
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
 function packageMustNotBePrivate(name: string): boolean {
-    return (
-        packageMustPublishToNPM(name)
-        || packageMustPublishToInternalFeedOnly(name)
-    );
+    return packageMustPublishToNPM(name) || packageMustPublishToInternalFeedOnly(name);
 }
 
 /**
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
- function packageIsFluidPackage(name: string): boolean {
+function packageIsFluidPackage(name: string): boolean {
     return (
-        name.startsWith("@fluidframework/")
-        || name.startsWith("@fluid-example/")
-        || name.startsWith("@fluid-experimental/")
-        || name.startsWith("@fluid-internal/")
-        || name.startsWith("@fluid-tools/")
-        || name === "fluid-framework"
-        || name === "fluidframework-docs"
-        || name === "tinylicious"
+        name.startsWith("@fluidframework/") ||
+        name.startsWith("@fluid-example/") ||
+        name.startsWith("@fluid-experimental/") ||
+        name.startsWith("@fluid-internal/") ||
+        name.startsWith("@fluid-msinternal/") ||
+        name.startsWith("@fluid-tools/") ||
+        name === "fluid-framework" ||
+        name === "fluidframework-docs" ||
+        name === "tinylicious"
     );
 }
 
-type IReadmeInfo = {
-    exists: false;
-    filePath: string;
-} | {
-    exists: true;
-    filePath: string;
-    title: string;
-    trademark: boolean;
-    readme: string;
-}
+type IReadmeInfo =
+    | {
+          exists: false;
+          filePath: string;
+      }
+    | {
+          exists: true;
+          filePath: string;
+          title: string;
+          trademark: boolean;
+          readme: string;
+      };
 
 function getReadmeInfo(dir: string): IReadmeInfo {
     const filePath = path.join(dir, "README.md");
@@ -140,19 +156,53 @@ function getReadmeInfo(dir: string): IReadmeInfo {
     };
 }
 
+function ensurePrivatePackagesComputed(): void {
+    if (privatePackages) {
+        return;
+    }
+
+    privatePackages = new Set();
+    const pathToGitRoot = child_process
+        .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
+        .trim();
+    const p = child_process.spawn("git", [
+        "ls-files",
+        "-co",
+        "--exclude-standard",
+        "--full-name",
+        "**/package.json",
+    ]);
+    const lineReader = readline.createInterface({
+        input: p.stdout,
+        terminal: false,
+    });
+
+    lineReader.on("line", (line) => {
+        const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
+        if (fs.existsSync(filePath)) {
+            const packageJson = JSON.parse(readFile(filePath));
+            if (packageJson.private) {
+                privatePackages.add(packageJson.name);
+            }
+        }
+    });
+}
+
+let privatePackages: Set<string>;
+
 const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
     {
         name: "npm-package-metadata-and-sorting",
         match,
-        handler: file => {
+        handler: (file) => {
             let jsonStr: string;
             let json;
             try {
                 jsonStr = readFile(file);
                 json = JSON.parse(jsonStr);
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             const ret: string[] = [];
@@ -171,7 +221,7 @@ export const handlers: Handler[] = [
 
             if (!json.repository) {
                 ret.push(`repository field missing`);
-            } else if ((typeof json.repository) === "string") {
+            } else if (typeof json.repository === "string") {
                 ret.push(`repository should be an object, not a string`);
             } else if (json.repository?.url !== repository) {
                 ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
@@ -193,12 +243,12 @@ export const handlers: Handler[] = [
 
             return undefined;
         },
-        resolver: file => {
+        resolver: (file) => {
             let json;
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return { resolved: false, message: 'Error parsing JSON file: ' + file };
+                return { resolved: false, message: "Error parsing JSON file: " + file };
             }
 
             const resolved = true;
@@ -211,10 +261,10 @@ export const handlers: Handler[] = [
                 json.license = licenseId;
             }
 
-            if (json.repository === undefined || (typeof json.repository) === "string") {
+            if (json.repository === undefined || typeof json.repository === "string") {
                 json.repository = {
-                    "type": "git",
-                    "url": repository
+                    type: "git",
+                    url: repository,
                 };
             }
 
@@ -236,12 +286,12 @@ export const handlers: Handler[] = [
         // If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
         name: "npm-strange-package-name",
         match,
-        handler: file => {
+        handler: (file) => {
             let json: { name: string };
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             // "root" is the package name for monorepo roots, so ignore them
@@ -257,17 +307,18 @@ export const handlers: Handler[] = [
     },
     {
         // Verify that packages are correctly marked private or not.
-        // Also verify that non-private packages don't take dependency on private packages.
+        // Also verify that non-private packages don't take dependencies on private packages.
         name: "npm-private-packages",
         match,
-        handler: file => {
-            let json: { name: string, private?: boolean, dependencies: Record<string, string> };
+        handler: (file) => {
+            let json: { name: string; private?: boolean; dependencies: Record<string, string> };
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
+            ensurePrivatePackagesComputed();
             const errors: string[] = [];
 
             if (json.private && packageMustNotBePrivate(json.name)) {
@@ -280,14 +331,12 @@ export const handlers: Handler[] = [
             }
 
             const deps = Object.keys(json.dependencies ?? {});
-            // TODO: Ideally we should check whether the dependency actually is marked private (in the case of
-            // packages which have a choice).  So this is just an approximation given packages that we know must
-            // be private.
-            if (
-                json.private !== true
-                && deps.some((name) => packageIsFluidPackage(name) && packageMustBePrivate(name))
-            ) {
-                errors.push(`Non-private package must not depend on a private package`);
+            if (json.private !== true && deps.some((name) => privatePackages.has(name))) {
+                errors.push(
+                    `Non-private package must not depend on the private package(s): ${deps
+                        .filter((name) => privatePackages.has(name))
+                        .join(",")}`,
+                );
             }
 
             if (errors.length > 0) {
@@ -298,12 +347,12 @@ export const handlers: Handler[] = [
     {
         name: "npm-package-readmes",
         match,
-        handler: file => {
+        handler: (file) => {
             let json;
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             const packageName = json.name;
@@ -311,13 +360,12 @@ export const handlers: Handler[] = [
             const readmeInfo: IReadmeInfo = getReadmeInfo(packageDir);
 
             if (!readmeInfo.exists) {
-                return (`Package directory ${packageDir} contains no README.md`);
-            }
-            else if (readmeInfo.title !== packageName) {
+                return `Package directory ${packageDir} contains no README.md`;
+            } else if (readmeInfo.title !== packageName) {
                 // These packages don't follow the convention of starting the readme with "# PackageName"
                 const skip = ["root", "fluid-docs"].some((skipMe) => packageName === skipMe);
                 if (!skip) {
-                    return (`Readme in package directory ${packageDir} should begin with heading "${json.name}"`);
+                    return `Readme in package directory ${packageDir} should begin with heading "${json.name}"`;
                 }
             }
 
@@ -327,12 +375,12 @@ export const handlers: Handler[] = [
                 }
             }
         },
-        resolver: file => {
+        resolver: (file) => {
             let json;
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return { resolved: false, message: 'Error parsing JSON file: ' + file };
+                return { resolved: false, message: "Error parsing JSON file: " + file };
             }
 
             const packageName = json.name;
@@ -342,17 +390,24 @@ export const handlers: Handler[] = [
             const expectTrademark = fs.existsSync(path.join(packageDir, "Dockerfile"));
             if (!readmeInfo.exists) {
                 if (expectTrademark) {
-                    writeFile(readmeInfo.filePath, `${expectedTitle}${newline}${newline}${trademark}`);
+                    writeFile(
+                        readmeInfo.filePath,
+                        `${expectedTitle}${newline}${newline}${trademark}`,
+                    );
                 } else {
                     writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
                 }
                 return { resolved: true };
             }
 
-            const fixTrademark = !readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
+            const fixTrademark =
+                !readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
             if (fixTrademark) {
                 const existingNewLine = readmeInfo.readme[readmeInfo.readme.length - 1] === "\n";
-                writeFile(readmeInfo.filePath, `${readmeInfo.readme}${existingNewLine ? "" : newline}${trademark}`);
+                writeFile(
+                    readmeInfo.filePath,
+                    `${readmeInfo.readme}${existingNewLine ? "" : newline}${trademark}`,
+                );
             }
             if (readmeInfo.title !== packageName) {
                 replace.sync({
@@ -368,12 +423,12 @@ export const handlers: Handler[] = [
     {
         name: "npm-package-folder-name",
         match,
-        handler: file => {
+        handler: (file) => {
             let json;
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             const packageName = json.name;
@@ -401,7 +456,7 @@ export const handlers: Handler[] = [
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             if (json.private) {
@@ -430,7 +485,10 @@ export const handlers: Handler[] = [
             try {
                 fs.copyFileSync(rootLicensePath, licensePath);
             } catch {
-                return { resolved: false, message: `Error copying file from ${rootLicensePath} to ${licensePath}` };
+                return {
+                    resolved: false,
+                    message: `Error copying file from ${rootLicensePath} to ${licensePath}`,
+                };
             }
             return { resolved: true };
         },
@@ -438,17 +496,36 @@ export const handlers: Handler[] = [
     {
         name: "npm-package-json-lint",
         match,
-        handler: file => {
+        handler: (file, root) => {
             let jsonStr: string;
-            let json;
+            let json: IPackage;
             try {
                 jsonStr = readFile(file);
                 json = JSON.parse(jsonStr);
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return "Error parsing JSON file: " + file;
             }
 
             const ret: string[] = [];
+
+            const { dependencies, devDependencies } = json;
+            const manifest = getPackageManifest(root);
+            const tildeDependencies = getTildeDependencies(manifest);
+            if (dependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.dependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
+
+            if (devDependencies !== undefined) {
+                for (const [dep, ver] of Object.entries(json.devDependencies)) {
+                    if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+                        ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
+                    }
+                }
+            }
 
             const { valid, validationResults } = runNpmJsonLint(json, file);
 
@@ -480,7 +557,7 @@ export const handlers: Handler[] = [
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return { resolved: false, message: 'Error parsing JSON file: ' + file };
+                return { resolved: false, message: "Error parsing JSON file: " + file };
             }
 
             const resolved = true;
@@ -492,7 +569,10 @@ export const handlers: Handler[] = [
                     for (const issue of result.issues) {
                         switch (issue.lintId) {
                             case "require-repository-directory":
-                                json.repository.directory = path.posix.relative(root, path.dirname(file));
+                                json.repository.directory = path.posix.relative(
+                                    root,
+                                    path.dirname(file),
+                                );
                                 break;
                             default:
                                 break;
@@ -517,7 +597,7 @@ function runNpmJsonLint(json: any, file: string) {
 
     const linter = new NpmPackageJsonLint(options);
     const validationResults = linter.lint();
-    const valid = (validationResults.errorCount + validationResults.warningCount) === 0;
+    const valid = validationResults.errorCount + validationResults.warningCount === 0;
     return { valid, validationResults };
 }
 
@@ -525,14 +605,17 @@ const defaultNpmPackageJsonLintConfig = {
     rules: {
         "no-repeated-dependencies": "error",
         "require-repository-directory": "error",
-        "valid-values-name-scope": ["error", [
-            "@fluidframework",
-            "@fluid-internal",
-            "@fluid-example",
-            "@fluid-experimental",
-            "@fluid-tools",
-        ]]
-    }
+        "valid-values-name-scope": [
+            "error",
+            [
+                "@fluidframework",
+                "@fluid-internal",
+                "@fluid-example",
+                "@fluid-experimental",
+                "@fluid-tools",
+            ],
+        ],
+    },
 };
 
 /**

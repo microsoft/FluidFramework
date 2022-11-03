@@ -9,13 +9,17 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed subDirectory.
+ *
  * - Modify the set method to call the setInterceptionCallback before calling set on the underlying object.
+ *
  * - The setInterceptionCallback and the call to the underlying object are wrapped around an orderSequentially
- *   call to batch any operations that might happen in the callback.
+ * call to batch any operations that might happen in the callback.
+ *
  * - Modify the sub directory methods to create / return a wrapper object that in turn intercepts the set method and
- *   calls the setInterceptionCallback.
+ * calls the setInterceptionCallback.
+ *
  * - When a sub directory is created from this directory, this base directory object is passed to it which is passed
- *   into the interception callback.
+ * into the interception callback.
  *
  * @param baseDirectory - The base directory in the directory structure that is passed to the interception callback
  * @param subDirectory - The underlying object that is to be intercepted
@@ -107,13 +111,17 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 
 /**
  * - Create a new object from the passed IDirectory object.
+ *
  * - Modify the set method to call the setInterceptionCallback before calling set on the underlying object.
+ *
  * - The setInterceptionCallback and the call to the underlying object are wrapped around an orderSequentially
- *   call to batch any operations that might happen in the callback.
+ * call to batch any operations that might happen in the callback.
+ *
  * - Modify the sub directory methods to create / return a wrapper object that in turn intercepts the set method and
- *   calls the setInterceptionCallback.
+ * calls the setInterceptionCallback.
+ *
  * - When a sub directory is created from this directory, this directory object is passed to it which is passed into
- *   the interception callback.
+ * the interception callback.
  *
  * @param baseDirectory - The underlying object that is to be intercepted
  * @param context - The IFluidDataStoreContext that will be used to call orderSequentially

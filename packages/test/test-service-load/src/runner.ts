@@ -18,6 +18,8 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -203,25 +205,34 @@ async function runnerProcess(
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
-                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs);
+                const testRuntime = await test.getRuntime();
+                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
+                                                       testRuntime);
             }
 
             // Control fault injection period through config.
             // If undefined then no fault injection.
-            const faultInjectionMinMs = runConfig.testConfig.faultInjectionMinMs;
-            const faultInjectionMaxMs = runConfig.testConfig.faultInjectionMaxMs;
-            if (faultInjectionMaxMs !== undefined) {
-                assert(faultInjectionMinMs !== undefined, "Define faultInjectionMinMs.");
-                assert(faultInjectionMinMs >= 0, "faultInjectionMinMs must be greater than or equal to zero.");
-                assert(faultInjectionMaxMs > 0, "faultInjectionMaxMs must be greater than zero.");
-                assert(faultInjectionMaxMs >= faultInjectionMinMs,
-                    "faultInjectionMaxMs must be greater than or equal to faultInjectionMinMs.");
-
-                scheduleContainerClose(container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
+            const faultInjection = runConfig.testConfig.faultInjectionMs;
+            if (faultInjection) {
+                scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
                 scheduleFaultInjection(
-                    documentServiceFactory, container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
-            } else {
-                assert(faultInjectionMinMs === undefined, "Define faultInjectionMaxMs.");
+                    documentServiceFactory,
+                    container,
+                    runConfig,
+                    faultInjection.min,
+                    faultInjection.max);
+            }
+            const offline = runConfig.testConfig.offline;
+            if (offline) {
+                scheduleOffline(
+                    documentServiceFactory,
+                    container,
+                    runConfig,
+                    offline.delayMs.min,
+                    offline.delayMs.max,
+                    offline.durationMs.min,
+                    offline.durationMs.max,
+                );
             }
 
             try {
@@ -270,21 +281,21 @@ function scheduleFaultInjection(
                     switch (random.integer(0, 5)(runConfig.randEng)) {
                         // dispreferr errors
                         case 0: {
-                            deltaConn.injectError(canRetry);
                             printStatus(runConfig, `error injected canRetry:${canRetry}`);
+                            deltaConn.injectError(canRetry);
                             break;
                         }
                         case 1:
                         case 2: {
-                            deltaConn.injectDisconnect();
                             printStatus(runConfig, "disconnect injected");
+                            deltaConn.injectDisconnect();
                             break;
                         }
                         case 3:
                         case 4:
                         default: {
-                            deltaConn.injectNack((container.resolvedUrl as IFluidResolvedUrl).id, canRetry);
                             printStatus(runConfig, `nack injected canRetry:${canRetry}`);
+                            deltaConn.injectNack((container.resolvedUrl as IFluidResolvedUrl).id, canRetry);
                             break;
                         }
                     }
@@ -351,7 +362,55 @@ function scheduleContainerClose(
     });
 }
 
-async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
+function scheduleOffline(
+    dsf: FaultInjectionDocumentServiceFactory,
+    container: IContainer,
+    runConfig: IRunConfig,
+    offlineDelayMinMs: number,
+    offlineDelayMaxMs: number,
+    offlineDurationMinMs: number,
+    offlineDurationMaxMs: number,
+) {
+    new Promise<void>((resolve) => {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
+            container.once("connected", () => resolve());
+            container.once("closed", () => resolve());
+        } else {
+            resolve();
+        }
+    }).then(async () => {
+        const schedule = async (): Promise<void> => {
+            if (container.closed) {
+                return;
+            }
+
+            const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs)(runConfig.randEng);
+            await new Promise<void>((res) => setTimeout(res, injectionTime));
+
+            assert(container.resolvedUrl !== undefined, "no url");
+            const ds = dsf.documentServices.get(container.resolvedUrl);
+            assert(!!ds, "no documentServices");
+            const offlineTime = random.integer(offlineDurationMinMs, offlineDurationMaxMs)(runConfig.randEng);
+            printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
+            ds.goOffline();
+
+            await new Promise<void>((res) => setTimeout(res, offlineTime));
+            if (!container.closed) {
+                ds.goOnline();
+                printStatus(runConfig, "going online!");
+                return schedule();
+            }
+        };
+        return schedule();
+    }).catch(async (e) => {
+        await loggerP.then(async (l) => l.sendErrorEvent({
+            eventName: "ScheduleOfflineFailed", runId: runConfig.runId,
+        }, e));
+    });
+}
+
+async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number,
+    testRuntime: IFluidDataStoreRuntime) {
     // Use map to cache userName instead of recomputing.
     const clientIdUserNameMap: { [clientId: string]: string; } = {};
 
@@ -386,6 +445,16 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
         }
     });
 
+    let submittedSignals = 0;
+    let receivedSignals = 0;
+    testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        if (message.type === "generic-signal" && local === true) {
+            submittedSignals += 1;
+        } else if (message.type === "generic-signal" && local === false) {
+            receivedSignals += 1;
+        }
+    });
+
     let t: NodeJS.Timeout | undefined;
     const sendMetrics = () => {
         if (submitedOps > 0) {
@@ -409,8 +478,31 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             });
         }
 
+        if (submittedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Submitted",
+                testHarnessEvent: true,
+                value: submittedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Received",
+                testHarnessEvent: true,
+                value: receivedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+
         submitedOps = 0;
         receivedOps = 0;
+        submittedSignals = 0;
+        receivedSignals = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };

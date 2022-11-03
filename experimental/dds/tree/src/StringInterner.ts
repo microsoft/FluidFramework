@@ -47,8 +47,8 @@ export class MutableStringInterner implements StringInterner {
 
 	/**
 	 *
-	 * @param internId - The intern ID to get the associated string for. Can only retrieve strings that have been used as inputs to
-	 *                   calls of `getInternId`.
+	 * @param internId - The intern ID to get the associated string for. Can only retrieve strings that have been
+	 * used as inputs to calls of `getInternId`.
 	 * @returns a string that is uniquely associated with the given intern ID
 	 */
 	public getString(internId: number): string {
@@ -56,7 +56,8 @@ export class MutableStringInterner implements StringInterner {
 	}
 
 	/**
-	 * @returns the list of strings interned where the indices map to the associated {@link InternedStringId} of each string
+	 * @returns The list of strings interned where the indices map to the associated {@link InternedStringId} of
+	 * each string.
 	 */
 	public getSerializable(): readonly string[] {
 		return this.internedStrings;

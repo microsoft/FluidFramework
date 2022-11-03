@@ -32,7 +32,7 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
     public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         const version = source.package;
         if (typeof version !== "string") {
-            throw new Error("Unexpected code detail format");
+            throw new TypeError("Unexpected code detail format");
         }
         switch (version) {
             case "one": return v1ModuleWithDetails;

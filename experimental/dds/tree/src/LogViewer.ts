@@ -146,9 +146,12 @@ export interface LogViewer {
 	 * Returns the `TreeView` output associated with the largest revision in `editLog` less than (but not equal to) the supplied revision.
 	 *
 	 * For example:
-	 *  - revision 0 returns the initialRevision.
-	 *  - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
-	 *  - revision Number.POSITIVE_INFINITY returns the newest revision.
+	 *
+	 * - revision 0 returns the initialRevision.
+	 *
+	 * - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
+	 *
+	 * - revision Number.POSITIVE_INFINITY returns the newest revision.
 	 */
 	getRevisionView(revision: Revision): Promise<RevisionView>;
 
@@ -157,9 +160,12 @@ export interface LogViewer {
 	 * Can only be used to retrieve revisions added during the current sessions.
 	 *
 	 * For example:
-	 *  - revision 0 returns the initialRevision.
-	 *  - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
-	 *  - revision Number.POSITIVE_INFINITY returns the newest revision.
+	 *
+	 * - revision 0 returns the initialRevision.
+	 *
+	 * - revision 1 returns the output of editLog[0] (or initialRevision if there is no edit 0).
+	 *
+	 * - revision Number.POSITIVE_INFINITY returns the newest revision.
 	 */
 	getRevisionViewInSession(revision: Revision): RevisionView;
 }

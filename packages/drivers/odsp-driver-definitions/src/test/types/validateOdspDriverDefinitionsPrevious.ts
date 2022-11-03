@@ -215,7 +215,6 @@ declare function get_old_InterfaceDeclaration_IOdspError():
 declare function use_current_InterfaceDeclaration_IOdspError(
     use: TypeOnly<current.IOdspError>);
 use_current_InterfaceDeclaration_IOdspError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOdspError());
 
 /*
@@ -229,6 +228,30 @@ declare function use_old_InterfaceDeclaration_IOdspError(
     use: TypeOnly<old.IOdspError>);
 use_old_InterfaceDeclaration_IOdspError(
     get_current_InterfaceDeclaration_IOdspError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspErrorAugmentations": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspErrorAugmentations():
+    TypeOnly<old.IOdspErrorAugmentations>;
+declare function use_current_InterfaceDeclaration_IOdspErrorAugmentations(
+    use: TypeOnly<current.IOdspErrorAugmentations>);
+use_current_InterfaceDeclaration_IOdspErrorAugmentations(
+    get_old_InterfaceDeclaration_IOdspErrorAugmentations());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspErrorAugmentations": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspErrorAugmentations():
+    TypeOnly<current.IOdspErrorAugmentations>;
+declare function use_old_InterfaceDeclaration_IOdspErrorAugmentations(
+    use: TypeOnly<old.IOdspErrorAugmentations>);
+use_old_InterfaceDeclaration_IOdspErrorAugmentations(
+    get_current_InterfaceDeclaration_IOdspErrorAugmentations());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -329,6 +352,54 @@ use_old_InterfaceDeclaration_IPersistedCache(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharingLink": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISharingLink():
+    TypeOnly<old.ISharingLink>;
+declare function use_current_InterfaceDeclaration_ISharingLink(
+    use: TypeOnly<current.ISharingLink>);
+use_current_InterfaceDeclaration_ISharingLink(
+    get_old_InterfaceDeclaration_ISharingLink());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharingLink": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISharingLink():
+    TypeOnly<current.ISharingLink>;
+declare function use_old_InterfaceDeclaration_ISharingLink(
+    use: TypeOnly<old.ISharingLink>);
+use_old_InterfaceDeclaration_ISharingLink(
+    get_current_InterfaceDeclaration_ISharingLink());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharingLinkKind": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISharingLinkKind():
+    TypeOnly<old.ISharingLinkKind>;
+declare function use_current_InterfaceDeclaration_ISharingLinkKind(
+    use: TypeOnly<current.ISharingLinkKind>);
+use_current_InterfaceDeclaration_ISharingLinkKind(
+    get_old_InterfaceDeclaration_ISharingLinkKind());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharingLinkKind": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISharingLinkKind():
+    TypeOnly<current.ISharingLinkKind>;
+declare function use_old_InterfaceDeclaration_ISharingLinkKind(
+    use: TypeOnly<old.ISharingLinkKind>);
+use_old_InterfaceDeclaration_ISharingLinkKind(
+    get_current_InterfaceDeclaration_ISharingLinkKind());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotOptions():
@@ -384,7 +455,6 @@ declare function get_old_TypeAliasDeclaration_OdspError():
 declare function use_current_TypeAliasDeclaration_OdspError(
     use: TypeOnly<current.OdspError>);
 use_current_TypeAliasDeclaration_OdspError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_OdspError());
 
 /*
@@ -409,7 +479,6 @@ declare function get_old_EnumDeclaration_OdspErrorType():
 declare function use_current_EnumDeclaration_OdspErrorType(
     use: TypeOnly<current.OdspErrorType>);
 use_current_EnumDeclaration_OdspErrorType(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_OdspErrorType());
 
 /*
@@ -495,6 +564,54 @@ declare function use_old_EnumDeclaration_ShareLinkTypes(
     use: TypeOnly<old.ShareLinkTypes>);
 use_old_EnumDeclaration_ShareLinkTypes(
     get_current_EnumDeclaration_ShareLinkTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SharingLinkRole": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SharingLinkRole():
+    TypeOnly<old.SharingLinkRole>;
+declare function use_current_EnumDeclaration_SharingLinkRole(
+    use: TypeOnly<current.SharingLinkRole>);
+use_current_EnumDeclaration_SharingLinkRole(
+    get_old_EnumDeclaration_SharingLinkRole());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SharingLinkRole": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SharingLinkRole():
+    TypeOnly<current.SharingLinkRole>;
+declare function use_old_EnumDeclaration_SharingLinkRole(
+    use: TypeOnly<old.SharingLinkRole>);
+use_old_EnumDeclaration_SharingLinkRole(
+    get_current_EnumDeclaration_SharingLinkRole());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SharingLinkScope": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SharingLinkScope():
+    TypeOnly<old.SharingLinkScope>;
+declare function use_current_EnumDeclaration_SharingLinkScope(
+    use: TypeOnly<current.SharingLinkScope>);
+use_current_EnumDeclaration_SharingLinkScope(
+    get_old_EnumDeclaration_SharingLinkScope());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SharingLinkScope": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SharingLinkScope():
+    TypeOnly<current.SharingLinkScope>;
+declare function use_old_EnumDeclaration_SharingLinkScope(
+    use: TypeOnly<old.SharingLinkScope>);
+use_old_EnumDeclaration_SharingLinkScope(
+    get_current_EnumDeclaration_SharingLinkScope());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -76,30 +76,6 @@ export function loadDocsJavascript() {
       other2 = 'win'
       other2Label = 'Windows'
     }
-    $('.dynamic-keybinding').each(function(index) {
-      var $el = $(this)
-      var mineValue = this.getAttribute('data-' + mine)
-      if (!mineValue) {
-        mineValue = 'unassigned'
-      }
-      var other1Value = this.getAttribute('data-' + other1)
-      var other2Value = this.getAttribute('data-' + other2)
-
-      var titleAttr = ''
-
-      if (other1Value && other2Value) {
-        titleAttr = other1Label + ': ' + other1Value + ', ' + other2Label + ': ' + other2Value
-      } else if (other1Value) {
-        titleAttr = other1Label + ': ' + other1Value
-      } else if (other2Value) {
-        titleAttr = other2Label + ': ' + other2Value
-      }
-
-      this.setAttribute('title', titleAttr)
-      this.className += ' keybinding ' + mine
-      this.innerHTML = ''
-      this.appendChild(document.createTextNode(mineValue))
-    })
   }
 
   function appendHashLink() {

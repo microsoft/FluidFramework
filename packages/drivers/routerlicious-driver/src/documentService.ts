@@ -33,6 +33,7 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
+// eslint-disable-next-line import/namespace
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
@@ -49,6 +50,7 @@ export class DocumentService implements api.IDocumentService {
         private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private deltaStorageUrl: string,
+        private deltaStreamUrl: string,
         private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
@@ -192,13 +194,14 @@ export class DocumentService implements api.IDocumentService {
                 this.documentId,
                 refreshToken,
             );
+
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
                 this.documentId,
                 ordererToken.jwt,
                 io,
                 client,
-                this.ordererUrl,
+                this.deltaStreamUrl,
                 this.logger,
             );
         };
@@ -240,6 +243,7 @@ export class DocumentService implements api.IDocumentService {
         this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
         this.lastDiscoveredAt = Date.now();
     }
 

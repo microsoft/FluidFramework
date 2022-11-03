@@ -9,9 +9,11 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { fluidExport as smde } from "./smde";
+import { SmdeFactory } from "./smde";
 
 const defaultComponentId = "default";
+
+const smde = new SmdeFactory();
 
 class SmdeContainerFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

@@ -39,7 +39,7 @@ export class KafkaMessageFactory {
         }
     }
 
-    public sequenceMessage(value: any, key: string): IQueuedMessage {
+    public sequenceMessage(value: any | any[], key: string): IQueuedMessage {
         const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
@@ -50,7 +50,7 @@ export class KafkaMessageFactory {
             value: this.stringify
                 ? JSON.stringify(value)
                 : ({
-                    contents: [value],
+                    contents: Array.isArray(value) ? value : [value],
                     documentId: this.documentId,
                     tenantId: this.tenantId,
                     type: BoxcarType,
@@ -77,6 +77,7 @@ export class MessageFactory {
     }
 
     public createDocumentMessage(type = MessageType.Operation, referenceSequenceNumber = 0): IDocumentMessage {
+        // back-compat ADO #1932: Remove cast when protocol change propagates
         const operation: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: null,
@@ -84,7 +85,8 @@ export class MessageFactory {
             referenceSequenceNumber,
             traces: [],
             type,
-        };
+            compression: undefined,
+        } as any;
         return operation;
     }
 

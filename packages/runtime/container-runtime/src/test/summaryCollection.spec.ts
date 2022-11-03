@@ -8,7 +8,7 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage, SummaryCollection } from "../summaryCollection";
+import { ISummaryOpMessage, SummaryCollection } from "../summaryCollection";
 
 const summaryOp: ISummaryOpMessage = {
     clientId: "cliendId",
@@ -27,7 +27,11 @@ const summaryOp: ISummaryOpMessage = {
     },
 };
 
-const summaryAck: ISummaryAckMessage = {
+const summaryAckContents = {
+    handle: "AckHandle",
+    summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
+};
+const summaryAck: ISequencedDocumentMessage & { data: string; } = {
     clientId: "cliendId",
     clientSequenceNumber: summaryOp.clientSequenceNumber + 1,
     minimumSequenceNumber: summaryOp.sequenceNumber,
@@ -36,13 +40,15 @@ const summaryAck: ISummaryAckMessage = {
     term: 0,
     timestamp: summaryOp.timestamp + 1,
     type: MessageType.SummaryAck,
-    contents: {
-        handle: "AckHandle",
-        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
-    },
+    contents: summaryAckContents,
+    data: JSON.stringify(summaryAckContents),
 };
 
-const summaryNack: ISummaryNackMessage = {
+const summaryNackContents = {
+    message: "Nack",
+    summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
+};
+const summaryNack: ISequencedDocumentMessage & { data: string; } = {
     clientId: "cliendId",
     clientSequenceNumber: summaryOp.clientSequenceNumber + 1,
     minimumSequenceNumber: summaryOp.sequenceNumber,
@@ -51,10 +57,8 @@ const summaryNack: ISummaryNackMessage = {
     term: 0,
     timestamp: summaryOp.timestamp + 1,
     type: MessageType.SummaryNack,
-    contents: {
-        message: "Nack",
-        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
-    },
+    contents: summaryNackContents,
+    data: JSON.stringify(summaryNackContents),
 };
 
 describe("Summary Collection", () => {

@@ -4,7 +4,7 @@
  */
 
 /**
- * This package contains common interfaces and definitions used by the Fluid Framework.
+ * This library contains common interfaces and definitions used by the Fluid Framework.
  *
  * @packageDocumentation
  */

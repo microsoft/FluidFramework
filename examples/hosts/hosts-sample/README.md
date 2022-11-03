@@ -6,8 +6,8 @@ create, initialize, and then make use of the loader in under 200 lines of code.
 And does so in a literate programming-like style to provide more detail on each line of the code.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 
