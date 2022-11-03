@@ -206,8 +206,8 @@ describe("AzureClient", () => {
 
     /**
      * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
-     * AzureClient will attempt to start the connection in write mode, but if the write permission
-     * is not available or the file is read only, mode will be read.
+     * AzureClient will attempt to start the connection in write mode, but if the file is read only,
+     * the connection mode will be read.
      *
      * Expected behavior: The container should start with the connectionMode in `write`.
      */
