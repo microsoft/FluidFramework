@@ -5,32 +5,29 @@ name: $(Build.BuildId)
 
 pr: none
 
-trigger: none
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
 
-# Uncomment when we're done manually triggering
-# resources:
-#   pipelines:
-#   - pipeline: client   # Name of the pipeline resource
-#     source: Build - client packages
-#     trigger:
-#       branches:
-#       - release/*
-#       - main
-#       - next
-#       - lts
-
-# trigger:
-#   branches:
-#     include:
-#     - release/*
-#     - main
-#     - next
-#     - lts
-#   paths:
-#     include:
-#     - tools/benchmark
-#     - tools/telemetry-generator
-#     - tools/pipelines/test-perf-benchmarks.yml  # update with this files name
+trigger:
+  branches:
+    include:
+    - release/*
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - tools/benchmark
+    - tools/telemetry-generator
+    - tools/pipelines/test-perf-benchmarks-using-built-atifacts.yml
 
 parameters:
 - name: taskBuild
@@ -169,6 +166,17 @@ stages:
                 SourceBranch=$(Build.SourceBranch)
               "
 
+        - task: Bash@3
+          displayName: 'Install aria-logger'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              cp ${{ variables.testWorkspace }}/.npmrc . ;
+              npm install @ff-internal/aria-logger;
+              npm i;
+              npm run build:compile;
+
         # Download Test Files
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
@@ -208,6 +216,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
+                echo "Install ${{ execTestPackage }}"
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
@@ -232,6 +241,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                echo "Unpack test files for ${{ execTestPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
@@ -243,6 +253,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}
               script: |
+                echo "Run execution-time tests for ${{ execTestPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
                 npm run build:test;
@@ -261,10 +272,8 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm install @ff-internal/aria-logger;
-              npm i;
-              npm run build:compile;
+              echo "Write the following benchmark output to Aria/Kusto"
+              ls -la ${{ variables.testWorkspace }}/benchmarkOutput;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.testWorkspace }}/benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
@@ -299,6 +308,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
+                echo "Install ${{ testPackage }}"
                 TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
@@ -323,6 +333,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                echo "Unpack test files for ${{ testPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
@@ -334,25 +345,12 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
               script: |
+                echo "Run memory performance test for ${{ testPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
                 ls -la;
                 npm run build:test;
                 npm run test:memory-profiling:report;
-
-          - task: Bash@3
-            displayName: 'Log out memory test output work dir'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(toolAbsolutePath)
-              script: |
-                cp ${{ variables.testWorkspace }}/.npmrc . ;
-                npm install @ff-internal/aria-logger;
-                npm i;
-                npm run build:compile;
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }};
-                ls -la ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput;
-                ls -la;
 
           - task: CopyFiles@2
             inputs:
@@ -366,7 +364,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              ls -la;
+              echo "Write the following benchmark output to Aria/Kusto"
               ls -la ${{ variables.testWorkspace }}/memoryTestsOutput;
               node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.testWorkspace }}/memoryTestsOutput;
 
