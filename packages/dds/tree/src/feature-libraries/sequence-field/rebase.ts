@@ -105,20 +105,22 @@ function rebaseMarkList<TNodeChange>(
                         );
                         baseIter.pop();
                         factory.pushOffset(reattachLength);
-                    }
-                    if (offset > 0) {
+                    } else if (offset > 0) {
+                        baseIter.pop();
                         const [baseMarkBefore, baseMarkAfter] = splitMarkOnOutput(baseMark, offset);
                         baseIter.push(baseMarkAfter);
                         factory.pushOffset(getOutputLength(baseMarkBefore));
                     }
 
-                    currIter.pop();
-                    const rebasedMark = clone(currMark);
+                    if (offset < reattachLength) {
+                        currIter.pop();
+                        const rebasedMark = clone(currMark);
 
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    removeLineageEvent(rebasedMark, baseRevision!);
-                    factory.pushContent(rebasedMark);
-                    lineageRequests.push({ mark: rebasedMark, offset });
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        removeLineageEvent(rebasedMark, baseRevision!);
+                        factory.pushContent(rebasedMark);
+                        lineageRequests.push({ mark: rebasedMark, offset });
+                    }
                 } else if (isAttachAfterBaseAttach(currMark, baseMark)) {
                     baseIter.pop();
                     factory.pushOffset(getOutputLength(baseMark));
