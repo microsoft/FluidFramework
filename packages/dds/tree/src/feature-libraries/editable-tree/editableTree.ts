@@ -68,6 +68,12 @@ export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
+ * A symbol to get the index of {@link EditableTree} within its parent field
+ * in contexts where string keys are already in use for fields.
+ */
+export const indexSymbol: unique symbol = Symbol("editable-tree:index");
+
+/**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
  * in contexts where string keys are already in use for fields.
  */
@@ -104,6 +110,11 @@ export interface EditableTree extends Iterable<EditableField> {
      * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
     [valueSymbol]: Value;
+
+    /**
+     * Index of this node within its parent field.
+     */
+    readonly [indexSymbol]: number;
 
     /**
      * Stores the target for the proxy which implements reading and writing for this node.
@@ -361,6 +372,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         this.context.setNodeValue(path, value);
     }
 
+    get currentIndex(): number {
+        return this.cursor.fieldIndex;
+    }
+
     public lookupFieldKind(field: FieldKey): FieldKind {
         return getFieldKind(getFieldSchema(field, this.context.forest.schema, this.type));
     }
@@ -485,6 +500,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.typeName;
             case valueSymbol:
                 return target.value;
+            case indexSymbol:
+                return target.currentIndex;
             case proxyTargetSymbol:
                 return target;
             case Symbol.iterator:
@@ -542,6 +559,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case proxyTargetSymbol:
             case typeSymbol:
             case typeNameSymbol:
+            case indexSymbol:
             case Symbol.iterator:
             case getField:
                 return true;
@@ -597,6 +615,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     configurable: true,
                     enumerable: false,
                     value: target.value,
+                    writable: false,
+                };
+            case indexSymbol:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.currentIndex,
                     writable: false,
                 };
             case Symbol.iterator:
