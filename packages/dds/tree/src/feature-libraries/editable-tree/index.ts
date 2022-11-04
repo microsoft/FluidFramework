@@ -5,8 +5,8 @@
 
 export {
     anchorSymbol,
-    getEditableTreeContext,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
@@ -16,8 +16,9 @@ export {
     UnwrappedEditableTree,
     UnwrappedEditableField,
     valueSymbol,
+    getWithoutUnwrappingSymbol,
 } from "./editableTree";
 
-export { EditableTreeContext } from "./editableTreeContext";
+export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
 export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";

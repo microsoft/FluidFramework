@@ -57,6 +57,10 @@ function rebaseMarkList<TNodeChange>(
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
 
+    // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
+    // the attach position was detached by `baseMarkList`.
+    // At the time we process an attach we don't know whether the following node will be detached, so we record attach
+    // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
     let baseReattachOffset = 0;
@@ -81,7 +85,7 @@ function rebaseMarkList<TNodeChange>(
                 "Loop condition should prevent both iterators from being empty",
             );
             baseIter.pop();
-            if (isRelevantToLineage(baseMark)) {
+            if (isDetachMark(baseMark)) {
                 baseDetachOffset += getInputLength(baseMark);
             } else if (!isAttach(baseMark)) {
                 break;
@@ -155,7 +159,7 @@ function rebaseMarkList<TNodeChange>(
             const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild);
             factory.push(rebasedMark);
 
-            if (isRelevantToLineage(baseMark)) {
+            if (isDetachMark(baseMark)) {
                 baseDetachOffset += getInputLength(baseMark);
             } else {
                 if (baseDetachOffset > 0 && baseRevision !== undefined) {
@@ -277,10 +281,6 @@ function compareLineages(
         }
     }
     return 0;
-}
-
-function isRelevantToLineage<TNodeChange>(mark: Mark<TNodeChange>): boolean {
-    return isDetachMark(mark);
 }
 
 interface LineageRequest<T> {

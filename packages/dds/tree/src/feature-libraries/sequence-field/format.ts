@@ -55,7 +55,7 @@ export interface HasPlaceFields {
 
     /**
      * Record of relevant information about changes this mark has been rebased over.
-     *
+     * Events are stored in the order in which they were rebased over.
      */
     lineage?: LineageEvent[];
 }
@@ -69,6 +69,9 @@ export interface HasTiebreakPolicy extends HasPlaceFields {
 
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
+ * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
+ * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
+ * same detach.
  */
 export interface LineageEvent {
     readonly revision: RevisionTag;

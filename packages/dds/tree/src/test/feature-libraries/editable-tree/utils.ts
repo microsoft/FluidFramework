@@ -14,12 +14,14 @@ import {
     isPrimitiveValue,
     proxyTargetSymbol,
     valueSymbol,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
     Multiplicity,
     EditableField,
     EditableTree,
     isEditableField,
     isPrimitive,
+    getWithoutUnwrappingSymbol,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -64,7 +66,7 @@ export function expectTreeEquals(
     // Confirm we have an EditableTree object.
     assert(node[proxyTargetSymbol] !== undefined);
     assert.equal(node[valueSymbol], expected.value);
-    const type = node[getTypeSymbol](undefined, false);
+    const type = node[typeSymbol];
     assert.deepEqual(type, expectedType);
     const expectedFields = new Set(genericTreeKeys(expected));
     for (const ok of Reflect.ownKeys(node)) {
@@ -145,10 +147,10 @@ export function expectNodeEquals(
     node: EditableTree,
     expected: JsonableTree,
 ): void {
-    assert.equal(expected.type, node[getTypeSymbol]());
+    assert.equal(expected.type, node[typeNameSymbol]);
     assert.equal(expected.value, node[valueSymbol]);
     const nodeSchema = schemaData.treeSchema.get(expected.type) ?? fail("type");
-    assert.deepEqual(nodeSchema, node[getTypeSymbol](undefined, false));
+    assert.deepEqual(nodeSchema, node[typeSymbol]);
     if (isPrimitiveValue(expected.value)) {
         assert(isPrimitive(nodeSchema));
         assert.deepEqual([...node], []);
@@ -159,6 +161,8 @@ export function expectNodeEquals(
         assert(expectedFields.delete(field.fieldKey));
         const expectedField = getGenericTreeField(expected, field.fieldKey, false);
         expectFieldEquals(schemaData, field, expectedField);
+        const fieldByKey = node[getWithoutUnwrappingSymbol](field.fieldKey);
+        expectFieldEquals(schemaData, fieldByKey, expectedField);
     }
     assert(expectedFields.size === 0);
 }
