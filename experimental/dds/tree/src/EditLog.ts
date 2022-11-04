@@ -189,7 +189,9 @@ export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unk
 export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, wasLocal: boolean) => void;
 
 /**
- * Event fired before edits are evicted from the edit log.
+ * Event fired before edits are evicted from the edit log. It takes in a count of the number of edits to evict
+ * starting from the oldest in memory edit. To get the edit itself, call {@link EditLog.getEditAtIndex}.
+ * The edit index corresponds to the count + {@link EditLog.earliestAvailableEditIndex}.
  */
 export type EditEvictionHandler = (editsToEvict: number) => void;
 
@@ -535,20 +537,20 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	private evictEdits(): void {
 		// Exclude any edits in the collab window from being evicted
-		const numberOfExtraneousEdits = this.numberOfSequencedEdits - this.editLogSize;
-		const collaborationWindowStartIndex = this._minSequenceNumber - this.earliestAvailableEditIndex;
-		const numberOfEditsToEvict =
-			collaborationWindowStartIndex < numberOfExtraneousEdits
-				? collaborationWindowStartIndex
-				: numberOfExtraneousEdits;
+		const numberOfEvictableEdits = this.minSequenceNumber - this.earliestAvailableEditIndex;
 
-		for (const handler of this._editEvictionHandlers) {
-			handler(numberOfEditsToEvict);
+		if (numberOfEvictableEdits > 0) {
+			// Evict either all but the target log size or the number of evictable edits, whichever is smaller
+			const numberOfDesiredEditsToEvict = this.numberOfSequencedEdits - this.editLogSize;
+			const numberOfEditsToEvict = Math.min(numberOfEvictableEdits, numberOfDesiredEditsToEvict);
+			for (const handler of this._editEvictionHandlers) {
+				handler(numberOfEditsToEvict);
+			}
+
+			// Remove the edits and move up the earliest available index
+			this.sequencedEdits.splice(0, numberOfEditsToEvict);
+			this._earliestAvailableEditIndex += numberOfEditsToEvict;
 		}
-
-		// Remove the edits and move up the earliest available index
-		this.sequencedEdits.splice(0, numberOfEditsToEvict);
-		this._earliestAvailableEditIndex += numberOfEditsToEvict;
 	}
 
 	/**
