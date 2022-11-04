@@ -135,7 +135,7 @@ class FluidClientDebugger
     private readonly containerConnectedHandler = (clientId: string): boolean =>
         this.emit("containerConnected", clientId);
     private readonly containerDisconnectedHandler = (): boolean =>
-        this.emit("ContainerDisconnected");
+        this.emit("containerDisconnected");
     private readonly containerClosedHandler = (error?: ICriticalContainerError): boolean =>
         this.emit("containerClosed", error);
 
