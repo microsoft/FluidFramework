@@ -18,7 +18,7 @@ import {
     getQuorumValuesFromProtocolSummary,
     RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -98,27 +98,56 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            tenantId,
-            undefined,
-            this.tokenProvider,
-            logger2,
-            rateLimiter,
-            this.driverPolicies.enableRestLess,
-            resolvedUrl.endpoints.ordererUrl,
-        );
 
-        // @TODO: Remove returned "string" type when removing back-compat code
-        const res = await ordererRestWrapper.post<{ id: string; token?: string; session?: ISession; } | string>(
-            `/documents/${tenantId}`,
+        const ordererRestWrapper = await PerformanceEvent.timedExecAsync(
+            logger2,
             {
-                summary: convertSummaryToCreateNewSummary(appSummary),
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-                enableDiscovery: this.driverPolicies.enableDiscovery,
-                generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+                eventName: "GetTokenForCreateNew",
+                details: JSON.stringify({
+                    enableRestLess: this.driverPolicies.enableRestLess,
+                }),
+
             },
-        );
+            async () => {
+                return RouterliciousOrdererRestWrapper.load(
+                    tenantId,
+                    undefined,
+                    this.tokenProvider,
+                    logger2,
+                    rateLimiter,
+                    this.driverPolicies.enableRestLess,
+                    resolvedUrl.endpoints.ordererUrl,
+                );
+            });
+
+        const res = await PerformanceEvent.timedExecAsync(
+            logger2,
+            {
+                eventName: "CreateNew",
+                details: JSON.stringify({
+                    enableDiscovery: this.driverPolicies.enableDiscovery,
+                    sequenceNumber: documentAttributes.sequenceNumber,
+                }),
+            },
+            async (event) => {
+                const postRes = await ordererRestWrapper.post<
+                { id: string; token?: string; session?: ISession; } | string
+                >(
+                    `/documents/${tenantId}`,
+                    {
+                        summary: convertSummaryToCreateNewSummary(appSummary),
+                        sequenceNumber: documentAttributes.sequenceNumber,
+                        values: quorumValues,
+                        enableDiscovery: this.driverPolicies.enableDiscovery,
+                        generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+                    },
+                );
+
+                event.end({
+                    docId: (typeof postRes === "string") ? postRes : postRes.token,
+                });
+                return postRes;
+            });
 
         // For supporting backward compatibility, when the request has generateToken === true, it will return
         // an object instead of string
@@ -140,11 +169,22 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
             try {
-                await this.tokenProvider.documentPostCreateCallback(documentId, token);
+                await PerformanceEvent.timedExecAsync(
+                    logger2,
+                    {
+                        eventName: "DocPostCreateCallback",
+                        docId: documentId,
+                    },
+                    async () => {
+                        if (token && this.tokenProvider.documentPostCreateCallback) {
+                            return this.tokenProvider.documentPostCreateCallback(documentId, token);
+                        }
+                    });
             } catch (error: any) {
                 throw new DocumentPostCreateError(error);
             }
         }
+
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
@@ -197,19 +237,36 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 return resolvedUrl;
             }
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                tenantId,
-                documentId,
-                this.tokenProvider,
+            const ordererRestWrapper = await PerformanceEvent.timedExecAsync(
                 logger2,
-                rateLimiter,
-                this.driverPolicies.enableRestLess,
-                resolvedUrl.endpoints.ordererUrl,
-            );
-            // The service responds with the current document session associated with the container.
-            const discoveredSession = await ordererRestWrapper.get<ISession>(
-                `/documents/${tenantId}/session/${documentId}`,
-            );
+                {
+                    eventName: "GetCreateSessionToken",
+                    docId: documentId,
+                    details: JSON.stringify({
+                        enableRestLess: this.driverPolicies.enableRestLess,
+                    }),
+                },
+                async () => {
+                    return RouterliciousOrdererRestWrapper.load(
+                        tenantId,
+                        documentId,
+                        this.tokenProvider,
+                        logger2,
+                        rateLimiter,
+                        this.driverPolicies.enableRestLess,
+                        resolvedUrl.endpoints.ordererUrl,
+                    );
+                });
+            const discoveredSession = await PerformanceEvent.timedExecAsync(
+                logger2,
+                {
+                    eventName: "CreateSession",
+                    docId: documentId,
+                },
+                async () => {
+                    return ordererRestWrapper.get<ISession>(
+                        `/documents/${tenantId}/session/${documentId}`);
+                });
             return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
         };
         const fluidResolvedUrl: IFluidResolvedUrl = session !== undefined
