@@ -475,20 +475,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		// The new minSequenceNumber indicates that no future edit will require information from edits with a smaller or equal seq number
 		// for its resolution.
 		this._minSequenceNumber = minSequenceNumber;
-		// TODO:#57176: Increment maximumEvictableIndex to reflect the fact we can now evict edits with a sequenceNumber lower or equal to
-		// it. Note that this will change the meaning of our 'InSession' APIs so we should make sure to rename them at the same time.
-		// The code might look like this:
-		// while (this.maximumEvictableIndex + 1 < this.indexOfFirstEditInSession) {
-		// 	const nextEdit = this.getEditInSessionAtIndex(this.maximumEvictableIndex + 1);
-		// 	const nextEditInfo = this.getOrderedEditId(nextEdit.id) as SequencedOrderedEditId;
-		// 	if (
-		// 		nextEditInfo.sequenceInfo !== undefined &&
-		// 		nextEditInfo.sequenceInfo.sequenceNumber > minSequenceNumber
-		// 	) {
-		// 		break;
-		// 	}
-		// 	++this.maximumEvictableIndex;
-		// }
 
 		const { id } = edit;
 
