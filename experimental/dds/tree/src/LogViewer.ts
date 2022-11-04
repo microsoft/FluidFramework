@@ -6,7 +6,7 @@
 import Denque from 'denque';
 import { IEvent } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-import { assert, assertNotUndefined, fail, noop } from './Common';
+import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
 import { Revision, RevisionValueCache } from './RevisionValueCache';
@@ -378,7 +378,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = assertNotUndefined(this.log.tryGetEditAtIndex(i), 'edit not found');
+			const edit = this.log.tryGetEditAtIndex(i) ?? fail('edit not found');
 			current = this.applyEdit(current.view, edit, i);
 		}
 		return current;
@@ -630,7 +630,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns Edit result information for the edit at the given `index`.
 	 */
 	private getEditResultFromIndex(index: number): CachedEditingResult {
-		const edit = assertNotUndefined(this.log.tryGetEditAtIndex(index), 'edit does not exist in memory');
+		const edit = this.log.tryGetEditAtIndex(index) ?? fail('edit does not exist in memory');
 		const before = this.getRevisionViewInMemory(index);
 		const resultAfter = this.getEditResultInMemory(index + 1);
 		if (resultAfter.status === undefined) {

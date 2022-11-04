@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, compareArrays, fail } from './Common';
+import { assert, compareArrays, fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
@@ -376,7 +376,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		}
 
 		if (orderedEdit.isLocal) {
-			const firstLocal = assertNotUndefined(this.allEditIds.get(this.localEdits[0].id));
+			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail('edit not found');
 			assert(firstLocal.isLocal);
 			return (
 				this._earliestAvailableEditIndex +
@@ -392,7 +392,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @returns Edit metadata for the edit with the given `editId`.
 	 */
 	public getOrderedEditId(editId: EditId): OrderedEditId {
-		return assertNotUndefined(this.allEditIds.get(editId), 'All edits should exist in this map');
+		return this.allEditIds.get(editId) ?? fail('All edits should exist in this map');
 	}
 
 	/**
@@ -484,7 +484,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			// New edit already exits: it must have been a local edit.
 			assert(encounteredEditId.isLocal, 'Duplicate acked edit.');
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
-			const oldLocalEditId = assertNotUndefined(this.localEdits.shift(), 'Local edit should exist').id;
+			const oldLocalEditId = this.localEdits.shift()?.id ?? fail('Local edit should exist');
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 

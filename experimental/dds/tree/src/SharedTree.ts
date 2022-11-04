@@ -1135,7 +1135,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = assertNotUndefined(this.editLog.tryGetEditAtIndex(i));
+				const edit = this.editLog.tryGetEditAtIndex(i) ?? fail('edit not found');
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1148,7 +1148,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(assertNotUndefined(this.editLog.tryGetEditAtIndex(i)));
+				this.internStringsFromEdit(this.editLog.tryGetEditAtIndex(i) ?? fail('edit not found'));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
@@ -1333,7 +1333,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = assertNotUndefined(this.edits.tryGetEditAtIndex(index), 'edit not found');
+		const edit = this.edits.tryGetEditAtIndex(index) ?? fail('edit not found');
 		const before = this.logViewer.getRevisionViewInMemory(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {

@@ -5,7 +5,7 @@
 
 import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, fail, RestOrArray, unwrapRestOrArray } from './Common';
+import { assert, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
@@ -365,10 +365,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public revert(editId: EditId): void {
 		assert(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
-		const edit = assertNotUndefined(
-			this.tree.edits.tryGetEditAtIndex(index),
-			'Edit with the specified ID does not exist in memory'
-		);
+		const edit = this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
 		const before = this.tree.logViewer.getRevisionViewInMemory(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {
