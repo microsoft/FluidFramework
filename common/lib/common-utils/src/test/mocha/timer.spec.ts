@@ -224,7 +224,6 @@ describe("Timers", () => {
 
             // Restart right before we execute the handler.
             clock.tick(defaultTimeout - 1);
-            assert.strictEqual(runCount, initialRunCount, "Should not have executed yet");
             timer.restart();
 
             setImmediate(() => {
@@ -232,6 +231,13 @@ describe("Timers", () => {
                 // first time our timer executes its handler, it is late by design.
                 clock.tick(defaultTimeout * 2);
             });
+
+            flushPromises().then(
+                () => {},
+                () => {
+                    assert.fail("Promise flushing failed");
+                },
+            );
 
             assert.strictEqual(
                 runCount,
