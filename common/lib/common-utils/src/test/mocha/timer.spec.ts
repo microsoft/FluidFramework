@@ -217,6 +217,31 @@ describe("Timers", () => {
             testExactTimeout(defaultTimeout, () => specialRunCount);
             assert.strictEqual(runCount, 0, "Should not run default handler");
         });
+
+        it("Should immediately execute at negative time", () => {
+            const overrideTimeout = -100; // a negative time
+            const initialRunCount = runCount;
+            timer.start(overrideTimeout);
+            assert.strictEqual(runCount, initialRunCount + 1, "Should have executed immediately");
+        });
+
+        it("Should immediately execute if the handler is late even accounting for the restart", () => {
+            const initialRunCount = runCount;
+            timer.start(defaultTimeout);
+
+            // Restart right before we execute the handler.
+            clock.tick(defaultTimeout - 1);
+            assert.strictEqual(runCount, initialRunCount, "Should not have executed yet");
+            timer.restart();
+
+            setImmediate(() => {
+                // use a microtask to advance the clock by a lot, that way, we ensure that the
+                // first time our timer executes its handler, it is late by design.
+                clock.tick(defaultTimeout * 2);
+              });
+        
+            assert.strictEqual(runCount, initialRunCount + 1, "Should have executed immediately because the handler was late");
+        });
     });
 
     describe("PromiseTimer", () => {
