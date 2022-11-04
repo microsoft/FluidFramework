@@ -47,7 +47,8 @@ export interface TinyliciousConnectionConfig {
 
     /**
      * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
-     * will use the default tokenProvider which is InsecureTinyliciousTokenProvider with default scopes.
+     * will use the default tokenProvider which is InsecureTinyliciousTokenProvider with default scopes,
+     * which are document read, write and summarizer write.
      *
      * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
      */
