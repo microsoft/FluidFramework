@@ -120,7 +120,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 // We can delay load this module as this path will not be executed in load flows and create flow
                 // while only happens once in lifetime of a document happens in the background after creation of
                 // detached container.
-                odspResolvedUrl = await import("./internalModule").then((m) => m.createNewFluidFile(
+                const module = await import("./internalModule");
+                odspResolvedUrl = await module.createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
                         resolvedUrlData,
@@ -137,7 +138,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     odspResolvedUrl.isClpCompliantApp,
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
                     this.hostPolicy.enableShareLinkWithCreate,
-                ));
+                );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
                 event.end({

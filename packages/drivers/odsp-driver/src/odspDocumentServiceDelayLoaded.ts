@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
     IFluidErrorBase,
@@ -19,7 +18,12 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+    DeltaStreamConnectionForbiddenError,
+    NonRetryableError,
+    UsageError,
+} from "@fluidframework/driver-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -82,12 +86,12 @@ export class OdspDocumentServiceDelayLoaded implements IDocumentService {
         public policies: IDocumentServicePolicies,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
-        private readonly mc: MonitoringContext<ITelemetryLogger>,
+        private readonly mc: MonitoringContext,
         private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
-        private readonly storageManagerGetter: () => OdspDocumentStorageService | undefined, 
+        private readonly storageManagerGetter: () => OdspDocumentStorageService | undefined,
         private readonly socketReferenceKeyPrefix?: string,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
@@ -95,6 +99,10 @@ export class OdspDocumentServiceDelayLoaded implements IDocumentService {
 
     public get resolvedUrl(): IResolvedUrl {
         return this.odspResolvedUrl;
+    }
+
+    public get currentDeltaConnection(): OdspDocumentDeltaConnection | undefined {
+        return this.currentConnection;
     }
 
     public get relayServiceTenantAndSessionId(): string | undefined {

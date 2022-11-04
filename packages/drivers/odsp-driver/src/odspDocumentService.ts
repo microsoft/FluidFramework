@@ -27,7 +27,6 @@ import {
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal } from "./contracts";
 import { IOdspCache } from "./odspCache";
-import type { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getOdspResolvedUrl } from "./odspUtils";
 import { isOdcOrigin } from "./odspUrlHelper";
@@ -40,7 +39,7 @@ import type { OdspDocumentServiceDelayLoaded } from "./odspDocumentServiceDelayL
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    private _policies: IDocumentServicePolicies;
+    private readonly _policies: IDocumentServicePolicies;
 
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
@@ -87,8 +86,6 @@ export class OdspDocumentService implements IDocumentService {
     private readonly mc: MonitoringContext;
 
     private readonly hostPolicy: HostStoragePolicyInternal;
-
-    private currentConnection?: OdspDocumentDeltaConnection;
 
     private odspDocumentServiceDelayLoaded: OdspDocumentServiceDelayLoaded | undefined;
 
@@ -162,8 +159,9 @@ export class OdspDocumentService implements IDocumentService {
                 this.epochTracker,
                 // flushCallback
                 async () => {
-                    if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
-                        return this.currentConnection.flush();
+                    const currentConnection = this.odspDocumentServiceDelayLoaded?.currentDeltaConnection;
+                    if (currentConnection !== undefined && !currentConnection.disposed) {
+                        return currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
