@@ -496,7 +496,14 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     public abstract clone(): ISegment;
-    public abstract append(segment: ISegment): void;
+
+    public append(segment: ISegment) {
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        LocalReferenceCollection.append(this, segment);
+        this.cachedLength += segment.cachedLength;
+    }
+
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 

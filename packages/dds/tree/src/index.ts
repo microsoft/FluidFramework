@@ -69,6 +69,8 @@ export {
     ICheckout,
     TransactionResult,
     FieldAnchor,
+    RevisionTag,
+    TaggedChange,
 } from "./core";
 
 export {
@@ -129,6 +131,8 @@ export {
     isNeverField,
     FullSchemaPolicy,
     UnwrappedEditableField,
+    isUnwrappedNode,
+    isEditableField,
     EditableTreeContext,
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
@@ -136,9 +140,12 @@ export {
     EditableField,
     isPrimitiveValue,
     isPrimitive,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
     valueSymbol,
     proxyTargetSymbol,
+    getField,
+    createField,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,

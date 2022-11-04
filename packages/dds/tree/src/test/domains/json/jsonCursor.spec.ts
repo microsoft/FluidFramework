@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { EmptyKey, ITreeCursor, singleJsonCursor, cursorToJsonObject } from "../../..";
 import { CursorLocationType, FieldKey, mapCursorFields, rootFieldKeySymbol } from "../../../tree";
 import { brand } from "../../../util";
-import { testCursors } from "../../cursor.spec";
+import { testCursors } from "../../cursorTestSuite";
 
 const testCases = [
     ["null", [null]],
