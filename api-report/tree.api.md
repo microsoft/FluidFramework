@@ -4,7 +4,6 @@
 
 ```ts
 
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -215,10 +214,11 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 // @public
 export interface EditableTree extends Iterable<EditableField> {
     readonly [anchorSymbol]: Anchor;
-    [getTypeSymbol](key?: FieldKey, nameOnly?: boolean): NamedTreeSchema | TreeSchemaIdentifier | undefined;
     [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
+    readonly [typeNameSymbol]: TreeSchemaIdentifier;
+    readonly [typeSymbol]: TreeSchema;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedEditableField;
 }
@@ -402,9 +402,6 @@ export interface GenericFieldsNode<TChild> {
 // @public
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
-
-// @public
-export const getTypeSymbol: unique symbol;
 
 // @public
 export const getWithoutUnwrappingSymbol: unique symbol;
@@ -1130,7 +1127,7 @@ export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
 }
@@ -1267,6 +1264,12 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 // @public
 export interface TreeValue extends Serializable {
 }
+
+// @public
+export const typeNameSymbol: unique symbol;
+
+// @public
+export const typeSymbol: unique symbol;
 
 // @public
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;

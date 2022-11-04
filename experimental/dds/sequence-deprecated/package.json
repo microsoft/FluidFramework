@@ -60,6 +60,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/merge-tree": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
