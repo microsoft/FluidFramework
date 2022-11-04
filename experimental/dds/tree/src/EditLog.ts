@@ -242,7 +242,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @param summary - An edit log summary used to populate the edit log.
 	 * @param logger - An optional logger to record telemetry/errors
 	 * @param editAddedHandlers - Optional handlers that are called when edits are added.
-	 * @param editLogSize - The target number of sequenced edits that the log will try to store in memory.
+	 * @param targetLength - The target number of sequenced edits that the log will try to store in memory.
 	 * Depending on eviction frequency and the collaboration window, there can be more edits in memory at a given time.
 	 * Edits greater than or equal to the `minSequenceNumber` (aka in the collaboration window) are not evicted.
 	 * @param evictionFrequency - The rate at which edits are evicted from memory. This is a factor of the editLogSize.
@@ -255,8 +255,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
 		private readonly logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
-		public readonly editLogSize = Infinity,
-		public readonly evictionFrequency = 2,
+		private readonly targetLength = Infinity,
+		private readonly evictionFrequency = 2,
 		editEvictionHandlers: readonly EditEvictionHandler[] = []
 	) {
 		super();
@@ -513,7 +513,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
 		// Check if any edits need to be evicted due to this addition
-		if (this.numberOfSequencedEdits >= this.evictionFrequency * this.editLogSize) {
+		if (this.numberOfSequencedEdits >= this.evictionFrequency * this.targetLength) {
 			this.evictEdits();
 		}
 	}
@@ -541,7 +541,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		if (numberOfEvictableEdits > 0) {
 			// Evict either all but the target log size or the number of evictable edits, whichever is smaller
-			const numberOfDesiredEditsToEvict = this.numberOfSequencedEdits - this.editLogSize;
+			const numberOfDesiredEditsToEvict = this.numberOfSequencedEdits - this.targetLength;
 			const numberOfEditsToEvict = Math.min(numberOfEvictableEdits, numberOfDesiredEditsToEvict);
 			for (const handler of this._editEvictionHandlers) {
 				handler(numberOfEditsToEvict);
