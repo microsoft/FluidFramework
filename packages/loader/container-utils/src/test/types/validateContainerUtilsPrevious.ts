@@ -167,7 +167,6 @@ declare function get_old_ClassDeclaration_UsageError():
 declare function use_current_ClassDeclaration_UsageError(
     use: TypeOnly<current.UsageError>);
 use_current_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_UsageError());
 
 /*

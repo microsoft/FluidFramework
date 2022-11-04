@@ -81,10 +81,11 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.5.0-103719",
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.4.6000",
-    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/build-tools": "^0.5.0-103719",
+    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.2.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -107,99 +108,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {
-      "VariableDeclaration_DefaultSummaryConfiguration": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_ISummaryConfiguration": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGeneratedSummaryStats": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISubmitSummaryOpResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IUploadSummaryResult": {
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_SubmitSummaryResult": {
-        "backCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IConnectableRuntime": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummarizerRuntime": {
-        "backCompat": false
-      },
-      "RemovedInterfaceDeclaration_IPendingFlushMode": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IPendingLocalState": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_IPendingState": {
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IPendingRuntimeState": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_ScheduleManager": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SummarizerStopReason": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedClassDeclaration_DeltaScheduler": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedClassDeclaration_ScheduleManager": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IAckedSummary": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IAckSummaryResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IChunkedOp": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummaryNackMessage": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_INackSummaryResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummaryOpMessage": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IBroadcastSummaryResult": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISummaryAckMessage": {
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_OpActionEventName": {
-        "backCompat": false
-      }
-    }
+    "broken": {}
   }
 }
