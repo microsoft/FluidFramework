@@ -14,7 +14,7 @@ This is a **major release** that includes some breaking changes in addition to u
 - [`check policy` checks for extraneous lockfiles and tilde dependencies](#check-policy-checks-for-extraneous-lockfiles-and-tilde-dependencies)
 - [Conventional commits enabled in build-tools release group](#conventional-commits-enabled-in-build-tools-release-group)
 
-For a full list of changes in this release, see the [changelog](./CHANGELOG.md#050-2022-11-03).
+For a full list of changes in this release, see the [changelog](./CHANGELOG.md#050-2022-11-04).
 
 ## 💥 Breaking changes
 
