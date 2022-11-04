@@ -176,7 +176,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     // (undocumented)
     instantiateFromExisting(_runtime: T): Promise<void>;
     // (undocumented)
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
     // (undocumented)
     get IRuntimeFactory(): this;
     // (undocumented)
