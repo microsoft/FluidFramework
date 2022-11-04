@@ -48,14 +48,14 @@ async function createContainerAndRenderInElement(element: HTMLDivElement) {
  * For local testing we have two div's that we are rendering into independently.
  */
 async function setup() {
-    const leftElement = document.getElementById("root1") as HTMLDivElement;
+    const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
     if (leftElement === null) {
-        throw new Error("root1 does not exist");
+        throw new Error("sbs-left does not exist");
     }
     await createContainerAndRenderInElement(leftElement);
-    const rightElement = document.getElementById("root2") as HTMLDivElement;
+    const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
     if (rightElement === null) {
-        throw new Error("root2 does not exist");
+        throw new Error("sbs-right does not exist");
     }
     await createContainerAndRenderInElement(rightElement);
 }
