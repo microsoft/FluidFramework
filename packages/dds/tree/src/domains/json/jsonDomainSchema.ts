@@ -19,11 +19,17 @@ import {
     NamedTreeSchema,
     fieldSchema,
     namedTreeSchema,
-} from "../../schema-stored";
-import { EmptyKey } from "../../tree";
+    SchemaData,
+    EmptyKey,
+} from "../../core";
 import { brand } from "../../util";
 
-export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
+const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
+
+export const jsonSchemaData: SchemaData = {
+    treeSchema: jsonTypeSchema,
+    globalFieldSchema: new Map(),
+};
 
 const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 

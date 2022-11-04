@@ -218,6 +218,7 @@ stages:
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           tagName: ${{ parameters.tagName }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
@@ -250,12 +251,12 @@ stages:
             action: 'Run a Docker command'
             customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
-        - task: PublishBuildArtifacts@1
+        - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
           inputs:
-            PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
-            ArtifactName: pack
-            publishLocation: 'Container'
+            targetPath: '$(System.DefaultWorkingDirectory)/pack'
+            artifactName: pack
+            publishLocation: 'pipeline'
 
       # Lint
       - ${{ if eq(parameters.lint, true) }}:
@@ -310,12 +311,12 @@ stages:
             action: 'Run a Docker command'
             customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
 
-        - task: PublishBuildArtifacts@1
+        - task: PublishPipelineArtifact@1
           displayName: 'Docs: Publish Artifact'
           inputs:
-            PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
-            ArtifactName: _api-extractor-temp
-            publishLocation: 'Container'
+            targetPath: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+            artifactName: _api-extractor-temp
+            publishLocation: 'pipeline'
 
     # Build
     - task: Docker@2

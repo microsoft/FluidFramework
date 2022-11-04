@@ -4,11 +4,35 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import {
+    ContainerMessageType,
+} from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { timeoutPromise } from "@fluidframework/test-utils";
+import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
+
+const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
+new Promise<boolean>((resolve, reject) => {
+    runtime.once("dispose", () => reject(new Error("Runtime disposed")));
+    (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
+}).catch((error) => new Error(error.message));
+
+const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
+    (dataObject as any).context.containerRuntime as IContainerRuntime;
+
+const connectionModeOf = (container: IFluidContainer) =>
+    (container as any).container.connectionMode as ConnectionMode;
+
+const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
+    containers.map(async (c) => new Promise<boolean>((resolve) => c.once("disposed", (error) => {
+        resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
+    })))).then((all) => !all.includes(false));
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -231,5 +255,108 @@ describe("TinyliciousClient", () => {
         map1.set("newpair-id", newPair.handle);
         const obj = await map1.get("newpair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
+    });
+
+    /**
+     * Scenario: test if FluidContainer emits error events with appropriate error type.
+     *
+     * Expected behavior: Injecting faulty op should force FluidContainer to close, while emitting
+     * error event.
+     */
+     it("can process data corruption events", async () => {
+        const dynamicSchema: ContainerSchema = {
+            initialObjects: {
+                do1: TestDataObject,
+            },
+        };
+
+        const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+        await createFluidContainer.attach();
+        await new Promise<void>((resolve, reject) => {
+            createFluidContainer.on("connected", () => {
+                resolve();
+            });
+        });
+
+        const do1 = createFluidContainer.initialObjects.do1 as TestDataObject;
+        const dataCorruption = allDataCorruption([createFluidContainer]);
+        await corruptedAliasOp(runtimeOf(do1), "alias");
+        assert(await dataCorruption);
+    });
+
+    /**
+     * Scenario: Test if TinyliciousClient with only read permission starts the container in read mode.
+     * TinyliciousClient will attempt to start the connection in write mode, and since access permissions
+     * does not offer write capabilities, the established connection mode will be `read`.
+     *
+     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `read`.
+     */
+    it("can create a container with only read permission in read mode", async () => {
+        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
+        const client = new TinyliciousClient({ connection: { tokenProvider } });
+
+        const { container } = await client.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            },
+        );
+        const { container: containerGet } = await client.getContainer(
+            containerId,
+            schema,
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "read",
+            "Creating a container with only read permission is not in read mode",
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "read",
+            "Getting a container with only read permission is not in read mode",
+        );
+    });
+
+    /**
+     * Scenario: Test if TinyliciousClient with read and write permissions starts the container in write mode.
+     * TinyliciousClient will attempt to start the connection in write mode, and since access permissions
+     * offer write capability, the established connection mode will be `write`.
+     *
+     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `write`
+     */
+    it("can create a container with read and write permissions in write mode", async () => {
+        const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead, ScopeType.DocWrite]);
+        const client = new TinyliciousClient({ connection: { tokenProvider } });
+
+        const { container } = await client.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            },
+        );
+        const { container: containerGet } = await client.getContainer(
+            containerId,
+            schema,
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "write",
+            "Creating a container with only write permission is not in write mode",
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container with only write permission is not in write mode",
+        );
     });
 });

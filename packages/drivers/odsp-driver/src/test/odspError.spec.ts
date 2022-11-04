@@ -109,6 +109,36 @@ describe("Odsp Error", () => {
         }
     });
 
+    it("errorObjectFromSocketError with inner errors", async () => {
+        const socketError: IOdspSocketError = {
+            message: "testMessage",
+            code: 400,
+            error: {
+                code: "notAllowed",
+                innerError: {
+                    code: "ipBlocked",
+                    innerError: {
+                        code: "SurelyBlocked",
+                    },
+                },
+                message: "Blocking due to policy",
+            },
+        };
+        const networkError = errorObjectFromSocketError(socketError, "error");
+        if (networkError.errorType !== DriverErrorType.genericNetworkError) {
+            assert.fail("networkError should be a genericNetworkError");
+        } else {
+            assert(networkError.message.includes("error"), "error message should include handler name");
+            assert(networkError.message.includes("testMessage"), "error message should include socket error message");
+            assert.equal(networkError.canRetry, false);
+            assert.equal(networkError.statusCode, 400);
+            assert.equal(networkError.getTelemetryProperties().innerMostErrorCode, "SurelyBlocked",
+                "Innermost error code should be correct");
+            assert.equal(networkError.facetCodes?.length, 3,
+                "3 facet codes should be there");
+        }
+    });
+
     it("errorObjectFromSocketError with retryAfter", async () => {
         const socketError: IOdspSocketError = {
             message: "testMessage",

@@ -11,7 +11,6 @@ export function getArgsValidationError(
 ): string | undefined {
     // Validate input file
     if (!inputFile) {
-        // TODO: Do not log file name. It can be customer content
         return "Input file name argument is missing.";
     } else if (!fs.existsSync(inputFile)) {
         return "Input file does not exist.";

@@ -26,38 +26,38 @@ tree to which it has been granted access.
 
 The motivations for the Semantic format are as follows:
 
-- It captures the intent of the user, allowing high-level commands to be
-  replayed to rebase edits whose inputs/context have changed. This need can
-  arise in at least three scenarios:
+-   It captures the intent of the user, allowing high-level commands to be
+    replayed to rebase edits whose inputs/context have changed. This need can
+    arise in at least three scenarios:
 
-  - The common case of rebasing local edits against incoming edits that have
-    been sequenced earlier
+    -   The common case of rebasing local edits against incoming edits that have
+        been sequenced earlier
 
-  - Out-of-order undo or redo operations (e.g. when one client undoes one of its
-    own edits, subsequent edits from other clients need to be rebased to the
-    revision before the undone edit)
+    -   Out-of-order undo or redo operations (e.g. when one client undoes one of its
+        own edits, subsequent edits from other clients need to be rebased to the
+        revision before the undone edit)
 
-  - Merging of branches in the history
+    -   Merging of branches in the history
 
-  Replaying edits can yield high-quality merge outcomes without the need for
-  merge-specific logic to be written by application authors.
+    Replaying edits can yield high-quality merge outcomes without the need for
+    merge-specific logic to be written by application authors.
 
-- It preserves the most precise history of the user’s actions, allowing
-  fine-grained branching and manipulation of the history.
+-   It preserves the most precise history of the user’s actions, allowing
+    fine-grained branching and manipulation of the history.
 
-- Semantic edits are simple and resilient to unrelated changes, since edits are
-  expressed using only identities.
+-   Semantic edits are simple and resilient to unrelated changes, since edits are
+    expressed using only identities.
 
-  - If there are no conflicts (i.e. need for anchor adjustment), the same edit
-    can be shared across different branches.
+    -   If there are no conflicts (i.e. need for anchor adjustment), the same edit
+        can be shared across different branches.
 
-  - There is no need to do an unbounded walk through the history to interpret
-    the edit on a different branch.
+    -   There is no need to do an unbounded walk through the history to interpret
+        the edit on a different branch.
 
-  - By using only identities, Semantic edits can be very compact, which is
-    useful in a local history or an “archive” region of a very large history.
+    -   By using only identities, Semantic edits can be very compact, which is
+        useful in a local history or an “archive” region of a very large history.
 
-- For edits that have sizable effects on the document, it can be far more
+-   For edits that have sizable effects on the document, it can be far more
     efficient to transmit to clients the high-level command, rather than the
     resulting low-level changes (provided that the command is deterministic and
     available on all clients).
@@ -67,8 +67,8 @@ commands that may inspect the tree.
 
 Here’s a quick comparison between the two formats:
 
-| ***Semantic***                                                  | ***Structural***                                                                                |
-|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| **_Semantic_**                                                  | **_Structural_**                                                                                |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | **Preserves all states between user actions**                   | **Omits intermediate states when desired**                                                      |
 | Structural format used where “Squash” is desired                | Can represent outcome of explicit “Squash” by user to deliberately forget intermediate states   |
 |                                                                 | Allows clients to quickly migrate tree snapshot (with no local changes) to a different revision |
@@ -79,19 +79,19 @@ Here’s a quick comparison between the two formats:
 |                                                                 | o Reduces cost of server mediating live collaboration sessions                                  |
 |                                                                 | o Allows server to cheaply mirror document in external database                                 |
 | **Compact representation through use of identities**            | **Representation optimized for scale, speed**                                                   |
-| Useful for local history, “archive history” on servers          |  Servers with stored Structural representation can enforce permissions without reifying tree    |
+| Useful for local history, “archive history” on servers          | Servers with stored Structural representation can enforce permissions without reifying tree     |
 |                                                                 | Servers can store “mipmap” for very fast migration between revisions                            |
 
 ## Terminology
 
 The following terminology is suggested for both code and discussion:
 
-| ***Term***    | ***Definition***                                                                                                                                        |
-| :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Command**   | A block of application code that modifies a document; has a stable ID and type signature, and may be invoked directly by the user or by another command |
-| **Edit**      | The recorded execution of a command in a document’s history, including both the command’s inputs and outcome; edits may nest                            |
-| **Change**    | A description of the difference between two states of a document                                                                                        |
-| **Changeset** | Multiple (mostly) unordered changes, often describing the difference between two revisions in a document’s history                                      |
+|  **_Term_**   | **_Definition_**                                                                                                                                                                                                                                           |
+| :-----------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  **Command**  | A block of application code that modifies a document; has a stable ID and type signature, and may be invoked directly by the user or by another command                                                                                                    |
+|   **Edit**    | The recorded execution of a command in a document’s history, including both the command’s inputs and outcome; edits may nest                                                                                                                               |
+|  **Change**   | A description of the difference between two states of a document                                                                                                                                                                                           |
+| **Changeset** | Multiple (mostly) unordered changes, often describing the difference between two revisions in a document’s history                                                                                                                                         |
 | **Revision**  | A state of interest in the history; may also refer to the data structure in the history that describes how this state may be obtained from the previous revision in the history (includes a Changeset or Edit, plus metadata such as author and timestamp) |
 
 ## Commands
@@ -146,15 +146,14 @@ command may potentially detect the error and choose an alternate code path.
 
 An Edit record contains the following fields:
 
-
-| ***Name***        | ***Type***    |
+|    **_Name_**     |  **_Type_**   |
 | :---------------: | :-----------: |
-| **commandID**     | UUID          |
-| **anchors**       | { any props } |
-| **parameters?**   | { any props } |
+|   **commandID**   |     UUID      |
+|    **anchors**    | { any props } |
+|  **parameters?**  | { any props } |
 | **constraints?**  | Constraint[]  |
 | **reversalData?** | { any props } |
-| **subEdits?**     | Edit[]        |
+|   **subEdits?**   |    Edit[]     |
 
 Only built-in “primitive” edits may contain reversalData. Only higher-level
 commands may (and typically do) contain subEdits. (The array of subEdits may be
@@ -191,25 +190,25 @@ must be re-executed.
 This representation records the complete call graph of commands resulting from
 each user action. The various edits in this hierarchy serve different purposes:
 
-- The **top-level** edit records the user’s intent (modulo anchor adjustment,
-  which attempts to preserve that intent), and allows the command to be called
-  again during a rebase operation to determine what the application would do
-  under the new circumstances.
+-   The **top-level** edit records the user’s intent (modulo anchor adjustment,
+    which attempts to preserve that intent), and allows the command to be called
+    again during a rebase operation to determine what the application would do
+    under the new circumstances.
 
-- The **lowest-level** edits can be called directly in order to mutate the state
-  if migrating forwards. They are reversible, so their inverses can be applied
-  to return to the state before the edit, during a backwards migration or
-  rebase.
+-   The **lowest-level** edits can be called directly in order to mutate the state
+    if migrating forwards. They are reversible, so their inverses can be applied
+    to return to the state before the edit, during a backwards migration or
+    rebase.
 
-- The **mid-level** commands are more nuanced. Their identities may be used when
-  specifying detached trees as input anchors. They may also mitigate code
-  availability problems to some degree (these can arise due to out-of-order
-  Undo/Redo operations or a client merging branches that include other users’
-  edits), as a client lacking the code for a top-level edit may have the code
-  for some of the mid-level commands, in which case the user will get
-  considerably better conflict resolution, both automatic and with manual
-  intervention. (Mid-level commands may be available because they are defined in
-  widely-used libraries, or an older version of the same application.)
+-   The **mid-level** commands are more nuanced. Their identities may be used when
+    specifying detached trees as input anchors. They may also mitigate code
+    availability problems to some degree (these can arise due to out-of-order
+    Undo/Redo operations or a client merging branches that include other users’
+    edits), as a client lacking the code for a top-level edit may have the code
+    for some of the mid-level commands, in which case the user will get
+    considerably better conflict resolution, both automatic and with manual
+    intervention. (Mid-level commands may be available because they are defined in
+    widely-used libraries, or an older version of the same application.)
 
 One potential concern with storing these descriptions of commands and the
 commands they call is the possibility of redundancy between the stored
@@ -237,31 +236,31 @@ With sufficient deduplication, the encoding of a mid-level or low-level edit
 should be fairly inexpensive. But there are a few ways in which the size of an
 edit may be reduced:
 
-- If the Structural representation of a given Semantic edit is also readily
-  available, there is no need to make the lowest-level edits reversible.
+-   If the Structural representation of a given Semantic edit is also readily
+    available, there is no need to make the lowest-level edits reversible.
 
-  - Furthermore, for any higher-level edit in the hierarchy whose command is
-    known to be available in all clients (ever – this is quite a strong
-    requirement), then there is no need to store its sub-edits, as it can always
-    be replayed when rebasing. (Note that this command does not need to be
-    deterministic. We can ensure that a single client is always responsible for
-    the rebase of a non-deterministic command.) If a much weaker requirement is
-    met, namely that all clients currently in a session can run a given command,
-    then this can be quite a valuable trick to reduce bandwidth for commands
-    that make substantial changes to the tree.
+    -   Furthermore, for any higher-level edit in the hierarchy whose command is
+        known to be available in all clients (ever – this is quite a strong
+        requirement), then there is no need to store its sub-edits, as it can always
+        be replayed when rebasing. (Note that this command does not need to be
+        deterministic. We can ensure that a single client is always responsible for
+        the rebase of a non-deterministic command.) If a much weaker requirement is
+        met, namely that all clients currently in a session can run a given command,
+        then this can be quite a valuable trick to reduce bandwidth for commands
+        that make substantial changes to the tree.
 
-  - Also, a large create operation may share its parameter between the
-    Structural and Semantic representations. However, this shared parameter may
-    contain semantic information (invariant “discriminators” in the tree
-    descriptor that allow a re-execution of the command to re-use more
-    identities) that the Structural representation does not need. Also, such
-    sharing may require the Structural representation to preserve more
-    intermediate states than it otherwise would have.
+    -   Also, a large create operation may share its parameter between the
+        Structural and Semantic representations. However, this shared parameter may
+        contain semantic information (invariant “discriminators” in the tree
+        descriptor that allow a re-execution of the command to re-use more
+        identities) that the Structural representation does not need. Also, such
+        sharing may require the Structural representation to preserve more
+        intermediate states than it otherwise would have.
 
-- An application could bet that a given mid-level edit will never be useful in
-  any rebase scenario, perhaps because its command is in the same library as the
-  command that called it, in which case its sub-edits can be inlined into those
-  of the calling edit.
+-   An application could bet that a given mid-level edit will never be useful in
+    any rebase scenario, perhaps because its command is in the same library as the
+    command that called it, in which case its sub-edits can be inlined into those
+    of the calling edit.
 
 ## History
 
@@ -273,24 +272,24 @@ any number of child Branches, i.e. Branches whose Revisions succeed that parent
 Revision.
 
 This representation can be easily represented using the SharedTree data
-structure itself.  There are several motivations for doing so:
+structure itself. There are several motivations for doing so:
 
-- There is a single body of code to maintain for serialization/deserialization.
+-   There is a single body of code to maintain for serialization/deserialization.
 
-- It is easy for applications to present the history to the user, as it is just
-  another SharedTree instance.
+-   It is easy for applications to present the history to the user, as it is just
+    another SharedTree instance.
 
-- Stable, globally unique identities are automatically (and efficiently)
-  assigned to all elements in the history, including Revision roots,
-  facilitating intra-history references (see above notes on deduplication) and
-  allowing user bookmarks into the history.
+-   Stable, globally unique identities are automatically (and efficiently)
+    assigned to all elements in the history, including Revision roots,
+    facilitating intra-history references (see above notes on deduplication) and
+    allowing user bookmarks into the history.
 
-- Leveraging the tree snapshot implementation, the history can be chunked on
-  disk and over the network and loaded on-demand. The mechanisms for loading
-  portions of a snapshot asynchronously (e.g. Placeholders) can be reused.
+-   Leveraging the tree snapshot implementation, the history can be chunked on
+    disk and over the network and loaded on-demand. The mechanisms for loading
+    portions of a snapshot asynchronously (e.g. Placeholders) can be reused.
 
-- Permissions can be assigned to portions of the history (likely entire
-  branches) using the same mechanisms as for snapshots.
+-   Permissions can be assigned to portions of the history (likely entire
+    branches) using the same mechanisms as for snapshots.
 
 If the user deliberately squashes a portion of a branch between two revisions,
 those Semantic edits are replaced with a (Structural) Changeset.
@@ -301,7 +300,7 @@ trees to be mostly deferred until they demand more of the nodes.
 
 ## Open Questions
 
-1.	How is code availability efficiently determined for clients in a session?
+1. How is code availability efficiently determined for clients in a session?
 
     - Are extra network round-trips tolerated the first time commands are run?
 
@@ -311,6 +310,6 @@ trees to be mostly deferred until they demand more of the nodes.
 
     - Or is it some combination of the above?
 
-2.	Should we record a “Command schema” (i.e. type signature) in the document as
+2. Should we record a “Command schema” (i.e. type signature) in the document as
    a versioning precaution? Note that it is possible to deduce a subset of the
    signature by inspecting edits in the document history.

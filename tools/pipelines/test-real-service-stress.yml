@@ -24,11 +24,15 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
+lockBehavior: sequential
 stages:
-    # stress tests odsp
+  # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -43,10 +47,13 @@ stages:
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-    # stress tests odsp dogfood
+  # stress tests odsp dogfood
   - stage:
     displayName:  Stress tests - Odspdf
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odspdf-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -80,6 +87,9 @@ stages:
   - stage:
     displayName: Stress tests - frs
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-frs-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:

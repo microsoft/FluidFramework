@@ -3,20 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, delay } from "@fluidframework/common-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjectWithCounter";
 
+/**
+ * A root dataObject that repeatedly sends a series of ops, and then references a new child or
+ * unreferences a child. That child is unique to a particular client and a particular dataObject.
+ * For example, if there are two clients A and B, there will be one rootDataObject and 2 child
+ * data objects that can be potentially referenced at one point.
+ */
 export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
-    private unrefTimeStampMs?: number;
-    private unreferencedChild?: DataObjectWithCounter;
-    // TODO: logic to always keep a child referenced. A getter should retrieve this value and add some asserts
     private child?: DataObjectWithCounter;
+    private readonly opsToWait = 1000;
+    private localOpsPerformed: number = 0;
+    private uniqueId?: string;
     private get childKey(): string {
-        assert(this.context.clientId !== undefined, `client id needs to be defined to retrieve the child key!`);
-        return `childKey:${this.context.clientId}`;
+        assert(this.uniqueId !== undefined, `A uniqueId needs to be defined to retrieve the child key!`);
+        return `childKey:${this.uniqueId}`;
     }
 
     public static get type(): string {
@@ -25,40 +31,51 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
 
     protected async hasInitialized(): Promise<void> {
         await super.hasInitialized();
+        this.uniqueId = makeRandom().uuid4();
         await this.createAndReferenceChild();
-        // TODO: Start logic goes here after we agree on what it should be.
+        this.start();
     }
 
-    // TODO: Make private - left public so the build passes
-    public async unreferenceChild() {
+    private unreferenceChild() {
         assert(this.child !== undefined, `Child should be defined when unreferencing!`);
-        this.unreferencedChild = this.child;
         this.child.stop();
         this.root.delete(this.childKey);
-        this.unrefTimeStampMs = Date.now();
     }
 
     private async createAndReferenceChild() {
+        // If this assert is hit, we may potentially have a child that is running and we did not stop it.
+        assert(this.child === undefined, "A child should not exist!");
         this.child = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
-        await this.referenceChild(this.child.handle);
+        this.root.set(this.childKey, this.child.handle);
+        this.child.start();
     }
 
-    private async referenceChild(handle: IFluidHandle<DataObjectWithCounter>) {
-        this.unreferencedChild = this.child;
-        this.root.set(this.childKey, handle);
-    }
+    protected async run() {
+        assert(this.isRunning === true, "Should be running to send ops");
 
-    // This should only be called when inactiveObjectX time isn't greater than unrefTimeStampMs
-    // TODO: Make private - left public so the build passes
-    public async reviveChild() {
-        assert(this.unreferencedChild !== undefined, `An old handle should exist when reviving`);
-        assert(this.unrefTimeStampMs !== undefined, `An unreferenceTimestamp should exist when reviving`);
-        await this.referenceChild(this.unreferencedChild.handle);
-        this.unreferencedChild = undefined;
-        this.unrefTimeStampMs = undefined;
-    }
+        // The ideal loop is to send a number of counter ops, and then reference or unreference a child.
+        while (this.isRunning && !this.disposed) {
+            // Every this.opsToWait, we want to either reference or unreference a datastore.
+            if (this.localOpsPerformed % this.opsToWait === 0) {
+                // Reference the child if there is none, unreference if there is one.
+                // Referencing and unreferencing should automatically stop and start the child.
+                // TODO: potentially reference an old child
+                if (this.child === undefined) {
+                    await this.createAndReferenceChild();
+                } else {
+                    this.unreferenceChild();
+                }
+            }
 
-    // TODO: create a doActivity method that does interesting GC tasks
+            // Count total ops performed on the datastore.
+            this.counter.increment(1);
+            // This data is local and allows us to understand the number of changes a local client has created.
+            this.localOpsPerformed++;
+
+            // This delay is const for now, potentially we would want to vary this value.
+            await delay(this.delayPerOpMs);
+        }
+    }
 }
 
 export const rootDataObjectWithChildDataObjectFactory = new DataObjectFactory(

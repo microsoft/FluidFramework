@@ -20,8 +20,13 @@ export function createAlphabetFromUnicodeRange(charMin: number, charMax: number)
 
 const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 // Returns either an alphanumeric string or an alpha string within the specified length range
-export function getRandomEnglishString(random = makeRandom(), includeNumbers: boolean, minLen: number, maxLen: number) {
-    const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
+export function getRandomEnglishString(
+    random = makeRandom(),
+    includeNumbers: boolean,
+    minLen: number,
+    maxLen: number,
+) {
+    const stringLength = minLen < maxLen ? random.integer(minLen, maxLen) : minLen;
     return includeNumbers
         ? random.string(stringLength)
         : random.string(stringLength, englishAlphabet);

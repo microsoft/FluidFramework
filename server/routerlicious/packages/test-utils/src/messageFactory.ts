@@ -77,6 +77,7 @@ export class MessageFactory {
     }
 
     public createDocumentMessage(type = MessageType.Operation, referenceSequenceNumber = 0): IDocumentMessage {
+        // back-compat ADO #1932: Remove cast when protocol change propagates
         const operation: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: null,
@@ -84,7 +85,8 @@ export class MessageFactory {
             referenceSequenceNumber,
             traces: [],
             type,
-        };
+            compression: undefined,
+        } as any;
         return operation;
     }
 

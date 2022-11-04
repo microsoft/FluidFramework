@@ -132,7 +132,6 @@ describe("ConnectionStateHandler Tests", () => {
             { minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }, // attributes
             { members: [], proposals: [], values: [] }, // quorumSnapshot
             (key, value) => 0, // sendProposal
-            [], // initial Clients
             new Audience(),
         );
         shouldClientJoinWrite = false;
