@@ -65,17 +65,17 @@ minor or major pinned version, or caret/tilde-equivalent ranges of the previous 
 
 Fluid internal versions are also now supported correctly. Given the version `2.0.0-internal.2.3.5`:
 
-baseMajor: `2.0.0-internal.2.0.0`
-baseMinor: `2.0.0-internal.2.3.0`
-previousMajor: `2.0.0-internal.1.0.0`
-previousMinor: `2.0.0-internal.2.2.0`
+- baseMajor: `2.0.0-internal.2.0.0`
+- baseMinor: `2.0.0-internal.2.3.0`
+- previousMajor: `2.0.0-internal.1.0.0`
+- previousMinor: `2.0.0-internal.2.2.0`
 
 Given the version `2.0.0-internal.2.0.0`:
 
-baseMajor: `2.0.0-internal.2.0.0`
-baseMinor: `2.0.0-internal.2.0.0`
-previousMajor: `2.0.0-internal.1.0.0`
-previousMinor: `2.0.0-internal.2.0.0` (the previous minor doesn't "roll back" to the previous version series)
+- baseMajor: `2.0.0-internal.2.0.0`
+- baseMinor: `2.0.0-internal.2.0.0`
+- previousMajor: `2.0.0-internal.1.0.0`
+- previousMinor: `2.0.0-internal.2.0.0` (the previous minor doesn't "roll back" to the previous version series)
 
 ### `bump` command has a new `--exact` flag
 
