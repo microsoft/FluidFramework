@@ -130,6 +130,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 }),
             },
             async (event) => {
+                // @TODO: Remove returned "string" type when removing back-compat code
                 const postRes = await ordererRestWrapper.post<
                 { id: string; token?: string; session?: ISession; } | string
                 >(
@@ -184,7 +185,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 throw new DocumentPostCreateError(error);
             }
         }
-
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
