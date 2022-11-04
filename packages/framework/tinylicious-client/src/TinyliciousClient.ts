@@ -51,10 +51,10 @@ export class TinyliciousClient {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             this.props?.connection?.port,
-            this.props?.connection?.domain
+            this.props?.connection?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            this.props?.connection?.tokenProvider ?? tokenProvider
+            this.props?.connection?.tokenProvider ?? tokenProvider,
         );
     }
 
@@ -64,7 +64,7 @@ export class TinyliciousClient {
      * @returns New detached container instance along with associated services.
      */
     public async createContainer(
-        containerSchema: ContainerSchema
+        containerSchema: ContainerSchema,
     ): Promise<{
         container: IFluidContainer;
         services: TinyliciousContainerServices;
@@ -106,7 +106,7 @@ export class TinyliciousClient {
      */
     public async getContainer(
         id: string,
-        containerSchema: ContainerSchema
+        containerSchema: ContainerSchema,
     ): Promise<{
         container: IFluidContainer;
         services: TinyliciousContainerServices;
@@ -121,7 +121,7 @@ export class TinyliciousClient {
 
     // #region private
     private getContainerServices(
-        container: IContainer
+        container: IContainer,
     ): TinyliciousContainerServices {
         return {
             audience: new TinyliciousAudience(container),
@@ -130,7 +130,7 @@ export class TinyliciousClient {
 
     private createLoader(containerSchema: ContainerSchema) {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
-            containerSchema
+            containerSchema,
         );
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {

@@ -53,7 +53,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
         tenantId: string,
         documentId: string | undefined,
         lifetime: number = 60 * 60,
-        ver: string = "1.0"
+        ver: string = "1.0",
     ): string {
         // Current time in seconds
         const now = Math.round(new Date().getTime() / 1000);
