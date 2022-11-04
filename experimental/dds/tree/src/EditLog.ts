@@ -246,8 +246,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * Depending on eviction frequency and the collaboration window, there can be more edits in memory at a given time.
 	 * Edits greater than or equal to the `minSequenceNumber` (aka in the collaboration window) are not evicted.
 	 * @param evictionFrequency - The rate at which edits are evicted from memory. This is a factor of the editLogSize.
-	 * For example, with the default frequency of 2 and a size of 10, the log will evict once it reaches 20 sequenced edits down to 10 edits,
-	 * also keeping any that are still in the collaboration window.
+	 * For example, with the default frequency of inMemoryHistorySize * 2 and a size of 10, the log will evict once it reaches 20 sequenced edits
+	 * down to 10 edits, also keeping any that are still in the collaboration window.
 	 * @param editEvictionHandlers - Handlers that are called before edits are evicted from memory. This provides a chance for
 	 * callers to work with the edits before they are lost.
 	 */
@@ -256,7 +256,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		private readonly logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
-		private readonly evictionFrequency = 2,
+		private readonly evictionFrequency = targetLength * 2,
 		editEvictionHandlers: readonly EditEvictionHandler[] = []
 	) {
 		super();
@@ -499,7 +499,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
 		// Check if any edits need to be evicted due to this addition
-		if (this.numberOfSequencedEdits >= this.evictionFrequency * this.targetLength) {
+		if (this.numberOfSequencedEdits >= this.evictionFrequency) {
 			this.evictEdits();
 		}
 	}

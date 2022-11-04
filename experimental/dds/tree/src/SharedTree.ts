@@ -23,7 +23,7 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray, assertNotUndefined } from './Common';
+import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -131,8 +131,8 @@ export interface SharedTreeBaseOptions {
 	inMemoryHistorySize?: number;
 	/**
 	 * The rate at which edits are evicted from memory. This is a factor of the inMemoryHistorySize.
-	 * For example, with the default frequency of 2 and a size of 10, the log will evict once it reaches 20 sequenced edits down to 10 edits,
-	 * also keeping any that are still in the collaboration window.
+	 * For example, with the default frequency of inMemoryHistorySize * 2 and a size of 10, the log will evict once it reaches 20 sequenced edits
+	 * down to 10 edits, also keeping any that are still in the collaboration window.
 	 */
 	editEvictionFrequency?: number;
 }
