@@ -30,11 +30,12 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
 }
 
 function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory):
-    { taskManager: ITaskManager; attach: () => void; } {
+    { taskManager: TaskManager; attach: () => void; } {
     // Create a detached TaskManager.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     dataStoreRuntime.local = true;
+    const clientId = dataStoreRuntime.clientId;
 
     const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
     const attach = () => {
@@ -44,6 +45,9 @@ function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRunt
         };
         dataStoreRuntime.local = false;
         taskManager.connect(services);
+        // Ensure clientId is set after attach (might be forced undefined in some tests)
+        dataStoreRuntime.clientId = clientId;
+        dataStoreRuntime.emit("attached");
     };
 
     return { taskManager, attach };
@@ -457,17 +461,19 @@ describe("TaskManager", () => {
     });
 
     describe("Detached/Attach", () => {
-        let taskManager1: ITaskManager;
+        let taskManager1: TaskManager;
         let attachTaskManager1: () => void;
         // let taskManager2: ITaskManager;
         // let attachTaskManager2: () => void;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
+        let placeholderClientId: string;
 
         beforeEach(() => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
             const createResponse1 = createDetachedTaskManager("taskManager1", containerRuntimeFactory);
             taskManager1 = createResponse1.taskManager;
             attachTaskManager1 = createResponse1.attach;
+            placeholderClientId = (taskManager1 as any).placeholderClientId;
         });
 
         it("Can create a detached TaskManager and attach later", async () => {
@@ -560,40 +566,78 @@ describe("TaskManager", () => {
 
         describe("Behavior after attaching", () => {
             describe("Volunteering for a task", () => {
-                it("Can volunteer for a task and stay assigned after attaching", async () => {
+                it("Will keep task assignment after attaching if clientId is defined", async () => {
+                    const taskId = "taskId";
+                    const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+                    containerRuntimeFactory.processAllMessages();
+                    await volunteerTaskP;
+                    attachTaskManager1();
+                    assert.ok(taskManager1.queued(taskId), "Should be queued");
+                    assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+                });
+
+                it("Will lose task assignment after attaching if clientId is undefined", async () => {
+                    (taskManager1 as any).runtime.clientId = undefined;
                     const taskId = "taskId";
                     const volunteerTaskP = taskManager1.volunteerForTask(taskId);
                     containerRuntimeFactory.processAllMessages();
                     await volunteerTaskP;
                     assert.ok(taskManager1.queued(taskId), "Should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+                    assert.strictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                        "taskQueue should have placeholder clientId");
 
+                    let taskManager1EventFired = false;
+                    taskManager1.once("lost", (completedTaskId: string) => {
+                        assert.ok(completedTaskId === taskId, "taskId should match");
+                        assert.ok(!taskManager1EventFired, "Should only fire lost event once on taskManager1");
+                        taskManager1EventFired = true;
+                    });
                     attachTaskManager1();
-                    assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-                });
 
-                it("Can volunteer for a task and abandon after attaching", async () => {
-                    const taskId = "taskId";
-                    const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-                    containerRuntimeFactory.processAllMessages();
-                    await volunteerTaskP;
-                    attachTaskManager1();
-                    taskManager1.abandon(taskId);
-                    containerRuntimeFactory.processAllMessages();
                     assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                     assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+                    assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
+                    assert.ok(taskManager1._getTaskQueues().size === 0, "taskQueue should be empty");
                 });
             });
 
             describe("Subscribing to a task", () => {
-                it("Can subscribe to a task and stay subscribed after attach", async () => {
+                it("Can subscribe to a task and stay assigned/subscribed after attach", async () => {
                     const taskId = "taskId";
                     taskManager1.subscribeToTask(taskId);
                     containerRuntimeFactory.processAllMessages();
                     attachTaskManager1();
+                    containerRuntimeFactory.processAllMessages();
                     assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
                     assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
+                });
+
+                it("Can subscribe to a task and stay subscribed after attach if clientId was undefined", async () => {
+                    (taskManager1 as any).runtime.clientId = undefined;
+                    const taskId = "taskId";
+                    taskManager1.subscribeToTask(taskId);
+                    containerRuntimeFactory.processAllMessages();
+                    let taskManager1EventFired = false;
+                    taskManager1.once("lost", (completedTaskId: string) => {
+                        assert.ok(completedTaskId === taskId, "taskId should match");
+                        assert.ok(!taskManager1EventFired, "Should only fire lost event once on taskManager1");
+                        taskManager1EventFired = true;
+                    });
+
+                    attachTaskManager1();
+                    assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
+
+                    containerRuntimeFactory.processAllMessages();
+                    assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
+                    assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+                    assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
+                    assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
+
+                    assert.ok(taskManager1._getTaskQueues().get(taskId)?.length !== 0, "taskQueue should not be empty");
+                    assert.notStrictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                        "taskQueue should not have placeholder clientId");
                 });
 
                 it("Can abandon a subscribed task after attach", async () => {
@@ -639,7 +683,6 @@ describe("TaskManager", () => {
                     containerRuntimeFactory.processAllMessages();
                     assert.ok(taskManager1EventFired, "Should have raised completed event on taskManager1");
                 });
-
             });
         });
     });
