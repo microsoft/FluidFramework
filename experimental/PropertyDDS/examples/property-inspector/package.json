@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@fluid-example/example-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/get-container": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-binder": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-common": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
