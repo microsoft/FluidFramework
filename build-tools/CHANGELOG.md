@@ -1,4 +1,4 @@
-## [0.5.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.4.8000...build-tools_v0.5.0) (2022-11-03)
+## [0.5.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.4.8000...build-tools_v0.5.0) (2022-11-04)
 
 
 ### ⚠ BREAKING CHANGES
