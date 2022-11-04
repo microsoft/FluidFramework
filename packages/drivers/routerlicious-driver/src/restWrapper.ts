@@ -153,9 +153,6 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
                 {
                     eventName: "FetchStorageToken",
                     docId: documentId,
-                    details: JSON.stringify({
-                        useRestLess,
-                    }),
                 },
                 async () => {
                     // Craft credentials using tenant id and token
@@ -214,9 +211,6 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
                 {
                     eventName: "FetchOrdererToken",
                     docId: documentId,
-                    details: JSON.stringify({
-                        useRestLess,
-                    }),
                 },
                 async () => {
                     const ordererToken = await tokenProvider.fetchOrdererToken(

@@ -237,7 +237,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             const discoveredSession = await PerformanceEvent.timedExecAsync(
                 logger2,
                 {
-                    eventName: "CreateSession",
+                    eventName: "DiscoverSession",
                     docId: documentId,
                 },
                 async () => {
