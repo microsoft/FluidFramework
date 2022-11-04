@@ -380,14 +380,14 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
- * Options for op compression. Compression is disabled when undefined.
+ * Options for op compression.
  * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
     /**
      * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
      */
-    readonly minimumBatchSize: number;
+    readonly minimumBatchSizeInBytes: number;
 
     /**
      * The compression algorithm that will be used to compress the op.
@@ -422,7 +422,7 @@ export interface IContainerRuntimeOptions {
      */
     readonly enableOfflineLoad?: boolean;
     /**
-     * Enables the runtime to compress ops.
+     * Enables the runtime to compress ops. Compression is disabled when undefined.
      * @experimental Not ready for use.
      */
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -686,7 +686,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSize: Number.POSITIVE_INFINITY,
+            compressionOptions = { minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
                                    compressionAlgorithm: CompressionAlgorithms.lz4 },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             enableOpReentryCheck = false,
@@ -1067,10 +1067,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOpReentryCheck: this.enableOpReentryCheck,
             hardLimit: runtimeOptions.maxBatchSizeInBytes,
             softLimit: 64 * 1024,
+            compressionOptions: runtimeOptions.compressionOptions
         });
         this.pendingBatch = new BatchManager(this.mc.logger, {
             enableOpReentryCheck: this.enableOpReentryCheck,
             hardLimit: runtimeOptions.maxBatchSizeInBytes,
+            compressionOptions: runtimeOptions.compressionOptions
         });
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;

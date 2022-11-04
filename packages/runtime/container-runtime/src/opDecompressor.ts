@@ -21,18 +21,14 @@ export class OpDecompressor {
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
-    constructor() {
-
-    }
-
     public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        // Beginning of a compressed batch
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services
         // to pick up protocol change. Eventually only the top level property should
         // be used.
         if (message.metadata?.batch === true
             && (message.metadata?.compressed || (message as any).compression !== undefined)) {
+            // Beginning of a compressed batch
             assert(this.activeBatch === false, "shouldn't have multiple active batches");
             if ((message as any).compression) {
                 // lz4 is the only supported compression algorithm for now
@@ -49,10 +45,14 @@ export class OpDecompressor {
             this.rootMessageContents = asObj;
 
             return { ...message, contents: this.rootMessageContents[this.processedCount++] };
-        } else if (this.rootMessageContents !== undefined && message.metadata === undefined && this.activeBatch) {
+        }
+
+        if (this.rootMessageContents !== undefined && message.metadata === undefined && this.activeBatch) {
             // Continuation of compressed batch
             return { ...message, contents: this.rootMessageContents[this.processedCount++] };
-        } else if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
+        }
+
+        if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
             const returnMessage = { ...message,
                                     contents: this.rootMessageContents[this.processedCount++] };
@@ -62,11 +62,13 @@ export class OpDecompressor {
             this.processedCount = 0;
 
             return returnMessage;
-        } else if (message.metadata?.batch === undefined &&
+        }
+
+        if (message.metadata?.batch === undefined &&
             (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
+            // Single compressed message
             assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
 
-            // Single compressed message
             const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);
             const intoString = new TextDecoder().decode(decompressedMessage);

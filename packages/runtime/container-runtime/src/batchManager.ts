@@ -77,7 +77,7 @@ export class BatchManager {
 
         if (batch.length > 0
             && this.options.compressionOptions !== undefined
-            && this.options.compressionOptions.minimumBatchSize < size) {
+            && this.options.compressionOptions.minimumBatchSizeInBytes < size) {
             return this.opCompressor.compressBatch(batch, size);
         }
 

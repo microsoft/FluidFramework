@@ -348,7 +348,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
         describe("TurnBased flushing of batches with compression", () => {
             beforeEach(async () => {
                 await setupContainers({ flushMode: FlushMode.TurnBased,
-                                                        compressionOptions: { minimumBatchSize: 1,
+                                                        compressionOptions: { minimumBatchSizeInBytes: 1,
                                                         compressionAlgorithm: CompressionAlgorithms.lz4 } });
                 setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
                 setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -469,7 +469,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
         describe("Immediate flushing of ops with compression", () => {
             beforeEach(async () => {
                 await setupContainers({ flushMode: FlushMode.Immediate,
-                    compressionOptions: { minimumBatchSize: 1,
+                    compressionOptions: { minimumBatchSizeInBytes: 1,
                     compressionAlgorithm: CompressionAlgorithms.lz4 } });
                 setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
                 setupBatchMessageListener(dataObject2, dataObject2BatchMessages);

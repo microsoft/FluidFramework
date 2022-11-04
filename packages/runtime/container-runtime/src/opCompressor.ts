@@ -50,8 +50,8 @@ export class OpCompressor {
                            metadata: { ...batch[0].metadata, compressed: true },
                            compression: CompressionAlgorithms.lz4 });
 
-        for (let i = 1; i < batch.length; i++) {
-            batchToSend.push({ ...batch[i], contents: undefined, metadata: batch[i].metadata });
+        for (const message of batch.slice(1)) {
+            batchToSend.push({ ...message, contents: undefined });
         }
 
         return batchToSend;

@@ -76,7 +76,7 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
-        compressionOptions: [{ minimumBatchSize: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
+        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
         maxBatchSizeInBytes: [undefined],
         enableOpReentryCheck: [undefined],
     };

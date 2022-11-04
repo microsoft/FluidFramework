@@ -124,8 +124,14 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: compresses when configured and criteria met", () => {
-        const batchManager = new BatchManager(new TelemetryUTLogger(), { hardLimit,
-            softLimit, compressionOptions: { minimumBatchSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 } });
+        const batchManager = new BatchManager(new TelemetryUTLogger(), {
+            hardLimit,
+            softLimit,
+            compressionOptions: {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+            },
+        });
         const message = { contents: generateStringOfSize(100) } as any as BatchMessage;
         assert.equal(batchManager.push(message), true);
         const batch = batchManager.popBatch();
@@ -137,7 +143,7 @@ describe("BatchManager", () => {
     it("BatchManager: doesn't compress when message too short", () => {
         const batchManager = new BatchManager(new TelemetryUTLogger(), { hardLimit,
             softLimit,
-            compressionOptions: { minimumBatchSize: 200, compressionAlgorithm: CompressionAlgorithms.lz4 } });
+            compressionOptions: { minimumBatchSizeInBytes: 200, compressionAlgorithm: CompressionAlgorithms.lz4 } });
         const message = { contents: generateStringOfSize(10) } as any as BatchMessage;
         assert.equal(batchManager.push(message), true);
         const batch = batchManager.popBatch();
@@ -152,7 +158,7 @@ describe("BatchManager", () => {
             hardLimit,
             softLimit,
             compressionOptions: {
-                minimumBatchSize: Number.POSITIVE_INFINITY,
+                minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
                 compressionAlgorithm: CompressionAlgorithms.lz4 },
         });
         const message = { contents: generateStringOfSize(10) } as any as BatchMessage;
