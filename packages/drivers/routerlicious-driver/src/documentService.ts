@@ -88,28 +88,16 @@ export class DocumentService implements api.IDocumentService {
             }
             if (!this.storageManager || !this.noCacheStorageManager || shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
-                const storageRestWrapper = await PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "GetStorageToken",
-                        docId: this.documentId,
-                        details: JSON.stringify({
-                            enableRestless: this.driverPolicies.enableRestLess,
-                            disableCache,
-                        }),
-                    },
-                    async () => {
-                        return RouterliciousStorageRestWrapper.load(
-                            this.tenantId,
-                            this.documentId,
-                            this.tokenProvider,
-                            this.logger,
-                            rateLimiter,
-                            this.driverPolicies.enableRestLess,
-                            this.storageUrl,
-                        );
-                    }
-                );
+                const storageRestWrapper =
+                    await RouterliciousStorageRestWrapper.load(
+                        this.tenantId,
+                        this.documentId,
+                        this.tokenProvider,
+                        this.logger,
+                        rateLimiter,
+                        this.driverPolicies.enableRestLess,
+                        this.storageUrl
+                    );
 
                 const historian = new Historian(
                     this.storageUrl,
@@ -166,26 +154,15 @@ export class DocumentService implements api.IDocumentService {
             }
             if (!this.ordererRestWrapper || shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-                this.ordererRestWrapper = await PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "GetDeltaStorageToken",
-                        docId: this.documentId,
-                        details: JSON.stringify({
-                            enableRestless: this.driverPolicies.enableRestLess,
-                        }),
-                    },
-                    async () => {
-                        return RouterliciousOrdererRestWrapper.load(
-                            this.tenantId,
-                            this.documentId,
-                            this.tokenProvider,
-                            this.logger,
-                            rateLimiter,
-                            this.driverPolicies.enableRestLess,
-                        );
-                    }
-                );
+                this.ordererRestWrapper =
+                    await RouterliciousOrdererRestWrapper.load(
+                        this.tenantId,
+                        this.documentId,
+                        this.tokenProvider,
+                        this.logger,
+                        rateLimiter,
+                        this.driverPolicies.enableRestLess
+                    );
             }
             return this.ordererRestWrapper;
         };
