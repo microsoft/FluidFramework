@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/tinylicious-client";
 
 import {
+    FluidClientDebuggerProps,
     clearDebuggerRegistry,
     closeFluidClientDebugger,
     getDebuggerRegistry,
@@ -38,9 +39,7 @@ const containerSchema: ContainerSchema = {
 };
 
 describe("ClientDebugger unit tests", () => {
-    let containerId: string | undefined;
-    let tinyliciousContainer: IFluidContainer | undefined;
-    let tinyliciousServices: TinyliciousContainerServices | undefined;
+    let _debuggerProps: FluidClientDebuggerProps | undefined;
 
     beforeEach(async () => {
         const client = new TinyliciousClient();
@@ -56,10 +55,11 @@ describe("ClientDebugger unit tests", () => {
         }
         console.log("Container created!");
 
-        ({ container: tinyliciousContainer, services: tinyliciousServices } =
-            createContainerResult);
+        const { container: tinyliciousContainer, services: tinyliciousServices } =
+            createContainerResult;
 
         // Attach container
+        let containerId: string;
         console.log("Awaiting container attach...");
         try {
             containerId = await tinyliciousContainer.attach();
@@ -68,38 +68,40 @@ describe("ClientDebugger unit tests", () => {
             throw error;
         }
         console.log("Fluid container attached!");
+
+        _debuggerProps = {
+            containerId,
+            container: tinyliciousContainer._getRuntimeContainer!(),
+            audience: tinyliciousServices.audience._getRuntimeAudience!(),
+        };
     });
 
     afterEach(() => {
         clearDebuggerRegistry();
     });
 
+    function getDebuggerProps(): FluidClientDebuggerProps {
+        if (_debuggerProps === undefined) {
+            expect.fail("Container initialization failed.");
+        }
+        return _debuggerProps;
+    }
+
     it("Initializing debugger populates global (window) registry", () => {
-        const { audience: tinyliciousAudience } = tinyliciousServices!;
-
-        const container = tinyliciousContainer!._getRuntimeContainer!();
-        const audience = tinyliciousAudience._getRuntimeAudience!();
-
         let debuggerRegistry = getDebuggerRegistry();
         expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
 
-        initializeFluidClientDebugger({ containerId: containerId!, container, audience });
+        initializeFluidClientDebugger(getDebuggerProps());
 
         debuggerRegistry = getDebuggerRegistry();
         expect(debuggerRegistry.size).to.equal(1);
     });
 
     it("Closing debugger removes it from global (window) registry and disposes it.", () => {
-        const { audience: tinyliciousAudience } = tinyliciousServices!;
+        const debuggerProps = getDebuggerProps();
+        const { containerId } = debuggerProps;
 
-        const container = tinyliciousContainer!._getRuntimeContainer!();
-        const audience = tinyliciousAudience._getRuntimeAudience!();
-
-        const clientDebugger = initializeFluidClientDebugger({
-            containerId: containerId!,
-            container,
-            audience,
-        });
+        const clientDebugger = initializeFluidClientDebugger(debuggerProps);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.false;
@@ -107,7 +109,7 @@ describe("ClientDebugger unit tests", () => {
         let debuggerRegistry = getDebuggerRegistry();
         expect(debuggerRegistry.size).to.equal(1);
 
-        closeFluidClientDebugger(containerId!);
+        closeFluidClientDebugger(containerId);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.true;
