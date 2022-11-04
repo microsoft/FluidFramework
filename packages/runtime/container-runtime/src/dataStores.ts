@@ -654,6 +654,24 @@ export class DataStores implements IDisposable {
         }
     }
 
+    public revive(usedRoutes: string[]) {
+        for (const route of usedRoutes) {
+            const pathParts = route.split("/");
+            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
+            // store based on its DDS being unused.
+            if (pathParts.length > 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+
+            const dataStore = this.contexts.get(dataStoreId);
+            assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
+            // Delete the contexts of unused data stores.
+            dataStore.revive();
+        }
+    }
+
     /**
      * Returns the outbound routes of this channel. Only root data stores are considered referenced and their paths are
      * part of outbound routes.

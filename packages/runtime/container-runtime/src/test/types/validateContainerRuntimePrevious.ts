@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -527,6 +528,7 @@ declare function get_old_InterfaceDeclaration_IGarbageCollectionRuntime():
 declare function use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
     use: TypeOnly<current.IGarbageCollectionRuntime>);
 use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGarbageCollectionRuntime());
 
 /*

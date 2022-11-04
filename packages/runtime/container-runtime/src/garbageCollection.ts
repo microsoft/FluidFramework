@@ -127,6 +127,8 @@ export interface IGarbageCollectionRuntime {
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to delete objects in the runtime whose routes are unused. */
     deleteUnusedRoutes(unusedRoutes: string[]): void;
+    /** After GC has run, called to revive objects in the runtime whose routes are used. */
+    revive(usedRoutes: string[]): void;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
     getCurrentReferenceTimestampMs(): number | undefined;
     /** Returns the type of the GC node. */
@@ -882,6 +884,14 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
+        const referencedDataStoreNodeIds: string[] = [];
+        for (const key of gcResult.referencedNodeIds) {
+            if (this.runtime.getNodeType(key) === GCNodeType.DataStore) {
+                referencedDataStoreNodeIds.push(key);
+            }
+        }
+        this.runtime.revive(referencedDataStoreNodeIds);
+
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
         // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will

@@ -163,6 +163,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
+    revive(usedRoutes: string[]): void;
+    // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -343,6 +345,7 @@ export interface IGarbageCollectionRuntime {
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getNodeType(nodePath: string): GCNodeType;
+    revive(usedRoutes: string[]): void;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
