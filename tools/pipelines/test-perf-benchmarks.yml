@@ -195,7 +195,7 @@ stages:
           inputs:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'perf-test-outputs_execution-time'
-            condition: succeededOrFailed()
+          condition: succeededOrFailed()
 
         - task: Npm@1
           displayName: 'Run performance test - memory usage'
@@ -226,4 +226,4 @@ stages:
           inputs:
             targetPath: '${{ variables.buildDirectory }}/memoryProfilingOutput'
             artifactName: 'perf-test-outputs_memory-usage'
-            condition: succeededOrFailed()
+          condition: succeededOrFailed()
