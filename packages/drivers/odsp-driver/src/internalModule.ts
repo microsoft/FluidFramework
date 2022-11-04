@@ -5,4 +5,4 @@
 
 export { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 export { createNewFluidFile } from "./createFile";
-export { OdspDocumentServiceDelayLoaded } from "./odspDocumentServiceDelayLoaded"; 
+export { OdspDocumentServiceDelayLoaded } from "./odspDocumentServiceDelayLoaded";
