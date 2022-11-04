@@ -325,7 +325,7 @@ export function clearDebuggerRegistry(): void {
     const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
     if (debuggerRegistry !== undefined) {
         for (const [, clientDebugger] of debuggerRegistry) {
-            if(clientDebugger.disposed) {
+            if (clientDebugger.disposed) {
                 console.warn(`Fluid Client debugger has already been disposed.`);
             } else {
                 clientDebugger.dispose();
