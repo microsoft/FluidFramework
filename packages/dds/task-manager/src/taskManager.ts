@@ -177,7 +177,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly connectionWatcher: EventEmitter = new EventEmitter();
     // completedWatcher emits an event whenever the local client receives a completed op.
     private readonly completedWatcher: EventEmitter = new EventEmitter();
-    // completedWatcher emits an event whenever the local client becomes attached.
+    // attachedWatcher emits an event whenever the local runtime becomes attached.
     private readonly attachedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
@@ -196,8 +196,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     private readonly pendingCompletedTasks: Map<string, number[]> = new Map();
 
+    /**
+     * Placeholder clientId for detached scenarios.
+     */
     private readonly placeholderClientId: string = "placeholder";
 
+    /**
+     * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
+     */
     private get clientId(): string | undefined {
         if (!this.isAttached()) {
             return this.runtime.clientId ?? this.placeholderClientId;
