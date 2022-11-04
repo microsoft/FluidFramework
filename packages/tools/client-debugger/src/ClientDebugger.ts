@@ -310,7 +310,7 @@ export function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
     const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
 
     if (debuggerRegistry === undefined) {
-        throw new Error("Fluid debugger registry initialization failed.");
+        throw new Error("Fluid Client debugger registry initialization failed.");
     }
 
     return debuggerRegistry;
@@ -325,7 +325,11 @@ export function clearDebuggerRegistry(): void {
     const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
     if (debuggerRegistry !== undefined) {
         for (const [, clientDebugger] of debuggerRegistry) {
-            clientDebugger.dispose();
+            if(clientDebugger.disposed) {
+                console.warn(`Fluid Client debugger has already been disposed.`);
+            } else {
+                clientDebugger.dispose();
+            }
         }
     }
 
