@@ -22,7 +22,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
-    "build:tsc": "tsc --pretty",
+    "build:tsc": "npm run tsc",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
@@ -37,7 +37,8 @@
     "start:tinylicious": "tinylicious",
     "test": "start-server-and-test start:tinylicious 7070 test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
+    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict",
+    "tsc": "tsc --pretty"
   },
   "nyc": {
     "all": true,
