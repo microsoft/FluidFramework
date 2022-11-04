@@ -22,7 +22,7 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "build:genver": "gen-version",
-    "build:tsc": "tsc --pretty",
+    "build:tsc": "npm run tsc",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
@@ -39,6 +39,7 @@
     "start:tinylicious": "tinylicious",
     "test": "start-server-and-test start:tinylicious 7070 test:jest",
     "test:jest": "jest",
+    "tsc": "tsc --pretty",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },
