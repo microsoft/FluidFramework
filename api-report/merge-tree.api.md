@@ -27,7 +27,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
-    abstract append(segment: ISegment): void;
+    append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)

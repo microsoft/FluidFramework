@@ -329,9 +329,18 @@ export function configureWebSocketServices(
                 );
             }
 
+            const lumberjackProperties = getLumberBaseProperties(claims.documentId, claims.tenantId);
+
+            const connectDocumentGetClientsMetric =
+                Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentGetClients, lumberjackProperties);
             const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
+                .then((response) => {
+                    connectDocumentGetClientsMetric.success("Successfully got clients from client manager");
+                    return response;
+                })
                 .catch(async (err) => {
                     const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                    connectDocumentGetClientsMetric.error("Failed to get clients during connectDocument", err);
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
 
@@ -345,14 +354,18 @@ export function configureWebSocketServices(
                 );
             }
 
+            const connectDocumentAddClientMetric =
+                Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentAddClient, lumberjackProperties);
             try {
                 await clientManager.addClient(
                     claims.tenantId,
                     claims.documentId,
                     clientId,
                     messageClient as IClient);
+                connectDocumentAddClientMetric.success("Successfully added client");
             } catch (err) {
                 const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+                connectDocumentAddClientMetric.error("Error adding client during connectDocument", err);
                 return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
@@ -363,15 +376,19 @@ export function configureWebSocketServices(
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, message.mode)) {
+                const connectDocumentOrdererConnectionMetric =
+                    Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentOrdererConnection, lumberjackProperties);
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
                     .catch(async (err) => {
                         const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient)
                     .catch(async (err) => {
                         const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to connect to orderer", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
@@ -394,10 +411,13 @@ export function configureWebSocketServices(
                     .catch(async (err) => {
                         // eslint-disable-next-line max-len
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
                 connectionsMap.set(clientId, connection);
+
+                connectDocumentOrdererConnectionMetric.success("Successfully established orderer connection");
 
                 connectedMessage = {
                     claims,

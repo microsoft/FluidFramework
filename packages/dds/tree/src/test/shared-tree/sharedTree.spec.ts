@@ -14,7 +14,7 @@ import {
     Value,
 } from "../../tree";
 import { moveToDetachedField } from "../../forest";
-import { TestTreeProvider } from "../utils";
+import { SharedTreeTestFactory, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
@@ -82,28 +82,6 @@ describe("SharedTree", () => {
     });
 
     it("can process ops after loading from summary", async () => {
-        function insert(tree: ISharedTree, index: number, value: string): void {
-            tree.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-                field.insert(index, singleTextCursor({ type: brand("Node"), value }));
-                return TransactionResult.Apply;
-            });
-        }
-
-        // Validate that the given tree is made up of nodes with the expected value
-        function validateTree(tree: ISharedTree, expected: Value[]): void {
-            const readCursor = tree.forest.allocateCursor();
-            moveToDetachedField(tree.forest, readCursor);
-            let hasNode = readCursor.firstNode();
-            for (const value of expected) {
-                assert(hasNode);
-                assert.equal(readCursor.value, value);
-                hasNode = readCursor.nextNode();
-            }
-            assert.equal(hasNode, false);
-            readCursor.free();
-        }
-
         const provider = await TestTreeProvider.create(1, true);
         const tree1 = provider.trees[0];
         const tree2 = await provider.createTree();
@@ -177,6 +155,38 @@ describe("SharedTree", () => {
         // Without that, it will interpret the insertion of B based on the current state, yielding
         // the order ACB.
         validateTree(tree4, expectedValues);
+    });
+
+    it("can summarize local edits in the attach summary", async () => {
+        const onCreate = (tree: ISharedTree) => {
+            const schema: SchemaData = {
+                treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+                globalFieldSchema: new Map([
+                    // This test requires the use of a sequence field
+                    [rootFieldKey, fieldSchema(FieldKinds.sequence)],
+                ]),
+            };
+            tree.storedSchema.update(schema);
+            insert(tree, 0, "A");
+            insert(tree, 1, "C");
+            validateTree(tree, ["A", "C"]);
+        };
+        const provider = await TestTreeProvider.create(
+            1,
+            true,
+            new SharedTreeTestFactory(onCreate),
+        );
+        const [tree1] = provider.trees;
+        validateTree(tree1, ["A", "C"]);
+        const tree2 = await provider.createTree();
+        // Check that the joining tree was initialized with data from the attach summary
+        validateTree(tree2, ["A", "C"]);
+
+        // Check that further edits are interpreted properly
+        insert(tree1, 1, "B");
+        await provider.ensureSynchronized();
+        validateTree(tree1, ["A", "B", "C"]);
+        validateTree(tree2, ["A", "B", "C"]);
     });
 
     describe("Editing", () => {
@@ -361,4 +371,45 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const { value } = readCursor;
     readCursor.free();
     return value;
+}
+
+/**
+ * Helper function to insert node at a given index.
+ *
+ * TODO: delete once the JSON editing API is ready for use.
+ *
+ * @param tree - The tree on which to perform the insert.
+ * @param index - The index in the root field at which to insert.
+ * @param value - The value of the inserted node.
+ */
+function insert(tree: ISharedTree, index: number, value: string): void {
+    tree.runTransaction((forest, editor) => {
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+        field.insert(index, singleTextCursor({ type: brand("Node"), value }));
+        return TransactionResult.Apply;
+    });
+}
+
+/**
+ * Checks that the root field of the given tree contains nodes with the given values.
+ * Fails if the given tree contains fewer or more nodes in the root trait.
+ * Fails if the given tree contains nodes with different values in the root trait.
+ * Does not check if nodes in the root trait have any children.
+ *
+ * TODO: delete once the JSON reading API is ready for use.
+ *
+ * @param tree - The tree to verify.
+ * @param expected - The expected values for the nodes in the root field of the tree.
+ */
+function validateTree(tree: ISharedTree, expected: Value[]): void {
+    const readCursor = tree.forest.allocateCursor();
+    moveToDetachedField(tree.forest, readCursor);
+    let hasNode = readCursor.firstNode();
+    for (const value of expected) {
+        assert(hasNode);
+        assert.equal(readCursor.value, value);
+        hasNode = readCursor.nextNode();
+    }
+    assert.equal(hasNode, false);
+    readCursor.free();
 }
