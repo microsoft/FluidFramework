@@ -5,7 +5,7 @@
     "outDir": "dist",
     "composite": true,
     "target": "es6",
-    "types": ["mocha"],
+    "types": ["chai", "mocha"],
   },
   "include": ["src/**/*"],
 }

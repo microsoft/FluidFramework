@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ConnectionState,
@@ -84,7 +84,9 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 /**
  * TODO
  */
-export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents> {
+export interface IFluidClientDebugger
+    extends IEventProvider<IFluidClientDebuggerEvents>,
+        IDisposable {
     get connectionState(): ConnectionState;
 
     // TODO: state associated with events.
@@ -140,6 +142,13 @@ class FluidClientDebugger
 
     // #endregion
 
+    /**
+     * Whether or not the instance has been disposed yet.
+     *
+     * @see {@link IFluidClientDebugger.dispose}
+     */
+    private _disposed: boolean;
+
     constructor(containerId: string, container: IContainer, audience: IAudience) {
         super();
 
@@ -157,6 +166,8 @@ class FluidClientDebugger
         this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
         // TODO: other events as needed
+
+        this._disposed = false;
     }
 
     /**
@@ -178,6 +189,15 @@ class FluidClientDebugger
         // Unbind Audience events
         this.audience.off("addMember", this.audienceMemberAddedHandler);
         this.audience.off("removeMember", this.audienceMemberRemovedHandler);
+
+        this._disposed = true;
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+     */
+    public get disposed(): boolean {
+        return this._disposed;
     }
 }
 
@@ -247,25 +267,36 @@ export function closeFluidClientDebugger(containerId: string): void {
  * Gets the debugger registry from the window. Initializes it if one does not yet exist.
  *
  * @throws Throws an error if initialization / binding to the window object fails.
+ *
+ * @internal
  */
-function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-
-    if ((window as any).fluidClientDebuggers === undefined) {
+export function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
+    if (globalThis.fluidClientDebuggers === undefined) {
         // If no client debuggers have been bound, initialize list
-        (window as any).fluidClientDebuggers = new Map<string, IFluidClientDebugger>();
+        globalThis.fluidClientDebuggers = new Map<string, IFluidClientDebugger>();
     }
 
-    const debuggerRegistry = (window as any).fluidClientDebuggers as Map<
-        string,
-        IFluidClientDebugger
-    >;
+    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
 
     if (debuggerRegistry === undefined) {
         throw new Error("Fluid debugger registry initialization failed.");
     }
 
     return debuggerRegistry;
+}
 
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+/**
+ * Clears the debugger registry, disposing of any remaining debugger objects.
+ *
+ * @internal
+ */
+export function clearDebuggerRegistry(): void {
+    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
+    if (debuggerRegistry !== undefined) {
+        for (const [, clientDebugger] of debuggerRegistry) {
+            clientDebugger.dispose();
+        }
+    }
+
+    globalThis.fluidClientDebuggers = undefined;
 }

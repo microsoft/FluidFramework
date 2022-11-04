@@ -9,6 +9,7 @@ import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
@@ -20,7 +21,7 @@ export interface FluidClientDebuggerProps {
 }
 
 // @public
-export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents> {
+export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     // (undocumented)
     get connectionState(): ConnectionState;
     dispose(): void;
