@@ -25,8 +25,8 @@ import { brand } from "../../../util";
 import {
     singleTextCursor,
     isUnwrappedNode,
-    createFieldSymbol,
-    getWithoutUnwrappingSymbol,
+    createField,
+    getField,
     isEditableField,
     FieldKinds,
     emptyField,
@@ -92,8 +92,8 @@ describe("editable-tree: editing", () => {
     it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         const person = trees[0].root as PersonType;
-        const nameNode = person[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0);
-        const ageNode = person[getWithoutUnwrappingSymbol](brand("age")).getWithoutUnwrapping(0);
+        const nameNode = person[getField](brand("name")).getNode(0);
+        const ageNode = person[getField](brand("age")).getNode(0);
         const phonesField = person.address.phones;
         assert(isEditableField(phonesField));
 
@@ -138,7 +138,7 @@ describe("editable-tree: editing", () => {
                 assert(isUnwrappedNode(trees[0].root));
                 assert(isUnwrappedNode(trees[1].root));
                 // create using `createFieldSymbol`
-                trees[0].root[createFieldSymbol](fieldKey, [
+                trees[0].root[createField](fieldKey, [
                     singleTextCursor({ type: stringSchema.name, value: "foo" }),
                     singleTextCursor({ type: stringSchema.name, value: "bar" }),
                 ]);
@@ -159,7 +159,7 @@ describe("editable-tree: editing", () => {
                 assert.deepEqual(field_0, field_1);
 
                 // edit using valueSymbol
-                field_0.getWithoutUnwrapping(0)[valueSymbol] = "via symbol";
+                field_0.getNode(0)[valueSymbol] = "via symbol";
                 assert.equal(field_0[0], "via symbol");
                 await provider.ensureSynchronized();
                 assert.deepEqual(field_0, field_1);
@@ -234,7 +234,7 @@ describe("editable-tree: editing", () => {
                 assert.throws(
                     () => {
                         assert(isUnwrappedNode(trees[0].root));
-                        trees[0].root[createFieldSymbol](fieldKey, [
+                        trees[0].root[createField](fieldKey, [
                             singleTextCursor({ type: stringSchema.name, value: "foo" }),
                             singleTextCursor({ type: stringSchema.name, value: "foo" }),
                         ]);
@@ -243,7 +243,7 @@ describe("editable-tree: editing", () => {
                         validateAssertionError(e, "Use single cursor to create the optional field"),
                     "Expected exception was not thrown",
                 );
-                trees[0].root[createFieldSymbol](
+                trees[0].root[createField](
                     fieldKey,
                     singleTextCursor({ type: stringSchema.name, value: "foo" }),
                 );
@@ -256,9 +256,7 @@ describe("editable-tree: editing", () => {
                 assert.equal(trees[0].root[fieldKey], "bar");
 
                 // edit using valueSymbol
-                trees[0].root[getWithoutUnwrappingSymbol](fieldKey).getWithoutUnwrapping(0)[
-                    valueSymbol
-                ] = "via symbol";
+                trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
                 await provider.ensureSynchronized();
                 assert.equal(trees[1].root[fieldKey], "via symbol");
 
@@ -290,7 +288,7 @@ describe("editable-tree: editing", () => {
                 assert.throws(
                     () => {
                         assert(isUnwrappedNode(trees[0].root));
-                        trees[0].root[createFieldSymbol](fieldKey, fieldContent);
+                        trees[0].root[createField](fieldKey, fieldContent);
                     },
                     (e) =>
                         validateAssertionError(
@@ -300,7 +298,7 @@ describe("editable-tree: editing", () => {
                     "Expected exception was not thrown",
                 );
                 // TODO: rework/remove this as soon as trees with value fields will be supported.
-                trees[0].root[getWithoutUnwrappingSymbol](fieldKey).insertNodes(0, fieldContent);
+                trees[0].root[getField](fieldKey).insertNodes(0, fieldContent);
                 assert.equal(trees[0].root[fieldKey], "foo");
                 await provider.ensureSynchronized();
                 assert.equal(trees[1].root[fieldKey], "foo");
@@ -311,9 +309,7 @@ describe("editable-tree: editing", () => {
                 assert.equal(trees[1].root[fieldKey], "bar");
 
                 // edit using valueSymbol
-                trees[0].root[getWithoutUnwrappingSymbol](fieldKey).getWithoutUnwrapping(0)[
-                    valueSymbol
-                ] = "via symbol";
+                trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
                 await provider.ensureSynchronized();
                 assert.equal(trees[1].root[fieldKey], "via symbol");
 

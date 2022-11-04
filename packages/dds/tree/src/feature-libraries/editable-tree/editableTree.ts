@@ -44,23 +44,23 @@ import {
 import { ProxyContext } from "./editableTreeContext";
 
 /**
- * A symbol for extracting target from editable-tree proxies.
+ * A symbol for extracting target from {@link EditableTree} proxies.
  * Useful for debugging and testing, but not part of the public API.
  */
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
- * A symbol to get the type of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the type of {@link EditableTree} in contexts where string keys are already in use for fields.
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 
 /**
- * A symbol to get the type name of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the type name of {@link EditableTree} in contexts where string keys are already in use for fields.
  */
 export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 
 /**
- * A symbol to get and set the value of a node in contexts where string keys are already in use for fields.
+ * A symbol to get and set the value of {@link EditableTree} in contexts where string keys are already in use for fields.
  *
  * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
  * Concurrently setting the value will follow the "last-write-wins" semantics.
@@ -68,16 +68,16 @@ export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
- * A symbol to get the field of a node without unwrapping in contexts where string keys are already in use for fields.
+ * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
+ * in contexts where string keys are already in use for fields.
  */
-export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
-    "editable-tree:getWithoutUnwrapping()",
-);
+export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
- * A symbol to create a new field of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the function, which creates a new field of {@link EditableTree},
+ * in contexts where string keys are already in use for fields.
  */
-export const createFieldSymbol: unique symbol = Symbol("editable-tree:newFieldSymbol()");
+export const createField: unique symbol = Symbol("editable-tree:createField()");
 
 /**
  * A tree which can be traversed and edited.
@@ -115,7 +115,7 @@ export interface EditableTree extends Iterable<EditableField> {
     /**
      * Gets the field of this node by its key without unwrapping.
      */
-    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
+    [getField](fieldKey: FieldKey): EditableField;
 
     /**
      * Fields of this node, indexed by their field keys.
@@ -153,7 +153,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * `optional` fields will be created following the "last-write-wins" semantics,
      * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
-    [createFieldSymbol](
+    [createField](
         fieldKey: FieldKey,
         newContent: ITreeCursor | ITreeCursor[],
     ): EditableField | undefined;
@@ -178,7 +178,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  *
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
- * Use `getWithoutUnwrapping` to get a node without unwrapping.
+ * Use `getNode` to get a node without unwrapping.
  */
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
@@ -209,7 +209,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
      * Gets a node of this field by its index without unwrapping.
      * Note that the node must exists at the given index.
      */
-    getWithoutUnwrapping(index: number): EditableTree;
+    getNode(index: number): EditableTree;
 
     /**
      * Gets an iterator iterating over the nodes (unwrapped) of this field.
@@ -404,7 +404,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         return proxifiedField;
     }
 
-    public getWithoutUnwrapping(fieldKey: FieldKey): EditableField {
+    public getField(fieldKey: FieldKey): EditableField {
         return this.proxifyField(fieldKey, false);
     }
 
@@ -489,9 +489,9 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target;
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
-            case getWithoutUnwrappingSymbol:
-                return target.getWithoutUnwrapping.bind(target);
-            case createFieldSymbol:
+            case getField:
+                return target.getField.bind(target);
+            case createField:
                 return target.createField.bind(target);
             default:
                 return undefined;
@@ -515,7 +515,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 "The field does not exist. Create the field first using `newFieldSymbol`.",
             );
             const field = target.proxifyField(fieldKey, false);
-            field.getWithoutUnwrapping(0)[valueSymbol] = value;
+            field.getNode(0)[valueSymbol] = value;
             return true;
         }
         if (key === valueSymbol) {
@@ -543,7 +543,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case typeSymbol:
             case typeNameSymbol:
             case Symbol.iterator:
-            case getWithoutUnwrappingSymbol:
+            case getField:
                 return true;
             case valueSymbol:
                 // Could do `target.value !== ValueSchema.Nothing`
@@ -606,11 +606,11 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     value: target[Symbol.iterator].bind(target),
                     writable: false,
                 };
-            case getWithoutUnwrappingSymbol:
+            case getField:
                 return {
                     configurable: true,
                     enumerable: false,
-                    value: target.getWithoutUnwrapping.bind(target),
+                    value: target.getField.bind(target),
                     writable: false,
                 };
             default:
@@ -682,7 +682,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     /**
      * Gets a node by its index without unwrapping.
      */
-    public getWithoutUnwrapping(index: number): EditableTree {
+    public getNode(index: number): EditableTree {
         assert(
             keyIsValidIndex(index, this.length),
             "A child node must exist at index to get it without unwrapping.",

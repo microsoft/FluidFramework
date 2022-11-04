@@ -78,12 +78,21 @@ export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
 }
 
+/**
+ * Implementation of `EditableTreeContext`.
+ *
+ * `transactionCheckout` is required to edit the EditableTrees.
+ */
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     private readonly observer: Dependent;
     private readonly afterChangeHandlers: Set<(context: EditableTreeContext) => void> = new Set();
 
+    /**
+     * @param forest - the Forest
+     * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
+     */
     constructor(
         public readonly forest: IEditableForest,
         private readonly transactionCheckout?: TransactionCheckout<

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -43,7 +44,7 @@ import {
     emptyField,
     isEditableField,
     UnwrappedEditableTree,
-    getWithoutUnwrappingSymbol,
+    getField,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -135,7 +136,7 @@ describe("editable-tree: read-only", () => {
         const fieldKey: FieldKey = brand("address");
         const addressDescriptor = Object.getOwnPropertyDescriptor(proxy, "address");
         assert(addressDescriptor !== undefined);
-        let expected = proxy[getWithoutUnwrappingSymbol](fieldKey).getWithoutUnwrapping(0);
+        let expected = proxy[getField](fieldKey).getNode(0);
         // This block is not needed for the test.
         // It reveals the values of non-primitive nodes,
         // which are otherwise "hidden" behind a proxy.
@@ -165,8 +166,8 @@ describe("editable-tree: read-only", () => {
     it("can use `getOwnPropertyDescriptor` for symbols of EditableTree", () => {
         const [, proxy] = buildTestPerson();
         assert(isUnwrappedNode(proxy));
-        const nameField = proxy[getWithoutUnwrappingSymbol](brand("name"));
-        const nameNode = nameField.getWithoutUnwrapping(0);
+        const nameField = proxy[getField](brand("name"));
+        const nameNode = nameField.getNode(0);
 
         {
             const descriptor = Object.getOwnPropertyDescriptor(nameNode, proxyTargetSymbol);
@@ -181,10 +182,7 @@ describe("editable-tree: read-only", () => {
         }
 
         {
-            const descriptor = Object.getOwnPropertyDescriptor(
-                nameNode,
-                getWithoutUnwrappingSymbol,
-            );
+            const descriptor = Object.getOwnPropertyDescriptor(nameNode, getField);
             assert(typeof descriptor?.value === "function");
             delete descriptor.value;
             assert.deepEqual(descriptor, {
@@ -240,7 +238,7 @@ describe("editable-tree: read-only", () => {
     it("can use `getOwnPropertyDescriptor` for symbols of EditableField", () => {
         const [, proxy] = buildTestPerson();
         assert(isUnwrappedNode(proxy));
-        const nameField = proxy[getWithoutUnwrappingSymbol](brand("name"));
+        const nameField = proxy[getField](brand("name"));
 
         {
             const descriptor = Object.getOwnPropertyDescriptor(nameField, proxyTargetSymbol);
@@ -281,26 +279,17 @@ describe("editable-tree: read-only", () => {
             (proxy.address.phones?.[2] as ComplexPhoneType)[typeNameSymbol],
             complexPhoneSchema.name,
         );
+        assert.deepEqual(proxy[getField](brand("name")).getNode(0)[typeSymbol], stringSchema);
         assert.deepEqual(
-            proxy[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0)[typeSymbol],
-            stringSchema,
-        );
-        assert.deepEqual(
-            proxy[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0)[
-                typeNameSymbol
-            ],
+            proxy[getField](brand("name")).getNode(0)[typeNameSymbol],
             stringSchema.name,
         );
         assert.deepEqual(
-            proxy.address[getWithoutUnwrappingSymbol](brand("phones")).getWithoutUnwrapping(0)[
-                typeSymbol
-            ],
+            proxy.address[getField](brand("phones")).getNode(0)[typeSymbol],
             phonesSchema,
         );
         assert.deepEqual(
-            proxy.address[getWithoutUnwrappingSymbol](brand("phones")).getWithoutUnwrapping(0)[
-                typeNameSymbol
-            ],
+            proxy.address[getField](brand("phones")).getNode(0)[typeNameSymbol],
             phonesSchema.name,
         );
     });
@@ -329,7 +318,7 @@ describe("editable-tree: read-only", () => {
         assert(proxyTargetSymbol in personProxy);
         assert(typeSymbol in personProxy);
         assert(typeNameSymbol in personProxy);
-        assert(getWithoutUnwrappingSymbol in personProxy);
+        assert(getField in personProxy);
         // Check fields show up:
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
@@ -465,9 +454,7 @@ describe("editable-tree: read-only", () => {
         const context = getEditableTreeContext(forest);
         assert(isUnwrappedNode(context.unwrappedRoot));
         assert.deepEqual(
-            context.unwrappedRoot[getWithoutUnwrappingSymbol](
-                globalFieldSymbol,
-            ).getWithoutUnwrapping(0)[typeSymbol],
+            context.unwrappedRoot[getField](globalFieldSymbol).getNode(0)[typeSymbol],
             stringSchema,
         );
         const keys = new Set([globalFieldKeyAsLocalField, globalFieldSymbol]);
@@ -525,7 +512,7 @@ describe("editable-tree: read-only", () => {
         assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
 
         // access without unwrapping
-        const child = context.unwrappedRoot[getWithoutUnwrappingSymbol](brand("child"));
+        const child = context.unwrappedRoot[getField](brand("child"));
         assert(isEditableField(child));
         expectFieldEquals(forest.schema, child, [{ type: int32Schema.name, value: 1 }]);
         context.free();
@@ -570,7 +557,7 @@ describe("editable-tree: read-only", () => {
             expectTreeEquals(forest.schema, context.unwrappedRoot, data);
             expectFieldEquals(forest.schema, context.unwrappedRoot, []);
             assert.throws(
-                () => (context.unwrappedRoot as EditableField).getWithoutUnwrapping(0),
+                () => (context.unwrappedRoot as EditableField).getNode(0),
                 (e) =>
                     validateAssertionError(
                         e,
@@ -674,11 +661,11 @@ describe("editable-tree: read-only", () => {
     it("'getWithoutUnwrapping' does not unwrap primary fields", () => {
         const [, proxy] = buildTestPerson();
         // get the field having a node which follows the primary field schema
-        const phonesField = proxy.address[getWithoutUnwrappingSymbol](brand("phones"));
+        const phonesField = proxy.address[getField](brand("phones"));
         assert(isEditableField(phonesField));
         assert.equal(phonesField.length, 1);
         // get the node with the primary field
-        const phonesNode = phonesField.getWithoutUnwrapping(0);
+        const phonesNode = phonesField.getNode(0);
         assert(isUnwrappedNode(phonesNode));
         assert.equal([...phonesNode].length, 1);
         // get the primary key
@@ -686,14 +673,14 @@ describe("editable-tree: read-only", () => {
         const phonesPrimary = getPrimaryField(phonesType);
         assert(phonesPrimary !== undefined);
         // get the primary field
-        const phonesPrimaryField = phonesNode[getWithoutUnwrappingSymbol](phonesPrimary.key);
+        const phonesPrimaryField = phonesNode[getField](phonesPrimary.key);
         assert(isEditableField(phonesPrimaryField));
         assert.equal(phonesPrimaryField.length, 4);
         // assert the primary field has no primaryType if accessed without prior unwrapping
         assert.equal(phonesPrimaryField.primaryType, undefined);
 
         // get the sequence node with the primary field
-        const simplePhonesNode = phonesPrimaryField.getWithoutUnwrapping(3);
+        const simplePhonesNode = phonesPrimaryField.getNode(3);
         assert(isUnwrappedNode(simplePhonesNode));
         // assert its schema follows the primary field schema and get the primary key from it
         assert.equal([...simplePhonesNode].length, 1);
@@ -711,10 +698,7 @@ describe("editable-tree: read-only", () => {
         assert.equal(simplePhonesPrimaryField.length, 2);
         const expectedPhones = ["112", "113"];
         for (let i = 0; i < simplePhonesPrimaryField.length; i++) {
-            assert.equal(
-                simplePhonesPrimaryField.getWithoutUnwrapping(i)[valueSymbol],
-                expectedPhones[i],
-            );
+            assert.equal(simplePhonesPrimaryField.getNode(i)[valueSymbol], expectedPhones[i]);
             assert.equal(simplePhonesPrimaryField[i], expectedPhones[i]);
         }
     });

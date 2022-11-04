@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
@@ -21,7 +22,7 @@ import {
     EditableTree,
     isEditableField,
     isPrimitive,
-    getWithoutUnwrappingSymbol,
+    getField,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -124,7 +125,7 @@ export function expectFieldEquals(
     }
     if (field.length === 0) {
         assert.throws(
-            () => field.getWithoutUnwrapping(0),
+            () => field.getNode(0),
             (e) =>
                 validateAssertionError(
                     e,
@@ -134,7 +135,7 @@ export function expectFieldEquals(
         );
     }
     for (let index = 0; index < field.length; index++) {
-        expectNodeEquals(schemaData, field.getWithoutUnwrapping(index), expected[index]);
+        expectNodeEquals(schemaData, field.getNode(index), expected[index]);
     }
 }
 
@@ -161,7 +162,7 @@ export function expectNodeEquals(
         assert(expectedFields.delete(field.fieldKey));
         const expectedField = getGenericTreeField(expected, field.fieldKey, false);
         expectFieldEquals(schemaData, field, expectedField);
-        const fieldByKey = node[getWithoutUnwrappingSymbol](field.fieldKey);
+        const fieldByKey = node[getField](field.fieldKey);
         expectFieldEquals(schemaData, fieldByKey, expectedField);
     }
     assert(expectedFields.size === 0);
