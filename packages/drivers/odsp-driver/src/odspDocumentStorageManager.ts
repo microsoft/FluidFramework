@@ -65,7 +65,7 @@ interface GetVersionsTelemetryProps {
 }
 
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
-    private readonly odspSummaryUploadManagerPromise: Promise<typeof OdspSummaryUploadManager>;
+    private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
     private firstVersionCall = true;
 
@@ -103,8 +103,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-        this.odspSummaryUploadManagerPromise = import("./getOdspSummaryUploadManager").then(
-            (m) => m.getOdspSummaryUploadManager());
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -494,16 +492,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             }
         }
 
-        const uploadManager = await this.odspSummaryUploadManagerPromise.then((m) => new m(
-            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
-            this.getStorageToken,
-            this.logger,
-            this.epochTracker,
-            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-            this.relayServiceTenantAndSessionId,
-        ));
+        if (!this.odspSummaryUploadManager) {
+            this.odspSummaryUploadManager = await import("./internalModule").then((module) => {
+                return new module.OdspSummaryUploadManager(
+                    this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+                    this.getStorageToken,
+                    this.logger,
+                    this.epochTracker,
+                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.relayServiceTenantAndSessionId,
+                );
+            });
+        }
 
-        const id = await uploadManager.writeSummaryTree(summary, context);
+        assert(this.odspSummaryUploadManager !== undefined, "summary upload manager should have been initialized");
+        const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
         return id;
     }
 
