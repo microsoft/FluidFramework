@@ -11,6 +11,7 @@ export {
     makeAnonChange,
     Rebaser,
     RevisionTag,
+    tagChange,
     TaggedChange,
 } from "./rebaser";
 export {

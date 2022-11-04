@@ -179,6 +179,10 @@ export interface TaggedChange<TChangeset> {
     readonly change: TChangeset;
 }
 
+export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedChange<T> {
+    return { revision: tag, change };
+}
+
 export function makeAnonChange<T>(change: T): TaggedChange<T> {
     return { revision: undefined, change };
 }
