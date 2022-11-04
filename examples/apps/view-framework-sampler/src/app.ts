@@ -13,7 +13,7 @@ import { renderSampler } from "./view";
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
- async function start() {
+async function start() {
     const tinyliciousModelLoader = new TinyliciousModelLoader<IDiceRollerAppModel>(
         new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
     );
