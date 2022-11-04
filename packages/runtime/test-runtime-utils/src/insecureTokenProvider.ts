@@ -25,6 +25,11 @@ export class InsecureTokenProvider implements ITokenProvider {
          * User with whom generated tokens will be associated.
          */
         private readonly user: IUser,
+
+        /**
+         * Optional. Override of scopes.
+         */
+        private readonly scopes?: ScopeType[],
     ) {
 
     }
@@ -38,7 +43,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
@@ -58,7 +63,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
