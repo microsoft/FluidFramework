@@ -241,6 +241,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     docId: documentId,
                 },
                 async () => {
+                    // The service responds with the current document session associated with the container.
                     return ordererRestWrapper.get<ISession>(
                         `/documents/${tenantId}/session/${documentId}`);
                 });
