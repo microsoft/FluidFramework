@@ -28,6 +28,7 @@ USAGE
 <!-- commands -->
 # Command Topics
 
+* [`flub autocomplete`](docs/autocomplete.md) - display autocomplete installation instructions
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
 * [`flub commands`](docs/commands.md) - list all the commands
