@@ -209,27 +209,14 @@ export class ContainerContext implements IContainerContext {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
-    public close(error?: Error): void {
-        if (this.runtime.close === undefined) {
-            return this.dispose(error);
-        }
+    public dispose(error?: Error, emitDispose?: boolean): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
 
-        this.runtime.close(error);
-        this._quorum.dispose();
-        this.deltaManager.dispose();
-    }
-
-    public dispose(error?: Error): void {
-        if (this._disposed) {
-            return;
-        }
-        this._disposed = true;
-
-        this.runtime.dispose(error);
+        // TODO: need to figure out way runtime can know about emitting dispose or not
+        this.runtime.dispose(error, emitDispose !== true);
         this._quorum.dispose();
         this.deltaManager.dispose();
     }

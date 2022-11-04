@@ -84,8 +84,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get clientId(): string | undefined;
     // (undocumented)
-    close(error?: Error): void;
-    // (undocumented)
     get closeFn(): (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
         logger?: ITelemetryLogger;

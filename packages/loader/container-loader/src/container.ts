@@ -734,7 +734,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public dispose() {
         // TODO: should maybe do close asserts as well?
-        this._deltaManager.dispose();
+        this._deltaManager.close(undefined, true);
     }
 
     public close(error?: ICriticalContainerError) {
@@ -773,11 +773,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 // TODO
                 const errorForContext = error !== undefined ? new Error(error.message) : undefined;
-                if (disposeCall === true) {
-                    this._context?.dispose(errorForContext);
-                } else {
-                    this._context?.close(errorForContext);
-                }
+                this._context?.dispose(errorForContext, disposeCall === true);
 
                 this.storageService.dispose();
 

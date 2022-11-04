@@ -100,12 +100,7 @@ export interface IConnectionManager {
     /**
      * Disposed connection manager
      */
-    dispose(): void;
-
-    /**
-     * TODO
-     */
-    close(error?: ICriticalContainerError): void;
+    dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
 
     get connectionMode(): ConnectionMode;
 }

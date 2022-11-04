@@ -1316,10 +1316,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.removeAllListeners();
     }
 
-    public close(error?: Error): void {
-        this.dispose(error, true);
-    }
-
     public get IFluidTokenProvider() {
         if (this.options?.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

@@ -404,6 +404,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
     }
 
+    public dispose() {
+        throw new Error("Not implemented.");
+    }
+
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
@@ -578,37 +582,26 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     /**
-     * TODO
-     */
-    public dispose(): void {
-        if (this._closed) {
-            return;
-        }
-        this._closed = true;
-
-        this.connectionManager.dispose();
-        this.clearQueues();
-
-        this.emit("dispose");
-        this.removeAllListeners();
-    }
-
-    /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: ICriticalContainerError): void {
+    public close(error?: ICriticalContainerError, emitDispose?: boolean): void {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this.connectionManager.close(error);
+        this.connectionManager.dispose(error, emitDispose !== true);
         this.clearQueues();
 
-        // This needs to be the last thing we do (before removing listeners), as it causes
-        // Container to dispose context and break ability of data stores / runtime to "hear"
-        // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error);
+        if (emitDispose === true) {
+            this.emit("dispose");
+        } else {
+            // This needs to be the last thing we do (before removing listeners), as it causes
+            // Container to dispose context and break ability of data stores / runtime to "hear"
+            // from delta manager, including notification (above) about readonly state.
+            this.emit("closed", error);
+        }
+
         this.removeAllListeners();
     }
 

@@ -104,7 +104,7 @@ export interface IRuntime extends IDisposable {
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 
     // TODO
-    close(error?: Error): void;
+    dispose(error?: Error, skipEmitDisposed?: boolean): void;
 }
 
 /**

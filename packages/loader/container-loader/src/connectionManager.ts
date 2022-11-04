@@ -180,7 +180,6 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionProps: ITelemetryProperties = {};
 
-    private _closed = false;
     private _disposed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -319,8 +318,7 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(errorMessage?: string) {
-        // TODO
+    public dispose(error?: ICriticalContainerError, switchToReadonly?: boolean) {
         if (this._disposed) {
             return;
         }
@@ -333,25 +331,19 @@ export class ConnectionManager implements IConnectionManager {
 
         this._outbound.clear();
 
-        const disconnectReason = errorMessage !== undefined
-            ? `Closing DeltaManager (${errorMessage})`
+        const disconnectReason = error !== undefined
+            ? `Closing DeltaManager (${error.message})`
             : "Closing DeltaManager";
 
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(disconnectReason);
-    }
 
-    public close(error?: ICriticalContainerError) {
-        if (this._closed || this._disposed) {
-            return;
+        if (switchToReadonly === true) {
+            // Notify everyone we are in read-only state.
+            // Useful for data stores in case we hit some critical error,
+            // to switch to a mode where user edits are not accepted
+            this.set_readonlyPermissions(true);
         }
-        this._closed = true;
-        this.dispose(error?.message);
-
-        // Notify everyone we are in read-only state.
-        // Useful for data stores in case we hit some critical error,
-        // to switch to a mode where user edits are not accepted
-        this.set_readonlyPermissions(true);
     }
 
     /**
