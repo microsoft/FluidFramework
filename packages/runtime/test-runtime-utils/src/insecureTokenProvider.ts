@@ -27,7 +27,12 @@ export class InsecureTokenProvider implements ITokenProvider {
         private readonly user: IUser,
 
         /**
-         * Optional. Override of scopes.
+         * Optional. Override of scopes. If a param is not provided, InsecureTinyliciousTokenProvider
+         * will use the default scopes which are document read, write and summarizer write.
+         *
+         * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+         *
+         * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
          */
         private readonly scopes?: ScopeType[],
     ) {
