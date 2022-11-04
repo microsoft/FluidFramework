@@ -397,6 +397,7 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();
     moveToDetachedField(forest, readCursor);
     if (!readCursor.firstNode()) {
+        readCursor.free();
         return undefined;
     }
     const { value } = readCursor;
