@@ -286,10 +286,10 @@ describe("TinyliciousClient", () => {
 
     /**
      * Scenario: Test if TinyliciousClient with only read permission starts the container in read mode.
-     * TinyliciousClient will attempt to start the connection in write mode, but if the write permission
-     * is not available or the file is read only, the connection mode will be read.
+     * TinyliciousClient will attempt to start the connection in write mode, and since access permissions
+     * does not offer write capabilities, the established connection mode will be `read`.
      *
-     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `read`
+     * Expected behavior: TinyliciousClient should start the container with the connectionMode in `read`.
      */
     it("can create a container with only read permission in read mode", async () => {
         const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
@@ -324,8 +324,8 @@ describe("TinyliciousClient", () => {
 
     /**
      * Scenario: Test if TinyliciousClient with read and write permissions starts the container in write mode.
-     * TinyliciousClient will attempt to start the connection in write mode, but if the file is read only,
-     * the connection mode will be read.
+     * TinyliciousClient will attempt to start the connection in write mode, and since access permissions
+     * offer write capability, the established connection mode will be `write`.
      *
      * Expected behavior: TinyliciousClient should start the container with the connectionMode in `write`
      */
