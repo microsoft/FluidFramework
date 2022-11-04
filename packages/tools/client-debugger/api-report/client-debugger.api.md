@@ -22,8 +22,8 @@ export interface FluidClientDebuggerProps {
 
 // @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
-    // (undocumented)
     get connectionState(): ConnectionState;
+    containerId: string;
     dispose(): void;
 }
 

@@ -87,6 +87,14 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 export interface IFluidClientDebugger
     extends IEventProvider<IFluidClientDebuggerEvents>,
         IDisposable {
+    /**
+     * The ID of the Container with which the debugger is associated.
+     */
+    containerId: string;
+
+    /**
+     * TODO
+     */
     get connectionState(): ConnectionState;
 
     // TODO: state associated with events.
@@ -108,7 +116,7 @@ class FluidClientDebugger
     implements IFluidClientDebugger
 {
     /**
-     * {@inheritDoc FluidClientDebuggerProps.containerId}
+     * {@inheritDoc IFluidClientDebugger.containerId}
      */
     public readonly containerId: string;
 
@@ -202,21 +210,21 @@ class FluidClientDebugger
 }
 
 /**
- * TODO
+ * Properties for configuring a {@link IFluidClientDebugger}.
  */
 export interface FluidClientDebuggerProps {
     /**
-     * TODO
+     * The ID of the Container with which the debugger will be associated.
      */
     containerId: string;
 
     /**
-     * TODO
+     * The Container with which the debugger will be associated.
      */
     container: IContainer;
 
     /**
-     * TODO
+     * The session audience with which the debugger will be associated.
      */
     audience: IAudience;
 }
@@ -261,6 +269,29 @@ export function closeFluidClientDebugger(containerId: string): void {
         clientDebugger.dispose();
         debuggerRegistry.delete(containerId);
     }
+}
+
+/**
+ * Gets the registered client debugger associated with the provided Container ID if one is registered.
+ * Will return `undefined` if no such debugger is registered.
+ */
+export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined {
+    const debuggerRegistry = getDebuggerRegistry();
+    return debuggerRegistry.get(containerId);
+}
+
+/**
+ * Gets all registered client debuggers from the registry.
+ */
+export function getFluidClientDebuggers(): IFluidClientDebugger[] {
+    const debuggerRegistry = getDebuggerRegistry();
+
+    const clientDebuggers: IFluidClientDebugger[] = [];
+    for (const [, clientDebugger] of debuggerRegistry) {
+        clientDebuggers.push(clientDebugger);
+    }
+
+    return clientDebuggers;
 }
 
 /**
