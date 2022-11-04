@@ -493,16 +493,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         }
 
         if (!this.odspSummaryUploadManager) {
-            this.odspSummaryUploadManager = await import("./internalModule").then((module) => {
-                return new module.OdspSummaryUploadManager(
+            const module = await import("./internalModule");
+            this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
                     this.odspResolvedUrl.endpoints.snapshotStorageUrl,
                     this.getStorageToken,
                     this.logger,
                     this.epochTracker,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                     this.relayServiceTenantAndSessionId,
-                );
-            });
+            );
         }
 
         assert(this.odspSummaryUploadManager !== undefined, "summary upload manager should have been initialized");

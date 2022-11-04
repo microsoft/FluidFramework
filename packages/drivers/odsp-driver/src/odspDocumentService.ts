@@ -199,7 +199,7 @@ export class OdspDocumentService implements IDocumentService {
         if (this.odspDocumentServiceDelayLoaded) {
             return this.odspDocumentServiceDelayLoaded;
         }
-        const module = await import("./internalModule");
+        const module = await import(/* webpackChunkName: "internalModule" */"./internalModule");
         this.odspDocumentServiceDelayLoaded = new module.OdspDocumentServiceDelayLoaded(
             this.odspResolvedUrl,
             this._policies,
