@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import commander from "commander";
+
+import { ConnectionState } from "fluid-framework";
+
 import { AzureClient } from "@fluidframework/azure-client";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { timeoutPromise } from "@fluidframework/test-utils";
+
 import { ContainerFactorySchema } from "./interface";
 import { getLogger } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
@@ -56,17 +57,17 @@ async function main() {
         process.env.DEBUG = commander.log;
     }
 
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-    }, [
-        "scenario:runner",
-        // "fluid:telemetry:OpPerf"
-    ]);
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+        },
+        ["scenario:runner"],
+    );
 
     const ac = await createAzureClient({
-        userId: "testUserId",
-        userName: "testUserName",
+        userId: `testUserId_${config.childId}`,
+        userName: `testUserName_${config.childId}`,
         connType: config.connType,
         connEndpoint: config.connEndpoint,
         logger,
@@ -78,11 +79,14 @@ async function main() {
 
 async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise<void> {
     let schema;
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-        namespace: "scenario:runner:DocCreator",
-    });
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+            namespace: "scenario:runner:DocCreator",
+        },
+        ["scenario:runner"],
+    );
 
     try {
         schema = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
@@ -116,6 +120,20 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
         );
     } catch {
         throw new Error("Unable to attach container.");
+    }
+
+    if (container.connectionState !== ConnectionState.Connected) {
+        await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "connected" },
+            async () => {
+                return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                    durationMs: 10000,
+                    errorMsg: "container connect() timeout",
+                });
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
     }
 
     process.send?.(id);

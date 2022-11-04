@@ -717,6 +717,32 @@ export class Client {
      * of the current sequence number. This is desirable when rebasing operations for reconnection.
      *
      * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
+     * the current sequence number, returns undefined.
+     */
+    public rebasePositionWithoutSegmentSlide(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number,
+    ): number | undefined {
+        assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x424 /* localSeq greater than collab window */);
+        const { clientId } = this.getCollabWindow();
+        const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
+        if (segment === undefined && offset === undefined) {
+            return;
+        }
+
+        // if segment is undefined, it slid off the string
+        assert(segment !== undefined, 0x425 /* No segment found */);
+
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x426 /* Invalid offset */);
+        return this.findReconnectionPosition(segment, localSeq) + offset;
+    }
+
+    /**
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     *
+     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
      * the current sequence number, the returned position will align with the position of a reference given
      * `SlideOnRemove` semantics.
      *

@@ -11,6 +11,7 @@ import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-uti
 
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
 import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
+import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 import { getLogger } from "./logger";
@@ -184,6 +185,9 @@ export class TestOrchestrator {
             }
             case "doc-creator": {
                 return new DocCreatorRunner(stage.params as unknown as DocCreatorRunnerConfig);
+            }
+            case "doc-loader": {
+                return new DocLoaderRunner(stage.params as unknown as DocLoaderRunnerConfig);
             }
             case "shared-map-traffic": {
                 return new MapTrafficRunner(stage.params as unknown as MapTrafficRunnerConfig);
