@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -91,32 +92,34 @@ describe("editable-tree: editing", () => {
     it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         const person = trees[0].root as PersonType;
+        const nameNode = person[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0);
+        const ageNode = person[getWithoutUnwrappingSymbol](brand("age")).getWithoutUnwrapping(0);
+        const phonesField = person.address.phones;
+        assert(isEditableField(phonesField));
+
         assert.throws(
-            () => (person.friends = { kate: "kate" }),
+            () => (person.friends[valueSymbol] = { kate: "kate" }),
             (e) => validateAssertionError(e, "The value is not primitive"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
-                assert(isEditableField(person.address.phones));
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                person.address.phones[2] = {} as ComplexPhoneType;
+                phonesField[2] = {} as ComplexPhoneType;
             },
             (e) => validateAssertionError(e, "Cannot set a value of a non-primitive field"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
-                assert(isUnwrappedNode(person));
-                person[getWithoutUnwrappingSymbol](brand("name")).getWithoutUnwrapping(0)[valueSymbol] = 1;
+                nameNode[valueSymbol] = 1;
             },
             (e) => validateAssertionError(e, "Expected string"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
-                assert(isUnwrappedNode(person));
-                person[getWithoutUnwrappingSymbol](brand("age")).getWithoutUnwrapping(0)[valueSymbol] = "some";
+                ageNode[valueSymbol] = "some";
             },
             (e) => validateAssertionError(e, "Expected number"),
             "Expected exception was not thrown",
@@ -135,21 +138,23 @@ describe("editable-tree: editing", () => {
                 assert(isUnwrappedNode(trees[0].root));
                 assert(isUnwrappedNode(trees[1].root));
                 // create using `createFieldSymbol`
-                trees[0].root[createFieldSymbol](
-                    fieldKey,
+                trees[0].root[createFieldSymbol](fieldKey, [
                     singleTextCursor({ type: stringSchema.name, value: "foo" }),
-                );
+                    singleTextCursor({ type: stringSchema.name, value: "bar" }),
+                ]);
                 const field_0 = trees[0].root[fieldKey];
                 assert(isEditableField(field_0));
-                assert.equal(field_0.length, 1);
+                assert.equal(field_0.length, 2);
                 assert.equal(field_0[0], "foo");
+                assert.equal(field_0[1], "bar");
+                assert.equal(field_0[2], undefined);
                 await provider.ensureSynchronized();
                 const field_1 = trees[1].root[fieldKey];
                 assert.deepEqual(field_0, field_1);
 
                 // edit using assignment
-                field_0[0] = "bar";
-                assert.equal(field_0[0], "bar");
+                field_0[0] = "buz";
+                assert.equal(field_0[0], "buz");
                 await provider.ensureSynchronized();
                 assert.deepEqual(field_0, field_1);
 
@@ -226,6 +231,18 @@ describe("editable-tree: editing", () => {
                 assert(isUnwrappedNode(trees[1].root));
 
                 // create
+                assert.throws(
+                    () => {
+                        assert(isUnwrappedNode(trees[0].root));
+                        trees[0].root[createFieldSymbol](fieldKey, [
+                            singleTextCursor({ type: stringSchema.name, value: "foo" }),
+                            singleTextCursor({ type: stringSchema.name, value: "foo" }),
+                        ]);
+                    },
+                    (e) =>
+                        validateAssertionError(e, "Use single cursor to create the optional field"),
+                    "Expected exception was not thrown",
+                );
                 trees[0].root[createFieldSymbol](
                     fieldKey,
                     singleTextCursor({ type: stringSchema.name, value: "foo" }),

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { fail } from "assert";
 import { assert } from "@fluidframework/common-utils";
 import {
@@ -59,7 +60,10 @@ export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 
 /**
- * A symbol to get the value of a node in contexts where string keys are already in use for fields.
+ * A symbol to get and set the value of a node in contexts where string keys are already in use for fields.
+ *
+ * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+ * Concurrently setting the value will follow the "last-write-wins" semantics.
  */
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
@@ -95,6 +99,9 @@ export interface EditableTree extends Iterable<EditableField> {
 
     /**
      * Value stored on this node.
+     *
+     * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
     [valueSymbol]: Value;
 
@@ -116,7 +123,13 @@ export interface EditableTree extends Iterable<EditableField> {
      * This API exposes content in a way depending on the {@link Multiplicity} of the {@link FieldKind}.
      * Sequences (including empty ones) are always exposed as {@link EditableField}s,
      * and everything else is either a single EditableTree or undefined depending on if it's empty.
+     *
+     * It is possible to use this indexed access to delete the field using the `delete` operator and
+     * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
+     * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
+    // TODO: update docs for concurrently deleting the field.
     [key: FieldKey]: UnwrappedEditableField;
 
     /**
@@ -130,10 +143,20 @@ export interface EditableTree extends Iterable<EditableField> {
     /**
      * Creates a new field at this node.
      *
-     * Use {@link EditableField.insertNodes} to crete fields of kind `value` as currently
+     * The content of the new field must follow the {@link Multiplicity} of the {@link FieldKind}:
+     * - use a single cursor when creating an `optional` field;
+     * - use array of cursors when creating a `sequence` field;
+     * - use {@link EditableField.insertNodes} instead to create fields of kind `value` as currently
      * it is not possible to have trees with already populated fields of this kind.
+     *
+     * When creating a field in a concurrent environment,
+     * `optional` fields will be created following the "last-write-wins" semantics,
+     * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
-    [createFieldSymbol](fieldKey: FieldKey, newContent: ITreeCursor): EditableField | undefined;
+    [createFieldSymbol](
+        fieldKey: FieldKey,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): EditableField | undefined;
 }
 
 /**
@@ -213,6 +236,11 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 
     /**
      * Nodes of this field, indexed by their numeric indices.
+     *
+     * It is possible to use this indexed access to set the value of the node using the simple assignment operator (`=`)
+     * if the node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
+     * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
      */
     [index: number]: UnwrappedEditableTree;
 }
@@ -386,12 +414,19 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             .values();
     }
 
-    public createField(fieldKey: FieldKey, newContent: ITreeCursor): EditableField | undefined {
+    public createField(
+        fieldKey: FieldKey,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): EditableField | undefined {
         assert(!this.has(fieldKey), "The field already exists.");
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
+                assert(
+                    !Array.isArray(newContent),
+                    "Use single cursor to create the optional field",
+                );
                 if (this.context.setOptionalField(path, fieldKey, newContent, true))
                     return this.proxifyField(fieldKey, false);
             }
