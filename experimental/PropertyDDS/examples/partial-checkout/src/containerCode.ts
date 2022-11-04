@@ -43,18 +43,18 @@ export class PropertyTreeContainerRuntimeFactory
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const diceRoller = await runtime.createDataStore(PropertyTreeInstantiationFactory.type);
-        await diceRoller.trySetAlias(propertyTreeId);
+        const propertyTree = await runtime.createDataStore(PropertyTreeInstantiationFactory.type);
+        await propertyTree.trySetAlias(propertyTreeId);
     }
 
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
     protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const diceRoller = await requestFluidObject<IPropertyTree>(
+        const propertyTree = await requestFluidObject<IPropertyTree>(
             await runtime.getRootDataStore(propertyTreeId),
             "",
         );
-        return new PropertyTreeAppModel(diceRoller);
+        return new PropertyTreeAppModel(propertyTree);
     }
 }

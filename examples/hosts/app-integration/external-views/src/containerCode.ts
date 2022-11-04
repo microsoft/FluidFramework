@@ -16,7 +16,7 @@ import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
  * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
  * complex models.
  */
- export interface IDiceRollerAppModel {
+export interface IDiceRollerAppModel {
     readonly diceRoller: IDiceRoller;
 }
 
