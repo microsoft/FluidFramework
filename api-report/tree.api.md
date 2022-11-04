@@ -122,6 +122,9 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public
+export const createField: unique symbol;
+
 // @public (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -205,26 +208,30 @@ const DUMMY_INVERT_TAG: ChangesetTag;
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    [index: number]: UnwrappedEditableTree;
+    deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
-    getWithoutUnwrapping(index: number): EditableTree;
+    getNode(index: number): EditableTree;
+    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly primaryType?: TreeSchemaIdentifier;
 }
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
-    readonly [anchorSymbol]: Anchor;
-    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): EditableField | undefined;
+    [getField](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: TreeSchema;
-    readonly [valueSymbol]: Value;
-    readonly [key: FieldKey]: UnwrappedEditableField;
+    [valueSymbol]: Value;
+    [key: FieldKey]: UnwrappedEditableField;
 }
 
 // @public
 export interface EditableTreeContext {
+    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;
@@ -404,7 +411,7 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 }
 
 // @public
-export const getWithoutUnwrappingSymbol: unique symbol;
+export const getField: unique symbol;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
