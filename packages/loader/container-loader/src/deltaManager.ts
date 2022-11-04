@@ -240,7 +240,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         assert(isClientMessage(message), 0x419 /* client sends non-client message */);
 
-        if (contents !== undefined) {
+        if (contents !== undefined && contents !== null) {
             this.opsSize += contents.length;
         }
 
