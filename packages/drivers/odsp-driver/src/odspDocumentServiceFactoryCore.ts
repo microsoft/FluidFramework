@@ -43,7 +43,6 @@ import {
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher } from "./odspUtils";
-import { createNewFluidFile } from "./createFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -118,7 +117,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
-                odspResolvedUrl = await createNewFluidFile(
+                // We can delay load this module as this path will not be executed in load flows and create flow
+                // while only happens once in lifetime of a document happens in the background after creation of
+                // detached container.
+                odspResolvedUrl = await import("./internalModule").then((m) => m.createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
                         resolvedUrlData,
@@ -135,7 +137,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     odspResolvedUrl.isClpCompliantApp,
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
                     this.hostPolicy.enableShareLinkWithCreate,
-                );
+                ));
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
                 event.end({
