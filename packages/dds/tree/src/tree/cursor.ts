@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { UpPath } from "./pathTree";
+import { FieldUpPath, UpPath } from "./pathTree";
 import { FieldKey, TreeType, Value } from "./types";
 
 /**
@@ -96,10 +96,23 @@ export interface ITreeCursor {
      */
     enterNode(childIndex: number): void;
 
+    /**
+     * @returns a path to the current field. See {@link FieldUpPath}.
+     *
+     * Only valid when `mode` is `Fields`.
+     * Assumes this cursor has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node,
+     * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
+     * This requirement exists because {@link FieldUpPath}s are absolute paths
+     * and thus must be rooted in a detached sequence.
+     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+     */
+    getFieldPath(): FieldUpPath;
+
     // ********** APIs for when mode = Nodes ********** //
 
     /**
-     * @returns a path to the current node.
+     * @returns a path to the current node. See {@link UpPath}.
      *
      * Only valid when `mode` is `Nodes`.
      * Assumes this cursor has a root node where its field keys are actually detached sequences.

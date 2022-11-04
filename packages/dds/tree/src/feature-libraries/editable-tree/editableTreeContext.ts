@@ -4,10 +4,15 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IEditableForest, TreeNavigationResult } from "../../forest";
-import { lookupGlobalFieldSchema } from "../../schema-stored";
-import { rootFieldKey, symbolFromKey } from "../../tree";
-import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
+import {
+    IEditableForest,
+    lookupGlobalFieldSchema,
+    rootFieldKey,
+    moveToDetachedField,
+    FieldAnchor,
+    Anchor,
+} from "../../core";
+import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -53,8 +58,8 @@ export interface EditableTreeContext {
 }
 
 export class ProxyContext implements EditableTreeContext {
-    public readonly withCursors: Set<ProxyTarget> = new Set();
-    public readonly withAnchors: Set<ProxyTarget> = new Set();
+    public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
+    public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
 
     constructor(public readonly forest: IEditableForest) {}
 
@@ -77,26 +82,31 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
-        return this.getRoot(true) as UnwrappedEditableField;
+        return this.getRoot(true);
     }
 
     public get root(): EditableField {
-        return this.getRoot(false) as EditableField;
+        return this.getRoot(false);
     }
 
-    private getRoot(unwrap: boolean) {
+    private getRoot(unwrap: false): EditableField;
+    private getRoot(unwrap: true): UnwrappedEditableField;
+    private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
-        const destination = this.forest.root(this.forest.rootField);
-        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
-        const targets: ProxyTarget[] = [];
-        if (cursorResult === TreeNavigationResult.Ok) {
-            do {
-                targets.push(new ProxyTarget(this, cursor));
-            } while (cursor.seek(1) === TreeNavigationResult.Ok);
-        }
+        moveToDetachedField(this.forest, cursor);
+        const proxifiedField = proxifyField(this, rootSchema, cursor, unwrap);
         cursor.free();
-        this.forest.anchors.forget(destination);
-        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
+        return proxifiedField;
     }
+}
+
+/**
+ * A simple API for a Forest to interact with the tree.
+ *
+ * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
+ */
+export function getEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+    return new ProxyContext(forest);
 }

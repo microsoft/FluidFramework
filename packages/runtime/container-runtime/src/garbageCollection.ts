@@ -73,6 +73,8 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+// Feature gate key to tombstone datastores.
+export const testTombstoneKey = "Fluid.GarbageCollection.Test.Tombstone";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -369,6 +371,7 @@ export class GarbageCollector implements IGarbageCollector {
     public readonly trackGCState: boolean;
 
     private readonly testMode: boolean;
+    private readonly tombstoneMode: boolean;
     private readonly mc: MonitoringContext;
 
     /**
@@ -448,6 +451,7 @@ export class GarbageCollector implements IGarbageCollector {
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
             testMode: this.testMode,
+            tombstoneMode: this.tombstoneMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             sweepTimeout: this.sweepTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
@@ -605,6 +609,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
+        this.tombstoneMode = this.mc.config.getBoolean(testTombstoneKey) ?? false;
 
         // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
         // contain GC tree and GC is enabled.
@@ -786,15 +791,19 @@ export class GarbageCollector implements IGarbageCollector {
      */
     public setConnectionState(connected: boolean, clientId?: string | undefined): void {
         /**
-         * For non-summarizer clients, initialize the base state when the container becomes active, i.e., it transitions
+         * For all clients, initialize the base state when the container becomes active, i.e., it transitions
          * to "write" mode. This will ensure that the container's own join op is processed and there is a recent
          * reference timestamp that will be used to update the state of unreferenced nodes. Also, all trailing ops which
          * could affect the GC state will have been processed.
          *
+         * If GC is up-to-date for the client and the summarizing client, there will be an doubling of both
+         * InactiveObject_Loaded and SweepReady_Loaded errors, as there will be one from the sending client and one from
+         * the receiving summarizer client.
+         *
          * Ideally, this initialization should only be done for summarizer client. However, we are currently rolling out
          * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
          */
-        if (this.activeConnection() && !this.isSummarizerClient && this.shouldRunGC) {
+        if (this.activeConnection() && this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {});
         }
     }
@@ -883,6 +892,23 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.testMode) {
             this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
+        } else {
+            // If we are running in GC tombstone mode, tombstone objects for unused routes. This enables testing
+            // scenarios involving access to "deleted" data without actually deleting the data from summaries.
+            // Note: we will not tombstone in test mode
+            if (this.tombstoneMode) {
+                const tombstoneRoutes: string[] = [];
+                // Currently only tombstone datastores
+                for (const [key, value] of this.unreferencedNodesState.entries()) {
+                    if (
+                        value.state === UnreferencedState.SweepReady &&
+                        this.runtime.getNodeType(key) === GCNodeType.DataStore
+                    ) {
+                        tombstoneRoutes.push(key);
+                    }
+                }
+                this.runtime.deleteUnusedRoutes(tombstoneRoutes);
+            }
         }
 
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and

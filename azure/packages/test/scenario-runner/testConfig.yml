@@ -6,8 +6,8 @@
         key1: SharedMap
         key2: SharedMap
     connectionConfig:
-      type: local
-      endpoint: http://localhost:7070
+      type: remote
+      endpoint: https://alfred.westus2.fluidrelay.azure.com
  stages:
   - stage-1:
     id: 1
@@ -20,22 +20,22 @@
     out: ${client}
   - stage-2:
     id: 2
-    name: Create empty document
+    name: Create empty documents
     package: doc-creator
     params:
-      client: ${client}
+      connectionConfig: ${connectionConfig}
       schema: ${schema}
-    out: ${docId}
+      numDocs: 2
+      clientStartDelayMs: 10
+    out: ${docIds}
   - stage-3:
     id: 3
-    name: Create traffic on SharedMap
-    package: shared-map-traffic
+    name: Load documents
+    package: doc-loader
     params:
       connectionConfig: ${connectionConfig}
-      docId: ${docId}
       schema: ${schema}
-      numClients: 1
-      clientStartDelayMs: 100
-      writeRatePerMin: 60
-      sharedMapKey: key1
-      totalWriteCount: 5
+      docIds: ${docIds}
+      clientStartDelayMs: 10
+
+

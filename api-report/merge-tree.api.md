@@ -27,7 +27,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
-    abstract append(segment: ISegment): void;
+    append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -187,6 +187,7 @@ export class Client {
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
+    rebasePositionWithoutSegmentSlide(pos: number, seqNumberFrom: number, localSeq: number): number | undefined;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;

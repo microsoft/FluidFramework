@@ -8,12 +8,12 @@ import {
     genericTreeKeys,
     getGenericTreeField,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
+    mapCursorField,
     ITreeCursorSynchronous,
     setGenericTreeField,
-} from "../tree";
+} from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
