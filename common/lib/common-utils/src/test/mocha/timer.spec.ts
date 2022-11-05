@@ -226,11 +226,9 @@ describe("Timers", () => {
             clock.tick(defaultTimeout - 1);
             timer.restart();
 
-            setImmediate(() => {
-                // use a microtask to advance the clock by a lot, that way, we ensure that the
-                // first time our timer executes its handler, it is late by design.
-                clock.tick(defaultTimeout * 2);
-            });
+            // Advance the clock by a lot, that way, we ensure that the
+            // first time our timer executes its handler, it is late by design.
+            clock.tick(defaultTimeout * 2);
 
             flushPromises().then(
                 () => {},
