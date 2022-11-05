@@ -145,9 +145,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (
-            refreshToken?: boolean
-        ): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 {

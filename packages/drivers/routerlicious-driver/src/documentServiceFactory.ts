@@ -121,23 +121,23 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             async (event) => {
                 // @TODO: Remove returned "string" type when removing back-compat code
                 const postRes = await ordererRestWrapper.post<
-                { id: string; token?: string; session?: ISession; } | string
-                >(
-                    `/documents/${tenantId}`,
-                    {
-                        summary: convertSummaryToCreateNewSummary(appSummary),
-                        sequenceNumber: documentAttributes.sequenceNumber,
-                        values: quorumValues,
-                        enableDiscovery: this.driverPolicies.enableDiscovery,
-                        generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-                    },
-                );
+                    { id: string; token?: string; session?: ISession } | string
+                >(`/documents/${tenantId}`, {
+                    summary: convertSummaryToCreateNewSummary(appSummary),
+                    sequenceNumber: documentAttributes.sequenceNumber,
+                    values: quorumValues,
+                    enableDiscovery: this.driverPolicies.enableDiscovery,
+                    generateToken:
+                        this.tokenProvider.documentPostCreateCallback !==
+                        undefined,
+                });
 
                 event.end({
-                    docId: (typeof postRes === "string") ? postRes : postRes.id,
+                    docId: typeof postRes === "string" ? postRes : postRes.id,
                 });
                 return postRes;
-            });
+            }
+        );
 
         // For supporting backward compatibility, when the request has generateToken === true, it will return
         // an object instead of string
