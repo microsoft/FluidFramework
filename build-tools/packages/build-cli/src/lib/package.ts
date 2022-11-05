@@ -24,7 +24,7 @@ import { indentString } from "./text";
  * @internal
  */
 export interface PackageVersionMap {
-    [packageName: ReleasePackage]: ReleaseVersion;
+    [packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
 }
 
 /**
