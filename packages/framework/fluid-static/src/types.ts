@@ -189,6 +189,7 @@ export interface IServiceAudience<M extends IMember>
      * FOR INTERNAL USE ONLY.
      *
      * @remarks Used to power debug tooling.
+     * @privateRemarks TODO: make this required in the future (breaking change).
      *
      * @internal
      */

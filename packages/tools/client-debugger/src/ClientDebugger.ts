@@ -5,11 +5,11 @@
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    ConnectionState,
     IAudience,
     IContainer,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 // TODOs:
@@ -82,6 +82,36 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 /**
+ * Represents a change in some state, coupled with a timestamp.
+ *
+ * @typeParam TState - The type of state being tracked.
+ */
+export interface StateChangeLogEntry<TState> {
+    /**
+     * The new state value.
+     */
+    newState: TState;
+
+    /**
+     * The time at which the state change event was emitted.
+     */
+    timestamp: Date;
+}
+
+/**
+ * Represents a {@link @fluidframework/container-loader#ConnectionState} change.
+ */
+export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+    /**
+     * When associated with a new connection (i.e. state transition to ConnectionState.Connected), will
+     * be the new client ID.
+     *
+     * Will always be undefined for disconnects.
+     */
+    clientId: string | undefined;
+}
+
+/**
  * TODO
  */
 export interface IFluidClientDebugger
@@ -93,9 +123,14 @@ export interface IFluidClientDebugger
     containerId: string;
 
     /**
-     * TODO
+     * The current connection state.
      */
     get connectionState(): ConnectionState;
+
+    /**
+     * The history of all ConnectionState changes since the debugger session was initialized.
+     */
+    get connectionStateLog(): readonly ConnectionStateChangeLogEntry[];
 
     // TODO: state associated with events.
 
@@ -129,6 +164,15 @@ class FluidClientDebugger
      * {@inheritDoc FluidClientDebuggerProps.audience}
      */
     private readonly audience: IAudience;
+
+    // #region Accumulated log state
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.connectionStateLog}
+     */
+    private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
+
+    // #endregion
 
     // #region Container-related event handlers
 
@@ -164,9 +208,12 @@ class FluidClientDebugger
         this.container = container;
         this.audience = audience;
 
+        // TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
+        this._connectionStateLog = [];
+
         // Bind Container events
-        this.container.on("connected", this.containerConnectedHandler);
-        this.container.on("disconnected", this.containerDisconnectedHandler);
+        this.container.on("connected", (clientId) => this.onConnected(clientId));
+        this.container.on("disconnected", () => this.onDisconnected());
         this.container.on("closed", this.containerClosedHandler);
 
         // Bind Audience events
@@ -186,12 +233,38 @@ class FluidClientDebugger
     }
 
     /**
+     * {@inheritDoc IFluidClientDebugger.connectionStateLog}
+     */
+    public get connectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
+        // Clone array contents so consumers don't see local changes
+        return this._connectionStateLog.map((value) => value);
+    }
+
+    private onConnected(clientId: string): void {
+        this._connectionStateLog.push({
+            newState: ConnectionState.Connected,
+            timestamp: new Date(),
+            clientId,
+        });
+        this.containerConnectedHandler(clientId);
+    }
+
+    private onDisconnected(): void {
+        this._connectionStateLog.push({
+            newState: ConnectionState.Disconnected,
+            timestamp: new Date(),
+            clientId: undefined,
+        });
+        this.containerDisconnectedHandler();
+    }
+
+    /**
      * {@inheritDoc IFluidClientDebugger.dispose}
      */
     public dispose(): void {
         // Unbind Container events
-        this.container.off("connected", this.containerConnectedHandler);
-        this.container.off("disconnected", this.containerDisconnectedHandler);
+        this.container.off("connected", (clientId) => this.onConnected(clientId));
+        this.container.off("disconnected", () => this.onDisconnected());
         this.container.off("closed", this.containerClosedHandler);
 
         // Unbind Audience events

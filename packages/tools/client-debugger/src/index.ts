@@ -12,8 +12,10 @@
  */
 
 export {
+    ConnectionStateChangeLogEntry,
     IFluidClientDebugger,
     IFluidClientDebuggerEvents,
     FluidClientDebuggerProps,
     initializeFluidClientDebugger,
+    StateChangeLogEntry,
 } from "./ClientDebugger";

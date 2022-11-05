@@ -4,7 +4,7 @@
 
 ```ts
 
-import { ConnectionState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -12,6 +12,11 @@ import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+
+// @public
+export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+    clientId: string | undefined;
+}
 
 // @public
 export interface FluidClientDebuggerProps {
@@ -23,6 +28,7 @@ export interface FluidClientDebuggerProps {
 // @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     get connectionState(): ConnectionState;
+    get connectionStateLog(): readonly ConnectionStateChangeLogEntry[];
     containerId: string;
     dispose(): void;
 }
@@ -38,5 +44,11 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger;
+
+// @public
+export interface StateChangeLogEntry<TState> {
+    newState: TState;
+    timestamp: Date;
+}
 
 ```

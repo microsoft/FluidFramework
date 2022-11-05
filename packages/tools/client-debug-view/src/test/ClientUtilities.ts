@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IFluidClientDebugger, initializeFluidClientDebugger } from "@fluid-tools/client-debugger";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -121,4 +122,17 @@ export async function loadExistingFluidContainer(
         containerId,
         audience: services.audience,
     };
+}
+
+/**
+ * Initializes the Fluid Client debugger using the current session Container info.
+ */
+export function initializeClientDebugger(containerInfo: ContainerInfo): IFluidClientDebugger {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+    return initializeFluidClientDebugger({
+        containerId: containerInfo.containerId,
+        container: containerInfo.container._getRuntimeContainer!(),
+        audience: containerInfo.audience._getRuntimeAudience!(),
+    });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 }

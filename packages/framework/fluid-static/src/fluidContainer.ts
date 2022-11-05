@@ -194,6 +194,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * FOR INTERNAL USE ONLY.
      *
      * @remarks Used to power debug tooling.
+     * @privateRemarks TODO: make this required in the future (breaking change).
      *
      * @internal
      */
