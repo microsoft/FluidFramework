@@ -26,6 +26,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
         id: userID ?? uuid(),
         name: userName ?? uuid(),
     };
+    const endPoint = (process.env.azure__fluid__relay__service__endpoint as string)
 
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
@@ -34,7 +35,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
         ? {
               tenantId,
               tokenProvider: createAzureTokenProvider(userID, userName),
-              endpoint: "https://alfred.westus2.fluidrelay.azure.com",
+              endpoint: endPoint ?? "https://alfred.westus2.fluidrelay.azure.com",
               type: "remote",
           }
         : {
