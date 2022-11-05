@@ -305,6 +305,7 @@ export const shortCodeMap = {
     "0x166": "BaseSnapshot should be there as detached container loaded from snapshot",
     "0x167": "Used route does not belong to any known data store",
     "0x168": "Expected tree in snapshot not found",
+    "0x169": "No pending message found for this remote message",
     "0x16b": "The pending batch state indicates we are already processing a batch",
     "0x16d": "There is no pending batch begin message",
     "0x16e": "Batch with single message should not have batch metadata",
