@@ -11,6 +11,7 @@ import {
     RestLessClient,
     RestWrapper,
 } from "@fluidframework/server-services-client";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
@@ -145,17 +146,26 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
-            // Craft credentials using tenant id and token
-            const storageToken = await tokenProvider.fetchStorageToken(
-                tenantId,
-                documentId,
-                refreshToken,
+            return PerformanceEvent.timedExecAsync(
+                logger,
+                {
+                    eventName: "FetchStorageToken",
+                    docId: documentId,
+                },
+                async () => {
+                    // Craft credentials using tenant id and token
+                    const storageToken = await tokenProvider.fetchStorageToken(
+                        tenantId,
+                        documentId,
+                        refreshToken
+                    );
+                    const credentials = {
+                        password: storageToken.jwt,
+                        user: tenantId,
+                    };
+                    return getAuthorizationTokenFromCredentials(credentials);
+                }
             );
-            const credentials = {
-                password: storageToken.jwt,
-                user: tenantId,
-            };
-            return getAuthorizationTokenFromCredentials(credentials);
         };
 
         const restWrapper = new RouterliciousStorageRestWrapper(
@@ -194,12 +204,21 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
-            const ordererToken = await tokenProvider.fetchOrdererToken(
-                tenantId,
-                documentId,
-                refreshToken,
+            return PerformanceEvent.timedExecAsync(
+                logger,
+                {
+                    eventName: "FetchOrdererToken",
+                    docId: documentId,
+                },
+                async () => {
+                    const ordererToken = await tokenProvider.fetchOrdererToken(
+                        tenantId,
+                        documentId,
+                        refreshToken,
+                    );
+                    return `Basic ${ordererToken.jwt}`;
+                }
             );
-            return `Basic ${ordererToken.jwt}`;
         };
 
         const restWrapper = new RouterliciousOrdererRestWrapper(
