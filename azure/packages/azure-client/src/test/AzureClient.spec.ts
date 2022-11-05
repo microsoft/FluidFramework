@@ -178,7 +178,7 @@ describe("AzureClient", () => {
      * Expected behavior: The container should start with the connectionMode in `read`.
      */
     it("can create a container with only read permission in read mode", async () => {
-        const readOnlyAzureClient = createAzureClient([ ScopeType.DocRead ]);
+        const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
 
         const { container } = await readOnlyAzureClient.createContainer(schema);
         const containerId = await container.attach();
@@ -212,7 +212,7 @@ describe("AzureClient", () => {
      * Expected behavior: The container should start with the connectionMode in `write`.
      */
     it("can create a container with read and write permissions in write mode", async () => {
-        const readWriteAzureClient = createAzureClient([ ScopeType.DocRead, ScopeType.DocWrite ]);
+        const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
 
         const { container } = await readWriteAzureClient.createContainer(schema);
         const containerId = await container.attach();
