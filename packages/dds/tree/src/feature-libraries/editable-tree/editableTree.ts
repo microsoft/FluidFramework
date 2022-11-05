@@ -449,10 +449,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         this.cursor.exitField();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
-                // TODO: `set` an existing optional field to `undefined` is not working
-                // since currently `ModularChangeFamily` does not support invert op for optional fields
-                this.context.deleteNodes(path, fieldKey, 0, length);
-                // this.context.setOptionalField(path, fieldKey, undefined, false);
+                this.context.setOptionalField(path, fieldKey, undefined, false);
                 break;
             }
             case Multiplicity.Sequence: {

@@ -830,7 +830,7 @@ describe("Data Store Context Tests", () => {
                     (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
             });
 
-            describe("should error on attach if data object cannot be constructed", () => {
+            describe("should error on attach if data store cannot be constructed/initialized", () => {
                 // Tests in this suite should be scenarios that lead to a data store which cannot be constructed for
                 // some reason.
 
