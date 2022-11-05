@@ -194,7 +194,10 @@ export class PendingStateManager implements IDisposable {
      * @deprecated Use batch metadata to indicate end of batch. To be removed in 2.0.0-internal.4.0.0
      */
     public onFlush() {
-        // This method should not be called
+        const previousMessage = this.pendingMessages.peekBack();
+        if (previousMessage) {
+            previousMessage.opMetadata = { ...previousMessage.opMetadata, batch: false };
+        }
     }
 
     /**
