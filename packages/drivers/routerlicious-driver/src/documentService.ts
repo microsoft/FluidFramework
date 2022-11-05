@@ -95,9 +95,8 @@ export class DocumentService implements api.IDocumentService {
                     this.logger,
                     rateLimiter,
                     this.driverPolicies.enableRestLess,
-                    this.storageUrl
+                    this.storageUrl,
                 );
-
                 const historian = new Historian(
                     this.storageUrl,
                     true,
@@ -159,7 +158,7 @@ export class DocumentService implements api.IDocumentService {
                     this.tokenProvider,
                     this.logger,
                     rateLimiter,
-                    this.driverPolicies.enableRestLess
+                    this.driverPolicies.enableRestLess,
                 );
             }
             return this.ordererRestWrapper;

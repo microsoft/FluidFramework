@@ -98,7 +98,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             undefined,
@@ -106,7 +105,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             logger2,
             rateLimiter,
             this.driverPolicies.enableRestLess,
-            resolvedUrl.endpoints.ordererUrl
+            resolvedUrl.endpoints.ordererUrl,
         );
 
         const res = await PerformanceEvent.timedExecAsync(
@@ -225,14 +224,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             }
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                        tenantId,
-                        documentId,
-                        this.tokenProvider,
-                        logger2,
-                        rateLimiter,
-                        this.driverPolicies.enableRestLess,
-                        resolvedUrl.endpoints.ordererUrl,
-                    );
+                tenantId,
+                documentId,
+                this.tokenProvider,
+                logger2,
+                rateLimiter,
+                this.driverPolicies.enableRestLess,
+                resolvedUrl.endpoints.ordererUrl,
+            );
 
             const discoveredSession = await PerformanceEvent.timedExecAsync(
                 logger2,
