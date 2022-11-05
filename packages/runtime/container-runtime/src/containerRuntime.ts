@@ -159,6 +159,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
+    testTombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -433,6 +434,17 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -606,6 +618,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     /**
+     * @deprecated - use loadRuntime instead.
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -621,6 +634,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
+        let existingFlag = true;
+        if (!existing) {
+            existingFlag = false;
+        }
+        return this.loadRuntime({
+            context,
+            registryEntries,
+            existing: existingFlag,
+            requestHandler,
+            runtimeOptions,
+            containerScope,
+        });
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param params - An object housing the runtime properties:
+     * - context - Context of the container.
+     * - registryEntries - Mapping to the stores.
+     * - existing - When loading from an existing snapshot
+     * - requestHandler - Request handlers for the container runtime
+     * - runtimeOptions - Additional options to be passed to the runtime
+     * - containerScope - runtime services provided with context
+     */
+     public static async loadRuntime(
+        params: {
+            context: IContainerContext;
+            registryEntries: NamedFluidDataStoreRegistryEntries;
+            existing: boolean;
+            requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+            runtimeOptions?: IContainerRuntimeOptions;
+            containerScope?: FluidObject;
+        },
+    ): Promise<ContainerRuntime> {
+        const { context, registryEntries, existing, requestHandler, runtimeOptions = {}, containerScope = {} } = params;
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
@@ -640,6 +688,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOfflineLoad = false,
             compressionOptions = {},
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -717,6 +766,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 enableOfflineLoad,
                 compressionOptions,
                 maxBatchSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -826,6 +876,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private delayConnectClientId?: string;
 
+    private ensureNoDataModelChangesCalls = 0;
+
+    /**
+     * Tracks the number of detected reentrant ops to report,
+     * in order to self-throttle the telemetry events.
+     *
+     * This should be removed as part of ADO:2322
+     */
+    private opReentryCallsToReport = 5;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            return callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
+    }
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -840,6 +917,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -962,6 +1040,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -978,8 +1060,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // latency of processing a batch.
         // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
         // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
-        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes);
+        this.pendingAttachBatch = new BatchManager({
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+            softLimit: 64 * 1024,
+        });
+        this.pendingBatch = new BatchManager({
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+        });
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -1356,10 +1445,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
+        const viaHandle = typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean"
+            ? request.headers?.[RuntimeHeaders.viaHandle]
+            : false;
 
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait, viaHandle);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1762,7 +1854,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const context = await this.dataStores.getDataStore(internalId, wait);
+        const context = await this.dataStores.getDataStore(internalId, wait, false /* viaHandle */);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
@@ -1787,16 +1879,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;
@@ -2208,9 +2290,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
      * scenarios with accessing deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
+        /**
+         * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
+         * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
+         * external user, but the internal runtime does not delete it in summarizes, etc.
+         */
+        const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
+        // TODO: add blobs
+        if (tombstone) {
+            // If blob routes are passed in here, tombstone will fail and hit an assert
+            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
+            return;
+        }
+
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2329,20 +2424,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
             latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
-            if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
-                // We need to catch up to the latest summary's reference sequence number before pausing.
-                await PerformanceEvent.timedExecAsync(
-                    summaryNumberLogger,
-                    {
-                        eventName: "WaitingForSeq",
-                        lastSequenceNumber: this.deltaManager.lastSequenceNumber,
-                        targetSequenceNumber: latestSnapshotRefSeq,
-                        lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
-                    },
-                    async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
-                    { start: true, end: true, cancel: "error" }, // definitely want start event
-                );
-            }
+            // We might need to catch up to the latest summary's reference sequence number before pausing.
+            await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
+                summaryNumberLogger);
         }
 
         try {
@@ -2634,6 +2718,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+        this.verifyCanSubmitOps();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
@@ -2688,7 +2773,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             {
                                 opSize: message.contents.length,
                                 count: this.pendingAttachBatch.length,
-                                limit: this.pendingAttachBatch.limit,
+                                limit: this.pendingAttachBatch.options.hardLimit,
                             });
                     }
                 }
@@ -2700,7 +2785,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         {
                             opSize: message.contents.length,
                             count: this.pendingBatch.length,
-                            limit: this.pendingBatch.limit,
+                            limit: this.pendingBatch.options.hardLimit,
                         });
                 }
                 if (!this.currentlyBatching()) {
@@ -2748,6 +2833,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
+        }
+    }
+
+    private verifyCanSubmitOps() {
+        if (this.ensureNoDataModelChangesCalls > 0) {
+            if (this.opReentryCallsToReport > 0) {
+                this.mc.logger.sendTelemetryEvent(
+                    { eventName: "Op reentry detected" },
+                    // We need to capture the call stack in order to inspect the source of this usage pattern
+                    new GenericError("Op reentry detected"),
+                );
+                this.opReentryCallsToReport--;
+            }
+
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            if (this.enableOpReentryCheck) {
+                throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+            }
         }
     }
 
@@ -2802,24 +2916,61 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private async waitForDeltaManagerToCatchup(
+        latestSnapshotRefSeq: number,
+        summaryLogger: ITelemetryLogger,
+    ): Promise<void> {
+        if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
+            // We need to catch up to the latest summary's reference sequence number before proceeding.
+            await PerformanceEvent.timedExecAsync(
+                summaryLogger,
+                {
+                    eventName: "WaitingForSeq",
+                    lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+                    targetSequenceNumber: latestSnapshotRefSeq,
+                    lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
+                },
+                async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
+                { start: true, end: true, cancel: "error" }, // definitely want start event
+            );
+        }
+    }
+
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
     public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
         const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         // The call to fetch the snapshot is very expensive and not always needed.
         // It should only be done by the summarizerNode, if required.
+        // When fetching from storage we will always get the latest version and do not use the ackHandle.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-                ackHandle,
+                null,
                 summaryLogger,
                 {
                     eventName: "RefreshLatestSummaryGetSnapshot",
                     ackHandle,
                     summaryRefSeq,
-                    fetchLatest: false,
+                    fetchLatest: true,
                 });
+
+            const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
+            summaryLogger.sendTelemetryEvent(
+            {
+                eventName: "LatestSummaryRetrieved",
+                ackHandle,
+                lastSequenceNumber: latestSnapshotRefSeq,
+                targetSequenceNumber: summaryRefSeq,
+            });
+
+            // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
+            // wait for the delta manager to catch up before refreshing the latest Summary.
+            await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq,
+                summaryLogger);
+
             return fetchResult.snapshotTree;
         };
+
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
             summaryRefSeq,
@@ -3043,11 +3194,16 @@ const waitForSeq = async (
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
 
-    const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-        if (message.sequenceNumber >= targetSeq) {
-            resolve();
-            deltaManager.off("op", handleOp);
-        }
-    };
-    deltaManager.on("op", handleOp);
+    // If we already reached target sequence number, simply resolve the promise.
+    if (deltaManager.lastSequenceNumber >= targetSeq) {
+        resolve();
+    } else {
+        const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+            if (message.sequenceNumber >= targetSeq) {
+                resolve();
+                deltaManager.off("op", handleOp);
+            }
+        };
+        deltaManager.on("op", handleOp);
+    }
 });

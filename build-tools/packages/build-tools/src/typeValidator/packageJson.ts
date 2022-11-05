@@ -36,9 +36,25 @@ interface PackageJson {
     private: boolean | undefined;
     devDependencies: Record<string, string>;
     typeValidation?: {
+        /**
+         * The version of the package. Should match the version field in package.json.
+         */
         version: string;
+
+        /**
+         * An object containing types that are known to be broken.
+         */
         broken: BrokenCompatTypes;
+
+        /**
+         * If true, disables type test preparation and generation for the package.
+         */
         disabled?: boolean;
+
+        /**
+         * The version used as the "previous" version to compare against when generating type tests.
+         */
+        baselineVersion?: string;
     };
 }
 
@@ -301,6 +317,7 @@ export async function getAndUpdatePackageDetails(
 
         packageDetails.pkg.typeValidation = {
             version,
+            baselineVersion: prevVersion,
             broken: resetBroken === true ? {} : packageDetails.pkg.typeValidation?.broken ?? {},
         };
 
@@ -311,7 +328,7 @@ export async function getAndUpdatePackageDetails(
         if ((writeUpdates ?? false) === true) {
             await util.promisify(fs.writeFile)(
                 `${packageDir}/package.json`,
-                JSON.stringify(packageDetails.pkg, undefined, 2),
+                JSON.stringify(packageDetails.pkg, undefined, 2).concat("\n"),
             );
         }
     }

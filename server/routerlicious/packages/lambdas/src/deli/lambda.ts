@@ -19,7 +19,7 @@ import {
     ISummaryAck,
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
+import { canSummarize, defaultHash, getNextHash, isNetworkError } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -562,7 +562,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         if (produceToDeltas.length > 0) {
             // processing this boxcar resulted in one or more ticketed messages (sequenced ops or nacks)
             // produce them in a single boxcar to the deltas topic
-            this.produceMessages(this.deltasProducer, produceToDeltas);
+            this.produceMessages(this.deltasProducer, produceToDeltas, rawMessage);
         }
 
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
@@ -661,7 +661,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             });
     }
 
-    private produceMessages(producer: IProducer, messages: ITicketedMessage[]) {
+    private produceMessages(producer: IProducer, messages: ITicketedMessage[], rawMessage: IQueuedMessage) {
         this.lastSendP = producer
             .send(messages, this.tenantId, this.documentId)
             .catch((error) => {
@@ -669,7 +669,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     return;
                 }
 
-                const errorMsg = `Could not send ${messages.length} messages to producer`;
+                const errorMsg = `Could not send ${messages.length} messages to producer. offset: ${rawMessage.offset}`;
                 this.context.log?.error(
                     `${errorMsg}: ${JSON.stringify(error)}`,
                     {
@@ -679,8 +679,19 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         },
                     });
                 Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+
+                let restart = true;
+                let markAsCorrupt = false;
+
+                if (isNetworkError(error) && error.code === 413) {
+                    // kafka message size too large
+                    restart = false;
+                    markAsCorrupt = true;
+                }
+
                 this.context.error(error, {
-                    restart: true,
+                    restart,
+                    markAsCorrupt: markAsCorrupt ? rawMessage : undefined,
                     tenantId: this.tenantId,
                     documentId: this.documentId,
                 });

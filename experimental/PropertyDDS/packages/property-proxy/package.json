@@ -43,8 +43,9 @@
     "@babel/core": "^7.12.10",
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
+    "@fluid-experimental/property-proxy-previous": "npm:@fluid-experimental/property-proxy@2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "babel-loader": "^8.0.5",
     "concurrently": "^6.2.0",
@@ -62,5 +63,9 @@
   "jest-junit": {
     "outputDirectory": "nyc",
     "outputName": "jest-junit-report.xml"
+  },
+  "typeValidation": {
+    "version": "2.0.0-internal.3.0.0",
+    "broken": {}
   }
 }

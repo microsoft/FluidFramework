@@ -160,6 +160,30 @@ use_old_ClassDeclaration_LocalDocumentServiceFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocalDocumentStorageService": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_LocalDocumentStorageService():
+    TypeOnly<old.LocalDocumentStorageService>;
+declare function use_current_ClassDeclaration_LocalDocumentStorageService(
+    use: TypeOnly<current.LocalDocumentStorageService>);
+use_current_ClassDeclaration_LocalDocumentStorageService(
+    get_old_ClassDeclaration_LocalDocumentStorageService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_LocalDocumentStorageService": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_LocalDocumentStorageService():
+    TypeOnly<current.LocalDocumentStorageService>;
+declare function use_old_ClassDeclaration_LocalDocumentStorageService(
+    use: TypeOnly<old.LocalDocumentStorageService>);
+use_old_ClassDeclaration_LocalDocumentStorageService(
+    get_current_ClassDeclaration_LocalDocumentStorageService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalResolver():

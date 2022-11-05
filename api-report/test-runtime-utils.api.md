@@ -52,6 +52,7 @@ import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -68,7 +69,8 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser);
+    user: IUser,
+    scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -291,6 +293,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -375,6 +379,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
+    // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)

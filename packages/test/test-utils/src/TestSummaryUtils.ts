@@ -27,8 +27,7 @@ import { timeoutAwait } from "./timeoutUtils";
 
 const summarizerClientType = "summarizer";
 
-async function createSummarizerCore(container: IContainer, loader: IHostLoader, summaryVersion?: string) {
-    const absoluteUrl = await container.getAbsoluteUrl("");
+async function createSummarizerCore(absoluteUrl: string | undefined, loader: IHostLoader, summaryVersion?: string) {
     if (absoluteUrl === undefined) {
         throw new Error("URL could not be resolved");
     }
@@ -54,7 +53,11 @@ async function createSummarizerCore(container: IContainer, loader: IHostLoader, 
     if (fluidObject.ISummarizer === undefined) {
         throw new Error("Fluid object does not implement ISummarizer");
     }
-    return fluidObject.ISummarizer;
+
+    return {
+        container: summarizerContainer,
+        summarizer: fluidObject.ISummarizer,
+    };
 }
 
 const defaultSummaryOptions: ISummaryRuntimeOptions = {
@@ -92,8 +95,8 @@ export async function createSummarizerFromFactory(
         [[provider.defaultCodeDetails, runtimeFactory]],
         { configProvider: mockConfigProvider() },
     );
-
-    return createSummarizerCore(container, loader, summaryVersion);
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
 }
 
 export async function createSummarizer(
@@ -112,7 +115,18 @@ export async function createSummarizer(
     };
 
     const loader = provider.makeTestLoader(testContainerConfig);
-    return createSummarizerCore(container, loader, summaryVersion);
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
+}
+
+export async function createSummarizerWithContainer(
+    provider: ITestObjectProvider,
+    absoluteUrl: string | undefined,
+    testContainerConfig: ITestContainerConfig,
+    summaryVersion?: string,
+): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
+    const loader = provider.makeTestLoader(testContainerConfig);
+    return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
 
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
