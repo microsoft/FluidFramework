@@ -12,7 +12,7 @@ import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 
-describe.only('EditLog', () => {
+describe('EditLog', () => {
 	const edit0 = newEdit([]);
 	const edit1 = newEdit([]);
 	const { id: id0, editWithoutId: editWithoutId0 } = separateEditAndId(edit0);
@@ -141,14 +141,14 @@ describe.only('EditLog', () => {
 		expect(log.length).to.equal(2);
 	});
 
-	it('tracks the min sequence number of sequenced edits', () => {
+	it('tracks the min sequence index of sequenced edits', () => {
 		const log = new EditLog();
 
-		expect(log.minSequenceIndex).equals(0);
+		expect(log.minSequenceNumber).equals(0);
 		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
-		expect(log.minSequenceIndex).equals(0);
+		expect(log.minSequenceNumber).equals(0);
 		log.addSequencedEdit(edit1, { sequenceNumber: 43, referenceSequenceNumber: 42, minimumSequenceNumber: 42 });
-		expect(log.minSequenceIndex).equals(42);
+		expect(log.minSequenceNumber).equals(42);
 		expect(() =>
 			log.addSequencedEdit('fake-edit' as unknown as Edit<unknown>, {
 				sequenceNumber: 44,
