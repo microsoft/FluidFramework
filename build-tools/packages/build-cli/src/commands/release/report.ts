@@ -410,7 +410,39 @@ export default class ReleaseReportCommand<
         });
 
         this.logHr();
+        this.log();
         this.log(chalk.underline(chalk.bold(`Release Report`)));
+        if (mode === "inRepo" && flags.releaseGroup !== undefined) {
+            this.log(
+                `${chalk.black.bgYellow(
+                    "\nIMPORTANT",
+                )}: This report only includes the direct dependencies of the ${chalk.blue(
+                    flags.releaseGroup,
+                )} release group.${context.getVersion(flags.releaseGroup)}`,
+            );
+        } else if(mode === "interactive") {
+        }
+            else if(flags.releaseGroup !== undefined) {
+
+            this.log(
+                `${chalk.yellow.bold(
+                    "\nIMPORTANT",
+                )}: This report includes all packages and release groups in the repo. Release versions were selected interactively.`,
+            );
+        } else if(mode === "date") {
+            this.log(
+                `${chalk.yellow.bold(
+                    "\nIMPORTANT",
+                )}: This report includes all packages and release groups in the repo. Release versions were selected interactively.`,
+            );
+        } else if(mode === "version") {
+            this.log(
+                `${chalk.yellow.bold(
+                    "\nIMPORTANT",
+                )}: This report includes all packages and release groups in the repo. Release versions were selected interactively.`,
+            );
+        }
+
         this.log(`\n${output}`);
         this.logHr();
 
