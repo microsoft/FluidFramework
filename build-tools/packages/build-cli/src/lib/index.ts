@@ -24,9 +24,10 @@ export {
 export { Repository } from "./git";
 export {
     filterVersionsOlderThan,
-    getAllVersions,
-    getPreReleaseDependencies,
     generateReleaseGitTagName,
+    getAllVersions,
+    getFluidDependencies,
+    getPreReleaseDependencies,
     getTagsForReleaseGroup,
     getVersionFromTag,
     isReleased,
@@ -40,6 +41,7 @@ export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
 export { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "./github";
 export {
+    getRanges,
     PackageVersionList,
     ReleaseRanges,
     ReleaseReport,

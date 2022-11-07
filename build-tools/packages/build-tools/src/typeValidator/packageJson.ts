@@ -8,6 +8,7 @@ import * as semver from "semver";
 import * as util from "util";
 
 import {
+    ReleaseVersion,
     fromInternalScheme,
     getPreviousVersions,
     getVersionRange,
@@ -137,6 +138,78 @@ export type PreviousVersionStyle =
     | "^previousMinor"
     | "~previousMajor"
     | "~previousMinor";
+
+// export function getPreviousVersion(
+//     version: ReleaseVersion,
+//     previousVersionStyle: Omit<
+//         PreviousVersionStyle,
+//         "^previousMajor" | "^previousMinor" | "~previousMajor" | "~previousMinor"
+//     >,
+// ) {
+//     const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
+//     const sv = semver.parse(version);
+//     if (sv === null) {
+//         throw new Error(`Cannot parse current version: ${version}`);
+//     }
+
+//     let prevVersion: string | undefined;
+
+//     switch (previousVersionStyle) {
+//         case "baseMajor": {
+//             const sv = semver.parse(version);
+//             if (sv === null) {
+//                 throw new Error(`Cannot parse current version: ${version}`);
+//             }
+
+//             if (isInternalVersionScheme(sv)) {
+//                 const [pubVer, intVer] = fromInternalScheme(sv);
+//                 prevVersion = toInternalScheme(pubVer, `${intVer.major}.0.0`).version;
+//             } else {
+//                 prevVersion = `${sv.major}.0.0`;
+//             }
+//             break;
+//         }
+
+//         case "baseMinor": {
+//             const sv = semver.parse(version);
+//             if (sv === null) {
+//                 throw new Error(`Cannot parse current version: ${version}`);
+//             }
+
+//             if (isInternalVersionScheme(sv)) {
+//                 const [pubVer, intVer] = fromInternalScheme(sv);
+//                 prevVersion = toInternalScheme(
+//                     pubVer,
+//                     `${intVer.major}.${intVer.minor}.0`,
+//                 ).version;
+//             } else {
+//                 prevVersion = `${sv.major}.${sv.minor}.0`;
+//             }
+
+//             break;
+//         }
+
+//         case "previousMajor": {
+//             if (previousMajorVersion === undefined) {
+//                 throw new Error(`Previous major version is undefined.`);
+//             }
+
+//             prevVersion = previousMajorVersion;
+//             break;
+//         }
+
+//         case "previousMinor": {
+//             if (previousMinorVersion === undefined) {
+//                 throw new Error(`Previous minor version is undefined.`);
+//             }
+
+//             prevVersion = previousMinorVersion;
+//             break;
+//         }
+//     }
+
+//     return prevVersion;
+// }
 
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run

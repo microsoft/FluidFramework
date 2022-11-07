@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
+import { CliUx, Flags } from "@oclif/core";
 import { strict as assert } from "assert";
 import chalk from "chalk";
-import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
+import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra";
 import inquirer from "inquirer";
 import path from "path";
@@ -18,7 +18,7 @@ import {
     ReleaseVersion,
     detectBumpType,
     detectVersionScheme,
-    getVersionRange,
+    getPreviousVersions,
     isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
@@ -26,7 +26,7 @@ import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 import {
     PackageVersionList,
-    ReleaseRanges,
+    PackageVersionMap,
     ReleaseReport,
     ReportKind,
     VersionDetails,
@@ -34,11 +34,15 @@ import {
     getAllVersions,
     getDisplayDate,
     getDisplayDateRelative,
+    getFluidDependencies,
+    getRanges,
     sortVersions,
     toReportKind,
 } from "../../lib";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
+
+export type ReleaseSelectionMode = "interactive" | "date" | "version" | "inRepo";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
@@ -47,37 +51,19 @@ export abstract class ReleaseReportBaseCommand<
 > extends BaseCommand<T> {
     protected releaseData: PackageReleaseData | undefined;
 
-    static flags = {
-        highest: Flags.boolean({
-            char: "s",
-            description: "Always pick the greatest semver version as the latest (ignore dates).",
-            exclusive: ["mostRecent", "interactive"],
-        }),
-        mostRecent: Flags.boolean({
-            char: "r",
-            description:
-                "Always pick the most recent version as the latest (ignore semver version sorting).",
-            exclusive: ["highest", "interactive"],
-        }),
-        releaseGroup: releaseGroupFlag({
-            required: false,
-        }),
-        ...BaseCommand.flags,
-    };
+    /**
+     * The default {@link ReleaseSelectionMode} that the command uses.
+     */
+    protected abstract readonly defaultMode: ReleaseSelectionMode;
 
-    public async init(): Promise<void> {
-        await super.init();
+    /**
+     * The release group or package that is being reported on.
+     */
+    protected abstract releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
-        const context = await this.getContext();
-        const flags = this.processedFlags;
-
-        this.releaseData = await this.collectReleaseData(
-            context,
-            flags.releaseGroup,
-            flags.highest ? "version" : "date",
-        );
-    }
-
+    /**
+     * Returns true if the `date` is within `days` days of the current date.
+     */
     protected isRecentReleaseByDate(date?: Date, days?: number): boolean {
         return date === undefined
             ? false
@@ -86,67 +72,93 @@ export abstract class ReleaseReportBaseCommand<
             : differenceInBusinessDays(Date.now(), date) < days;
     }
 
+    /**
+     * Collect release data from the repo. Subclasses should call this in their init or run methods.
+     *
+     * @param context - The {@link Context}.
+     * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
+     * group and its direct Fluid dependencies.
+     * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
+     */
     protected async collectReleaseData(
         context: Context,
-        releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined,
-        mode: "interactive" | "date" | "version" = "interactive",
-    ): Promise<PackageReleaseData | undefined> {
+        // eslint-disable-next-line default-param-last
+        mode: ReleaseSelectionMode = this.defaultMode,
+        releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
+        includeDependencies = true,
+    ): Promise<PackageReleaseData> {
         const versionData: PackageReleaseData = {};
 
-        if (releaseGroupOrPackage === undefined || isReleaseGroup(releaseGroupOrPackage)) {
-            this.log(`Collecting version data for release groups...`);
-            for (const rg of context.repo.releaseGroups.keys()) {
-                if (releaseGroupOrPackage !== undefined && releaseGroupOrPackage !== rg) {
-                    this.verbose(`Skipping '${rg} because it's excluded.`);
-                    continue;
-                }
-
-                const name = rg;
-                const repoVersion = context.getVersion(rg);
-
-                // eslint-disable-next-line no-await-in-loop
-                const data = await this.collectRawReleaseData(
-                    context,
-                    name,
-                    repoVersion,
-                    undefined,
-                    mode,
-                );
-                if (data !== undefined) {
-                    versionData[name] = data;
-                }
-            }
-        }
-
-        if (isReleaseGroup(releaseGroupOrPackage)) {
-            this.verbose(
-                `Not collecting version data for independent packages because --releaseGroup was set.`,
+        if (mode === "inRepo" && !isReleaseGroup(releaseGroupOrPackage)) {
+            this.error(
+                `Release group must be provided unless --interactive, --highest, or --mostRecent are provided.`,
             );
+        }
+
+        const rgs: ReleaseGroup[] = [];
+        const pkgs: ReleasePackage[] = [];
+
+        let rgVerMap: PackageVersionMap | undefined;
+        let pkgVerMap: PackageVersionMap | undefined;
+
+        if (mode === "inRepo") {
+            if (isReleaseGroup(releaseGroupOrPackage)) {
+                if (includeDependencies) {
+                    [rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
+                    rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
+                    pkgs.push(...Object.keys(pkgVerMap));
+                } else {
+                    rgs.push(releaseGroupOrPackage);
+                }
+            }
+        } else if (isReleaseGroup(releaseGroupOrPackage)) {
+            rgs.push(releaseGroupOrPackage);
+        } else if (releaseGroupOrPackage === undefined) {
+            rgs.push(...context.repo.releaseGroups.keys());
+            pkgs.push(...context.independentPackages.map((p) => p.name));
         } else {
-            this.log(`Collecting version data for independent packages...`);
-            for (const pkg of context.independentPackages) {
-                if (releaseGroupOrPackage !== undefined && releaseGroupOrPackage !== pkg.name) {
-                    this.verbose(`Skipping '${pkg.name} because it's excluded.`);
-                    continue;
-                }
+            pkgs.push(releaseGroupOrPackage);
+        }
 
-                const name = pkg.name;
-                const repoVersion = pkg.version;
+        // Only show the spinner in non-interactive mode.
+        if (mode !== "interactive") {
+            CliUx.ux.action.start("Collecting version data");
+        }
 
-                // eslint-disable-next-line no-await-in-loop
-                const data = await this.collectRawReleaseData(
-                    context,
-                    name,
-                    repoVersion,
-                    undefined,
-                    mode,
-                );
-                if (data !== undefined) {
-                    versionData[name] = data;
-                }
+        for (const rg of rgs) {
+            CliUx.ux.action.status = `${rg} (release group)`;
+            // eslint-disable-next-line no-await-in-loop
+            const data = await this.collectRawReleaseData(
+                context,
+                rg,
+                rgVerMap?.[rg] ?? context.getVersion(rg),
+                undefined,
+                mode,
+            );
+            if (data !== undefined) {
+                versionData[rg] = data;
             }
         }
 
+        for (const pkg of pkgs) {
+            const repoVersion = pkgVerMap?.[pkg] ?? context.fullPackageMap.get(pkg)?.version;
+            assert(repoVersion !== undefined, `version of ${pkg} is undefined.`);
+
+            CliUx.ux.action.status = `${pkg} (package)`;
+            // eslint-disable-next-line no-await-in-loop
+            const data = await this.collectRawReleaseData(
+                context,
+                pkg,
+                repoVersion,
+                undefined,
+                mode,
+            );
+            if (data !== undefined) {
+                versionData[pkg] = data;
+            }
+        }
+
+        CliUx.ux.action.stop("Done!");
         return versionData;
     }
 
@@ -158,8 +170,8 @@ export abstract class ReleaseReportBaseCommand<
      * @param repoVersion - The version of the release group or package in the repo.
      * @param numberBusinessDaysToConsiderRecent - If a release is within this number of business days, it will be
      * considered recent.
-     * @param mode - Controls which release is considered the latest. The default, `"interactive"`, prompts the user to
-     * select the version.
+     * @param latestReleaseChooseMode - Controls which release is considered the latest. The default, `"date"`,
+     * selects the most recently released version by date.
      * @returns The collected release data.
      */
     private async collectRawReleaseData(
@@ -167,9 +179,9 @@ export abstract class ReleaseReportBaseCommand<
         releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
         repoVersion: string,
         numberBusinessDaysToConsiderRecent: number | undefined,
-        mode: "interactive" | "date" | "version",
+        latestReleaseChooseMode?: ReleaseSelectionMode,
     ): Promise<RawReleaseData | undefined> {
-        // const tags = await getTagsForReleaseGroup(context, releaseGroup);
+        this.verbose(`collectRawReleaseData for ${releaseGroupOrPackage}`);
         const versions = await getAllVersions(context, releaseGroupOrPackage);
 
         if (versions === undefined) {
@@ -186,7 +198,8 @@ export abstract class ReleaseReportBaseCommand<
 
         let latestReleasedVersion: VersionDetails | undefined;
 
-        switch (mode) {
+        switch (latestReleaseChooseMode) {
+            case undefined:
             case "interactive": {
                 let answer: inquirer.Answers | undefined;
 
@@ -233,7 +246,24 @@ export abstract class ReleaseReportBaseCommand<
                 break;
             }
 
-            case undefined:
+            case "inRepo": {
+                latestReleasedVersion = sortedByVersion.find((v) => v.version === repoVersion);
+                if (latestReleasedVersion === undefined) {
+                    const [, previousMinor] = getPreviousVersions(repoVersion);
+                    this.info(
+                        `The in-repo version of ${chalk.blue(
+                            releaseGroupOrPackage,
+                        )} is ${chalk.yellow(
+                            repoVersion,
+                        )}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
+                            previousMinor ?? "undefined",
+                        )}. If you want to create a report for a specific version, check out the tag for the release and re-run this command.`,
+                    );
+                    latestReleasedVersion = sortedByVersion[0];
+                }
+                break;
+            }
+
             case "date": {
                 latestReleasedVersion = sortedByDate[0];
                 break;
@@ -245,7 +275,7 @@ export abstract class ReleaseReportBaseCommand<
             }
 
             default: {
-                throw new Error(`Unhandled mode: ${mode}`);
+                throw new Error(`Unhandled mode: ${latestReleaseChooseMode}`);
             }
         }
 
@@ -276,7 +306,7 @@ export default class ReleaseReportCommand<
     T extends typeof ReleaseReportCommand.flags,
 > extends ReleaseReportBaseCommand<T> {
     static summary = "Generates a report of Fluid Framework releases.";
-    static description = `The release report command is used to produce a report of all the packages that were released and their current version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
+    static description = `The release report command is used to produce a report of all the packages that were released and their version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
 
     The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.
 
@@ -312,8 +342,24 @@ export default class ReleaseReportCommand<
                 "[default: infinity] The number of days to look back for releases to report.",
         }),
         interactive: Flags.boolean({
-            description: "Prompts the user to select a release for each release group or package.",
-            exclusive: ["highest", "mostRecent"],
+            char: "i",
+            description:
+                "Choose the version of each release group and package to contain in the release report.",
+            exclusive: ["mostRecent", "highest"],
+        }),
+        highest: Flags.boolean({
+            char: "s",
+            description: "Always pick the greatest semver version as the latest (ignore dates).",
+            exclusive: ["mostRecent", "interactive"],
+        }),
+        mostRecent: Flags.boolean({
+            char: "r",
+            description:
+                "Always pick the most recent version as the latest (ignore semver version sorting).",
+            exclusive: ["highest", "interactive"],
+        }),
+        releaseGroup: releaseGroupFlag({
+            required: false,
         }),
         output: Flags.directory({
             char: "o",
@@ -322,36 +368,42 @@ export default class ReleaseReportCommand<
         ...ReleaseReportBaseCommand.flags,
     };
 
-    // public async init(): Promise<void> {
-    //     await super.init();
-
-    //     const context = await this.getContext();
-
-    //     this.releaseData = await this.collectReleaseData(
-    //         context,
-    //         this.processedFlags.releaseGroup,
-    //         this.processedFlags.interactive
-    //             ? "interactive"
-    //             : this.processedFlags.highest
-    //             ? "version"
-    //             : "date",
-    //     );
-    // }
+    defaultMode: ReleaseSelectionMode = "inRepo";
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
     public async run(): Promise<ReleaseReport | PackageVersionList | any> {
-        const context = await this.getContext();
         const flags = this.processedFlags;
 
-        // const mode = flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
         const shouldOutputFiles = flags.output !== undefined;
         const outputPath = flags.output ?? process.cwd();
+
+        const mode =
+            flags.highest === true
+                ? "version"
+                : flags.mostRecent === true
+                ? "date"
+                : flags.interactive
+                ? "interactive"
+                : this.defaultMode;
+        assert(mode !== undefined, `mode is undefined`);
+
+        this.releaseGroupOrPackage = flags.releaseGroup;
+        const context = await this.getContext();
+
+        // Collect the release version data from the history
+        this.releaseData = await this.collectReleaseData(
+            context,
+            mode,
+            this.releaseGroupOrPackage,
+            /* includeDeps */ mode === "inRepo",
+        );
 
         if (this.releaseData === undefined) {
             this.error(`No releases found for ${flags.releaseGroup}`);
         }
+        const report = await this.generateReleaseReport(this.releaseData);
 
-        const report: ReleaseReport = await this.generateReleaseReport(this.releaseData);
-        const tableData = this.generateReleaseTable(this.releaseData);
+        const tableData = this.generateReleaseTable(report, flags.releaseGroup);
 
         const output = table(tableData, {
             singleLine: true,
@@ -401,20 +453,7 @@ export default class ReleaseReportCommand<
 
             const isNewRelease = this.isRecentReleaseByDate(latestDate, this.processedFlags.days);
             const scheme = detectVersionScheme(latestVer);
-            const ranges: ReleaseRanges | undefined =
-                scheme === "internal"
-                    ? {
-                          patch: getVersionRange(latestVer, "patch"),
-                          minor: getVersionRange(latestVer, "minor"),
-                          tilde: getVersionRange(latestVer, "~"),
-                          caret: getVersionRange(latestVer, "^"),
-                      }
-                    : {
-                          patch: `~${latestVer}`,
-                          minor: `^${latestVer}`,
-                          tilde: `~${latestVer}`,
-                          caret: `^${latestVer}`,
-                      };
+            const ranges = getRanges(latestVer);
 
             // Expand the release group to its constituent packages.
             if (isReleaseGroup(pkgName)) {
@@ -422,8 +461,10 @@ export default class ReleaseReportCommand<
                     report[pkg.name] = {
                         version: latestVer,
                         versionScheme: scheme,
+                        previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
                         date: latestDate,
                         releaseType: bumpType,
+                        releaseGroup: pkg.monoRepo?.kind,
                         isNewRelease,
                         ranges,
                     };
@@ -432,6 +473,7 @@ export default class ReleaseReportCommand<
                 report[pkgName] = {
                     version: latestVer,
                     versionScheme: scheme,
+                    previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
                     date: latestDate,
                     releaseType: bumpType,
                     isNewRelease,
@@ -443,11 +485,28 @@ export default class ReleaseReportCommand<
         return report;
     }
 
-    private generateReleaseTable(reportData: PackageReleaseData): string[][] {
+    private generateReleaseTable(
+        reportData: ReleaseReport,
+        initialReleaseGroup?: ReleaseGroup,
+    ): string[][] {
         const tableData: string[][] = [];
+        const releaseGroups: ReleaseGroup[] = [];
 
         for (const [pkgName, verDetails] of Object.entries(reportData)) {
-            const { date: latestDate, version: latestVer } = verDetails.latestReleasedVersion;
+            const {
+                date: latestDate,
+                version: latestVer,
+                previousVersion: prevVer,
+                releaseGroup,
+            } = verDetails;
+
+            let displayName: string | undefined;
+            if (releaseGroup !== undefined) {
+                displayName =
+                    releaseGroup === initialReleaseGroup
+                        ? chalk.blue(chalk.bold(releaseGroup))
+                        : chalk.bold(releaseGroup);
+            }
 
             const displayDate = getDisplayDate(latestDate);
             const highlight = this.isRecentReleaseByDate(latestDate, this.processedFlags.days)
@@ -455,28 +514,27 @@ export default class ReleaseReportCommand<
                 : chalk.white;
             const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
-            const displayPreviousVersion =
-                verDetails.previousReleasedVersion?.version === undefined
-                    ? DEFAULT_MIN_VERSION
-                    : verDetails.previousReleasedVersion.version;
+            const displayPreviousVersion = prevVer === undefined ? DEFAULT_MIN_VERSION : prevVer;
 
-            const bumpType = detectBumpType(
-                verDetails.previousReleasedVersion?.version ?? DEFAULT_MIN_VERSION,
-                latestVer,
-            );
+            const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
             const displayBumpType = highlight(`${bumpType}`);
 
             const displayVersionSection = chalk.grey(
-                `${highlight(latestVer)} <= ${displayPreviousVersion}`,
+                `${highlight(latestVer)} <- ${displayPreviousVersion}`,
             );
 
-            tableData.push([
-                pkgName,
-                displayBumpType,
-                displayRelDate,
-                displayDate,
-                displayVersionSection,
-            ]);
+            if (releaseGroup === undefined || !releaseGroups.includes(releaseGroup)) {
+                tableData.push([
+                    displayName ?? pkgName,
+                    displayBumpType,
+                    displayRelDate,
+                    displayDate,
+                    displayVersionSection,
+                ]);
+                if (releaseGroup !== undefined) {
+                    releaseGroups.push(releaseGroup);
+                }
+            }
         }
 
         tableData.sort((a, b) => {

@@ -5,6 +5,7 @@ Release commands are used to manage the Fluid release process.
 
 * [`flub release`](#flub-release)
 * [`flub release report`](#flub-release-report)
+* [`flub release report all`](#flub-release-report-all)
 
 ## `flub release`
 
@@ -52,21 +53,18 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
-    <value>]] [-p <value> ] [--limit <value> ] [-v]
+  $ flub release report [--json] [--days <value>] [-i | -r | -s] [-g client|server|azure|build-tools] [-o <value>]
+    [-v]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
+  -i, --interactive            Choose the version of each release group and package to contain in the release report.
   -o, --output=<value>         Output JSON report files to this location.
-  -p, --package=<value>        Name of package.
   -r, --mostRecent             Always pick the most recent version as the latest (ignore semver version sorting).
   -s, --highest                Always pick the greatest semver version as the latest (ignore dates).
   -v, --verbose                Verbose logging.
-  --all                        List all releases. Useful when you want to see all the releases done for a release group
-                               or package. The number of results can be limited using the --limit argument.
-  --days=<value>               [default: 10] The number of days to look back for releases to report.
-  --limit=<value>              Limits the number of displayed releases for each release group.
+  --days=<value>               [default: infinity] The number of days to look back for releases to report.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -74,9 +72,9 @@ GLOBAL FLAGS
 DESCRIPTION
   Generates a report of Fluid Framework releases.
 
-  The release report command is used to produce a report of all the packages that were released and their current
-  version. After a release, it is useful to generate this report to provide to customers, so they can update their
-  dependencies to the most recent version.
+  The release report command is used to produce a report of all the packages that were released and their version. After
+  a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the
+  most recent version.
 
   The command will prompt you to select versions for a package or release group in the event that multiple versions have
   recently been released.
@@ -103,4 +101,35 @@ EXAMPLES
   List the 10 most recent client releases.
 
     $ flub release report --all -g client --limit 10
+```
+
+## `flub release report all`
+
+Generates a report of all releases of a particular package or release group.
+
+```
+USAGE
+  $ flub release report all [-g client|server|azure|build-tools | -p <value>] [-l <value>] [-v]
+
+FLAGS
+  -g, --releaseGroup=<option>  Name of the release group
+                               <options: client|server|azure|build-tools>
+  -l, --limit=<value>          Limits the number of displayed releases for each release group.
+  -p, --package=<value>        Name of package.
+  -v, --verbose                Verbose logging.
+
+DESCRIPTION
+  Generates a report of all releases of a particular package or release group.
+
+  Useful when you want to see all the releases done for a release group or package. The number of results can be limited
+  using the --limit argument.
+
+EXAMPLES
+  List all the releases of the azure release group.
+
+    $ flub release report all -g azure
+
+  List the 10 most recent client releases.
+
+    $ flub release report all -g client --limit 10
 ```

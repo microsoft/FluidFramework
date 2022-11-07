@@ -3,56 +3,31 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { strict as assert } from "assert";
 import chalk from "chalk";
-import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
-import { writeJson } from "fs-extra";
-import inquirer from "inquirer";
-import path from "path";
-import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context } from "@fluidframework/build-tools";
+import { detectBumpType } from "@fluid-tools/version-tools";
 
-import {
-    ReleaseVersion,
-    VersionBumpType,
-    VersionScheme,
-    detectBumpType,
-    detectVersionScheme,
-    getVersionRange,
-    isVersionBumpType,
-} from "@fluid-tools/version-tools";
-
-import { packageOrReleaseGroupArg } from "../../../args";
-import { BaseCommand } from "../../../base";
 import { packageSelectorFlag, releaseGroupFlag } from "../../../flags";
 import {
     ReleaseReport,
     VersionDetails,
-    filterVersionsOlderThan,
-    getAllVersions,
     getDisplayDate,
     getDisplayDateRelative,
     sortVersions,
 } from "../../../lib";
-import { CommandLogger } from "../../../logging";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../../releaseGroups";
-import ReleaseReportCommand, { ReleaseReportBaseCommand } from "../report";
+import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups";
+import ReleaseReportCommand, { ReleaseReportBaseCommand, ReleaseSelectionMode } from "../report";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
 /**
- * Releases a release group recursively.
+ * Generates a report of all releases of a particular package or release group.
  *
  * @remarks
  *
- * First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're
- * checked for the latest release version. If the dependencies have not yet been released, then the command prompts to
- * perform the release of the dependency, then run the releae command again.
- *
- * This process is continued until all the dependencies have been released, after which the release group itself is
- * released.
+ * Useful when you want to see all the releases done for a release group or package. The number of results can be
+ * limited using the `--limit` argument.
  */
 export default class ReportAllCommand<
     T extends typeof ReportAllCommand.flags,
@@ -67,19 +42,17 @@ export default class ReportAllCommand<
         },
         {
             description: "List the 10 most recent client releases.",
-            command: "<%= config.bin %> <%= command.id %> client --limit 10",
+            command: "<%= config.bin %> <%= command.id %> -g client --limit 10",
         },
     ];
 
-    static enableJsonFlag = true;
-    // static args = [packageOrReleaseGroupArg];
     static flags = {
-        // all: Flags.boolean({
-        //     description:
-        //         "List all releases. Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.",
-        //     exclusive: ["output"],
-        // }),
+        releaseGroup: releaseGroupFlag({
+            required: false,
+            exclusive: ["package"],
+        }),
         package: packageSelectorFlag({
+            required: false,
             exclusive: ["releaseGroup"],
         }),
         limit: Flags.integer({
@@ -89,25 +62,53 @@ export default class ReportAllCommand<
         ...ReleaseReportBaseCommand.flags,
     };
 
+    static enableJsonFlag = true;
+
+    defaultMode: ReleaseSelectionMode = "date";
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
+
     // public async init(): Promise<void> {
     //     await super.init();
 
-    //     const context = await this.getContext();
-    //     const flags = this.processedFlags;
+    //     // These arguments aren't used directly in this command, so hide them before calling super.init
+    //     ReleaseReportCommand.flags.highest.hidden = true;
+    //     ReleaseReportCommand.flags.mostRecent.hidden = true;
 
-    //     const mode = flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
+    //     // We need access to the flags and args here, but they haven't been parsed yet since we haven't called the base
+    //     // class init function. We parse them here instead; when the base class tries to parse them again it'll
+    //     // no-op.
+    //     // await this.parseCmdArgs();
 
-    //     this.releaseData = await this.collectReleaseData(context, flags.releaseGroup, mode);
+    //     // this.releaseGroupOrPackage =
+    //     //     this.processedFlags.releaseGroup ?? this.processedFlags.package;
+
+    //     // if (this.releaseGroupOrPackage === undefined) {
+    //     //     this.error(`You must provide a --releaseGroup or --package.`);
+    //     // }
+    //     // await super.init();
+    //     this.warning(`exiting ReportAllCommand.init`);
     // }
 
-    public async run(): Promise<ReleaseReport[]> {
-        const context = await this.getContext();
-        const flags = this.processedFlags;
-        const reports: ReleaseReport[] = [];
+    public async run(): Promise<ReleaseReport> {
+        this.releaseGroupOrPackage =
+            this.processedFlags.releaseGroup ?? this.processedFlags.package;
 
+        // if (this.releaseGroupOrPackage === undefined) {
+        //     this.error(`You must provide a --releaseGroup or --package.`);
+        // }
+
+        const context = await this.getContext();
+        this.releaseData = await this.collectReleaseData(
+            context,
+            this.defaultMode,
+            this.releaseGroupOrPackage,
+            false,
+        );
         if (this.releaseData === undefined) {
-            this.error(`No releases found for ${flags.releaseGroup}`);
+            this.error(`No releases found for ${this.releaseGroupOrPackage}`);
         }
+
+        const reports: ReleaseReport[] = [];
 
         for (const [pkgOrReleaseGroup, data] of Object.entries(this.releaseData)) {
             const versions = sortVersions([...data.versions], "version");
@@ -121,7 +122,7 @@ export default class ReportAllCommand<
         }
 
         // When the --json flag is passed, the command will return the raw data as JSON.
-        return reports;
+        return reports[0];
     }
 
     /**

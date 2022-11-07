@@ -17,7 +17,8 @@ export interface ReleaseReport {
 }
 
 export interface ReleaseDetails {
-    version: string;
+    version: ReleaseVersion;
+    previousVersion?: ReleaseVersion;
     versionScheme: VersionScheme;
     date?: Date;
     releaseType: VersionBumpType;
