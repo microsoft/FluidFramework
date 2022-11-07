@@ -10,7 +10,7 @@ Concepts you will learn:
 2. How to run and connect your Teams application to a Fluid service (Azure Fluid Relay)
 3. How to create and get Fluid Containers and pass them to a React component
 
-For an example of how this recipe may be used to build a more complex application, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world) example in our FluidExamples repo.
+For an example of how this recipe may be used to build a more complex application, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/examples/teams-fluid-hello-world) example in our FluidExamples repo.
 
 {{< callout note >}}
 
@@ -42,6 +42,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     ```dotnetcli
     npm install @fluidframework/azure-client fluid-framework @fluidframework/test-client-utils
     ```
+
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
 
 ## Code the project
 
@@ -267,12 +273,6 @@ Now follow the [instructions to upload the application to a Teams Tab](https://d
 {{< callout warning >}}
 
 Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureclient-with-azure-fluid-relay)
-
-{{< /callout >}}
-
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
 
 {{< /callout >}}
 

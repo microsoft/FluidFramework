@@ -13,14 +13,12 @@ import {
     FieldKindIdentifier,
     GlobalFieldKey,
     InMemoryStoredSchemaRepository,
-} from "../../schema-stored";
-import {
     Adapters,
     ViewSchemaData,
     AdaptedViewSchema,
     Compatibility,
     FieldAdapter,
-} from "../../schema-view";
+} from "../../core";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
 

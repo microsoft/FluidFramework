@@ -25,7 +25,18 @@ type TypeOnly<T> = {
 };
 `;
 
-export async function generateTests(packageDetails: PackageDetails) {
+const generateFilename = (
+    oldVersionFileName: string,
+    path: string,
+    includeGeneratedInName: boolean,
+): string => {
+    return `${path}/validate${oldVersionFileName}.${includeGeneratedInName ? "generated." : ""}ts`;
+};
+
+export async function generateTests(
+    packageDetails: PackageDetails,
+    includeGeneratedInName: boolean,
+) {
     const currentProjectData = await generateTypeDataForProject(
         packageDetails.packageDir,
         undefined,
@@ -105,13 +116,13 @@ export async function generateTests(packageDetails: PackageDetails) {
                 : oldVersion;
 
         stats.files++;
-        await util.promisify(fs.writeFile)(
-            `${testPath}/validate${oldVersionNameForFile
-                .split("-")
-                .map((p) => p[0].toUpperCase() + p.substring(1))
-                .join("")}.ts`,
-            testString.join("\n"),
-        );
+        const oldVersionFileName = oldVersionNameForFile
+            .split("-")
+            .map((p) => p[0].toUpperCase() + p.substring(1))
+            .join("");
+        const filePath = generateFilename(oldVersionFileName, testPath, includeGeneratedInName);
+
+        await util.promisify(fs.writeFile)(filePath, testString.join("\n"));
     }
     return stats;
 }

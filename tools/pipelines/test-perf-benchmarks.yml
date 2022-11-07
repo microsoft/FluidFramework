@@ -46,6 +46,10 @@ parameters:
   type: string
   default: client
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -107,6 +111,7 @@ stages:
           parameters:
             buildDirectory: ${{ variables.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
 
         # Build
@@ -190,7 +195,7 @@ stages:
           inputs:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'perf-test-outputs_execution-time'
-            condition: succeededOrFailed()
+          condition: succeededOrFailed()
 
         - task: Npm@1
           displayName: 'Run performance test - memory usage'
@@ -221,4 +226,4 @@ stages:
           inputs:
             targetPath: '${{ variables.buildDirectory }}/memoryProfilingOutput'
             artifactName: 'perf-test-outputs_memory-usage'
-            condition: succeededOrFailed()
+          condition: succeededOrFailed()
