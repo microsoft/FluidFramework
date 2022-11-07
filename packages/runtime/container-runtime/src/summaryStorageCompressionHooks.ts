@@ -102,7 +102,6 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         summary: ISummaryTree,
         context: ISummaryContext
     ): { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
-        console.log("Using Summary Compression : UploadSummaryWithContext ");
         return {
             prepSummary: recursivelyReplace(
                 summary,
