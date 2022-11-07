@@ -34,7 +34,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
-              tokenProvider: createAzureTokenProvider(userID, userName),
+              tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
               endpoint: endPoint ?? "https://alfred.westus2.fluidrelay.azure.com",
               type: "remote",
           }
