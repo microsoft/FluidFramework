@@ -4,17 +4,10 @@
  */
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import {
-    FieldKinds,
-    singleTextCursor,
-} from "../../feature-libraries";
+import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { brand, unreachableCase } from "../../util";
-import {
-    JsonableTree,
-    rootFieldKey,
-    rootFieldKeySymbol,
-    TreeValue,
-} from "../../tree";
+import { JsonableTree, rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { moveToDetachedField } from "../../forest";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
@@ -30,35 +23,65 @@ enum TreeShape {
     Deep = 1,
 }
 
+// TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
-    // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
-    for (let i=1; i<1700; i+=100) {
-        it(`Wide Tree: reads with ${i} nodes`, async () => {
-            const tree = await getTestTree(i, TreeShape.Wide);
-            readTree(tree, i, TreeShape.Wide);
-        });
-    }
-    // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
-    for (let i=1; i<100; i+=10) {
-        it(`Deep Tree: reads with ${i} nodes`, async () => {
-            const tree = await getTestTree(i, TreeShape.Deep);
-            readTree(tree, i, TreeShape.Deep);
-        });
-    }
+    describe("Cursors", () => {
+        for (let i = 1; i < 100; i += 10) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Deep Tree with cursor: reads with ${i} nodes`,
+                before: async () => {
+                    tree = await getTestTree(i, TreeShape.Deep);
+                },
+                benchmarkFn: () => {
+                    readTree(tree, i, TreeShape.Deep);
+                },
+            });
+        }
+        for (let i = 1; i < 1700; i += 100) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Wide Tree with cursor: reads with ${i} nodes`,
+                before: async () => {
+                    tree = await getTestTree(i, TreeShape.Wide);
+                },
+                benchmarkFn: () => {
+                    readTree(tree, i, TreeShape.Wide);
+                },
+            });
+        }
+    });
 
-    for (let i=1; i<1700; i+=100) {
-        it(`Wide Tree as JS Object: reads with ${i} nodes`, async () => {
-            const tree = await getTestTreeAsJSObject(i, TreeShape.Wide);
-            readTreeAsJSObject(tree);
-        });
-    }
-    for (let i=1; i<100; i+=10) {
-        it(`Deep Tree as JS Object: reads with ${i} nodes`, async () => {
-            const tree = await getTestTreeAsJSObject(5, TreeShape.Deep);
-            readTreeAsJSObject(tree);
-        });
-    }
-
+    describe("Direct JS Object", () => {
+        for (let i = 1; i < 100; i += 10) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Deep Tree as JS Object: reads with ${i} nodes`,
+                before: async () => {
+                    tree = await getTestTreeAsJSObject(i, TreeShape.Deep);
+                },
+                benchmarkFn: () => {
+                    readTreeAsJSObject(tree);
+                },
+            });
+        }
+        for (let i = 1; i < 1700; i += 100) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Wide Tree as JS Object: reads with ${i} nodes`,
+                before: async () => {
+                    tree = await getTestTreeAsJSObject(i, TreeShape.Wide);
+                },
+                benchmarkFn: () => {
+                    readTreeAsJSObject(tree);
+                },
+            });
+        }
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
@@ -124,7 +147,7 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
 /**
  * Inserts a single node under the root of the tree with the given value.
  */
- function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void {
+function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void {
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
@@ -146,12 +169,16 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
     });
 }
 
-async function setTestValuesWide(tree: ISharedTree, numberOfNodes: number, provider:ITestTreeProvider): Promise<void> {
+async function setTestValuesWide(
+    tree: ISharedTree,
+    numberOfNodes: number,
+    provider: ITestTreeProvider,
+): Promise<void> {
     const seed = 0;
     const random = makeRandom(seed);
     for (let j = 0; j < numberOfNodes; j++) {
         setTestValue(tree, random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER), j);
-        if (j % 1000 === 0){
+        if (j % 1000 === 0) {
             await provider.ensureSynchronized();
         }
     }
@@ -163,10 +190,7 @@ async function setTestValuesWide(tree: ISharedTree, numberOfNodes: number, provi
  * @param shape - TreeShape enum to specify the shape of the tree
  * @returns the byte size of the tree's summary
  */
-async function getTestTree(
-    numberOfNodes: number,
-    shape: TreeShape,
-): Promise<ISharedTree> {
+async function getTestTree(numberOfNodes: number, shape: TreeShape): Promise<ISharedTree> {
     const provider = await TestTreeProvider.create(1, true);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
@@ -208,21 +232,21 @@ function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
     }
 }
 
-function readTree(tree:ISharedTree, numberOfNodes:number, shape: TreeShape) {
+function readTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape) {
     const { forest } = tree;
     const readCursor = forest.allocateCursor();
     moveToDetachedField(forest, readCursor);
     assert(readCursor.firstNode());
     switch (shape) {
         case TreeShape.Deep:
-            for (let i=0; i<numberOfNodes; i++){
+            for (let i = 0; i < numberOfNodes; i++) {
                 readCursor.enterField(rootFieldKeySymbol);
-                assert(readCursor.firstNode())
+                assert(readCursor.firstNode());
             }
             break;
         case TreeShape.Wide:
-            for (let j=0; j<numberOfNodes; j++){
-                readCursor.nextNode()
+            for (let j = 0; j < numberOfNodes; j++) {
+                readCursor.nextNode();
             }
             break;
         default:
@@ -234,27 +258,21 @@ function readTree(tree:ISharedTree, numberOfNodes:number, shape: TreeShape) {
 async function getTestTreeAsJSObject(
     numberOfNodes: number,
     shape: TreeShape,
-): Promise<any> {
+): Promise<ISharedTree> {
     const tree = await getTestTree(numberOfNodes, shape);
-    const { summary } = tree.getAttachSummary()
-
+    const { summary } = tree.getAttachSummary();
     const summaryString = JSON.stringify(summary);
-    const summaryJS = JSON.parse(summaryString)
+    const summaryJS = JSON.parse(summaryString);
     const treeContent = summaryJS.tree.indexes.tree.Forest.tree.ForestTree.content;
-    const parsedContent = JSON.parse(JSON.parse(treeContent))
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const parsedContent: ISharedTree = JSON.parse(JSON.parse(treeContent));
     return parsedContent;
 }
 
-
-function readTreeAsJSObject(tree:any) {
+function readTreeAsJSObject(tree: any) {
     for (const key of Object.keys(tree)) {
-        if (typeof tree[key] === "object" && tree[key] !== null)
-            readTreeAsJSObject(tree[key]);
-        else if (key === 'value'){
-            assert(tree[key] !== null)
+        if (typeof tree[key] === "object" && tree[key] !== null) readTreeAsJSObject(tree[key]);
+        else if (key === "value") {
+            assert(tree[key] !== null);
         }
     }
 }
-
