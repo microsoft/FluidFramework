@@ -289,7 +289,7 @@ describe('EditLog', () => {
 
 	it('does not evict edits within the collaboration window', () => {
 		const editLogSize = 10;
-		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const log = new EditLog(undefined, undefined, undefined, editLogSize, editLogSize * 2);
 		const ids: EditId[] = [];
 
 		let editsEvicted = 0;
@@ -331,7 +331,7 @@ describe('EditLog', () => {
 	it.only('can start accepting edits from a non-zero sequence number', () => {
 		const startSequenceNumber = 50;
 		const editLogSize = 10;
-		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const log = new EditLog(undefined, undefined, undefined, editLogSize, editLogSize * 2);
 		const ids: EditId[] = [];
 
 		let editsEvicted = 0;
@@ -340,6 +340,7 @@ describe('EditLog', () => {
 			editsEvicted += editsToEvict;
 		});
 
+		// Add enough edits to hit the target size
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, { sequenceNumber: startSequenceNumber + i, referenceSequenceNumber: i - 1 });
@@ -350,7 +351,10 @@ describe('EditLog', () => {
 			.equals(log.numberOfSequencedEdits)
 			.and.equals(editLogSize, 'Only sequenced edits should be present.');
 
-		const minimumSequenceNumber = 5;
+		// Add another set of edits to trigger eviction while setting the collaboration size so that
+		// only half of those edits will be evicted
+		const collaborationWindowSize = 5;
+		const minimumSequenceNumber = startSequenceNumber + editLogSize + collaborationWindowSize;
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, {
@@ -364,9 +368,9 @@ describe('EditLog', () => {
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)
 			.and.equals(
-				editLogSize + minimumSequenceNumber,
+				editLogSize + collaborationWindowSize,
 				'Only edits outside the collab window should have been evicted'
 			);
-		expect(editsEvicted).to.equal(editLogSize - minimumSequenceNumber);
+		expect(editsEvicted).to.equal(editLogSize - collaborationWindowSize);
 	});
 });
