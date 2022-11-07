@@ -15,9 +15,5 @@ module.exports = {
     ],
     importOrderSeparation: true,
     importOrderSortSpecifiers: true,
-<<<<<<< HEAD
-    useTabs: false,
-=======
     useTabs: false, // @fluidframework/build-common ^1.2.0, change to TRUE after prettier infra
->>>>>>> 7cd58b21306f88d8059f5f7a0a373fcec8409fde
 };
