@@ -57,6 +57,11 @@ export abstract class ReleaseReportBaseCommand<
     protected abstract readonly defaultMode: ReleaseSelectionMode;
 
     /**
+     * The number of business days for which to consider releases recent. `undefined` means there is no limit.
+     */
+    protected numberBusinessDaysToConsiderRecent: number | undefined;
+
+    /**
      * The release group or package that is being reported on.
      */
     protected abstract releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
@@ -388,6 +393,7 @@ export default class ReleaseReportCommand<
         assert(mode !== undefined, `mode is undefined`);
 
         this.releaseGroupOrPackage = flags.releaseGroup;
+        this.numberBusinessDaysToConsiderRecent = flags.days;
         const context = await this.getContext();
 
         // Collect the release version data from the history
@@ -483,7 +489,7 @@ export default class ReleaseReportCommand<
                 );
             }
 
-            const isNewRelease = this.isRecentReleaseByDate(latestDate, this.processedFlags.days);
+            const isNewRelease = this.isRecentReleaseByDate(latestDate, this.numberBusinessDaysToConsiderRecent);
             const scheme = detectVersionScheme(latestVer);
             const ranges = getRanges(latestVer);
 
@@ -541,7 +547,7 @@ export default class ReleaseReportCommand<
             }
 
             const displayDate = getDisplayDate(latestDate);
-            const highlight = this.isRecentReleaseByDate(latestDate, this.processedFlags.days)
+            const highlight = this.isRecentReleaseByDate(latestDate, this.numberBusinessDaysToConsiderRecent)
                 ? chalk.green
                 : chalk.white;
             const displayRelDate = highlight(getDisplayDateRelative(latestDate));
@@ -552,7 +558,7 @@ export default class ReleaseReportCommand<
             const displayBumpType = highlight(`${bumpType}`);
 
             const displayVersionSection = chalk.grey(
-                `${highlight(latestVer)} <- ${displayPreviousVersion}`,
+                `${highlight(latestVer)} <-- ${displayPreviousVersion}`,
             );
 
             if (releaseGroup === undefined || !releaseGroups.includes(releaseGroup)) {

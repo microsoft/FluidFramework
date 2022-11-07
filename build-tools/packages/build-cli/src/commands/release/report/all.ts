@@ -148,7 +148,7 @@ export default class ReportAllCommand<
             const displayBumpType = highlight(`${bumpType}`);
 
             const displayVersionSection = chalk.grey(
-                `${highlight(ver.version)} <= ${displayPreviousVersion}`,
+                `${highlight(ver.version)} <-- ${displayPreviousVersion}`,
             );
 
             tableData.push([
