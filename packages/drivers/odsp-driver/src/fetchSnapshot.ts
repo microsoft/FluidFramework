@@ -197,9 +197,10 @@ async function fetchLatestSnapshotCore(
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
         let controller: AbortController | undefined;
+        let fetchTimeout: ReturnType<typeof setTimeout>;
         if (snapshotOptions?.timeout !== undefined) {
             controller = new AbortController();
-            setTimeout(
+            fetchTimeout = setTimeout(
                 () => controller!.abort(),
                 snapshotOptions.timeout,
             );
@@ -228,7 +229,10 @@ async function fetchLatestSnapshotCore(
                     storageToken,
                     snapshotOptions,
                     controller,
-                );
+                ).finally(() => {
+                    // Clear the fetchTimeout once the response is fetched.
+                    clearTimeout(fetchTimeout);
+                });
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
