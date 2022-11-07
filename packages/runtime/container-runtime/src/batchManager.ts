@@ -56,15 +56,17 @@ export class BatchManager {
         // If we were provided soft limit, check for exceeding it.
         // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
         // and start over. That's not an option if we have no ops.
+        // If compression is enabled, the soft and hard limit are ignored and the message will be pushed anyways.
+        // Cases where the message is still too large will be handled by the maxConsecutiveReconnects path.
         if (this.options.softLimit !== undefined
             && this.length > 0
             && socketMessageSize >= this.options.softLimit
-            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? 0)) {
+            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
             return false;
         }
 
         if (socketMessageSize >= this.options.hardLimit
-            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? 0)) {
+            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
             return false;
         }
 
