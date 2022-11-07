@@ -900,5 +900,34 @@ describe("Runtime", () => {
                         && e.message === `Id cannot contain slashes: '${invalidId}'`);
             });
         });
+
+        describe("op format", () => {
+            const getMockContext = ((deltaManager): Partial<IContainerContext> => {
+                return {
+                    deltaManager,
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            it("handles message with undefined contents", async () => {
+                const deltaManager = new MockDeltaManager();
+                const runtime = await ContainerRuntime.load(
+                    getMockContext(deltaManager) as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+                const op: ISequencedDocumentMessage = {
+                    contents: undefined,
+                    clientId: "a client",
+                } as any;
+                deltaManager.inbound.push(op as any);
+                runtime.process(op, false);
+            });
+        });
     });
 });

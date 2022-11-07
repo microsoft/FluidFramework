@@ -43,7 +43,7 @@ export class OpTracker {
             // so stringifying them again will add inaccurate overhead.
             const messageContent = typeof message.contents === "string" ?
                 message.contents :
-                JSON.stringify(message.contents);
+                JSON.stringify(message.contents) ?? "";
             const messageData = OpTracker.messageHasData(message) ? message.data : "";
             this.messageSize[OpTracker.messageId(message)] = messageContent.length + messageData.length;
         });
