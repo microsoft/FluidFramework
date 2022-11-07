@@ -59,8 +59,9 @@
     "mocha": "^10.0.0"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.5.0-103719",
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@fluidframework/mocha-test-setup-previous": "npm:@fluidframework/mocha-test-setup@2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",

@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
 import type { IMigrationTool } from "../migrationInterfaces";
@@ -34,6 +35,9 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         private readonly container: IContainer,
     ) {
         super();
+        this.container.on("connected", () => {
+            this.emit("connected");
+        });
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportFormat1 => {
@@ -65,6 +69,10 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         });
         return `version:one\n${inventoryItemStrings.join("\n")}`;
     };
+
+    public connected() {
+        return this.container.connectionState === ConnectionState.Connected;
+    }
 
     public close() {
         this.container.close();

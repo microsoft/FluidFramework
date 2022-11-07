@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { Changeset, ChangesetTag, Mark, MarkList, OpId } from "./format";
 import { isSkipMark } from "./utils";
@@ -27,14 +28,14 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  * - Support for slices is not implemented.
  */
 export function invert<TNodeChange>(
-    change: Changeset<TNodeChange>,
+    change: TaggedChange<Changeset<TNodeChange>>,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Changeset<TNodeChange> {
     // TODO: support the input change being a squash
     const opIdToTag = (id: OpId): ChangesetTag => {
         return DUMMY_INVERT_TAG;
     };
-    return invertMarkList(change, opIdToTag, invertChild);
+    return invertMarkList(change.change, opIdToTag, invertChild);
 }
 
 type IdToTagLookup = (id: OpId) => ChangesetTag;

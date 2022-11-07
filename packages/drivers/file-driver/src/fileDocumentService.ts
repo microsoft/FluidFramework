@@ -11,6 +11,7 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService";
  * The DocumentService manages the different endpoints for connecting to
  * underlying storage for file document service.
  */
+// eslint-disable-next-line import/namespace
 export class FileDocumentService implements api.IDocumentService {
     constructor(
         private readonly storage: api.IDocumentStorageService,

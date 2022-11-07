@@ -120,8 +120,8 @@ export function detectBumpType(
         throw new Error(`Invalid version: ${v2}`);
     }
 
-    const v1IsInternal = isInternalVersionScheme(v1, true);
-    const v2IsInternal = isInternalVersionScheme(v2, true);
+    const v1IsInternal = isInternalVersionScheme(v1, true, true);
+    const v2IsInternal = isInternalVersionScheme(v2, true, true);
 
     if (v1IsInternal) {
         const [, internalVer] = fromInternalScheme(v1, true);

@@ -8,8 +8,11 @@ export {
     ChangesetFromChangeRebaser,
     FinalChange,
     FinalChangeStatus,
+    makeAnonChange,
     Rebaser,
     RevisionTag,
+    tagChange,
+    TaggedChange,
 } from "./rebaser";
 export {
     Exception,

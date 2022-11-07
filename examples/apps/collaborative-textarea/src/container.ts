@@ -34,8 +34,8 @@ export class CollaborativeTextContainerRuntimeFactory
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const inventoryList = await runtime.createDataStore(CollaborativeText.getFactory().type);
-        await inventoryList.trySetAlias(collaborativeTextId);
+        const collaborativeText = await runtime.createDataStore(CollaborativeText.getFactory().type);
+        await collaborativeText.trySetAlias(collaborativeTextId);
     }
 
     /**
