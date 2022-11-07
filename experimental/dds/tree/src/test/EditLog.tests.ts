@@ -12,7 +12,7 @@ import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 
-describe('EditLog', () => {
+describe.only('EditLog', () => {
 	const edit0 = newEdit([]);
 	const edit1 = newEdit([]);
 	const { id: id0, editWithoutId: editWithoutId0 } = separateEditAndId(edit0);
@@ -144,11 +144,11 @@ describe('EditLog', () => {
 	it('tracks the min sequence number of sequenced edits', () => {
 		const log = new EditLog();
 
-		expect(log.minSequenceNumber).equals(0);
+		expect(log.minSequenceIndex).equals(0);
 		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
-		expect(log.minSequenceNumber).equals(0);
+		expect(log.minSequenceIndex).equals(0);
 		log.addSequencedEdit(edit1, { sequenceNumber: 43, referenceSequenceNumber: 42, minimumSequenceNumber: 42 });
-		expect(log.minSequenceNumber).equals(42);
+		expect(log.minSequenceIndex).equals(42);
 		expect(() =>
 			log.addSequencedEdit('fake-edit' as unknown as Edit<unknown>, {
 				sequenceNumber: 44,
@@ -308,7 +308,10 @@ describe('EditLog', () => {
 			.equals(log.numberOfSequencedEdits)
 			.and.equals(editLogSize, 'Only sequenced edits should be present.');
 
-		const minimumSequenceNumber = 5;
+		// Add another set of edits to trigger eviction while setting the collaboration size so that
+		// only half of those edits will be evicted
+		const collaborationWindowSize = 15;
+		const minimumSequenceNumber = editLogSize * 2 - collaborationWindowSize;
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, {
@@ -321,14 +324,11 @@ describe('EditLog', () => {
 
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)
-			.and.equals(
-				editLogSize + minimumSequenceNumber,
-				'Only edits outside the collab window should have been evicted'
-			);
-		expect(editsEvicted).to.equal(editLogSize - minimumSequenceNumber);
+			.and.equals(collaborationWindowSize, 'Only edits outside the collab window should have been evicted');
+		expect(editsEvicted).to.equal(editLogSize * 2 - collaborationWindowSize);
 	});
 
-	it.only('can start accepting edits from a non-zero sequence number', () => {
+	it('can start accepting edits from a non-zero sequence number', () => {
 		const startSequenceNumber = 50;
 		const editLogSize = 10;
 		const log = new EditLog(undefined, undefined, undefined, editLogSize, editLogSize * 2);
@@ -343,7 +343,10 @@ describe('EditLog', () => {
 		// Add enough edits to hit the target size
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
-			log.addSequencedEdit(edit, { sequenceNumber: startSequenceNumber + i, referenceSequenceNumber: i - 1 });
+			log.addSequencedEdit(edit, {
+				sequenceNumber: startSequenceNumber + i,
+				referenceSequenceNumber: startSequenceNumber + i - 1,
+			});
 			ids.push(edit.id);
 			expect(log.getIndexOfId(edit.id)).equals(i);
 		}
@@ -353,8 +356,8 @@ describe('EditLog', () => {
 
 		// Add another set of edits to trigger eviction while setting the collaboration size so that
 		// only half of those edits will be evicted
-		const collaborationWindowSize = 5;
-		const minimumSequenceNumber = startSequenceNumber + editLogSize + collaborationWindowSize;
+		const collaborationWindowSize = 15;
+		const minimumSequenceNumber = startSequenceNumber + editLogSize * 2 - collaborationWindowSize;
 		for (let i = 0; i < editLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, {
@@ -367,10 +370,7 @@ describe('EditLog', () => {
 
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)
-			.and.equals(
-				editLogSize + collaborationWindowSize,
-				'Only edits outside the collab window should have been evicted'
-			);
-		expect(editsEvicted).to.equal(editLogSize - collaborationWindowSize);
+			.and.equals(collaborationWindowSize, 'Only edits outside the collab window should have been evicted');
+		expect(editsEvicted).to.equal(editLogSize * 2 - collaborationWindowSize);
 	});
 });
