@@ -4,7 +4,6 @@
 
 ```ts
 
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -35,7 +34,7 @@ export class AnchorSet {
 }
 
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange>;
+type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -123,6 +122,9 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public
+export const createField: unique symbol;
+
 // @public (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -206,26 +208,30 @@ const DUMMY_INVERT_TAG: ChangesetTag;
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+    [index: number]: UnwrappedEditableTree;
+    deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
-    getWithoutUnwrapping(index: number): EditableTree;
+    getNode(index: number): EditableTree;
+    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly primaryType?: TreeSchemaIdentifier;
 }
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
-    readonly [anchorSymbol]: Anchor;
-    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): EditableField | undefined;
+    [getField](fieldKey: FieldKey): EditableField;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: TreeSchema;
-    readonly [valueSymbol]: Value;
-    readonly [key: FieldKey]: UnwrappedEditableField;
+    [valueSymbol]: Value;
+    [key: FieldKey]: UnwrappedEditableField;
 }
 
 // @public
 export interface EditableTreeContext {
+    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;
@@ -405,7 +411,7 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 }
 
 // @public
-export const getWithoutUnwrappingSymbol: unique symbol;
+export const getField: unique symbol;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
@@ -426,6 +432,11 @@ interface HasOpId {
 // @public (undocumented)
 interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
+    lineage?: LineageEvent[];
+}
+
+// @public (undocumented)
+interface HasTiebreakPolicy extends HasPlaceFields {
     tiebreak?: Tiebreak;
 }
 
@@ -474,7 +485,7 @@ interface Insert<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Insert_2 extends HasOpId, HasPlaceFields {
+interface Insert_2 extends HasOpId, HasTiebreakPolicy {
     // (undocumented)
     content: ProtoNode_2[];
     // (undocumented)
@@ -636,6 +647,13 @@ export const jsonString: NamedTreeSchema;
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @public
+interface LineageEvent {
+    readonly offset: number;
+    // (undocumented)
+    readonly revision: RevisionTag;
+}
+
+// @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @public
@@ -729,7 +747,7 @@ interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
 }
 
 // @public (undocumented)
-interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
@@ -747,7 +765,7 @@ interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFi
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
@@ -904,7 +922,7 @@ export interface NodeData {
 }
 
 // @public (undocumented)
-type NodeMark = Detach | Reattach;
+type NodeMark = Detach;
 
 // @public (undocumented)
 type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
@@ -974,7 +992,7 @@ enum RangeType {
 }
 
 // @public (undocumented)
-interface Reattach extends HasOpId {
+interface Reattach extends HasOpId, HasPlaceFields {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1038,6 +1056,7 @@ declare namespace SequenceField {
         HasOpId,
         HasLength,
         HasPlaceFields,
+        HasTiebreakPolicy,
         Insert_2 as Insert,
         Mark_2 as Mark,
         MarkList_2 as MarkList,
@@ -1064,6 +1083,7 @@ declare namespace SequenceField {
         TreeForestPath,
         TreeRootPath,
         Skip_2 as Skip,
+        LineageEvent,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
@@ -1128,7 +1148,7 @@ export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
 }
@@ -1154,7 +1174,7 @@ export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
 type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
 
 // @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Tomb | Modify_2<TNodeChange> | Detach | Reattach | ModifyReattach<TNodeChange> | ModifyDetach<TNodeChange>;
+type SizedObjectMark<TNodeChange = NodeChangeType> = Tomb | Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
 
 // @public
 type Skip = number;
