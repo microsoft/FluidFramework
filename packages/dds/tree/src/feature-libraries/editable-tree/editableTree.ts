@@ -114,6 +114,11 @@ export interface EditableTree extends Iterable<EditableField> {
     /**
      * Index of this node within its parent field.
      */
+    // TODO: this is a temporary solution.
+    // It should be replaced with a more general location symbol like
+    // `readonly [location]: EditableTreeUpPath`
+    // to cover all the cases, where the code may be lacking information about an origin of the node.
+    // See proposed API: https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
     readonly [indexSymbol]: number;
 
     /**
