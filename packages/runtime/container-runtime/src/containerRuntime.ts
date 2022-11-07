@@ -1179,7 +1179,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientId: () => this.clientId,
                 close: this.closeFn,
                 connected: () => this.connected,
-                flush: this.flush.bind(this),
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),

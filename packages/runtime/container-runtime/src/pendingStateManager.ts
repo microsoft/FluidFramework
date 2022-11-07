@@ -51,8 +51,6 @@ export interface IRuntimeStateHandler {
     clientId(): string | undefined;
     close(error?: ICriticalContainerError): void;
     applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>;
-    /** @deprecated To be removed in 2.0.0-internal.4.0.0 (AB#2496) */
-    flush(): void;
     reSubmit(
         type: ContainerMessageType,
         content: any,
@@ -189,16 +187,6 @@ export class PendingStateManager implements IDisposable {
         };
 
         this.pendingMessages.push(pendingMessage);
-    }
-
-    /**
-     * @deprecated Use batch metadata to indicate end of batch. To be removed in 2.0.0-internal.4.0.0 (AB#2496)
-     */
-    public onFlush() {
-        const previousMessage = this.pendingMessages.peekBack();
-        if (previousMessage) {
-            previousMessage.opMetadata = { ...previousMessage.opMetadata, batch: false };
-        }
     }
 
     /**
