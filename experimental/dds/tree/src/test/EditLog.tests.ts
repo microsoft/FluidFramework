@@ -327,4 +327,46 @@ describe('EditLog', () => {
 			);
 		expect(editsEvicted).to.equal(editLogSize - minimumSequenceNumber);
 	});
+
+	it.only('can start accepting edits from a non-zero sequence number', () => {
+		const startSequenceNumber = 50;
+		const editLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const ids: EditId[] = [];
+
+		let editsEvicted = 0;
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, { sequenceNumber: startSequenceNumber + i, referenceSequenceNumber: i - 1 });
+			ids.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(editLogSize, 'Only sequenced edits should be present.');
+
+		const minimumSequenceNumber = 5;
+		for (let i = 0; i < editLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber: startSequenceNumber + editLogSize + i,
+				referenceSequenceNumber: startSequenceNumber + i - 1,
+				minimumSequenceNumber,
+			});
+			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
+		}
+
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(
+				editLogSize + minimumSequenceNumber,
+				'Only edits outside the collab window should have been evicted'
+			);
+		expect(editsEvicted).to.equal(editLogSize - minimumSequenceNumber);
+	});
 });
