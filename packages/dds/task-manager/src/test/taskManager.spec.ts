@@ -54,29 +54,7 @@ function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRunt
     return { taskManager, attach };
 }
 
-function createLocalTaskManager(id: string) {
-    // Create a local TaskManager.
-    const runtime = new MockFluidDataStoreRuntime();
-    runtime.local = true;
-    return new TaskManager(id, runtime, TaskManagerFactory.Attributes);
-}
-
 describe("TaskManager", () => {
-    describe("Local state", () => {
-        let taskManager: TaskManager;
-
-        beforeEach(() => {
-            taskManager = createLocalTaskManager("taskmanager");
-        });
-
-        describe("APIs", () => {
-            it("Can create a detached TaskManager", () => {
-                assert.ok(taskManager, "Could not create a task manager");
-                assert.ok(!taskManager.isAttached(), "TaskManager should be detached");
-            });
-        });
-    });
-
     describe("Connected state", () => {
         let taskManager1: ITaskManager;
         let taskManager2: ITaskManager;
