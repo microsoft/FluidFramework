@@ -301,6 +301,19 @@ stages:
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
+          # Display Failed Tests
+          - task: PythonScript@0
+            inputs:
+              scriptSource: 'inline'
+              script: |
+                import xml.etree.ElementTree as ET
+                tree = ET.parse('mocha-junit-report.xml')
+                root = tree.getroot()
+
+                for failure in root.iter('failure'):
+                    print (failure.text)
+            displayName: 'Display Failed Tests'
+
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
