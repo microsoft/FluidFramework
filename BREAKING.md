@@ -36,7 +36,8 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
 
 ### Deprecate existing flag in runtime
-The `existing` flag in runtime has been deprecated and will be removed in a future breaking change.
+The `existing` flag in IContainerContext has been deprecated and will be removed in a future breaking change. Furthermore,
+in the same breaking change, in ContainerRuntime existing will be required and expected in instantiateRuntime().
 
 ### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
