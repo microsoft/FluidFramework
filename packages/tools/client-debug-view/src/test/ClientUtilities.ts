@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidClientDebugger, initializeFluidClientDebugger } from "@fluid-tools/client-debugger";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -10,6 +9,8 @@ import {
     TinyliciousClient,
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
+
+import { IFluidClientDebugger, initializeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
