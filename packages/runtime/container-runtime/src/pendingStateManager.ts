@@ -376,11 +376,13 @@ export class PendingStateManager implements IDisposable {
                         if (pendingMessage.opMetadata?.batch === false) {
                             break;
                         }
-                        assert(pendingMessagesCount > 0, "Batch start needs a corresponding batch end");
+                        assert(pendingMessagesCount > 0, "No batch end found");
 
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         pendingMessage = this.pendingMessages.shift()!;
                         pendingMessagesCount--;
+                        assert(pendingMessage.opMetadata?.batch !== true,
+                            "Batch start needs a corresponding batch end");
                     }
                 });
             } else {
