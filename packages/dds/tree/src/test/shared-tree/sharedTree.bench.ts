@@ -52,6 +52,28 @@ describe("SharedTree benchmarks", () => {
                 },
             });
         }
+        for (let i = 1; i < 100; i += 10) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Deep Tree with cursor: writes ${i} nodes`,
+                before: () => {},
+                benchmarkFn: async () => {
+                    tree = await getTestTree(i, TreeShape.Deep);
+                },
+            });
+        }
+        for (let i = 1; i < 1700; i += 100) {
+            let tree: ISharedTree;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Wide Tree with cursor: writes ${i} nodes`,
+                before: () => {},
+                benchmarkFn: async () => {
+                    tree = await getTestTree(i, TreeShape.Wide);
+                },
+            });
+        }
     });
 
     describe("Direct JS Object", () => {
