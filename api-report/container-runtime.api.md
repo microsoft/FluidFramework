@@ -553,7 +553,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryBaseConfiguration {
-    compressionAlgorithm?: SummaryCompressionAlgorithms;
+    compressionAlgorithm?: SummaryCompressionAlgorithm;
     initialSummarizerDelayMs: number;
     isUseB64OnCompressed?: boolean;
     maxAckWaitTime: number;
@@ -761,7 +761,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 }
 
 // @public (undocumented)
-export enum SummaryCompressionAlgorithms {
+export enum SummaryCompressionAlgorithm {
     // (undocumented)
     LZ4 = 2,
     // (undocumented)
