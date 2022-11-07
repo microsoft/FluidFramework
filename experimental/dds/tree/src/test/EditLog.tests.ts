@@ -247,7 +247,7 @@ describe('EditLog', () => {
 
 	it('can configure a maximum size and evict edits once it grows larger than that size', () => {
 		const editLogSize = 10;
-		const log = new EditLog(undefined, undefined, undefined, editLogSize);
+		const log = new EditLog(undefined, undefined, undefined, editLogSize, editLogSize * 2);
 		const ids: EditId[] = [];
 
 		let editsEvicted = 0;
