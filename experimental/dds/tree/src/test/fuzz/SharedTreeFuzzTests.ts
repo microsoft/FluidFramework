@@ -122,6 +122,7 @@ export async function performFuzzActions(
 						for (let j = 0; j < minEdits - 1; j++) {
 							const editA = editLogA.tryGetEditAtIndex(editLogA.length - j - 1);
 							const editB = editLogB.tryGetEditAtIndex(editLogB.length - j - 1);
+                            expect(editA).to.not.be.undefined;
 							expect(editA?.id).to.equal(editB?.id);
 						}
 						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
