@@ -56,11 +56,15 @@ export class BatchManager {
         // If we were provided soft limit, check for exceeding it.
         // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
         // and start over. That's not an option if we have no ops.
-        if (this.options.softLimit !== undefined && this.length > 0 && socketMessageSize >= this.options.softLimit) {
+        if (this.options.softLimit !== undefined
+            && this.length > 0
+            && socketMessageSize >= this.options.softLimit
+            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? 0)) {
             return false;
         }
 
-        if (socketMessageSize >= this.options.hardLimit) {
+        if (socketMessageSize >= this.options.hardLimit
+            && socketMessageSize < (this.options.compressionOptions?.minimumBatchSizeInBytes ?? 0)) {
             return false;
         }
 
