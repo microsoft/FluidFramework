@@ -50,6 +50,12 @@ interface IPendingOp {
 const snapshotFileName = "header";
 
 /**
+ * Placeholder clientId for detached scenarios.
+ */
+const placeholderClientId = "placeholder";
+
+
+/**
  * The TaskManager distributed data structure tracks queues of clients that want to exclusively run a task.
  *
  * @remarks
@@ -177,8 +183,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly connectionWatcher: EventEmitter = new EventEmitter();
     // completedWatcher emits an event whenever the local client receives a completed op.
     private readonly completedWatcher: EventEmitter = new EventEmitter();
-    // attachedWatcher emits an event whenever the local runtime becomes attached.
-    private readonly attachedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -197,16 +201,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly pendingCompletedTasks: Map<string, number[]> = new Map();
 
     /**
-     * Placeholder clientId for detached scenarios.
-     */
-    private readonly placeholderClientId: string = "placeholder";
-
-    /**
      * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
      */
     private get clientId(): string | undefined {
         if (!this.isAttached()) {
-            return this.runtime.clientId ?? this.placeholderClientId;
+            return this.runtime.clientId ?? placeholderClientId;
         }
         return this.runtime.clientId;
     }
@@ -283,9 +282,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
-            // If oldLockHolder is this.placeholderClientId we need to emit the task was lost during the attach process
-            if (oldLockHolder === this.placeholderClientId) {
-                this.connectionWatcher.emit("abandon", taskId);
+            // If oldLockHolder is placeholderClientId we need to emit the task was lost during the attach process
+            if (oldLockHolder === placeholderClientId) {
                 this.emit("lost", taskId);
                 return;
             }
@@ -319,14 +317,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.latestPendingOps.clear();
         });
 
-        runtime.once("attached", () => {
-            // Once we attach we need to release all tasks that were assigned to the placeholder (detached) client.
-            // We do this because we need to re-volunteer with our actual clientId, and there could be a race to regain
-            // the task assignment.
-            this.removeClientFromAllQueues(this.placeholderClientId);
-            // We will also emit the "attached" event so if we are subscribed with placeholderClientId we will know we
-            // have to resubscribe
-            this.attachedWatcher.emit("attached");
+        runtime.once("attaching", () => {
+            // Once we start attaching we need to release all tasks that were assigned to the placeholder (detached)
+            // client. We do this because we need to re-volunteer with our actual clientId, and there could be a race
+            // to regain the task assignment.
+            this.removeClientFromAllQueues(placeholderClientId);
         });
     }
 
@@ -534,10 +529,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // Simulate auto-ack in detached scenario
             assert(this.clientId !== undefined, "clientId is undefined");
             this.onVolunteerAck(taskId, this.clientId);
-            // If we volunteered using placeHolderClientId, then we need to watch for when we attach and are assigned a
-            // real clientId. At that point we should re-enter the queue with a real volunteer op.
-            if (this.clientId === this.placeholderClientId) {
-                this.attachedWatcher.once("attached", () => {
+            // If we volunteered using placeHolderClientId, then we need to watch for when we connect and are assigned a
+            // clientId post-attach. At that point we should re-enter the queue with a real volunteer op.
+            if (this.clientId === placeholderClientId) {
+                this.connectionWatcher.once("connect", () => {
                     submitVolunteerOp();
                 });
             }
@@ -726,8 +721,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        // Ensure that the clientId exists in the quorum, or it is this.placeholderClientId (detached scenario)
-        if (this.runtime.getQuorum().getMembers().has(clientId) || this.clientId === this.placeholderClientId) {
+        // Ensure that the clientId exists in the quorum, or it is placeholderClientId (detached scenario)
+        if (this.runtime.getQuorum().getMembers().has(clientId) || this.clientId === placeholderClientId) {
             // Create the queue if it doesn't exist, and push the client on the back.
             let clientQueue = this.taskQueues.get(taskId);
             if (clientQueue === undefined) {
@@ -751,7 +746,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return;
         }
 
-        const oldLockHolder = clientId === this.placeholderClientId ? this.placeholderClientId : clientQueue[0];
+        const oldLockHolder = clientId === placeholderClientId ? placeholderClientId : clientQueue[0];
         const clientIdIndex = clientQueue.indexOf(clientId);
         if (clientIdIndex !== -1) {
             clientQueue.splice(clientIdIndex, 1);

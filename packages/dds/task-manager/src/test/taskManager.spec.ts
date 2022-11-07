@@ -47,6 +47,7 @@ function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRunt
         taskManager.connect(services);
         // Ensure clientId is set after attach (might be forced undefined in some tests)
         dataStoreRuntime.clientId = clientId;
+        dataStoreRuntime.emit("attaching");
         dataStoreRuntime.emit("attached");
     };
 
@@ -411,12 +412,12 @@ describe("TaskManager", () => {
 
                 let taskManager1EventFired = false;
                 let taskManager2EventFired = false;
-                taskManager1.once("completed", (completedTaskId: string) => {
+                taskManager1.on("completed", (completedTaskId: string) => {
                     assert.ok(completedTaskId === taskId, "taskId should match");
                     assert.ok(!taskManager1EventFired, "Should only fire completed event once on taskManager1");
                     taskManager1EventFired = true;
                 });
-                taskManager2.once("completed", (completedTaskId: string) => {
+                taskManager2.on("completed", (completedTaskId: string) => {
                     assert.ok(completedTaskId === taskId, "taskId should match");
                     assert.ok(!taskManager2EventFired, "Should only fire completed event once on taskManager2");
                     taskManager2EventFired = true;
@@ -466,14 +467,13 @@ describe("TaskManager", () => {
         // let taskManager2: ITaskManager;
         // let attachTaskManager2: () => void;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
-        let placeholderClientId: string;
+        const placeholderClientId = "placeholder";
 
         beforeEach(() => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
             const createResponse1 = createDetachedTaskManager("taskManager1", containerRuntimeFactory);
             taskManager1 = createResponse1.taskManager;
             attachTaskManager1 = createResponse1.attach;
-            placeholderClientId = (taskManager1 as any).placeholderClientId;
         });
 
         it("Can create a detached TaskManager and attach later", async () => {
@@ -588,7 +588,7 @@ describe("TaskManager", () => {
                         "taskQueue should have placeholder clientId");
 
                     let taskManager1EventFired = false;
-                    taskManager1.once("lost", (completedTaskId: string) => {
+                    taskManager1.on("lost", (completedTaskId: string) => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
                         assert.ok(!taskManager1EventFired, "Should only fire lost event once on taskManager1");
                         taskManager1EventFired = true;
@@ -620,7 +620,7 @@ describe("TaskManager", () => {
                     taskManager1.subscribeToTask(taskId);
                     containerRuntimeFactory.processAllMessages();
                     let taskManager1EventFired = false;
-                    taskManager1.once("lost", (completedTaskId: string) => {
+                    taskManager1.on("lost", (completedTaskId: string) => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
                         assert.ok(!taskManager1EventFired, "Should only fire lost event once on taskManager1");
                         taskManager1EventFired = true;
@@ -674,7 +674,7 @@ describe("TaskManager", () => {
                     await volunteerTaskP1;
                     attachTaskManager1();
                     let taskManager1EventFired = false;
-                    taskManager1.once("completed", (completedTaskId: string) => {
+                    taskManager1.on("completed", (completedTaskId: string) => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
                         assert.ok(!taskManager1EventFired, "Should only fire completed event once on taskManager1");
                         taskManager1EventFired = true;
@@ -718,7 +718,7 @@ describe("TaskManager", () => {
             taskManager2.connect(services2);
         });
 
-        it("Can create a disconnected TaskManager", () => {
+        it("Can create a TaskManager while disconnected", () => {
             containerRuntime1.connected = false;
             assert.ok(taskManager1, "Could not create a task manager");
             assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
