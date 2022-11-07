@@ -18,6 +18,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
+- [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+
+### Deprecated IPendingFlush
+`IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)

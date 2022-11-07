@@ -1179,7 +1179,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientId: () => this.clientId,
                 close: this.closeFn,
                 connected: () => this.connected,
-                flush: this.flush.bind(this),
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),
@@ -1956,8 +1955,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        this.pendingStateManager.onFlush();
     }
 
     public orderSequentially(callback: () => void): void {
@@ -2000,7 +1997,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+        // We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
+        if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
     }
