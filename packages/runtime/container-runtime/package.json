@@ -114,6 +114,14 @@
       },
       "InterfaceDeclaration_ISummarizerRuntime": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_ICompressionRuntimeOptions": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntimeOptions": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }
