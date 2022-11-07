@@ -189,20 +189,42 @@ export class DocumentService implements api.IDocumentService {
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
-            const ordererToken = await this.tokenProvider.fetchOrdererToken(
-                this.tenantId,
-                this.documentId,
-                refreshToken,
+
+            const ordererToken = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "GetDeltaStreamToken",
+                    docId: this.documentId,
+                    details: JSON.stringify({
+                        refreshToken,
+                    }),
+                },
+                async () => {
+                    return this.tokenProvider.fetchOrdererToken(
+                        this.tenantId,
+                        this.documentId,
+                        refreshToken,
+                    );
+                }
             );
 
-            return R11sDocumentDeltaConnection.create(
-                this.tenantId,
-                this.documentId,
-                ordererToken.jwt,
-                io,
-                client,
-                this.deltaStreamUrl,
+            return PerformanceEvent.timedExecAsync(
                 this.logger,
+                {
+                    eventName: "ConnectToDeltaStream",
+                    docId: this.documentId,
+                },
+                async () => {
+                    return R11sDocumentDeltaConnection.create(
+                        this.tenantId,
+                        this.documentId,
+                        ordererToken.jwt,
+                        io,
+                        client,
+                        this.deltaStreamUrl,
+                        this.logger,
+                    );
+                }
             );
         };
 
@@ -229,7 +251,7 @@ export class DocumentService implements api.IDocumentService {
             this.discoverP = PerformanceEvent.timedExecAsync(
                 this.logger,
                 {
-                    eventName: "refreshSessionDiscovery",
+                    eventName: "RefreshDiscovery",
                 },
                 async () => this.refreshDiscoveryCore(),
             );

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import { fail } from "assert";
 import { assert } from "@fluidframework/common-utils";
 import {
     Value,
@@ -22,6 +24,7 @@ import {
     mapCursorFields,
     CursorLocationType,
     FieldAnchor,
+    ITreeCursor,
 } from "../../core";
 import { brand } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
@@ -36,49 +39,51 @@ import {
     PrimitiveValue,
     keyIsValidIndex,
     getOwnArrayKeys,
+    assertPrimitiveValueType,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 
 /**
- * A symbol for extracting target from editable-tree proxies.
+ * A symbol for extracting target from {@link EditableTree} proxies.
  * Useful for debugging and testing, but not part of the public API.
  */
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
- * A symbol to get the type of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the type of {@link EditableTree} in contexts where string keys are already in use for fields.
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 
 /**
- * A symbol to get the type name of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the type name of {@link EditableTree} in contexts where string keys are already in use for fields.
  */
 export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 
 /**
- * A symbol to get the value of a node in contexts where string keys are already in use for fields.
+ * A symbol to get and set the value of {@link EditableTree} in contexts where string keys are already in use for fields.
+ *
+ * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+ * Concurrently setting the value will follow the "last-write-wins" semantics.
  */
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
- * A symbol to get the anchor of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
+ * in contexts where string keys are already in use for fields.
  */
-export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
+export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
- * A symbol to get the field of a node without unwrapping in contexts where string keys are already in use for fields.
+ * A symbol to get the function, which creates a new field of {@link EditableTree},
+ * in contexts where string keys are already in use for fields.
  */
-export const getWithoutUnwrappingSymbol: unique symbol = Symbol(
-    "editable-tree:getWithoutUnwrapping()",
-);
+export const createField: unique symbol = Symbol("editable-tree:createField()");
 
 /**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
  * To discover empty fields, inspect the schema using {@link typeSymbol}.
- *
- * TODO: support editing.
  */
 export interface EditableTree extends Iterable<EditableField> {
     /**
@@ -94,8 +99,11 @@ export interface EditableTree extends Iterable<EditableField> {
 
     /**
      * Value stored on this node.
+     *
+     * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
-    readonly [valueSymbol]: Value;
+    [valueSymbol]: Value;
 
     /**
      * Stores the target for the proxy which implements reading and writing for this node.
@@ -105,19 +113,9 @@ export interface EditableTree extends Iterable<EditableField> {
     readonly [proxyTargetSymbol]: object;
 
     /**
-     * Anchor to this node.
-     * Valid as long as this EditableTree's context is not freed.
-     * Might not point to any node if this node is deleted from the document.
-     *
-     * TODO: When a proper editing API is exposed on EditableTree directly,
-     * this should become an implementation detail and rbe removed from this API surface.
-     */
-    readonly [anchorSymbol]: Anchor;
-
-    /**
      * Gets the field of this node by its key without unwrapping.
      */
-    [getWithoutUnwrappingSymbol](fieldKey: FieldKey): EditableField;
+    [getField](fieldKey: FieldKey): EditableField;
 
     /**
      * Fields of this node, indexed by their field keys.
@@ -125,8 +123,14 @@ export interface EditableTree extends Iterable<EditableField> {
      * This API exposes content in a way depending on the {@link Multiplicity} of the {@link FieldKind}.
      * Sequences (including empty ones) are always exposed as {@link EditableField}s,
      * and everything else is either a single EditableTree or undefined depending on if it's empty.
+     *
+     * It is possible to use this indexed access to delete the field using the `delete` operator and
+     * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
+     * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
-    readonly [key: FieldKey]: UnwrappedEditableField;
+    // TODO: update docs for concurrently deleting the field.
+    [key: FieldKey]: UnwrappedEditableField;
 
     /**
      * Gets an iterator iterating over the fields of this node.
@@ -135,6 +139,24 @@ export interface EditableTree extends Iterable<EditableField> {
      * when the fields are getting changed while iterating.
      */
     [Symbol.iterator](): IterableIterator<EditableField>;
+
+    /**
+     * Creates a new field at this node.
+     *
+     * The content of the new field must follow the {@link Multiplicity} of the {@link FieldKind}:
+     * - use a single cursor when creating an `optional` field;
+     * - use array of cursors when creating a `sequence` field;
+     * - use {@link EditableField.insertNodes} instead to create fields of kind `value` as currently
+     * it is not possible to have trees with already populated fields of this kind.
+     *
+     * When creating a field in a concurrent environment,
+     * `optional` fields will be created following the "last-write-wins" semantics,
+     * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
+     */
+    [createField](
+        fieldKey: FieldKey,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): EditableField | undefined;
 }
 
 /**
@@ -156,7 +178,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  *
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
- * Use `getWithoutUnwrapping` to get a node without unwrapping.
+ * Use `getNode` to get a node without unwrapping.
  */
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     /**
@@ -187,7 +209,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
      * Gets a node of this field by its index without unwrapping.
      * Note that the node must exists at the given index.
      */
-    getWithoutUnwrapping(index: number): EditableTree;
+    getNode(index: number): EditableTree;
 
     /**
      * Gets an iterator iterating over the nodes (unwrapped) of this field.
@@ -197,6 +219,30 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
      * when the field is getting changed while iterating.
      */
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
+
+    /**
+     * Inserts new nodes into this field.
+     */
+    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+
+    /**
+     * Sequentially deletes the nodes from this field.
+     *
+     * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
+     * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
+     * starting from the index and up to the length of the field.
+     */
+    deleteNodes(index: number, count?: number): void;
+
+    /**
+     * Nodes of this field, indexed by their numeric indices.
+     *
+     * It is possible to use this indexed access to set the value of the node using the simple assignment operator (`=`)
+     * if the node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
+     * Concurrently setting the value will follow the "last-write-wins" semantics.
+     * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+     */
+    [index: number]: UnwrappedEditableTree;
 }
 
 /**
@@ -307,6 +353,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         return this.cursor.value;
     }
 
+    set value(value: Value) {
+        assert(isPrimitive(this.type), "Cannot set a value of a non-primitive field");
+        assertPrimitiveValueType(value, this.type);
+        const path = this.cursor.getPath();
+        assert(path !== undefined, "Cannot locate a path to set a value of the node");
+        this.context.setNodeValue(path, value);
+    }
+
     public lookupFieldKind(field: FieldKey): FieldKind {
         return getFieldKind(getFieldSchema(field, this.context.forest.schema, this.type));
     }
@@ -350,7 +404,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         return proxifiedField;
     }
 
-    public getWithoutUnwrapping(fieldKey: FieldKey): EditableField {
+    public getField(fieldKey: FieldKey): EditableField {
         return this.proxifyField(fieldKey, false);
     }
 
@@ -358,6 +412,55 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         return this.getFieldKeys()
             .map((fieldKey) => this.proxifyField(fieldKey, false))
             .values();
+    }
+
+    public createField(
+        fieldKey: FieldKey,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): EditableField | undefined {
+        assert(!this.has(fieldKey), "The field already exists.");
+        const fieldKind = this.lookupFieldKind(fieldKey);
+        const path = this.cursor.getPath();
+        switch (fieldKind.multiplicity) {
+            case Multiplicity.Optional: {
+                assert(
+                    !Array.isArray(newContent),
+                    "Use single cursor to create the optional field",
+                );
+                if (this.context.setOptionalField(path, fieldKey, newContent, true))
+                    return this.proxifyField(fieldKey, false);
+            }
+            case Multiplicity.Sequence: {
+                if (this.context.insertNodes(path, fieldKey, 0, newContent))
+                    return this.proxifyField(fieldKey, false);
+            }
+            case Multiplicity.Value:
+                fail("It is invalid to create fields of kind `value` as they should always exist.");
+            default:
+                fail("`Forbidden` fields may not be created.");
+        }
+    }
+
+    public deleteField(fieldKey: FieldKey): void {
+        const fieldKind = this.lookupFieldKind(fieldKey);
+        const path = this.cursor.getPath();
+        this.cursor.enterField(fieldKey);
+        const length = this.cursor.getFieldLength();
+        this.cursor.exitField();
+        switch (fieldKind.multiplicity) {
+            case Multiplicity.Optional: {
+                this.context.setOptionalField(path, fieldKey, undefined, false);
+                break;
+            }
+            case Multiplicity.Sequence: {
+                this.context.deleteNodes(path, fieldKey, 0, length);
+                break;
+            }
+            case Multiplicity.Value:
+                fail("Fields of kind `value` may not be deleted.");
+            default:
+                fail("`Forbidden` fields may not be deleted.");
+        }
     }
 }
 
@@ -381,12 +484,12 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.value;
             case proxyTargetSymbol:
                 return target;
-            case anchorSymbol:
-                return target.getAnchor();
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
-            case getWithoutUnwrappingSymbol:
-                return target.getWithoutUnwrapping.bind(target);
+            case getField:
+                return target.getField.bind(target);
+            case createField:
+                return target.createField.bind(target);
             default:
                 return undefined;
         }
@@ -394,13 +497,37 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
     set: (
         target: NodeProxyTarget,
         key: string | symbol,
-        setValue: unknown,
+        value: unknown,
         receiver: NodeProxyTarget,
     ): boolean => {
-        throw new Error("Not implemented.");
+        if (typeof key === "string" || symbolIsFieldKey(key)) {
+            const fieldKey: FieldKey = brand(key);
+            const fieldKind = target.lookupFieldKind(fieldKey);
+            assert(
+                fieldKind.multiplicity !== Multiplicity.Sequence,
+                "Cannot set a value of a sequence field.",
+            );
+            assert(
+                target.has(fieldKey),
+                "The field does not exist. Create the field first using `newFieldSymbol`.",
+            );
+            const field = target.proxifyField(fieldKey, false);
+            field.getNode(0)[valueSymbol] = value;
+            return true;
+        }
+        if (key === valueSymbol) {
+            target.value = value;
+            return true;
+        }
+        return false;
     },
     deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
-        throw new Error("Not implemented.");
+        if (typeof key === "string" || symbolIsFieldKey(key)) {
+            const fieldKey: FieldKey = brand(key);
+            target.deleteField(fieldKey);
+            return true;
+        }
+        return false;
     },
     // Include documented symbols (except value when value is undefined) and all non-empty fields.
     has: (target: NodeProxyTarget, key: string | symbol): boolean => {
@@ -412,9 +539,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case proxyTargetSymbol:
             case typeSymbol:
             case typeNameSymbol:
-            case anchorSymbol:
             case Symbol.iterator:
-            case getWithoutUnwrappingSymbol:
+            case getField:
                 return true;
             case valueSymbol:
                 // Could do `target.value !== ValueSchema.Nothing`
@@ -437,11 +563,12 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
         // so they must return true.
 
         if ((typeof key === "string" || symbolIsFieldKey(key)) && target.has(brand(key))) {
+            const unwrappedField = target.proxifyField(brand(key));
             return {
                 configurable: true,
                 enumerable: true,
-                value: target.proxifyField(brand(key)),
-                writable: false,
+                value: unwrappedField,
+                writable: isPrimitiveValue(unwrappedField),
             };
         }
         // utility symbols
@@ -469,13 +596,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     value: target.value,
                     writable: false,
                 };
-            case anchorSymbol:
-                return {
-                    configurable: true,
-                    enumerable: false,
-                    value: target.getAnchor(),
-                    writable: false,
-                };
             case Symbol.iterator:
                 return {
                     configurable: true,
@@ -483,11 +603,11 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     value: target[Symbol.iterator].bind(target),
                     writable: false,
                 };
-            case getWithoutUnwrappingSymbol:
+            case getField:
                 return {
                     configurable: true,
                     enumerable: false,
-                    value: target.getWithoutUnwrapping.bind(target),
+                    value: target.getField.bind(target),
                     writable: false,
                 };
             default:
@@ -538,7 +658,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         this.context.forest.anchors.forget(anchor.parent);
     }
 
-    readonly [index: number]: UnwrappedEditableTree;
+    [index: number]: UnwrappedEditableTree;
 
     public get length(): number {
         return this.cursor.getFieldLength();
@@ -559,7 +679,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     /**
      * Gets a node by its index without unwrapping.
      */
-    public getWithoutUnwrapping(index: number): EditableTree {
+    public getNode(index: number): EditableTree {
         assert(
             keyIsValidIndex(index, this.length),
             "A child node must exist at index to get it without unwrapping.",
@@ -579,17 +699,52 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
         return this.asArray().values();
     }
+
+    public insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void {
+        const fieldKind = getFieldKind(this.fieldSchema);
+        // TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
+        // Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
+        // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
+        if (fieldKind.multiplicity !== Multiplicity.Sequence) {
+            assert(this.length === 0, "A non-sequence field cannot have more than one node.");
+        }
+        assert(
+            keyIsValidIndex(index, this.length + 1),
+            "Index must be less than or equal to length.",
+        );
+        const fieldPath = this.cursor.getFieldPath();
+        this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
+    }
+
+    public deleteNodes(index: number, count?: number): void {
+        // TODO: currently for all field kinds the nodes can be deleted by editor using `sequenceField.delete()`.
+        // Uncomment when the editor will become more schema-aware.
+        // const fieldKind = getFieldKind(this.fieldSchema);
+        // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
+        assert(
+            this.length === 0 || keyIsValidIndex(index, this.length),
+            "Index must be less than length.",
+        );
+        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
+        const maxCount = this.length - index;
+        const _count = count === undefined || count > maxCount ? maxCount : count;
+        const fieldPath = this.cursor.getFieldPath();
+        this.context.deleteNodes(fieldPath.parent, fieldPath.field, index, _count);
+    }
 }
 
+const editableFieldPropertySetWithoutLength = new Set<string>([
+    "fieldKey",
+    "fieldSchema",
+    "primaryType",
+]);
 /**
  * The set of `EditableField` properties exposed by `fieldProxyHandler`.
  * Any other properties are considered to be non-existing.
  */
-const editableFieldPropertySet = new Set<PropertyKey>([
+const editableFieldPropertySet = new Set<string>([
     "length",
-    "fieldKey",
-    "fieldSchema",
-    "primaryType",
+    ...editableFieldPropertySetWithoutLength,
 ]);
 
 /**
@@ -626,10 +781,13 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         return undefined;
     },
     set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
-        throw new Error("Not implemented");
+        assert(keyIsValidIndex(key, target.length), "The node does not exist.");
+        const node = target.proxifyNode(Number(key), false);
+        node[valueSymbol] = value;
+        return true;
     },
     deleteProperty: (target: FieldProxyTarget, key: string): boolean => {
-        throw new Error("Not supported");
+        throw new Error("Not supported. Use `deleteNodes()` instead");
     },
     // Include documented symbols and all non-empty fields.
     has: (target: FieldProxyTarget, key: string | symbol): boolean => {
@@ -650,7 +808,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
     ownKeys: (target: FieldProxyTarget): ArrayLike<keyof EditableField> => {
         // This includes 'length' property.
         const keys: string[] = getOwnArrayKeys(target.length);
-        keys.push("fieldKey", "fieldSchema", "primaryType");
+        keys.push(...editableFieldPropertySetWithoutLength);
         return keys as ArrayLike<keyof EditableField>;
     },
     getOwnPropertyDescriptor: (
@@ -691,7 +849,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                     configurable: true,
                     enumerable: true,
                     value: target.proxifyNode(Number(key)),
-                    writable: false,
+                    writable: true,
                 };
             }
         }
@@ -728,6 +886,10 @@ function inProxyOrUnwrap(
                 target.cursor,
                 nodeTypeName,
             );
+            // Even though the target gets "substituted" by the FieldProxyTarget and not used afterwards,
+            // its cursor still must follow the "node" mode, as the target is cached in the context,
+            // where an anchor for this node must be built by the cursor within `prepareForEdit`.
+            target.cursor.exitField();
             return adaptWithProxy(primarySequence, fieldProxyHandler);
         }
     }
@@ -747,8 +909,27 @@ export function proxifyField(
     context: ProxyContext,
     fieldSchema: FieldSchema,
     cursor: ITreeSubscriptionCursor,
+    unwrap: false,
+): EditableField;
+export function proxifyField(
+    context: ProxyContext,
+    fieldSchema: FieldSchema,
+    cursor: ITreeSubscriptionCursor,
+    unwrap: true,
+): UnwrappedEditableField;
+// ts cannot resolve boolean without this overload
+export function proxifyField(
+    context: ProxyContext,
+    fieldSchema: FieldSchema,
+    cursor: ITreeSubscriptionCursor,
     unwrap: boolean,
-): UnwrappedEditableField {
+): UnwrappedEditableField | EditableField;
+export function proxifyField(
+    context: ProxyContext,
+    fieldSchema: FieldSchema,
+    cursor: ITreeSubscriptionCursor,
+    unwrap: boolean = true,
+): UnwrappedEditableField | EditableField {
     if (!unwrap) {
         const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
         return inProxyOrUnwrap(targetSequence, unwrap);
