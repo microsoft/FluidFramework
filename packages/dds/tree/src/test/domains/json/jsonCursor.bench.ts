@@ -79,7 +79,7 @@ function bench(
 
         benchmark({
             type: BenchmarkType.Measurement,
-            title: `Direct: '${name}'`,
+            title: `Clone JS Object: '${name}'`,
             before: () => {
                 const cloned = clone(json);
                 assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");

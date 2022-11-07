@@ -35,14 +35,16 @@ const readStdin: () => Promise<string | undefined> = async () => {
 type policyAction = "handle" | "resolve" | "final";
 
 /**
- * This tool enforces polices across the code base via a series of handlers.
- * This command supports piping. The flag is modified from s to stdin
+ * This tool enforces policies across the code base via a series of handlers.
+ *
+ * This command supports piping.
+ *
  * i.e. `git ls-files -co --exclude-standard --full-name | flub check policy --stdin --verbose`
  *
  * @remarks
  *
  * This command is equivalent to `fluid-repo-policy-check`.
- * fluid-repo-policy-check -s is equivalent to flub check policy --stdin
+ * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
@@ -284,8 +286,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
         try {
             this.routeToHandlers(filePath, handlerRegex, handlers);
-        } catch {
-            throw new Error("Line error");
+        } catch (error: any) {
+            throw new Error(`Line error: ${error}`);
         }
 
         CheckPolicy.processed++;
