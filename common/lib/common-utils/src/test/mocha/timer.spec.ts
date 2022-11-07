@@ -86,6 +86,32 @@ describe("Timers", () => {
             testExactTimeout(overrideTimeout);
         });
 
+        it("Should immediately execute if the handler is late even accounting for the restart", () => {
+            const initialRunCount = runCount;
+            timer.start(defaultTimeout);
+
+            // Restart right before we execute the handler.
+            clock.tick(defaultTimeout - 1);
+            timer.restart();
+
+            // Advance the clock by a lot, that way, we ensure that the
+            // first time our timer executes its handler, it is late by design.
+            clock.tick(defaultTimeout * 2);
+
+            // flushPromises().then(
+            //     () => {},
+            //     () => {
+            //         assert.fail("Promise flushing failed");
+            //     },
+            // );
+
+            assert.strictEqual(
+                runCount,
+                initialRunCount + 1,
+                "Should have executed immediately because the handler was late",
+            );
+        });
+
         it("Should be reusable multiple times", () => {
             timer.start();
             testExactTimeout(defaultTimeout);
