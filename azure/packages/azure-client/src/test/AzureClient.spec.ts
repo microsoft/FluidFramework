@@ -172,10 +172,10 @@ describe("AzureClient", () => {
 
     /**
      * Scenario: Test if AzureClient with only read permission starts the container in read mode.
-     * AzureClient will attempt to start the connection in write mode, but if the write permission
-     * is not available or the file is read only, mode will be read.
+     * AzureClient will attempt to start the connection in write mode, and since access permissions
+     * does not offer write capabilities, the established connection mode will be `read`.
      *
-     * Expected behavior: The container should start with the connectionMode in `read`.
+     * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
      */
     it("can create a container with only read permission in read mode", async () => {
         const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
@@ -206,10 +206,10 @@ describe("AzureClient", () => {
 
     /**
      * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
-     * AzureClient will attempt to start the connection in write mode, but if the file is read only,
-     * the connection mode will be read.
+     * AzureClient will attempt to start the connection in write mode, and since access permissions offer
+     * write capability, the established connection mode will be `write`.
      *
-     * Expected behavior: The container should start with the connectionMode in `write`.
+     * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
      */
     it("can create a container with read and write permissions in write mode", async () => {
         const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
