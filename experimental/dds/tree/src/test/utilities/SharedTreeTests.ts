@@ -857,7 +857,7 @@ export function runSharedTreeOperationsTests(
 					expect(editLog.length).to.equal(2);
 
 					// The first operation to be sequenced is the tree init
-					const treeInitEdit = assertNotUndefined(editLog.tryGetEditAtIndex(1));
+					const treeInitEdit = editLog.tryGetEditAtIndex(1) ?? fail('edit not found');
 					expect(treeInitEdit.changes.length).to.equal(2);
 					expect(treeInitEdit.changes[0].type).to.equal(ChangeType.Build);
 					expect(treeInitEdit.changes[1].type).to.equal(ChangeType.Insert);
@@ -1308,10 +1308,10 @@ export function runSharedTreeOperationsTests(
 
 					const log = getEditLogInternal(tree);
 					const log2 = getEditLogInternal(secondTree);
-					const insertEdit = normalizeEdit(tree, assertNotUndefined(log.tryGetEditAtIndex(1)));
-					const moveEdit = normalizeEdit(tree, assertNotUndefined(log.tryGetEditAtIndex(2)));
-					const insertEdit2 = normalizeEdit(secondTree, assertNotUndefined(log2.tryGetEditAtIndex(1)));
-					const moveEdit2 = normalizeEdit(secondTree, assertNotUndefined(log2.tryGetEditAtIndex(2)));
+					const insertEdit = normalizeEdit(tree, log.tryGetEditAtIndex(1) ?? fail('edit not found'));
+					const moveEdit = normalizeEdit(tree, log.tryGetEditAtIndex(2) ?? fail('edit not found'));
+					const insertEdit2 = normalizeEdit(secondTree, log2.tryGetEditAtIndex(1) ?? fail('edit not found'));
+					const moveEdit2 = normalizeEdit(secondTree, log2.tryGetEditAtIndex(2) ?? fail('edit not found'));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
@@ -1369,7 +1369,7 @@ export function runSharedTreeOperationsTests(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
 				const preEditRootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
-				const edits = [0, 1, 2].map((i) => assertNotUndefined(sharedTree.edits.tryGetEditAtIndex(i)));
+				const edits = [0, 1, 2].map((i) => sharedTree.edits.tryGetEditAtIndex(i) ?? fail('edit not found'));
 				// Since the TestTree setup edit is a `setTrait`, this should wipe `testTree2` state.
 				sharedTree2.mergeEditsFrom(sharedTree, edits);
 				expect(sharedTree2.edits.length).to.equal(4);
@@ -1398,7 +1398,7 @@ export function runSharedTreeOperationsTests(
 				sharedTree.applyEdit(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
-				const edits = [1, 2].map((i) => assertNotUndefined(sharedTree.edits.tryGetEditAtIndex(i)));
+				const edits = [1, 2].map((i) => sharedTree.edits.tryGetEditAtIndex(i) ?? fail('edit not found'));
 				sharedTree2.mergeEditsFrom(sharedTree, edits, (id) => translationMap.get(id) ?? id);
 
 				const root = getTestTreeRootHandle(sharedTree, testTree);

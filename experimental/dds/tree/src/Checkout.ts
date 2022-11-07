@@ -365,7 +365,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public revert(editId: EditId): void {
 		assert(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
-		const edit = this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
+		const edit =
+			this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
 		const before = this.tree.logViewer.getRevisionViewInMemory(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {

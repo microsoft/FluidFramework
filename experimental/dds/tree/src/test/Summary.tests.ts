@@ -7,7 +7,7 @@ import { join } from 'path';
 import { expect } from 'chai';
 import { v5 } from 'uuid';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { assert, assertNotUndefined, RecursiveMutable } from '../Common';
+import { assert, fail, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';
@@ -394,12 +394,12 @@ async function expectSharedTreesEqual(
 		const roundTrip = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T;
 
 		const editA = roundTrip(
-			convertEditIds(assertNotUndefined(getEditLogInternal(sharedTreeA).tryGetEditAtIndex(i)), (id) =>
+			convertEditIds(getEditLogInternal(sharedTreeA).tryGetEditAtIndex(i) ?? fail('edit not found'), (id) =>
 				sharedTreeA.convertToStableNodeId(id)
 			)
 		);
 		const editB = roundTrip(
-			convertEditIds(assertNotUndefined(getEditLogInternal(sharedTreeB).tryGetEditAtIndex(i)), (id) =>
+			convertEditIds(getEditLogInternal(sharedTreeB).tryGetEditAtIndex(i) ?? fail('edit not found'), (id) =>
 				sharedTreeB.convertToStableNodeId(id)
 			)
 		);

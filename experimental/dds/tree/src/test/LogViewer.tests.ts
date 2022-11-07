@@ -15,7 +15,7 @@ import {
 	SequencedEditResultCallback,
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
-import { assert, assertNotUndefined, copyPropertyIfDefined } from '../Common';
+import { assert, copyPropertyIfDefined, fail } from '../Common';
 import { initialTree } from '../InitialTree';
 import {
 	ChangeInternal,
@@ -134,7 +134,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 function getViewsForLog(log: EditLog<ChangeInternal>, baseView: RevisionView): RevisionView[] {
 	const views: RevisionView[] = [baseView];
 	for (let i = 0; i < log.length; i++) {
-		const edit = assertNotUndefined(log.tryGetEditAtIndex(i));
+		const edit = log.tryGetEditAtIndex(i) ?? fail('edit not found');
 		const result = TransactionInternal.factory(views[i]).applyChanges(edit.changes).close();
 		if (result.status === EditStatus.Applied) {
 			views.push(result.after);
@@ -204,7 +204,7 @@ function runLogViewerCorrectnessTests(
 				}
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
-					const edit = assertNotUndefined(simpleLog.tryGetEditAtIndex(i));
+					const edit = simpleLog.tryGetEditAtIndex(i) ?? fail('edit not found');
 					mutableLog.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
 				}
 			}
@@ -249,7 +249,8 @@ function runLogViewerCorrectnessTests(
 				expectViewsAreEqual(logWithLocalEdits, viewer);
 				// Sequence a local edit
 				logWithLocalEdits.addSequencedEdit(
-					assertNotUndefined(logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits)),
+					logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits) ??
+						fail('edit not found'),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
 				++seqNumber;
@@ -489,7 +490,7 @@ describe('CachingLogViewer', () => {
 		let seqNumber = 1;
 		while (logWithLocalEdits.numberOfLocalEdits > 0) {
 			logWithLocalEdits.addSequencedEdit(
-				assertNotUndefined(logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits)),
+				logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits) ?? fail('edit not found'),
 				{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 			);
 			++seqNumber;
