@@ -7,79 +7,135 @@ import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { requestWithRetry } from "@fluidframework/server-services-core";
+import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
 
-export class MongoCollection<T> implements core.ICollection<T> {
-    constructor(private readonly collection: Collection<T>) {
+export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble {
+    public readonly retryEnabled: boolean;
+    constructor(
+        private readonly collection: Collection<T>,
+        private readonly clientSideRetry?: boolean,
+    ) {
+        assert(collection, "collection must be defined");
+        this.retryEnabled = clientSideRetry ?? false;
     }
 
-    public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
-        return this.collection.aggregate(pipeline, options);
+    public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
+        const req = async () => new Promise<AggregationCursor<T>>(
+            (resolve) => resolve(this.collection.aggregate(pipeline, options)));
+        return this.requestWithRetry(req, "MongoCollection.aggregate");
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
-        let queryCursor = this.collection
-            .find(query)
-            .sort(sort)
-            .limit(limit);
+    public async find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+        const req: () => Promise<T[]> = async () => {
+            let queryCursor = this.collection
+                .find(query)
+                .sort(sort)
+                .limit(limit);
 
-        if (skip) {
-            queryCursor = queryCursor.skip(skip);
-        }
-        return queryCursor.toArray();
+            if (skip) {
+                queryCursor = queryCursor.skip(skip);
+            }
+            return queryCursor.toArray();
+        };
+        return this.requestWithRetry(req, "MongoCollection.find");
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public findOne(query: object): Promise<T> {
-        return this.collection.findOne(query);
+    public async findOne(query: object): Promise<T> {
+        const req: () => Promise<T> = async () => this.collection.findOne(query);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.findAll", // callerName
+        );
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public findAll(): Promise<T[]> {
-        return this.collection.find({}).toArray();
+    public async findAll(): Promise<T[]> {
+        const req: () => Promise<T[]> = async () => this.collection.find({}).toArray();
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.findAll", // callerName
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async update(filter: object, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(filter, set, addToSet, false);
+        const req = async () => this.updateCore(filter, set, addToSet, false);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.update", // callerName
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
-        return this.updateManyCore(filter, set, addToSet, false);
+        const req = async () => this.updateManyCore(filter, set, addToSet, false);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.updateMany", // callerName
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(filter, set, addToSet, true);
+        const req = async () => this.updateCore(filter, set, addToSet, true);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.upsert", // callerName
+        );
     }
 
     public async distinct(key: any, query: any): Promise<any> {
-        return this.collection.distinct(key, query);
+        const req = async () => this.collection.distinct(key, query);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.distinct", // callerName
+        );
     }
 
     public async deleteOne(filter: any): Promise<any> {
-        return this.collection.deleteOne(filter);
+        const req = async () => this.collection.deleteOne(filter);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.deleteOne", // callerName
+        );
     }
 
     public async deleteMany(filter: any): Promise<any> {
-        return this.collection.deleteMany(filter);
+        const req = async () => this.collection.deleteMany(filter);
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.deleteMany", // callerName
+        );
     }
 
     public async insertOne(value: T): Promise<any> {
-        const result = await this.collection.insertOne(value);
-        return result.insertedId;
+        const req = async () => {
+            const result = await this.collection.insertOne(value);
+            return result.insertedId;
+        };
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.insertOne", // callerName
+        );
     }
 
     public async insertMany(values: T[], ordered: boolean): Promise<void> {
-        await this.collection.insertMany(values, { ordered: false });
+        const req = async () => this.collection.insertMany(values, { ordered: false });
+        await this.requestWithRetry(
+            req, // request
+            "MongoCollection.insertMany", // callerName
+        );
     }
 
     public async createIndex(index: any, unique: boolean): Promise<void> {
+        const req = async () => this.collection.createIndex(index, { unique });
         try {
-            const indexName = await this.collection.createIndex(index, { unique });
+            const indexName = await this.requestWithRetry(
+                req, // request
+                "MongoCollection.createIndex", // callerName
+            );
             Lumberjack.info(`Created index ${indexName}`);
         } catch (error) {
             Lumberjack.error(`Index creation failed`, error);
@@ -87,23 +143,38 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
-        await this.collection.createIndex(index, { expireAfterSeconds });
+        const req = async () => this.collection.createIndex(index, { expireAfterSeconds });
+        try {
+            const indexName = await this.requestWithRetry(
+                req, // request
+                "MongoCollection.createTTLIndex", // callerName
+            );
+            Lumberjack.info(`Created index ${indexName}`);
+        } catch (error) {
+            Lumberjack.error(`Index creation failed`, error);
+        }
     }
 
     public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
-        const result = await this.collection.findOneAndUpdate(
-            query,
-            {
-                $setOnInsert: value,
-            },
-            {
-                returnOriginal: true,
-                upsert: true,
-            });
+        const req = async () => {
+            const result = await this.collection.findOneAndUpdate(
+                query,
+                {
+                    $setOnInsert: value,
+                },
+                {
+                    returnOriginal: true,
+                    upsert: true,
+                });
 
-        return result.value
-            ? { value: result.value, existing: true }
-            : { value, existing: false };
+            return result.value
+                ? { value: result.value, existing: true }
+                : { value, existing: false };
+        };
+        return this.requestWithRetry(
+            req, // request
+            "MongoCollection.findOrCreate", // callerName
+        );
     }
 
     private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
@@ -135,10 +206,26 @@ export class MongoCollection<T> implements core.ICollection<T> {
 
         await this.collection.updateMany(filter, update, options);
     }
+
+    private async requestWithRetry<TOut>(request: () => Promise<TOut>, callerName: string): Promise<TOut> {
+        return requestWithRetry<TOut>(
+            request,
+            callerName,
+            {}, // telemetryProperties
+            (e) => this.clientSideRetry && MongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+            3, // maxRetries
+            1000, // retryAfterMs
+            (error: any, numRetries: number, retryAfterInterval: number) =>
+                numRetries * retryAfterInterval, // retryAfterIntervalCalculator
+        );
+    }
 }
 
 export class MongoDb implements core.IDb {
-    constructor(private readonly client: MongoClient) {
+    constructor(
+        private readonly client: MongoClient,
+        private readonly clientSideRetry?: boolean,
+    ) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -152,7 +239,7 @@ export class MongoDb implements core.IDb {
 
     public collection<T>(name: string): core.ICollection<T> {
         const collection = this.client.db("admin").collection<T>(name);
-        return new MongoCollection<T>(collection);
+        return new MongoCollection<T>(collection, this.clientSideRetry);
     }
 
     public async dropCollection(name: string): Promise<boolean> {
@@ -167,6 +254,7 @@ interface IMongoDBConfig {
     globalDbEnabled?: boolean;
     connectionPoolMinSize?: number;
     connectionPoolMaxSize?: number;
+    facadeLevelRetry?: boolean;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -175,6 +263,7 @@ export class MongoDbFactory implements core.IDbFactory {
     private readonly globalDbEndpoint?: string;
     private readonly connectionPoolMinSize?: number;
     private readonly connectionPoolMaxSize?: number;
+    private readonly clientSideRetry?: boolean;
     constructor(config: IMongoDBConfig) {
         const {
             operationsDbEndpoint,
@@ -192,6 +281,7 @@ export class MongoDbFactory implements core.IDbFactory {
         this.bufferMaxEntries = bufferMaxEntries;
         this.connectionPoolMinSize = connectionPoolMinSize;
         this.connectionPoolMaxSize = connectionPoolMaxSize;
+        this.clientSideRetry = config.facadeLevelRetry;
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -222,6 +312,6 @@ export class MongoDbFactory implements core.IDbFactory {
                 this.operationsDbEndpoint,
             options);
 
-        return new MongoDb(connection);
+        return new MongoDb(connection, this.clientSideRetry);
     }
 }
