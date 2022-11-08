@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+export { IChunkedOp } from "./opSplitter";
 export {
     ContainerMessageType,
-    IChunkedOp,
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,

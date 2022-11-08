@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -68,6 +70,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     };
 
+    const generateRandomStringOfSize = (sizeInBytes: number): string =>
+        crypto.randomBytes(sizeInBytes / 2).toString("utf8");
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
     const setMapKeys = (map: SharedMap, count: number, item: string): void => {
         for (let i = 0; i < count; i++) {
@@ -77,7 +81,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
         for (let i = 0; i < count; i++) {
-            const value = dataObject2map.get(`key${i}`);
+            const value = map.get(`key${i}`);
             assert.strictEqual(value, expected, `Wrong value for key${i}`);
         }
     };
@@ -151,8 +155,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await setupContainers({
             ...testContainerConfig,
             runtimeOptions: {
-                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 }
-            }
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
         }, {});
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
@@ -165,7 +169,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             ...testContainerConfig,
             runtimeOptions: {
                 compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-            }
+            },
         }, {});
         const largeString = generateStringOfSize(500000);
         const messageCount = 10;
@@ -173,5 +177,19 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Single large op passes when compression enabled, compressed content is over max op size", async () => {
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
+        }, {});
+
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
     });
 });

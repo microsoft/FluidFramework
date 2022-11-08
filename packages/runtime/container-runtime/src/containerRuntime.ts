@@ -168,6 +168,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
+import { OpSplitter } from "./opSplitter";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -187,16 +188,6 @@ export enum ContainerMessageType {
 
     // Sets the alias of a root data store
     Alias = "alias",
-}
-
-export interface IChunkedOp {
-    chunkId: number;
-
-    totalChunks: number;
-
-    contents: string;
-
-    originalType: MessageType | ContainerMessageType;
 }
 
 export interface ContainerRuntimeMessage {
@@ -658,7 +649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * - runtimeOptions - Additional options to be passed to the runtime
      * - containerScope - runtime services provided with context
      */
-     public static async loadRuntime(
+    public static async loadRuntime(
         params: {
             context: IContainerContext;
             registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -686,8 +677,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-                                   compressionAlgorithm: CompressionAlgorithms.lz4 },
+            compressionOptions = {
+                minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+            },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             enableOpReentryCheck = false,
         } = runtimeOptions;
@@ -942,13 +935,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly pendingStateManager: PendingStateManager;
     private readonly pendingAttachBatch: BatchManager;
     private readonly pendingBatch: BatchManager;
-
     private readonly garbageCollector: IGarbageCollector;
-
-    // Local copy of incomplete received chunks.
-    private readonly chunkMap: Map<string, string[]>;
-
     private readonly dataStores: DataStores;
+    private readonly opSplitter: OpSplitter;
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
@@ -1032,7 +1021,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.chunkMap = new Map<string, string[]>(chunks);
+        this.opSplitter = new OpSplitter(chunks);
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1191,7 +1180,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
-            this.clearPartialChunks(clientId);
+            this.opSplitter.clearPartialChunks(clientId);
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
@@ -1512,8 +1501,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.chunkMap.size > 0) {
-            const content = JSON.stringify([...this.chunkMap]);
+        if (this.opSplitter.hasChunks) {
+            const content = JSON.stringify([...this.opSplitter.chunks]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
@@ -1739,7 +1728,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         try {
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
-            message = this.processRemoteChunkedMessage(message);
+            message = this.opSplitter.processRemoteMessage(message);
 
             let localOpMetadata: unknown;
             if (local && runtimeMessage) {
@@ -2607,43 +2596,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
-        if (message.type !== ContainerMessageType.ChunkedOp) {
-            return message;
-        }
-
-        const clientId = message.clientId;
-        const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent);
-        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const newMessage = { ...message };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const serializedContent = this.chunkMap.get(clientId)!.join("");
-            newMessage.contents = JSON.parse(serializedContent);
-            newMessage.type = chunkedContent.originalType;
-            this.clearPartialChunks(clientId);
-            return newMessage;
-        }
-        return message;
-    }
-
-    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
-        let map = this.chunkMap.get(clientId);
-        if (map === undefined) {
-            map = [];
-            this.chunkMap.set(clientId, map);
-        }
-        assert(chunkedContent.chunkId === map.length + 1,
-            0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
-        map.push(chunkedContent.contents);
-    }
-
-    private clearPartialChunks(clientId: string) {
-        if (this.chunkMap.has(clientId)) {
-            this.chunkMap.delete(clientId);
-        }
-    }
-
     private hasPendingMessages() {
         return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
     }
@@ -2938,12 +2890,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
             summaryLogger.sendTelemetryEvent(
-            {
-                eventName: "LatestSummaryRetrieved",
-                ackHandle,
-                lastSequenceNumber: latestSnapshotRefSeq,
-                targetSequenceNumber: summaryRefSeq,
-            });
+                {
+                    eventName: "LatestSummaryRetrieved",
+                    ackHandle,
+                    lastSequenceNumber: latestSnapshotRefSeq,
+                    targetSequenceNumber: summaryRefSeq,
+                });
 
             // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
             // wait for the delta manager to catch up before refreshing the latest Summary.
