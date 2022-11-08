@@ -149,8 +149,10 @@ export class MonoRepo {
     }
 
     public async install() {
-        this.logger.info(`${this.kind}: Installing - npm i`);
-        const installScript = "npm i";
+        const installScript = existsSync(path.join(this.repoPath, "pnpm-workspace.yaml"))
+            ? "pnpm i"
+            : "npm i";
+        this.logger.info(`${this.kind}: Installing - ${installScript}`);
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
