@@ -270,7 +270,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }} --use-openssl-ca'
 
       # Upload results
       - task: PublishTestResults@2
