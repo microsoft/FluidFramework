@@ -591,24 +591,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this._closed = true;
 
         this.connectionManager.dispose(error, emitDispose !== true);
-        this.clearQueues();
 
-        if (emitDispose === true) {
-            this.emit("dispose");
-        } else {
-            // This needs to be the last thing we do (before removing listeners), as it causes
-            // Container to dispose context and break ability of data stores / runtime to "hear"
-            // from delta manager, including notification (above) about readonly state.
-            this.emit("closed", error);
-        }
-
-        this.removeAllListeners();
-    }
-
-    /**
-     * TODO
-     */
-    private clearQueues(): void {
         this.closeAbortController.abort();
 
         this._inbound.clear();
@@ -621,6 +604,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
+
+        if (emitDispose === true) {
+            this.emit("dispose");
+        } else {
+            // This needs to be the last thing we do (before removing listeners), as it causes
+            // Container to dispose context and break ability of data stores / runtime to "hear"
+            // from delta manager, including notification (above) about readonly state.
+            this.emit("closed", error);
+        }
+
+        this.removeAllListeners();
     }
 
     public refreshDelayInfo(id: string) {

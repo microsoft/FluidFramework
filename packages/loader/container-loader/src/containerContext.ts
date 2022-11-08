@@ -215,7 +215,6 @@ export class ContainerContext implements IContainerContext {
         }
         this._disposed = true;
 
-        // TODO: need to figure out way runtime can know about emitting dispose or not
         this.runtime.dispose(error, emitDispose !== true);
         this._quorum.dispose();
         this.deltaManager.dispose();
