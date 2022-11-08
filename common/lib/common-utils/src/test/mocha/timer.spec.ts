@@ -102,8 +102,11 @@ describe("Timers", () => {
             );
 
             const calls = setTimeoutSpy.getCalls();
-            for(const call of calls) {
-                assert(call.args[1] >= 0, "SetLongTimeout should have never been called with a negative number!");
+            for (const call of calls) {
+                assert(
+                    call.args[1] >= 0,
+                    "SetLongTimeout should have never been called with a negative number!",
+                );
             }
             setTimeoutSpy.restore();
         });
@@ -135,8 +138,11 @@ describe("Timers", () => {
             );
 
             const calls = setTimeoutSpy.getCalls();
-            for(const call of calls) {
-                assert(call.args[1] >= 0, "SetLongTimeout should have never been called with a negative number!");
+            for (const call of calls) {
+                assert(
+                    call.args[1] >= 0,
+                    "SetLongTimeout should have never been called with a negative number!",
+                );
             }
             setTimeoutSpy.restore();
         });
