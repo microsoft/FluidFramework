@@ -726,8 +726,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let storage = !pendingRuntimeState
             ? context.storage
             : new SerializedSnapshotStorage(() => {
-                  return context.storage;
-              }, pendingRuntimeState.snapshotBlobs);
+                return context.storage;
+            }, pendingRuntimeState.snapshotBlobs);
         if (summaryConfigurationHeuristic?.compressionAlgorithm !== undefined) {
             storage = buildSummaryStorageAdapter(storage, [
                 new CompressionSummaryStorageHooks(
