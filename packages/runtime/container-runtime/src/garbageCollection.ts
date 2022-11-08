@@ -882,7 +882,6 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
-
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
         // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
