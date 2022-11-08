@@ -22,7 +22,16 @@ export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChan
     private opId: number = 0;
 
     constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
-        super(sequenceChangeFamily, deltaReceiver, anchorSet);
+        super(
+            sequenceChangeFamily,
+            deltaReceiver,
+            {
+                capture: () => {},
+                getNodes: () => fail("Not supported"),
+                getValue: () => fail("Not supported"),
+            },
+            anchorSet,
+        );
     }
 
     public setValue(node: NodePath, value: Value) {

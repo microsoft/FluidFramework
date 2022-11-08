@@ -3,23 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { AnchorSet, Delta } from "../tree";
+import { RevisionTag, TaggedChange } from "../rebase";
+import { AnchorSet, Delta, ReadonlyRepairDataStore, RepairDataStore } from "../tree";
+import { brand } from "../util";
 import { ChangeFamily } from "./changeFamily";
 
 export interface ProgressiveEditBuilder<TChange> {
     /**
      * @returns a copy of the internal change list so far.
      */
-    getChanges(): TChange[];
+    getChanges(): TaggedChange<TChange>[];
+
+    readonly repairStore: ReadonlyRepairDataStore;
 }
 
 export abstract class ProgressiveEditBuilderBase<TChange>
     implements ProgressiveEditBuilder<TChange>
 {
-    private readonly changes: TChange[] = [];
+    private readonly changes: TaggedChange<TChange>[] = [];
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,
         private readonly deltaReceiver: (delta: Delta.Root) => void,
+        public readonly repairStore: RepairDataStore,
         private readonly anchorSet: AnchorSet,
     ) {}
 
@@ -29,9 +34,17 @@ export abstract class ProgressiveEditBuilderBase<TChange>
      * @sealed
      */
     protected applyChange(change: TChange): void {
-        this.changes.push(change);
+        const revision: RevisionTag = brand(this.changes.length);
+        this.changes.push({
+            revision,
+            change,
+        });
         this.changeFamily.rebaser.rebaseAnchors(this.anchorSet, change);
-        const delta = this.changeFamily.intoDelta(change);
+        const delta = this.changeFamily.intoDelta(change, this.repairStore);
+        this.repairStore.capture({
+            revision,
+            changes: delta,
+        });
         this.deltaReceiver(delta);
     }
 
@@ -39,7 +52,7 @@ export abstract class ProgressiveEditBuilderBase<TChange>
      * {@inheritDoc (ProgressiveEditBuilder:interface).getChanges}
      * @sealed
      */
-    public getChanges(): TChange[] {
+    public getChanges(): TaggedChange<TChange>[] {
         return [...this.changes];
     }
 }

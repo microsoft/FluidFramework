@@ -19,7 +19,14 @@ import {
 } from "../../../feature-libraries";
 import { makeAnonChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
+import {
+    AnchorSet,
+    Delta,
+    FieldKey,
+    RepairDataStore,
+    TreeDestruction,
+    UpPath,
+} from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
@@ -425,7 +432,12 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build child change", () => {
-        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const repair: RepairDataStore = {
+            capture: (destruction: TreeDestruction) => {},
+            getNodes: () => assert.fail(),
+            getValue: () => assert.fail(),
+        };
+        const editor = family.buildEditor((delta) => {}, repair, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
@@ -449,7 +461,12 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build value change", () => {
-        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const repair: RepairDataStore = {
+            capture: (destruction: TreeDestruction) => {},
+            getNodes: () => assert.fail(),
+            getValue: () => assert.fail(),
+        };
+        const editor = family.buildEditor((delta) => {}, repair, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,

@@ -17,6 +17,7 @@ import {
     UpPath,
     Value,
     TaggedChange,
+    RepairDataStore,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import {
@@ -253,9 +254,10 @@ export class ModularChangeFamily
 
     buildEditor(
         deltaReceiver: (delta: Delta.Root) => void,
+        repairStore: RepairDataStore,
         anchors: AnchorSet,
     ): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, anchors);
+        return new ModularEditBuilder(this, deltaReceiver, repairStore, anchors);
     }
 }
 
@@ -302,9 +304,10 @@ export class ModularEditBuilder
     constructor(
         family: ChangeFamily<unknown, FieldChangeMap>,
         deltaReceiver: (delta: Delta.Root) => void,
+        repairStore: RepairDataStore,
         anchors: AnchorSet,
     ) {
-        super(family, deltaReceiver, anchors);
+        super(family, deltaReceiver, repairStore, anchors);
     }
 
     /**

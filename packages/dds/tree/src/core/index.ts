@@ -61,6 +61,11 @@ export {
     visitDelta,
     setGenericTreeField,
     rootFieldKeySymbol,
+    TreeDestruction,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
+    DeltaVisitor,
+    SparseNode,
 } from "../tree";
 
 export {
@@ -121,7 +126,7 @@ export {
 
 export { ICheckout, TransactionResult } from "../checkout";
 
-export { Checkout, runSynchronousTransaction } from "../transaction";
+export { Checkout } from "../transaction";
 
 export {
     Index,

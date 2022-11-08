@@ -4,12 +4,21 @@
  */
 
 import { ChangeRebaser } from "../rebase";
-import { AnchorSet, Delta } from "../tree";
+import { AnchorSet, Delta, ReadonlyRepairDataStore, RepairDataStore } from "../tree";
 import { ChangeEncoder } from "./changeEncoder";
 
 export interface ChangeFamily<TEditor, TChange> {
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
-    intoDelta(change: TChange): Delta.Root;
+    buildEditor(
+        deltaReceiver: (delta: Delta.Root) => void,
+        repairStore: RepairDataStore,
+        anchorSet: AnchorSet,
+    ): TEditor;
+    intoDelta(
+        change: TChange,
+        // Allows undefined for now since we don't support it everywhere yet.
+        // TODO: make the repair store mandatory when all usages of this method have repair data support.
+        repairStore?: ReadonlyRepairDataStore,
+    ): Delta.Root;
     readonly rebaser: ChangeRebaser<TChange>;
     readonly encoder: ChangeEncoder<TChange>;
 }

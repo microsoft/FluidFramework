@@ -85,3 +85,7 @@ export {
     parseSummary as loadSummary,
     stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { ForestRepairDataStore } from "./forestRepairDataStore";
+
+export { runSynchronousTransaction } from "./defaultTransaction";
