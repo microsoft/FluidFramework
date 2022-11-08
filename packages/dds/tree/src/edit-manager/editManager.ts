@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
-import { TaggedChange, RevisionTag, tagChange } from "../rebase";
+import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
 import { AnchorSet, Delta } from "../tree";
 import { brand, Brand, fail, RecursiveReadonly } from "../util";
@@ -369,17 +369,6 @@ export class EditManager<
 
 function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return tagChange(commit.changeset, brand(commit.seqNumber));
-}
-
-function tagInverse<T>(
-    inverseChange: T,
-    invertedRevision: RevisionTag | undefined,
-): TaggedChange<T> {
-    return {
-        revision: invertedRevision,
-        isInverse: true,
-        change: inverseChange,
-    };
 }
 
 export interface Branch<TChangeset> {

@@ -187,6 +187,17 @@ export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedCha
     return { revision: tag, change };
 }
 
+export function tagInverse<T>(
+    inverseChange: T,
+    invertedRevision: RevisionTag | undefined,
+): TaggedChange<T> {
+    return {
+        revision: invertedRevision,
+        isInverse: true,
+        change: inverseChange,
+    };
+}
+
 export function makeAnonChange<T>(change: T): TaggedChange<T> {
     return { revision: undefined, change };
 }
