@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "homepage": "https://fluidframework.com",
-  "packageManager": "pnpm@7.14.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
@@ -33,6 +32,7 @@
     "clean:nyc": "rimraf nyc/**",
     "commit": "git-cz",
     "format": "lerna run format --no-sort --stream",
+    "preinstall": "npx only-allow pnpm",
     "install:root": "pnpm install --ignore-scripts",
     "layer-check": "node packages/build-tools/dist/layerCheck/layerCheck.js --root ..",
     "layer-check:doc": "node packages/build-tools/dist/layerCheck/layerCheck.js --root .. --md",
@@ -40,7 +40,6 @@
     "lint": "lerna run lint --no-sort --stream -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- --color",
     "policy-check": "cd .. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
-    "preinstall": "npx only-allow pnpm",
     "policy-check:fix": "npm run policy-check -- -r",
     "test": "npm run test:mocha && npm run test:jest && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
@@ -103,5 +102,6 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
-  }
+  },
+  "packageManager": "pnpm@7.14.2"
 }
