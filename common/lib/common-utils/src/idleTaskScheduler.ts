@@ -11,7 +11,6 @@
  * @returns A promise pertaining to the callback that was passed in.
  */
 export async function scheduleIdleTask<T>(callback: () => T, timeout: number): Promise<T> {
-
     return new Promise<T>((resolve, reject) => {
         const doLowPriorityTask = (): void => {
             try {

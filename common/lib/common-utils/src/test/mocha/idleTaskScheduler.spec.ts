@@ -13,7 +13,7 @@ describe("Idle task scheduler", () => {
         }
     }
 
-    it("Should schedule and run a synchronous task during idle time", async() => {
+    it("Should schedule and run a synchronous task during idle time", async () => {
         let success = false;
         await scheduleIdleTask(() => {
             someTask(5);
@@ -27,9 +27,9 @@ describe("Idle task scheduler", () => {
         assert(success);
     });
 
-    it("Should fall back to setTimeout when idle Task API is not available", async() => {
+    it("Should fall back to setTimeout when idle Task API is not available", async () => {
         let success = false;
-        await new Promise((resolve,reject) => {
+        await new Promise((resolve, reject) => {
             setTimeout(() => {
                 try {
                     resolve(someTask(5));
