@@ -67,35 +67,9 @@ export default class ReportAllCommand<
     defaultMode: ReleaseSelectionMode = "date";
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
-    // public async init(): Promise<void> {
-    //     await super.init();
-
-    //     // These arguments aren't used directly in this command, so hide them before calling super.init
-    //     ReleaseReportCommand.flags.highest.hidden = true;
-    //     ReleaseReportCommand.flags.mostRecent.hidden = true;
-
-    //     // We need access to the flags and args here, but they haven't been parsed yet since we haven't called the base
-    //     // class init function. We parse them here instead; when the base class tries to parse them again it'll
-    //     // no-op.
-    //     // await this.parseCmdArgs();
-
-    //     // this.releaseGroupOrPackage =
-    //     //     this.processedFlags.releaseGroup ?? this.processedFlags.package;
-
-    //     // if (this.releaseGroupOrPackage === undefined) {
-    //     //     this.error(`You must provide a --releaseGroup or --package.`);
-    //     // }
-    //     // await super.init();
-    //     this.warning(`exiting ReportAllCommand.init`);
-    // }
-
     public async run(): Promise<ReleaseReport> {
         this.releaseGroupOrPackage =
             this.processedFlags.releaseGroup ?? this.processedFlags.package;
-
-        // if (this.releaseGroupOrPackage === undefined) {
-        //     this.error(`You must provide a --releaseGroup or --package.`);
-        // }
 
         const context = await this.getContext();
         this.releaseData = await this.collectReleaseData(
