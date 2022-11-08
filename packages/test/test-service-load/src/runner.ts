@@ -180,62 +180,63 @@ async function runnerProcess(
         // Reset the workload once, on the first iteration
         let reset = true;
         while (!done) {
-            const nextFactoryPermutation = iterator.next();
-            if (nextFactoryPermutation.done === true) {
-                throw new Error("Factory permutation iterator is expected to cycle forever");
-            }
-            const { documentServiceFactory, headers } = nextFactoryPermutation.value;
-
-            // Construct the loader
-            const loader = new Loader({
-                urlResolver: testDriver.createUrlResolver(),
-                documentServiceFactory,
-                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
-                logger,
-                options: loaderOptions[runConfig.runId % containerOptions.length],
-                configProvider: {
-                    getRawConfig(name) {
-                        return configurations[runConfig.runId % configurations.length][name];
-                    },
-                },
-            });
-
-            const container: IContainer = await loader.resolve({ url, headers });
-            container.connect();
-            const test = await requestFluidObject<ILoadTest>(container, "/");
-
-            if (enableOpsMetrics) {
-                const testRuntime = await test.getRuntime();
-                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
-                                                       testRuntime);
-            }
-
-            // Control fault injection period through config.
-            // If undefined then no fault injection.
-            const faultInjection = runConfig.testConfig.faultInjectionMs;
-            if (faultInjection) {
-                scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
-                scheduleFaultInjection(
-                    documentServiceFactory,
-                    container,
-                    runConfig,
-                    faultInjection.min,
-                    faultInjection.max);
-            }
-            const offline = runConfig.testConfig.offline;
-            if (offline) {
-                scheduleOffline(
-                    documentServiceFactory,
-                    container,
-                    runConfig,
-                    offline.delayMs.min,
-                    offline.delayMs.max,
-                    offline.durationMs.min,
-                    offline.durationMs.max,
-                );
-            }
-
+            let container: IContainer | undefined;
             try {
+                const nextFactoryPermutation = iterator.next();
+                if (nextFactoryPermutation.done === true) {
+                    throw new Error("Factory permutation iterator is expected to cycle forever");
+                }
+                const { documentServiceFactory, headers } = nextFactoryPermutation.value;
+
+                // Construct the loader
+                const loader = new Loader({
+                    urlResolver: testDriver.createUrlResolver(),
+                    documentServiceFactory,
+                    codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                    logger,
+                    options: loaderOptions[runConfig.runId % containerOptions.length],
+                    configProvider: {
+                        getRawConfig(name) {
+                            return configurations[runConfig.runId % configurations.length][name];
+                        },
+                    },
+                });
+
+                container = await loader.resolve({ url, headers });
+                container.connect();
+                const test = await requestFluidObject<ILoadTest>(container, "/");
+
+                if (enableOpsMetrics) {
+                    const testRuntime = await test.getRuntime();
+                    metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
+                                                        testRuntime);
+                }
+
+                // Control fault injection period through config.
+                // If undefined then no fault injection.
+                const faultInjection = runConfig.testConfig.faultInjectionMs;
+                if (faultInjection) {
+                    scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
+                    scheduleFaultInjection(
+                        documentServiceFactory,
+                        container,
+                        runConfig,
+                        faultInjection.min,
+                        faultInjection.max);
+                }
+                const offline = runConfig.testConfig.offline;
+                if (offline) {
+                    scheduleOffline(
+                        documentServiceFactory,
+                        container,
+                        runConfig,
+                        offline.delayMs.min,
+                        offline.delayMs.max,
+                        offline.durationMs.min,
+                        offline.durationMs.max,
+                    );
+                }
+
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset, logger);
                 reset = false;
@@ -246,8 +247,8 @@ async function runnerProcess(
                     testHarnessEvent: true,
                 }, error);
             } finally {
-                if (!container.closed) {
-                    container.close();
+                if (container?.closed === false) {
+                    container?.close();
                 }
                 metricsCleanup();
                 await baseLogger.flush({ url, runId: runConfig.runId });
@@ -385,7 +386,7 @@ function scheduleOffline(
             }
 
             const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs)(runConfig.randEng);
-            await new Promise<void>((res) => setTimeout(res, injectionTime));
+            await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
 
             assert(container.resolvedUrl !== undefined, "no url");
             const ds = dsf.documentServices.get(container.resolvedUrl);
@@ -394,7 +395,7 @@ function scheduleOffline(
             printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
             ds.goOffline();
 
-            await new Promise<void>((res) => setTimeout(res, offlineTime));
+            await new Promise<void>((resolve) => setTimeout(resolve, offlineTime));
             if (!container.closed) {
                 ds.goOnline();
                 printStatus(runConfig, "going online!");
