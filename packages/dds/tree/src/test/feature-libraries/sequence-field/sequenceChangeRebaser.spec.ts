@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
+import { makeAnonChange, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { TestChangeset } from "./utils";
+import { createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -140,40 +140,3 @@ describe("SequenceField - Rebaser Axioms", () => {
         assert.deepEqual(insertB3.change, insertB.change);
     });
 });
-
-// TODO: Deduplicate and move to test utility
-function createInsertChangeset(index: number, size: number): TestChangeset {
-    const content = [];
-    while (content.length < size) {
-        content.push({ type, value: content.length });
-    }
-
-    const insertMark: SF.Insert = {
-        type: "Insert",
-        id: 0,
-        content,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(index);
-    factory.pushContent(insertMark);
-    return factory.list;
-}
-
-// TODO: Deduplicate and move to test utility
-function rebaseTagged(
-    change: TaggedChange<TestChangeset>,
-    ...base: TaggedChange<TestChangeset>[]
-): TaggedChange<TestChangeset> {
-    deepFreeze(change);
-    deepFreeze(base);
-
-    let currChange = change;
-    for (const baseChange of base) {
-        currChange = tagChange(
-            SF.rebase(currChange.change, baseChange, TestChange.rebase),
-            change.revision,
-        );
-    }
-    return currChange;
-}
