@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
-import { TaggedChange, RevisionTag } from "../rebase";
+import { TaggedChange, RevisionTag, tagChange } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
 import { AnchorSet, Delta } from "../tree";
 import { brand, Brand, fail, RecursiveReadonly } from "../util";
@@ -166,10 +166,7 @@ export class EditManager<
         });
 
         return this.changeFamily.intoDelta(
-            this.rebaseLocalBranch({
-                revision: brand(newCommit.seqNumber),
-                change: newChangeFullyRebased,
-            }),
+            this.rebaseLocalBranch(tagChange(newChangeFullyRebased, brand(newCommit.seqNumber))),
         );
     }
 
@@ -192,7 +189,7 @@ export class EditManager<
             0x42a /* The session ID should be set before processing changes */,
         );
 
-        this.localChanges.push({ revision: this.allocateLocalRevisionTag(), change });
+        this.localChanges.push(tagChange(change, this.allocateLocalRevisionTag()));
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -281,10 +278,12 @@ export class EditManager<
                 });
             }
 
-            inverses.unshift({
-                revision: brand(nextTempRevision--),
-                change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
-            });
+            inverses.unshift(
+                tagChange(
+                    this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+                    brand(nextTempRevision--),
+                ),
+            );
         }
 
         branch.localChanges = newBranchChanges;
@@ -369,7 +368,7 @@ export class EditManager<
 }
 
 function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
-    return { revision: brand(commit.seqNumber), change: commit.changeset };
+    return tagChange(commit.changeset, brand(commit.seqNumber));
 }
 
 function tagInverse<T>(
