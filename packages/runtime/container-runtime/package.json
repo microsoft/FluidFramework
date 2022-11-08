@@ -108,6 +108,15 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_ICompressionRuntimeOptions": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntimeOptions": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }
