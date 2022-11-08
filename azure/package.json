@@ -11,7 +11,6 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run format && npm run build:compile && npm run lint && npm run build:docs",
     "build:ci": "npm run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
@@ -33,6 +32,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "format": "lerna run format --no-sort --stream",
+    "preinstall": "npx only-allow pnpm",
     "layer-check": "fluid-layer-check --info ../build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream",
