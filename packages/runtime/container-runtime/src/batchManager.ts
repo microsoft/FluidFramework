@@ -18,7 +18,6 @@ export type BatchMessage = IBatchMessage & {
 };
 
 export interface IBatchManagerOptions {
-    readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
