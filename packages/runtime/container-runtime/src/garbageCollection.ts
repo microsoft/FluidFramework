@@ -882,12 +882,6 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
-        const referencedDataStoreNodeIds: string[] = [];
-        for (const key of gcResult.referencedNodeIds) {
-            if (this.runtime.getNodeType(key) === GCNodeType.DataStore) {
-                referencedDataStoreNodeIds.push(key);
-            }
-        }
 
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
