@@ -4,7 +4,8 @@
  */
 
 import { RevisionTag, TaggedChange } from "../rebase";
-import { AnchorSet, Delta, ReadonlyRepairDataStore, RepairDataStore } from "../tree";
+import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
+import { AnchorSet, Delta } from "../tree";
 import { brand } from "../util";
 import { ChangeFamily } from "./changeFamily";
 

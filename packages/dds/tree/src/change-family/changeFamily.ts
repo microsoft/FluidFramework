@@ -4,7 +4,8 @@
  */
 
 import { ChangeRebaser } from "../rebase";
-import { AnchorSet, Delta, ReadonlyRepairDataStore, RepairDataStore } from "../tree";
+import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
+import { AnchorSet, Delta } from "../tree";
 import { ChangeEncoder } from "./changeEncoder";
 
 export interface ChangeFamily<TEditor, TChange> {

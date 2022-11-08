@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { RepairDataStore, TreeDestruction } from "../../../core";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -19,14 +20,7 @@ import {
 } from "../../../feature-libraries";
 import { makeAnonChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import {
-    AnchorSet,
-    Delta,
-    FieldKey,
-    RepairDataStore,
-    TreeDestruction,
-    UpPath,
-} from "../../../tree";
+import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;

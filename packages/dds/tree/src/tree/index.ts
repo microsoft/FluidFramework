@@ -57,6 +57,4 @@ export { DeltaVisitor, visitDelta } from "./visitDelta";
 import * as Delta from "./delta";
 export { Delta };
 
-export { RepairDataStore, ReadonlyRepairDataStore, TreeDestruction } from "./repairDataStore";
-
 export { SparseNode } from "./sparseTree";

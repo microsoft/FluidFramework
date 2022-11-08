@@ -4,9 +4,7 @@
  */
 
 import { RevisionTag } from "../rebase";
-import { Value } from "./types";
-import * as Delta from "./delta";
-import { UpPath } from "./pathTree";
+import { Value, Delta, UpPath } from "../tree";
 
 /**
  * Characterizes the regions of a document tree that an edit destroys.

@@ -61,9 +61,6 @@ export {
     visitDelta,
     setGenericTreeField,
     rootFieldKeySymbol,
-    TreeDestruction,
-    RepairDataStore,
-    ReadonlyRepairDataStore,
     DeltaVisitor,
     SparseNode,
 } from "../tree";
@@ -152,3 +149,5 @@ export {
     ReadonlySummaryData,
     SessionId,
 } from "../edit-manager";
+
+export { RepairDataStore, ReadonlyRepairDataStore, TreeDestruction } from "../repair";
