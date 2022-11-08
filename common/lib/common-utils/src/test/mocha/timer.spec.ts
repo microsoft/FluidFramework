@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import process from "process";
-import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
+import { SinonFakeTimers, SinonSandbox, SinonSpy, useFakeTimers, createSandbox } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
 const flushPromises = async (): Promise<void> =>
@@ -14,13 +14,21 @@ type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
 
 describe("Timers", () => {
     let clock: SinonFakeTimers;
+    let sandbox: SinonSandbox;
+    let timeoutSpy: SinonSpy;
 
     before(() => {
         clock = useFakeTimers();
+        sandbox = createSandbox();
+    });
+
+    beforeEach(() => {
+        timeoutSpy = sandbox.spy(global, "setTimeout");
     });
 
     afterEach(() => {
         clock.reset();
+        sandbox.restore();
     });
 
     after(() => {
@@ -87,7 +95,6 @@ describe("Timers", () => {
         });
 
         it("Should immediately execute with negative numbers if setTimeout is called", () => {
-            const setTimeoutSpy = spy(global, "setTimeout");
             const initialRunCount = runCount;
             timer.start(-10);
 
@@ -101,18 +108,16 @@ describe("Timers", () => {
                 "Should have executed immediately because the handler was late",
             );
 
-            const calls = setTimeoutSpy.getCalls();
+            const calls = timeoutSpy.getCalls();
             for (const call of calls) {
                 assert(
                     call.args[1] >= 0,
                     "SetLongTimeout should have never been called with a negative number!",
                 );
             }
-            setTimeoutSpy.restore();
         });
 
         it("Should immediately execute if the handler is late even accounting for the restart", () => {
-            const setTimeoutSpy = spy(global, "setTimeout");
             const initialRunCount = runCount;
             timer.start(defaultTimeout);
 
@@ -137,14 +142,13 @@ describe("Timers", () => {
                 "Should have executed immediately because the handler was late",
             );
 
-            const calls = setTimeoutSpy.getCalls();
+            const calls = timeoutSpy.getCalls();
             for (const call of calls) {
                 assert(
                     call.args[1] >= 0,
                     "SetLongTimeout should have never been called with a negative number!",
                 );
             }
-            setTimeoutSpy.restore();
         });
 
         it("Should be reusable multiple times", () => {
