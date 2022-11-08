@@ -140,6 +140,14 @@ export interface ICollection<T> {
     createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void>;
 }
 
+export interface IRetryAble {
+    retryEnabled: boolean;
+}
+
+export function isRetryAble<T>(collection: ICollection<T>): collection is ICollection<T> {
+    return "retryEnabled" in collection;
+}
+
 export type IDbEvents = "close" | "reconnect" | "error" | "reconnectFailed";
 
 export interface IDb {
