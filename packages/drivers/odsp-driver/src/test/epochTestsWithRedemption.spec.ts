@@ -66,7 +66,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             epochCallback = new DeferralWithCallback();
             (epochTracker as any).treesLatestDeferral = epochCallback;
         });
-        it.skip("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {
+        it("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {
             epochTracker.setEpoch("epoch1", true, "test");
             const cacheEntry1: IEntry = {
                 type: snapshotKey,
