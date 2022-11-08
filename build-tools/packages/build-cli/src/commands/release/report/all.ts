@@ -67,7 +67,7 @@ export default class ReportAllCommand<
     defaultMode: ReleaseSelectionMode = "date";
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
-    public async run(): Promise<ReleaseReport> {
+    public async run(): Promise<{ reports: ReleaseReport[] }> {
         this.releaseGroupOrPackage =
             this.processedFlags.releaseGroup ?? this.processedFlags.package;
 
@@ -96,7 +96,7 @@ export default class ReportAllCommand<
         }
 
         // When the --json flag is passed, the command will return the raw data as JSON.
-        return reports[0];
+        return { reports };
     }
 
     /**
