@@ -14,6 +14,9 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
 // @public
+export function closeFluidClientDebugger(containerId: string): void;
+
+// @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
     clientId: string | undefined;
 }

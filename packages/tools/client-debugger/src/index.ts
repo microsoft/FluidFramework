@@ -12,6 +12,7 @@
  */
 
 export {
+    closeFluidClientDebugger,
     ConnectionStateChangeLogEntry,
     IFluidClientDebugger,
     IFluidClientDebuggerEvents,
