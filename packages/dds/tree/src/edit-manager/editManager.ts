@@ -232,11 +232,7 @@ export class EditManager<
             newBranchChanges.push({ ...localChange, change });
 
             const inverse = this.changeFamily.rebaser.invert(localChange);
-
-            inverses.unshift({
-                revision: revisionTagForInverse(localChange.revision),
-                change: inverse,
-            });
+            inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
         const netChange = this.changeFamily.rebaser.compose([
@@ -361,10 +357,10 @@ export class EditManager<
     }
 
     private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {
-        return {
-            revision: revisionTagForInverse(brand(commit.seqNumber)),
-            change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
-        };
+        return tagInverse(
+            this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+            brand(commit.seqNumber),
+        );
     }
 
     private allocateLocalRevisionTag(): RevisionTag {
@@ -376,10 +372,15 @@ function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
     return { revision: brand(commit.seqNumber), change: commit.changeset };
 }
 
-// This always returns undefined, as we do not currently need an identity for the inverse of a change.
-// TODO: Correctly implement this function if needed; otherwise remove it.
-function revisionTagForInverse(revision: RevisionTag | undefined): RevisionTag | undefined {
-    return undefined;
+function tagInverse<T>(
+    inverseChange: T,
+    invertedRevision: RevisionTag | undefined,
+): TaggedChange<T> {
+    return {
+        revision: invertedRevision,
+        isInverse: true,
+        change: inverseChange,
+    };
 }
 
 export interface Branch<TChangeset> {

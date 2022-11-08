@@ -1188,6 +1188,8 @@ export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
     // (undocumented)
+    readonly isInverse?: boolean;
+    // (undocumented)
     readonly revision: RevisionTag | undefined;
 }
 
