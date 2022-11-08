@@ -47,7 +47,7 @@ export class OpDecompressor {
             return { ...message, contents: this.rootMessageContents[this.processedCount++] };
         }
 
-        if (this.rootMessageContents !== undefined && message.metadata === undefined && this.activeBatch) {
+        if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
             // Continuation of compressed batch
             return { ...message, contents: this.rootMessageContents[this.processedCount++] };
         }
