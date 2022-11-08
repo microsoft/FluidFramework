@@ -37,7 +37,7 @@ export class SharedTreeNodeHelper {
      */
     getCursor(): ITreeSubscriptionCursor {
         const cursor = this.tree.forest.allocateCursor();
-        this.tree.forest.tryMoveCursorTo(this.anchor, cursor);
+        this.tree.forest.tryMoveCursorToNode(this.anchor, cursor);
         return cursor;
     }
 

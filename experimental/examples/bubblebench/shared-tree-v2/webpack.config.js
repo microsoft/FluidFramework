@@ -6,6 +6,7 @@
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require('webpack'); //to access built-in plugins
 
 module.exports = (env) => {
     const isProduction = env?.production;
@@ -42,6 +43,15 @@ module.exports = (env) => {
             watchOptions: {
                 ignored: "**/node_modules/**",
             },
+            plugins: [
+                new webpack.ProvidePlugin({
+                    // Make a global `process` variable that points to the `process` package,
+                    // because the `util` package expects there to be a global variable named `process`.
+                         // Thanks to https://stackoverflow.com/a/65018686/14239942
+                    process: 'process/browser'
+                 })
+            ]
+
         },
         isProduction ? require("./webpack.prod") : require("./webpack.dev"),
         fluidRoute.devServerConfig(__dirname, env)

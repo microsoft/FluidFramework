@@ -9,7 +9,7 @@ import {
 } from "@fluid-internal/tree";
 /* eslint-disable import/no-internal-modules */
 import { singleTextCursor } from "@fluid-internal/tree/dist/feature-libraries";
-import { detachedFieldAsKey } from "@fluid-internal/tree/dist/tree";
+import { rootFieldKeySymbol } from "@fluid-internal/tree/dist/tree";
 /* eslint-enable import/no-internal-modules */
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -24,11 +24,16 @@ export class Bubblebench extends DataObject {
     private maybeAppState?: AppState = undefined;
     static treeFactory = new SharedTreeFactory();
 
+
     protected async initializingFirstTime() {
-        this.maybeTree = Bubblebench.treeFactory.create(
-            this.runtime,
-            Math.random().toString(),
-        ); // Is this correct?
+        // this.maybeTree = Bubblebench.treeFactory.create(
+        //     this.runtime,
+        //     "bubbleBench-tree",
+        // ); // Is this correct?
+        this.maybeTree = this.runtime.createChannel(
+            "unqiue-bubblebench-key-1337",
+            Bubblebench.treeFactory.type
+        ) as ISharedTree;
 
         // initialize the schema of the shared tree to that of the Bubblebench AppState
         this.maybeTree.storedSchema.update(AppStateSchemaData);
@@ -44,7 +49,7 @@ export class Bubblebench extends DataObject {
             });
             const field = editor.sequenceField(
                 undefined,
-                detachedFieldAsKey(forest.rootField),
+                rootFieldKeySymbol,
             );
             field.insert(0, writeCursor);
             return TransactionResult.Apply;
@@ -56,9 +61,10 @@ export class Bubblebench extends DataObject {
 
     // What is the replacement for this method?
     protected async initializingFromExisting() {
+        // console.log("existing initialization");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.maybeTree = await this.root
-            .get<IFluidHandle<ISharedTree>>("tree-v2")!
+            .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
             .get();
     }
 

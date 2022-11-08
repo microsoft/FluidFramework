@@ -7,12 +7,15 @@ import {
     brand,
     emptyField,
     EmptyKey,
-    FieldKinds,
     JsonableTree,
     rootFieldKey,
+    // symbolFromKey,
+    // symbolFromKey,
 } from "@fluid-internal/tree";
+import { FieldKinds } from "@fluid-internal/tree/dist/feature-libraries";
 import {
     fieldSchema,
+    // GlobalFieldKey,
     namedTreeSchema,
     SchemaData,
     ValueSchema,
@@ -68,6 +71,11 @@ export const iClientSequenceSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
+// const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
+
 export const AppStateSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppState-1.0.0"),
     localFields: {
@@ -80,6 +88,8 @@ export const rootAppStateSchema = fieldSchema(FieldKinds.value, [
     AppStateSchema.name,
 ]);
 
+// const rootFieldSchema = fieldSchema(FieldKinds.value);
+// const globalFieldSchema = fieldSchema(FieldKinds.value);
 export const AppStateSchemaData: SchemaData = {
     treeSchema: new Map([
         [stringSchema.name, stringSchema],
@@ -90,7 +100,10 @@ export const AppStateSchemaData: SchemaData = {
         [iClientSequenceSchema.name, iClientSequenceSchema],
         [AppStateSchema.name, AppStateSchema],
     ]),
-    globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootAppStateSchema],
+        // [globalFieldKey, globalFieldSchema],
+    ]),
 };
 
 export const mockAppStateJsonTree: JsonableTree = {

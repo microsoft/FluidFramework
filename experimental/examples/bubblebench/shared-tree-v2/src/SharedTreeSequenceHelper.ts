@@ -70,7 +70,7 @@ export class SharedTreeSequenceHelper {
 
     public push(jsonTree: JsonableTree): void {
         const cursor = this.tree.forest.allocateCursor();
-        this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
+        this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
 
         this.tree.runTransaction((forest, editor) => {
             const parentPath = this.tree.locate(cursor.buildAnchor());

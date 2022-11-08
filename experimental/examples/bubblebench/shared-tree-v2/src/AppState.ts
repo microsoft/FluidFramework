@@ -4,6 +4,8 @@
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
 import { brand, ISharedTree, JsonableTree } from "@fluid-internal/tree";
+// eslint-disable-next-line import/no-internal-modules
+import { moveToDetachedField } from "@fluid-internal/tree/dist/forest";
 import { Client } from "./Client";
 import {
     iBubbleSchema,
@@ -24,8 +26,7 @@ export class AppState implements IAppState {
     ) {
         // Move to root node (which is the Shared AppState Node) and initialize this.clientsSequenceHelper
         const cursor = tree.forest.allocateCursor();
-        const destination = tree.forest.root(tree.forest.rootField);
-        tree.forest.tryMoveCursorTo(destination, cursor);
+        moveToDetachedField(tree.forest, cursor);
         this.clientsSequenceHelper = new SharedTreeSequenceHelper(
             tree,
             cursor.buildAnchor(),
