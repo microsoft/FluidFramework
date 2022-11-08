@@ -8,6 +8,7 @@ import * as semver from "semver";
 import * as util from "util";
 
 import {
+    ReleaseVersion,
     fromInternalScheme,
     getPreviousVersions,
     getVersionRange,
@@ -131,12 +132,147 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
 export type PreviousVersionStyle =
     | "baseMajor"
     | "baseMinor"
+    | "~baseMinor"
+    | "previousPatch"
     | "previousMinor"
     | "previousMajor"
     | "^previousMajor"
     | "^previousMinor"
     | "~previousMajor"
     | "~previousMinor";
+
+function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVersionStyle): string {
+    const [previousMajorVersion, previousMinorVersion, previousPatchVersion] =
+        getPreviousVersions(version);
+    let prevVersion: string;
+
+    switch (style) {
+        case "baseMajor": {
+            const sv = semver.parse(version);
+            if (sv === null) {
+                throw new Error(`Cannot parse current version: ${version}`);
+            }
+
+            if (isInternalVersionScheme(sv)) {
+                const [pubVer, intVer] = fromInternalScheme(sv);
+                prevVersion = toInternalScheme(pubVer, `${intVer.major}.0.0`).version;
+            } else {
+                prevVersion = `${sv.major}.0.0`;
+            }
+            break;
+        }
+
+        case "baseMinor": {
+            const sv = semver.parse(version);
+            if (sv === null) {
+                throw new Error(`Cannot parse current version: ${version}`);
+            }
+
+            if (isInternalVersionScheme(sv)) {
+                const [pubVer, intVer] = fromInternalScheme(sv);
+                prevVersion = toInternalScheme(pubVer, `${intVer.major}.${intVer.minor}.0`).version;
+            } else {
+                prevVersion = `${sv.major}.${sv.minor}.0`;
+            }
+
+            break;
+        }
+
+        case "~baseMinor": {
+            const sv = semver.parse(version);
+            if (sv === null) {
+                throw new Error(`Cannot parse current version: ${version}`);
+            }
+
+            if (isInternalVersionScheme(sv)) {
+                const [pubVer, intVer] = fromInternalScheme(sv);
+                const baseMinor = toInternalScheme(pubVer, `${intVer.major}.${intVer.minor}.0`);
+                prevVersion = getVersionRange(baseMinor, "~");
+            } else {
+                prevVersion = `~${sv.major}.${sv.minor}.0`;
+            }
+
+            break;
+        }
+
+        case "previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = previousMajorVersion;
+            break;
+        }
+
+        case "previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = previousMinorVersion;
+            break;
+        }
+
+        case "previousPatch": {
+            if (previousPatchVersion === undefined) {
+                throw new Error(`Previous patch version is undefined.`);
+            }
+
+            prevVersion = previousPatchVersion;
+            break;
+        }
+
+        case "^previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMajorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMajorVersion!, "^")
+                : `^${previousMajorVersion}`;
+            break;
+        }
+
+        case "^previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMinorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMinorVersion!, "^")
+                : `^${previousMinorVersion}`;
+            break;
+        }
+
+        case "~previousMajor": {
+            if (previousMajorVersion === undefined) {
+                throw new Error(`Previous major version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMajorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMajorVersion!, "~")
+                : `~${previousMajorVersion}`;
+            break;
+        }
+
+        case "~previousMinor": {
+            if (previousMinorVersion === undefined) {
+                throw new Error(`Previous minor version is undefined.`);
+            }
+
+            prevVersion = isInternalVersionScheme(previousMinorVersion)
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  getVersionRange(previousMinorVersion!, "~")
+                : `~${previousMinorVersion}`;
+            break;
+        }
+    }
+
+    return prevVersion;
+}
 
 /**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
@@ -184,7 +320,8 @@ export async function getAndUpdatePackageDetails(
     let prevVersion: string;
 
     if (exactPreviousVersionString === undefined) {
-        const [previousMajorVersion, previousMinorVersion] = getPreviousVersions(version);
+        const [previousMajorVersion, previousMinorVersion, previousPatchVersion] =
+            getPreviousVersions(version);
         switch (previousVersionStyle) {
             case "baseMajor": {
                 const sv = semver.parse(version);
@@ -220,6 +357,23 @@ export async function getAndUpdatePackageDetails(
                 break;
             }
 
+            case "~baseMinor": {
+                const sv = semver.parse(version);
+                if (sv === null) {
+                    throw new Error(`Cannot parse current version: ${version}`);
+                }
+
+                if (isInternalVersionScheme(sv)) {
+                    const [pubVer, intVer] = fromInternalScheme(sv);
+                    const baseMinor = toInternalScheme(pubVer, `${intVer.major}.${intVer.minor}.0`);
+                    prevVersion = getVersionRange(baseMinor, "~");
+                } else {
+                    prevVersion = `~${sv.major}.${sv.minor}.0`;
+                }
+
+                break;
+            }
+
             case "previousMajor": {
                 if (previousMajorVersion === undefined) {
                     throw new Error(`Previous major version is undefined.`);
@@ -235,6 +389,15 @@ export async function getAndUpdatePackageDetails(
                 }
 
                 prevVersion = previousMinorVersion;
+                break;
+            }
+
+            case "previousPatch": {
+                if (previousPatchVersion === undefined) {
+                    throw new Error(`Previous patch version is undefined.`);
+                }
+
+                prevVersion = previousPatchVersion;
                 break;
             }
 

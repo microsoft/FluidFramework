@@ -35,3 +35,4 @@ export { policyHandlers } from "./repoPolicyCheck/handlers";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
 export { findPackagesUnderPath, getAndUpdatePackageDetails } from "./typeValidator/packageJson";
 export { generateTests } from "./typeValidator/testGeneration";
+export { type PreviousVersionStyle } from "./typeValidator/packageJson";
