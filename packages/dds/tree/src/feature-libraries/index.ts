@@ -20,6 +20,7 @@ export {
     getEditableTreeContext,
     typeSymbol,
     typeNameSymbol,
+    indexSymbol,
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
