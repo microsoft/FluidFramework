@@ -38,7 +38,7 @@ stages:
               foreach ($path in $env:AFFECTED_PATHS.Split(";")) {
                 $pathsChanged = git diff --name-only HEAD~1 $path
                 if ($pathsChanged -ne $null) {
-                  Write-Host "Found the following files changed in $path:"
+                  Write-Host "Found the following files changed in ${path}:"
                   Write-Host $pathsChanged
                   $filesWereChanged = 1
                 } else {
