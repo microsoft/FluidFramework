@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, tagChange } from "../../../rebase";
+import { makeAnonChange, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -137,7 +137,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const insertA = tagChange(createInsertChangeset(0, 2), brand(1));
         const insertB = tagChange(createInsertChangeset(1, 1), brand(2));
         const inverseA = SF.invert(insertA, TestChange.invert);
-        const insertB2 = rebaseTagged(insertB, tagChange(inverseA, insertA.revision));
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
         const insertB3 = rebaseTagged(insertB2, insertA);
         assert.deepEqual(insertB3.change, insertB.change);
     });
