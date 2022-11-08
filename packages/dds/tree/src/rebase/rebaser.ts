@@ -177,8 +177,10 @@ export interface ChangeRebaser<TChangeset> {
 export interface TaggedChange<TChangeset> {
     readonly revision: RevisionTag | undefined;
 
-    // Whether this change represents the inverse of the specified revision
-    // Considered false if undefined
+    /**
+     * Whether this change represents the inverse of the specified revision.
+     * Considered false if undefined.
+     */
     readonly isInverse?: boolean;
     readonly change: TChangeset;
 }
