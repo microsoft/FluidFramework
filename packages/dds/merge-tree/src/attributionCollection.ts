@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/common-utils";
 import { RedBlackTree } from "./collections";
 import { compareNumbers, ISegment } from "./mergeTreeNodes";
-import { SerializedAttributionBlob } from "./snapshotlegacy";
 
 export interface SerializedAttributionCollection {
     keys: unknown[];

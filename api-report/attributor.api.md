@@ -26,6 +26,8 @@ export class Attributor implements IAttributor {
     getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     serialize(): string;
+    // (undocumented)
+    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
 // @public (undocumented)
@@ -45,6 +47,8 @@ export interface IAttributor {
     getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     serialize(): string;
+    // (undocumented)
+    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
 // @public

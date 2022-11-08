@@ -23,7 +23,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/common-utils";
 import { pkgVersion } from "./packageVersion";
 
 /**

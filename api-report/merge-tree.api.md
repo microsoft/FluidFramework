@@ -34,9 +34,9 @@ export class AttributionCollection<T> {
     getAtOffset(offset: number): T;
     // (undocumented)
     get length(): number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionBlob" needs to be exported by the entry point index.d.ts
-    static populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionBlob): void;
-    static serializeAttributionCollections(segments: Iterable<ISegment>): SerializedAttributionBlob;
+    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
+    static populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
+    static serializeAttributionCollections(segments: Iterable<ISegment>): SerializedAttributionCollection;
     splitAt(pos: number): AttributionCollection<T>;
 }
 
