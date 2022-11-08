@@ -102,7 +102,7 @@ export class FluidRepoBuild extends FluidRepo {
         if (options.server) {
             monoReposToConsider.push(MonoRepoKind.Server);
         }
-        if(options.buildTools){
+        if (options.buildTools) {
             monoReposToConsider.push(MonoRepoKind.BuildTools);
         }
         if (!options.azure && !options.server && !options.buildTools) {
