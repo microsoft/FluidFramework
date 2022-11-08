@@ -86,7 +86,7 @@ describe("Timers", () => {
             testExactTimeout(overrideTimeout);
         });
 
-        it("Should immediately execute if the handler is late even accounting for the restart", () => {
+        it("Should immediately execute with negative numbers if setTimeout is called", () => {
             const setTimeoutSpy = spy(global, "setTimeout");
             const initialRunCount = runCount;
             timer.start(-10);
