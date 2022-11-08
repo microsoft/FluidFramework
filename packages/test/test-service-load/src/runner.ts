@@ -386,7 +386,7 @@ function scheduleOffline(
             }
 
             const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs)(runConfig.randEng);
-            await new Promise<void>((res) => setTimeout(res, injectionTime));
+            await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
 
             assert(container.resolvedUrl !== undefined, "no url");
             const ds = dsf.documentServices.get(container.resolvedUrl);
@@ -395,7 +395,7 @@ function scheduleOffline(
             printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
             ds.goOffline();
 
-            await new Promise<void>((res) => setTimeout(res, offlineTime));
+            await new Promise<void>((resolve) => setTimeout(resolve, offlineTime));
             if (!container.closed) {
                 ds.goOnline();
                 printStatus(runConfig, "going online!");
