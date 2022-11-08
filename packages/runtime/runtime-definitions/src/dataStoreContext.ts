@@ -31,7 +31,6 @@ import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
@@ -75,17 +74,24 @@ export const VisibilityState = {
 
     /**
      * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     *
      * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
-     *    not visible to globally visible.
+     * not visible to globally visible.
+     *
      * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
-     *    visible.
+     * visible.
      */
     GloballyVisible: "GloballyVisible",
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent {
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+export interface IContainerRuntimeBaseEvents extends IEvent{
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+    /**
+     * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+     * represent internal container runtime type / content.
+     */
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
@@ -131,12 +137,6 @@ export interface IContainerRuntimeBase extends
      * sequentially. Total size of all messages must be less than maxOpSize.
      */
     orderSequentially(callback: () => void): void;
-
-    /**
-     * Sets the flush mode for operations on the document.
-     * @deprecated - Will be removed in 0.60. See #9480.
-     */
-    setFlushMode(mode: FlushMode): void;
 
     /**
      * Executes a request against the container runtime
@@ -195,6 +195,13 @@ export interface IContainerRuntimeBase extends
     getAudience(): IAudience;
 }
 
+/** @deprecated - Used only in deprecated API bindToContext */
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
+}
+
 /**
  * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
  *
@@ -215,8 +222,8 @@ export interface IFluidDataStoreChannel extends
     readonly visibilityState?: VisibilityState;
 
     /**
-     * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
+     * @deprecated This will be removed in favor of {@link IFluidDataStoreChannel.makeVisibleAndAttachGraph}.
      */
     attachGraph(): void;
 
@@ -264,10 +271,8 @@ export interface IFluidDataStoreChannel extends
     /**
      * After GC has run, called to notify this channel of routes that are used in it.
      * @param usedRoutes - The routes that are used in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -299,7 +304,7 @@ export interface IFluidDataStoreChannel extends
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
@@ -381,6 +386,12 @@ export interface IFluidDataStoreContext extends
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated - To be removed in favor of makeVisible.
+     * Register the runtime to the container
+     */
+    bindToContext(): void;
+
+    /**
      * Called to make the data store locally visible in the container. This happens automatically for root data stores
      * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
      */
@@ -414,15 +425,10 @@ export interface IFluidDataStoreContext extends
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-
-    /**
      * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
      * and its children with the GC details from the previous summary.
      */
-    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     /**
      * Called when a new outbound reference is added to another node. This is used by garbage collection to identify

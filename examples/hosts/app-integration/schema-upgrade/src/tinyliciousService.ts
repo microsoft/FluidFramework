@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 

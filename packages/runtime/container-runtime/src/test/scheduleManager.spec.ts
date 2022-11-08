@@ -18,6 +18,7 @@ describe("ScheduleManager", () => {
         let emitter: EventEmitter;
         let deltaManager: MockDeltaManager;
         let scheduleManager: ScheduleManager;
+        const testClientId = "test-client";
 
         beforeEach(() => {
             emitter = new EventEmitter();
@@ -30,6 +31,7 @@ describe("ScheduleManager", () => {
             scheduleManager = new ScheduleManager(
                 deltaManager,
                 emitter,
+                () => testClientId,
                 DebugLogger.create("fluid:testScheduleManager"),
             );
 
@@ -74,9 +76,8 @@ describe("ScheduleManager", () => {
         }
 
         it("Single non-batch message", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
@@ -86,14 +87,13 @@ describe("ScheduleManager", () => {
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin events");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd events");
         });
 
         it("Multiple non-batch messages", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
@@ -107,14 +107,13 @@ describe("ScheduleManager", () => {
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
-            assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
-            assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
+            assert.strictEqual(batchBegin, 5, "Did not receive correct batchBegin events");
+            assert.strictEqual(batchEnd, 5, "Did not receive correct batchEnd events");
         });
 
         it("Message with non batch-related metadata", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { foo: 1 },
             };
@@ -124,25 +123,24 @@ describe("ScheduleManager", () => {
 
             // We should have a "batchBegin" and a "batchEnd" event for the batch.
             assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
         });
 
         it("Messages in a single batch", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -160,25 +158,24 @@ describe("ScheduleManager", () => {
 
             // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
             assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
         });
 
         it("two batches", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -204,33 +201,32 @@ describe("ScheduleManager", () => {
 
             assert.strictEqual(deltaManager.inbound.length, 3,
                 "none of the second batch ops are processed yet");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
 
             // End the batch - all ops should be processed.
             pushOp(batchEndMessage);
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
-            assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 2, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
         });
 
         it("non-batched ops followed by batch", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -262,8 +258,8 @@ describe("ScheduleManager", () => {
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
-            assert.strictEqual(3, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(3, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 3, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 3, "Did not receive correct batchEnd event for the batch");
         });
 
         function testWrongBatches() {
@@ -332,8 +328,8 @@ describe("ScheduleManager", () => {
                     assert.throws(() => pushOp(messageToFail));
 
                     assert.strictEqual(deltaManager.inbound.length, 4, "Some of batch ops were processed");
-                    assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
-                    assert.strictEqual(0, batchEnd, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(batchBegin, 0, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(batchEnd, 0, "Did not receive correct batchBegin event for the batch");
                 });
             }
         }

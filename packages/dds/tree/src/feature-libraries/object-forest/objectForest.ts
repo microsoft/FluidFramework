@@ -4,58 +4,77 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursor";
 import {
-    DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
-} from "../../dependency-tracking";
-import {
-    ITreeCursor, ITreeSubscriptionCursor, IEditableForest,
+    DisposingDependee,
+    ObservingDependent,
+    recordDependency,
+    SimpleDependee,
+    SimpleObservingDependent,
+    ITreeSubscriptionCursor,
+    IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-} from "../../forest";
-import { StoredSchemaRepository } from "../../schema-stored";
-import {
-    FieldKey, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
-    Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta,
-} from "../../tree";
+    StoredSchemaRepository,
+    FieldKey,
+    DetachedField,
+    AnchorSet,
+    detachedFieldAsKey,
+    Value,
+    Delta,
+    UpPath,
+    Anchor,
+    visitDelta,
+    ITreeCursor,
+    CursorLocationType,
+    TreeSchemaIdentifier,
+    TreeValue,
+    MapTree,
+    getMapTreeField,
+    FieldAnchor,
+    afterChangeToken,
+    FieldUpPath,
+} from "../../core";
 import { brand, fail } from "../../util";
+import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
+import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 
+function makeRoot(): MapTree {
+    return {
+        type: brand("above root placeholder"),
+        fields: new Map(),
+    };
+}
+
+/**
+ * Reference implementation of IEditableForest.
+ *
+ * This implementation focuses on correctness and simplicity, not performance.
+ * It does not use compressed chunks: instead nodes are implemented using objects.
+ */
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
-    public readonly rootField: DetachedField;
+    public readonly roots: MapTree = makeRoot();
 
-    private readonly roots: Map<DetachedField, ObjectField> = new Map();
-
-    private readonly dependees: Map<ObjectField | JsonableTree, DisposingDependee> = new Map();
+    private readonly dependees: Map<ObjectField | MapTree, DisposingDependee> = new Map();
 
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
     public constructor(
-        public readonly schema: StoredSchemaRepository, public readonly anchors: AnchorSet = new AnchorSet()) {
+        public readonly schema: StoredSchemaRepository,
+        public readonly anchors: AnchorSet = new AnchorSet(),
+    ) {
         super("object-forest.ObjectForest");
-        this.rootField = this.newDetachedField();
-        this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
     }
 
-    public root(range: DetachedField, index = 0): Anchor {
-        if (!this.roots.get(range)?.length) {
-            return this.anchors.track(null);
-        }
-
-        // TODO: Mark anchor as undefined/removed
-        return this.anchors.track(
-            { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: index },
-        );
+    public forgetAnchor(anchor: Anchor): void {
+        this.anchors.forget(anchor);
     }
 
     applyDelta(delta: Delta.Root): void {
-        // TODO: refactor object forest to use root node above detached fields, like how PathNode works.
-        // Then factor out this editing code to work on any such JsonableTree.
-
         this.beforeChange();
 
         // Note: This code uses cursors, however it also modifies the tree.
@@ -65,50 +84,36 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         // which can edit, but is the only cursor allowed at the time.
 
         const moves: Map<Delta.MoveId, DetachedField> = new Map();
-        const currentNode: Cursor = this.allocateCursor();
-        let currentField: FieldKey | undefined;
+        const cursor: Cursor = this.allocateCursor();
+        cursor.setToAboveDetachedSequences();
         const moveIn = (index: number, toAttach: DetachedField): number => {
-            assert(currentField !== undefined, 0x363 /* must be in field to onMoveIn */);
-            const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
-            this.roots.delete(toAttach);
-            let dstField: ObjectField;
-            if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                const dst = keyAsDetachedField(currentField);
-                assert(toAttach !== dst, 0x364 /* can not attach range to itself */);
-                // TODO: protect against parenting under itself creating a cycle as well:
-                // or maybe that should delete the subtree?
-                dstField = this.getRoot(dst);
-            } else {
-                if (children.length === 0) {
-                    return 0; // Prevent creating 0 sized fields when inserting empty into empty.
-                }
-                dstField = getGenericTreeField(currentNode, currentField, true);
+            const detachedKey = detachedFieldAsKey(toAttach);
+            const children = getMapTreeField(this.roots, detachedKey, false);
+            this.roots.fields.delete(detachedKey);
+            if (children.length === 0) {
+                return 0; // Prevent creating 0 sized fields when inserting empty into empty.
             }
-            assertValidIndex(index, dstField, true);
+
+            const [parent, key] = cursor.getParent();
+            const destinationField = getMapTreeField(parent, key, true);
+            assertValidIndex(index, destinationField, true);
             // TODO: this will fail for very large moves due to argument limits.
-            dstField.splice(index, 0, ...children);
+            destinationField.splice(index, 0, ...children);
 
             return children.length;
         };
         const visitor = {
             onDelete: (index: number, count: number): void => {
-                assert(currentField !== undefined, 0x365 /* must be in field to onDelete */);
                 visitor.onMoveOut(index, count);
             },
             onInsert: (index: number, content: Delta.ProtoNode[]): void => {
-                assert(currentField !== undefined, 0x366 /* must be in field to onInsert */);
-                const range = this.add(content.map((data) => singleTextCursor(data)));
+                const range = this.add(content);
                 moveIn(index, range);
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
-                assert(currentField !== undefined, 0x367 /* must be in field to onMoveOut */);
-                let srcField: ObjectField;
-                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    srcField = this.getRoot(keyAsDetachedField(currentField));
-                } else {
-                    srcField = getGenericTreeField(currentNode, currentField, false);
-                }
-                const field = this.detachRangeOfChildren(srcField, index, index + count);
+                const [parent, key] = cursor.getParent();
+                const sourceField = getMapTreeField(parent, key, false);
+                const field = this.detachRangeOfChildren(sourceField, index, index + count);
                 if (id !== undefined) {
                     moves.set(id, field);
                 } else {
@@ -116,54 +121,32 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
                 }
             },
             onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
-                assert(currentField !== undefined, 0x368 /* must be in field to onMoveIn */);
                 const toAttach = moves.get(id) ?? fail("move in without move out");
                 moves.delete(id);
                 const countMoved = moveIn(index, toAttach);
                 assert(countMoved === count, 0x369 /* counts must match */);
             },
             onSetValue: (value: Value): void => {
-                assert(currentField === undefined, 0x36a /* must be in node to onSetValue */);
-                const node = currentNode.getNode();
+                const node = cursor.getNode();
                 if (value !== undefined) {
                     node.value = value;
                 } else {
                     delete node.value;
                 }
             },
-            enterNode: (index: number): void => {
-                assert(currentField !== undefined, 0x36b /* must be in field to enterNode */);
-                let result: TreeNavigationResult;
-                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    result = this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), currentNode);
-                } else {
-                    result = currentNode.down(currentField, index);
-                }
-                assert(result === TreeNavigationResult.Ok, 0x36c /* can only enter existing nodes */);
-                currentField = undefined;
-            },
-            exitNode: (index: number): void => {
-                assert(currentField === undefined, 0x36d /* must be in node to exitNode */);
-                currentField = currentNode.getParentFieldKey();
-                const result = currentNode.up();
-                if (result === TreeNavigationResult.NotFound) {
-                    currentNode.clear();
-                }
-            },
-            enterField: (key: FieldKey): void => {
-                assert(currentField === undefined, 0x36e /* must be in node to enterField */);
-                currentField = key;
-            },
-            exitField: (key: FieldKey): void => {
-                assert(currentField !== undefined, 0x36f /* must be in field to exitField */);
-                currentField = undefined;
-            },
+            enterNode: (index: number): void => cursor.enterNode(index),
+            exitNode: (index: number): void => cursor.exitNode(),
+            enterField: (key: FieldKey): void => cursor.enterField(key),
+            exitField: (key: FieldKey): void => cursor.exitField(),
         };
         visitDelta(delta, visitor);
-        currentNode.free();
+        cursor.free();
     }
 
-    public observeItem(item: ObjectField | JsonableTree, observer: ObservingDependent | undefined): void {
+    public observeItem(
+        item: ObjectField | MapTree,
+        observer: ObservingDependent | undefined,
+    ): void {
         let result = this.dependees.get(item);
         if (result === undefined) {
             result = new DisposingDependee("ObjectForest item");
@@ -175,14 +158,6 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         }
     }
 
-    public getRoot(item: DetachedField): ObjectField {
-        // Currently we assume you only ever need to access a root of you know it exists.
-        // Thus we do not track observation of the existence of the root, and error if it does not exists.
-        const root = this.roots.get(item);
-        assert(root !== undefined, 0x335 /* ObjectForest.getRoot only valid for existing roots */);
-        return root;
-    }
-
     private nextRange = 0;
     public newDetachedField(): DetachedField {
         const range: DetachedField = brand(String(this.nextRange));
@@ -191,28 +166,34 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private add(nodes: Iterable<ITreeCursor>): DetachedField {
-        const range = this.newDetachedField();
-        assert(!this.roots.has(range), 0x370 /* new range must not already exist */);
-        const field: ObjectField = Array.from(nodes, jsonableTreeFromCursor);
-        this.roots.set(range, field);
-        return range;
+        const field: ObjectField = Array.from(nodes, mapTreeFromCursor);
+        return this.addFieldAsDetached(field);
     }
 
-    private detachRangeOfChildren(field: ObjectField, startIndex: number, endIndex: number): DetachedField {
+    private addFieldAsDetached(field: ObjectField): DetachedField {
+        const detached = this.newDetachedField();
+        const key = detachedFieldAsKey(detached);
+        assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
+        if (field.length > 0) {
+            this.roots.fields.set(key, field);
+        }
+        return detached;
+    }
+
+    private detachRangeOfChildren(
+        field: ObjectField,
+        startIndex: number,
+        endIndex: number,
+    ): DetachedField {
         assertValidIndex(startIndex, field, true);
         assertValidIndex(endIndex, field, true);
         assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
-        const newRange = this.newDetachedField();
         const newField = field.splice(startIndex, endIndex - startIndex);
-        this.roots.set(newRange, newField);
-        return newRange;
+        return this.addFieldAsDetached(newField);
     }
 
-    private delete(range: DetachedField): void {
-        // TODO: maybe define this to leave the forest with an empty root field?
-        assert(range !== this.rootField, 0x372 /* root field can not be deleted */);
-        const deleted = this.roots.delete(range);
-        assert(deleted, 0x373 /* deleted range must exist in forest */);
+    private delete(field: DetachedField): void {
+        this.roots.fields.delete(detachedFieldAsKey(field));
     }
 
     allocateCursor(): Cursor {
@@ -220,12 +201,22 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private beforeChange(): void {
-        assert(this.currentCursors.size === 0, 0x374 /* No cursors can be current when modifying forest */);
         this.invalidateDependents();
+        assert(
+            this.currentCursors.size === 0,
+            0x374 /* No cursors can be current when modifying forest */,
+        );
     }
 
-    tryMoveCursorTo(
-        destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent,
+    // TODO: remove this workaround as soon as notification/eventing will be supported.
+    afterChange(): void {
+        this.invalidateDependents(afterChangeToken);
+    }
+
+    tryMoveCursorToNode(
+        destination: Anchor,
+        cursorToMove: ITreeSubscriptionCursor,
+        observer?: ObservingDependent,
     ): TreeNavigationResult {
         const path = this.anchors.locate(destination);
         if (path === undefined) {
@@ -235,14 +226,40 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return TreeNavigationResult.Ok;
     }
 
+    tryMoveCursorToField(
+        destination: FieldAnchor,
+        cursorToMove: ITreeSubscriptionCursor,
+    ): TreeNavigationResult {
+        if (destination.parent === undefined) {
+            this.moveCursorToPath(undefined, cursorToMove);
+        } else {
+            const result = this.tryMoveCursorToNode(destination.parent, cursorToMove);
+            if (result !== TreeNavigationResult.Ok) {
+                return result;
+            }
+        }
+        cursorToMove.enterField(destination.fieldKey);
+        return TreeNavigationResult.Ok;
+    }
+
     /**
      * Set `cursorToMove` to location described by path.
      * This is NOT a relative move: current position is discarded.
      * Path must point to existing node.
      */
-    moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): void {
-        assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
-        assert(cursorToMove.forest === this, 0x338 /* ObjectForest must only be given its own Cursor */);
+    moveCursorToPath(
+        destination: UpPath | undefined,
+        cursorToMove: ITreeSubscriptionCursor,
+        observer?: ObservingDependent,
+    ): void {
+        assert(
+            cursorToMove instanceof Cursor,
+            0x337 /* ObjectForest must only be given its own Cursor type */,
+        );
+        assert(
+            cursorToMove.forest === this,
+            0x338 /* ObjectForest must only be given its own Cursor */,
+        );
 
         const indexStack: number[] = [];
         const keyStack: FieldKey[] = [];
@@ -253,12 +270,12 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             keyStack.push(path.parentField);
             path = path.parent;
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        cursorToMove.set(keyAsDetachedField(keyStack.pop()!), indexStack.pop()!);
+        cursorToMove.setToAboveDetachedSequences();
         while (keyStack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const result = cursorToMove.down(keyStack.pop()!, indexStack.pop()!);
-            assert(result === TreeNavigationResult.Ok, 0x375 /* path should point to existing node */);
+            cursorToMove.enterField(keyStack.pop()!);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            cursorToMove.enterNode(indexStack.pop()!);
         }
 
         return;
@@ -275,67 +292,181 @@ function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: bool
     }
 }
 
-type ObjectField = JsonableTree[];
+type ObjectField = MapTree[];
 
 /**
  * TODO: track observations.
  * When doing observation tracking, it might make more sense to have this wrap a RootedTextCursor
  * (which can be undefined when cleared), instead of sub-classing it.
  */
-class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
-    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
-    public constructor(public readonly forest: ObjectForest) {
-        // Unlike RootedTextCursor, ITreeSubscriptionCursor can be in a "cleared" state,
-        // where they are not at a location in the tree.
-        // This makes a ITreeSubscriptionCursor not really a logical subtype of ITreeCursor and makes
-        // reusing an ITreeCursor implementation as a base type questionable.
-        // Despite this, using this base type is a handy way to reduce code duplication,
-        // and we can put the base type into an invalid state with a negative index to represent the cleared state.
-        super([], -1, forest.rootField);
+class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
+    state: ITreeSubscriptionCursorState;
+
+    /**
+     * @param forest - forest this cursor navigates
+     * @param innerCursor - underlying cursor implementation this wraps. `undefined` when state is not `Current`
+     */
+    public constructor(
+        public readonly forest: ObjectForest,
+        private innerCursor?: CursorWithNode<MapTree>,
+    ) {
+        super();
+        this.state =
+            innerCursor === undefined
+                ? ITreeSubscriptionCursorState.Cleared
+                : ITreeSubscriptionCursorState.Current;
+    }
+
+    buildFieldAnchor(): FieldAnchor {
+        const path = this.getFieldPath();
+        const anchor =
+            path.parent === undefined ? undefined : this.forest.anchors.track(path.parent);
+        return { parent: anchor, fieldKey: path.field };
+    }
+    getFieldPath(): FieldUpPath {
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        return this.innerCursor.getFieldPath();
+    }
+    get mode(): CursorLocationType {
+        assert(this.innerCursor !== undefined, 0x42e /* Cursor must be current to be used */);
+        return this.innerCursor.mode;
+    }
+
+    nextField(): boolean {
+        assert(this.innerCursor !== undefined, 0x42f /* Cursor must be current to be used */);
+        return this.innerCursor.nextField();
+    }
+    exitField(): void {
+        assert(this.innerCursor !== undefined, 0x430 /* Cursor must be current to be used */);
+        return this.innerCursor.exitField();
+    }
+    skipPendingFields(): boolean {
+        assert(this.innerCursor !== undefined, 0x431 /* Cursor must be current to be used */);
+        return this.innerCursor.skipPendingFields();
+    }
+    getFieldKey(): FieldKey {
+        assert(this.innerCursor !== undefined, 0x432 /* Cursor must be current to be used */);
+        return this.innerCursor.getFieldKey();
+    }
+    getFieldLength(): number {
+        assert(this.innerCursor !== undefined, 0x433 /* Cursor must be current to be used */);
+        return this.innerCursor.getFieldLength();
+    }
+    firstNode(): boolean {
+        assert(this.innerCursor !== undefined, 0x434 /* Cursor must be current to be used */);
+        return this.innerCursor.firstNode();
+    }
+    enterNode(childIndex: number): void {
+        assert(this.innerCursor !== undefined, 0x435 /* Cursor must be current to be used */);
+        return this.innerCursor.enterNode(childIndex);
+    }
+    getPath(): UpPath {
+        assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
+        return this.innerCursor.getPath() ?? fail("no path when at root");
+    }
+    get fieldIndex(): number {
+        assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);
+        return this.innerCursor.fieldIndex;
+    }
+    get chunkStart(): number {
+        assert(this.innerCursor !== undefined, 0x438 /* Cursor must be current to be used */);
+        return this.innerCursor.chunkStart;
+    }
+    get chunkLength(): number {
+        assert(this.innerCursor !== undefined, 0x439 /* Cursor must be current to be used */);
+        return this.innerCursor.chunkLength;
+    }
+    seekNodes(offset: number): boolean {
+        assert(this.innerCursor !== undefined, 0x43a /* Cursor must be current to be used */);
+        return this.innerCursor.seekNodes(offset);
+    }
+    nextNode(): boolean {
+        assert(this.innerCursor !== undefined, 0x43b /* Cursor must be current to be used */);
+        return this.innerCursor.nextNode();
+    }
+    exitNode(): void {
+        assert(this.innerCursor !== undefined, 0x43c /* Cursor must be current to be used */);
+        return this.innerCursor.exitNode();
+    }
+    firstField(): boolean {
+        assert(this.innerCursor !== undefined, 0x43d /* Cursor must be current to be used */);
+        return this.innerCursor.firstField();
+    }
+    enterField(key: FieldKey): void {
+        assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
+        return this.innerCursor.enterField(key);
+    }
+    get type(): TreeSchemaIdentifier {
+        assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
+        return this.innerCursor.type;
+    }
+    get value(): TreeValue {
+        assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
+        return this.innerCursor.value;
     }
 
     observer?: ObservingDependent | undefined;
 
     // TODO: tests for clear when not at root.
     public clear(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
+        assert(
+            this.state !== ITreeSubscriptionCursorState.Freed,
+            0x33b /* Cursor must not be freed */,
+        );
         this.state = ITreeSubscriptionCursorState.Cleared;
-        this.keyStack.length = 0;
-        this.siblingStack.length = 0;
-        this.indexStack.length = 0;
-        this.index = -1;
+        this.innerCursor = undefined;
         this.forest.currentCursors.delete(this);
     }
 
-    public set(root: DetachedField, index: number): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33c /* Cursor must not be freed */);
+    /**
+     * Move this cursor to the special dummy node above the detached sequences.
+     * Can be used when cleared (but not freed).
+     */
+    public setToAboveDetachedSequences(): void {
+        assert(
+            this.state !== ITreeSubscriptionCursorState.Freed,
+            0x33c /* Cursor must not be freed */,
+        );
         this.clear();
         this.state = ITreeSubscriptionCursorState.Current;
-        this.index = index;
-        this.siblings = this.forest.getRoot(root);
+        this.innerCursor = singleMapTreeCursor(this.forest.roots);
         this.forest.currentCursors.add(this);
-        this.keyStack.push(detachedFieldAsKey(root));
     }
 
-    getNode(): JsonableTree {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33e /* Cursor must be current to be used */);
-        return this.siblings[this.index];
+    getNode(): MapTree {
+        assert(this.innerCursor !== undefined, 0x33e /* Cursor must be current to be used */);
+        return this.innerCursor.getNode();
+    }
+
+    getParent(): [MapTree, FieldKey] {
+        assert(this.innerCursor !== undefined, 0x441 /* Cursor must be current to be used */);
+        // This could be optimized to skip moving it accessing internals of cursor.
+        const key = this.innerCursor.getFieldKey();
+        this.innerCursor.exitField();
+        const node = this.innerCursor.getNode();
+        this.innerCursor.enterField(key);
+        return [node, key];
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
-        const other = this.forest.allocateCursor();
-        const path = this.getPath();
-        this.forest.moveCursorToPath(path, other, observer);
-        return other;
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        return new Cursor(this.forest, this.innerCursor.fork());
     }
 
     free(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
+        assert(
+            this.state !== ITreeSubscriptionCursorState.Freed,
+            0x33f /* Cursor must not be double freed */,
+        );
+        this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
     buildAnchor(): Anchor {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x37a /* Cursor must be current to be used */);
+        assert(
+            this.state === ITreeSubscriptionCursorState.Current,
+            0x37a /* Cursor must be current to be used */,
+        );
         return this.forest.anchors.track(this.getPath());
     }
 }
@@ -348,4 +479,10 @@ class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
  */
 export function buildForest(schema: StoredSchemaRepository): IEditableForest {
     return new ObjectForest(schema);
+}
+
+// This must be used only in forestIndex and should never be exported elsewhere.
+// TODO: remove this workaround as soon as notification/eventing will be supported.
+export function afterChangeForest(forest: IEditableForest): void {
+    (forest as ObjectForest).afterChange();
 }

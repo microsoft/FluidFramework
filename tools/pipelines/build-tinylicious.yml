@@ -21,6 +21,10 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
@@ -61,11 +65,12 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/tinylicious
     tagName: tinylicious
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: false
+    taskTest: [] # no tests
     namespace: false
     buildNumberInPatch: true

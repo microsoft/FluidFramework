@@ -54,6 +54,18 @@ export enum BenchmarkType {
 	OwnCorrectness,
 }
 
+export enum TestType {
+	/**
+	 * Tests that measure execution time
+	 */
+	ExecutionTime,
+
+	/**
+	 * Tests that measure memory usage
+	 */
+	MemoryUsage,
+}
+
 /**
  * Names of all BenchmarkTypes.
  */
@@ -64,6 +76,17 @@ for (const type of Object.values(BenchmarkType)) {
 		benchmarkTypes.push(type);
 	}
 }
+
+/**
+ * Names of all TestTypes.
+ */
+ export const testTypes: string[] = [];
+
+ for (const type of Object.values(TestType)) {
+     if (typeof type === "string") {
+         testTypes.push(type);
+     }
+ }
 
 /**
  * Arguments to `benchmark`
@@ -136,6 +159,13 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
 	 * The kind of benchmark.
 	 */
 	type?: BenchmarkType;
+
+    /**
+	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+     * only execute specific tests.
+	 */
+	category?: string;
 }
 
 /**
@@ -217,6 +247,13 @@ export const isChildProcess = process.argv.includes("--childProcess");
  * Performance test suites are tagged with this to allow filtering to only performance tests.
  */
 export const performanceTestSuiteTag = "@Benchmark";
+
+/**
+ * When a consumer specifies a category for a test, we append this value to the test name followed by the
+ * user-specified category. This is so we can then strip that information from the name safely, before
+ * writing the test name in reporters.
+ */
+export const userCategoriesSplitter = ":ff-cat:";
 
 /**
  * Reporter output location

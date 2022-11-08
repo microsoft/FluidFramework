@@ -31,7 +31,6 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -105,6 +104,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
+    public bindToContext(): void {
+        throw new Error("Method not implemented.");
+    }
+
     public setChannelDirty(address: string): void {
         throw new Error("Method not implemented.");
     }
@@ -121,10 +124,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         throw new Error("Method not implemented.");
     }
 

@@ -7,12 +7,14 @@ import { brand, Brand, Invariant } from "../util";
 import { AnchorSet } from "../tree";
 
 /**
- * A way to refer to a particular revision within a given {@link Rebaser} instance.
+ * A way to refer to a particular revision within a given `Rebaser` instance.
  */
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 /**
  * A collection of branches which can rebase changes between them.
+ *
+ * @sealed
  */
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     private lastRevision = 0;
@@ -32,7 +34,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
      */
     private readonly revisionTree: Map<
         RevisionTag,
-        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser>; }
+        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser> }
     > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
@@ -49,8 +51,10 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
         to: RevisionTag,
     ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
         const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.rebase(changes, over);
+        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(
+            changes,
+            over,
+        );
         const newRevision = this.makeRevision();
         this.revisionTree.set(newRevision, {
             before: to,
@@ -62,11 +66,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     /**
      * Modifies `anchors` to be valid at the destination.
      */
-    public rebaseAnchors(
-        anchors: AnchorSet,
-        from: RevisionTag,
-        to: RevisionTag,
-    ): void {
+    public rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void {
         const over = this.getResolutionPath(from, to);
         this.rebaser.rebaseAnchors(anchors, over);
     }
@@ -101,17 +101,13 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
 }
 
 // TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
-export type ChangesetFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any>,
-    > = TChangeRebaser extends ChangeRebaser<infer TChangeset>
-    ? TChangeset
-    : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
+    TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 /**
  * Rebasing logic for a particular kind of change.
  *
- * This interface is designed to be easy to implement.
- * Use {@link Rebaser} for an ergonomic wrapper around this.
+ * This interface is used to provide rebase policy to `Rebaser`.
  *
  * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
  * - `compose([])` is the identity element.
@@ -120,8 +116,11 @@ export type ChangesetFromChangeRebaser<
  * - `inverse(a)` gives the inverse element of `a`.
  *
  * In these requirements the definition of equality is up to the implementer,
- * but it is required that any two changes which are considered equal
- * have the same impact when applied to any tree, and rebaseAnchors has identical effects as well.
+ * but it is required that any two changes which are considered equal:
+ * - have the same impact when applied to any tree.
+ * - can be substituted for each-other in all methods on this
+ * interface and produce equal (by this same definition) results.
+ *
  * For the sake of testability, implementations will likely want to have a concrete equality implementation.
  *
  * This API uses `compose` on arrays instead of an explicit identity element and associative binary operator
@@ -151,7 +150,7 @@ export interface ChangeRebaser<TChangeset> {
      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
      * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeset): TChangeset;
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -160,17 +159,32 @@ export interface ChangeRebaser<TChangeset> {
      * except be valid to apply after `over` instead of before it.
      *
      * Requirements:
-     * The implementation must ensure that:
+     * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
      * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
      * - `rebase(compose([a, b]), c)` is equal to
      * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+     * - `rebase(a, compose([]))` is equal to `a`.
+     * - `rebase(compose([]), a)` is equal to `a`.
      */
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+}
+
+export interface TaggedChange<TChangeset> {
+    readonly revision: RevisionTag | undefined;
+    readonly change: TChangeset;
+}
+
+export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedChange<T> {
+    return { revision: tag, change };
+}
+
+export function makeAnonChange<T>(change: T): TaggedChange<T> {
+    return { revision: undefined, change };
 }
 
 export interface FinalChange {

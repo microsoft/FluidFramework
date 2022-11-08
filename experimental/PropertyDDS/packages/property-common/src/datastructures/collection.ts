@@ -171,22 +171,16 @@ export class Collection<T> {
     filterByKey(in_filterKey: string | string[]): Collection<T> {
         const rtn = new Collection<T>();
 
-        let filterCb;
-
-        if (_.isArray(in_filterKey)) {
-            filterCb = function(in_key, in_item) {
+        const filterCb = _.isArray(in_filterKey)
+            ? function(in_key, in_item) {
                 if (in_filterKey.includes(in_key)) {
                     rtn.add(in_key, in_item);
                 }
-            };
-        } else {
-            // if in_filterKey is an array
-            filterCb = function(in_key, in_item) {
+            } : function(in_key, in_item) {
                 if (in_key === in_filterKey) {
                     rtn.add(in_key, in_item);
                 }
             };
-        }
 
         this.iterate(filterCb);
 

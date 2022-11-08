@@ -11,7 +11,6 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-    IChannel,
 } from "@fluidframework/datastore-definitions";
 import {
     IPropertyTreeConfig, IPropertyTreeMessage, ISharedPropertyTreeEncDec,

@@ -29,7 +29,8 @@ export enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize">;
+type StopReason = Extract<SummarizerStopReason,
+    "parentNotConnected" | "notElectedParent" | "notElectedClient">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
@@ -141,13 +142,23 @@ export class SummaryManager implements IDisposable {
         // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
         // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
         // changing the electedParent will just cause us to transition to Starting again.
-        if (this.connectedState.clientId !== this.clientElection.electedParentId ||
-            (this.state !== SummaryManagerState.Running &&
-                this.connectedState.clientId !== this.clientElection.electedClientId)) {
-            return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
-        } else if (!this.connectedState.connected) {
+
+        // New Parent has been elected and it is not the current client, or
+        if (this.connectedState.clientId !== this.clientElection.electedParentId) {
+            return { shouldSummarize: false, stopReason: "notElectedParent" };
+        }
+
+        // We are not already running the summarizer and we are not the current elected client id.
+        if (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId) {
+            return { shouldSummarize: false, stopReason: "notElectedClient" };
+        }
+
+        if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.disposed) {
+        }
+
+        if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
@@ -302,8 +313,8 @@ export class SummaryManager implements IDisposable {
 
     /**
      * Implements initial delay before creating summarizer
-     * @returns true, if creation is delayed due to heuristics (not many ops to summarize).
-     *          False if summarizer should start immediately due to too many unsummarized ops.
+     * @returns `true`, if creation is delayed due to heuristics (not many ops to summarize).
+     * `false` if summarizer should start immediately due to too many unsummarized ops.
      */
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections

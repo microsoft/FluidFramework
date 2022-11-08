@@ -12,7 +12,11 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, intervalLocatorFromEndpoint, IntervalType, SequenceInterval } from "../intervalCollection";
+import {
+    IntervalCollection,
+    intervalLocatorFromEndpoint,
+    IntervalType, SequenceInterval,
+} from "../intervalCollection";
 
 const assertIntervals = (
     sharedString: SharedString,

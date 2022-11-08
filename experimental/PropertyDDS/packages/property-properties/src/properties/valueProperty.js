@@ -135,16 +135,14 @@ export class ValueProperty extends BaseProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for ValueProperty
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy.
+     * Has no effect for ValueProperty
      * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * The type of dirtiness to use when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
      *
      * @return {*} The serialized representation of this property
      * @private
@@ -152,11 +150,7 @@ export class ValueProperty extends BaseProperty {
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return this._data;
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType) ? this._data : {};
         } else {
             return this._data;
         }
@@ -166,8 +160,7 @@ export class ValueProperty extends BaseProperty {
      * Calls back the given function with a human-readable string
      * representation of the property.
      * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
-     *                              Used for arrays.
+     * @param {string} externalId - Name of the current property at the upper level. Used for arrays.
      * @param {function} printFct - Function to call for printing each property
      */
     _prettyPrint(indent, externalId, printFct) {

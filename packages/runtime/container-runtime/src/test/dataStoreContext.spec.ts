@@ -6,6 +6,10 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
+
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -26,12 +30,10 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import {
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -108,8 +110,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 assert.throws(codeBlock,
@@ -127,8 +127,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 try {
@@ -156,8 +154,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 await localDataStoreContext.realize();
@@ -198,8 +194,6 @@ describe("Data Store Context Tests", () => {
                         makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
-                        writeGCDataAtRoot: true,
-                        disableIsolatedChannels: false,
                     },
                 );
 
@@ -233,8 +227,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 await localDataStoreContext.realize();
@@ -273,8 +265,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -292,8 +282,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -313,8 +301,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const gcData = await localDataStoreContext.getGCData();
@@ -332,8 +318,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.
@@ -350,6 +334,24 @@ describe("Data Store Context Tests", () => {
                 localDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+            });
+
+            it("can tombstone a local datastore", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["TestComp", "SubComp"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: false,
+                });
+
+                assert.doesNotThrow(() => {
+                    localDataStoreContext.tombstone();
+                }, `Local dataStores should not throw on tombstone`);
             });
         });
     });
@@ -408,10 +410,9 @@ describe("Data Store Context Tests", () => {
              * and expectations.
              * This runs the same test with various summary write and read preferences. Specifically each call of this
              * function will run the test 4 times, one for each possible summary format we could be reading from.
-             * @param writeIsolatedChannels - whether to write summary with isolated channels disabled or not
              * @param expected - the expected datastore attributes to be generated given the write preference
              */
-            function testGenerateAttributes(writeIsolatedChannels: boolean, expected: WriteFluidDataStoreAttributes) {
+            function testGenerateAttributes(expected: WriteFluidDataStoreAttributes) {
                 /**
                  * This function is called for each possible base snapshot format version. We want to cover all
                  * summary format read/write combinations. We only write in latest or -1 version, but we can
@@ -420,7 +421,6 @@ describe("Data Store Context Tests", () => {
                  * @param attributes - datastore attributes that are in the base snapshot we load from
                  */
                 async function testGenerateAttributesCore(
-                    hasIsolatedChannels: boolean,
                     attributes: ReadFluidDataStoreAttributes,
                 ) {
                     const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
@@ -429,15 +429,13 @@ describe("Data Store Context Tests", () => {
                         blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                         trees: {},
                     };
-                    if (hasIsolatedChannels) {
-                        // If we are expecting to read isolated channels as intended by the test, then make sure
-                        // it exists on the snapshot. Otherwise, make sure it doesn't to most closely resemble
-                        // real loading use cases.
-                        snapshotTree.trees[channelsTreeName] = {
-                            blobs: {},
-                            trees: {},
-                        };
-                    }
+                    // If we are expecting to read isolated channels as intended by the test, then make sure
+                    // it exists on the snapshot. Otherwise, make sure it doesn't to most closely resemble
+                    // real loading use cases.
+                    snapshotTree.trees[channelsTreeName] = {
+                        blobs: {},
+                        trees: {},
+                    };
 
                     remoteDataStoreContext = new RemoteFluidDataStoreContext({
                         id: dataStoreId,
@@ -447,8 +445,6 @@ describe("Data Store Context Tests", () => {
                         storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                         scope,
                         createSummarizerNodeFn,
-                        writeGCDataAtRoot: true,
-                        disableIsolatedChannels: !writeIsolatedChannels,
                     });
 
                     const isRootNode = await remoteDataStoreContext.isRoot();
@@ -465,27 +461,10 @@ describe("Data Store Context Tests", () => {
                     assert.deepStrictEqual(contents, expected, "Unexpected datastore attributes written");
                 }
 
-                it("can read from latest with isolated channels", async () => testGenerateAttributesCore(true, {
+                it("can read from latest with isolated channels", async () => testGenerateAttributesCore({
                     pkg: JSON.stringify([pkgName]),
                     summaryFormatVersion: 2,
                     isRootDataStore: true,
-                }));
-
-                it("can read from latest without isolated channels", async () => testGenerateAttributesCore(false, {
-                    pkg: JSON.stringify([pkgName]),
-                    summaryFormatVersion: 2,
-                    isRootDataStore: true,
-                    disableIsolatedChannels: true,
-                }));
-
-                it("can read from previous snapshot format", async () => testGenerateAttributesCore(false, {
-                    pkg: JSON.stringify([pkgName]),
-                    snapshotFormatVersion: "0.1",
-                    isRootDataStore: true,
-                }));
-
-                it("can read from oldest snapshot format", async () => testGenerateAttributesCore(false, {
-                    pkg: pkgName,
                 }));
             }
 
@@ -499,26 +478,13 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                     snapshotTree: undefined,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                     getBaseGCDetails: async () => undefined as unknown as IGarbageCollectionDetailsBase,
                 });
 
                 assert.throws(codeBlock,
                     (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
             });
-
-            describe("writing with isolated channels disabled", () => testGenerateAttributes(
-                false, /* writeIsolatedChannels */
-                {
-                    pkg: JSON.stringify([pkgName]),
-                    snapshotFormatVersion: "0.1",
-                    isRootDataStore: true,
-                },
-            ));
-
             describe("writing with isolated channels enabled", () => testGenerateAttributes(
-                true, /* writeIsolatedChannels */
                 {
                     pkg: JSON.stringify([pkgName]),
                     summaryFormatVersion: 2,
@@ -565,8 +531,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -601,8 +565,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -642,8 +604,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -678,8 +638,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 // Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
@@ -722,8 +680,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
-                    disableIsolatedChannels: false,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.
@@ -763,6 +719,33 @@ describe("Data Store Context Tests", () => {
                     summaryFormatVersion: 2,
                 };
                 updateReferencedStateTest();
+            });
+
+            it("can successfully tombstone a remote datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    trees: {},
+                };
+
+                remoteDataStoreContext = new RemoteFluidDataStoreContext({
+                    id: dataStoreId,
+                    snapshotTree,
+                    getBaseGCDetails: async () => undefined,
+                    runtime: containerRuntime,
+                    storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                });
+                assert.doesNotThrow(() => {
+                    remoteDataStoreContext.tombstone();
+                }, `Should be able to tombstone a non-root remote datastore!`);
             });
         });
     });

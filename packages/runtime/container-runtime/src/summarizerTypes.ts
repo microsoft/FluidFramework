@@ -25,16 +25,16 @@ import { SummarizeReason } from "./summaryGenerator";
 import { ISummaryConfigurationHeuristics } from ".";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export interface IProvideSummarizer {
     /**
-     * @deprecated - This will be removed in a later release.
+     * @deprecated This will be removed in a later release.
      */
     readonly ISummarizer: ISummarizer;
 }
@@ -61,12 +61,7 @@ export interface ISummarizerInternalsProvider {
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
-    refreshLatestSummaryAck(
-        proposalHandle: string,
-        ackHandle: string,
-        summaryRefSeq: number,
-        summaryLogger: ITelemetryLogger,
-    ): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
 }
 
 /**
@@ -114,6 +109,20 @@ export interface ISummarizeOptions {
     readonly refreshLatestAck?: boolean;
 }
 
+/**
+ * Data required to update internal tracking state after receiving a Summary Ack.
+ */
+ export interface IRefreshSummaryAckOptions {
+    /** Handle from the ack's summary op. */
+    readonly proposalHandle: string | undefined;
+    /** Handle from the summary ack just received */
+    readonly ackHandle: string;
+    /** Reference sequence number from the ack's summary op */
+    readonly summaryRefSeq: number;
+    /** Telemetry logger to which telemetry events will be forwarded. */
+    readonly summaryLogger: ITelemetryLogger;
+}
+
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger;
@@ -130,6 +139,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     /** If specified, The summarize attempt will not occur until after this sequence number. */
     readonly afterSequenceNumber?: number;
+
     /**
      * True to override the existing enqueued summarize attempt if there is one.
      * This will guarantee that this attempt gets enqueued. If override is false,
@@ -204,11 +214,16 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * The result consists of 4 possible stages, each with its own data.
  * The data is cumulative, so each stage will contain the data from the previous stages.
  * If the final "submitted" stage is not reached, the result may contain the error object.
+ *
  * Stages:
- *  1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
- *  2. "generate" - the summary tree was generated, and the result will contain that tree + stats
- *  3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
- *  4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ *
+ * 1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
+ *
+ * 2. "generate" - the summary tree was generated, and the result will contain that tree + stats
+ *
+ * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
+ *
+ * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  */
 export type SubmitSummaryResult =
     | IBaseSummarizeResult
@@ -286,7 +301,11 @@ export type SummarizerStopReason =
      * client to no longer be elected as responsible for summaries. Then it
      * tries to stop its spawned summarizer client.
      */
-    | "parentShouldNotSummarize"
+    | "notElectedParent"
+    /**
+     * We are not already running the summarizer and we are not the current elected client id.
+     */
+    | "notElectedClient"
     /** Summarizer client was disconnected */
     | "summarizerClientDisconnected"
     /* running summarizer threw an exception */
@@ -453,8 +472,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
     "opsSinceLastAttempt" |
     /** Delta between the current reference sequence number and the reference sequence number of the last summary */
     "opsSinceLastSummary" |
-    /** Delta in sum of op sizes between the current reference sequence number and the reference
-     *  sequence number of the last summary */
+    /**
+     * Delta in sum of op sizes between the current reference sequence number and the reference
+     * sequence number of the last summary
+     */
     "opsSizesSinceLastSummary" |
     /** Delta between the number of non-runtime ops since the last summary */
     "nonRuntimeOpsSinceLastSummary" |

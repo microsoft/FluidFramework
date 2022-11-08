@@ -16,6 +16,7 @@ export type PathTree = Map<String, PathTree>;
 /**
  * Helper functions for string processing
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PathHelper {
 
     const RE_ALL_OPEN_SQUARE_BRACKETS = new RegExp("[[]", "g");
@@ -201,52 +202,61 @@ export namespace PathHelper {
                     throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
                 }
             } else if (!inSquareBrackets) {
-                if (character === PROPERTY_PATH_DELIMITER) {
-                    // A dot symbols starts a new token
-                    storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
-
-                    allowSegmentStart = true;
-                } else if (character === "[") {
-                    // An opening square bracket starts a new token
-                    if (tokenStarted) {
+                switch (character) {
+                    case PROPERTY_PATH_DELIMITER: {
+                        // A dot symbols starts a new token
                         storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+
+                        allowSegmentStart = true;
+                        break;
                     }
+                    case "[": {
+                        // An opening square bracket starts a new token
+                        if (tokenStarted) {
+                            storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        }
 
-                    // And sets the state to inSquareBrackets
-                    inSquareBrackets = true;
-                } else if (character === "]") {
-                    throw new Error(MSG.CLOSING_BRACKET_WITHOUT_OPENING + in_path);
-                } else if (character === "*") {
-                    // Store the last token
-                    if (tokenStarted) {
-                        storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        // And sets the state to inSquareBrackets
+                        inSquareBrackets = true;
+                        break;
                     }
-
-                    // Create a new dereference token
-                    tokens.push("*");
-                    if (out_types) {
-                        out_types.push(TOKEN_TYPES.DEREFERENCE_TOKEN);
+                    case "]": {
+                        throw new Error(MSG.CLOSING_BRACKET_WITHOUT_OPENING + in_path);
                     }
+                    case "*": {
+                        // Store the last token
+                        if (tokenStarted) {
+                            storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        }
 
-                    // Reset the token started flag
-                    tokenStarted = false;
-                    atStartToken = true;
-                    allowSegmentStart = false;
-                } else {
-                    if (!tokenStarted &&
-                        !allowSegmentStart &&
-                        !inSquareBrackets) {
-                        throw new Error(MSG.MISSING_DOT_AT_SEGMENT_START + in_path);
+                        // Create a new dereference token
+                        tokens.push("*");
+                        if (out_types) {
+                            out_types.push(TOKEN_TYPES.DEREFERENCE_TOKEN);
+                        }
+
+                        // Reset the token started flag
+                        tokenStarted = false;
+                        atStartToken = true;
+                        allowSegmentStart = false;
+                        break;
                     }
+                    default: {
+                        if (!tokenStarted &&
+                            !allowSegmentStart &&
+                            !inSquareBrackets) {
+                            throw new Error(MSG.MISSING_DOT_AT_SEGMENT_START + in_path);
+                        }
 
-                    currentToken += character;
+                        currentToken += character;
 
-                    // We have started parsing the token
-                    tokenStarted = true;
+                        // We have started parsing the token
+                        tokenStarted = true;
 
-                    // When a symbols appears after a closing quotation mark, we have an error
-                    if (lastTokenWasQuoted) {
-                        throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
+                        // When a symbols appears after a closing quotation mark, we have an error
+                        if (lastTokenWasQuoted) {
+                            throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
+                        }
                     }
                 }
             } else {
@@ -363,18 +373,14 @@ export namespace PathHelper {
      * @returns quoted path string
      */
     export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
-        if (in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
+        return in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
             in_pathSegment.indexOf('"') !== -1 ||
             in_pathSegment.indexOf("\\") !== -1 ||
             in_pathSegment.indexOf("/") !== -1 ||
             in_pathSegment.indexOf("*") !== -1 ||
             in_pathSegment.indexOf("[") !== -1 ||
             in_pathSegment.indexOf("]") !== -1 ||
-            in_pathSegment.length === 0) {
-            return quotePathSegment(in_pathSegment);
-        } else {
-            return in_pathSegment;
-        }
+            in_pathSegment.length === 0 ? quotePathSegment(in_pathSegment) : in_pathSegment;
     };
 
     /**
@@ -439,11 +445,9 @@ export namespace PathHelper {
      */
     export const getChildAbsolutePathCanonical = function(in_parentAbsolutePathCanonical: string, in_childId: string): string {
         const childPath = quotePathSegmentIfNeeded(String(in_childId));
-        if (in_parentAbsolutePathCanonical) {
-            return (in_parentAbsolutePathCanonical + PROPERTY_PATH_DELIMITER + childPath);
-        } else {
-            return childPath;
-        }
+        return in_parentAbsolutePathCanonical
+            ? (in_parentAbsolutePathCanonical + PROPERTY_PATH_DELIMITER + childPath)
+            : childPath;
     };
 
     export enum CoverageExtent {
@@ -472,7 +476,7 @@ export namespace PathHelper {
      * @param in_basePath - The property's absolute path in canonical form
      * @param in_paths - The array of paths that must cover the property and its children
      * @returns The coverage of the property and its children. For a coverage of
-     *    'FULLY_COVERED', only the first matching path is returned.
+     * 'FULLY_COVERED', only the first matching path is returned.
      */
     export const getPathCoverage = function(in_basePath: string, in_paths: string[]): BasePathCoverage {
         // First, check if the base path is entirely included in one of the paths

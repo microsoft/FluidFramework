@@ -195,5 +195,3 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
         return runtime;
     }
 }
-
-export const fluidExport = new ProseMirrorFactory();

@@ -245,6 +245,8 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
             await provider.ensureSynchronized();
 
+            assert.strict(!container1.deltaManager.active, "Expected read mode");
+
             // Since we start in read mode, we shouldn't be able to successfully get the task even after volunteering
             assert.strict(!taskSubscription.haveTask(), "Got task in read mode");
 

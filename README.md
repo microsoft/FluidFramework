@@ -69,6 +69,20 @@ Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-w
 [MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js, in case you find yourself needing to install different
 versions of Node.js side-by-side.
 
+Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
+
+### On Windows
+The node installer should ask if you want to install "Tools for Native Modules." If you check the box for this nothing further should be needed. Otherwise, you can follow the steps listed [here](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#prerequisites)
+### On Unix
+1. Python v3.7, v3.8, v3.9, or v3.10
+2. `make`
+3. A C/C++ toolchain (like [GCC](https://gcc.gnu.org/))
+### On MacOS
+If you've *upgraded* your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+1. Python v3.7, v3.8, v3.9, or v3.10
+2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
+    - You can install these by running `xcode-select --install` from a command line.
+
 Clone a copy of the repo and change to the repo root directory:
 
 ```shell

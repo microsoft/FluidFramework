@@ -11,7 +11,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * Contract that defines the necessary exports for the bundle provided at runtime
  * For an example, see "src/test/sampleCodeLoaders/sampleCodeLoader.ts"
  */
- export interface ICodeLoaderBundle {
+export interface ICodeLoaderBundle {
     /**
      * Fluid export of all the required objects and functions
      */
@@ -23,9 +23,10 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  */
 export interface IFluidFileConverter {
     /**
-     * Code loader details to provide at Loader creation
+     * Get code loader details to provide at Loader creation
+     * @param logger - created logger object to pass to code loader
      */
-    codeLoader: ICodeDetailsLoader;
+    getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
 
     /**
      * Scope object to provide at Loader creation
@@ -33,13 +34,11 @@ export interface IFluidFileConverter {
     scope?: FluidObject;
 
     /**
-     * Execute code and return the results
+     * Executes code on container and returns the result
      * @param container - container created by this application
-     * @param scenario - scenario this execution is related to
-     * @param logger - passed through logger object
-     * @returns - object containing file names as property keys and file content as values
+     * @param options - additional options
      */
-    execute(container: IContainer, scenario: string, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
+    execute(container: IContainer, options?: string): Promise<string>;
 }
 
 /**
@@ -53,6 +52,6 @@ export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
 
 export function isFluidFileConverter(obj: any): obj is IFluidFileConverter {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return obj?.codeLoader && typeof obj.codeLoader === "object"
+    return obj?.getCodeLoader && typeof obj.getCodeLoader === "function"
         && obj.execute && typeof obj.execute === "function";
 }

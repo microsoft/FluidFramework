@@ -234,11 +234,7 @@ export class StringProperty extends ValueArrayProperty {
         var oldStringLength = this._dataArrayRef.length;
         var newStringData;
         if (_.isString(in_serializedObj)) {
-            if (this._setValue(in_serializedObj, in_reportToView)) {
-                return in_serializedObj;
-            } else {
-                return {};
-            }
+            return this._setValue(in_serializedObj, in_reportToView) ? in_serializedObj : {};
         } else {
             if (!in_serializedObj.insert ||
                 !in_serializedObj.insert[0]) {
@@ -302,12 +298,9 @@ export class StringProperty extends ValueArrayProperty {
      */
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
-        if (in_dirtyOnly) {
-            return ArrayProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid, in_dirtinessType);
-        } else {
-            // returns just the current data
-            return this._dataArrayRef;
-        }
+        return in_dirtyOnly
+            ? ArrayProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid, in_dirtinessType)
+            : this._dataArrayRef;
     }
 
     /**

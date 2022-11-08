@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TrackingGroup } from "../mergeTreeTracking";
+import { ReferenceType } from "../ops";
 import { TestClient } from "./testClient";
 
 describe("MergeTree.tracking", () => {
@@ -42,6 +43,10 @@ describe("MergeTree.tracking", () => {
             const segmentInfo = testClient.getContainingSegment(0);
 
             assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(trackingGroup.unlink(segmentInfo.segment), "unlink segment should be true");
+
+           assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 0);
         });
 
     it("Splitting segment should split tracking group",
@@ -98,5 +103,92 @@ describe("MergeTree.tracking", () => {
             assert.equal(trackingGroup.size, 1);
             segmentInfo = testClient.getContainingSegment(0);
             assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+        });
+
+        it("Newly created local reference should have empty tracking group",
+        () => {
+            testClient.insertTextLocal(0, "abc");
+
+            assert.equal(testClient.getLength(), 3);
+
+            const segmentInfo = testClient.getContainingSegment(0);
+            assert(segmentInfo.segment);
+            const ref = testClient.createLocalReferencePosition(
+                segmentInfo.segment,
+                0,
+                ReferenceType.SlideOnRemove,
+                undefined);
+
+            assert(ref.trackingCollection.empty);
+        });
+
+        it("Local reference can be added an removed from tracking group",
+        () => {
+            testClient.insertTextLocal(0, "abc");
+
+            assert.equal(testClient.getLength(), 3);
+
+            const segmentInfo = testClient.getContainingSegment(0);
+            assert(segmentInfo.segment);
+            const ref = testClient.createLocalReferencePosition(
+                segmentInfo.segment,
+                0,
+                ReferenceType.SlideOnRemove,
+                undefined);
+
+            const trackingGroup = new TrackingGroup();
+
+            ref.trackingCollection.link(trackingGroup);
+
+            assert.equal(trackingGroup.size, 1);
+            assert.equal(trackingGroup.has(ref), true);
+            assert.equal(trackingGroup.tracked.includes(ref), true);
+            assert.equal(ref.trackingCollection.trackingGroups.size, 1);
+
+            ref.trackingCollection.unlink(trackingGroup);
+
+            assert.equal(trackingGroup.size, 0);
+            assert.equal(trackingGroup.has(ref), false);
+            assert.equal(trackingGroup.tracked.includes(ref), false);
+            assert.equal(ref.trackingCollection.trackingGroups.size, 0);
+        });
+
+        it("unlink segment from tracking group",
+        () => {
+            const trackingGroup = new TrackingGroup();
+
+            testClient.insertTextLocal(0, "abc");
+
+            const { segment } = testClient.getContainingSegment(0);
+            segment?.trackingCollection.link(trackingGroup);
+
+            assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(trackingGroup.unlink(segment), "unlink segment should be true");
+
+           assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
+
+           assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+           assert.equal(segment.trackingCollection.unlink(trackingGroup), false,
+                "repeat unlink trackingGroup should be false");
+        });
+
+        it("unlink tracking group from collection",
+        () => {
+            const trackingGroup = new TrackingGroup();
+
+            testClient.insertTextLocal(0, "abc");
+
+            const { segment } = testClient.getContainingSegment(0);
+            segment?.trackingCollection.link(trackingGroup);
+
+            assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(segment.trackingCollection.unlink(trackingGroup), "unlink trackingGroup should be true");
+
+           assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
+           assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+           assert.equal(segment.trackingCollection.unlink(trackingGroup), false,
+                "repeat unlink trackingGroup should be false");
         });
 });

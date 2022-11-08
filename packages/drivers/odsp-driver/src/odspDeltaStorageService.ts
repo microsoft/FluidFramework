@@ -83,12 +83,9 @@ export class OdspDeltaStorageService {
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;
-            let messages: ISequencedDocumentMessage[];
-            if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
-                messages = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
-            } else {
-                messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
-            }
+            const messages = deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
+                ? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op)
+                : deltaStorageResponse.value as ISequencedDocumentMessage[];
 
             this.logger.sendPerformanceEvent({
                 eventName: "OpsFetch",

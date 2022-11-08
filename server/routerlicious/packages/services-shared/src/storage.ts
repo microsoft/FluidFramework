@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
@@ -92,23 +92,20 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
-        if (this.enableWholeSummaryUpload) {
-            return {
+        return this.enableWholeSummaryUpload
+            ? {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ".app": appTree,
                 },
-            };
-        } else {
-            return {
+            } : {
                 type: SummaryType.Tree,
                 tree: {
                     ".protocol": protocolTree,
                     ...appTree.tree,
                 },
             };
-        }
     }
 
     public async createDocument(
@@ -120,13 +117,13 @@ export class DocumentStorage implements IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
+        deltaStreamUrl: string,
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
-        const messageMetaData = { documentId, tenantId };
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,
             [BaseTelemetryProperties.documentId]: documentId,
@@ -139,28 +136,33 @@ export class DocumentStorage implements IDocumentStorage {
         const uploadManager = this.enableWholeSummaryUpload ?
             new WholeSummaryUploadManager(gitManager) :
             new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
-        const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
 
-        winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
-        Lumberjack.info(`Tree reference: ${JSON.stringify(handle)}`, lumberjackProperties);
+        const initialSummaryUploadMetric =
+            Lumberjack.newLumberMetric(LumberEventName.CreateDocInitialSummaryWrite, lumberjackProperties);
+        try {
+            const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
+            let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
-        if (!this.enableWholeSummaryUpload) {
-            const commitParams: ICreateCommitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "dummy@microsoft.com",
-                    name: "Routerlicious Service",
-                },
-                message: "New document",
-                parents: [],
-                tree: handle,
-            };
+            if (!this.enableWholeSummaryUpload) {
+                const commitParams: ICreateCommitParams = {
+                    author: {
+                        date: new Date().toISOString(),
+                        email: "dummy@microsoft.com",
+                        name: "Routerlicious Service",
+                    },
+                    message: "New document",
+                    parents: [],
+                    tree: handle,
+                };
 
-            const commit = await gitManager.createCommit(commitParams);
-            await gitManager.createRef(documentId, commit.sha);
-
-            winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
-            Lumberjack.info(`Commit sha: ${JSON.stringify(commit.sha)}`, lumberjackProperties);
+                const commit = await gitManager.createCommit(commitParams);
+                await gitManager.createRef(documentId, commit.sha);
+                initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(commit.sha)}`;
+            }
+            initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
+        } catch (error: any) {
+            initialSummaryUploadMetric.error("Error during initial summary upload", error);
+            throw error;
         }
 
         const deli: Omit<IDeliState, "epoch"> = {
@@ -194,16 +196,21 @@ export class DocumentStorage implements IDocumentStorage {
         const session: ISession = {
             ordererUrl,
             historianUrl,
+            deltaStreamUrl,
             isSessionAlive: true,
             isSessionActive: false,
         };
 
-        const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
-        winston.info(message, { messageMetaData });
-        Lumberjack.info(message, lumberjackProperties);
+        Lumberjack.info(
+            `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,
+            lumberjackProperties);
 
-        const collection = await this.databaseManager.getDocumentCollection();
-        const result = await collection.findOrCreate(
+        const updateDocumentCollectionMetric =
+            Lumberjack.newLumberMetric(LumberEventName.CreateDocumentUpdateDocumentCollection, lumberjackProperties);
+
+        try {
+            const collection = await this.databaseManager.getDocumentCollection();
+            const result = await collection.findOrCreate(
             {
                 documentId,
                 tenantId,
@@ -217,8 +224,12 @@ export class DocumentStorage implements IDocumentStorage {
                 tenantId,
                 version: "0.1",
             });
-
-        return result;
+            updateDocumentCollectionMetric.success("Successfully updated document collection");
+            return result;
+        } catch (error: any) {
+            updateDocumentCollectionMetric.error("Error updating document collection", error);
+            throw error;
+        }
     }
 
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {

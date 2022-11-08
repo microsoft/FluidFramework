@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./migrationTool";
-export * from "./interfaces";
+export { MigrationTool, MigrationToolInstantiationFactory } from "./migrationTool";

@@ -19,3 +19,12 @@ export class InMemoryCache<T> implements ICache<T> {
         this.cache.set(key, value);
     }
 }
+
+export class NullCache<T> implements ICache<T> {
+    public async get(key: string): Promise<T | undefined> {
+        return undefined;
+    }
+
+    public async put(key: string, value: T): Promise<void> {
+    }
+}

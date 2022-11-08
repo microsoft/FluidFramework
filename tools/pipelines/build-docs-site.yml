@@ -32,6 +32,6 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: false
+    taskTest: [] # no tests
     taskPack: false
     buildNumberInPatch: true

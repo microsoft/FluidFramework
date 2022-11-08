@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataTransformationCallback } from "./migrationInterfaces";
+import type { DataTransformationCallback } from "./migrationInterfaces";
 
 /**
  * Read the version of the string data, to understand how to parse it.  This is shared between versions.
@@ -98,7 +98,7 @@ export const inventoryListDataTransformationCallback: DataTransformationCallback
     modelVersion: string,
 ) => {
     if (typeof exportedData !== "string") {
-        throw new Error("Unexpected data format");
+        throw new TypeError("Unexpected data format");
     }
 
     if (modelVersion === "one") {

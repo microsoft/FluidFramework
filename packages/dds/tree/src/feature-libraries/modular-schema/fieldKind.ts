@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder } from "../../change-family";
-import { ChangeRebaser } from "../../rebase";
 import {
-    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, fieldSchema, SchemaData,
-} from "../../schema-stored";
+    FieldSchema,
+    FieldKindIdentifier,
+    TreeSchemaIdentifier,
+    SchemaPolicy,
+    fieldSchema,
+    SchemaData,
+} from "../../core";
 import { isNeverField } from "./comparison";
+import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -21,8 +25,10 @@ import { isNeverField } from "./comparison";
  * All behavior must be deterministic, and not change across versions of the app/library.
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
+ *
+ * @sealed
  */
-export class FieldKind {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
     /**
      * @param identifier - Globally scoped identifier.
      * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -41,11 +47,13 @@ export class FieldKind {
     public constructor(
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
-        public readonly changeHandler: ChangeHandler<any>,
-        private readonly allowsTreeSupersetOf:
-            (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
+        public readonly changeHandler: FieldChangeHandler<any, TEditor>,
+        private readonly allowsTreeSupersetOf: (
+            originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+            superset: FieldSchema,
+        ) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-        ) {}
+    ) {}
 
     /**
      * @returns true iff `superset` permits a (non-strict) superset of the subtrees
@@ -71,7 +79,7 @@ export class FieldKind {
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
  */
- export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
     /**
      * Policy information about FieldKinds:
      * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
@@ -80,29 +88,6 @@ export class FieldKind {
      * and will be unable to process any changes that use those FieldKinds.
      */
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-}
-
-/**
- * Functionality provided by a field kind which will be composed together to
- * implement a unified ChangeFamily supporting documents with multiple field kinds.
- *
- * TODO: eventually field-kinds will need to provide everything ChangeFamily requires.
- */
-export interface ChangeHandler<TChange> {
-    /**
-     * Provides merge / rebase policy for handling concurrent changes.
-     *
-     * TODO: This might handle changes from other field kinds if the file kind opts into them.
-     * Sort out how to reflect this in the type parameter for this vs other uses of TChanges in this interface.
-     */
-    readonly rebaser: ChangeRebaser<TChange>;
-
-    /**
-     * Handles encoding of changes.
-     */
-    readonly encoder: ChangeEncoder<TChange>;
-
-    // TODO: add edit builder.
 }
 
 /**

@@ -109,17 +109,24 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * with the object factories in the entry list. All the entries with an id other than undefined are passed to the
  * Fluid object so that it can create a shared object for each.
  *
- * For example, the following will create a Fluid object that creates and loads a SharedString and SharedDirectory. It
- * will add SparseMatrix to the data store's factory so that it can be created later.
- *      new TestFluidObjectFactory([
- *          [ "sharedString", SharedString.getFactory() ],
- *          [ "sharedDirectory", SharedDirectory.getFactory() ],
-*          [ undefined, SparseMatrix.getFactory() ],
- *      ]);
+ * @example
+ * The following will create a Fluid object that creates and loads a SharedString and SharedDirectory.
+ * It will add SparseMatrix to the data store's factory so that it can be created later.
+ *
+ * ```typescript
+ * new TestFluidObjectFactory([
+ *  [ "sharedString", SharedString.getFactory() ],
+ *  [ "sharedDirectory", SharedDirectory.getFactory() ],
+ *  [ undefined, SparseMatrix.getFactory() ],
+ * ]);
+ * ```
  *
  * The SharedString and SharedDirectory can be retrieved via getSharedObject() on the TestFluidObject as follows:
- *      sharedString = testFluidObject.getSharedObject<SharedString>("sharedString");
- *      sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
+ *
+ * ```typescript
+ * sharedString = testFluidObject.getSharedObject<SharedString>("sharedString");
+ * sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
+ * ```
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     public get IFluidDataStoreFactory() { return this; }

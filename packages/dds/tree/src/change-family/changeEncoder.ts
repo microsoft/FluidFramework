@@ -4,6 +4,7 @@
  */
 
 import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { JsonCompatibleReadOnly } from "../util";
 
 /**
  * Serializes and deserializes changes.
@@ -46,27 +47,3 @@ export abstract class ChangeEncoder<TChange> {
         return this.decodeJson(formatVersion, jsonable);
     }
 }
-
-/**
- * Use for Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- */
-// eslint-disable-next-line @rushstack/no-new-null
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | { [P in string]: JsonCompatible; };
-
-/**
- * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- */
-export type JsonCompatibleReadOnly =
-    | string
-    | number
-    | boolean
-    // eslint-disable-next-line @rushstack/no-new-null
-    | null
-    | readonly JsonCompatibleReadOnly[]
-    | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };

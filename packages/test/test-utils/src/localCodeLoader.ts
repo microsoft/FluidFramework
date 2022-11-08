@@ -43,14 +43,10 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
             // Store the entry point against a unique id in the fluidPackageCache.
             // For code details containing a package name, use the package name as the id.
             // For code details containing a Fluid package, create a unique id from the package name and version.
-            let pkgId: string;
-
             const source = entry[0];
-            if (typeof source.package === "string") {
-                pkgId = source.package;
-            } else {
-                pkgId = `${source.package.name}@${source.package.version}`;
-            }
+            const pkgId = typeof source.package === "string"
+                ? source.package
+                : `${source.package.name}@${source.package.version}`;
             let fluidModule = entry[1] as IFluidModule;
             if (fluidModule?.fluidExport === undefined) {
                 const maybeExport = fluidModule as SupportedExportInterfaces;
@@ -98,13 +94,9 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
         // Get the entry point for from the fluidPackageCache for the given code details.
         // For code details containing a package name, use the package name as the id.
         // For code details containing a Fluid package, create a unique id from the package name and version.
-        let pkdId: string;
-
-        if (typeof source.package === "string") {
-            pkdId = source.package;
-        } else {
-            pkdId = `${source.package.name}@${source.package.version}`;
-        }
+        const pkdId = typeof source.package === "string"
+            ? source.package
+            : `${source.package.name}@${source.package.version}`;
 
         const entryPoint = this.fluidPackageCache.get(pkdId);
         if (entryPoint === undefined) {

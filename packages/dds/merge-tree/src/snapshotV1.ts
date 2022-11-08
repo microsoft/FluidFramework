@@ -29,6 +29,7 @@ import {
 } from "./snapshotChunks";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -239,7 +240,7 @@ export class SnapshotV1 {
             return true;
         };
 
-        mergeTree.walkAllSegments(mergeTree.root, extractSegment, this);
+        walkAllChildSegments(mergeTree.root, extractSegment);
 
         // If the last segment in the walk was coalescable, push it now.
         pushSeg(prev);
