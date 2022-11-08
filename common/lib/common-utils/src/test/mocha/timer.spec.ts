@@ -108,6 +108,39 @@ describe("Timers", () => {
             setTimeoutSpy.restore();
         });
 
+        it("Should immediately execute if the handler is late even accounting for the restart", () => {
+            const setTimeoutSpy = spy(global, "setTimeout");
+            const initialRunCount = runCount;
+            timer.start(defaultTimeout);
+
+            // Restart right before we execute the handler.
+            clock.tick(defaultTimeout - 1);
+            timer.restart();
+
+            // Advance the clock by a lot, that way, we ensure that the
+            // first time our timer executes its handler, it is late by design.
+            clock.tick(defaultTimeout * 2);
+
+            flushPromises().then(
+                () => {},
+                () => {
+                    assert.fail("Promise flushing failed");
+                },
+            );
+
+            assert.strictEqual(
+                runCount,
+                initialRunCount + 1,
+                "Should have executed immediately because the handler was late",
+            );
+
+            const calls = setTimeoutSpy.getCalls();
+            for(const call of calls) {
+                assert(call.args[1] >= 0, "SetLongTimeout should have never been called with a negative number!");
+            }
+            setTimeoutSpy.restore();
+        });
+
         it("Should be reusable multiple times", () => {
             timer.start();
             testExactTimeout(defaultTimeout);
