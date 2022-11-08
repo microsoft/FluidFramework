@@ -144,8 +144,8 @@ export interface IRetryAble {
     retryEnabled: boolean;
 }
 
-export function isRetryAble<T>(collection: ICollection<T>): collection is ICollection<T> {
-    return "retryEnabled" in collection;
+export function isRetryEnabled<T>(collection: ICollection<T>): boolean {
+    return (collection as unknown as IRetryAble).retryEnabled === true;
 }
 
 export type IDbEvents = "close" | "reconnect" | "error" | "reconnectFailed";

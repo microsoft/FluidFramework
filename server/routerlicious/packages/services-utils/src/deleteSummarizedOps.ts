@@ -22,7 +22,7 @@ export async function deleteSummarizedOps(
         }
 
     const uniqueDocumentsCursor = await documentsCollection.aggregate([
-            { $group: { _id: { documentId: "$documentId", tenantId: "$tenantId" } } },
+        { $group: { _id: { documentId: "$documentId", tenantId: "$tenantId" } } },
     ]);
     const uniqueDocuments = await uniqueDocumentsCursor.toArray();
 

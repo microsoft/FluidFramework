@@ -7,7 +7,7 @@ import {
     ICollection,
     IContext,
     IDocument,
-    isRetryAble,
+    isRetryEnabled,
     IScribe,
     ISequencedOperationMessage,
     runWithRetry,
@@ -27,7 +27,7 @@ export class CheckpointManager implements ICheckpointManager {
          private readonly documentCollection: ICollection<IDocument>,
          private readonly opCollection: ICollection<ISequencedOperationMessage>,
     ) {
-        this.clientFacadeRetryEnabled = isRetryAble(this.opCollection);
+        this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
      }
 
     /**

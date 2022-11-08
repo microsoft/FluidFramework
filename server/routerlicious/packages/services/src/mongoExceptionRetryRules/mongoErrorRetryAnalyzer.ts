@@ -35,7 +35,13 @@ export const MongoErrorRetryAnalyzer = {
 
     getRetryRuleFromSet(error: any, ruleSet: IMongoExceptionRetryRule[]): IMongoExceptionRetryRule {
         const resultRule = ruleSet.find((rule) => rule.match(error)) || new DefaultExceptionRule();
-        Lumberjack.info(`Error rule used ${resultRule.constructor.name}, shouldRetry: ${resultRule.shouldRetry}`);
-        return ruleSet.find((rule) => rule.match(error)) || new DefaultExceptionRule();
+        const ruleName = resultRule.constructor.name;
+        const shouldRetry = resultRule.shouldRetry;
+        const properties = {
+            ruleName,
+            shouldRetry,
+        };
+        Lumberjack.warning(`Error rule used ${ruleName}, shouldRetry: ${shouldRetry}`, properties, error);
+        return resultRule;
     },
 };

@@ -13,14 +13,10 @@ import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 const MaxFetchSize = 2000;
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble {
-    public readonly retryEnabled: boolean;
     constructor(
         private readonly collection: Collection<T>,
-        private readonly clientSideRetry?: boolean,
-    ) {
-        assert(collection, "collection must be defined");
-        this.retryEnabled = clientSideRetry ?? false;
-    }
+        public readonly retryEnabled = false,
+    ) { }
 
     public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
         const req = async () => new Promise<AggregationCursor<T>>(
@@ -212,7 +208,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
             request,
             callerName,
             {}, // telemetryProperties
-            (e) => this.clientSideRetry && MongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+            (e) => this.retryEnabled && MongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
             3, // maxRetries
             1000, // retryAfterMs
             (error: any, numRetries: number, retryAfterInterval: number) =>
@@ -224,7 +220,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
 export class MongoDb implements core.IDb {
     constructor(
         private readonly client: MongoClient,
-        private readonly clientSideRetry?: boolean,
+        private readonly retryEnabled = false,
     ) {
     }
 
@@ -239,7 +235,7 @@ export class MongoDb implements core.IDb {
 
     public collection<T>(name: string): core.ICollection<T> {
         const collection = this.client.db("admin").collection<T>(name);
-        return new MongoCollection<T>(collection, this.clientSideRetry);
+        return new MongoCollection<T>(collection, this.retryEnabled);
     }
 
     public async dropCollection(name: string): Promise<boolean> {
@@ -263,7 +259,7 @@ export class MongoDbFactory implements core.IDbFactory {
     private readonly globalDbEndpoint?: string;
     private readonly connectionPoolMinSize?: number;
     private readonly connectionPoolMaxSize?: number;
-    private readonly clientSideRetry?: boolean;
+    private readonly retryEnabled?: boolean;
     constructor(config: IMongoDBConfig) {
         const {
             operationsDbEndpoint,
@@ -281,7 +277,7 @@ export class MongoDbFactory implements core.IDbFactory {
         this.bufferMaxEntries = bufferMaxEntries;
         this.connectionPoolMinSize = connectionPoolMinSize;
         this.connectionPoolMaxSize = connectionPoolMaxSize;
-        this.clientSideRetry = config.facadeLevelRetry;
+        this.retryEnabled = config.facadeLevelRetry;
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -312,6 +308,6 @@ export class MongoDbFactory implements core.IDbFactory {
                 this.operationsDbEndpoint,
             options);
 
-        return new MongoDb(connection, this.clientSideRetry);
+        return new MongoDb(connection, this.retryEnabled);
     }
 }

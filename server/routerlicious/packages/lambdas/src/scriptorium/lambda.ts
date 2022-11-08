@@ -12,7 +12,7 @@ import {
     ISequencedOperationMessage,
     SequencedOperationType,
     runWithRetry,
-    isRetryAble,
+    isRetryEnabled,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
@@ -27,7 +27,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         protected context: IContext,
         protected readonly tenantId: string,
         protected readonly documentId: string) {
-        this.clientFacadeRetryEnabled = isRetryAble(this.opCollection);
+        this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
     }
 
     public handler(message: IQueuedMessage) {
