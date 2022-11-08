@@ -112,7 +112,7 @@ describe("Timers", () => {
             for (const call of calls) {
                 assert(
                     call.args[1] >= 0,
-                    "SetLongTimeout should have never been called with a negative number!",
+                    "setTimeout should have never been called with a negative number!",
                 );
             }
         });
