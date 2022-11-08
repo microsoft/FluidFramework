@@ -7,4 +7,8 @@
  * Exports test utilities shared by tests in the package.
  */
 
+/* eslint-disable no-restricted-syntax */
+
 export * from "./ClientUtilities";
+
+/* eslint-enable no-restricted-syntax */
