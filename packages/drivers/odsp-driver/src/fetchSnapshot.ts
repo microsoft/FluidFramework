@@ -196,15 +196,6 @@ async function fetchLatestSnapshotCore(
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
-        let controller: AbortController | undefined;
-        let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
-        if (snapshotOptions?.timeout !== undefined) {
-            controller = new AbortController();
-            fetchTimeout = setTimeout(
-                () => controller!.abort(),
-                snapshotOptions.timeout,
-            );
-        }
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
@@ -224,6 +215,15 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
+                let controller: AbortController | undefined;
+                let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+                if (snapshotOptions?.timeout !== undefined) {
+                    controller = new AbortController();
+                    fetchTimeout = setTimeout(
+                        () => controller!.abort(),
+                        snapshotOptions.timeout,
+                    );
+                }
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
