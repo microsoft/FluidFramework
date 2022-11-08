@@ -342,6 +342,23 @@ describe("SharedTree", () => {
             }
         });
     });
+
+    describe("Rebasing", () => {
+        it("can rebase two inserts", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            insert(tree1, 0, "y");
+            await provider.ensureSynchronized();
+
+            insert(tree1, 0, "x");
+            insert(tree2, 1, "a", "c");
+            insert(tree2, 2, "b");
+            await provider.ensureSynchronized();
+
+            validateTree(tree1, ["x", "y", "a", "b", "c"]);
+        });
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
@@ -414,10 +431,11 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTree, index: number, value: string): void {
+function insert(tree: ISharedTree, index: number, ...values: string[]): void {
     tree.runTransaction((forest, editor) => {
         const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-        field.insert(index, singleTextCursor({ type: brand("Node"), value }));
+        const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
+        field.insert(index, nodes);
         return TransactionResult.Apply;
     });
 }
