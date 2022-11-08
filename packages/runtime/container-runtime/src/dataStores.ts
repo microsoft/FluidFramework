@@ -609,6 +609,10 @@ export class DataStores implements IDisposable {
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
+
+            // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
+            const dataStore = this.getKnownDataStore(id);
+            dataStore.revive();
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -640,9 +644,7 @@ export class DataStores implements IDisposable {
              * summaries.
              */
             if (tombstone) {
-                const dataStore = this.contexts.get(dataStoreId);
-                assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-                // Delete the contexts of unused data stores.
+                const dataStore = this.getKnownDataStore(dataStoreId);
                 dataStore.tombstone();
                 continue;
             }
@@ -654,22 +656,15 @@ export class DataStores implements IDisposable {
         }
     }
 
-    public revive(usedRoutes: string[]) {
-        for (const route of usedRoutes) {
-            const pathParts = route.split("/");
-            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
-            // store based on its DDS being unused.
-            if (pathParts.length > 2) {
-                continue;
-            }
-            const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
-
-            const dataStore = this.contexts.get(dataStoreId);
-            assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-            // Delete the contexts of unused data stores.
-            dataStore.revive();
-        }
+    /**
+     * Assumes that the datastore exists and throws an error if it doesn't exist
+     * @param dataStoreId - the id of the datastore
+     * @returns the datastore
+     */
+    private getKnownDataStore(dataStoreId: string): FluidDataStoreContext {
+        const dataStore = this.contexts.get(dataStoreId);
+        assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
+        return dataStore;
     }
 
     /**

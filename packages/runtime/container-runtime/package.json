@@ -108,9 +108,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {
-      "ClassDeclaration_ContainerRuntime": {"forwardCompat": false},
-      "InterfaceDeclaration_IGarbageCollectionRuntime": {"forwardCompat": false}
-    }
+    "broken": {}
   }
 }

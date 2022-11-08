@@ -106,7 +106,6 @@ describe("Garbage Collection Tests", () => {
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
             deleteUnusedRoutes: (unusedRoutes: string[]) => {},
-            revive: (usedRoutes: string[]) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,

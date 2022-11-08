@@ -2298,10 +2298,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes);
     }
 
-    public revive(usedRoutes: string[]) {
-        this.dataStores.revive(usedRoutes);
-    }
-
     /**
      * Returns a server generated referenced timestamp to be used to track unreferenced nodes by GC.
      */

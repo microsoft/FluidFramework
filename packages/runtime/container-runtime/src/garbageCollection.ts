@@ -127,8 +127,6 @@ export interface IGarbageCollectionRuntime {
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to delete objects in the runtime whose routes are unused. */
     deleteUnusedRoutes(unusedRoutes: string[]): void;
-    /** After GC has run, called to revive objects in the runtime whose routes are used. */
-    revive(usedRoutes: string[]): void;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
     getCurrentReferenceTimestampMs(): number | undefined;
     /** Returns the type of the GC node. */
@@ -890,7 +888,6 @@ export class GarbageCollector implements IGarbageCollector {
                 referencedDataStoreNodeIds.push(key);
             }
         }
-        this.runtime.revive(referencedDataStoreNodeIds);
 
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
