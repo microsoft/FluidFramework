@@ -356,7 +356,9 @@ describe("SharedTree", () => {
             insert(tree2, 2, "b");
             await provider.ensureSynchronized();
 
-            validateTree(tree1, ["x", "y", "a", "b", "c"]);
+            const expected = ["x", "y", "a", "b", "c"];
+            validateTree(tree1, expected);
+            validateTree(tree2, expected);
         });
     });
 });
