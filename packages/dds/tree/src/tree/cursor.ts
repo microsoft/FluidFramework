@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { UpPath } from "./pathTree";
+import { FieldUpPath, UpPath } from "./pathTree";
 import { FieldKey, TreeType, Value } from "./types";
 
 /**
@@ -26,7 +26,8 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Fields ********** //
 
     /**
-     * Moves the "current field" forward one in an arbitrary field traversal order.
+     * Moves the "current field" forward one in an arbitrary field traversal order,
+     * skipping any empty fields.
      *
      * If there is no remaining field to iterate to,
      * returns false and navigates up to the parent setting the mode to `Nodes`.
@@ -95,10 +96,23 @@ export interface ITreeCursor {
      */
     enterNode(childIndex: number): void;
 
+    /**
+     * @returns a path to the current field. See {@link FieldUpPath}.
+     *
+     * Only valid when `mode` is `Fields`.
+     * Assumes this cursor has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node,
+     * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
+     * This requirement exists because {@link FieldUpPath}s are absolute paths
+     * and thus must be rooted in a detached sequence.
+     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+     */
+    getFieldPath(): FieldUpPath;
+
     // ********** APIs for when mode = Nodes ********** //
 
     /**
-     * @returns a path to the current node.
+     * @returns a path to the current node. See {@link UpPath}.
      *
      * Only valid when `mode` is `Nodes`.
      * Assumes this cursor has a root node where its field keys are actually detached sequences.
@@ -166,7 +180,7 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Nodes and not pending ********** //
 
     /**
-     * Enters the first field (setting mode to `Fields`)
+     * Enters the first non-empty field (setting mode to `Fields`)
      * so fields can be iterated with `nextField` and `skipPendingFields`.
      *
      * If there are no fields, mode is returned to `Nodes` and false is returned.
@@ -246,7 +260,7 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
     cursor: TCursor,
     f: (cursor: TCursor) => void,
 ): void {
-    assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+    assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
     for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
         f(cursor);
     }

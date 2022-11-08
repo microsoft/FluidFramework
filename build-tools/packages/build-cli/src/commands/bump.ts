@@ -2,25 +2,39 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Flags } from "@oclif/core";
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
-import stripAnsi from "strip-ansi";
+import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 
-import { ReleaseVersion, bumpVersionScheme } from "@fluid-tools/version-tools";
+import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionChangeType,
+    VersionScheme,
+    bumpVersionScheme,
+    detectVersionScheme,
+} from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
-import { bumpReleaseGroup, generateBumpVersionBranchName } from "../lib";
+import {
+    bumpReleaseGroup,
+    generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
+} from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
-    static description =
+    static summary =
         "Bumps the version of a release group or package to the next minor, major, or patch version.";
+
+    static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
 
     static args: ArgInput = [packageOrReleaseGroupArg];
 
@@ -29,11 +43,17 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             char: "t",
             description:
                 "Bump the release group or package to the next version according to this bump type.",
-            required: true,
+            exclusive: ["exact"],
+        }),
+        exact: Flags.string({
+            description:
+                "An exact string to use as the version. The string must be a valid semver string.",
+            exclusive: ["bumpType", "scheme"],
         }),
         scheme: versionSchemeFlag({
             description: "Override the version scheme used by the release group or package.",
             required: false,
+            exclusive: ["exact"],
         }),
         commit: checkFlags.commit,
         install: checkFlags.install,
@@ -51,6 +71,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
                 "Bump the server release group to the next major version, forcing the semver version scheme.",
             command: "<%= config.bin %> <%= command.id %> server -t major --scheme semver",
         },
+        {
+            description:
+                "By default, the bump command will run npm install in any affected packages and commit the results to a new branch. You can skip these steps using the --no-commit and --no-install flags.",
+            command: "<%= config.bin %> <%= command.id %> server -t major --no-commit --no-install",
+        },
     ];
 
     /**
@@ -63,11 +88,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const flags = this.processedFlags;
 
         const context = await this.getContext();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const bumpType = flags.bumpType!;
-        const scheme = flags.scheme;
-        const shouldInstall = flags.install && !flags.skipChecks;
-        const shouldCommit = flags.commit && !flags.skipChecks;
+        const bumpType: VersionBumpType | undefined = flags.bumpType;
+        const shouldInstall: boolean = flags.install && !flags.skipChecks;
+        const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
         if (args.package_or_release_group === undefined) {
             this.error("ERROR: No dependency provided.");
@@ -75,7 +98,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
         let repoVersion: ReleaseVersion;
         let packageOrReleaseGroup: Package | MonoRepo;
+        let scheme: VersionScheme | undefined;
+        const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
         const updatedPackages: Package[] = [];
+
+        if (bumpType === undefined && exactVersion === null) {
+            this.error(`Either --bumpType or --exact must be provided.`);
+        }
 
         if (isReleaseGroup(args.package_or_release_group)) {
             const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
@@ -85,6 +114,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             );
 
             repoVersion = releaseRepo.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(...releaseRepo.packages);
             packageOrReleaseGroup = releaseRepo;
         } else {
@@ -105,34 +135,57 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
             }
 
             repoVersion = releasePackage.version;
+            scheme = flags.scheme ?? detectVersionScheme(repoVersion);
             updatedPackages.push(releasePackage);
             packageOrReleaseGroup = releasePackage;
         }
 
-        const newVersion = bumpVersionScheme(repoVersion, bumpType, scheme).version;
+        const newVersion =
+            exactVersion === null
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  bumpVersionScheme(repoVersion, bumpType!, scheme).version
+                : exactVersion.version;
+
+        let bumpArg: VersionChangeType;
+        if (bumpType === undefined) {
+            if (exactVersion === null) {
+                this.error(`bumpType and exactVersion are both null/undefined.`);
+            } else {
+                bumpArg = exactVersion;
+            }
+        } else {
+            bumpArg = bumpType;
+        }
+
+        // Update the scheme based on the new version, unless it was passed in explicitly
+        scheme = flags.scheme ?? detectVersionScheme(newVersion);
 
         this.logHr();
         this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
-        this.log(`Bump type: ${chalk.blue(bumpType)}`);
+        this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
+        this.log(`Scheme: ${chalk.cyan(scheme)}`);
         this.log(`Versions: ${newVersion} <== ${repoVersion}`);
         this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
         this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
         this.logHr();
         this.log("");
 
-        const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-            type: "confirm",
-            name: "proceed",
-            message: `Proceed with the bump?`,
-        };
+        // If a bump type was provided, ask the user to confirm. This is skipped when --exact is used.
+        if (bumpType !== undefined) {
+            const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
+                type: "confirm",
+                name: "proceed",
+                message: `Proceed with the bump?`,
+            };
 
-        const answers = await inquirer.prompt(confirmIntegratedQuestion);
-        if (answers.proceed !== true) {
-            this.info(`Cancelled.`);
-            this.exit(0);
+            const answers = await inquirer.prompt(confirmIntegratedQuestion);
+            if (answers.proceed !== true) {
+                this.info(`Cancelled.`);
+                this.exit(0);
+            }
         }
 
-        const logs = await bumpReleaseGroup(context, bumpType, packageOrReleaseGroup, scheme);
+        const logs = await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme);
         this.verbose(logs);
 
         if (shouldInstall) {
@@ -144,14 +197,18 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         }
 
         if (shouldCommit) {
-            const commitMessage = stripAnsi(
-                `Bump ${packageOrReleaseGroup} to ${newVersion} (${bumpType} bump)`,
+            const commitMessage = generateBumpVersionCommitMessage(
+                args.package_or_release_group,
+                bumpArg,
+                repoVersion,
+                scheme,
             );
 
             const bumpBranch = generateBumpVersionBranchName(
                 args.package_or_release_group,
-                bumpType,
+                bumpArg,
                 repoVersion,
+                scheme,
             );
             this.log(`Creating branch ${bumpBranch}`);
             await context.createBranch(bumpBranch);

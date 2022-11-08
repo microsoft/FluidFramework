@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./debugView";
-export * from "./appView";
+export { IDebugViewProps, DebugView } from "./debugView";
+export { IInventoryListAppViewProps, InventoryListAppView } from "./appView";

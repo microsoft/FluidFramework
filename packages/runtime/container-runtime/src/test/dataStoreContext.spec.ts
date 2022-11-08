@@ -6,6 +6,10 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
+
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -26,13 +30,12 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
+import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import {
+    LocalDetachedFluidDataStoreContext,
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
@@ -108,7 +111,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 assert.throws(codeBlock,
@@ -126,7 +128,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 try {
@@ -154,7 +155,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 await localDataStoreContext.realize();
@@ -195,7 +195,6 @@ describe("Data Store Context Tests", () => {
                         makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
-                        writeGCDataAtRoot: true,
                     },
                 );
 
@@ -229,7 +228,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 await localDataStoreContext.realize();
@@ -268,7 +266,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -286,7 +283,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 const isRootNode = await localDataStoreContext.isRoot();
@@ -306,7 +302,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await localDataStoreContext.getGCData();
@@ -324,7 +319,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.
@@ -341,6 +335,24 @@ describe("Data Store Context Tests", () => {
                 localDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+            });
+
+            it("can tombstone a local datastore", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["TestComp", "SubComp"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: false,
+                });
+
+                assert.doesNotThrow(() => {
+                    localDataStoreContext.tombstone();
+                }, `Local dataStores should not throw on tombstone`);
             });
         });
     });
@@ -434,7 +446,6 @@ describe("Data Store Context Tests", () => {
                         storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                         scope,
                         createSummarizerNodeFn,
-                        writeGCDataAtRoot: true,
                     });
 
                     const isRootNode = await remoteDataStoreContext.isRoot();
@@ -468,7 +479,6 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                     snapshotTree: undefined,
-                    writeGCDataAtRoot: true,
                     getBaseGCDetails: async () => undefined as unknown as IGarbageCollectionDetailsBase,
                 });
 
@@ -522,7 +532,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -557,7 +566,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -597,7 +605,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 const gcData = await remoteDataStoreContext.getGCData();
@@ -632,7 +639,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
@@ -675,7 +681,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                 });
 
                 // Get the summarizer node for this data store which tracks its referenced state.
@@ -715,6 +720,135 @@ describe("Data Store Context Tests", () => {
                     summaryFormatVersion: 2,
                 };
                 updateReferencedStateTest();
+            });
+
+            it("can successfully tombstone a remote datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    trees: {},
+                };
+
+                remoteDataStoreContext = new RemoteFluidDataStoreContext({
+                    id: dataStoreId,
+                    snapshotTree,
+                    getBaseGCDetails: async () => undefined,
+                    runtime: containerRuntime,
+                    storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                });
+                assert.doesNotThrow(() => {
+                    remoteDataStoreContext.tombstone();
+                }, `Should be able to tombstone a non-root remote datastore!`);
+            });
+        });
+    });
+
+    describe("LocalDetachedFluidDataStoreContext", () => {
+        let localDataStoreContext: LocalDetachedFluidDataStoreContext;
+        let storage: IDocumentStorageService;
+        let scope: FluidObject;
+        let factory: IFluidDataStoreFactory;
+        const makeLocallyVisibleFn = () => {};
+        let containerRuntime: ContainerRuntime;
+
+        beforeEach(async () => {
+            const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            summarizerNode.startSummary(0, new TelemetryNullLogger());
+
+            createSummarizerNodeFn = (
+                summarizeInternal: SummarizeInternalFn,
+                getGCDataFn: () => Promise<IGarbageCollectionData>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            ) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.Local },
+                // DDS will not create failure summaries
+                { throwOnFailure: true },
+                getGCDataFn,
+                getBaseGCDetailsFn,
+            );
+
+            factory = {
+                type: "store-type",
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: async (context: IFluidDataStoreContext, existing: boolean) =>
+                    new MockFluidDataStoreRuntime()
+            };
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
+                get: async (pkg) => (pkg === factory.type ? factory : undefined),
+            };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            containerRuntime = {
+                IFluidDataStoreRegistry: registry,
+                on: (event, listener) => { },
+                logger: new TelemetryNullLogger(),
+            } as ContainerRuntime;
+        });
+
+        describe("Initialization", () => {
+            it("rejects ids with forward slashes", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = () => new LocalDetachedFluidDataStoreContext({
+                    id: invalidId,
+                    pkg: [factory.type],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: true,
+                });
+
+                assert.throws(codeBlock,
+                    (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
+            });
+
+            describe("should error on attach if data store cannot be constructed/initialized", () => {
+                // Tests in this suite should be scenarios that lead to a data store which cannot be constructed for
+                // some reason.
+
+                it("because of package type for data store not present in registry", async () => {
+                    let exceptionOccurred = false;
+                    localDataStoreContext = new LocalDetachedFluidDataStoreContext({
+                            id: dataStoreId,
+                            pkg: ["some-datastore-type-not-present-in-registry"],
+                            runtime: containerRuntime,
+                            storage,
+                            scope,
+                            createSummarizerNodeFn,
+                            makeLocallyVisibleFn,
+                            snapshotTree: undefined,
+                            isRootDataStore: false,
+                        },
+                    );
+
+                    const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+                    await localDataStoreContext.attachRuntime(factory, dataStore)
+                        .catch((error) => {
+                            assert.strictEqual(
+                                error.message,
+                                "Registry does not contain entry for the package",
+                                "Unexpected exception thrown");
+                            exceptionOccurred = true;
+                        });
+                    assert.strictEqual(exceptionOccurred, true, "attachRuntime() call did not fail as expected.");
+                    assert.strictEqual(localDataStoreContext.attachState, AttachState.Detached);
+                });
             });
         });
     });

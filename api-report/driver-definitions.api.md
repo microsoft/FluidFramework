@@ -43,6 +43,7 @@ export enum DriverErrorType {
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
+    usageError = "usageError",
     writeError = "writeError"
 }
 
@@ -67,6 +68,9 @@ export enum FetchSource {
     // (undocumented)
     noCache = "noCache"
 }
+
+// @public (undocumented)
+export type FiveDaysMs = 432000000;
 
 // @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
@@ -180,14 +184,14 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError;
     // (undocumented)
     readonly statusCode?: number;
 }

@@ -24,6 +24,7 @@ program
         "-g|--generateOnly",
         "This only generates the tests. If does not prepare the package.json",
     )
+    .option("--generateInName", "Includes .generated in the output filename.")
     .option("-v|--verbose", "Verbose logging mode")
     .parse(process.argv);
 
@@ -64,11 +65,10 @@ async function run(): Promise<boolean> {
                 const output = [`${(i + 1).toString()}/${packageDirs.length}`, `${packageName}`];
                 try {
                     const start = Date.now();
-                    const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-                        program.generateOnly ? undefined : { cwd: program.monoRepoDir };
                     const packageData = await getAndUpdatePackageDetails(
                         packageDir,
-                        updateOptions,
+                        program.generateOnly === true,
+                        "baseMinor",
                     ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
                     if (packageData.skipReason !== undefined) {
                         output.push(packageData.skipReason);
@@ -77,7 +77,7 @@ async function run(): Promise<boolean> {
                         program.preinstallOnly === undefined
                     ) {
                         const start = Date.now();
-                        await generateTests(packageData)
+                        await generateTests(packageData, program.generateInName ?? false)
                             .then((s) =>
                                 output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`),
                             )

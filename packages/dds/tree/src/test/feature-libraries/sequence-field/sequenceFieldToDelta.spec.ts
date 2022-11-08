@@ -7,11 +7,10 @@ import { fail, strict as assert } from "assert";
 import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
 import {
     FieldChange,
-    FieldKind,
-    Multiplicity,
+    FieldKinds,
     NodeChangeset,
     SequenceField as SF,
-    singleTextCursorNew,
+    singleTextCursor,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
@@ -22,8 +21,9 @@ import { TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: "X" };
 const content = [nodeX];
-const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew(nodeX)];
+const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const opId = 42;
+const tag = "TestTag";
 const moveId = brandOpaque<Delta.MoveId>(opId);
 const fooField = brand<FieldKey>("foo");
 
@@ -93,6 +93,47 @@ describe("SequenceField - toDelta", () => {
         const expected: Delta.MarkList = [mark];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
+    });
+
+    it("revive", () => {
+        const changeset: TestChangeset = [{ type: "Revive", id: opId, tomb: tag, count: 2 }];
+        const actual = toDelta(changeset);
+        assert.equal(actual.length, 1);
+        const mark = actual[0];
+        assert.equal(typeof mark, "object");
+        assert(typeof mark === "object");
+        assert.equal(mark.type, Delta.MarkType.Insert);
+        assert(mark.type === Delta.MarkType.Insert);
+        assert.equal(mark.content.length, 2);
+    });
+
+    it("revive and modify", () => {
+        const nestedChange: FieldChange = {
+            fieldKind: FieldKinds.sequence.identifier,
+            change: brand("Dummy Child Change"),
+        };
+        const nodeChange = {
+            fieldChanges: new Map([[fooField, nestedChange]]),
+        };
+        const changeset: SF.Changeset = [
+            { type: "MRevive", id: opId, tomb: tag, changes: nodeChange },
+        ];
+        const fieldChanges = new Map([
+            [fooField, [{ type: Delta.MarkType.Insert, id: opId, content: [] }]],
+        ]);
+        const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
+            assert.deepEqual(child, nodeChange);
+            return { type: Delta.MarkType.Modify, fields: fieldChanges };
+        };
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+        assert.equal(actual.length, 1);
+        const mark = actual[0];
+        assert.equal(typeof mark, "object");
+        assert(typeof mark === "object");
+        assert.equal(mark.type, Delta.MarkType.InsertAndModify);
+        assert(mark.type === Delta.MarkType.InsertAndModify);
+        assert.notEqual(mark.content, undefined);
+        assert.deepEqual(mark.fields, fieldChanges);
     });
 
     it("delete", () => {
@@ -195,7 +236,7 @@ describe("SequenceField - toDelta", () => {
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: [
-                singleTextCursorNew({
+                singleTextCursor({
                     type,
                     value: "1",
                 }),
@@ -225,15 +266,8 @@ describe("SequenceField - toDelta", () => {
 
     // This test requires more support for MoveIn
     it.skip("Insert and modify => Insert and modify", () => {
-        const sequenceField = new FieldKind(
-            brand("Sequence"),
-            Multiplicity.Sequence,
-            SF.sequenceFieldChangeHandler,
-            () => false,
-            new Set(),
-        );
         const nestedChange: FieldChange = {
-            fieldKind: sequenceField.identifier,
+            fieldKind: FieldKinds.sequence.identifier,
             change: brand({
                 type: "MoveIn",
                 id: opId,

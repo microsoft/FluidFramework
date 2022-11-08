@@ -40,6 +40,12 @@ export interface IConnect {
     versions: string[];
 
     /**
+     * Version of the driver which is connecting. It can be used at server to record in telemetry or
+     * to block/allow specific driver version for specific features.
+     */
+    driverVersion?: string;
+
+    /**
      * Connection mode of client.
      */
     mode: ConnectionMode;

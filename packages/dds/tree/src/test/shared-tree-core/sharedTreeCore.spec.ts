@@ -25,7 +25,12 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeFamily, DefaultChangeset } from "../../feature-libraries";
+import {
+    DefaultChangeFamily,
+    defaultChangeFamily,
+    DefaultChangeset,
+} from "../../feature-libraries";
+import { EditManager } from "../../edit-manager";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -146,11 +151,17 @@ describe("SharedTreeCore", () => {
             snapshotFormatVersion: "0.0.0",
             packageVersion: "0.0.0",
         };
+        const anchors = new AnchorSet();
+        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
+            defaultChangeFamily,
+            anchors,
+        );
 
         return new SharedTreeCore(
             indexes ?? [],
-            new DefaultChangeFamily(),
-            new AnchorSet(),
+            defaultChangeFamily,
+            editManager,
+            anchors,
             "TestSharedTree",
             runtime,
             attributes,

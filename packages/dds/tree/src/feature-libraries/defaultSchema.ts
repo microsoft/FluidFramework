@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema } from "../schema-stored";
+import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema } from "../core";
 import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 import { FullSchemaPolicy } from "./modular-schema";
 
