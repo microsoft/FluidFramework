@@ -40,7 +40,6 @@ describe("Idle task scheduler", () => {
         }).then(() => {
             success = true;
         });
-
         assert(success);
     });
 });
