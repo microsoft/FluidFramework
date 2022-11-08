@@ -291,11 +291,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         if (initializeEntryPoint) {
-            this.entryPoint = new FluidObjectHandle<FluidObject>(
-                new LazyPromise(async () => initializeEntryPoint(this)),
-                "",
-                this.objectsRoutingContext,
-                );
+            const promise = new LazyPromise(async () => initializeEntryPoint(this));
+            this.entryPoint = new FluidObjectHandle<FluidObject>(promise, "", this.objectsRoutingContext);
         }
 
         this.attachListener();
