@@ -266,6 +266,15 @@ stages:
               contents: '**'
               targetFolder: ${{ variables.testWorkspace }}/benchmarkOutput/${{ replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
 
+          - task: Bash@3
+            displayName: 'Cleanup package'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}/node_modules/
+              script: |
+                echo "Cleanup package ${{ execTestPackage }} from ${{ variables.testWorkspace }}/node_modules/"
+                rm -rf ${{ execTestPackage }};
+
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
@@ -357,6 +366,15 @@ stages:
               sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
               contents: '**'
               targetFolder: ${{ variables.testWorkspace }}/memoryTestsOutput/${{ replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-', '' ), '/', '-') }}
+
+          - task: Bash@3
+            displayName: 'Cleanup package'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.testWorkspace }}/node_modules/
+              script: |
+                echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
+                rm -rf ${{ testPackage }};
 
         - task: Bash@3
           displayName: 'Write measurements to Aria/Kusto - memory usage'
