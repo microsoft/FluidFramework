@@ -3187,6 +3187,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throw new UsageError(`Summary heuristic configuration property "${prop}" cannot be less than 0`);
             }
         }
+        if (configuration.minIdleTime > configuration.maxIdleTime) {
+            throw new UsageError(`"minIdleTime" [${configuration.minIdleTime}] cannot be greater than "maxIdleTime" [${configuration.maxIdleTime}]`);
+        }
     }
 }
 
