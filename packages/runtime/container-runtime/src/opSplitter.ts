@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "./containerRuntime";
+import { ContainerMessageType, ContainerRuntimeMessage } from "./containerRuntime";
 
 export interface IChunkedOp {
     chunkId: number;
@@ -23,7 +23,7 @@ export class OpSplitter {
 
     constructor(
         chunks: [string, string[]][],
-
+        private readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
     ) {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
@@ -73,13 +73,12 @@ export class OpSplitter {
         map.push(chunkedContent.contents);
     }
 
-    /*
-    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
+    public submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
         const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
         let offset = 0;
         let clientSequenceNumber: number = 0;
-        for (let i = 1; i <= chunkN; i = i + 1) {
+        for (let i = 1; i <= chunkN; i++) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
                 contents: content.substring(offset, offset + maxOpSize + 1),
@@ -87,12 +86,14 @@ export class OpSplitter {
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            clientSequenceNumber = this.submitRuntimeMessageFn(
-                ContainerMessageType.ChunkedOp,
-                chunkedOp,
+
+            const payload: ContainerRuntimeMessage = { type, contents: chunkedOp };
+            clientSequenceNumber = this.submitFn(
+                MessageType.Operation,
+                payload,
                 false);
         }
+
         return clientSequenceNumber;
     }
-    */
 }

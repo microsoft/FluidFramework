@@ -1021,7 +1021,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.opSplitter = new OpSplitter(chunks);
+        this.opSplitter = new OpSplitter(chunks, this.context.submitFn);
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
