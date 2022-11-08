@@ -123,6 +123,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         assertMapValues(dataObject2map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
     });
 
     it("Large ops passes when smaller than the max op size", async () => {
@@ -162,6 +165,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 1;
         setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
     });
 
     it("Batched small ops pass when compression enabled and batch is larger than max op size", async function() {
@@ -180,7 +186,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     });
 
     it("Single large op passes when compression enabled, compressed content is over max op size", async () => {
-        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
+
+        const maxMessageSizeInBytes = 30 * 1024 * 1024; // 30MB
         await setupContainers({
             ...testContainerConfig,
             runtimeOptions: {
@@ -191,5 +201,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
         const messageCount = 1;
         setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
     });
 });
