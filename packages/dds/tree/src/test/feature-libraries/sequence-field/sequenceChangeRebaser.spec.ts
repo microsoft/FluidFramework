@@ -148,7 +148,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const insertB = tagChange(createInsertChangeset(2, 1), brand(3));
         const inverseA = SF.invert(insertA, TestChange.invert);
         const insertA2 = rebaseTagged(insertA, insertX);
-        const insertB2 = rebaseTagged(insertB, tagChange(inverseA, insertA.revision));
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
         const insertB3 = rebaseTagged(insertB2, insertX);
         const insertB4 = rebaseTagged(insertB3, insertA2);
         assert.deepEqual(insertB4.change, createInsertChangeset(3, 1));
