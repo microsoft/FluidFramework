@@ -185,7 +185,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Single large op passes when compression enabled, compressed content is over max op size", async () => {
+    it("Single large op passes when compression enabled, compressed content is over max op size", async function() {
         if (provider.driver.type === "local") {
             this.skip();
         }
