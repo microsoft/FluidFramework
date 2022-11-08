@@ -624,8 +624,8 @@ describe('CachingLogViewer', () => {
 		let editsProcessed = 0;
 		let editsEvicted = 0;
 		let retainedRevision = 0;
-		const editLogSize = 10;
-		const log = new EditLog<ChangeInternal>(undefined, undefined, undefined, editLogSize);
+		const targetEditLogSize = 10;
+		const log = new EditLog<ChangeInternal>(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, () => editsProcessed++);
 
 		log.registerEditEvictionHandler((editsToEvict) => {
@@ -637,35 +637,35 @@ describe('CachingLogViewer', () => {
 		});
 
 		// Add enough edits to the log to start evicting
-		for (let i = 0; i < editLogSize; i++) {
+		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, { sequenceNumber: i, referenceSequenceNumber: i - 1 });
 			expect(log.getIndexOfId(edit.id)).equals(i);
 		}
 		expect(log.length)
 			.equals(log.numberOfSequencedEdits)
-			.and.equals(editLogSize, 'Only sequenced edits should be present.');
+			.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
 
 		// Add more edits so that the oldest get evicted
-		for (let i = 0; i < editLogSize; i++) {
+		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
-			const sequenceNumber = editLogSize + 1;
+			const sequenceNumber = targetEditLogSize + 1;
 			log.addSequencedEdit(edit, {
 				sequenceNumber,
 				referenceSequenceNumber: sequenceNumber - 1,
 				minimumSequenceNumber: sequenceNumber - 1,
 			});
-			expect(log.getIndexOfId(edit.id)).equals(editLogSize + i);
+			expect(log.getIndexOfId(edit.id)).equals(targetEditLogSize + i);
 		}
 
 		// Check to see that the revision was retained
-		expect(editsEvicted).to.equal(editLogSize);
-		expect(retainedRevision).to.equal(editLogSize);
+		expect(editsEvicted).to.equal(targetEditLogSize);
+		expect(retainedRevision).to.equal(targetEditLogSize);
 
 		// Make sure retrieving the latest revision is possible after edit eviction
 		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 		// There should be 10 edits processed since the evicted ones would not be included
-		expect(editsProcessed).to.equal(editLogSize);
+		expect(editsProcessed).to.equal(targetEditLogSize);
 	});
 
 	describe('Callbacks', () => {
