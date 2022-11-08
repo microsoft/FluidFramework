@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { clone, fail, StackyIterator } from "../../util";
-import { TaggedChange } from "../../core";
+import { RevisionTag, TaggedChange } from "../../core";
 import {
     getInputLength,
     getOutputLength,
     isAttach,
+    isDetachMark,
     isModify,
-    isReattach,
     isSkipMark,
     splitMarkOnInput,
 } from "./utils";
-import { Changeset, Mark, MarkList, SizedMark } from "./format";
+import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 /**
@@ -37,7 +38,7 @@ export function rebase<TNodeChange>(
     base: TaggedChange<Changeset<TNodeChange>>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): Changeset<TNodeChange> {
-    return rebaseMarkList(change, base.change, rebaseChild);
+    return rebaseMarkList(change, base.change, base.revision, rebaseChild);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -48,57 +49,64 @@ export type NodeChangeRebaser<TNodeChange> = (
 function rebaseMarkList<TNodeChange>(
     currMarkList: MarkList<TNodeChange>,
     baseMarkList: MarkList<TNodeChange>,
+    baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
-    for (let baseMark of baseIter) {
-        let currMark: Mark<TNodeChange> | undefined = currIter.pop();
-        if (currMark === undefined) {
-            break;
-        }
 
-        if (isAttach(currMark)) {
-            // We currently ignore the ways in which base marks could affect attaches.
-            // These are:
-            // 1. Slices with which the attach would commute.
-            // 2. Attaches that target the same gap.
-            // We ignore #1 because slices are not yet supported.
-            // We ignore #2 because we do not yet support specifying the tiebreak.
-            factory.pushContent(clone(currMark));
-            baseIter.push(baseMark);
-        } else if (isReattach(currMark)) {
-            // We currently ignore the ways in which base marks could affect re-attaches.
-            // These are:
-            // 1. A reattach that targets the same tombs.
-            // 2. Attaches that target the same gap.
-            // We ignore #1 because it could only occur if undo were supported.
-            // We ignore #2 because we do not yet support specifying the tiebreak.
-            factory.pushContent(clone(currMark));
-            baseIter.push(baseMark);
-        } else if (isReattach(baseMark)) {
-            // We currently ignore the ways in which curr marks overlap with this re-attach.
-            // These are:
-            // 1. A reattach that matches this re-attach.
-            // 2. A tomb that matches this re-attach.
-            // We ignore #1 because it could only occur if undo were supported.
-            // We ignore #2 because we do not yet produce tombs.
-            factory.pushOffset(getOutputLength(baseMark));
-            currIter.push(currMark);
+    // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
+    // the attach position was detached by `baseMarkList`.
+    // At the time we process an attach we don't know whether the following node will be detached, so we record attach
+    // marks which should have their lineage updated if we encounter a detach.
+    const lineageRequests: LineageRequest<TNodeChange>[] = [];
+    let baseDetachOffset = 0;
+    while (!baseIter.done || !currIter.done) {
+        let currMark: Mark<TNodeChange> | undefined = currIter.peek();
+        let baseMark: Mark<TNodeChange> | undefined = baseIter.peek();
+
+        if (baseMark === undefined) {
+            assert(
+                currMark !== undefined,
+                "Loop condition should prevent both iterators from being empty",
+            );
+            if (baseDetachOffset > 0 && isAttach(currMark)) {
+                currIter.pop();
+                handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
+            } else {
+                break;
+            }
+        } else if (currMark === undefined) {
+            assert(
+                baseMark !== undefined,
+                "Loop condition should prevent both iterators from being empty",
+            );
+            baseIter.pop();
+            if (isDetachMark(baseMark)) {
+                baseDetachOffset += getInputLength(baseMark);
+            } else if (!isAttach(baseMark)) {
+                break;
+            }
+        } else if (isAttach(currMark)) {
+            if (isAttach(baseMark) && isAttachAfterBaseAttach(currMark, baseMark)) {
+                baseIter.pop();
+                factory.pushOffset(getOutputLength(baseMark));
+            } else {
+                currIter.pop();
+                handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
+            }
         } else if (isAttach(baseMark)) {
-            // We currently ignore the ways in which curr marks overlap with these attaches.
-            // These are:
-            // 1. Slice ranges that include prior insertions
-            // We ignore #1 because we do not yet support slices.
+            baseIter.pop();
             factory.pushOffset(getOutputLength(baseMark));
-            currIter.push(currMark);
         } else {
             // If we've reached this branch then `baseMark` and `currMark` start at the same location
             // in the document field at the revision to which both changesets apply.
             // Despite that, it's not necessarily true that they affect the same range in that document
             // field because they may be of different lengths.
             // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
+            currIter.pop();
+            baseIter.pop();
             const currMarkLength = getInputLength(currMark);
             const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
@@ -115,8 +123,24 @@ function rebaseMarkList<TNodeChange>(
             // They therefore refer to the same range for that revision.
             const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild);
             factory.push(rebasedMark);
+
+            if (isDetachMark(baseMark)) {
+                baseDetachOffset += getInputLength(baseMark);
+            } else {
+                if (baseDetachOffset > 0 && baseRevision !== undefined) {
+                    updateLineage(lineageRequests, baseRevision);
+                }
+
+                lineageRequests.length = 0;
+                baseDetachOffset = 0;
+            }
         }
     }
+
+    if (baseDetachOffset > 0 && baseRevision !== undefined) {
+        updateLineage(lineageRequests, baseRevision);
+    }
+
     for (const currMark of currIter) {
         factory.push(currMark);
     }
@@ -146,6 +170,79 @@ function rebaseMark<TNodeChange>(
             return clone(currMark);
         }
         default:
-            fail("Not implemented");
+            fail(`Unsupported mark type: ${baseType}`);
+    }
+}
+
+function handleCurrAttach<T>(
+    currMark: Attach<T>,
+    factory: MarkListFactory<T>,
+    lineageRequests: LineageRequest<T>[],
+    offset: number,
+) {
+    const rebasedMark = clone(currMark);
+    factory.pushContent(rebasedMark);
+    lineageRequests.push({ mark: rebasedMark, offset });
+}
+
+function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): boolean {
+    const lineageCmp = compareLineages(currMark.lineage, baseMark.lineage);
+    if (lineageCmp < 0) {
+        return false;
+    } else if (lineageCmp > 0) {
+        return true;
+    }
+
+    // TODO: Handle tiebreaking, including support for the following scenario
+    // Staring state: a b
+    // A1) Delete a b
+    // A2) Insert c
+    // B) Insert x between a and b
+    // Instead of using B's tiebreak policy, we should first consider the relative positions of a, b, and c if A1 were undone.
+    // The best outcome seems to be that c is positioned relative to ab according to A2's tiebreak policy.
+    return false;
+}
+
+function compareLineages(
+    lineage1: LineageEvent[] | undefined,
+    lineage2: LineageEvent[] | undefined,
+): number {
+    if (lineage1 === undefined || lineage2 === undefined) {
+        return 0;
+    }
+
+    const lineage1Offsets = new Map<RevisionTag, number>();
+    for (const event of lineage1) {
+        lineage1Offsets.set(event.revision, event.offset);
+    }
+
+    for (let i = lineage2.length - 1; i >= 0; i--) {
+        const event2 = lineage2[i];
+        const offset1 = lineage1Offsets.get(event2.revision);
+        if (offset1 !== undefined) {
+            const offset2 = event2.offset;
+            if (offset1 < offset2) {
+                return -1;
+            } else if (offset1 > offset2) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+interface LineageRequest<T> {
+    mark: Attach<T>;
+    offset: number;
+}
+
+function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) {
+    for (const request of requests) {
+        const mark = request.mark;
+        if (mark.lineage === undefined) {
+            mark.lineage = [];
+        }
+
+        mark.lineage.push({ revision, offset: request.offset });
     }
 }

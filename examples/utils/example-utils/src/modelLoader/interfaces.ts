@@ -49,4 +49,4 @@ export interface IModelLoader<ModelType> {
 /**
  * The callback signature that the container author will provide.  It must return a promise for the container's model.
  */
- export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
+export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;

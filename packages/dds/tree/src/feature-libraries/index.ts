@@ -13,13 +13,14 @@ export {
     SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 export {
-    anchorSymbol,
     EditableField,
     EditableTree,
     EditableTreeContext,
     EditableTreeOrPrimitive,
     getEditableTreeContext,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
+    indexSymbol,
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
@@ -29,7 +30,8 @@ export {
     UnwrappedEditableField,
     UnwrappedEditableTree,
     valueSymbol,
-    getWithoutUnwrappingSymbol,
+    getField,
+    createField,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

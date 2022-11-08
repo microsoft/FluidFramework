@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannel,
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
@@ -150,7 +149,7 @@ class SharedTree
             submitEdit: (edit) => this.submitEdit(edit),
         };
 
-        this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest, this.transactionCheckout);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
@@ -205,7 +204,7 @@ export class SharedTreeFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
+    ): Promise<ISharedTree> {
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
