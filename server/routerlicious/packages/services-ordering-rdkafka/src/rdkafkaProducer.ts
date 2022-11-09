@@ -303,11 +303,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		const message = Buffer.from(JSON.stringify(boxcarMessage));
 		if (message.byteLength > this.producerOptions.maxMessageSize) {
-			const error = new NetworkError(
-				413,
-				// eslint-disable-next-line max-len
-				`Message size too large. Boxcar message count: ${boxcar.messages.length}, size: ${message.byteLength}, max message size: ${this.producerOptions.maxMessageSize}.`,
-			);
+			const error = this.createMessageSizeTooLargeError(boxcar, message);
 			boxcar.deferred.reject(error);
 			return;
 		}
@@ -338,10 +334,16 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				message, // message
 				boxcar.documentId, // key
 				undefined, // timestamp
-				(err: any, offset?: number) => {
+				(ex: any, offset?: number) => {
 					this.inflightPromises.delete(boxcar.deferred);
 
+					let err = ex;
 					if (err) {
+						// ensure that "message size too large" errors are thrown as network errors
+						if (this.isMessageSizeTooLargeError(err)) {
+							err = this.createMessageSizeTooLargeError(boxcar, message);
+						}
+
 						boxcar.deferred.reject(err);
 
 						// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -357,11 +359,18 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				},
 			);
 		} catch (ex) {
+			let err = ex;
+
+			// ensure that "message size too large" errors are thrown as network errors
+			if (this.isMessageSizeTooLargeError(err)) {
+				err = this.createMessageSizeTooLargeError(boxcar, message);
+			}
+
 			// produce can throw if the outgoing message queue is full
-			boxcar.deferred.reject(ex);
+			boxcar.deferred.reject(err);
 
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.handleError(producer, ex, {
+			this.handleError(producer, err, {
 				restart: true,
 				tenantId: boxcar.tenantId,
 				documentId: boxcar.documentId,
@@ -400,5 +409,25 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		await this.close(true);
 
 		this.connect();
+	}
+
+	/**
+	 * Check if an exception is a "Broker: Message size too large" error
+	 */
+	private isMessageSizeTooLargeError(ex: any): boolean {
+		return (RdkafkaBase as any).isObject(ex) &&
+			((ex as kafkaTypes.LibrdKafkaError).code === this.kafka.CODES.ERRORS.ERR_MSG_SIZE_TOO_LARGE ||
+				(ex as Error).message.toLowerCase().includes("message size too large"));
+	}
+
+	/**
+	 * Creates a standard code 413 "Message size too large" NetworkError
+	 */
+	private createMessageSizeTooLargeError(boxcar: IPendingBoxcar, message: Buffer) {
+		return new NetworkError(
+			413,
+			// eslint-disable-next-line max-len
+			`Message size too large. Boxcar message count: ${boxcar.messages.length}, size: ${message.byteLength}, max message size: ${this.producerOptions.maxMessageSize}.`,
+		);
 	}
 }
