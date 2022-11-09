@@ -21,6 +21,5 @@ export {
     FluidClientDebuggerProps,
     initializeFluidClientDebugger,
     LogEntry,
-    OpsLogEntry,
     StateChangeLogEntry,
 } from "./ClientDebugger";

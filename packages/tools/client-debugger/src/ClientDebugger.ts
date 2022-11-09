@@ -11,6 +11,7 @@ import {
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -121,6 +122,13 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void);
 
     // #endregion
+
+    /**
+     * Emitted when the {@link IFluidClientDebugger} itself has been disposed.
+     *
+     * @see {@link IFluidClientDebugger.dispose}
+     */
+    (event: "debuggerDisposed", listener: () => void);
 }
 
 /**
@@ -161,16 +169,6 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 /**
  * Represents a processed operation (op), paired with a timestamp.
  */
-export interface OpsLogEntry extends LogEntry {
-    /**
-     * The operation (op) that was processed.
-     */
-    op: ISequencedDocumentMessage;
-}
-
-/**
- * Represents a processed operation (op), paired with a timestamp.
- */
 export interface AudienceChangeLogEntry extends LogEntry {
     /**
      * The ID of the client that was added or removed.
@@ -202,6 +200,14 @@ export interface IFluidClientDebugger
      * @remarks This value will not change during the lifetime of the debugger.
      */
     readonly containerId: string;
+
+    /**
+     * Data contents of the Container.
+     *
+     * @remarks This map is assumed to be immutable. The debugger will not make any modifications to
+     * its contents.
+     */
+    readonly containerData: Record<string, IFluidLoadable>;
 
     // #region Container data
 
@@ -252,7 +258,7 @@ export interface IFluidClientDebugger
     /**
      * All operations (ops) processed since the debugger was initialized.
      */
-    getOpsLog(): readonly OpsLogEntry[];
+    getOpsLog(): readonly ISequencedDocumentMessage[];
 
     // #endregion
 
@@ -320,6 +326,11 @@ class FluidClientDebugger
     public readonly containerId: string;
 
     /**
+     * {@inheritDoc IFluidClientDebugger.containerData}
+     */
+    public readonly containerData: Record<string, IFluidLoadable>;
+
+    /**
      * {@inheritDoc FluidClientDebuggerProps.container}
      */
     private readonly container: IContainer;
@@ -339,7 +350,7 @@ class FluidClientDebugger
     /**
      * Accumulated data for {@link IFluidClientDebugger.getOpsLog}.
      */
-    private readonly _opsLog: OpsLogEntry[];
+    private readonly _opsLog: ISequencedDocumentMessage[];
 
     /**
      * Accumulated data for {@link IFluidClientDebugger.getAudienceHistory}.
@@ -377,6 +388,12 @@ class FluidClientDebugger
 
     // #endregion
 
+    // #region Debugger-specific event handlers
+
+    private readonly debuggerDisposedHandler = (): boolean => this.emit("debuggerDisposed");
+
+    // #endregion
+
     /**
      * Whether or not the instance has been disposed yet.
      *
@@ -386,10 +403,16 @@ class FluidClientDebugger
      */
     private _disposed: boolean;
 
-    constructor(containerId: string, container: IContainer, audience: IAudience) {
+    constructor(
+        containerId: string,
+        container: IContainer,
+        audience: IAudience,
+        containerData: Record<string, IFluidLoadable>,
+    ) {
         super();
 
         this.containerId = containerId;
+        this.containerData = containerData;
         this.container = container;
         this.audience = audience;
 
@@ -510,16 +533,13 @@ class FluidClientDebugger
         return this.container.deltaManager.minimumSequenceNumber;
     }
 
-    public getOpsLog(): readonly OpsLogEntry[] {
+    public getOpsLog(): readonly ISequencedDocumentMessage[] {
         // Clone array contents so consumers don't see local changes
         return this._opsLog.map((value) => value);
     }
 
     private onIncomingOpProcessed(op: ISequencedDocumentMessage): void {
-        this._opsLog.push({
-            op,
-            timestamp: new Date(),
-        });
+        this._opsLog.push(op);
 
         this.incomingOpProcessedHandler(op);
     }
@@ -595,6 +615,7 @@ class FluidClientDebugger
      * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
      */
     public get disposed(): boolean {
+        this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
         return this._disposed;
     }
 }
@@ -617,15 +638,27 @@ export interface FluidClientDebuggerProps {
      * The session audience with which the debugger will be associated.
      */
     audience: IAudience;
+
+    /**
+     * Data belonging to the Container.
+     *
+     * @remarks The debugger will not mutate this data.
+     */
+    containerData: Record<string, IFluidLoadable>;
 }
 
 /**
- * TODO
+ * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context.
+ *
+ * @remarks
+ *
+ * If there is an existing debugger session associated with the provided {@link FluidClientDebuggerProps.containerId},
+ * the existing debugger session object will be returned, rather than creating a new one.
  */
 export function initializeFluidClientDebugger(
     props: FluidClientDebuggerProps,
 ): IFluidClientDebugger {
-    const { containerId, container, audience } = props;
+    const { containerId, container, audience, containerData } = props;
 
     const debuggerRegistry = getDebuggerRegistry();
 
@@ -637,7 +670,7 @@ export function initializeFluidClientDebugger(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return debuggerRegistry.get(containerId)!;
     } else {
-        clientDebugger = new FluidClientDebugger(containerId, container, audience);
+        clientDebugger = new FluidClientDebugger(containerId, container, audience, containerData);
         debuggerRegistry.set(containerId, clientDebugger);
         return clientDebugger;
     }

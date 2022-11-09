@@ -13,6 +13,7 @@ import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
@@ -35,6 +36,7 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 export interface FluidClientDebuggerProps {
     audience: IAudience;
     container: IContainer;
+    containerData: Record<string, IFluidLoadable>;
     containerId: string;
 }
 
@@ -44,6 +46,7 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 // @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     closeContainer(): void;
+    readonly containerData: Record<string, IFluidLoadable>;
     readonly containerId: string;
     disconnectContainer(): void;
     dispose(): void;
@@ -55,7 +58,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
     getContainerResolvedUrl(): IResolvedUrl | undefined;
     getMinimumSequenceNumber(): number;
-    getOpsLog(): readonly OpsLogEntry[];
+    getOpsLog(): readonly ISequencedDocumentMessage[];
     isContainerClosed(): boolean;
     isContainerDirty(): boolean;
     tryConnectContainer(): void;
@@ -71,6 +74,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void): any;
     (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void): any;
+    (event: "debuggerDisposed", listener: () => void): any;
 }
 
 // @public
@@ -79,11 +83,6 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 // @public
 export interface LogEntry {
     timestamp: Date;
-}
-
-// @public
-export interface OpsLogEntry extends LogEntry {
-    op: ISequencedDocumentMessage;
 }
 
 // @public

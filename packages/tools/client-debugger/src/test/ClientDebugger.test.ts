@@ -73,6 +73,7 @@ describe("ClientDebugger unit tests", () => {
             containerId,
             container: tinyliciousContainer._getRuntimeContainer!(),
             audience: tinyliciousServices.audience._getRuntimeAudience!(),
+            containerData: tinyliciousContainer.initialObjects,
         };
     });
 
