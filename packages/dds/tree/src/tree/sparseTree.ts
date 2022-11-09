@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { FieldKey } from "../tree";
-import { UpPath } from "./pathTree";
+import { topDownPath, UpPath } from "./pathTree";
 
 /**
  * Sparse Tree of nodes.
@@ -147,4 +147,21 @@ export class SparseNode<TData> implements UpPath {
     private disposeThis(): void {
         this.parentPath?.removeChild(this);
     }
+}
+
+export function getRelativeNode<TData>(
+    from: SparseNode<TData>,
+    path: UpPath | undefined,
+): SparseNode<TData> {
+    const topDown = topDownPath(path);
+    let curr = from;
+    for (const hop of topDown) {
+        const field = curr.children.get(hop.parentField);
+        assert(field !== undefined, "Field not present in sparse node");
+        // TODO: should do more optimized search (ex: binary search).
+        const child = field.find((c) => c.parentIndex === hop.parentIndex);
+        assert(child !== undefined, "Child not present in sparse node field");
+        curr = child;
+    }
+    return curr;
 }

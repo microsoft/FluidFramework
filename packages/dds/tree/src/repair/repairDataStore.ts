@@ -4,7 +4,7 @@
  */
 
 import { RevisionTag } from "../rebase";
-import { Value, Delta, UpPath } from "../tree";
+import { Value, Delta, UpPath, FieldKey } from "../tree";
 
 /**
  * Characterizes the regions of a document tree that an edit destroys.
@@ -23,8 +23,14 @@ export interface TreeDestruction {
  * Represents the change made to a document.
  */
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
-    getNodes(revision: RevisionTag, path: UpPath, index: number, count: number): TTree[];
-    getValue(revision: RevisionTag, path: UpPath, index: number): Value;
+    getNodes(
+        revision: RevisionTag,
+        path: UpPath | undefined,
+        field: FieldKey,
+        index: number,
+        count: number,
+    ): TTree[];
+    getValue(revision: RevisionTag, path: UpPath): Value;
 }
 
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {

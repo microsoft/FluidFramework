@@ -142,7 +142,9 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 3, detachedBy, detachIndex }];
+        const revive: SF.Changeset = [
+            { type: "Revive", id: 1, count: 3, detachedBy, detachIndex: 0 },
+        ];
         const modify: SF.Changeset = [
             {
                 type: "Modify",
@@ -154,10 +156,10 @@ describe("SequenceField - Compose", () => {
                 type: "MRevive",
                 id: 1,
                 detachedBy,
-                detachIndex,
+                detachIndex: 0,
                 changes: { valueChange: { value: 2 } },
             },
-            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 1 },
         ];
         const actual = shallowCompose([revive, modify]);
         assert.deepEqual(actual, expected);
@@ -291,7 +293,9 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 5, detachedBy, detachIndex }];
+        const revive: SF.Changeset = [
+            { type: "Revive", id: 1, count: 5, detachedBy, detachIndex: 0 },
+        ];
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", id: 3, count: 1 },
@@ -300,7 +304,8 @@ describe("SequenceField - Compose", () => {
         ];
         const actual = shallowCompose([revive, deletion]);
         const expected: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 2 },
             { type: "Delete", id: 4, count: 1 },
         ];
         assert.deepEqual(actual, expected);

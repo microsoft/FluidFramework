@@ -228,30 +228,63 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+    intoDelta(
+        change: FieldChangeMap,
+        repairStore?: ReadonlyRepairDataStore,
+        path?: UpPath,
+    ): Delta.Root {
         const delta: Delta.Root = new Map();
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
-                (childChange) => this.deltaFromNodeChange(childChange),
-                fakeRepairData,
+                (childChange, index): Delta.Modify =>
+                    this.deltaFromNodeChange(
+                        childChange,
+                        repairStore,
+                        index === undefined
+                            ? undefined
+                            : {
+                                  parent: path,
+                                  parentField: field,
+                                  parentIndex: index,
+                              },
+                    ),
+                repairStore === undefined
+                    ? // TODO: remove this branch once the repairStore is mandatory
+                      fakeRepairData
+                    : (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+                          repairStore.getNodes(revision, path, field, index, count),
             );
             delta.set(field, deltaField);
         }
         return delta;
     }
 
-    private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+    private deltaFromNodeChange(
+        change: NodeChangeset,
+        repairStore: ReadonlyRepairDataStore | undefined,
+        path?: UpPath,
+    ): Delta.Modify {
         const modify: Delta.Modify = {
             type: Delta.MarkType.Modify,
         };
 
-        if (change.valueChange !== undefined) {
-            modify.setValue = change.valueChange.value;
+        const valueChange = change.valueChange;
+        if (valueChange !== undefined) {
+            if ("revert" in valueChange) {
+                assert(path !== undefined, "Only existing node can have their value restored");
+                if (repairStore !== undefined) {
+                    modify.setValue = repairStore.getValue(valueChange.revert, path);
+                } else {
+                    // TODO: remove this branch once the repairStore is mandatory
+                }
+            } else {
+                modify.setValue = valueChange.value;
+            }
         }
 
         if (change.fieldChanges !== undefined) {
-            modify.fields = this.intoDelta(change.fieldChanges);
+            modify.fields = this.intoDelta(change.fieldChanges, repairStore, path);
         }
 
         return modify;

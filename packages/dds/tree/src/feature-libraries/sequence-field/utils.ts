@@ -248,12 +248,16 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, content: markObj.content.slice(length) },
             ] as [TMark, TMark];
         case "MoveIn":
-        case "Return":
-        case "Revive":
         case "Tomb":
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder },
+            ] as [TMark, TMark];
+        case "Return":
+        case "Revive":
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
             ] as [TMark, TMark];
         default:
             unreachableCase(type);
@@ -316,7 +320,11 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Revive":
         case "Return": {
             const lhsReattach = lhs as Reattach;
-            if (rhs.id === lhsReattach.id && rhs.detachedBy === lhsReattach.detachedBy) {
+            if (
+                rhs.id === lhsReattach.id &&
+                rhs.detachedBy === lhsReattach.detachedBy &&
+                lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
+            ) {
                 lhsReattach.count += rhs.count;
                 return true;
             }

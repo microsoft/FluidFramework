@@ -87,3 +87,13 @@ export function clonePath(path: UpPath | undefined): UpPath | undefined {
         parentIndex: path.parentIndex,
     };
 }
+
+export function topDownPath(path: UpPath | undefined): UpPath[] {
+    const out: UpPath[] = [];
+    let curr = path;
+    while (curr !== undefined) {
+        out.unshift(curr);
+        curr = curr.parent;
+    }
+    return out;
+}

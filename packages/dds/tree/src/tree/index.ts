@@ -57,4 +57,4 @@ export { DeltaVisitor, visitDelta } from "./visitDelta";
 import * as Delta from "./delta";
 export { Delta };
 
-export { SparseNode } from "./sparseTree";
+export { SparseNode, getRelativeNode } from "./sparseTree";

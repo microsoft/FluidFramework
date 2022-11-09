@@ -64,8 +64,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
     rebaser: singleNodeRebaser,
     encoder: singleNodeEncoder,
     editor: singleNodeEditor,
-
-    intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
+    intoDelta: (change, deltaFromChild) => [deltaFromChild(change, 0)],
 };
 
 const singleNodeField = new FieldKind(

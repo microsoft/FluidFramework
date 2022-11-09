@@ -90,7 +90,7 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
 export type RepairData = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
@@ -111,12 +111,16 @@ export interface NodeChangeset {
     valueChange?: ValueChange;
 }
 
-export interface ValueChange {
-    /**
-     * Can be left unset to represent the value being cleared.
-     */
-    value?: Value;
-}
+export type ValueChange =
+    | {
+          /**
+           * Can be left unset to represent the value being cleared.
+           */
+          value?: Value;
+      }
+    | {
+          revert: RevisionTag;
+      };
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 

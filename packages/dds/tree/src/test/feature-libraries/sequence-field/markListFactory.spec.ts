@@ -117,6 +117,27 @@ describe("SequenceField - MarkListFactory", () => {
         assert.deepStrictEqual(factory.list, [expected]);
     });
 
+    it("Does not merge revives with gaps", () => {
+        const factory = new SF.MarkListFactory();
+        const revive1: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 1,
+        };
+        const revive2: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 2,
+            count: 1,
+        };
+        factory.pushContent(revive1);
+        factory.pushContent(revive2);
+        assert.deepStrictEqual(factory.list, [revive1, revive2]);
+    });
+
     it("Can merge consecutive returns", () => {
         const factory = new SF.MarkListFactory();
         const return1: SF.Reattach = {

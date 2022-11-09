@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     Delta,
     EmptyKey,
     FieldKey,
+    getRelativeNode,
     IForestSubscription,
     ITreeCursorSynchronous,
     keyAsDetachedField,
@@ -20,12 +22,15 @@ import {
     Value,
 } from "../core";
 import { unreachableCase } from "../util";
-import { mapTreeFromCursor } from "./mapTreeCursor";
+import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 
-type RepairData = Map<RevisionTag, Value | MapTree>;
+interface RepairData {
+    value?: Map<RevisionTag, Value>;
+    node?: Map<RevisionTag, MapTree>;
+}
 type RepairDataNode = SparseNode<RepairData | undefined>;
 
-const repairDataFactory = (): RepairData => new Map();
+const repairDataFactory = (): RepairData => ({});
 const undefinedFactory = (): undefined => undefined;
 
 export class ForestRepairDataStore implements RepairDataStore {
@@ -109,7 +114,10 @@ export class ForestRepairDataStore implements RepairDataStore {
                     node.data = repairDataFactory();
                 }
                 const value = cursor.value;
-                node.data.set(revision, value);
+                if (node.data.value === undefined) {
+                    node.data.value = new Map();
+                }
+                node.data.value.set(revision, value);
             }
             if (modify.fields !== undefined) {
                 visitFieldMarks(modify.fields, node);
@@ -132,7 +140,10 @@ export class ForestRepairDataStore implements RepairDataStore {
                 if (child.data === undefined) {
                     child.data = repairDataFactory();
                 }
-                child.data.set(revision, nodeData);
+                if (child.data.node === undefined) {
+                    child.data.node = new Map();
+                }
+                child.data.node.set(revision, nodeData);
             }
         }
 
@@ -142,17 +153,37 @@ export class ForestRepairDataStore implements RepairDataStore {
 
     public getNodes(
         revision: RevisionTag,
-        path: UpPath,
+        path: UpPath | undefined,
+        field: FieldKey,
         index: number,
         count: number,
     ): ITreeCursorSynchronous[] {
-        throw new Error("Method not implemented.");
+        const parent = getRelativeNode(this.root, path);
+        const sparseField = parent.children.get(field);
+        assert(sparseField !== undefined, ERR_MISSING_DATA);
+        // TODO: should do more optimized search (ex: binary search).
+        const sparseIndex = sparseField.findIndex((child) => child.parentIndex === index);
+        assert(sparseIndex !== -1, ERR_MISSING_DATA);
+        assert(
+            sparseField[sparseIndex + count - 1]?.parentIndex === index + count - 1,
+            ERR_MISSING_DATA,
+        );
+        return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
+            const repair = node.data?.node?.get(revision);
+            assert(repair !== undefined, ERR_MISSING_DATA);
+            return singleMapTreeCursor(repair);
+        });
     }
 
-    public getValue(revision: RevisionTag, path: UpPath, index: number): Value {
-        throw new Error("Method not implemented.");
+    public getValue(revision: RevisionTag, path: UpPath): Value {
+        const data = getRelativeNode(this.root, path).data;
+        const valueMap = data?.value;
+        assert(valueMap?.has(revision) === true, ERR_MISSING_DATA);
+        return valueMap.get(revision);
     }
 }
+
+const ERR_MISSING_DATA = "No repair data found";
 
 interface ModifyLike {
     setValue?: Value;
