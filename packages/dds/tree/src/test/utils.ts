@@ -280,3 +280,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
         return tree;
     }
 }
+
+export function noRepair(): Delta.ProtoNode[] {
+    assert.fail("Unexpected request for repair data");
+}

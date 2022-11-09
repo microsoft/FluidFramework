@@ -5,11 +5,11 @@
 
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
+import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy: RevisionTag = brand(42);
 
 export type TestChangeset = SF.Changeset<TestChange>;
 
@@ -44,5 +44,5 @@ export const cases: {
         },
     ],
     delete: [1, { type: "Delete", id: 1, count: 3 }],
-    revive: [2, { type: "Revive", id: 1, count: 2, detachedBy: tomb }],
+    revive: [2, { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 0 }],
 };

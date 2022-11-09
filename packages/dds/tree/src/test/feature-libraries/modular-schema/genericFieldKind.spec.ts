@@ -16,6 +16,7 @@ import {
 import { makeAnonChange } from "../../../rebase";
 import { Delta, FieldKey } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { noRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -112,10 +113,6 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
     const valueChange = valueHandler.encoder.decodeJson(0, nodeChange, unexpectedDelegate);
     return nodeChangeFromValueChange(valueChange);
 };
-
-function repair(): Delta.ProtoNode[] {
-    assert.fail("Unexpected request for repair data");
-}
 
 describe("Generic FieldKind", () => {
     describe("compose", () => {
@@ -341,7 +338,7 @@ describe("Generic FieldKind", () => {
 
         const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, repair);
+        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
         assert.deepEqual(actual, expected);
     });
 

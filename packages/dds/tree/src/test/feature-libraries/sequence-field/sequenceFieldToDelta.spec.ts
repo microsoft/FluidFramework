@@ -16,7 +16,7 @@ import {
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
 import { TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -24,7 +24,7 @@ const nodeX = { type, value: "X" };
 const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const opId = 42;
-const tag = "TestTag";
+const tag: RevisionTag = brand(42);
 const moveId = brandOpaque<Delta.MoveId>(opId);
 const fooField = brand<FieldKey>("foo");
 
@@ -69,7 +69,7 @@ describe("SequenceField - toDelta", () => {
         const actual = toDelta([
             {
                 type: "Modify",
-                tomb: "DummyTag",
+                tomb: tag,
                 changes: TestChange.mint([0], 1),
             },
         ]);
@@ -81,7 +81,7 @@ describe("SequenceField - toDelta", () => {
         const actual = toDelta([
             {
                 type: "Tomb",
-                change: "DummyTag",
+                change: tag,
                 count: 3,
             },
         ]);
@@ -107,7 +107,9 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive", () => {
-        const changeset: TestChangeset = [{ type: "Revive", id: opId, detachedBy: tag, count: 2 }];
+        const changeset: TestChangeset = [
+            { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 2 },
+        ];
         const actual = toDelta(changeset);
         assert.equal(actual.length, 1);
         const mark = actual[0];
@@ -127,7 +129,7 @@ describe("SequenceField - toDelta", () => {
             fieldChanges: new Map([[fooField, nestedChange]]),
         };
         const changeset: SF.Changeset = [
-            { type: "MRevive", id: opId, detachedBy: tag, changes: nodeChange },
+            { type: "MRevive", id: opId, detachedBy: tag, detachIndex: 0, changes: nodeChange },
         ];
         const fieldChanges = new Map([
             [fooField, [{ type: Delta.MarkType.Insert, id: opId, content: [] }]],
@@ -136,7 +138,13 @@ describe("SequenceField - toDelta", () => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: fieldChanges };
         };
-        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+        function repair(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+            assert.equal(revision, tag);
+            assert.equal(index, 0);
+            assert.equal(count, 1);
+            return contentCursor;
+        }
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repair);
         assert.equal(actual.length, 1);
         const mark = actual[0];
         assert.equal(typeof mark, "object");
@@ -214,7 +222,7 @@ describe("SequenceField - toDelta", () => {
             2,
             {
                 type: "Tomb",
-                change: "DummyTag",
+                change: tag,
                 count: 3,
             },
         ];
@@ -307,7 +315,7 @@ describe("SequenceField - toDelta", () => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
         };
-        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, noRepair);
         assertMarkListEqual(actual, expected);
     });
 });

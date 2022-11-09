@@ -42,9 +42,9 @@ function invertMarkList<TNodeChange>(
     const inverseMarkList: MarkList<TNodeChange> = [];
     let inputIndex = 0;
     for (const mark of markList) {
-        inputIndex += getInputLength(mark);
         const inverseMarks = invertMark(mark, inputIndex, opIdToTag, invertChild);
         inverseMarkList.push(...inverseMarks);
+        inputIndex += getInputLength(mark);
     }
     return inverseMarkList;
 }

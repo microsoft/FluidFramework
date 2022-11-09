@@ -10,19 +10,15 @@ import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../r
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
 import { cases, TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
 const detachedBy2: RevisionTag = brand(42);
 
-function repair(): Delta.ProtoNode[] {
-    assert.fail("Unexpected request for repair data");
-}
-
 function toDelta(change: TestChangeset): Delta.MarkList {
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta, repair);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, noRepair);
 }
 
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
