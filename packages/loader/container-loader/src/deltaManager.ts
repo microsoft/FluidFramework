@@ -127,8 +127,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedSequenceNumber: number = 0;
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
-    // private lastClientSequenceNumber: number = 0;
-    // private noOpCounter: number = 0;
 
     /**
      * Track down the ops size.
