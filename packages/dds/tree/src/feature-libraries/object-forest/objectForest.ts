@@ -201,11 +201,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private beforeChange(): void {
+        this.invalidateDependents();
         assert(
             this.currentCursors.size === 0,
             0x374 /* No cursors can be current when modifying forest */,
         );
-        this.invalidateDependents();
     }
 
     // TODO: remove this workaround as soon as notification/eventing will be supported.
@@ -300,11 +300,23 @@ type ObjectField = MapTree[];
  * (which can be undefined when cleared), instead of sub-classing it.
  */
 class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
-    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
-    private innerCursor?: CursorWithNode<MapTree>;
-    public constructor(public readonly forest: ObjectForest) {
+    state: ITreeSubscriptionCursorState;
+
+    /**
+     * @param forest - forest this cursor navigates
+     * @param innerCursor - underlying cursor implementation this wraps. `undefined` when state is not `Current`
+     */
+    public constructor(
+        public readonly forest: ObjectForest,
+        private innerCursor?: CursorWithNode<MapTree>,
+    ) {
         super();
+        this.state =
+            innerCursor === undefined
+                ? ITreeSubscriptionCursorState.Cleared
+                : ITreeSubscriptionCursorState.Current;
     }
+
     buildFieldAnchor(): FieldAnchor {
         const path = this.getFieldPath();
         const anchor =
@@ -438,16 +450,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
         assert(this.innerCursor !== undefined, "Cursor must be current to be used");
-        const other = this.forest.allocateCursor();
-        if (this.innerCursor.mode === CursorLocationType.Fields) {
-            const path = this.getFieldPath();
-            this.forest.moveCursorToPath(path.parent, other, observer);
-            other.enterField(path.field);
-        } else {
-            const path = this.getPath();
-            this.forest.moveCursorToPath(path, other, observer);
-        }
-        return other;
+        return new Cursor(this.forest, this.innerCursor.fork());
     }
 
     free(): void {

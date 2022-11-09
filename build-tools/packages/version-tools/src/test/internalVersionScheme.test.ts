@@ -94,6 +94,12 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.4.3 is a not valid even when allowPrereleases and allowAnyPrereleaseId are true", () => {
+            const input = `2.4.3`;
+            const result = isInternalVersionScheme(input, true, true);
+            assert.isFalse(result);
+        });
+
         it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
             const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
             assert.isTrue(isInternalVersionRange(input));
@@ -111,6 +117,11 @@ describe("internalScheme", () => {
 
         it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
             const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
+            assert.isTrue(isInternalVersionRange(input, true));
+        });
+
+        it(">=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
+            const input = `>=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0`;
             assert.isTrue(isInternalVersionRange(input, true));
         });
 
@@ -241,6 +252,20 @@ describe("internalScheme", () => {
             // Check that major bumps do not satisfy the range
             assert.isFalse(semver.satisfies(`2.0.0-internal.2.0.0`, range));
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
+        });
+
+        it("caret ^ dependency equivalent for prerelease/dev versions", () => {
+            const input = `2.0.0-dev.3.0.0.105091`;
+            const expected = `>=2.0.0-dev.3.0.0.105091 <2.0.0-dev.4.0.0`;
+            const range = getVersionRange(input, "^");
+            assert.strictEqual(range, expected);
+        });
+
+        it("tilde ~ dependency equivalent for prerelease/dev versions", () => {
+            const input = `2.0.0-dev.3.1.0.105091`;
+            const expected = `>=2.0.0-dev.3.1.0.105091 <2.0.0-dev.3.2.0`;
+            const range = getVersionRange(input, "~");
+            assert.strictEqual(range, expected);
         });
 
         /**
