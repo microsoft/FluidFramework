@@ -12,7 +12,8 @@ import { deepFreeze } from "../../utils";
 import { cases, TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy = undefined;
+const detachIndex = 0;
 
 function compose(changes: TestChangeset[]): TestChangeset {
     changes.forEach(deepFreeze);
@@ -141,7 +142,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 3, tomb }];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 3, detachedBy, detachIndex }];
         const modify: SF.Changeset = [
             {
                 type: "Modify",
@@ -152,10 +153,11 @@ describe("SequenceField - Compose", () => {
             {
                 type: "MRevive",
                 id: 1,
-                tomb,
+                detachedBy,
+                detachIndex,
                 changes: { valueChange: { value: 2 } },
             },
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
         ];
         const actual = shallowCompose([revive, modify]);
         assert.deepEqual(actual, expected);
@@ -289,7 +291,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 5, tomb }];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 5, detachedBy, detachIndex }];
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", id: 3, count: 1 },
@@ -298,7 +300,7 @@ describe("SequenceField - Compose", () => {
         ];
         const actual = shallowCompose([revive, deletion]);
         const expected: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
             { type: "Delete", id: 4, count: 1 },
         ];
         assert.deepEqual(actual, expected);
@@ -336,12 +338,14 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const deletion: SF.Changeset = [{ type: "Revive", id: 1, count: 5, tomb }];
+        const deletion: SF.Changeset = [
+            { type: "Revive", id: 1, count: 5, detachedBy, detachIndex },
+        ];
         const insert: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-            { type: "Revive", id: 1, count: 5, tomb },
+            { type: "Revive", id: 1, count: 5, detachedBy, detachIndex },
         ];
         const actual = shallowCompose([deletion, insert]);
         assert.deepEqual(actual, expected);
@@ -384,9 +388,9 @@ describe("SequenceField - Compose", () => {
                 changes: { valueChange: { value: 1 } },
             },
         ];
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, detachedBy, detachIndex }];
         const expected: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
             {
                 type: "Modify",
                 changes: { valueChange: { value: 1 } },
@@ -398,11 +402,11 @@ describe("SequenceField - Compose", () => {
 
     it("delete ○ revive", () => {
         const deletion: SF.Changeset = [{ type: "Delete", id: 1, count: 3 }];
-        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
+        const revive: SF.Changeset = [{ type: "Revive", id: 1, count: 2, detachedBy, detachIndex }];
         // TODO: test with merge-right policy as well
         // TODO: test revive of deleted content
         const expected: SF.Changeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
             { type: "Delete", id: 1, count: 3 },
         ];
         const actual = shallowCompose([deletion, revive]);
@@ -410,12 +414,16 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ revive", () => {
-        const reviveA: SF.Changeset = [{ type: "Revive", id: 1, count: 2, tomb }];
-        const reviveB: SF.Changeset = [{ type: "Revive", id: 2, count: 3, tomb }];
+        const reviveA: SF.Changeset = [
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
+        ];
+        const reviveB: SF.Changeset = [
+            { type: "Revive", id: 2, count: 3, detachedBy, detachIndex },
+        ];
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
-            { type: "Revive", id: 2, count: 3, tomb },
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 2, count: 3, detachedBy, detachIndex },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex },
         ];
         const actual = shallowCompose([reviveA, reviveB]);
         assert.deepEqual(actual, expected);
@@ -435,17 +443,17 @@ describe("SequenceField - Compose", () => {
             },
         ];
         const revive: SF.Changeset = [
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex },
             4,
-            { type: "Revive", id: 4, count: 1, tomb },
+            { type: "Revive", id: 4, count: 1, detachedBy, detachIndex },
         ];
         const actual = shallowCompose([insert, revive]);
         const expected: SF.Changeset = [
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex },
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
             2,
             { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-            { type: "Revive", id: 4, count: 1, tomb },
+            { type: "Revive", id: 4, count: 1, detachedBy, detachIndex },
             { type: "Insert", id: 2, content: [{ type, value: 3 }] },
         ];
         assert.deepEqual(actual, expected);

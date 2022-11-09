@@ -113,6 +113,10 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
     return nodeChangeFromValueChange(valueChange);
 };
 
+function repair(): Delta.ProtoNode[] {
+    assert.fail("Unexpected request for repair data");
+}
+
 describe("Generic FieldKind", () => {
     describe("compose", () => {
         it("empty list", () => {
@@ -337,7 +341,7 @@ describe("Generic FieldKind", () => {
 
         const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
+        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, repair);
         assert.deepEqual(actual, expected);
     });
 

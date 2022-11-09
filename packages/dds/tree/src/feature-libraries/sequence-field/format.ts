@@ -27,13 +27,13 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
 
 export interface Tomb {
     type: "Tomb";
-    change: ChangesetTag;
+    change: RevisionTag;
     count: number;
 }
 
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     changes: TNodeChange;
 }
 
@@ -117,25 +117,27 @@ export type Attach<TNodeChange = NodeChangeType> =
 export type NodeMark = Detach;
 
 export interface Detach extends HasOpId {
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     type: "Delete" | "MoveOut";
     count: NodeCount;
 }
 
 export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     type: "MDelete" | "MMoveOut";
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     changes: TNodeChange;
 }
 
 export interface Reattach extends HasOpId, HasPlaceFields {
     type: "Revive" | "Return";
-    tomb: ChangesetTag;
+    detachedBy: RevisionTag | undefined;
+    detachIndex: number;
     count: NodeCount;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
     type: "MRevive" | "MReturn";
-    tomb: ChangesetTag;
+    detachedBy: RevisionTag | undefined;
+    detachIndex: number;
     changes: TNodeChange;
 }
 
@@ -150,11 +152,11 @@ export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, H
  */
 export interface Tombstones {
     count: NodeCount;
-    change: ChangesetTag;
+    change: RevisionTag;
 }
 
 export interface PriorOp {
-    change: ChangesetTag;
+    change: RevisionTag;
     id: OpId;
 }
 
@@ -200,7 +202,6 @@ export type ProtoNode = JsonableTree;
 export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
-export type ChangesetTag = number | string;
 export type ClientId = number;
 export enum Tiebreak {
     Left,

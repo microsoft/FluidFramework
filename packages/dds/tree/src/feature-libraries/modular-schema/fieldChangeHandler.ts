@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange } from "../../core";
+import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -18,7 +18,7 @@ export interface FieldChangeHandler<
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repair: RepairData): Delta.MarkList;
 
     // TODO
     // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
@@ -91,6 +91,8 @@ export interface FieldEditor<TChangeset> {
 }
 
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+
+export type RepairData = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 

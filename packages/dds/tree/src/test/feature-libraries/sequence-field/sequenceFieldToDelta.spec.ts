@@ -4,6 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { RevisionTag } from "../../../core";
 import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
 import {
     FieldChange,
@@ -13,7 +14,7 @@ import {
     singleTextCursor,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { brand, brandOpaque } from "../../../util";
+import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { TestChangeset } from "./utils";
@@ -27,14 +28,24 @@ const tag = "TestTag";
 const moveId = brandOpaque<Delta.MoveId>(opId);
 const fooField = brand<FieldKey>("foo");
 
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+
+function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
+    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
+}
+
 function toDelta(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepairData);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
+    return SF.sequenceFieldToDelta(
+        change,
+        () => fail("Unexpected call to child ToDelta"),
+        fakeRepairData,
+    );
 }
 
 describe("SequenceField - toDelta", () => {
@@ -96,7 +107,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive", () => {
-        const changeset: TestChangeset = [{ type: "Revive", id: opId, tomb: tag, count: 2 }];
+        const changeset: TestChangeset = [{ type: "Revive", id: opId, detachedBy: tag, count: 2 }];
         const actual = toDelta(changeset);
         assert.equal(actual.length, 1);
         const mark = actual[0];
@@ -116,7 +127,7 @@ describe("SequenceField - toDelta", () => {
             fieldChanges: new Map([[fooField, nestedChange]]),
         };
         const changeset: SF.Changeset = [
-            { type: "MRevive", id: opId, tomb: tag, changes: nodeChange },
+            { type: "MRevive", id: opId, detachedBy: tag, changes: nodeChange },
         ];
         const fieldChanges = new Map([
             [fooField, [{ type: Delta.MarkType.Insert, id: opId, content: [] }]],

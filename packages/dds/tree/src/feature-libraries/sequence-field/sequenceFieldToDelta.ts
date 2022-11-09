@@ -4,19 +4,23 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, brandOpaque, fail, makeArray, OffsetListFactory } from "../../util";
-import { TreeSchemaIdentifier, Delta } from "../../core";
+import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { Delta } from "../../core";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
+import { RepairData } from "../modular-schema";
 import { MarkList, ModifyInsert } from "./format";
 import { isSkipMark } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
+const ERR_NO_REVISION_ON_REVIVE =
+    "Unable to get convert revive mark to delta due to missing revision tag";
 export function sequenceFieldToDelta<TNodeChange>(
     marks: MarkList<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
+    repair: RepairData,
 ): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
     for (const mark of marks) {
@@ -107,9 +111,10 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Revive": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        // TODO: Restore the actual node, possibly as part of Delta application
-                        content: makeArray(mark.count, () =>
-                            singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
+                        content: repair(
+                            mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
+                            mark.detachIndex,
+                            mark.count,
                         ),
                     };
                     out.pushContent(insertMark);
@@ -121,9 +126,11 @@ export function sequenceFieldToDelta<TNodeChange>(
                         modify.fields ?? fail("MRevive marks should always carry field changes");
                     const insertMark: Delta.InsertAndModify = {
                         type: Delta.MarkType.InsertAndModify,
-                        // TODO: Restore the actual node, possibly as part of Delta application
-                        content: singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
-                        // TODO: Apply the field changes to the restored node
+                        content: repair(
+                            mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
+                            mark.detachIndex,
+                            1,
+                        )[0],
                         fields,
                     };
                     out.pushContent(insertMark);
@@ -146,8 +153,6 @@ export function sequenceFieldToDelta<TNodeChange>(
     }
     return out.list;
 }
-
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
  * Converts inserted content into the format expected in Delta instances.

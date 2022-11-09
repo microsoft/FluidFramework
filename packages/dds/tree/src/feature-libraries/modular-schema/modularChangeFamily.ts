@@ -18,8 +18,12 @@ import {
     Value,
     TaggedChange,
     RepairDataStore,
+    ReadonlyRepairDataStore,
+    RevisionTag,
+    TreeSchemaIdentifier,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly, makeArray } from "../../util";
+import { singleTextCursor } from "../treeTextCursor";
 import {
     FieldChangeHandler,
     FieldChangeMap,
@@ -224,12 +228,13 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: FieldChangeMap): Delta.Root {
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
         const delta: Delta.Root = new Map();
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
                 (childChange) => this.deltaFromNodeChange(childChange),
+                fakeRepairData,
             );
             delta.set(field, deltaField);
         }
@@ -259,6 +264,12 @@ export class ModularChangeFamily
     ): ModularEditBuilder {
         return new ModularEditBuilder(this, deltaReceiver, repairStore, anchors);
     }
+}
+
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+
+function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
+    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
 export function getFieldKind(

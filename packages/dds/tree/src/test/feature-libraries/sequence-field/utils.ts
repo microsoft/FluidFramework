@@ -44,5 +44,5 @@ export const cases: {
         },
     ],
     delete: [1, { type: "Delete", id: 1, count: 3 }],
-    revive: [2, { type: "Revive", id: 1, count: 2, tomb }],
+    revive: [2, { type: "Revive", id: 1, count: 2, detachedBy: tomb }],
 };

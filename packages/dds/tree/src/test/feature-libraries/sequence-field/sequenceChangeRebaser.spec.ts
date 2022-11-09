@@ -4,15 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange } from "../../../rebase";
+import { Delta } from "../../../core";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { makeAnonChange, RevisionTag } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { brand } from "../../../util";
+import { brand, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy: RevisionTag = brand(41);
+
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+
+function fakeRepairData(revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
+    assert.equal(revision, detachedBy);
+    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
+}
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
@@ -32,7 +40,7 @@ const testMarks: [string, SF.Mark<TestChange>][] = [
         },
     ],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
-    ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
+    ["Revive", { type: "Revive", id: 0, count: 2, detachedBy, detachIndex: 0 }],
 ];
 deepFreeze(testMarks);
 
@@ -123,7 +131,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                     const change = [mark];
                     const inv = SF.invert(makeAnonChange(change), TestChange.invert);
                     const actual = SF.compose([change, inv], TestChange.compose);
-                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta);
+                    const delta = SF.sequenceFieldToDelta(
+                        actual,
+                        TestChange.toDelta,
+                        fakeRepairData,
+                    );
                     assert.deepEqual(delta, []);
                 });
             }

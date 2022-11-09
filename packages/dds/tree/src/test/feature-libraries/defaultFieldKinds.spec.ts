@@ -52,6 +52,10 @@ const childComposer1_2 = (changes: NodeChangeset[]): NodeChangeset => {
     return nodeChange3;
 };
 
+function repair(): Delta.ProtoNode[] {
+    assert.fail("Unexpected request for repair data");
+}
+
 describe("Value field changesets", () => {
     const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset, FieldKinds.ValueFieldEditor> =
         FieldKinds.value.changeHandler;
@@ -156,7 +160,7 @@ describe("Value field changesets", () => {
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
         ];
 
-        const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
+        const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, repair);
         assertMarkListEqual(delta, expected);
     });
 
@@ -269,7 +273,7 @@ describe("Optional field changesets", () => {
             },
         ];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1, repair), expected);
     });
 
     it("can be converted to a delta when replacing content", () => {
@@ -278,13 +282,13 @@ describe("Optional field changesets", () => {
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
         ];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1, repair), expected);
     });
 
     it("can be converted to a delta with only child changes", () => {
         const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2, repair), expected);
     });
 
     it("can be encoded in JSON", () => {

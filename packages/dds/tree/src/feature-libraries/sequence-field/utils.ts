@@ -316,7 +316,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Revive":
         case "Return": {
             const lhsReattach = lhs as Reattach;
-            if (rhs.id === lhsReattach.id && rhs.tomb === lhsReattach.tomb) {
+            if (rhs.id === lhsReattach.id && rhs.detachedBy === lhsReattach.detachedBy) {
                 lhsReattach.count += rhs.count;
                 return true;
             }
