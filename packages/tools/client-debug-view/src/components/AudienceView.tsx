@@ -29,9 +29,10 @@ export interface AudienceViewProps {
     audience: IServiceAudience<IMember>;
 
     /**
-     * Audience
+     * Audience history to show member come and go records.
      */
     history: AudienceHistory[];
+
     /**
      * Callback to render data about an individual audience member.
      */

@@ -60,7 +60,6 @@ export interface ClientDebugViewProps {
  * Audience member history information. Record each member comes and goes.
  */
 export interface AudienceHistory {
-
     /**
      * Audience member ID.
      */
