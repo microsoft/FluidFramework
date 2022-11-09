@@ -70,7 +70,9 @@ graph TD;
 * No two chunks intersect/overlap
 * Every node in the tree belongs to a chunk
 
-These chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The chunk size is not necessarily related to the blob size; multiple chunks might go into a blob, or perhaps a chunk might be split across multiple blobs (that must always be downloaded together).
+These chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service.
+
+> The chunk size is not _necessarily_ related to the blob size; multiple chunks could go into a blob, for example. But in practice, having the chunk size target the blob size and storing each chunk in its own blob simplifies things greatly.
 
 ## The Chunk Data Structure
 
@@ -94,7 +96,7 @@ graph TD;
     D-->F
 ```
 
-Node B recognizes that it has two children, C and D, but C is inlined and part of the same chunk as B whereas D is in a different chunk and is stored by reference. Walking from B to C is a synchronous operation; walking from B to D is at worst an asynchronous operation that requires downloading Chunk 2 first. This is the pattern of virtualization for walking down the tree; chunks are loaded only as necessary.
+Node B recognizes that it has two children, C and D, but C is inlined and part of the same chunk as B whereas D is in a different chunk and is stored by reference. Walking from B to C is a synchronous operation; walking from B to D is an asynchronous operation that may require downloading Chunk 2 first. This is the pattern of virtualization for walking down the tree; chunks are loaded only as necessary.
 
 We assume that blobs are immutable and `content-addressable`. Therefore, the data structure cannot update the content of a blob in place; it must instead make a new blob that has a new key to replace it. This has implications for writes to the tree. Suppose, in the diagram above, that each Chunk is stored in a different blob (Blob 1, 2 and 3). A client updates the value of `H` which changes the value of Blob 3 and it is reuploaded. The _key_ for Blob 3 also changes; so now the reference to Blob 3 in Blob 2 is incorrect. Blob 2 must therefore be replaced and reuploaded as well, which means the same for Blob 1, and so on... all the way to the top of the tree (the "root blob"). Every write to the tree results in serious back surgery; the whole `spine` of the tree is replaced.
 
@@ -110,8 +112,10 @@ graph TD;
     B(Chunk B)
     C(Chunk C)
     D(Chunk D)
+    E(Chunk E)
     A-->B
     A-->C
+    A-->E
     C-->D
 ```
 
@@ -123,8 +127,10 @@ graph TD;
     B(Chunk B')
     C(Chunk C)
     D(Chunk D)
+    E(Chunk E)
     A-->B
     A-->C
+    A-->E
     C-->D
     style A fill:#844
     style B fill:#844
@@ -138,8 +144,10 @@ graph TD;
     B(Chunk B')
     C(Chunk C')
     D(Chunk D')
+    E(Chunk E)
     A-->B
     A-->C
+    A-->E
     C-->D
     style A fill:#448
     style B fill:#844
@@ -155,7 +163,7 @@ Revision | Root Chunk Key
 1        | A'
 2        | A''
 
-This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision.
+This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for producing a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing `snapshot isolation` because the tree reader does not have to worry about changes from other clients affecting its view.
 
 ### Sparse Root Updates
 
@@ -231,7 +239,7 @@ graph TD;
     style E fill:#844
 ```
 
-Even though this tree has the same number of chunks as the tree above, it takes many more downloads (five) to get to the leaves.
+Even though this tree has the same number of chunks as the tree above, it takes many more downloads (five) to get to the leaves simply because the tree is of a different shape.
 
 ### Implementing a Random Read
 
@@ -245,41 +253,68 @@ The next sections will explore some ways of organizing the tree data such that b
 
 ### Path-Based B-Tree
 
-This approach simply puts all the nodes in a key-value data structure optimized for sorted keys,like a B-tree or similar data structure, using the path of each node as its key.
+This approach simply puts all the nodes in a key-value data structure optimized for sorted keys,like a [B-tree](https://en.wikipedia.org/wiki/B-tree) or similar data structure, using the path of each node as its key.
 
 Consider a tree and the paths of each of its nodes:
 
 ```mermaid
 graph TD;
-    A--1-->B;
-    A--2-->C--3-->D--4-->E;
-    D--5-->F;
+    A--0-->B;
+    A--1-->C--0-->D--0-->E;
+    D--1-->I;
+    E--0-->F;
+    E--1-->G;
+    E--2-->H;
 ```
 
  Node | Path
 ------|-----
-   A  | ""
-   B  | "1"
-   C  | "2"
-   D  | "2/3"
-   E  | "2/3/4"
-   F  | "2/3/5"
+   A  | "_"
+   B  | "0"
+   C  | "1"
+   D  | "1/0"
+   E  | "1/0/0"
+   F  | "1/0/0/0"
+   G  | "1/0/0/1"
+   H  | "1/0/0/2"
+   I  | "1/0/1"
 
-Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D, E, F]` (an in-order traversal of the tree).
+Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D, E, F, G, H, I]` (an in-order traversal of the tree).
 
 > Other sorts are possible too, but this one allows for some helpful optimizations in the B-tree itself (see Potential Optimizations below).
 
-The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. It is  easy to group the nodes into chunks; every so many consecutive nodes in sorted order comprise a chunk (in this case, every two):
+The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. After inserting these into a B-tree with a branching factor of three, for example, the tree might look like:
+
+```mermaid
+graph TD;
+    A(1/0, 1/0/0/1)
+    A-->B(_, 0, 1)
+    A-->C(1/0, 1/0/0, 1/0/0/0)
+    A-->D(1/0/0/1, 1/0/0/2, 1/0/1)
+```
+
+The overall idea here is that the original, unbalanced logical tree has been reshaped into a balanced tree, so now reading or writing any part of the tree is bounded by `O(log(n))`. The branching factor of the tree is chosen such that it aligns with the chunk size. The above tree, with a branching factor of three, would be optimized for fitting three nodes into each "leaf chunk":
+
+```mermaid
+graph TD;
+    A(1/0, 1/0/0/1)
+    A-->B(_, 0, 1)
+    A-->C(1/0, 1/0/0, 1/0/0/0)
+    A-->D(1/0/0/1, 1/0/0/2, 1/0/1)
+    style B fill:#844
+    style C fill:#448
+    style D fill:#484
+```
+
+In this approach, every so many consecutive nodes in sorted order comprise a chunk.
 
 Chunk | Nodes
 ------|------
-1     | [A, B]
-2     | [C, D]
-3     | [E, F]
+1     | [A, B, C]
+2     | [D, E, F]
+3     | [G, H, I]
 
-TODO: specify exactly where chunks are (don't forget interior nodes)
-
-TODO: How do the chunks re-balance if a node's payload increases in size and now the chunk is too full? Does data spill over into adjacent chunks (and spill over repeatedly, if necessary?)
+> TODO talk about chunk sizes and rebalancing a bit?
 
 Advantages:
 
@@ -972,6 +1007,7 @@ This is a good place leverage decision encapsulation to minimize the impact if w
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
 - Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
 - Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
+- Snapshot Isolation: [A guarantee](https://en.wikipedia.org/wiki/Snapshot_isolation) that the view of some data won't change until the client is finished with its current edit.
 - Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
 - Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
 - Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
