@@ -439,7 +439,7 @@ describe("ModularChangeFamily", () => {
         };
 
         editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
-        const changes = editor.getChanges();
+        const changes = editor.getChanges().map((c) => c.change);
         const nodeChange: NodeChangeset = {
             fieldChanges: new Map([
                 [fieldB, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
@@ -475,6 +475,7 @@ describe("ModularChangeFamily", () => {
         ]);
 
         editor.setValue(path, value);
-        assert.deepEqual(editor.getChanges(), [expectedChange]);
+        const changes = editor.getChanges().map((c) => c.change);
+        assert.deepEqual(changes, [expectedChange]);
     });
 });

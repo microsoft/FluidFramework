@@ -9,7 +9,9 @@ import {
     FieldKey,
     IForestSubscription,
     ITreeCursorSynchronous,
+    keyAsDetachedField,
     MapTree,
+    moveToDetachedField,
     RepairDataStore,
     RevisionTag,
     SparseNode,
@@ -40,13 +42,19 @@ export class ForestRepairDataStore implements RepairDataStore {
         const forest = this.forestProvider(revision);
         const cursor = forest.allocateCursor();
 
-        function visitFieldMarks(fields: Delta.FieldMarks, parent: RepairDataNode): void {
+        const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
             for (const [key, field] of fields) {
-                cursor.enterField(key);
+                if (parent !== this.root) {
+                    cursor.enterField(key);
+                } else {
+                    moveToDetachedField(forest, cursor, keyAsDetachedField(key));
+                }
                 visitField(field, parent, key);
-                cursor.exitField();
+                if (parent !== this.root) {
+                    cursor.exitField();
+                }
             }
-        }
+        };
 
         function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
             let index = 0;

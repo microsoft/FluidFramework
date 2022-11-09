@@ -4,8 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonSchemaData, jsonString, singleJsonCursor } from "../../domains";
-import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
+import {
+    AnchorSet,
+    Delta,
+    FieldKey,
+    initializeForest,
+    InMemoryStoredSchemaRepository,
+    ITreeCursorSynchronous,
+    JsonableTree,
+    RevisionTag,
+    rootFieldKeySymbol,
+    UpPath,
+} from "../../core";
+import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
     defaultChangeFamily as family,
     DefaultEditBuilder,
@@ -16,9 +27,8 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
-import { initializeForest, InMemoryStoredSchemaRepository, RevisionTag } from "../../core";
 
-const rootKey = brand<FieldKey>("root");
+const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");
 
 const root: UpPath = {
@@ -50,11 +60,11 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-function setup(data?: number | {}) {
-    const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
+function setup(data?: JsonableTree) {
+    const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
     const forest = new ObjectForest(schema);
     if (data !== undefined) {
-        initializeForest(forest, [singleJsonCursor(data)]);
+        initializeForest(forest, [singleTextCursor(data)]);
     }
     let currentRevision = 0;
     const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
@@ -88,7 +98,7 @@ describe("DefaultEditBuilder", () => {
     });
 
     it("Produces one delta for each editing call made to it", () => {
-        const { builder, deltas } = setup();
+        const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
         const expected: Delta.Root[] = [];
 
         builder.setValue(root, 42);
@@ -142,7 +152,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Node Edits", () => {
         it("Can set the root node value", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
             builder.setValue(root, 42);
             const expected: Delta.Root = new Map([
                 [
@@ -159,7 +169,28 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can set a child node value", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        {
+                            type: jsonObject.name,
+                            fields: {
+                                foo: [
+                                    { type: jsonNumber.name, value: 0 },
+                                    { type: jsonNumber.name, value: 1 },
+                                    { type: jsonNumber.name, value: 2 },
+                                    { type: jsonNumber.name, value: 3 },
+                                    { type: jsonNumber.name, value: 4 },
+                                    { type: jsonNumber.name, value: 5 },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -200,7 +231,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Value Field Edits", () => {
         it("Can overwrite a populated root field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({ type: jsonObject.name });
             builder.valueField(undefined, rootKey).set(singleTextCursor(nodeX));
             const expected: Delta.Root = new Map([
                 [
@@ -221,7 +252,21 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can overwrite a populated child field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        {
+                            type: jsonObject.name,
+                            fields: {
+                                foo: [{ type: jsonNumber.name, value: 0 }],
+                            },
+                        },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -265,7 +310,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Optional Field Edits", () => {
         it("Can overwrite a populated root field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({ type: jsonObject.name });
             builder.optionalField(undefined, rootKey).set(singleTextCursor(nodeX), false);
             const expected: Delta.Root = new Map([
                 [
@@ -286,7 +331,21 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can overwrite a populated child field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        {
+                            type: jsonObject.name,
+                            fields: {
+                                foo: [{ type: jsonNumber.name, value: 0 }],
+                            },
+                        },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -345,7 +404,16 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can set an empty child field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        { type: jsonObject.name },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -402,7 +470,27 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can insert a child node", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        {
+                            type: jsonObject.name,
+                            fields: {
+                                foo: [
+                                    { type: jsonNumber.name, value: 0 },
+                                    { type: jsonNumber.name, value: 1 },
+                                    { type: jsonNumber.name, value: 2 },
+                                    { type: jsonNumber.name, value: 3 },
+                                    { type: jsonNumber.name, value: 4 },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -441,7 +529,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can delete a root node", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -458,7 +546,29 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can delete child nodes", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = setup({
+                type: jsonObject.name,
+                fields: {
+                    foo: [
+                        { type: jsonNumber.name, value: 0 },
+                        { type: jsonNumber.name, value: 1 },
+                        {
+                            type: jsonObject.name,
+                            fields: {
+                                foo: [
+                                    { type: jsonNumber.name, value: 0 },
+                                    { type: jsonNumber.name, value: 1 },
+                                    { type: jsonNumber.name, value: 2 },
+                                    { type: jsonNumber.name, value: 3 },
+                                    { type: jsonNumber.name, value: 4 },
+                                    { type: jsonNumber.name, value: 5 },
+                                    { type: jsonNumber.name, value: 6 },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -479,7 +589,7 @@ describe("DefaultEditBuilder", () => {
                                                         5,
                                                         {
                                                             type: Delta.MarkType.Delete,
-                                                            count: 10,
+                                                            count: 2,
                                                         },
                                                     ],
                                                 ],
@@ -492,7 +602,7 @@ describe("DefaultEditBuilder", () => {
                     ],
                 ],
             ]);
-            builder.sequenceField(root_foo2, fooKey).delete(5, 10);
+            builder.sequenceField(root_foo2, fooKey).delete(5, 2);
             assertDeltasEqual(deltas, [expected]);
         });
     });
