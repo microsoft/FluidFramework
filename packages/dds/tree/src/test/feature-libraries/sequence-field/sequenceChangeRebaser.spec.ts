@@ -5,11 +5,12 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange } from "../../../rebase";
+import { makeAnonChange, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
+import { createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -128,5 +129,28 @@ describe("SequenceField - Rebaser Axioms", () => {
                 });
             }
         }
+    });
+});
+
+describe("SequenceField - Sandwich Rebasing", () => {
+    it("Nested inserts", () => {
+        const insertA = tagChange(createInsertChangeset(0, 2), brand(1));
+        const insertB = tagChange(createInsertChangeset(1, 1), brand(2));
+        const inverseA = SF.invert(insertA, TestChange.invert);
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+        const insertB3 = rebaseTagged(insertB2, insertA);
+        assert.deepEqual(insertB3.change, insertB.change);
+    });
+
+    it("Nested inserts ↷ adjacent insert", () => {
+        const insertX = tagChange(createInsertChangeset(0, 1), brand(1));
+        const insertA = tagChange(createInsertChangeset(1, 2), brand(2));
+        const insertB = tagChange(createInsertChangeset(2, 1), brand(3));
+        const inverseA = SF.invert(insertA, TestChange.invert);
+        const insertA2 = rebaseTagged(insertA, insertX);
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+        const insertB3 = rebaseTagged(insertB2, insertX);
+        const insertB4 = rebaseTagged(insertB3, insertA2);
+        assert.deepEqual(insertB4.change, createInsertChangeset(3, 1));
     });
 });
