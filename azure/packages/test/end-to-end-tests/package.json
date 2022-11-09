@@ -67,7 +67,7 @@
     "@fluidframework/sequence": "^1.4.0-106438",
     "@fluidframework/server-services-client": "^0.1036.5000",
     "@fluidframework/telemetry-utils": "^1.4.0-106438",
-    "@fluidframework/test-client-utils": "1.4.0-106438",
+    "@fluidframework/test-client-utils": "^1.4.0-106438",
     "@fluidframework/test-runtime-utils": "^1.4.0-106438",
     "@fluidframework/test-utils": "^1.4.0-106438",
     "cross-env": "^7.0.2",
