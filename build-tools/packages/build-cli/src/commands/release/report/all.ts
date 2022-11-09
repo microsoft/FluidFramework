@@ -32,8 +32,9 @@ const DEFAULT_MIN_VERSION = "0.0.0";
 export default class ReportAllCommand<
     T extends typeof ReportAllCommand.flags,
 > extends ReleaseReportBaseCommand<T> {
-    static summary = "Generates a report of all releases of a particular package or release group.";
-    static description = `Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.`;
+    static description = `Generates a report of all releases of a particular package or release group.
+
+    Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.`;
 
     static examples = [
         {

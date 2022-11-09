@@ -95,22 +95,28 @@ DESCRIPTION
   a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the
   most recent version.
 
-  The by default, the command will select the
+  The command operates in two modes: "whole repo" or "release group." The default mode is "whole repo." In this mode,
+  the command will look at the git tags in the repo to determine the versions, and will include all release groups and
+  packages in the repo. You can control which version of each package and release group is included in the report using
+  the --interactive, --mostRecent, and --highest flags.
 
-  Using the --all flag, you can list all the releases for a given release group or package.
+  The "release group" mode can be activated by passing a --releaseGroup flag. In this mode, the specified release
+  group's version will be loaded from the repo, and its immediate Fluid dependencies will be included in the report.
+  This is useful when we want to include only the dependency versions that the release group depends on in the report.
 
 EXAMPLES
   Output all release report files to the current directory.
 
-    $ flub release report -o .
-
-  Generate a minimal release report and display it in the terminal.
-
     $ flub release report
 
-  Generate a minimal release report and output it to stdout as JSON.
+  Generate a release report of the highest semver release for each package and release group and display it in the
+  terminal only.
 
-    $ flub release report --json
+    $ flub release report --no-output
+
+  Generate a release report for each package and release group in the repo interactively.
+
+    $ flub release report -i
 ```
 
 ## `flub release report all`
