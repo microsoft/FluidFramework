@@ -57,6 +57,27 @@ export interface ClientDebugViewProps {
 }
 
 /**
+ * Audience member history information. Record each member comes and goes.
+ */
+export interface AudienceHistory {
+
+    /**
+     * Audience member ID.
+     */
+    audienceMemberId?: string;
+
+    /**
+     * Event time stamp.
+     */
+    timestamp: number;
+
+    /**
+     * Add or Remove
+     */
+    type: string;
+}
+
+/**
  * Displays information about the provided container and its audience.
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
@@ -67,18 +88,25 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
     // #region Audience state
 
     const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
+    const [history, updateHistory] = React.useState<AudienceHistory[]>([{audienceMemberId: myself?.userId, timestamp: Date.now(), type: "Add"}]);
 
     React.useEffect(() => {
         function onUpdateAudienceMembers(): void {
             updateMyself(audience.getMyself());
         }
 
-        audience.on("membersChanged", onUpdateAudienceMembers);
+        audience.on("memberRemoved", (clientId: string, member: IMember) => {
+            updateHistory([...history, {audienceMemberId: member.userId, timestamp: Date.now(), type: "Remove"}]);
+          });
+        audience.on("memberAdded", (clientId: string, member: IMember) => {
+            updateHistory([...history, {audienceMemberId: member.userId, timestamp: Date.now(), type: "Add"}]);
+          });
+
 
         return (): void => {
             audience.off("membersChanged", onUpdateAudienceMembers);
         };
-    }, [audience, updateMyself]);
+    }, [audience, updateMyself, history, updateHistory]);
 
     // #endregion
 
@@ -162,6 +190,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
                 innerView = (
                     <AudienceView
                         audience={audience}
+                        history={history}
                         myself={myself}
                         onRenderAudienceMember={renderOptions.onRenderAudienceMember}
                     />
