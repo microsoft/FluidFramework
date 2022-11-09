@@ -388,7 +388,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		if (!this.producerOptions.reconnectOnNonFatalErrors) {
 			// we should not reconnect on non fatal errors
-			const isFatalError = (RdkafkaBase as any).isObject(error) &&
+			const isFatalError = RdkafkaBase.isObject(error) &&
 				(error as kafkaTypes.LibrdKafkaError).code === this.kafka.CODES.ERRORS.ERR__FATAL;
 			if (!isFatalError) {
 				// it's not fatal!
@@ -415,7 +415,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Check if an exception is a "Broker: Message size too large" error
 	 */
 	private isMessageSizeTooLargeError(ex: any): boolean {
-		return (RdkafkaBase as any).isObject(ex) &&
+		return RdkafkaBase.isObject(ex) &&
 			((ex as kafkaTypes.LibrdKafkaError).code === this.kafka.CODES.ERRORS.ERR_MSG_SIZE_TOO_LARGE ||
 				(ex as Error).message.toLowerCase().includes("message size too large"));
 	}
