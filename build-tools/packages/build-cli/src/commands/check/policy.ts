@@ -97,7 +97,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const handlersToRun: Handler[] = policyHandlers.filter((h) => {
-            const shouldRun = this.processedFlags.excludeHandler?.includes(h.name) === false;
+            const shouldRun = !this.processedFlags.excludeHandler?.includes(h.name);
             if (!shouldRun) {
                 this.info(`Excluding handler: ${h.name}`);
             }

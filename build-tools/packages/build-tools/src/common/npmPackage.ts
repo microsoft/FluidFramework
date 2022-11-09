@@ -189,7 +189,7 @@ export class Package {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc");
         const npmRC = path.join(this.directory, ".npmrc");
-        const npmCommand = this.monoRepo?.npmClient === "pnpm" ? "pnpm i" : "npm i --no-package-lock --no-shrinkwrap";
+        const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
 
         await copyFileAsync(rootNpmRC, npmRC);
         const result = await execWithErrorAsync(
@@ -354,7 +354,7 @@ export class Packages {
     }
 
     public async noHoistInstall(repoRoot: string) {
-        return this.queueExecOnAllPackage((pkg) => pkg.noHoistInstall(repoRoot), `(p)npm install`);
+        return this.queueExecOnAllPackage((pkg) => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
     public async filterPackages(releaseGroup: MonoRepoKind | undefined) {

@@ -68,7 +68,6 @@ export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
     public readonly workspaceGlobs: string[];
-    public readonly npmClient: "npm" | "pnpm";
 
     /**
      * Creates a new monorepo.
@@ -90,7 +89,6 @@ export class MonoRepo {
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
 
-        this.npmClient = existsSync(pnpmWorkspace) ? "pnpm" : "npm";
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
@@ -101,7 +99,7 @@ export class MonoRepo {
 
             let pkgs: string[] = [];
 
-            if (this.npmClient === "pnpm") {
+            if (existsSync(pnpmWorkspace)) {
                 logger.verbose(`${kind}: Loading packages from ${pnpmWorkspace}`);
                 const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
                 pkgs = YAML.parse(workspaceString).packages;
@@ -151,10 +149,8 @@ export class MonoRepo {
     }
 
     public async install() {
-        const installScript = existsSync(path.join(this.repoPath, "pnpm-workspace.yaml"))
-            ? "pnpm i"
-            : "npm i";
-        this.logger.info(`${this.kind}: Installing - ${installScript}`);
+        this.logger.info(`${this.kind}: Installing - npm i`);
+        const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
