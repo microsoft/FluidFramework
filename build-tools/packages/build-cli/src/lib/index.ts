@@ -47,4 +47,4 @@ export {
     ReleaseReport,
     ReportKind,
     toReportKind,
-} from "./releaseManifest";
+} from "./release";
