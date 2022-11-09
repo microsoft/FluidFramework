@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "console";
+import { assert } from "@fluidframework/common-utils";
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {

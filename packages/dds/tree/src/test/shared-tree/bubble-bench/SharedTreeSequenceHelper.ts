@@ -2,6 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// import {
+//     Anchor,
+//     FieldKey,
+//     ISharedTree,
+//     JsonableTree,
+//     singleTextCursor,
+//     TransactionResult,
+// } from "@fluid-internal/tree";
 import { TransactionResult } from "../../../checkout";
 import { singleTextCursor } from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
@@ -18,16 +26,16 @@ export class SharedTreeSequenceHelper {
         this.treeNodeHelper = new SharedTreeNodeHelper(tree, parentAnchor);
     }
 
-    public getAnchor(index: number) {
+    public getAnchor(index: number): Anchor {
         const cursor = this.treeNodeHelper.getCursor();
         cursor.enterField(this.sequenceFieldKey);
         cursor.enterNode(index);
-        const treeNode = cursor.buildAnchor();
+        const treeNode: Anchor = cursor.buildAnchor();
         cursor.free();
         return treeNode;
     }
 
-    public get(index: number) {
+    public get(index: number): SharedTreeNodeHelper {
         return new SharedTreeNodeHelper(this.tree, this.getAnchor(index));
     }
 
@@ -36,11 +44,11 @@ export class SharedTreeSequenceHelper {
         const cursor = this.treeNodeHelper.getCursor();
         cursor.enterField(this.sequenceFieldKey);
         let currentNode = cursor.firstNode();
-        if (!currentNode) {
+        if (currentNode === false) {
             cursor.free();
             return nodeAnchors; // The node has no members in its sequence.
         }
-        while (currentNode) {
+        while (currentNode === true) {
             nodeAnchors.push(cursor.buildAnchor());
             currentNode = cursor.nextNode();
         }
@@ -49,11 +57,11 @@ export class SharedTreeSequenceHelper {
         return nodeAnchors;
     }
 
-    public getAll() {
+    public getAll(): SharedTreeNodeHelper[] {
         return this.getAllAnchors().map((anchor) => new SharedTreeNodeHelper(this.tree, anchor));
     }
 
-    public length() {
+    public length(): number {
         const cursor = this.treeNodeHelper.getCursor();
         cursor.enterField(this.sequenceFieldKey);
         const length: number = cursor.getFieldLength();
@@ -61,9 +69,9 @@ export class SharedTreeSequenceHelper {
         return length;
     }
 
-    public push(jsonTree: JsonableTree) {
+    public push(jsonTree: JsonableTree): void {
         const cursor = this.tree.forest.allocateCursor();
-        this.tree.forest.tryMoveCursorTo(this.parentAnchor, cursor);
+        this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
 
         this.tree.runTransaction((forest, editor) => {
             const parentPath = this.tree.locate(cursor.buildAnchor());
@@ -78,7 +86,7 @@ export class SharedTreeSequenceHelper {
         });
     }
 
-    public pop() {
+    public pop(): void {
         this.tree.runTransaction((forest, editor) => {
             const cursor = this.treeNodeHelper.getCursor();
             const parentPath = this.tree.locate(cursor.buildAnchor());

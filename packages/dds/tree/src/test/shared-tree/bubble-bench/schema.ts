@@ -2,10 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { brand } from "../../../util";
+
 import { emptyField, FieldKinds } from "../../../feature-libraries";
 import { fieldSchema, namedTreeSchema, SchemaData, ValueSchema } from "../../../schema-stored";
 import { EmptyKey, JsonableTree, rootFieldKey } from "../../../tree";
+import { brand } from "../../../util";
+
+// import {
+//     brand,
+//     emptyField,
+//     EmptyKey,
+//     FieldKinds,
+//     fieldSchema,
+//     JsonableTree,
+//     namedTreeSchema,
+//     rootFieldKey,
+//     SchemaData,
+//     ValueSchema,
+//     // symbolFromKey,
+// } from "@fluid-internal/tree";
 
 export const stringSchema = namedTreeSchema({
     name: brand("String"),
@@ -57,6 +72,11 @@ export const iClientSequenceSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
+// const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
+
 export const AppStateSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppState-1.0.0"),
     localFields: {
@@ -67,6 +87,8 @@ export const AppStateSchema = namedTreeSchema({
 
 export const rootAppStateSchema = fieldSchema(FieldKinds.value, [AppStateSchema.name]);
 
+// const rootFieldSchema = fieldSchema(FieldKinds.value);
+// const globalFieldSchema = fieldSchema(FieldKinds.value);
 export const AppStateSchemaData: SchemaData = {
     treeSchema: new Map([
         [stringSchema.name, stringSchema],
@@ -77,7 +99,10 @@ export const AppStateSchemaData: SchemaData = {
         [iClientSequenceSchema.name, iClientSequenceSchema],
         [AppStateSchema.name, AppStateSchema],
     ]),
-    globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootAppStateSchema],
+        // [globalFieldKey, globalFieldSchema],
+    ]),
 };
 
 export const mockAppStateJsonTree: JsonableTree = {
@@ -126,21 +151,71 @@ export const mockAppStateJsonTree: JsonableTree = {
                                     {
                                         type: iBubbleSchema.name,
                                         fields: {
-                                            x: [{ type: int32Schema.name, value: 10 }],
-                                            y: [{ type: int32Schema.name, value: 10 }],
-                                            r: [{ type: int32Schema.name, value: 10 }],
-                                            vx: [{ type: int32Schema.name, value: 10 }],
-                                            vy: [{ type: int32Schema.name, value: 10 }],
+                                            x: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 10,
+                                                },
+                                            ],
+                                            y: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 10,
+                                                },
+                                            ],
+                                            r: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 10,
+                                                },
+                                            ],
+                                            vx: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 10,
+                                                },
+                                            ],
+                                            vy: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 10,
+                                                },
+                                            ],
                                         },
                                     },
                                     {
                                         type: iBubbleSchema.name,
                                         fields: {
-                                            x: [{ type: int32Schema.name, value: 20 }],
-                                            y: [{ type: int32Schema.name, value: 20 }],
-                                            r: [{ type: int32Schema.name, value: 20 }],
-                                            vx: [{ type: int32Schema.name, value: 20 }],
-                                            vy: [{ type: int32Schema.name, value: 20 }],
+                                            x: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 20,
+                                                },
+                                            ],
+                                            y: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 20,
+                                                },
+                                            ],
+                                            r: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 20,
+                                                },
+                                            ],
+                                            vx: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 20,
+                                                },
+                                            ],
+                                            vy: [
+                                                {
+                                                    type: int32Schema.name,
+                                                    value: 20,
+                                                },
+                                            ],
                                         },
                                     },
                                 ],

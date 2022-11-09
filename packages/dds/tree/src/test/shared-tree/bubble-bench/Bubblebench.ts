@@ -2,93 +2,117 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// import {
+//     ISharedTree,
+//     rootFieldKeySymbol,
+//     SharedTreeFactory,
+//     singleTextCursor,
+//     TransactionResult,
+// } from "@fluid-internal/tree";
 // import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
-// import { TransactionResult } from "../../../checkout";
-// import { singleTextCursor } from "../../../feature-libraries";
-// import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
-// import { detachedFieldAsKey } from "../../../tree";
+import { TransactionResult } from "../../../checkout";
+import { singleTextCursor } from "../../../feature-libraries";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
+import { rootFieldKeySymbol } from "../../../tree";
 // import { AppState } from "./AppState";
-// import { AppStateSchema, AppStateSchemaData } from "./schema";
+import { AppStateSchema, AppStateSchemaData } from "./schema";
 
-// export class Bubblebench extends DataObject {
-//     public static get Name() {
-//         return "@fluid-example/bubblebench-sharedtree";
-//     }
-//     private maybeTree?: ISharedTree = undefined;
-//     private maybeAppState?: AppState = undefined;
-//     static treeFactory = new SharedTreeFactory();
+export class Bubblebench {
+    public static get Name() {
+        return "@fluid-example/bubblebench-sharedtree";
+    }
+    // private maybeTree?: ISharedTree = undefined;
+    // private maybeAppState?: AppState = undefined;
+    static treeFactory = new SharedTreeFactory();
 
-//     protected async initializingFirstTime() {
-//         this.maybeTree = Bubblebench.treeFactory.create(this.runtime, "bubbleBench"); // Is this correct?
+    // protected async initializingFirstTime() {
+    //     this.maybeTree = this.runtime.createChannel(
+    //         "unqiue-bubblebench-key-1337",
+    //         Bubblebench.treeFactory.type
+    //     ) as ISharedTree;
 
-//         // initialize the schema of the shared tree to that of the Bubblebench AppState
-//         this.maybeTree.storedSchema.update(AppStateSchemaData);
+    //     this.initializeTree(this.maybeTree);
 
-//         // Apply an edit to the tree which inserts a node with the initial AppState as the root of the tree
-//         this.maybeTree.runTransaction((forest, editor) => {
-//             // This cursor contains the initial state of the root of the bubblebench shared tree as a JsonableTree
-//             const writeCursor = singleTextCursor({
-//                 type: AppStateSchema.name,
-//                 fields: {
-//                     clients: [],
-//                 },
-//             });
-//             const field = editor.sequenceField(undefined, detachedFieldAsKey(forest.rootField));
-//             field.insert(0, writeCursor);
-//             return TransactionResult.Apply;
-//         });
+    //     // This line will fail with the error 0x17b /* "Channel to be binded should be in not bounded set" */);
+    //     this.root.set("unqiue-bubblebench-key-1337", this.maybeTree.handle);
+    // }
 
-//         this.root.set("bubbleBench", this.maybeTree.handle);
-//     }
+    // // What is the replacement for this method?
+    // protected async initializingFromExisting() {
+    //     // console.log("existing initialization");
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     this.maybeTree = await this.root
+    //         .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
+    //         .get();
+    // }
 
-//     // What is the replacement for this method?
-//     protected async initializingFromExisting() {
-//         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//         this.maybeTree = await this.root.get<IFluidHandle<ISharedTree>>("bubbleBench")!.get();
-//     }
+    // protected async hasInitialized() {
+    //     if (this.tree === undefined) {
+    //         throw new Error(
+    //             "hasInitialized called but tree is still undefined",
+    //         );
+    //     }
+    //     this.maybeAppState = new AppState(
+    //         this.tree,
+    //         /* stageWidth: */ 640,
+    //         /* stageHeight: */ 480,
+    //         /* numBubbles: */ 1,
+    //     );
 
-//     protected async hasInitialized() {
-//         if (!this.tree) {
-//             throw new Error("hasInitialized called but tree is still undefined");
-//         }
-//         this.maybeAppState = new AppState(
-//             this.tree,
-//             /* stageWidth: */ 640,
-//             /* stageHeight: */ 480,
-//             /* numBubbles: */ 1,
-//         );
+    //     const onConnected = () => {
+    //         // Out of paranoia, we periodically check to see if your client Id has changed and
+    //         // update the tree if it has.
+    //         setInterval(() => {
+    //             const clientId = this.runtime.clientId;
+    //             if (
+    //                 clientId !== undefined &&
+    //                 clientId !== this.appState.localClient.clientId
+    //             ) {
+    //                 this.appState.localClient.clientId = clientId;
+    //             }
+    //         }, 1000);
+    //     };
 
-//         const onConnected = () => {
-//             // Out of paranoia, we periodically check to see if your client Id has changed and
-//             // update the tree if it has.
-//             setInterval(() => {
-//                 const clientId = this.runtime.clientId;
-//                 if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
-//                     this.appState.localClient.clientId = clientId;
-//                 }
-//             }, 1000);
-//         };
+    //     // Wait for connection to begin checking client Id.
+    //     if (this.runtime.connected) {
+    //         onConnected();
+    //     } else {
+    //         this.runtime.once("connected", onConnected);
+    //     }
+    // }
 
-//         // Wait for connection to begin checking client Id.
-//         if (this.runtime.connected) {
-//             onConnected();
-//         } else {
-//             this.runtime.once("connected", onConnected);
-//         }
-//     }
+    initializeTree(tree: ISharedTree) {
+        // initialize the schema of the shared tree to that of the Bubblebench AppState
+        tree.storedSchema.update(AppStateSchemaData);
 
-//     private get tree() {
-//             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//         return this.maybeTree!;
-//     }
+        // Apply an edit to the tree which inserts a node with
+        // the initial AppState as the root of the tree
+        tree.runTransaction((forest, editor) => {
+            // This cursor contains the initial state of the root of the
+            // bubblebench shared tree as a JsonableTree
+            const writeCursor = singleTextCursor({
+                type: AppStateSchema.name,
+                fields: {
+                    clients: [],
+                },
+            });
+            const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+            field.insert(0, writeCursor);
+            return TransactionResult.Apply;
+        });
+    }
 
-//     public get appState() {
-//             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//         return this.maybeAppState!;
-//     }
-// }
+    // private get tree() {
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     return this.maybeTree!;
+    // }
+
+    // public get appState() {
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     return this.maybeAppState!;
+    // }
+}
 
 // /**
 //  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.

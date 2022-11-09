@@ -1,3 +1,9 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+// import { IClient } from "@fluid-example/bubblebench-common";
+// import { Anchor, brand, FieldKey, ISharedTree } from "@fluid-internal/tree";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey } from "../../../tree";
 import { brand } from "../../../util";
@@ -13,7 +19,7 @@ export class Client {
 
     private readonly treeHelper: SharedTreeNodeHelper;
     readonly bubbleSeqeunceHelper: SharedTreeSequenceHelper;
-    private readonly _bubbles: Bubble[];
+    // readonly bubbles: Bubble[];
 
     constructor(public readonly tree: ISharedTree, public readonly anchor: Anchor) {
         this.treeHelper = new SharedTreeNodeHelper(tree, anchor);
@@ -23,9 +29,9 @@ export class Client {
             Client.bubblesFieldKey,
         );
 
-        this._bubbles = this.bubbleSeqeunceHelper
-            .getAllAnchors()
-            .map((bubbleAnchor) => new Bubble(this.tree, bubbleAnchor));
+        // this.bubbles = this.bubbleSeqeunceHelper
+        //     .getAllAnchors()
+        //     .map((bubbleAnchor) => new Bubble(this.tree, bubbleAnchor));
     }
 
     public get clientId() {
@@ -43,7 +49,9 @@ export class Client {
     }
 
     public get bubbles() {
-        return this._bubbles;
+        return this.bubbleSeqeunceHelper
+            .getAll()
+            .map((treeNode) => new Bubble(this.tree, treeNode.anchor));
     }
 
     public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number }) {
@@ -54,19 +62,19 @@ export class Client {
                 y: [{ type: int32Schema.name, value: bubble.y }],
                 r: [{ type: int32Schema.name, value: bubble.r }],
                 vx: [{ type: int32Schema.name, value: bubble.vx }],
-                vy: [{ type: int32Schema.name, value: bubble.y }],
+                vy: [{ type: int32Schema.name, value: bubble.vy }],
             },
         };
         this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
-        this._bubbles.push(
-            new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this._bubbles.length)),
-        );
+        // this.bubbles.push(
+        //     new Bubble(this.tree, this.bubbleSeqeunceHelper.getAnchor(this.bubbles.length - 1)),
+        // );
     }
 
     public decreaseBubbles() {
-        if (this._bubbles.length > 1) {
+        if (this.bubbles.length > 1) {
             this.bubbleSeqeunceHelper.pop();
-            this._bubbles.pop();
+            // this.bubbles.pop();
         }
     }
 }

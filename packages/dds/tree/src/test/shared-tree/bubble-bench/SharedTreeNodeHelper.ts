@@ -2,9 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { TransactionResult } from "../../../checkout";
+import { ITreeSubscriptionCursor } from "../../../forest";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey, Value } from "../../../tree";
+
+// import {
+//     Anchor,
+//     FieldKey,
+//     ISharedTree,
+//     ITreeSubscriptionCursor,
+//     TransactionResult,
+//     Value,
+// } from "@fluid-internal/tree";
 
 export class SharedTreeNodeHelper {
     constructor(public readonly tree: ISharedTree, public readonly anchor: Anchor) {}
@@ -27,9 +38,9 @@ export class SharedTreeNodeHelper {
     /**
      * @returns A cursor pointing to the tree node held by this class instance.
      */
-    getCursor() {
+    getCursor(): ITreeSubscriptionCursor {
         const cursor = this.tree.forest.allocateCursor();
-        this.tree.forest.tryMoveCursorTo(this.anchor, cursor);
+        this.tree.forest.tryMoveCursorToNode(this.anchor, cursor);
         return cursor;
     }
 
@@ -38,7 +49,7 @@ export class SharedTreeNodeHelper {
      * @param fieldKey - The FieldKey of the field (node) within the tree node held by this class instance.
      * @param value - the value to be set at the given field (node) within the tree node held by this class instance.
      */
-    setFieldValue(fieldKey: FieldKey, value: Value) {
+    setFieldValue(fieldKey: FieldKey, value: Value): void {
         const cursor = this.getCursor();
         cursor.enterField(fieldKey);
         cursor.enterNode(0);

@@ -71,6 +71,12 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    moveToDetachedField,
+    rootField,
+    rootFieldKeySymbol,
+    namedTreeSchema,
+    TreeSchemaBuilder,
+    fieldSchema,
 } from "./core";
 
 export {
@@ -155,6 +161,8 @@ export {
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
     SequenceField,
+    singleTextCursor,
+    FieldKinds,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

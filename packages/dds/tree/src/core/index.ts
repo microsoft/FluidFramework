@@ -61,6 +61,7 @@ export {
     visitDelta,
     setGenericTreeField,
     rootFieldKeySymbol,
+    rootField,
 } from "../tree";
 
 export {

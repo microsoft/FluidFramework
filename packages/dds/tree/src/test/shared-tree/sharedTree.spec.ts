@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { FieldKinds, singleTextCursor, getSchemaString } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, getSchemaString, emptyField } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
+    EmptyKey,
+    FieldKey,
     JsonableTree,
     rootFieldKey,
     rootFieldKeySymbol,
@@ -22,11 +24,16 @@ import {
     GlobalFieldKey,
     namedTreeSchema,
     SchemaData,
-    // ValueSchema,
+    ValueSchema,
 } from "../../schema-stored";
-// import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
-// import { SharedTreeSequenceHelper } from "./bubble-bench/SharedTreeSequenceHelper";
-// import { AppState } from "./bubble-bench/AppState";
+/* eslint-disable import/no-internal-modules */
+import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
+import { SharedTreeSequenceHelper } from "./bubble-bench/SharedTreeSequenceHelper";
+import { AppState } from "./bubble-bench/AppState";
+import { AppStateSchemaData } from "./bubble-bench/schema";
+import { Bubblebench } from "./bubble-bench/Bubblebench";
+import { Bubble } from "./bubble-bench/Bubble";
+/* eslint-enable import/no-internal-modules */
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
@@ -349,6 +356,470 @@ describe("SharedTree", () => {
                 assert.equal(readCursor.nextNode(), false);
                 readCursor.free();
             }
+        });
+
+        describe("SharedTreeNodeHelper", () => {
+            const int32Schema = namedTreeSchema({
+                name: brand("Int32"),
+                extraLocalFields: emptyField,
+                value: ValueSchema.Number,
+            });
+
+            const testObjectSchema = namedTreeSchema({
+                name: brand("TestSharedTree"),
+                localFields: {
+                    testField: fieldSchema(FieldKinds.value, [int32Schema.name]),
+                },
+                extraLocalFields: emptyField,
+            });
+
+            const schemaData: SchemaData = {
+                treeSchema: new Map([[int32Schema.name, int32Schema]]),
+                globalFieldSchema: new Map([
+                    [rootFieldKey, fieldSchema(FieldKinds.value, [testObjectSchema.name])],
+                ]),
+            };
+
+            const testJsonableTree: JsonableTree = {
+                type: testObjectSchema.name,
+                fields: {
+                    testField: [{ type: int32Schema.name, value: 1 }],
+                },
+            };
+
+            const testFieldKey: FieldKey = brand("testField");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const expectedInitialNodeValue = testJsonableTree.fields!.testField[0].value;
+
+            it("getFieldValue()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+                assert.equal(treeNode.getFieldValue(testFieldKey), expectedInitialNodeValue);
+            });
+
+            it("setFieldValue()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+                const originalNodeValue = treeNode.getFieldValue(testFieldKey) as number;
+                const newNodeValue = originalNodeValue + 99;
+                cursor.free();
+                await provider.ensureSynchronized();
+                treeNode.setFieldValue(testFieldKey, newNodeValue);
+                assert.equal(treeNode.getFieldValue(testFieldKey), newNodeValue);
+            });
+        });
+
+        describe("SharedTreeSequenceHelper", () => {
+            const int32Schema = namedTreeSchema({
+                name: brand("Int32Schema"),
+                extraLocalFields: emptyField,
+                value: ValueSchema.Number,
+            });
+
+            const testSequenceMemeberSchema = namedTreeSchema({
+                name: brand("testSequenceMemeberSchema"),
+                localFields: {
+                    testField: fieldSchema(FieldKinds.value, [int32Schema.name]),
+                },
+                extraLocalFields: emptyField,
+            });
+
+            const testSequenceSchema = namedTreeSchema({
+                name: brand("testSequenceSchema"),
+                localFields: {
+                    [EmptyKey]: fieldSchema(FieldKinds.sequence, [testSequenceMemeberSchema.name]),
+                },
+                extraLocalFields: emptyField,
+            });
+
+            const testObjectSchema = namedTreeSchema({
+                name: brand("testObjectSchema"),
+                localFields: {
+                    testSequence: fieldSchema(FieldKinds.sequence, [testSequenceSchema.name]),
+                },
+                extraLocalFields: emptyField,
+            });
+
+            const schemaData: SchemaData = {
+                treeSchema: new Map([
+                    [int32Schema.name, int32Schema],
+                    [testSequenceMemeberSchema.name, testSequenceMemeberSchema],
+                    [testSequenceSchema.name, testSequenceSchema],
+                    [testObjectSchema.name, testObjectSchema],
+                ]),
+                globalFieldSchema: new Map([
+                    [rootFieldKey, fieldSchema(FieldKinds.value, [testObjectSchema.name])],
+                ]),
+            };
+
+            const testJsonableTree: JsonableTree = {
+                type: testObjectSchema.name,
+                fields: {
+                    testSequence: [
+                        {
+                            type: testSequenceMemeberSchema.name,
+                            fields: {
+                                testField: [{ type: int32Schema.name, value: 1 }],
+                            },
+                        },
+                        {
+                            type: testSequenceMemeberSchema.name,
+                            fields: {
+                                testField: [{ type: int32Schema.name, value: 2 }],
+                            },
+                        },
+                    ],
+                },
+            };
+
+            const testFieldKey: FieldKey = brand("testField");
+            /* eslint-disable @typescript-eslint/no-non-null-assertion */
+            const expectedFirstNodeInitialValue =
+                testJsonableTree.fields!.testSequence[0]!.fields!.testField[0].value;
+            const expectedSecondNodeInitialValue =
+                testJsonableTree.fields!.testSequence[1]!.fields!.testField[0].value;
+            /* eslint-enable @typescript-eslint/no-non-null-assertion */
+
+            it("getAnchor()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+
+                const firstNodeAnchor = treeSequence.getAnchor(0);
+                const firstNodeCursor = provider.trees[0].forest.allocateCursor();
+                provider.trees[0].forest.tryMoveCursorToNode(firstNodeAnchor, firstNodeCursor);
+                firstNodeCursor.enterField(testFieldKey);
+                firstNodeCursor.enterNode(0);
+                assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
+
+                const secondNodeAnchor = treeSequence.getAnchor(1);
+                const secondNodeCursor = provider.trees[0].forest.allocateCursor();
+                provider.trees[0].forest.tryMoveCursorToNode(secondNodeAnchor, secondNodeCursor);
+                secondNodeCursor.enterField(testFieldKey);
+                secondNodeCursor.enterNode(0);
+                assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
+            });
+
+            it("get()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+
+                const firstNode = treeSequence.get(0);
+                assert.equal(firstNode.getFieldValue(testFieldKey), expectedFirstNodeInitialValue);
+                const secondNode = treeSequence.get(1);
+                assert.equal(
+                    secondNode.getFieldValue(testFieldKey),
+                    expectedSecondNodeInitialValue,
+                );
+            });
+
+            it("getAllAnchors()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+                const treeAnchors = treeSequence.getAllAnchors();
+
+                const firstNodeCursor = provider.trees[0].forest.allocateCursor();
+                provider.trees[0].forest.tryMoveCursorToNode(treeAnchors[0], firstNodeCursor);
+                firstNodeCursor.enterField(testFieldKey);
+                firstNodeCursor.enterNode(0);
+                assert.equal(firstNodeCursor.value, expectedFirstNodeInitialValue);
+
+                const secondNodeCursor = provider.trees[0].forest.allocateCursor();
+                provider.trees[0].forest.tryMoveCursorToNode(treeAnchors[1], secondNodeCursor);
+                secondNodeCursor.enterField(testFieldKey);
+                secondNodeCursor.enterNode(0);
+                assert.equal(secondNodeCursor.value, expectedSecondNodeInitialValue);
+            });
+
+            it("getAll()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+                const treeNodes = treeSequence.getAll();
+                assert.equal(treeNodes.length, 2);
+                assert.equal(
+                    treeNodes[0].getFieldValue(testFieldKey),
+                    expectedFirstNodeInitialValue,
+                );
+                assert.equal(
+                    treeNodes[1].getFieldValue(testFieldKey),
+                    expectedSecondNodeInitialValue,
+                );
+            });
+
+            it("length()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+                assert.equal(treeSequence.length(), 2);
+            });
+
+            it("pop()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+                cursor.free();
+                treeSequence.pop();
+                await provider.ensureSynchronized();
+                assert.equal(treeSequence.length(), 1);
+                // confirms removal of node was the one at the last index
+                const remainingNode = new SharedTreeNodeHelper(
+                    provider.trees[0],
+                    treeSequence.getAnchor(0),
+                );
+                assert.equal(
+                    remainingNode.getFieldValue(testFieldKey),
+                    expectedFirstNodeInitialValue,
+                );
+            });
+
+            it("push()", async () => {
+                const provider = await TestTreeProvider.create(1);
+                initializeTestTree(provider.trees[0], testJsonableTree, schemaData);
+
+                // move to root node
+                const cursor = provider.trees[0].forest.allocateCursor();
+                moveToDetachedField(provider.trees[0].forest, cursor);
+                cursor.enterNode(0);
+
+                const treeSequence = new SharedTreeSequenceHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    brand("testSequence"),
+                );
+
+                cursor.free();
+                const initialSequenceLength = treeSequence.length();
+                treeSequence.push({
+                    type: testSequenceMemeberSchema.name,
+                    fields: {
+                        testField: [{ type: int32Schema.name, value: 3 }],
+                    },
+                });
+                await provider.ensureSynchronized();
+                assert.equal(treeSequence.length(), initialSequenceLength + 1);
+                const treeNodeValues = treeSequence
+                    .getAll()
+                    .map((node) => node.getFieldValue(testFieldKey));
+                assert.equal(treeNodeValues[0], expectedFirstNodeInitialValue);
+                assert.equal(treeNodeValues[1], expectedSecondNodeInitialValue);
+                assert.equal(treeNodeValues[2], 3);
+            });
+        });
+
+        describe("BubbleBench AppState", () => {
+            it("constructor creates a local client and inserts it at the end of the tree client sequence list", async () => {
+                const provider = await TestTreeProvider.create(1);
+                provider.trees[0].storedSchema.update(AppStateSchemaData);
+                new Bubblebench().initializeTree(provider.trees[0]);
+
+                const initialBubblesNum = 2;
+                const appState1 = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+                assert.equal(appState1.clients.length, 1);
+                const client1 = appState1.clients[0];
+                const client1Id = appState1.clients[0].clientId;
+                assert.equal(client1.bubbles.length, initialBubblesNum);
+                assert.equal(client1Id, appState1.localClient.clientId);
+
+                const appState2 = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+                assert.equal(appState2.clients.length, 2);
+                const client2 = appState2.clients[1];
+                const client2Id = appState2.clients[1].clientId;
+                assert.equal(client2.bubbles.length, initialBubblesNum);
+                assert.equal(client2Id, appState2.localClient.clientId);
+            });
+
+            it("increaseBubbles() - correctly adds bubbles to end of local client bubbles sequence", async () => {
+                const provider = await TestTreeProvider.create(1);
+                provider.trees[0].storedSchema.update(AppStateSchemaData);
+                new Bubblebench().initializeTree(provider.trees[0]);
+
+                const initialBubblesNum = 2;
+                const appState = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+                const client = appState.clients[0];
+                assert.equal(appState.clients[0].bubbles.length, initialBubblesNum);
+
+                appState.increaseBubblesT({ x: 99, y: 99, vx: 99, vy: 99, r: 99 });
+                await provider.ensureSynchronized();
+
+                const bubbles = client.bubbles;
+                assert.equal(bubbles.length, initialBubblesNum + 1);
+                assert.equal(bubbles[bubbles.length - 1].x, 99);
+            });
+
+            it("decreaseBubbles() - correctly pops bubble from end of local client bubbles sequence", async () => {
+                const provider = await TestTreeProvider.create(1);
+                provider.trees[0].storedSchema.update(AppStateSchemaData);
+                new Bubblebench().initializeTree(provider.trees[0]);
+
+                const initialBubblesNum = 2;
+                const appState = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+                const client = appState.clients[0];
+                assert.equal(appState.clients[0].bubbles.length, initialBubblesNum);
+
+                appState.increaseBubblesT({ x: 99, y: 99, vx: 99, vy: 99, r: 99 });
+                await provider.ensureSynchronized();
+                assert.equal(client.bubbles.length, initialBubblesNum + 1);
+                assert.equal(client.bubbles[client.bubbles.length - 1].x, 99);
+
+                appState.decreaseBubbles();
+                await provider.ensureSynchronized();
+                assert.equal(client.bubbles.length, initialBubblesNum);
+                assert.equal(client.bubbles[client.bubbles.length - 1].x, 10);
+            });
+
+            it("AppState observes changes in remote clients ", async () => {
+                const provider = await TestTreeProvider.create(1);
+                provider.trees[0].storedSchema.update(AppStateSchemaData);
+                new Bubblebench().initializeTree(provider.trees[0]);
+
+                // 1. create two clients
+                const initialBubblesNum = 2;
+                const appState1 = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                const appState2 = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+
+                // confirm both appState1 and appState2 can see each others clients
+                assert.equal(appState1.clients.length, 2);
+                assert.equal(appState2.clients.length, 2);
+                assert.notEqual(appState1.localClient.clientId, appState2.localClient.clientId);
+
+                // 2. increase bubbles in local client of appState1
+                appState1.increaseBubblesT({ x: 99, y: 99, vx: 99, vy: 99, r: 99 });
+                await provider.ensureSynchronized();
+                assert.equal(appState1.localClient.bubbles.length, initialBubblesNum + 1);
+                assert.equal(
+                    appState1.localClient.bubbles[appState1.localClient.bubbles.length - 1].x,
+                    99,
+                );
+
+                // 3. confirm appState2 can see the added bubble in the local client of appState1
+                const client1FromAppState2 = appState2.clients[0];
+                assert.equal(client1FromAppState2.bubbles.length, initialBubblesNum + 1);
+                assert.equal(
+                    client1FromAppState2.bubbles[client1FromAppState2.bubbles.length - 1].x,
+                    99,
+                );
+
+                // 4. decrease bubbles in local client of appState1
+                appState1.decreaseBubbles();
+                await provider.ensureSynchronized();
+                assert.equal(appState1.localClient.bubbles.length, initialBubblesNum);
+                assert.equal(
+                    appState1.localClient.bubbles[appState1.localClient.bubbles.length - 1].x,
+                    10,
+                );
+
+                // 5. confirm appState2 noticed the deleted bubble in the local client of appState1
+                assert.equal(client1FromAppState2.bubbles.length, initialBubblesNum);
+                assert.equal(
+                    client1FromAppState2.bubbles[client1FromAppState2.bubbles.length - 1].x,
+                    10,
+                );
+            });
+
+            it("localClient bubbleSequenceHelper", async () => {
+                const provider = await TestTreeProvider.create(1);
+                provider.trees[0].storedSchema.update(AppStateSchemaData);
+                new Bubblebench().initializeTree(provider.trees[0]);
+
+                const initialBubblesNum = 2;
+                const appState1 = new AppState(provider.trees[0], 640, 480, initialBubblesNum);
+                await provider.ensureSynchronized();
+                assert.equal(appState1.clients.length, 1);
+                const client1 = appState1.clients[0];
+                const client1Id = appState1.clients[0].clientId;
+                assert.equal(client1.bubbles.length, initialBubblesNum);
+                assert.equal(client1Id, appState1.localClient.clientId);
+                appState1.increaseBubbles();
+
+                const bubbleNodeHelpers = appState1.localClient.bubbleSeqeunceHelper.getAll();
+                const bubblesFromHelpers = bubbleNodeHelpers.map(
+                    (node) => new Bubble(node.tree, node.anchor),
+                );
+                const bubbleXVals = bubblesFromHelpers.map((bub) => bub.x);
+                console.log("breakpoint");
+            });
         });
     });
 });
