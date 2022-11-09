@@ -189,7 +189,9 @@ export interface AudienceChangeLogEntry extends LogEntry {
 }
 
 /**
- * TODO
+ * Fluid debug session associated with a Fluid Client via its
+ * {@link @fluidframework/container-definitions#IContainer} and
+ * {@link @fluidframework/container-definitions#IAudience}.
  */
 export interface IFluidClientDebugger
     extends IEventProvider<IFluidClientDebuggerEvents>,
@@ -270,7 +272,29 @@ export interface IFluidClientDebugger
 
     // #endregion
 
-    // TODO: state associated with events.
+    // #region User actions
+
+    /**
+     * Manually {@link @fluidframework/container-definitions#IContainer.disconnect | disconnect} the Container.
+     */
+    disconnectContainer(): void;
+
+    /**
+     * Manually attempt to {@link @fluidframework/container-definitions#IContainer.connect | connect} the Container.
+     *
+     * @remarks There is no guarantee that this operation will succeed.
+     */
+    tryConnectContainer(): void;
+
+    /**
+     * Manually {@link @fluidframework/container-definitions#IContainer.close | close} (dispose) the Container.
+     *
+     * @remarks Note: this cannot be undone. If you call this, you will need to restart your application'
+     * Container session.
+     */
+    closeContainer(): void;
+
+    // #endregion
 
     /**
      * Disposes the debugger session.
@@ -281,6 +305,8 @@ export interface IFluidClientDebugger
 
 /**
  * {@link IFluidClientDebugger} implementation.
+ *
+ * @remarks This class is not intended for external use. Only its interface is exported.
  *
  * @internal
  */
@@ -509,9 +535,39 @@ class FluidClientDebugger
         return this.audience.getMembers();
     }
 
+    /**
+     * {@inheritDoc IFluidClientDebugger.getAuidienceHistory}
+     */
     public getAuidienceHistory(): readonly AudienceChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._audienceChangeLog.map((value) => value);
+    }
+
+    // #endregion
+
+    // #region User actions
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.disconnectContainer}
+     */
+    public disconnectContainer(): void {
+        // TODO: Provide along reason string once API is updated to accept one.
+        this.container.disconnect();
+    }
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.tryConnectContainer}
+     */
+    public tryConnectContainer(): void {
+        this.container.connect();
+    }
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.closeContainer}
+     */
+    public closeContainer(): void {
+        // TODO: Provide reason string if/when the close API is updated to accept non-error "reason"s.
+        this.container.close();
     }
 
     // #endregion
@@ -520,12 +576,15 @@ class FluidClientDebugger
      * {@inheritDoc IFluidClientDebugger.dispose}
      */
     public dispose(): void {
-        // Unbind Container events
+        // Bind Container events
         this.container.off("connected", (clientId) => this.onContainerConnected(clientId));
         this.container.off("disconnected", () => this.onContainerDisconnected());
-        this.container.off("closed", this.containerClosedHandler);
+        this.container.off("closed", (error) => this.onContainerClosed(error));
+        this.container.off("op", (op) => this.onIncomingOpProcessed(op));
+        this.container.off("dirty", () => this.onContainerDirty());
+        this.container.off("saved", () => this.onContainerSaved());
 
-        // Unbind Audience events
+        // Bind Audience events
         this.audience.off("addMember", this.audienceMemberAddedHandler);
         this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 

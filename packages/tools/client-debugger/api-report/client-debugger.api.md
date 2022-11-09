@@ -43,7 +43,9 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
+    closeContainer(): void;
     readonly containerId: string;
+    disconnectContainer(): void;
     dispose(): void;
     getAudienceMembers(): Map<string, IClient>;
     getAuidienceHistory(): readonly AudienceChangeLogEntry[];
@@ -56,6 +58,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getOpsLog(): readonly OpsLogEntry[];
     isContainerClosed(): boolean;
     isContainerDirty(): boolean;
+    tryConnectContainer(): void;
 }
 
 // @public
