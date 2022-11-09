@@ -167,7 +167,7 @@ export function checkoutTests(
 			checkout.closeEdit();
 		});
 
-		it.only('emits error telemetry on attempted close of malformed edits', async () => {
+		it('emits error telemetry on attempted close of malformed edits', async () => {
 			const events: ITelemetryBaseEvent[] = [];
 			const { checkout } = await setUpTestTreeCheckout({
 				logger: { send: (event) => event.eventName.includes('Checkout') && events.push(event) },

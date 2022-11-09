@@ -14,6 +14,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
+import { MessageType2 } from "@fluidframework/driver-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../collabWindowTracker";
@@ -66,8 +67,8 @@ describe("Loader", () => {
                 );
 
                 const tracker = new CollabWindowTracker(
-                    (type: MessageType, contents: any) => {
-                        deltaManager.submit(type, contents);
+                    (type: MessageType) => {
+                        deltaManager.submit(type);
                         // CollabWindowTracker expects every op submitted (including noops) to result in this call:
                         tracker.stopSequenceNumberUpdate();
                     },
@@ -103,7 +104,7 @@ describe("Loader", () => {
                 } as any as ISequencedDocumentMessage;
             }
 
-            async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
+            async function emitSequentialOps(count: number) {
                 for (let num = 0; num < count; ++num) {
                     assert(!deltaConnection.disposed, "disposed");
                     deltaConnection.emitOp(docId, [generateOp()]);
@@ -143,10 +144,16 @@ describe("Loader", () => {
 
             describe("Update Minimum Sequence Number", () => {
                 // helper function asserting that there is exactly one well-formed no-op
-                function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {
+                function assertOneValidNoOp(messages: IDocumentMessage[]) {
                     assert.strictEqual(1, messages.length);
                     assert.strictEqual(MessageType.NoOp, messages[0].type);
-                    assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
+                    assert.strictEqual(undefined, messages[0].contents);
+                }
+
+                function assertOneValidAcceptOp(messages: IDocumentMessage[]) {
+                    assert.strictEqual(1, messages.length);
+                    assert.strictEqual(MessageType2.Accept, messages[0].type);
+                    assert.strictEqual(undefined, messages[0].contents);
                 }
 
                 it("Infinite frequency parameters disables periodic noops completely", async () => {
@@ -176,6 +183,7 @@ describe("Loader", () => {
                     await tickClock(1000 * 1000);
                     assert.equal(counter, 0, "No messages sent after 99 ops");
                     tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    await tickClock(1);
                     assert.equal(counter, 1, "One message should be sent");
                 });
 
@@ -194,6 +202,21 @@ describe("Loader", () => {
                     assert.equal(counter, 1, "One message should be sent");
                 });
 
+                it("1k op frequency will generate noop at op intervals", async () => {
+                    let counter = 0;
+                    const tracker = new CollabWindowTracker(
+                        () => { counter++; tracker.stopSequenceNumberUpdate(); },
+                        Infinity,
+                        1000,
+                    );
+                    for (let num = 0; num < 1000; ++num) {
+                        tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    }
+                    assert.equal(counter, 0, "No messages sent after 999 ops");
+                    await tickClock(1);
+                    assert.equal(counter, 1, "One message should be sent");
+                });
+
                 it("Should update after op count threshold", async () => {
                     let runCount = 0;
                     await startDeltaManager();
@@ -202,14 +225,14 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
-                    await emitSequentialOps(MessageType.Operation, 1);
+                    await emitSequentialOps(1);
                     assert.strictEqual(runCount, 1);
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 1);
                 });
@@ -223,7 +246,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
@@ -233,7 +256,7 @@ describe("Loader", () => {
 
                     // Now timeout again should not cause noop
                     await tickClock(expectedTimeout);
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -244,7 +267,7 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOps(MessageType.NoOp, noopCountFrequency + 1);
+                    await emitSequentialOps(noopCountFrequency + 1);
                     await tickClock(expectedTimeout);
                 });
 
@@ -254,11 +277,11 @@ describe("Loader", () => {
                     await startDeltaManager();
 
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                        assertOneValidNoOp(messages, true);
+                        assertOneValidAcceptOp(messages);
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.NoOp);
+                    await emitSequentialOps(1);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -282,7 +305,7 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOps();
+                    await emitSequentialOps(1);
                     await tickClock(expectedTimeout - 1);
                     deltaManager.submit(MessageType.Operation, ignoreContent);
                     await tickClock(1);

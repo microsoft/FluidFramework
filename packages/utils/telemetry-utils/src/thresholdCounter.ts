@@ -30,7 +30,7 @@ export class ThresholdCounter {
     }
 
     /**
-     * Sends the value if it's above the treshold
+     * Sends the value if it's above the threshold
      * and a multiple of the threshold.
      *
      * To be used in scenarios where we'd like to record a

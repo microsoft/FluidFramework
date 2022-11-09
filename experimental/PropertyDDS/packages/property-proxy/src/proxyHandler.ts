@@ -39,12 +39,10 @@ export const proxyHandler = {
         if (target.getProperty().has(key)) {
             // Recursion with proxies
 
-            if (asteriskFound) {
-                return PropertyProxy.proxify(target.getProperty().get(key,
-                    { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
-            } else {
-                return Utilities.proxifyInternal(target.getProperty(), key, caretFound);
-            }
+            return asteriskFound
+                ? PropertyProxy.proxify(target.getProperty().get(key,
+                    { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!)
+                : Utilities.proxifyInternal(target.getProperty(), key, caretFound);
         }
         return Reflect.get(target, key);
     },

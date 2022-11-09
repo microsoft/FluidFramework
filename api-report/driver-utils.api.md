@@ -107,6 +107,9 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
+// @public (undocumented)
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
@@ -132,14 +135,14 @@ export function createGenericNetworkError(message: string, retryInfo: {
 export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    static readonly errorType: string;
+    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
-    readonly errorType: string;
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 }
 
 // @public (undocumented)
@@ -184,6 +187,15 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
+export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    constructor(message: string, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+}
+
+// @public
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -204,7 +216,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @public
+// @public @deprecated
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
@@ -228,23 +240,22 @@ export interface IProgress {
 }
 
 // @public (undocumented)
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
-
-// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
-// @public (undocumented)
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+// @public
+export function isRuntimeMessage(message: {
+    type: string;
+}): boolean;
 
 // @public
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public @deprecated
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
@@ -260,6 +271,12 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
+
+// @public (undocumented)
+export enum MessageType2 {
+    // (undocumented)
+    Accept = "accept"
+}
 
 // @public (undocumented)
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
@@ -333,7 +350,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     get policies(): {
         caching: LoaderCachingPolicy;
         minBlobSize?: number | undefined;
-        maximumCacheDurationMs?: number | undefined;
+        maximumCacheDurationMs?: 432000000 | undefined;
     } | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
@@ -430,10 +447,12 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 // @public
-export class UsageError extends LoggingError implements IFluidErrorBase {
+export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string);
     // (undocumented)
-    readonly errorType = "usageError";
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.usageError;
 }
 
 // @public

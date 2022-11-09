@@ -18,12 +18,14 @@ import {
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there
  * is more than one op a particular run of the queue. It does not schedule if there is just one
  * op or just one batch in the run. It does the following two things:
+ *
  * 1. If the ops have been processed for more than a specific amount of time, it pauses the queue
- *    and calls setTimeout to schedule a resume of the queue. This ensures that we don't block
- *    the JS thread for a long time processing ops synchronously (for example, when catching up
- *    ops right after boot or catching up ops / delayed realizing data stores by summarizer).
+ * and calls setTimeout to schedule a resume of the queue. This ensures that we don't block
+ * the JS thread for a long time processing ops synchronously (for example, when catching up
+ * ops right after boot or catching up ops / delayed realizing data stores by summarizer).
+ *
  * 2. If we scheduled a particular run of the queue, it logs telemetry for the number of ops
- *    processed, the time and number of turns it took to process the ops.
+ * processed, the time and number of turns it took to process the ops.
  */
 export class DeltaScheduler {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

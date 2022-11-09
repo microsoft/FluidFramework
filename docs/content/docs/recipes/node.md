@@ -8,7 +8,7 @@ aliases:
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application in NodeJS that enables connected clients to generate random numbers and display the result of any changes to the shared state.  You'll also learn how to connect the Fluid data layer in [Node](https://nodejs.org/).
 
-To jump ahead into the finished demo, check out the [Node demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
+To jump ahead into the finished demo, check out the [Node demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/node-demo).
 
 The following image shows the random number generated open in four terminals after every one second.
 
@@ -42,7 +42,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
      "test:report": "echo No test for this example"
    },
    ```
-   
+
    And add the following line after the `dependencies` section, before the final closing bracket:
 
    ```json
@@ -62,6 +62,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     ```dotnetcli
     npm install @fluidframework/tinylicious-client fluid-framework readline-sync
     ```
+
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
 
 ## Code the project
 
@@ -181,7 +187,7 @@ To create a new Fluid container press Enter. The container id will be printed in
 
 ## Next steps
 
-- You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
+- You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/examples/node-demo).
 - Try extending the demo with more key/value pairs and a more complex framework such as Express.
 - Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
 
@@ -198,13 +204,23 @@ When you make changes to the code the project will automatically rebuild and the
 
 [Fluid container]: {{< relref "containers.md" >}}
 
-<!-- Classes and interfaces -->
+<!-- Distributed Data Structures -->
 
-[FluidContainer]: {{< relref "fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "sequences.md" >}}
-[SharedString]: {{< relref "string.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

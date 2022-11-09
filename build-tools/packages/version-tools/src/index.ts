@@ -3,7 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export * from "./bumpTypes";
-export * from "./internalVersionScheme";
-export * from "./schemes";
-export { incRange } from "./semver";
+export {
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
+    ReleaseVersion,
+    VersionBumpType,
+    VersionBumpTypeExtended,
+    VersionChangeType,
+    VersionChangeTypeExtended,
+} from "./bumpTypes";
+export {
+    changePreReleaseIdentifier,
+    getVersionRange,
+    fromInternalScheme,
+    isInternalVersionScheme,
+    toInternalScheme,
+} from "./internalVersionScheme";
+export {
+    bumpVersionScheme,
+    detectVersionScheme,
+    getLatestReleaseFromList,
+    isVersionScheme,
+    sortVersions,
+    VersionScheme,
+} from "./schemes";
+export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
+export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

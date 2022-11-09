@@ -14,19 +14,17 @@ export {
     ISummaryConfigurationDisableSummarizer,
     ISummaryConfigurationDisableHeuristics,
     IContainerRuntimeOptions,
-    IPendingRuntimeState,
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
-    ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
+    ICompressionRuntimeOptions,
 } from "./containerRuntime";
-export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
     gcBlobPrefix,
@@ -36,7 +34,6 @@ export {
 } from "./garbageCollection";
 export {
     IPendingFlush,
-    IPendingFlushMode,
     IPendingLocalState,
     IPendingMessage,
     IPendingState,
@@ -55,6 +52,7 @@ export {
     INackSummaryResult,
     IOnDemandSummarizeOptions,
     IProvideSummarizer,
+    IRefreshSummaryAckOptions,
     ISubmitSummaryOpResult,
     ISubmitSummaryOptions,
     ISummarizeOptions,

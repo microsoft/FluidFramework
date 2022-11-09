@@ -14,22 +14,36 @@ import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the counter
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedCounter}.
+ *
+ * @sealed
  */
 export class CounterFactory implements IChannelFactory {
+    /**
+     * Static value for {@link CounterFactory."type"}.
+     */
     public static readonly Type = "https://graph.microsoft.com/types/counter";
 
+    /**
+     * Static value for {@link CounterFactory.attributes}.
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: CounterFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
-    public get type() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
+    public get type(): string {
         return CounterFactory.Type;
     }
 
-    public get attributes() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
+    public get attributes(): IChannelAttributes {
         return CounterFactory.Attributes;
     }
 
@@ -46,6 +60,9 @@ export class CounterFactory implements IChannelFactory {
         return counter;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
         const counter = new SharedCounter(id, document, this.attributes);
         counter.initializeLocal();

@@ -283,11 +283,14 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
          * https://github.com/microsoft/FluidFramework/issues/2400
          *
          * - A SharedMap in local (detached) state set a key.
+         *
          * - The map is then attached so that it is available to remote clients.
+         *
          * - One of the remote clients sets a new value to the same key.
+         *
          * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
-         *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
-         *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+         * the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+         * when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
          */
 
         // Create a new map in local (detached) state.
@@ -345,6 +348,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     let container: Container;
     let dataObject: ITestFluidObject;
     let sharedMap: SharedMap;
+
     let containerRuntime: ContainerRuntime;
     let clearEventCount: number;
     let changedEventData: IValueChanged[];
@@ -357,10 +361,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(async () => {
         const configWithFeatureGates = {
             ...testContainerConfig,
-            loaderProps: { configProvider: configProvider({
-                "Fluid.ContainerRuntime.EnableRollback": true,
-            }) },
+            loaderProps: {
+                configProvider: configProvider({
+                    "Fluid.ContainerRuntime.EnableRollback": true,
+                }),
+            },
         };
+
         container = await provider.makeTestContainer(configWithFeatureGates) as Container;
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);

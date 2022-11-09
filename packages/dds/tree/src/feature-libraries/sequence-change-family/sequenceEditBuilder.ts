@@ -3,27 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ProgressiveEditBuilder } from "../../change-family";
-import { Transposed as T } from "../../changeset";
-import { ITreeCursor } from "../../forest";
-import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
+import {
+    ProgressiveEditBuilderBase,
+    ITreeCursor,
+    AnchorSet,
+    UpPath,
+    Value,
+    Delta,
+    getDepth,
+} from "../../core";
 import { fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
+import { Transposed as T } from "./changeset";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
+export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
     private opId: number = 0;
 
-    constructor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        anchorSet: AnchorSet,
-    ) {
+    constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
         super(sequenceChangeFamily, deltaReceiver, anchorSet);
     }
 
     public setValue(node: NodePath, value: Value) {
-        const modify: T.Modify & { value: T.SetValue; } = { type: "Modify", value: { type: "Set" } };
+        const modify: T.Modify & { value: T.SetValue } = { type: "Modify", value: { id: 0 } };
         // Only set the `SetValue.value` field if the given `value` is defined.
         // This ensures the object properly round-trips through JSON.
         if (value !== undefined) {
@@ -36,7 +39,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         const id = this.opId++;
         const content = jsonableTreeFromCursor(cursor);
         const insert: T.Insert = { type: "Insert", id, content: [content] };
-        this.applyMarkAtPath([insert], place);
+        this.applyMarkAtPath(insert, place);
     }
 
     public delete(place: PlacePath, count: number) {
@@ -51,7 +54,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         }
         const id = this.opId++;
         const moveOut: T.Detach = { type: "MoveOut", id, count };
-        const moveIn: T.AttachGroup = [{ type: "MoveIn", id, count }];
+        const moveIn: T.MoveIn = { type: "MoveIn", id, count };
         if (source.parent === destination.parent) {
             const srcIndex = source.parentIndex;
             const dstIndex = destination.parentIndex;
@@ -78,8 +81,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         const id2 = this.opId++;
                         marks.push(
                             { type: "MoveOut", id, count: gap },
-                            [{ type: "MoveIn", id, count: count - gap }],
-                            [{ type: "MoveIn", id: id2, count: gap }],
+                            { type: "MoveIn", id, count: count - gap },
+                            { type: "MoveIn", id: id2, count: gap },
                             { type: "MoveOut", id: id2, count: count - gap },
                         );
                     } else {
@@ -91,12 +94,17 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         marks.push(moveIn);
                     }
                 }
-                this.applyFieldMarksAtPath({ [source.parentField as string]: marks }, source.parent);
+                this.applyFieldMarksAtPath(
+                    { [source.parentField as string]: marks },
+                    source.parent,
+                );
             } else {
                 this.applyFieldMarksAtPath(
                     {
-                        [source.parentField as string]: srcIndex > 0 ? [srcIndex, moveOut] : [moveOut],
-                        [destination.parentField as string]: dstIndex > 0 ? [dstIndex, moveIn] : [moveIn],
+                        [source.parentField as string]:
+                            srcIndex > 0 ? [srcIndex, moveOut] : [moveOut],
+                        [destination.parentField as string]:
+                            dstIndex > 0 ? [dstIndex, moveIn] : [moveIn],
                     },
                     source.parent,
                 );
@@ -149,7 +157,12 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                     let aMarkList = aFieldMarks[keyA];
                     let bMarkList = bFieldMarks[keyB];
                     if (indexA > indexB) {
-                        [aMarkList, indexA, bMarkList, indexB] = [bMarkList, indexB, aMarkList, indexA];
+                        [aMarkList, indexA, bMarkList, indexB] = [
+                            bMarkList,
+                            indexB,
+                            aMarkList,
+                            indexA,
+                        ];
                     }
                     const marks = aMarkList;
                     const gap = indexB - indexA - 1;
@@ -211,8 +224,18 @@ function wrap1(marks: T.FieldMarks, node: UpPath): T.FieldMarks {
     return toFieldMarks({ type: "Modify", fields: marks }, node);
 }
 
-type NodePath = UpPath;
-type PlacePath = UpPath;
+/**
+ * Location of a Node in a tree relative to the root.
+ * Only valid for a specific revision of that tree.
+ */
+export interface NodePath extends UpPath {}
 
-const ERR_UP_PATH_NOT_VALID
-    = "If the two paths have the same key and the same index then they should have shared an UpPath earlier";
+/**
+ * Location of a "Place" in a tree relative to the root.
+ * This means a location where a node could be inserted, such as between nodes or an end of a field.
+ * Only valid for a specific revision of that tree.
+ */
+export interface PlacePath extends UpPath {}
+
+const ERR_UP_PATH_NOT_VALID =
+    "If the two paths have the same key and the same index then they should have shared an UpPath earlier";

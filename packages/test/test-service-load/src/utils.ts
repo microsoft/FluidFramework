@@ -142,18 +142,19 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         randEng,
         generateConfigurations(seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations));
 
+    const logger = ChildLogger.create(await loggerP, undefined,
+    {
+        all: {
+            driverType: testDriver.type,
+            driverEndpointName: testDriver.endpointName,
+        },
+    });
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader: createCodeLoader(containerOptions),
-        logger: ChildLogger.create(await loggerP, undefined,
-            {
-                all: {
-                    driverType: testDriver.type,
-                    driverEndpointName: testDriver.endpointName,
-                },
-            }),
+        logger,
         options: loaderOptions,
         detachedBlobStorage: new MockDetachedBlobStorage(),
         configProvider: {
@@ -172,7 +173,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
         assert(testDriver.type === "odsp", "attachment blobs in detached container not supported on this service");
         const ds = await requestFluidObject<ILoadTest>(container, "/");
-        const dsm = await ds.detached({ testConfig, verbose, randEng });
+        const dsm = await ds.detached({ testConfig, verbose, randEng }, logger);
         await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 

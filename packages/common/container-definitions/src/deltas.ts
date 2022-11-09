@@ -29,7 +29,7 @@ export interface IConnectionDetails {
     /**
      * Last known sequence number to ordering service at the time of connection
      * It may lap actual last sequence number (quite a bit, if container  is very active).
-     * But it's best information for client to figure out how far it is behind, at least
+     * But it's the best information for client to figure out how far it is behind, at least
      * for "read" connections. "write" connections may use own "join" op to similar information,
      * that is likely to be more up-to-date.
      */
@@ -106,7 +106,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly initialSequenceNumber: number;
 
     /**
-     * Tells if  current connection has checkpoint information.
+     * Tells if current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
      */
     readonly hasCheckpointSequenceNumber: boolean;

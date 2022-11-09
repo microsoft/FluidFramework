@@ -14,7 +14,7 @@ export interface IProvideFluidHandleContext {
 }
 
 /**
- * An IFluidHandleContext describes a routing context from which other IFluidHandleContexts are defined
+ * Describes a routing context from which other `IFluidHandleContext`s are defined.
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     /**
@@ -48,7 +48,7 @@ export interface IProvideFluidHandle {
 }
 
 /**
- * Handle to a shared FluidObject
+ * Handle to a shared {@link FluidObject}.
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
@@ -56,7 +56,7 @@ export interface IFluidHandle<
     > extends IProvideFluidHandle {
 
     /**
-     * @deprecated - Do not use handle's path for routing. Use `get` to get the underlying object.
+     * @deprecated Do not use handle's path for routing. Use `get` to get the underlying object.
      *
      * The absolute path to the handle context from the root.
      */

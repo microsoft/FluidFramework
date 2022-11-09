@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
+import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 export interface IExternalDataSourceEvents extends IEvent {
@@ -22,7 +22,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
     public constructor() {
         super();
         this.externalInventoryData =
-`Alpha:1
+`version:one
+Alpha:1
 Beta:2
 Gamma:3
 Delta:4`;

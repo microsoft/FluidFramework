@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test the string property
- *    object described in /src/properties/stringProperty.js
+ * @fileoverview In this file, we will test the string property object described in /src/properties/stringProperty.js
  */
 
 const { ChangeSet } = require('@fluid-experimental/property-changeset');

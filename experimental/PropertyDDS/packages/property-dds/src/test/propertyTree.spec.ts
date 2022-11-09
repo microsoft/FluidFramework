@@ -19,7 +19,7 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { PropertyFactory, StringProperty, BaseProperty } from "@fluid-experimental/property-properties";
-import { DeflatedPropertyTree } from "../propertyTreeExt";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 
 describe("PropertyTree", () => {
@@ -38,6 +38,11 @@ describe("PropertyTree", () => {
     const factory2 = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
     describe("SharedPropertyTree", () => {
         executePerPropertyTreeType(codeDetails, factory2, documentId, documentLoadUrl, propertyDdsId);
+    });
+
+	const factory3 = new TestFluidObjectFactory([[propertyDdsId, LZ4PropertyTree.getFactory()]]);
+    describe("LZ4PropertyTree", () => {
+        executePerPropertyTreeType(codeDetails, factory1, documentId, documentLoadUrl, propertyDdsId);
     });
 });
 function executePerPropertyTreeType(codeDetails: IFluidCodeDetails,

@@ -10,17 +10,34 @@
  * get started quickly.
  *
  * @remarks
- * About the package name: An Aqueduct is a way to transport water from a source
- * to another location. The package name was chosen because its purpose is to
+ * About the library name: An "aqueduct" is a way to transport water from a source
+ * to another location. The library name was chosen because its purpose is to
  * facilitate using lower level constructs and therefore handle 'fluid' items
  * same as an aqueduct.
  *
  * @packageDocumentation
  */
 
-export * from "./data-object-factories";
-export * from "./data-objects";
-export * from "./container-runtime-factories";
-export * from "./container-services";
-export * from "./request-handlers";
-export * from "./utils";
+export { DataObjectFactory, IRootDataObjectFactory, PureDataObjectFactory } from "./data-object-factories";
+export { DataObject, DataObjectTypes, IDataObjectProps, PureDataObject } from "./data-objects";
+export {
+	BaseContainerRuntimeFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+} from "./container-runtime-factories";
+export {
+	BaseContainerService,
+	ContainerServiceRegistryEntries,
+	generateContainerServicesRequestHandler,
+	serviceRoutePathRoot,
+} from "./container-services";
+export {
+	defaultFluidObjectRequestHandler,
+	defaultRouteRequestHandler,
+	mountableViewRequestHandler,
+} from "./request-handlers";
+export {
+	getDefaultObjectFromContainer,
+	getObjectFromContainer,
+	getObjectWithIdFromContainer,
+	waitForAttach,
+} from "./utils";

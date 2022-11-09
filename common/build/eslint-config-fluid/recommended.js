@@ -94,7 +94,7 @@ module.exports = {
          * Require the description (summary) component in JSDoc/TSDoc comments
          * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
          */
-        "jsdoc/require-description": "error",
+        "jsdoc/require-description": ["error", { checkConstructors: false }],
 
         // #endregion
     },
@@ -103,7 +103,7 @@ module.exports = {
             // Rules only for TypeScript files
             files: ["**/*.{ts,tsx}"],
             rules: {
-                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
+                "editorconfig/indent": "off",
             },
         },
         {

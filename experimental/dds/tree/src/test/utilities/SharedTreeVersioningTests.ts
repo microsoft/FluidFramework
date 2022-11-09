@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { LoaderHeader } from '@fluidframework/container-definitions';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
@@ -51,6 +52,12 @@ export function runSharedTreeVersioningTests(
 			localMode: false,
 			writeFormat: newVersion,
 		};
+
+		it('defaults to latest version if no version is specified when creating factory', () => {
+			const sharedTree = SharedTree.getFactory().create(new MockFluidDataStoreRuntime(), 'SharedTree');
+			const writeFormats = Object.values(WriteFormat);
+			expect(sharedTree.getWriteFormat()).to.equal(writeFormats[writeFormats.length - 1]);
+		});
 
 		it('only processes edit ops if they have the same version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);

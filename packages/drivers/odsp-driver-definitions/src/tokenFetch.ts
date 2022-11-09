@@ -84,8 +84,8 @@ export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): 
 
 /**
  * Identity types supported by ODSP driver.
- *  Consumer represents user authenticated with Microsoft Account (MSA)
- *  Enterprise represents user authenticated with M365 tenant account
+ * `Consumer` represents user authenticated with Microsoft Account (MSA).
+ * `Enterprise` represents user authenticated with M365 tenant account.
  */
 export type IdentityType = "Consumer" | "Enterprise";
 

@@ -7,7 +7,7 @@ aliases:
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
 
-To jump ahead into the finished demo, check out the [React demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-demo).
+To jump ahead into the finished demo, check out the [React demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/react-demo).
 
 The following image shows the time stamp application open in four browsers. Each has a button labeled **click** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
 
@@ -46,6 +46,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     ```dotnetcli
     npm install @fluidframework/tinylicious-client fluid-framework
     ```
+
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
 
 ## Code the project
 
@@ -225,7 +231,7 @@ Paste the URL of the application into the address bar of another tab or even ano
 - Try extending the demo with more key/value pairs and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
 - Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
-- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
+- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/react-starter-template).
 
 {{< callout tip >}}
 
@@ -240,13 +246,23 @@ When you make changes to the code the project will automatically rebuild and the
 
 [Fluid container]: {{< relref "containers.md" >}}
 
-<!-- Classes and interfaces -->
+<!-- Distributed Data Structures -->
 
-[FluidContainer]: {{< relref "fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "sequences.md" >}}
-[SharedString]: {{< relref "string.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

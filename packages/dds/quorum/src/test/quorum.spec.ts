@@ -392,7 +392,6 @@ describe("Quorum", () => {
             assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
 
-        // eslint-disable-next-line max-len
         it("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
             const targetKey = "key";
             quorum1.set(targetKey, "expected");
@@ -407,7 +406,6 @@ describe("Quorum", () => {
             assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
 
-        // eslint-disable-next-line max-len
         it("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
             const targetKey = "key";
             quorum1.set(targetKey, "expected");

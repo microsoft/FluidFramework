@@ -209,3 +209,29 @@ export async function getRepoManagerFromWriteAPI(
         throw error;
     }
 }
+
+export function getSoftDeletedMarkerPath(basePath: string): string {
+    return `${basePath}/.softDeleted`;
+}
+
+export async function checkSoftDeleted(
+    fileSystemManager: IFileSystemManager,
+    repoPath: string,
+    repoManagerParams: IRepoManagerParams,
+    repoPerDocEnabled: boolean): Promise<void> {
+    // DELETE API is only implemented for the repo-per-doc model
+    if (!repoPerDocEnabled) {
+        return;
+    }
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+    };
+    const softDeletedMarkerPath = getSoftDeletedMarkerPath(repoPath);
+    const softDeleteBlobExists = await exists(fileSystemManager, softDeletedMarkerPath);
+    const softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
+    if (softDeleted) {
+        const error = new NetworkError(410, "The requested resource has been deleted.");
+        Lumberjack.error("Attempted to retrieve soft-deleted document.", lumberjackProperties, error);
+        throw error;
+    }
+}

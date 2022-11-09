@@ -14,6 +14,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "kafka.fullname" . }}
+      component: "zookeeper"
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
@@ -36,7 +38,7 @@ spec:
       name: data
     spec:
       storageClassName: managed-premium
-      accessModes: 
+      accessModes:
         - ReadWriteOnce
       resources:
         requests:

@@ -4,11 +4,11 @@
  */
 
 /**
- * This package contains the SharedCounter distributed data structure. A SharedCounter is a shared object
- * which holds a number that can be incremented or decremented.
+ * This library contains the {@link SharedCounter} distributed data structure.
+ * A `SharedCounter` is a shared object which holds a whole number that can be incremented or decremented.
  *
  * @packageDocumentation
  */
 
-export * from "./counter";
-export * from "./interfaces";
+export { SharedCounter } from "./counter";
+export { ISharedCounter, ISharedCounterEvents } from "./interfaces";

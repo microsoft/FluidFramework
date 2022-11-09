@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../schema-stored";
-import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
+import { InvalidationToken } from "../dependency-tracking";
+import {
+    AnchorSet,
+    FieldKey,
+    DetachedField,
+    Delta,
+    Anchor,
+    ITreeCursorSynchronous,
+    rootFieldKeySymbol,
+} from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
  */
 export interface IEditableForest extends IForestSubscription {
-    // Overrides field from IForestSubscription adding editing support.
-    readonly schema: StoredSchemaRepository;
-
     /**
      * Set of anchors this forest is tracking.
      *
@@ -31,11 +36,20 @@ export interface IEditableForest extends IForestSubscription {
     applyDelta(delta: Delta.Root): void;
 }
 
-export function initializeForest(forest: IEditableForest, content: JsonableTree[]): void {
+/**
+ * This `InvalidationToken` is used to indicate that the invalidation of Dependents happens after the Delta is applied to the forest.
+ * It is a workaround i.e. definitely a misuse of the invalidation system in an absence of alternative notification/eventing system.
+ */
+// TODO: remove together with `afterChangeForest` as soon as notification/eventing will be supported.
+export const afterChangeToken: InvalidationToken = new InvalidationToken(
+    "forest:afterChange",
+    false,
+);
+
+export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
     // TODO: maybe assert forest is empty?
     const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-    const rootField = detachedFieldAsKey(forest.rootField);
-    forest.applyDelta(new Map([[rootField, [insert]]]));
+    forest.applyDelta(new Map([[rootFieldKeySymbol, [insert]]]));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
@@ -43,7 +57,7 @@ export function initializeForest(forest: IEditableForest, content: JsonableTree[
 /**
  * Ways to refer to a node in an IEditableForest.
  */
- export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedField;
@@ -58,6 +72,6 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
  * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface FieldLocation {
-	readonly key: FieldKey;
+    readonly key: FieldKey;
     readonly parent: ForestLocation;
 }

@@ -4,3 +4,4 @@
  */
 
 export { run } from "@oclif/core";
+export type { ReleaseGroup, ReleasePackage } from "./releaseGroups";

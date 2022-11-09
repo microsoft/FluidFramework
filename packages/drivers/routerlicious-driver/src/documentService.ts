@@ -33,6 +33,7 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
+// eslint-disable-next-line import/namespace
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
@@ -49,6 +50,7 @@ export class DocumentService implements api.IDocumentService {
         private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private deltaStorageUrl: string,
+        private deltaStreamUrl: string,
         private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
@@ -187,36 +189,58 @@ export class DocumentService implements api.IDocumentService {
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
-            const ordererToken = await this.tokenProvider.fetchOrdererToken(
-                this.tenantId,
-                this.documentId,
-                refreshToken,
-            );
-            return R11sDocumentDeltaConnection.create(
-                this.tenantId,
-                this.documentId,
-                ordererToken.jwt,
-                io,
-                client,
-                this.ordererUrl,
+
+            const ordererToken = await PerformanceEvent.timedExecAsync(
                 this.logger,
+                {
+                    eventName: "GetDeltaStreamToken",
+                    docId: this.documentId,
+                    details: JSON.stringify({
+                        refreshToken,
+                    }),
+                },
+                async () => {
+                    return this.tokenProvider.fetchOrdererToken(
+                        this.tenantId,
+                        this.documentId,
+                        refreshToken,
+                    );
+                }
+            );
+
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "ConnectToDeltaStream",
+                    docId: this.documentId,
+                },
+                async () => {
+                    return R11sDocumentDeltaConnection.create(
+                        this.tenantId,
+                        this.documentId,
+                        ordererToken.jwt,
+                        io,
+                        client,
+                        this.deltaStreamUrl,
+                        this.logger,
+                    );
+                }
             );
         };
 
         // Attempt to establish connection.
         // Retry with new token on authorization error; otherwise, allow container layer to handle.
-        let connection: api.IDocumentDeltaConnection;
         try {
-            connection = await connect();
+            const connection = await connect();
+            return connection;
         } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
-                connection = await connect(true /* refreshToken */);
+                return connect(true /* refreshToken */);
             }
             throw error;
         }
-        return connection;
     }
 
     /**
@@ -227,7 +251,7 @@ export class DocumentService implements api.IDocumentService {
             this.discoverP = PerformanceEvent.timedExecAsync(
                 this.logger,
                 {
-                    eventName: "refreshSessionDiscovery",
+                    eventName: "RefreshDiscovery",
                 },
                 async () => this.refreshDiscoveryCore(),
             );
@@ -241,6 +265,7 @@ export class DocumentService implements api.IDocumentService {
         this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
         this.lastDiscoveredAt = Date.now();
     }
 

@@ -5,9 +5,8 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
@@ -18,11 +17,13 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let fileName: string;
+    let containerUrl: IResolvedUrl;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
         provider = getTestObjectProvider();
@@ -40,6 +41,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         loaderContainerTracker.add(loader);
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         await container.attach(provider.driver.createCreateNewRequest(fileName));
+        assert(container.resolvedUrl);
+        containerUrl = container.resolvedUrl;
     });
 
     afterEach(() => {
@@ -57,7 +60,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                 new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
         });
         loaderContainerTracker.add(loader);
-        const requestUrl = await provider.driver.createContainerUrl(fileName);
+        const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
         const testResolved = await loader.services.urlResolver.resolve({ url: requestUrl });
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
@@ -70,20 +73,30 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
     }
 
     itExpects("GeneralError Test",
-    [
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "" },
-        { eventName: "TestException", errorType: ContainerErrorType.genericError },
-    ],
-    async () => {
-        const documentServiceFactory = provider.documentServiceFactory;
-        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-        mockFactory.createDocumentService = async (resolvedUrl) => {
-            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            service.connectToDeltaStream = async () => { throw new Error(); };
-            return service;
-        };
-        await loadContainer({ documentServiceFactory: mockFactory });
-    });
+        [
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                errorType: ContainerErrorType.genericError,
+                error: "Injected error",
+                fatalConnectError: true,
+            },
+        ],
+        async () => {
+            try {
+                const documentServiceFactory = provider.documentServiceFactory;
+                const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+                mockFactory.createDocumentService = async (resolvedUrl) => {
+                    const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+                    service.connectToDeltaStream = async () => { throw new Error("Injected error"); };
+                    return service;
+                };
+                await loadContainer({ documentServiceFactory: mockFactory });
+            } catch (e: any) {
+                assert(e.errorType === ContainerErrorType.genericError);
+                assert(e.message === "Injected error");
+                assert(e.fatalConnectError);
+            }
+        });
 
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";

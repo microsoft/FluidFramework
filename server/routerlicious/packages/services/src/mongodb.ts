@@ -101,11 +101,9 @@ export class MongoCollection<T> implements core.ICollection<T> {
                 upsert: true,
             });
 
-        if (result.value) {
-            return { value: result.value, existing: true };
-        } else {
-            return { value, existing: false };
-        }
+        return result.value
+            ? { value: result.value, existing: true }
+            : { value, existing: false };
     }
 
     private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
@@ -167,20 +165,33 @@ interface IMongoDBConfig {
     bufferMaxEntries: number | undefined;
     globalDbEndpoint?: string;
     globalDbEnabled?: boolean;
+    connectionPoolMinSize?: number;
+    connectionPoolMaxSize?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
     private readonly operationsDbEndpoint: string;
     private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
+    private readonly connectionPoolMinSize?: number;
+    private readonly connectionPoolMaxSize?: number;
     constructor(config: IMongoDBConfig) {
-        const { operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint } = config;
+        const {
+            operationsDbEndpoint,
+            bufferMaxEntries,
+            globalDbEnabled,
+            globalDbEndpoint,
+            connectionPoolMinSize,
+            connectionPoolMaxSize,
+        } = config;
         if (globalDbEnabled) {
             this.globalDbEndpoint = globalDbEndpoint;
         }
         assert(!!operationsDbEndpoint, `No endpoint provided`);
         this.operationsDbEndpoint = operationsDbEndpoint;
         this.bufferMaxEntries = bufferMaxEntries;
+        this.connectionPoolMinSize = connectionPoolMinSize;
+        this.connectionPoolMaxSize = connectionPoolMaxSize;
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -197,6 +208,13 @@ export class MongoDbFactory implements core.IDbFactory {
             socketTimeoutMS: 120000,
             useNewUrlParser: true,
         };
+        if (this.connectionPoolMinSize) {
+            options.minSize = this.connectionPoolMinSize;
+        }
+
+        if (this.connectionPoolMaxSize) {
+            options.poolSize = this.connectionPoolMaxSize;
+        }
 
         const connection = await MongoClient.connect(
             global ?

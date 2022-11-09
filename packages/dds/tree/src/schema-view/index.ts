@@ -4,5 +4,10 @@
  */
 
 export {
-	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
+    Adapters,
+    Compatibility,
+    FieldAdapter,
+    TreeAdapter,
+    ViewSchemaData,
+    AdaptedViewSchema,
 } from "./view";

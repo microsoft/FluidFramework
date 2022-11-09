@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-unused-expressions */
-/* eslint-disable consistent-return */
 /**
  * @fileoverview In this file, we will test the functions related Container property object
- *    this will also tests parts of Property Factory that creates Container property
+ * this will also tests parts of Property Factory that creates Container property
  */
 
 const MSG = require('@fluid-experimental/property-common').constants.MSG;

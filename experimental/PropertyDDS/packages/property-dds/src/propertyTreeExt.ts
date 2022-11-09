@@ -5,7 +5,7 @@
 
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedPropertyTree } from "./propertyTree";
-import { DeflatedPropertyTreeFactory } from "./propertyTreeExtFactories";
+import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyTreeExtFactories";
 
 /**
  * This class is the extension of SharedPropertyTree which compresses
@@ -18,5 +18,15 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
 
     public static getFactory(): IChannelFactory {
         return new DeflatedPropertyTreeFactory();
+    }
+}
+
+export class LZ4PropertyTree extends SharedPropertyTree {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
+        return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;
+    }
+
+    public static getFactory(): IChannelFactory {
+        return new LZ4PropertyTreeFactory();
     }
 }

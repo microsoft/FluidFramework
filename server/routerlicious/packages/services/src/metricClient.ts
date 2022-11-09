@@ -23,11 +23,9 @@ class TelegrafClient implements IMetricClient {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
-        if (!this.connected || !traces || traces.length === 0) {
-            return Promise.resolve();
-        } else {
-            return this.writeToTelegraf(series, this.createTelegrafRow(traces));
-        }
+        return !this.connected || !traces || traces.length === 0
+            ? Promise.resolve()
+            : this.writeToTelegraf(series, this.createTelegrafRow(traces));
     }
 
     private createTelegrafRow(traces: ITrace[]): any {

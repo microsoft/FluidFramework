@@ -4,12 +4,19 @@
  */
 
 export {
-    ITreeCursor,
-    TreeNavigationResult,
-    mapCursorField,
-    SynchronousNavigationResult,
-} from "./cursor";
-export * from "./forest";
-export {
-    IEditableForest, FieldLocation, TreeLocation, isFieldLocation, ForestLocation, initializeForest,
+    IEditableForest,
+    FieldLocation,
+    TreeLocation,
+    isFieldLocation,
+    ForestLocation,
+    initializeForest,
+    afterChangeToken,
 } from "./editableForest";
+export {
+    IForestSubscription,
+    ITreeSubscriptionCursor,
+    ITreeSubscriptionCursorState,
+    TreeNavigationResult,
+    FieldAnchor,
+    moveToDetachedField,
+} from "./forest";

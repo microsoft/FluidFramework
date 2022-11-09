@@ -29,8 +29,7 @@ import {
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { currentReadVersion, ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
 
@@ -66,11 +65,7 @@ export async function fetchSnapshot(
     let queryParams: ISnapshotOptions = {};
 
     if (fetchFullSnapshot) {
-        if (versionId !== "latest") {
-            queryParams = { channels: 1, blobs: 2 };
-        } else {
-            queryParams = { deltas: 1, channels: 1, blobs: 2 };
-        }
+        queryParams = versionId !== "latest" ? { blobs: 2 } : { deltas: 1, blobs: 2 };
     }
 
     const queryString = getQueryString(queryParams);
@@ -201,14 +196,6 @@ async function fetchLatestSnapshotCore(
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
-        let controller: AbortController | undefined;
-        if (snapshotOptions?.timeout !== undefined) {
-            controller = new AbortController();
-            setTimeout(
-                () => controller!.abort(),
-                snapshotOptions.timeout,
-            );
-        }
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
@@ -228,12 +215,27 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
+                let controller: AbortController | undefined;
+                let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+                if (snapshotOptions?.timeout !== undefined) {
+                    controller = new AbortController();
+                    fetchTimeout = setTimeout(
+                        () => controller!.abort(),
+                        snapshotOptions.timeout,
+                    );
+                }
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
-                );
+                ).finally(() => {
+                    // Clear the fetchTimeout once the response is fetched.
+                    if (fetchTimeout !== undefined) {
+                        clearTimeout(fetchTimeout);
+                        fetchTimeout = undefined;
+                    }
+                });
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -251,10 +253,16 @@ async function fetchLatestSnapshotCore(
                     ...propsToLog,
                 });
 
-                let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
+                let contentTypeToRead: string | undefined;
+                if (contentType?.includes("application/ms-fluid")) {
+                    contentTypeToRead = "application/ms-fluid";
+                } else if (contentType?.includes("application/json")) {
+                    contentTypeToRead = "application/json";
+                }
 
                 try {
-                    switch (contentType) {
+                    switch (contentTypeToRead) {
                         case "application/json": {
                             const text = await odspResponse.content.text();
                             propsToLog.bodySize = text.length;
@@ -268,8 +276,9 @@ async function fetchLatestSnapshotCore(
                         case "application/ms-fluid": {
                             const content = await odspResponse.content.arrayBuffer();
                             propsToLog.bodySize = content.byteLength;
-                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-                                new ReadBuffer(new Uint8Array(content)));
+                            const snapshotContents: ISnapshotContentsWithProps = parseCompactSnapshotResponse(
+                                new Uint8Array(content),
+                                logger);
                             if (snapshotContents.snapshotTree.trees === undefined ||
                                 snapshotContents.snapshotTree.blobs === undefined) {
                                     throw new NonRetryableError(
@@ -278,6 +287,15 @@ async function fetchLatestSnapshotCore(
                                         propsToLog,
                                     );
                                 }
+                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                            if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+                                logger.sendErrorEvent({
+                                    eventName: "SlowSnapshotParseCodePaths",
+                                    slowTreeStructureCount: slowTreeParseCodePaths,
+                                    slowBlobStructureCount: slowBlobParseCodePaths,
+                                });
+                            }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
@@ -396,6 +414,8 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
+                    slowTreeStructureCount: snapshot.slowTreeStructureCount ?? 0,
+                    slowBlobStructureCount: snapshot.slowBlobStructureCount ?? 0,
                     userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
@@ -549,14 +569,12 @@ export async function downloadSnapshot(
     };
     // Decide what snapshot format to fetch as per the feature gate.
     switch (snapshotFormatFetchType) {
-        case SnapshotFormatSupportType.JsonAndBinary:
-            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-            break;
         case SnapshotFormatSupportType.Binary:
             headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
             break;
         default:
-            headers.accept = "application/json";
+            // By default ask both versions and let the server decide the format.
+            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
     }
 
     const odspResponse = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??

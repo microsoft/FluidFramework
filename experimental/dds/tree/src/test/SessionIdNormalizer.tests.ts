@@ -5,16 +5,16 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { expect } from 'chai';
-import Random from 'random-js';
 import {
 	BaseFuzzTestState,
 	chain,
 	createWeightedGenerator,
-	makeRandom,
-	performFuzzActions,
-	take,
 	Generator,
 	generatorFromArray,
+	IRandom,
+	performFuzzActions,
+	take,
+	makeRandom,
 } from '@fluid-internal/stochastic-test-utils';
 import { assert, fail } from '../Common';
 import { isFinalId, isLocalId } from '../id-compressor';
@@ -42,7 +42,8 @@ describe('SessionIdNormalizer', () => {
 		 * Calling `addFinalIds` with first === last === 9 results in the following:
 		 * Locals: [-1, -2,  X,  -4,  X]
 		 * Finals: [ 0,  1,  2,   5,  9]
-		 *                            ^should fail
+		 *
+		 * ^should fail
 		 */
 		const normalizer = makeTestNormalizer();
 		normalizer.addLocalId(); // -1
@@ -139,7 +140,7 @@ describe('SessionIdNormalizer Perf', () => {
 	const choiceCount = 1000;
 	const type = BenchmarkType.Measurement;
 	let normalizer: SessionIdNormalizer<DummyRange>;
-	let rand: Random;
+	let rand: IRandom;
 	let ids: SessionSpaceCompressedId[];
 	let finals: FinalCompressedId[];
 	let locals: LocalCompressedId[];
@@ -352,7 +353,7 @@ function fuzzNormalizer(
 	normalizerToFuzz: SessionIdNormalizer<DummyRange>,
 	numOperations: number,
 	seed: number
-): Random {
+): IRandom {
 	const locals: (LocalCompressedId | undefined)[] = [];
 	const finals: (FinalCompressedId | undefined)[] = [];
 	const normalizer: SessionIdNormalizer<DummyRange> = makeNormalizerProxy(normalizerToFuzz, locals, finals);

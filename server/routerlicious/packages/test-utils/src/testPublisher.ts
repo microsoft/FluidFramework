@@ -4,14 +4,17 @@
  */
 
 import { EventEmitter } from "events";
-import * as core from "@fluidframework/server-services-core";
+import {
+    IPublisher,
+    ITopic,
+} from "@fluidframework/server-services-core";
 
 export interface IEvent {
     event: string;
     args: any[];
 }
 
-export class TestTopic implements core.ITopic {
+export class TestTopic implements ITopic {
     public events = new Map<string, IEvent[]>();
 
     public emit(event: string, ...args: any[]) {
@@ -27,7 +30,7 @@ export class TestTopic implements core.ITopic {
     }
 }
 
-export class TestPublisher implements core.IPublisher {
+export class TestPublisher implements IPublisher {
     private readonly events = new EventEmitter();
     private topics: { [topic: string]: TestTopic; } = {};
 

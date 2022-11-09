@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals describe */
-/* eslint-disable no-unused-expressions */
+
 /**
  * @fileoverview In this file, we will test the int64 map property
- *    object described in /src/properties/valueMapProperty.js
+ * object described in /src/properties/valueMapProperty.js
  */
 
 describe('Int64MapProperty', function() {

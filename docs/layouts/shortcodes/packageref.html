@@ -1,0 +1,10 @@
+{{/* Helper template for linking to the root page of a package's API docs. */}}
+{{/* Parameters: */}}
+{{/* - unscopedPackageName: The *unscoped* name of the package being linked to. */}}
+
+{{- $unscopedPackageName := .Get 0 -}}
+{{- $path := delimit (slice "/docs/apis/" $unscopedPackageName ".md" ) "" -}}
+
+<a href="{{ relref . $path }}"><code>{{ $unscopedPackageName }}</code></a>
+
+{{- /* Strip trailing newline. */ -}}

@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
 /* globals isBrowser, assert */
 
 /**
  * @fileoverview In this file, we will test the functions of a BaseProperty object
- *    described in /src/properties/baseProperty.js
+ * described in /src/properties/baseProperty.js
  */
 
 const { ChangeSet } = require('@fluid-experimental/property-changeset');

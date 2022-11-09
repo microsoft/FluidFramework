@@ -59,9 +59,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 // if rabbitmq configs are not provided.
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    if (rabbitmqConfig && rabbitmqConfig.connectionString) {
-        return new RabbitmqTaskSender(rabbitmqConfig, config);
-    } else {
-        return new EmptyTaskMessageSender();
-    }
+    return rabbitmqConfig && rabbitmqConfig.connectionString
+        ? new RabbitmqTaskSender(rabbitmqConfig, config)
+        : new EmptyTaskMessageSender();
 }

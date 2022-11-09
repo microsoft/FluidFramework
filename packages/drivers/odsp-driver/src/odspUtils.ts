@@ -27,6 +27,7 @@ import {
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     ShareLinkTypes,
+    ISharingLinkKind,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
@@ -136,11 +137,10 @@ export async function fetchHelper(
                 "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
 
-        //
         // WARNING: Do not log error object itself or any of its properties!
         // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
-        //
+        // eslint-disable-next-line unicorn/prefer-ternary
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
                 // pre-0.58 error message prefix: Offline
@@ -233,8 +233,10 @@ export interface INewFileInfo {
      * application can request creation of a share link along with the creation of a new file
      * by passing in an optional param to specify the kind of sharing link
      * (at the time of adding this comment Sept/2021), odsp only supports csl
+     * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
+     * share link type and the role type.
      */
-    createLinkType?: ShareLinkTypes;
+    createLinkType?: ShareLinkTypes | ISharingLinkKind;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
@@ -348,3 +350,23 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
 // 80KB is the max body size that we can put in ump post body for server to be able to accept it.
 // Keeping it 78KB to be a little cautious. As per the telemetry 99p is less than 78KB.
 export const maxUmpPostBodySize = 79872;
+
+/**
+ * Build request parameters to request for the creation of a sharing link along with the creation of the file
+ * through the /snapshot api call.
+ * @param shareLinkType - Kind of sharing link requested
+ * @returns A string of request parameters that can be concatenated with the base URI
+ */
+export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined) {
+    if (!shareLinkType) {
+        return;
+    }
+    const scope = (shareLinkType as ISharingLinkKind).scope;
+    if (!scope) {
+        return `createLinkType=${shareLinkType}`;
+    }
+    let shareLinkRequestParams = `createLinkScope=${scope}`;
+    const role = (shareLinkType as ISharingLinkKind).role;
+    shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
+    return shareLinkRequestParams;
+}

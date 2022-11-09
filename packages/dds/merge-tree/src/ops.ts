@@ -3,15 +3,35 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Flags enum that dictates behavior of a ReferencePosition
+ */
 export enum ReferenceType {
     Simple = 0x0,
+    /**
+     * Allows this reference to be located using the `findTile` API on merge-tree.
+     */
     Tile = 0x1,
     NestBegin = 0x2,
     NestEnd = 0x4,
     RangeBegin = 0x10,
     RangeEnd = 0x20,
+    /**
+     * When a segment is marked removed (locally or with ack), this reference will slide to the first
+     * valid option of:
+     * 1. the start of the next furthest segment
+     * 2. the end of the next nearest segment
+     * 3. DetachedReferencePosition
+     */
     SlideOnRemove = 0x40,
+    /**
+     * When a segment is marked removed (locally or with ack), this reference will remain on that segment.
+     */
     StayOnRemove = 0x80,
+    /**
+     * Specifies that the reference position should never be added to the segment it refers to.
+     * This is useful for comparison/iteration purposes
+     */
     Transient = 0x100,
 }
 

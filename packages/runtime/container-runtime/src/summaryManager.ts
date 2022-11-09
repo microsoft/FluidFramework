@@ -14,6 +14,7 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
+import { Summarizer } from "./summarizer";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -28,7 +29,8 @@ export enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize">;
+type StopReason = Extract<SummarizerStopReason,
+    "parentNotConnected" | "notElectedParent" | "notElectedClient">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
@@ -140,13 +142,23 @@ export class SummaryManager implements IDisposable {
         // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
         // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
         // changing the electedParent will just cause us to transition to Starting again.
-        if (this.connectedState.clientId !== this.clientElection.electedParentId ||
-            (this.state !== SummaryManagerState.Running &&
-                this.connectedState.clientId !== this.clientElection.electedClientId)) {
-            return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
-        } else if (!this.connectedState.connected) {
+
+        // New Parent has been elected and it is not the current client, or
+        if (this.connectedState.clientId !== this.clientElection.electedParentId) {
+            return { shouldSummarize: false, stopReason: "notElectedParent" };
+        }
+
+        // We are not already running the summarizer and we are not the current elected client id.
+        if (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId) {
+            return { shouldSummarize: false, stopReason: "notElectedClient" };
+        }
+
+        if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.disposed) {
+        }
+
+        if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
@@ -198,8 +210,12 @@ export class SummaryManager implements IDisposable {
             // a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
             // document out of broken state if it has too many ops and ordering service keeps nacking main
             // container (and thus it goes into cycle of reconnects)
-            if (startWithInitialDelay && this.getShouldSummarizeState().shouldSummarize === false) {
-                return "early exit";
+            // If we can't run the LastSummary, simply return as to avoid paying the cost of launching
+            // the summarizer at all.
+            const shouldSummarizeStateEarlyStage = this.getShouldSummarizeState();
+            if (startWithInitialDelay &&
+                shouldSummarizeStateEarlyStage.shouldSummarize === false) {
+                    return `early exit ${shouldSummarizeStateEarlyStage.stopReason}`;
             }
 
             // We transition to Running before requesting the summarizer, because after requesting we can't predict
@@ -213,11 +229,21 @@ export class SummaryManager implements IDisposable {
             this.summarizer = summarizer;
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
+            // If we can't run the LastSummary, simply return as to avoid paying the cost of launching
+            // the summarizer at all.
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
-                this.state = SummaryManagerState.Starting;
-                summarizer.stop(shouldSummarizeState.stopReason);
-                return "early exit after starting summarizer";
+                // In order to allow the last summary to run, we not only need a stop reason that would
+                // allow it but also, startWithInitialDelay to be false (start the summarization immediately),
+                // which would happen when we have a high enough number of unsummarized ops.
+                if (startWithInitialDelay || !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
+                    this.state = SummaryManagerState.Starting;
+                    summarizer.stop(shouldSummarizeState.stopReason);
+                    return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
+                }
+                this.logger.sendTelemetryEvent({
+                    eventName: "LastAttemptToSummarize",
+                });
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -287,8 +313,8 @@ export class SummaryManager implements IDisposable {
 
     /**
      * Implements initial delay before creating summarizer
-     * @returns true, if creation is delayed due to heuristics (not many ops to summarize).
-     *          False if summarizer should start immediately due to too many unsummarized ops.
+     * @returns `true`, if creation is delayed due to heuristics (not many ops to summarize).
+     * `false` if summarizer should start immediately due to too many unsummarized ops.
      */
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections

@@ -66,23 +66,35 @@ export interface ITokenClaims {
     jti?: string;
 }
 
+/**
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
+ */
 export interface ISummaryTokenClaims {
     sub: string;
     act: IActorClient;
     claims: ITokenClaims;
 }
 
+/**
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
+ */
 export interface IActorClient {
     sub: string;
 }
 
 /**
- * Abstracts the discovery of claims contained within a token.
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  */
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
 
+/**
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
+ */
 export interface ITokenProvider {
+    /**
+     * Whether or not the token is still valid to use.
+     */
     isValid(): boolean;
 }

@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -18,6 +18,7 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
@@ -101,10 +102,14 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     /**
      * Validates that the data store with the given id is represented correctly in the summary.
+     *
      * For referenced data stores:
-     *   - The unreferenced property in its entry in the summary should be undefined.
+     *
+     * - The unreferenced property in its entry in the summary should be undefined.
+     *
      * For unreferenced data stores:
-     *   - The unreferenced property in its entry in the summary should be true.
+     *
+     * - The unreferenced property in its entry in the summary should be true.
      */
     async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
         await provider.ensureSynchronized();

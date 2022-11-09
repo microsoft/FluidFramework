@@ -13,19 +13,19 @@ export interface IDisposable {
     readonly disposed: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IErrorEvent extends IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;

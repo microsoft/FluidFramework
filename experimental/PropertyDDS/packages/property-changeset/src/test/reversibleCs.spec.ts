@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test the path helper
- *    functions described in /src/properties/path_helper.js
+ * @fileoverview In this file, we will test the path helper functions described in /src/properties/path_helper.js
  */
+
 import { copy as cloneDeep } from "fastest-json-copy";
 
 import { ChangeSet } from "../changeset";

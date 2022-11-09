@@ -6,14 +6,19 @@
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 import {
     IFluidContainer,
     IMember,
-    IServiceAudience,
 } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
+}
+
+export interface IFocusSignalPayload {
+    userId: string;
+    focus: boolean;
 }
 
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
@@ -30,7 +35,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
      */
     private readonly focusMap = new Map<string, Map<string, boolean>>();
 
-    private readonly onFocusSignalFn = (clientId: string, payload: any) => {
+    private readonly onFocusSignalFn = (clientId: string, payload: IFocusSignalPayload) => {
         const userId: string = payload.userId;
         const hasFocus: boolean = payload.focus;
 
@@ -43,9 +48,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.emit("focusChanged");
     };
 
-    public constructor(
+    constructor(
         container: IFluidContainer,
-        public readonly audience: IServiceAudience<IMember>,
+        public readonly audience: ITinyliciousAudience,
         private readonly signaler: Signaler,
     ) {
         super();
@@ -64,7 +69,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId: string,
+            local: boolean,
+            payload: IFocusSignalPayload) => {
             this.onFocusSignalFn(clientId, payload);
         });
 

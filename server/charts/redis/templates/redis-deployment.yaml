@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "redis.fullname" . }}
+      component: "redis"
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:

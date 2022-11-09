@@ -134,7 +134,7 @@ export function isNetworkError(error: unknown): error is NetworkError {
  * based variable parameters. That is, when it is not known whether the status code can be 404 or 500.
  * @param statusCode - HTTP status code that describes the error.
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
- *  the message, or an {@link INetworkErrorDetails} object.
+ * the message, or an {@link INetworkErrorDetails} object.
  * @returns A {@link NetworkError} instance properly configured according to the parameters provided.
  * @public
  */
@@ -215,7 +215,7 @@ export function createFluidServiceNetworkError(
  * function also throws the {@link NetworkError}.
  * @param statusCode - HTTP status code that describes the error.
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
- *  the message, or an {@link INetworkErrorDetails} object.
+ * the message, or an {@link INetworkErrorDetails} object.
  * @public
  */
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never {

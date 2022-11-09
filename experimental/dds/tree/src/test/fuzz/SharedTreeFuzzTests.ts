@@ -9,6 +9,7 @@ import { expect } from 'chai';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
+	describeFuzz,
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
@@ -179,7 +180,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 	// Some useful tips for debugging fuzz tests:
 	// - A JSON dump of the operation sequence can be written to disk by passing `true` for `saveOnFailure`.
 	// - Different shared-tree instances can be distinguished (e.g. in logs) by using `tree.getRuntime().clientId`
-	describe(title, () => {
+	describeFuzz(title, ({ testCount }) => {
 		function runTest(
 			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
 			seed: number,
@@ -295,7 +296,6 @@ export function runSharedTreeFuzzTests(title: string): void {
 			});
 		}
 
-		const testCount = 1;
 		const testLength = 200;
 		describe('with no-history summarization', () => {
 			runMixedVersionTests(false, testCount, testLength);

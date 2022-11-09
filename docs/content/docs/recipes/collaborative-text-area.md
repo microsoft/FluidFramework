@@ -47,6 +47,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npm install @fluidframework/tinylicious-client @fluid-experimental/react-inputs fluid-framework
     ```
 
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
+
 ## Code the project
 
 1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the markup from the `return` statement. The file should look like the following:
@@ -332,7 +338,7 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 - Try extending the demo with more Fluid DDSes and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
-- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
+- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/react-starter-template).
 
 {{< callout tip >}}
 

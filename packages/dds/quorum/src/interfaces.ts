@@ -20,28 +20,25 @@ export interface IQuorumEvents extends ISharedObjectEvents {
  * the set message.  As a result, the value goes through two phases - "pending" state where the local client has seen
  * the set, but not all connected clients have, and "accepted" where all connected clients have seen the set.
  */
-export interface IQuorum extends ISharedObject<IQuorumEvents> {
-    /**
-     * Checks if the quorum has an accepted value for the given key.
-     * @param key - The key to check
-     */
-    has(key: string): boolean;
-
+export interface IQuorum<T = unknown> extends ISharedObject<IQuorumEvents> {
     /**
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    get(key: string): any;
+    get(key: string): T | undefined;
+
+    /**
+     * Returns whether there is a pending value for the given key.  Can be used to distinguish a pending delete vs.
+     * nothing pending when getPending would just return undefined.
+     * @param key - The key to check
+     */
+    isPending(key: string): boolean;
 
     /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getPending(key: string): any;
+    getPending(key: string): T | undefined;
 
     /**
      * Sets the value for the given key.  After setting the value, it will be in "pending" state until all connected
@@ -49,7 +46,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * @param key - The key to set
      * @param value - The value to store
      */
-    set(key: string, value: unknown): void;
+    set(key: string, value: T | undefined): void;
 
     /**
      * Deletes the key/value pair at the given key.  After issuing the delete, the delete is in "pending" state until

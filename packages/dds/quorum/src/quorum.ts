@@ -26,18 +26,18 @@ import { IQuorum, IQuorumEvents } from "./interfaces";
 /**
  * The accepted value information, if any.
  */
-interface IAcceptedQuorumValue {
+interface IAcceptedQuorumValue<T> {
     /**
-     * The accepted value.
+     * The accepted value of the given type or undefined (typically in case of delete).
      */
-    value: unknown;
+    value: T | undefined;
 
     /**
      * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
      * - The sequence number of the "accept" op from the final client we expected signoff from
      * - The sequence number of the ClientLeave of the final client we expected signoff from
      * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-     *   was connected when the op was sequenced)
+     * was connected when the op was sequenced)
      *
      * For values set in detached state, it will be 0.
      */
@@ -47,8 +47,11 @@ interface IAcceptedQuorumValue {
 /**
  * The pending change information, if any.
  */
-interface IPendingQuorumValue {
-    value: unknown;
+interface IPendingQuorumValue<T> {
+    /**
+     * The pending value of the given type or undefined (typically in case of delete).
+     */
+    value: T | undefined;
     /**
      * The list of clientIds that we expect "accept" ops from.  Clients are also removed from this list if they
      * disconnect without accepting.  When this list empties, the pending value transitions to accepted.
@@ -60,18 +63,18 @@ interface IPendingQuorumValue {
 /**
  * Internal format of the values stored in the Quorum.
  */
-type QuorumValue =
-    { accepted: IAcceptedQuorumValue; pending: undefined; }
-    | { accepted: undefined; pending: IPendingQuorumValue; }
-    | { accepted: IAcceptedQuorumValue; pending: IPendingQuorumValue; };
+type QuorumValue<T> =
+    { accepted: IAcceptedQuorumValue<T>; pending: undefined; }
+    | { accepted: undefined; pending: IPendingQuorumValue<T>; }
+    | { accepted: IAcceptedQuorumValue<T>; pending: IPendingQuorumValue<T>; };
 
 /**
  * Quorum operation formats
  */
-interface IQuorumSetOperation {
+interface IQuorumSetOperation<T> {
     type: "set";
     key: string;
-    value: unknown;
+    value: T | undefined;
 
     /**
      * A "set" is only valid if it is made with knowledge of the most-recent accepted proposal - its reference
@@ -90,7 +93,7 @@ interface IQuorumAcceptOperation {
     key: string;
 }
 
-type IQuorumOperation = IQuorumSetOperation | IQuorumAcceptOperation;
+type IQuorumOperation<T> = IQuorumSetOperation<T> | IQuorumAcceptOperation;
 
 const snapshotFileName = "header";
 
@@ -136,6 +139,12 @@ const snapshotFileName = "header";
  * becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value, again with
  * consensus-like FWW resolution.
  *
+ * Since all connected clients must explicitly accept the new value, it is important that all connected clients
+ * have the Quorum loaded, including e.g. the summarizing client.  Otherwise, those clients who have not loaded
+ * the Quorum will not be responding to proposals and delay their acceptance (until they disconnect, which implicitly
+ * removes them from consideration).  The easiest way to ensure all clients load the Quorum is to instantiate it
+ * as part of instantiating the IRuntime for the container (containerHasInitialized if using Aqueduct).
+ *
  * ### Eventing
  *
  * `Quorum` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
@@ -146,7 +155,7 @@ const snapshotFileName = "header";
  * });
  * ```
  */
-export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
+export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
     /**
      * Create a new Quorum
      *
@@ -167,10 +176,10 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return new QuorumFactory();
     }
 
-    private readonly values: Map<string, QuorumValue> = new Map();
+    private readonly values: Map<string, QuorumValue<T>> = new Map();
 
-    // disconnectWatcher emits an event whenever we get disconnected.
-    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
+    // connectionWatcher emits an event whenever we get disconnected.
+    private readonly connectionWatcher: EventEmitter = new EventEmitter();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
 
@@ -190,42 +199,36 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
-        this.disconnectWatcher.on("disconnect", () => {
+        this.connectionWatcher.on("disconnect", () => {
             // TODO: Consider if disconnect watching is needed for promise-based API.
         });
     }
 
     /**
-     * {@inheritDoc IQuorum.has}
+     * {@inheritDoc IQuorum.get}
      */
-    public has(key: string): boolean {
-        return this.values.get(key)?.accepted !== undefined;
+    public get(key: string): T | undefined {
+        return this.values.get(key)?.accepted?.value;
     }
 
     /**
-     * {@inheritDoc IQuorum.get}
+     * {@inheritDoc IQuorum.isPending}
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public get(key: string): any {
-        return this.values.get(key)?.accepted?.value;
+    public isPending(key: string): boolean {
+        return this.values.get(key)?.pending !== undefined;
     }
 
     /**
      * {@inheritDoc IQuorum.getPending}
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public getPending(key: string): any {
-        // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
-        // Maybe return the QuorumValue itself?
+    public getPending(key: string): T | undefined {
         return this.values.get(key)?.pending?.value;
     }
 
     /**
      * {@inheritDoc IQuorum.set}
      */
-    public set(key: string, value: unknown): void {
+    public set(key: string, value: T | undefined): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
         if (currentValue?.pending !== undefined) {
@@ -244,16 +247,14 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                     value,
                     0 /* refSeq */,
                     0 /* setSequenceNumber */,
-                    "detachedClient" /* clientId */,
                 );
             });
             return;
         }
 
-        const setOp: IQuorumSetOperation = {
+        const setOp: IQuorumSetOperation<T> = {
             type: "set",
             key,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
@@ -296,10 +297,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     private readonly handleIncomingSet = (
         key: string,
-        value: unknown,
+        value: T | undefined,
         refSeq: number,
         setSequenceNumber: number,
-        clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
         // We use a consensus-like approach here, so a proposal is valid if the value is unset or if there is no
@@ -315,14 +315,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         const accepted = currentValue?.accepted;
 
-        // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
-        // who issued the set (that client implicitly signs off).
-        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
+        // We expect signoffs from all connected clients at the time the set was sequenced (including the client who
+        // sent the set).
+        const expectedSignoffs = this.getSignoffClients();
 
-        const newQuorumValue: QuorumValue = {
+        const newQuorumValue: QuorumValue<T> = {
             accepted,
             pending: {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 value,
                 expectedSignoffs,
             },
@@ -333,9 +332,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.emit("pending", key);
 
         if (expectedSignoffs.length === 0) {
-            // Only the submitting client was connected at the time the set was sequenced.
+            // At least the submitting client should be amongst the expectedSignoffs, but keeping this check around
+            // as extra protection and in case we bring back the "submitting client implicitly accepts" optimization.
             this.values.set(key, {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 accepted: { value, sequenceNumber: setSequenceNumber },
                 pending: undefined,
             });
@@ -370,7 +369,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         if (pending.expectedSignoffs.length === 0) {
             // The pending value has settled
             this.values.set(key, {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 accepted: { value: pending.value, sequenceNumber },
                 pending: undefined,
             });
@@ -389,7 +387,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                     // The pending value has settled
                     this.values.set(key, {
                         accepted: {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             value: pending.value,
                             // The sequence number of the ClientLeave message.
                             sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
@@ -428,22 +425,24 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<[string, QuorumValue][]>(storage, snapshotFileName);
+        const content = await readAndParse<[string, QuorumValue<T>][]>(storage, snapshotFileName);
         for (const [key, value] of content) {
             this.values.set(key, value);
         }
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
      * @internal
      */
     protected initializeLocalCore(): void { }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
      * @internal
      */
     protected onDisconnect(): void {
-        this.disconnectWatcher.emit("disconnect");
+        this.connectionWatcher.emit("disconnect");
     }
 
     /**
@@ -451,7 +450,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * @internal
      */
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-        const quorumOp = content as IQuorumOperation;
+        const quorumOp = content as IQuorumOperation<T>;
         // Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
         // because we're implicitly removed from the list of expected accepts.
         if (quorumOp.type === "accept") {
@@ -487,11 +486,11 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
-            const op = message.contents as IQuorumOperation;
+            const op = message.contents as IQuorumOperation<T>;
 
             switch (op.type) {
                 case "set":
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, message.clientId);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
                     break;
 
                 case "accept":

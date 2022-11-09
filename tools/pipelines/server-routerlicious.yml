@@ -30,6 +30,10 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
@@ -42,7 +46,6 @@ trigger:
     include:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -67,7 +70,6 @@ pr:
     include:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -81,6 +83,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false

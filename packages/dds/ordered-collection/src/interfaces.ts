@@ -104,7 +104,7 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject<ICon
     /**
      * Retrieves a value from the collection.
      * @returns Returns true (and calls callback with acquired value) if collection was not empty.
-     *          Otherwise returns false.
+     * Otherwise returns false.
      */
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 

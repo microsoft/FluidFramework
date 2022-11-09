@@ -5,7 +5,7 @@
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
-
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 // Re-export so developers can build loggers without pulling in common-definitions
 export {
     ITelemetryBaseEvent,
@@ -32,16 +32,27 @@ export interface TinyliciousClientProps {
  */
 export interface TinyliciousConnectionConfig {
     /**
-     * Optional. Override of the port
-     * @defaultValue - {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
+     * Optional. Override of the port.
+     *
+     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
      */
     port?: number;
 
     /**
-     * Optional. Override of the domain
-     * @defaultValue - {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
+     * Optional. Override of the domain.
+     *
+     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
      */
     domain?: string;
+
+    /**
+     * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
+     * will use the default tokenProvider which is InsecureTinyliciousTokenProvider with default scopes,
+     * which are document read, write and summarizer write.
+     *
+     * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
+     */
+    tokenProvider?: ITokenProvider;
 }
 
 /**

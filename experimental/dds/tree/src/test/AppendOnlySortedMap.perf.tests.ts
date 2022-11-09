@@ -4,15 +4,14 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { makeRandom } from '@fluid-internal/stochastic-test-utils';
-import Random from 'random-js';
+import { IRandom, makeRandom } from '@fluid-internal/stochastic-test-utils';
 import { compareFiniteNumbers } from '../Common';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	const type = BenchmarkType.Measurement;
 	let map: AppendOnlySortedMap<number, number>;
-	let rand: Random;
+	let rand: IRandom;
 	const keyChoices: number[] = [];
 	let localChoice = 0;
 	const before = () => {
