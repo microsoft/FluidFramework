@@ -192,20 +192,22 @@ export interface IFluidClientDebugger
     /**
      * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}
      */
-    getAttachState(): AttachState;
+    getContainerAttachState(): AttachState;
 
     /**
      * Gets the Container's {@link @fluidframework/container-definitions#IContainer.connectionState}.
      */
-    getConnectionState(): ConnectionState;
+    getContainerConnectionState(): ConnectionState;
 
     /**
      * Gets the history of all ConnectionState changes since the debugger session was initialized.
      */
-    getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
 
     /**
-     * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}
+     * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}.
+     *
+     * @remarks Will be undefined when the Container is not connected.
      */
     getClientId(): string | undefined;
 
@@ -280,7 +282,7 @@ class FluidClientDebugger
     // #region Accumulated log state
 
     /**
-     * Accumulated data for {@link IFluidClientDebugger.getConnectionStateLog}.
+     * Accumulated data for {@link IFluidClientDebugger.getContainerConnectionStateLog}.
      */
     private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
 
@@ -364,21 +366,21 @@ class FluidClientDebugger
     /**
      * {@inheritDoc IFluidClientDebugger.getAttachState}
      */
-    public getAttachState(): AttachState {
+    public getContainerAttachState(): AttachState {
         return this.container.attachState;
     }
 
     /**
      * {@inheritDoc IFluidClientDebugger.getConnectionState}
      */
-    public getConnectionState(): ConnectionState {
+    public getContainerConnectionState(): ConnectionState {
         return this.container.connectionState;
     }
 
     /**
      * {@inheritDoc IFluidClientDebugger.getConnectionStateLog}
      */
-    public getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
+    public getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._connectionStateLog.map((value) => value);
     }

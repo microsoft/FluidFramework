@@ -44,12 +44,12 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     readonly containerId: string;
     dispose(): void;
-    getAttachState(): AttachState;
     getAudienceMembers(): Map<string, IClient>;
     getAuidienceHistory(): readonly AudienceChangeLogEntry[];
     getClientId(): string | undefined;
-    getConnectionState(): ConnectionState;
-    getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerAttachState(): AttachState;
+    getContainerConnectionState(): ConnectionState;
+    getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
     getMinimumSequenceNumber(): number;
     getOpsLog(): readonly OpsLogEntry[];
     isContainerClosed(): boolean;
