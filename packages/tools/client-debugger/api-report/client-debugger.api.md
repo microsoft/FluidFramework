@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -12,6 +13,14 @@ import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+
+// @public
+export interface AudienceChangeLogEntry extends LogEntry {
+    changeKind: "added" | "removed";
+    client: IClient;
+    clientId: string;
+}
 
 // @public
 export function closeFluidClientDebugger(containerId: string): void;
@@ -29,11 +38,21 @@ export interface FluidClientDebuggerProps {
 }
 
 // @public
+export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
+
+// @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
-    get connectionState(): ConnectionState;
-    get connectionStateLog(): readonly ConnectionStateChangeLogEntry[];
-    containerId: string;
+    readonly containerId: string;
     dispose(): void;
+    getAttachState(): AttachState;
+    getAudienceMembers(): Map<string, IClient>;
+    getAuidienceHistory(): readonly AudienceChangeLogEntry[];
+    getConnectionState(): ConnectionState;
+    getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getMinimumSequenceNumber(): number;
+    getMyClientId(): string | undefined;
+    getOpsLog(): readonly OpsLogEntry[];
+    isContainerClosed(): boolean;
 }
 
 // @public
@@ -41,6 +60,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerConnected", listener: (clientId: string) => void): void;
     (event: "containerDisconnected", listener: () => void): void;
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void): any;
     (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void): any;
 }
@@ -49,9 +69,18 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger;
 
 // @public
-export interface StateChangeLogEntry<TState> {
-    newState: TState;
+export interface LogEntry {
     timestamp: Date;
+}
+
+// @public
+export interface OpsLogEntry extends LogEntry {
+    op: ISequencedDocumentMessage;
+}
+
+// @public
+export interface StateChangeLogEntry<TState> extends LogEntry {
+    newState: TState;
 }
 
 ```

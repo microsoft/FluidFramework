@@ -5,22 +5,26 @@
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+    AttachState,
     IAudience,
     IContainer,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
 // - Audience history (including timestamps)
 // - Full ops history
+// - Document association between data that changes, and the events that signal the changes.
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.
  */
 export interface IFluidClientDebuggerEvents extends IEvent {
+    // #region Container-related events
+
     /**
      * Emitted when the {@link @fluidframework/container-definitions#IContainer} completes connecting to the
      * Fluid service.
@@ -58,6 +62,28 @@ export interface IFluidClientDebuggerEvents extends IEvent {
      */
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void);
 
+    // #region DeltaManager-related events
+
+    /**
+     * Emitted when an incoming operation (op) has been processed.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `message`: The op that was processed.
+     *
+     * - `processingTime`: The amount of time it took to process the op, expressed in milliseconds.
+     */
+    (
+        event: "incomingOpProcessed",
+        listener: (op: ISequencedDocumentMessage, processingTime: number) => void,
+    );
+
+    // #endregion
+
+    // #endregion
+
+    // #region Audience-related events
+
     /**
      * Emitted when a new member is added to the Audience.
      *
@@ -79,6 +105,18 @@ export interface IFluidClientDebuggerEvents extends IEvent {
      * - `client`: The removed member client.
      */
     (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void);
+
+    // #endregion
+}
+
+/**
+ * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
+ */
+export interface LogEntry {
+    /**
+     * The time at which some data was recorded.
+     */
+    timestamp: Date;
 }
 
 /**
@@ -86,16 +124,11 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  *
  * @typeParam TState - The type of state being tracked.
  */
-export interface StateChangeLogEntry<TState> {
+export interface StateChangeLogEntry<TState> extends LogEntry {
     /**
      * The new state value.
      */
     newState: TState;
-
-    /**
-     * The time at which the state change event was emitted.
-     */
-    timestamp: Date;
 }
 
 /**
@@ -112,6 +145,36 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 }
 
 /**
+ * Represents a processed operation (op), paired with a timestamp.
+ */
+export interface OpsLogEntry extends LogEntry {
+    /**
+     * The operation (op) that was processed.
+     */
+    op: ISequencedDocumentMessage;
+}
+
+/**
+ * Represents a processed operation (op), paired with a timestamp.
+ */
+export interface AudienceChangeLogEntry extends LogEntry {
+    /**
+     * The ID of the client that was added or removed.
+     */
+    clientId: string;
+
+    /**
+     * Metadata abou the client that was added or removed.
+     */
+    client: IClient;
+
+    /**
+     * Whether the change represents a client being added to or removed from the collaborative session.
+     */
+    changeKind: "added" | "removed";
+}
+
+/**
  * TODO
  */
 export interface IFluidClientDebugger
@@ -120,17 +183,64 @@ export interface IFluidClientDebugger
     /**
      * The ID of the Container with which the debugger is associated.
      */
-    containerId: string;
+    readonly containerId: string;
+
+    // #region Container data
 
     /**
-     * The current connection state.
+     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}
      */
-    get connectionState(): ConnectionState;
+    getAttachState(): AttachState;
 
     /**
-     * The history of all ConnectionState changes since the debugger session was initialized.
+     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.connectionState}.
      */
-    get connectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getConnectionState(): ConnectionState;
+
+    /**
+     * Gets the history of all ConnectionState changes since the debugger session was initialized.
+     */
+    getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+
+    /**
+     * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}
+     */
+    getMyClientId(): string | undefined;
+
+    /**
+     * Whether or not the Container has been {@link @fluidframework/container-definitions#IContainer.disposed}.
+     */
+    isContainerClosed(): boolean;
+
+    // #region DeltaManager data
+
+    /**
+     * Gets the Container's current {@link @fluid-framework/container-definitions#IDeltaManager.minimumSequenceNumber}.
+     */
+    getMinimumSequenceNumber(): number;
+
+    /**
+     * All operations (ops) processed since the debugger was initialized.
+     */
+    getOpsLog(): readonly OpsLogEntry[];
+
+    // #endregion
+
+    // #endregion
+
+    // #region Audience data
+
+    /**
+     * Gets all of the Audience's {@link @fluidframework/container-definitions#IAudience.getMembers | members}.
+     */
+    getAudienceMembers(): Map<string, IClient>;
+
+    /**
+     * Historical log of audience member changes.
+     */
+    getAuidienceHistory(): readonly AudienceChangeLogEntry[];
+
+    // #endregion
 
     // TODO: state associated with events.
 
@@ -168,9 +278,19 @@ class FluidClientDebugger
     // #region Accumulated log state
 
     /**
-     * {@inheritDoc IFluidClientDebugger.connectionStateLog}
+     * Accumulated data for {@link IFluidClientDebugger.getConnectionStateLog}.
      */
     private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
+
+    /**
+     * Accumulated data for {@link IFluidClientDebugger.getOpsLog}.
+     */
+    private readonly _opsLog: OpsLogEntry[];
+
+    /**
+     * Accumulated data for {@link IFluidClientDebugger.getAudienceHistory}.
+     */
+    private readonly _audienceChangeLog: AudienceChangeLogEntry[];
 
     // #endregion
 
@@ -182,6 +302,13 @@ class FluidClientDebugger
         this.emit("containerDisconnected");
     private readonly containerClosedHandler = (error?: ICriticalContainerError): boolean =>
         this.emit("containerClosed", error);
+
+    // #region DeltaManager-related event handlers
+
+    private readonly incomingOpProcessedHandler = (op: ISequencedDocumentMessage): boolean =>
+        this.emit("incomingOpProcessed", op);
+
+    // #endregion
 
     // #endregion
 
@@ -197,6 +324,8 @@ class FluidClientDebugger
     /**
      * Whether or not the instance has been disposed yet.
      *
+     * @remarks Not related to Container disposal.
+     *
      * @see {@link IFluidClientDebugger.dispose}
      */
     private _disposed: boolean;
@@ -210,11 +339,14 @@ class FluidClientDebugger
 
         // TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
         this._connectionStateLog = [];
+        this._opsLog = [];
+        this._audienceChangeLog = [];
 
         // Bind Container events
-        this.container.on("connected", (clientId) => this.onConnected(clientId));
-        this.container.on("disconnected", () => this.onDisconnected());
-        this.container.on("closed", this.containerClosedHandler);
+        this.container.on("connected", (clientId) => this.onContainerConnected(clientId));
+        this.container.on("disconnected", () => this.onContainerDisconnected());
+        this.container.on("closed", (error) => this.onContainerClosed(error));
+        this.container.on("op", (op) => this.onIncomingOpProcessed(op));
 
         // Bind Audience events
         this.audience.on("addMember", this.audienceMemberAddedHandler);
@@ -225,22 +357,45 @@ class FluidClientDebugger
         this._disposed = false;
     }
 
+    // #region Container data
+
     /**
-     * {@inheritDoc IFluidClientDebugger.connectionState}
+     * {@inheritDoc IFluidClientDebugger.getAttachState}
      */
-    public get connectionState(): ConnectionState {
+    public getAttachState(): AttachState {
+        return this.container.attachState;
+    }
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.getConnectionState}
+     */
+    public getConnectionState(): ConnectionState {
         return this.container.connectionState;
     }
 
     /**
-     * {@inheritDoc IFluidClientDebugger.connectionStateLog}
+     * {@inheritDoc IFluidClientDebugger.getConnectionStateLog}
      */
-    public get connectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
+    public getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._connectionStateLog.map((value) => value);
     }
 
-    private onConnected(clientId: string): void {
+    /**
+     * {@inheritDoc IFluidClientDebugger.getMyClientId}
+     */
+    public getMyClientId(): string | undefined {
+        return this.container.clientId;
+    }
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.isContainerClosed}
+     */
+    public isContainerClosed(): boolean {
+        return this.container.closed;
+    }
+
+    private onContainerConnected(clientId: string): void {
         this._connectionStateLog.push({
             newState: ConnectionState.Connected,
             timestamp: new Date(),
@@ -249,7 +404,7 @@ class FluidClientDebugger
         this.containerConnectedHandler(clientId);
     }
 
-    private onDisconnected(): void {
+    private onContainerDisconnected(): void {
         this._connectionStateLog.push({
             newState: ConnectionState.Disconnected,
             timestamp: new Date(),
@@ -258,13 +413,60 @@ class FluidClientDebugger
         this.containerDisconnectedHandler();
     }
 
+    private onContainerClosed(error?: ICriticalContainerError): void {
+        this.containerClosedHandler(error);
+    }
+
+    // #endregion
+
+    // #region DeltaManager data
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.getMinimumSequenceNumber}
+     */
+    public getMinimumSequenceNumber(): number {
+        return this.container.deltaManager.minimumSequenceNumber;
+    }
+
+    public getOpsLog(): readonly OpsLogEntry[] {
+        // Clone array contents so consumers don't see local changes
+        return this._opsLog.map((value) => value);
+    }
+
+    private onIncomingOpProcessed(op: ISequencedDocumentMessage): void {
+        this._opsLog.push({
+            op,
+            timestamp: new Date(),
+        });
+
+        this.incomingOpProcessedHandler(op);
+    }
+
+    // #endregion
+
+    // #region Audience data
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.getAudienceMembers}
+     */
+    public getAudienceMembers(): Map<string, IClient> {
+        return this.audience.getMembers();
+    }
+
+    public getAuidienceHistory(): readonly AudienceChangeLogEntry[] {
+        // Clone array contents so consumers don't see local changes
+        return this._audienceChangeLog.map((value) => value);
+    }
+
+    // #endregion
+
     /**
      * {@inheritDoc IFluidClientDebugger.dispose}
      */
     public dispose(): void {
         // Unbind Container events
-        this.container.off("connected", (clientId) => this.onConnected(clientId));
-        this.container.off("disconnected", () => this.onDisconnected());
+        this.container.off("connected", (clientId) => this.onContainerConnected(clientId));
+        this.container.off("disconnected", () => this.onContainerDisconnected());
         this.container.off("closed", this.containerClosedHandler);
 
         // Unbind Audience events
