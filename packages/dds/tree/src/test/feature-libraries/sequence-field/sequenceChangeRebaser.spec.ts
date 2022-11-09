@@ -5,10 +5,12 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
+import { makeAnonChange, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
+import { createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -60,9 +62,13 @@ describe("SequenceField - Rebaser Axioms", () => {
                             for (let offset2 = 1; offset2 <= 4; ++offset2) {
                                 const change1 = [offset1, mark1];
                                 const change2 = [offset2, mark2];
-                                const inv = SF.invert(change2, TestChange.invert);
-                                const r1 = SF.rebase(change1, change2, TestChange.rebase);
-                                const r2 = SF.rebase(r1, inv, TestChange.rebase);
+                                const inv = SF.invert(makeAnonChange(change2), TestChange.invert);
+                                const r1 = SF.rebase(
+                                    change1,
+                                    makeAnonChange(change2),
+                                    TestChange.rebase,
+                                );
+                                const r2 = SF.rebase(r1, makeAnonChange(inv), TestChange.rebase);
                                 assert.deepEqual(r2, change1);
                             }
                         }
@@ -88,10 +94,14 @@ describe("SequenceField - Rebaser Axioms", () => {
                         for (let offset2 = 1; offset2 <= 4; ++offset2) {
                             const change1 = [offset1, mark1];
                             const change2 = [offset2, mark2];
-                            const inverse2 = SF.invert(change2, TestChange.invert);
-                            const r1 = SF.rebase(change1, change2, TestChange.rebase);
-                            const r2 = SF.rebase(r1, inverse2, TestChange.rebase);
-                            const r3 = SF.rebase(r2, change2, TestChange.rebase);
+                            const inverse2 = SF.invert(makeAnonChange(change2), TestChange.invert);
+                            const r1 = SF.rebase(
+                                change1,
+                                makeAnonChange(change2),
+                                TestChange.rebase,
+                            );
+                            const r2 = SF.rebase(r1, makeAnonChange(inverse2), TestChange.rebase);
+                            const r3 = SF.rebase(r2, makeAnonChange(change2), TestChange.rebase);
                             assert.deepEqual(r3, r1);
                         }
                     }
@@ -112,12 +122,35 @@ describe("SequenceField - Rebaser Axioms", () => {
             } else {
                 it(`${name} ○ ${name}⁻¹ === ε`, () => {
                     const change = [mark];
-                    const inv = SF.invert(change, TestChange.invert);
+                    const inv = SF.invert(makeAnonChange(change), TestChange.invert);
                     const actual = SF.compose([change, inv], TestChange.compose);
                     const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta);
                     assert.deepEqual(delta, []);
                 });
             }
         }
+    });
+});
+
+describe("SequenceField - Sandwich Rebasing", () => {
+    it("Nested inserts", () => {
+        const insertA = tagChange(createInsertChangeset(0, 2), brand(1));
+        const insertB = tagChange(createInsertChangeset(1, 1), brand(2));
+        const inverseA = SF.invert(insertA, TestChange.invert);
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+        const insertB3 = rebaseTagged(insertB2, insertA);
+        assert.deepEqual(insertB3.change, insertB.change);
+    });
+
+    it("Nested inserts ↷ adjacent insert", () => {
+        const insertX = tagChange(createInsertChangeset(0, 1), brand(1));
+        const insertA = tagChange(createInsertChangeset(1, 2), brand(2));
+        const insertB = tagChange(createInsertChangeset(2, 1), brand(3));
+        const inverseA = SF.invert(insertA, TestChange.invert);
+        const insertA2 = rebaseTagged(insertA, insertX);
+        const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+        const insertB3 = rebaseTagged(insertB2, insertX);
+        const insertB4 = rebaseTagged(insertB3, insertA2);
+        assert.deepEqual(insertB4.change, createInsertChangeset(3, 1));
     });
 });

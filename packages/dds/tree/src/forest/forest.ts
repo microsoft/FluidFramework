@@ -98,12 +98,15 @@ export function moveToDetachedField(
     field: DetachedField = rootField,
 ): void {
     const result = forest.tryMoveCursorToField(rootAnchor(field), cursorToMove);
-    assert(result === TreeNavigationResult.Ok, "Navigation to detached fields should never fail");
+    assert(
+        result === TreeNavigationResult.Ok,
+        0x42d /* Navigation to detached fields should never fail */,
+    );
 }
 
 /**
  * Anchor to a field.
- * This is structurally based on the parent, so it will move only as the parent moves.W
+ * This is structurally based on the parent, so it will move only as the parent moves.
  */
 export interface FieldAnchor {
     /**
@@ -152,8 +155,18 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Nodes`.
      */
     buildAnchor(): Anchor;
+
+    /**
+     * Construct a `FieldAnchor` which the IForestSubscription will keep rebased to `current`.
+     * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Fields`.
+     */
+    buildFieldAnchor(): FieldAnchor;
 
     /**
      * Current state.

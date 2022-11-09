@@ -25,5 +25,5 @@ jobs:
   - task: PublishPipelineArtifact@1
     displayName: Publish Pipeline Artifact
     inputs:
-      path: ${{ parameters.chartPath }}
+      targetPath: ${{ parameters.chartPath }}
       artifactName: chart
