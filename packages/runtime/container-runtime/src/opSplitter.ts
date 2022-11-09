@@ -15,7 +15,7 @@ export interface IChunkedOp {
     originalType: MessageType | ContainerMessageType;
 }
 
-const DefaultChunkSize = 500 * 1024; // 500kb
+const DefaultChunkSize = 700 * 1024; // 700kb
 
 /**
  * Responsible for keeping track of remote chunked messages.
