@@ -219,7 +219,7 @@ export class DocumentService implements api.IDocumentService {
                         ordererToken.jwt,
                         io,
                         client,
-                        this.deltaStreamUrl,
+                        this.ordererUrl,
                         this.logger,
                     );
                 }
