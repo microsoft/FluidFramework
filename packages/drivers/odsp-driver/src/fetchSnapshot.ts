@@ -115,10 +115,7 @@ export async function fetchSnapshotWithRedeem(
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
-            logger.sendErrorEvent({
-                eventName: "RedeemFallback",
-                errorType: error.errorType,
-            }, error);
+
             await redeemSharingLink(
                 odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
@@ -129,6 +126,15 @@ export async function fetchSnapshotWithRedeem(
                     sharingLinkToRedeem: undefined,
                 },
             };
+
+            // Log initial failure only if redeem succeeded - it points out to some bug somewhere
+            // If redeem failed, that most likely means user has no permissions to access a file,
+            // and thus it's not worth it logging extra errors - same error will be logged by end-to-end
+            // flow (container open) based on a failure above.
+            logger.sendErrorEvent({
+                eventName: "RedeemFallback",
+                errorType: error.errorType,
+            }, error);
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
