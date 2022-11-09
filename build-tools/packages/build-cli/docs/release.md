@@ -136,14 +136,14 @@ DESCRIPTION
   This is useful when we want to include only the dependency versions that the release group depends on in the report.
 
 EXAMPLES
-  Output all release report files to the current directory.
-
-    $ flub release report
-
   Generate a release report of the highest semver release for each package and release group and display it in the
   terminal only.
 
-    $ flub release report --no-output
+    $ flub release report
+
+  Output all release report files to the current directory.
+
+    $ flub release report -o .
 
   Generate a release report for each package and release group in the repo interactively.
 

@@ -342,13 +342,13 @@ export default class ReleaseReportCommand<
 
     static examples = [
         {
-            description: "Output all release report files to the current directory.",
+            description:
+                "Generate a release report of the highest semver release for each package and release group and display it in the terminal only.",
             command: "<%= config.bin %> <%= command.id %>",
         },
         {
-            description:
-                "Generate a release report of the highest semver release for each package and release group and display it in the terminal only.",
-            command: "<%= config.bin %> <%= command.id %> --no-output",
+            description: "Output all release report files to the current directory.",
+            command: "<%= config.bin %> <%= command.id %> -o .",
         },
         {
             description:
