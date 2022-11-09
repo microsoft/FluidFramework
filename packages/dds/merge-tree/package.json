@@ -36,8 +36,6 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
@@ -98,8 +96,7 @@
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",

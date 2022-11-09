@@ -32,8 +32,6 @@
     "lint:fix": "npm run eslint:fix",
     "test": "jest",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
@@ -58,8 +56,7 @@
     "fake-indexeddb": "3.1.4",
     "jest": "^26.6.3",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
