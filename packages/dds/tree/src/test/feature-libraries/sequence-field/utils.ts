@@ -7,8 +7,8 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { TestChange } from "../../testChange";
-import { TaggedChange } from "../../../core";
-import { deepFreeze } from "../../utils";
+import { Delta, TaggedChange } from "../../../core";
+import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -96,4 +96,12 @@ export function rebaseTagged(
         );
     }
     return currChange;
+}
+
+export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+    assertMarkListEqual(toDelta(actual), toDelta(expected));
+}
+
+function toDelta(change: TestChangeset): Delta.MarkList {
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
