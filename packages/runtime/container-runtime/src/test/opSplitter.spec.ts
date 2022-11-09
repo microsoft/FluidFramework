@@ -5,18 +5,18 @@
 
 // eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { OpSplitter } from "../opSplitter";
 
 describe("Op splitter", () => {
-    const submitted: { type: MessageType; contents: any; batch: boolean; appData?: any; }[] = [];
-    const submitFn = (type: MessageType, contents: any, batch: boolean, appData?: any): number => {
-        submitted.push({ type, contents, batch, appData });
+    const submitted: IBatchMessage[][] = [];
+    const submitBatchFn = (batch: IBatchMessage[]): number => {
+        submitted.push(batch);
         return submitted.length;
     };
 
     it("Validate chunking end to end", () => {
-        const opSplitter = new OpSplitter([], submitFn);
+        const opSplitter = new OpSplitter([], submitBatchFn);
         assert.ok(!opSplitter.hasChunks);
     });
 });

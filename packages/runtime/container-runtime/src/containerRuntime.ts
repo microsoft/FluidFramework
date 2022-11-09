@@ -1023,7 +1023,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = this.context.connected;
         this.opSplitter = new OpSplitter(
             chunks,
-            this.context.submitFn);
+            this.context.submitBatchFn);
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1712,8 +1712,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message.contents = JSON.parse(message.contents);
         }
 
-        message = this.opDecompressor.processMessage(message);
-
         // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
         // This format was not shipped to production workflows.
         const runtimeMessage = unpackRuntimeMessage(message);
@@ -1731,6 +1729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
             message = this.opSplitter.processRemoteMessage(message);
+            message = this.opDecompressor.processMessage(message);
 
             let localOpMetadata: unknown;
             if (local && runtimeMessage) {

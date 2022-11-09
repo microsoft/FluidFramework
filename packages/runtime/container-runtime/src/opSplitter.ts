@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { BatchMessage } from "./batchManager";
 import { ContainerMessageType, ContainerRuntimeMessage } from "./containerRuntime";
@@ -13,6 +14,8 @@ export interface IChunkedOp {
     totalChunks: number;
     contents: string;
     originalType: MessageType | ContainerMessageType;
+    metadata?: Record<string, unknown>;
+    compression?: string;
 }
 
 const DefaultChunkSize = 700 * 1024; // 700kb
@@ -26,7 +29,7 @@ export class OpSplitter {
 
     constructor(
         chunks: [string, string[]][],
-        private readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+        private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly chunkSizeInBytes: number = DefaultChunkSize,
     ) {
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -49,13 +52,16 @@ export class OpSplitter {
         const chunkedContent = message.contents as IChunkedOp;
         this.addChunk(clientId, chunkedContent);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const newMessage = { ...message };
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const serializedContent = this.chunkMap.get(clientId)!.join("");
-            newMessage.contents = JSON.parse(serializedContent);
-            newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
-            return newMessage;
+            return {
+                ...message,
+                contents: JSON.parse(serializedContent),
+                type: chunkedContent.originalType,
+                metadata: chunkedContent.metadata,
+                compression: chunkedContent.compression,
+            };
         }
         return message;
     }
@@ -91,18 +97,24 @@ export class OpSplitter {
         for (let i = 1; i <= chunkN; i++) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
-                contents: contentToChunk.substring(offset, offset + this.chunkSizeInBytes + 1),
+                contents: contentToChunk.substr(offset, this.chunkSizeInBytes),
                 originalType: cons.deserializedContent.type,
                 totalChunks: chunkN,
+                metadata: cons.metadata,
+                compression: cons.compression,
             };
 
             offset += this.chunkSizeInBytes;
 
-            const payload: ContainerRuntimeMessage = { type: cons.deserializedContent.type, contents: chunkedOp };
-            clientSequenceNumber = this.submitFn(
-                MessageType.Operation,
-                payload,
-                false);
+            const payload: ContainerRuntimeMessage = { type: ContainerMessageType.ChunkedOp, contents: chunkedOp };
+            const messageToSend: BatchMessage = {
+                contents: JSON.stringify(payload),
+                deserializedContent: payload,
+                metadata: undefined,
+                localOpMetadata: undefined,
+                referenceSequenceNumber: cons.referenceSequenceNumber,
+            };
+            clientSequenceNumber = this.submitBatchFn([messageToSend]);
         }
 
         return clientSequenceNumber;

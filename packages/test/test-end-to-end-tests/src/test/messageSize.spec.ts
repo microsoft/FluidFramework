@@ -71,7 +71,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     };
 
     const generateRandomStringOfSize = (sizeInBytes: number): string =>
-        crypto.randomBytes(sizeInBytes / 2).toString("utf8");
+        crypto.randomBytes(sizeInBytes / 2).toString("hex");
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
     const setMapKeys = (map: SharedMap, count: number, item: string): void => {
         for (let i = 0; i < count; i++) {
@@ -186,10 +186,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     });
 
     it.only("Single large op passes when compression enabled, compressed content is over max op size", async function() {
-        if (provider.driver.type === "local") {
-            this.skip();
-        }
-
         const maxMessageSizeInBytes = 15 * 1024 * 1024; // 15MB
         await setupContainers({
             ...testContainerConfig,
