@@ -8,33 +8,36 @@ import { table } from "table";
 
 import { detectBumpType } from "@fluid-tools/version-tools";
 
-import { packageSelectorFlag, releaseGroupFlag } from "../../../flags";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 import {
     ReleaseReport,
     VersionDetails,
     getDisplayDate,
     getDisplayDateRelative,
     sortVersions,
-} from "../../../lib";
-import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups";
-import ReleaseReportCommand, { ReleaseReportBaseCommand, ReleaseSelectionMode } from "../report";
+} from "../../lib";
+import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
+import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
 /**
- * Generates a report of all releases of a particular package or release group.
+ * Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo
+ * containing the working directory.
  *
  * @remarks
+ * Use 'npm view' to list published packages based on the public npm registry.
  *
- * Useful when you want to see all the releases done for a release group or package. The number of results can be
- * limited using the `--limit` argument.
+ * The number of results can be limited using the --limit argument.
  */
-export default class ReportAllCommand<
-    T extends typeof ReportAllCommand.flags,
+export default class ReleaseHistoryCommand<
+    T extends typeof ReleaseHistoryCommand.flags,
 > extends ReleaseReportBaseCommand<T> {
-    static description = `Generates a report of all releases of a particular package or release group.
+    static description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
-    Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.`;
+    Use 'npm view' to list published packages based on the public npm registry.
+
+    The number of results can be limited using the --limit argument.`;
 
     static examples = [
         {
@@ -58,7 +61,7 @@ export default class ReportAllCommand<
         }),
         limit: Flags.integer({
             char: "l",
-            description: `Limits the number of displayed releases for each release group.`,
+            description: `Limits the number of displayed releases for each release group. Results are sorted by semver, so '--limit 10' will return the 10 highest semver releases for the release group.`,
         }),
         ...ReleaseReportBaseCommand.flags,
     };

@@ -384,15 +384,9 @@ export default class ReleaseReportCommand<
             If you want to report on a particular release, check out the git tag for the release version you want to report on before running this command.`,
             required: false,
         }),
-        output: Flags.boolean({
+        output: Flags.directory({
             char: "o",
-            default: true,
-            description: "Output JSON report files.",
-            allowNo: true,
-        }),
-        path: Flags.directory({
-            char: "p",
-            description: "[default: working directory] Output JSON report files to this location.",
+            description: "Output JSON report files to this directory.",
         }),
         ...ReleaseReportBaseCommand.flags,
     };
@@ -403,8 +397,8 @@ export default class ReleaseReportCommand<
     public async run(): Promise<void> {
         const flags = this.processedFlags;
 
-        const shouldOutputFiles = flags.output;
-        const outputPath = flags.path ?? process.cwd();
+        const shouldOutputFiles = flags.output !== undefined;
+        const outputPath = flags.output ?? process.cwd();
 
         const mode =
             flags.highest === true
