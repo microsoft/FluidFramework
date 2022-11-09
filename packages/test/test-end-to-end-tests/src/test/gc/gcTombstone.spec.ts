@@ -27,9 +27,9 @@ import { IRequest } from "@fluidframework/core-interfaces";
  * TODO: add testing for sending and receiving signals
  */
 describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjectProvider) => {
-    const waitLessThanSweepTimeoutMs = 100;
+    const remainingTimeUntilSweepMs = 100;
     const sweepTimeoutMs = 200;
-    assert(waitLessThanSweepTimeoutMs < sweepTimeoutMs, "waitLessThanSweepTimeoutMs should be < sweepTimeoutMs");
+    assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");
     const settings = {
         "Fluid.GarbageCollection.Test.Tombstone": "true",
         "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
@@ -180,14 +180,14 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             unreferencedId,
             summarizingContainer,
             summarizer,
-        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
 
         // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
         // production application - causes an inactive loaded and changed error
         const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(waitLessThanSweepTimeoutMs);
+        await delay(remainingTimeUntilSweepMs);
 
         await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
@@ -266,7 +266,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             summarizingContainer,
             summarizer,
             summaryVersion,
-        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
 
         // Setup close validation
         let closeError: IErrorBase | undefined;
@@ -281,7 +281,7 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
         const dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(waitLessThanSweepTimeoutMs);
+        await delay(remainingTimeUntilSweepMs);
 
         await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
@@ -344,9 +344,9 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             unreferencedId,
             summarizingContainer,
             summarizer,
-        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
         // Wait enough time so that the datastore is sweep ready
-        await delay(waitLessThanSweepTimeoutMs);
+        await delay(remainingTimeUntilSweepMs);
 
         await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
@@ -411,11 +411,11 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             unreferencedId,
             summarizingContainer,
             summarizer,
-        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
         const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(waitLessThanSweepTimeoutMs);
+        await delay(remainingTimeUntilSweepMs);
 
         await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
@@ -446,11 +446,11 @@ describeNoCompat("GC DataStore Tombstoned When It Is Sweep Ready", (getTestObjec
             unreferencedId,
             summarizingContainer,
             summarizer,
-        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - waitLessThanSweepTimeoutMs);
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
         const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
 
         // Wait enough time so that the datastore is sweep ready
-        await delay(waitLessThanSweepTimeoutMs);
+        await delay(remainingTimeUntilSweepMs);
 
         await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
