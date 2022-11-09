@@ -611,8 +611,9 @@ export class DataStores implements IDisposable {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
 
             // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
-            const dataStore = this.getKnownDataStore(id);
-            dataStore.revive();
+            const dataStore = this.contexts.get(id);
+            assert(dataStore !== undefined, "No data store retrieved with specified id");
+            dataStore.setTombstone(false /* tombstone */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -644,8 +645,9 @@ export class DataStores implements IDisposable {
              * summaries.
              */
             if (tombstone) {
-                const dataStore = this.getKnownDataStore(dataStoreId);
-                dataStore.tombstone();
+                const dataStore = this.contexts.get(dataStoreId);
+                assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
+                dataStore.setTombstone(true /* tombstone */);
                 continue;
             }
 
@@ -654,17 +656,6 @@ export class DataStores implements IDisposable {
             // Delete the summarizer node of the unused data stores.
             this.deleteChildSummarizerNodeFn(dataStoreId);
         }
-    }
-
-    /**
-     * Assumes that the datastore exists and throws an error if it doesn't exist
-     * @param dataStoreId - the id of the datastore
-     * @returns the datastore
-     */
-    private getKnownDataStore(dataStoreId: string): FluidDataStoreContext {
-        const dataStore = this.contexts.get(dataStoreId);
-        assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-        return dataStore;
     }
 
     /**

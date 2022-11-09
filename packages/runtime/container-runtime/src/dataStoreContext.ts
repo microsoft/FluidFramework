@@ -316,20 +316,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public tombstone() {
-        if (this.tombstoned) {
+    public setTombstone(tombstone: boolean) {
+        if (this.tombstoned === tombstone) {
             return;
         }
 
-        this._tombstoned = true;
-    }
-
-    public revive() {
-        if (!this.tombstoned) {
-            return;
-        }
-
-        this._tombstoned = false;
+        this._tombstoned = tombstone;
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
