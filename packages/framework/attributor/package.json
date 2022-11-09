@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/attributor"
+    "directory": "packages/framework/attributor"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
