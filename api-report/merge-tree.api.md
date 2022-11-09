@@ -245,8 +245,6 @@ export function compareReferencePositions(a: ReferencePosition, b: ReferencePosi
 // @public (undocumented)
 export const compareStrings: (a: string, b: string) => number;
 
-// Warning: (ae-internal-missing-underscore) The name "ConflictAction" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
@@ -280,8 +278,6 @@ export function debugMarkerToString(marker: Marker): string;
 // @public (undocumented)
 export const DetachedReferencePosition = -1;
 
-// Warning: (ae-internal-missing-underscore) The name "Dictionary" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface Dictionary<TKey, TData> {
     // (undocumented)
@@ -343,8 +339,6 @@ export interface IHierBlock extends IMergeBlock {
     rightmostTiles: MapLike<ReferencePosition>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
@@ -597,16 +591,12 @@ export interface InsertContext {
 // @public (undocumented)
 export function internedSpaces(n: number): string;
 
-// Warning: (ae-internal-missing-underscore) The name "IRBAugmentation" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
     update(node: RBNode<TKey, TData>): void;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "IRBMatcher" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface IRBMatcher<TKey, TData> {
     // (undocumented)
@@ -673,8 +663,6 @@ export interface ISegmentChanges {
     replaceCurrent?: ISegment;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "KeyComparer" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface KeyComparer<TKey> {
     // (undocumented)
@@ -952,8 +940,6 @@ export enum PropertiesRollback {
     Rollback = 1
 }
 
-// Warning: (ae-internal-missing-underscore) The name "Property" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface Property<TKey, TData> {
     // (undocumented)
@@ -962,8 +948,6 @@ export interface Property<TKey, TData> {
     key: TKey;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "PropertyAction" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface PropertyAction<TKey, TData> {
     // (undocumented)
@@ -973,8 +957,6 @@ export interface PropertyAction<TKey, TData> {
 // @public (undocumented)
 export type PropertySet = MapLike<any>;
 
-// Warning: (ae-internal-missing-underscore) The name "QProperty" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface QProperty<TKey, TData> {
     // (undocumented)
@@ -986,8 +968,6 @@ export interface QProperty<TKey, TData> {
 // @public (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
-// Warning: (ae-internal-missing-underscore) The name "RBColor" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export const RBColor: {
     readonly RED: 0;
@@ -997,8 +977,6 @@ export const RBColor: {
 // @internal (undocumented)
 export type RBColor = typeof RBColor[keyof typeof RBColor];
 
-// Warning: (ae-internal-missing-underscore) The name "RBNode" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface RBNode<TKey, TData> {
     // (undocumented)
@@ -1015,8 +993,6 @@ export interface RBNode<TKey, TData> {
     size: number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RBNodeActions" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface RBNodeActions<TKey, TData> {
     // (undocumented)
@@ -1029,8 +1005,6 @@ export interface RBNodeActions<TKey, TData> {
     showStructure?: boolean;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RedBlackTree" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
     constructor(compareKeys: KeyComparer<TKey>, aug?: IRBAugmentation<TKey, TData> | undefined);
@@ -1198,8 +1172,6 @@ export class SegmentGroupCollection {
     get size(): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "SortedDictionary" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     // (undocumented)
