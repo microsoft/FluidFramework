@@ -25,7 +25,6 @@ import {
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 import {
-    PackageVersionList,
     PackageVersionMap,
     ReleaseReport,
     ReportKind,
@@ -401,7 +400,7 @@ export default class ReleaseReportCommand<
     defaultMode: ReleaseSelectionMode = "inRepo";
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
-    public async run(): Promise<ReleaseReport | PackageVersionList | any> {
+    public async run(): Promise<void> {
         const flags = this.processedFlags;
 
         const shouldOutputFiles = flags.output;
@@ -514,9 +513,6 @@ export default class ReleaseReportCommand<
 
             await Promise.all(promises);
         }
-
-        // When the --json flag is passed, the command will return the raw data as JSON.
-        return report;
     }
 
     private async generateReleaseReport(reportData: PackageReleaseData): Promise<ReleaseReport> {
