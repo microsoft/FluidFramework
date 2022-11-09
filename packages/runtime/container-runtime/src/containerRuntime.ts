@@ -1021,7 +1021,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.opSplitter = new OpSplitter(chunks, this.context.submitFn);
+        this.opSplitter = new OpSplitter(
+            chunks,
+            this.context.submitFn);
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1882,14 +1884,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
         if (this.canSendOps()) {
             if (this.context.submitBatchFn !== undefined) {
-                const batchToSend: IBatchMessage[] = [];
-
-                for (const message of batch) {
-                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
+                if (batch.length > 0
+                    && batch[0].compression !== undefined
+                    && (batch[0].contents?.length ?? 0) >= defaultMaxBatchSizeInBytes) {
+                    clientSequenceNumber = this.opSplitter.submitChunkedBatch(batch);
+                } else {
+                    const batchToSend: IBatchMessage[] =
+                        batch.map((message) => ({ contents: message.contents, metadata: message.metadata }));
+                    // returns clientSequenceNumber of last message in a batch
+                    clientSequenceNumber = this.context.submitBatchFn(batchToSend);
                 }
-
-                // returns clientSequenceNumber of last message in a batch
-                clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
                 // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
                 // version that has support for batches (submitBatchFn)

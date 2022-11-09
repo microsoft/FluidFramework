@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { BatchMessage } from "./batchManager";
 import { ContainerMessageType, ContainerRuntimeMessage } from "./containerRuntime";
 
 export interface IChunkedOp {
@@ -13,6 +14,8 @@ export interface IChunkedOp {
     contents: string;
     originalType: MessageType | ContainerMessageType;
 }
+
+const DefaultChunkSize = 500 * 1024; // 500kb
 
 /**
  * Responsible for keeping track of remote chunked messages.
@@ -24,6 +27,7 @@ export class OpSplitter {
     constructor(
         chunks: [string, string[]][],
         private readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+        public readonly chunkSizeInBytes: number = DefaultChunkSize,
     ) {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
@@ -73,21 +77,28 @@ export class OpSplitter {
         map.push(chunkedContent.contents);
     }
 
-    public submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
-        const contentLength = content.length;
-        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
+    public submitChunkedBatch(batch: BatchMessage[]): number {
+        const cons = batch[0];
+        const contentToChunk = cons.contents ?? "";
+        if (cons.compression === undefined || contentToChunk.length < this.chunkSizeInBytes) {
+            return -1;
+        }
+
+        const contentLength = contentToChunk.length;
+        const chunkN = Math.floor((contentLength - 1) / this.chunkSizeInBytes) + 1;
         let offset = 0;
         let clientSequenceNumber: number = 0;
         for (let i = 1; i <= chunkN; i++) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
-                contents: content.substring(offset, offset + maxOpSize + 1),
-                originalType: type,
+                contents: contentToChunk.substring(offset, offset + this.chunkSizeInBytes + 1),
+                originalType: cons.deserializedContent.type,
                 totalChunks: chunkN,
             };
-            offset += maxOpSize;
 
-            const payload: ContainerRuntimeMessage = { type, contents: chunkedOp };
+            offset += this.chunkSizeInBytes;
+
+            const payload: ContainerRuntimeMessage = { type: cons.deserializedContent.type, contents: chunkedOp };
             clientSequenceNumber = this.submitFn(
                 MessageType.Operation,
                 payload,
