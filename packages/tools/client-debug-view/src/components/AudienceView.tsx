@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
 import { AudienceMemberViewProps } from "./client-data-views";
+import { AudienceHistory } from "./ClientDebugView";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -28,6 +29,11 @@ export interface AudienceViewProps {
     audience: IServiceAudience<IMember>;
 
     /**
+     * Audience history to show member come and go records.
+     */
+    history: AudienceHistory[];
+
+    /**
      * Callback to render data about an individual audience member.
      */
     onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
@@ -39,7 +45,7 @@ export interface AudienceViewProps {
  * @param props - See {@link AudienceViewProps}.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-    const { audience, myself, onRenderAudienceMember } = props;
+    const { audience, history, myself, onRenderAudienceMember } = props;
 
     const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
 
@@ -67,6 +73,18 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         );
     }
 
+    const historyViews: React.ReactElement[] = [];
+    for (const h of history.values()) {
+        historyViews.push(
+            <ul key={h.audienceMemberId}> <li>
+                <b>Id: </b>{h.audienceMemberId}
+                <br /><b>Time: </b> {new Date(h.timestamp).toDateString()}
+                <br /><b>Type: </b> {h.type}</li>
+            </ul>
+        );
+    }
+
+
     return (
         <Stack
             styles={{
@@ -83,6 +101,12 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
             <StackItem>
                 <ul>{memberViews}</ul>
             </StackItem>
+            <StackItem>
+                <div className="history-list">
+                    <b>History</b>
+                </div>
+            </StackItem>
+            <ul>{historyViews}</ul>
         </Stack>
     );
 }
