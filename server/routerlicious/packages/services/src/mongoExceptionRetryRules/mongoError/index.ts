@@ -99,16 +99,27 @@ class RequestTimedOutWithHttpInfo implements IMongoExceptionRetryRule {
 }
 
 // This handles request timeout from server with additional rate limit info.
-class RequestTimedOutWithRateLimit implements IMongoExceptionRetryRule {
+class RequestTimedOutWithRateLimitTrue implements IMongoExceptionRetryRule {
     private static readonly codeName = "ExceededTimeLimit";
+    private static readonly errorMsg = "Request timed out. Retries due to rate limiting: True.";
     match(error: any): boolean {
-        // TODO: This timed out actually included two different messages:
-        // 1. Retries due to rate limiting: False.
-        // 2. Retries due to rate limiting: True.
-        // We might need to split this into two different rules after consult with DB team.
         return error.code === 50
             && error.errmsg
-            && (error.errmsg as string) === RequestTimedOutWithRateLimit.codeName;
+            && (error.codeName as string) === RequestTimedOutWithRateLimitTrue.codeName
+            && (error.errmsg as string) === RequestTimedOutWithRateLimitTrue.errorMsg;
+    }
+    shouldRetry: boolean = false;
+}
+
+// This handles request timeout from server with additional rate limit info.
+class RequestTimedOutWithRateLimitFalse implements IMongoExceptionRetryRule {
+    private static readonly codeName = "ExceededTimeLimit";
+    private static readonly errorMsg = "Request timed out. Retries due to rate limiting: False.";
+    match(error: any): boolean {
+        return error.code === 50
+            && error.errmsg
+            && (error.codeName as string) === RequestTimedOutWithRateLimitFalse.codeName
+            && (error.errmsg as string) === RequestTimedOutWithRateLimitFalse.errorMsg;
     }
     shouldRetry: boolean = true;
 }
@@ -117,7 +128,7 @@ class RequestTimedOutWithRateLimit implements IMongoExceptionRetryRule {
 class ServiceUnavailableRule implements IMongoExceptionRetryRule {
     private static readonly errorDetails = "Response status code does not indicate success: ServiceUnavailable (503)";
     match(error: any): boolean {
-        return error.code === 50
+        return error.code === 1
             && error.errorDetails
             && (error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails);
     }
@@ -129,8 +140,7 @@ class ServiceUnavailableRule implements IMongoExceptionRetryRule {
 class TopologyDestroyed implements IMongoExceptionRetryRule {
     private static readonly message = "Topology was destroyed";
     match(error: any): boolean {
-        return error.code === 16
-            && error.message
+        return error.message
             && (error.message as string) === TopologyDestroyed.message;
     }
 
@@ -155,7 +165,8 @@ export const mongoErrorRetryRuleset: IMongoExceptionRetryRule[] = [
     new InternalErrorRule(),
     new NoPrimaryInReplicasetRule(),
     new RequestTimedNoRateLimitInfo(),
-    new RequestTimedOutWithRateLimit(),
+    new RequestTimedOutWithRateLimitTrue(),
+    new RequestTimedOutWithRateLimitFalse(),
     new TopologyDestroyed(),
     new UnUnauthorizedRule(),
 
