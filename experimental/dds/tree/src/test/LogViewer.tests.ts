@@ -621,8 +621,6 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('caches the oldest in memory revision when edits are evicted', async () => {
-		let editsProcessed = 0;
-		let editsEvicted = 0;
 		let retainedRevision = 0;
 		const targetEditLogSize = 10;
 		const log = new EditLog<ChangeInternal>(
@@ -632,11 +630,7 @@ describe('CachingLogViewer', () => {
 			targetEditLogSize,
 			targetEditLogSize * 2
 		);
-		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, () => editsProcessed++);
-
-		log.registerEditEvictionHandler((editsToEvict) => {
-			editsEvicted += editsToEvict;
-		});
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView);
 
 		viewer.on(CachingLogViewerDiagnosticEvents.RevisionRetained, (revision) => {
 			retainedRevision = revision;
@@ -655,23 +649,19 @@ describe('CachingLogViewer', () => {
 		// Add more edits so that the oldest get evicted
 		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
-			const sequenceNumber = targetEditLogSize + 1;
+			const sequenceNumber = targetEditLogSize + i;
 			log.addSequencedEdit(edit, {
 				sequenceNumber,
 				referenceSequenceNumber: sequenceNumber - 1,
 				minimumSequenceNumber: sequenceNumber - 1,
 			});
-			expect(log.getIndexOfId(edit.id)).equals(targetEditLogSize + i);
 		}
 
 		// Check to see that the revision was retained
-		expect(editsEvicted).to.equal(targetEditLogSize);
 		expect(retainedRevision).to.equal(targetEditLogSize);
 
 		// Make sure retrieving the latest revision is possible after edit eviction
 		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
-		// There should be 10 edits processed since the evicted ones would not be included
-		expect(editsProcessed).to.equal(targetEditLogSize);
 	});
 
 	describe('Callbacks', () => {
