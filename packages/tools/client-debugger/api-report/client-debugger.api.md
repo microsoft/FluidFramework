@@ -13,6 +13,7 @@ import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
 // @public
@@ -52,7 +53,9 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
     getMinimumSequenceNumber(): number;
     getOpsLog(): readonly OpsLogEntry[];
+    getResolvedUrl(): IResolvedUrl | undefined;
     isContainerClosed(): boolean;
+    isContainerDirty(): boolean;
 }
 
 // @public
@@ -60,6 +63,8 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerConnected", listener: (clientId: string) => void): void;
     (event: "containerDisconnected", listener: () => void): void;
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "containerDirty", listener: () => void): any;
+    (event: "containerSaved", listener: () => void): any;
     (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void): any;
     (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void): any;

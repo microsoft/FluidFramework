@@ -11,6 +11,7 @@ import {
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 // TODOs:
@@ -61,6 +62,18 @@ export interface IFluidClientDebuggerEvents extends IEvent {
      * about the error that caused the closure.
      */
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void);
+
+    /**
+     * Emitted when the Container has new pending local operations (ops)
+     * (i.e. {@link @fluidframework/container-definitions#IContainer.dirty} is `true`).
+     */
+    (event: "containerDirty", listener: () => void);
+
+    /**
+     * Emitted when the Container finishes processing all pending local operations (ops)
+     * (i.e. {@link @fluidframework/container-definitions#IContainer.dirty} is `false`).
+     */
+    (event: "containerSaved", listener: () => void);
 
     // #region DeltaManager-related events
 
@@ -212,6 +225,16 @@ export interface IFluidClientDebugger
     getClientId(): string | undefined;
 
     /**
+     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.resolvedUrl}.
+     */
+    getResolvedUrl(): IResolvedUrl | undefined;
+
+    /**
+     * Whether or not the Container is currently {@link @fluidframework/container-definitions#IContainer.isDirty | dirty}.
+     */
+    isContainerDirty(): boolean;
+
+    /**
      * Whether or not the Container has been {@link @fluidframework/container-definitions#IContainer.disposed}.
      */
     isContainerClosed(): boolean;
@@ -306,6 +329,8 @@ class FluidClientDebugger
         this.emit("containerDisconnected");
     private readonly containerClosedHandler = (error?: ICriticalContainerError): boolean =>
         this.emit("containerClosed", error);
+    private readonly containerDirtyHandler = (): boolean => this.emit("containerDirty");
+    private readonly containerSavedHandler = (): boolean => this.emit("containerSaved");
 
     // #region DeltaManager-related event handlers
 
@@ -351,6 +376,8 @@ class FluidClientDebugger
         this.container.on("disconnected", () => this.onContainerDisconnected());
         this.container.on("closed", (error) => this.onContainerClosed(error));
         this.container.on("op", (op) => this.onIncomingOpProcessed(op));
+        this.container.on("dirty", () => this.onContainerDirty());
+        this.container.on("saved", () => this.onContainerSaved());
 
         // Bind Audience events
         this.audience.on("addMember", this.audienceMemberAddedHandler);
@@ -393,6 +420,20 @@ class FluidClientDebugger
     }
 
     /**
+     * {@inheritDoc IFluidClientDebugger.getResolvedUrl}
+     */
+    public getResolvedUrl(): IResolvedUrl | undefined {
+        return this.container.resolvedUrl;
+    }
+
+    /**
+     * {@inheritDoc IFluidClientDebugger.isContainerDirty}
+     */
+    public isContainerDirty(): boolean {
+        return this.container.isDirty;
+    }
+
+    /**
      * {@inheritDoc IFluidClientDebugger.isContainerClosed}
      */
     public isContainerClosed(): boolean {
@@ -415,6 +456,16 @@ class FluidClientDebugger
             clientId: undefined,
         });
         this.containerDisconnectedHandler();
+    }
+
+    private onContainerDirty(): void {
+        // TODO: dirtiness history log?
+        this.containerDirtyHandler();
+    }
+
+    private onContainerSaved(): void {
+        // TODO: dirtiness history log?
+        this.containerSavedHandler();
     }
 
     private onContainerClosed(error?: ICriticalContainerError): void {
