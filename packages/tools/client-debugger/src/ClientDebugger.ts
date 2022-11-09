@@ -18,6 +18,7 @@ import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-def
 // - Data recording configuration (what things the user wishes to subscribe to)
 // - Audience history (including timestamps)
 // - Full ops history
+// - Audit events to simplify hooks for consumers
 // - Document association between data that changes, and the events that signal the changes.
 
 /**
