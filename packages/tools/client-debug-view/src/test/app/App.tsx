@@ -20,7 +20,9 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
+import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
+import { HasClientDebugger } from "../../CommonProps";
 import { ClientDebugView, CounterWidget } from "../../components";
 import {
     ContainerInfo,
@@ -28,8 +30,6 @@ import {
     initializeFluidClientDebugger,
     loadExistingFluidContainer,
 } from "../ClientUtilities";
-import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
-import { HasClientDebugger } from "../../CommonProps";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -88,7 +88,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
     });
 }
 
-interface ContainerInfoWithDebugger extends ContainerInfo, HasClientDebugger{};
+interface ContainerInfoWithDebugger extends ContainerInfo, HasClientDebugger {}
 
 /**
  * React hook for asynchronously creating / loading the Fluid Container.
@@ -139,16 +139,15 @@ function useContainerInfo(): ContainerInfoWithDebugger | undefined {
         );
 
         return (): void => {
-            if (containerInfo!== undefined) {
+            if (containerInfo !== undefined) {
                 containerInfo.container.dispose();
                 closeFluidClientDebugger(containerInfo.containerId);
             }
-        }
+        };
     }, []);
 
     return containerInfo;
 }
-
 
 const appTheme = createTheme({
     palette: {
@@ -213,7 +212,7 @@ export function App(): React.ReactElement {
 /**
  * {@link AppView} input props.
  */
-interface AppViewProps  {
+interface AppViewProps {
     containerInfo: ContainerInfoWithDebugger;
 }
 
@@ -254,10 +253,7 @@ function AppView(props: AppViewProps): React.ReactElement {
                 </Stack>
             </StackItem>
             <StackItem className={debuggerViewPaneStackStyles}>
-                <ClientDebugView
-                    containerId={containerId}
-                    clientDebugger={clientDebugger}
-                />
+                <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />
             </StackItem>
         </Stack>
     );

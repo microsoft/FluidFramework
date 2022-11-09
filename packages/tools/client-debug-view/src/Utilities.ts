@@ -10,7 +10,6 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
  * @remarks These are considered package-internal and should not be exported as a part of the API.
  */
 
-
 /**
  * Creates a string representation of an {@link @fluidframework/driver-definitions#IResolvedUrl}.
  *

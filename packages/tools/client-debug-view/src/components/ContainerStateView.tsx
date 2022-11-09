@@ -7,12 +7,13 @@ import React from "react";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+
 import { HasClientDebugger } from "../CommonProps";
 
 /**
  * {@link ContainerStateView} input props.
  */
-export type ContainerStateViewProps = HasClientDebugger
+export type ContainerStateViewProps = HasClientDebugger;
 
 /**
  * Displays information about the container's internal state, including its disposal status,
@@ -23,7 +24,9 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 
     const [isDisposed, updateIsDisposed] = React.useState<boolean>(clientDebugger.disposed);
     const [attachState, updateAttachState] = React.useState(clientDebugger.getAttachState());
-    const [connectionState, updateConnectionState] = React.useState(clientDebugger.getConnectionState());
+    const [connectionState, updateConnectionState] = React.useState(
+        clientDebugger.getConnectionState(),
+    );
 
     React.useEffect(() => {
         function onConnectionChange(): void {

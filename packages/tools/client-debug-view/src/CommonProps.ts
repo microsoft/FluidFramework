@@ -2,7 +2,6 @@
  * This module contains interfaces for common props used by React components in this library.
  * The primary goal is to offer a central place for documenting common input properties.
  */
-
 import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 /**

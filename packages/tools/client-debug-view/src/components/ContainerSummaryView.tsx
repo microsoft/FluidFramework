@@ -4,15 +4,15 @@
  */
 import { Stack } from "@fluentui/react";
 import React from "react";
+
 import { HasClientDebugger } from "../CommonProps";
 import { useMyAudienceData } from "../ReactHooks";
-
 import { ContainerStateView } from "./ContainerStateView";
 
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasClientDebugger
+export type ContainerSummaryViewProps = HasClientDebugger;
 
 /**
  * Small header that displays core container data.
@@ -33,7 +33,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
         clientDebugger.on("audienceMemberAdded", onAudienceMemberAdded);
         clientDebugger.on("audienceMemberRemoved", onAudienceMemberAdded);
-
     }, [clientDebugger]);
 
     const maybeClientIdView =

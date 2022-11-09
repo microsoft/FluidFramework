@@ -13,16 +13,13 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-
+import { HasClientDebugger, HasContainerId } from "../CommonProps";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
-import { HasClientDebugger, HasContainerId } from "../CommonProps";
-import {useMyAudienceData} from "../ReactHooks";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -47,7 +44,7 @@ export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId 
  * Displays information about the provided container and its audience.
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
-    const { containerId, clientDebugger, renderOptions: userRenderOptions } = props;
+    const { clientDebugger, renderOptions: userRenderOptions } = props;
 
     const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
@@ -56,11 +53,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
     const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(
         clientDebugger.isContainerClosed(),
     );
-    const [clientId, setClientId] = React.useState<string | undefined>(container.clientId);
-
-    const [minimumSequenceNumber, setMinimumSequenceNumber] = React.useState<number>(
-        container.deltaManager.minimumSequenceNumber,
-    );
 
     React.useEffect(() => {
         function onContainerClose(): void {
@@ -68,15 +60,11 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
         }
 
         clientDebugger.on("containerClosed", onContainerClose);
-        clientDebugger.on("containerConnected", onConnectionChange);
-        clientDebugger.on("containerDisconnected", onConnectionChange);
 
         return (): void => {
             clientDebugger.off("containerClosed", onContainerClose);
-            clientDebugger.off("containerConnected", onConnectionChange);
-            clientDebugger.off("containerDisconnected", onConnectionChange);
         };
-    }, [clientDebugger, setIsContainerClosed, setClientId, setMinimumSequenceNumber, setOps]);
+    }, [clientDebugger, setIsContainerClosed]);
 
     // UI state
     const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
@@ -90,12 +78,12 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
         let innerView: React.ReactElement;
         switch (rootViewSelection) {
             case RootView.Container:
-                innerView = <ContainerDataView containerId={containerId} container={container} />;
+                innerView = <ContainerDataView clientDebugger={clientDebugger} />;
                 break;
             case RootView.Data:
                 innerView = (
                     <DataObjectsView
-                        initialObjects={container.initialObjects}
+                        clientDebugger={clientDebugger}
                         renderOptions={renderOptions.sharedObjectRenderOptions}
                     />
                 );
@@ -103,8 +91,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
             case RootView.Audience:
                 innerView = (
                     <AudienceView
-                        audience={audience}
-                        myself={myself}
+                        clientDebugger={clientDebugger}
                         onRenderAudienceMember={renderOptions.onRenderAudienceMember}
                     />
                 );
@@ -112,9 +99,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
             case RootView.OpsStream:
                 innerView = (
                     <OpsStreamView
-                        ops={ops}
-                        minimumSequenceNumber={minimumSequenceNumber}
-                        clientId={clientId}
+                        clientDebugger={clientDebugger}
                         onRenderOp={renderOptions.onRenderOp}
                     />
                 );
@@ -147,9 +132,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
                 },
             }}
         >
-            <ContainerSummaryView
-                clientDebugger={clientDebugger}
-            />
+            <ContainerSummaryView clientDebugger={clientDebugger} />
             <div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
         </Stack>
     );

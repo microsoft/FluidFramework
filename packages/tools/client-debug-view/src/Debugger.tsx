@@ -5,8 +5,8 @@ import React from "react";
 import { IFluidClientDebugger, getFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 import { HasContainerId } from "./CommonProps";
-import { ClientDebugView } from "./components";
 import { RenderOptions } from "./RendererOptions";
+import { ClientDebugView } from "./components";
 
 /**
  * {@link FluidClientDebugger} input props.
@@ -17,7 +17,7 @@ export interface FluidClientDebuggerProps extends HasContainerId {
      *
      * @defaultValue Strictly use default visualization policies.
      */
-     renderOptions?: RenderOptions;
+    renderOptions?: RenderOptions;
 }
 
 /**
@@ -36,16 +36,13 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
     // TODO: respond to disposal of debugger
 
     return clientDebugger === undefined ? (
-            <NoDebuggerInstance
-                containerId={containerId}
-                onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
-            />
-        ) : (
-            <ClientDebugView
-                containerId={containerId}
-                clientDebugger={clientDebugger}
-            />
-        );
+        <NoDebuggerInstance
+            containerId={containerId}
+            onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+        />
+    ) : (
+        <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />
+    );
 }
 
 /**

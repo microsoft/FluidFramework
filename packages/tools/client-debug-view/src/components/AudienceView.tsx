@@ -5,8 +5,9 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import { IMember } from "@fluidframework/fluid-static";
 
+import { HasClientDebugger } from "../CommonProps";
 import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
@@ -16,17 +17,7 @@ import { AudienceMemberViewProps } from "./client-data-views";
 /**
  * {@link AudienceView} input props.
  */
-export interface AudienceViewProps {
-    /**
-     * Audience member info for the session user.
-     */
-    myself: IMember | undefined;
-
-    /**
-     * Audience information.
-     */
-    audience: IServiceAudience<IMember>;
-
+export interface AudienceViewProps extends HasClientDebugger {
     /**
      * Callback to render data about an individual audience member.
      */

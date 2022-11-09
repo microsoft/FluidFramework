@@ -8,9 +8,8 @@ import React, { useEffect, useState } from "react";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IFluidContainer } from "@fluidframework/fluid-static";
 
-import { getInnerContainer } from "../Utilities";
+import { HasClientDebugger } from "../CommonProps";
 
 // TODOs:
 // - Container Read/Write permissions
@@ -21,17 +20,7 @@ import { getInnerContainer } from "../Utilities";
 /**
  * {@link ContainerDataView} input props.
  */
-export interface ContainerDataViewProps {
-    /**
-     * ID of {@link ContainerDataViewProps.container | the container}.
-     */
-    containerId: string;
-
-    /**
-     * The Fluid container for which data will be displayed.
-     */
-    container: IFluidContainer;
-}
+export type ContainerDataViewProps = HasClientDebugger;
 
 /**
  * Displays information about the provided container.
@@ -39,57 +28,71 @@ export interface ContainerDataViewProps {
  * @param props - See {@link ContainerDataViewProps}.
  */
 export function ContainerDataView(props: ContainerDataViewProps): React.ReactElement {
-    const { containerId, container } = props;
-
-    const innerContainer = getInnerContainer(container);
+    const { clientDebugger } = props;
 
     // State bound to outer container
-    const [isDirty, updateIsDirty] = useState<boolean>(container.isDirty);
-    const [isDisposed, updateIsDisposed] = useState<boolean>(container.disposed);
-    const [attachState, updateAttachState] = useState(container.attachState);
-    const [connectionState, updateConnectionState] = useState(container.connectionState);
-
-    // State bound to inner container
-    const [resolvedUrl, updateResolvedUrl] = useState<IResolvedUrl | undefined>(
-        innerContainer.resolvedUrl,
+    const [isContainerDirty, setIsContainerDirty] = useState<boolean>(
+        clientDebugger.isContainerDirty(),
+    );
+    const [isContainerClosed, setIsContainerClosed] = useState<boolean>(
+        clientDebugger.isContainerClosed(),
+    );
+    const [containerAttachState, setContainerAttachState] = useState(
+        clientDebugger.getContainerAttachState(),
+    );
+    const [containerConnectionState, setContainerConnectionState] = useState(
+        clientDebugger.getContainerConnectionState(),
+    );
+    const [containerResolvedUrl, setContainerResolvedUrl] = useState<IResolvedUrl | undefined>(
+        clientDebugger.getContainerResolvedUrl(),
     );
 
     useEffect(() => {
         function onConnectionChange(): void {
-            updateConnectionState(container.connectionState); // Should be connected
-            updateAttachState(container.attachState);
-            updateResolvedUrl(innerContainer.resolvedUrl);
+            setContainerConnectionState(clientDebugger.getContainerConnectionState());
+            setIsContainerDirty(clientDebugger.isContainerDirty());
+
+            // TODO: When do these change? Do we need these here?
+            setContainerAttachState(clientDebugger.getContainerAttachState());
+            setContainerResolvedUrl(clientDebugger.getContainerResolvedUrl());
         }
 
-        function onDirty(): void {
-            updateIsDirty(true);
+        function onContainerDirty(): void {
+            setIsContainerDirty(true);
         }
 
-        function onSaved(): void {
-            updateIsDirty(false);
+        function onContainerSaved(): void {
+            setIsContainerDirty(false);
         }
 
-        function onDispose(): void {
-            updateIsDisposed(true);
+        function onContainerClosed(): void {
+            setIsContainerClosed(true);
         }
 
-        container.on("connected", onConnectionChange);
-        container.on("disconnected", onConnectionChange);
-        container.on("dirty", onDirty);
-        container.on("saved", onSaved);
-        container.on("disposed", onDispose);
+        clientDebugger.on("containerConnected", onConnectionChange);
+        clientDebugger.on("containerDisconnected", onConnectionChange);
+        clientDebugger.on("containerDirty", onContainerDirty);
+        clientDebugger.on("containerSaved", onContainerSaved);
+        clientDebugger.on("containerClosed", onContainerClosed);
 
         return (): void => {
-            container.off("connected", onConnectionChange);
-            container.off("disconnected", onConnectionChange);
-            container.off("dirty", onDirty);
-            container.off("saved", onSaved);
-            container.off("disposed", onDispose);
+            clientDebugger.on("containerConnected", onConnectionChange);
+            clientDebugger.on("containerDisconnected", onConnectionChange);
+            clientDebugger.on("containerDirty", onContainerDirty);
+            clientDebugger.on("containerSaved", onContainerSaved);
+            clientDebugger.on("containerClosed", onContainerClosed);
         };
-    }, [container, innerContainer]);
+    }, [
+        clientDebugger,
+        setIsContainerDirty,
+        setIsContainerClosed,
+        setContainerAttachState,
+        setContainerConnectionState,
+        setContainerResolvedUrl,
+    ]);
 
     let innerView: React.ReactElement;
-    if (isDisposed) {
+    if (isContainerClosed) {
         innerView = (
             <div>
                 <b>Disposed</b>
@@ -97,12 +100,12 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         );
     } else {
         const maybeResolvedUrlView =
-            resolvedUrl === undefined ? (
+            containerResolvedUrl === undefined ? (
                 <></>
             ) : (
                 <StackItem>
                     <b>Resolved URL: </b>
-                    {resolvedUrlToString(resolvedUrl)}
+                    {resolvedUrlToString(containerResolvedUrl)}
                 </StackItem>
             );
 
@@ -110,23 +113,23 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             <Stack>
                 <StackItem>
                     <b>Attach state: </b>
-                    {attachState}
+                    {containerAttachState}
                 </StackItem>
                 <StackItem>
                     <b>Connection state: </b>
-                    {connectionStateToString(connectionState)}
+                    {connectionStateToString(containerConnectionState)}
                 </StackItem>
                 {maybeResolvedUrlView}
                 <StackItem>
                     <b>Local edit state: </b>
-                    {isDirty ? "Pending local edits" : "No pending local edits"}
+                    {isContainerDirty ? "Pending local edits" : "No pending local edits"}
                 </StackItem>
                 <StackItem align="end">
                     <ActionsBar
-                        connectionState={connectionState}
-                        tryConnect={(): void => container.connect()}
-                        forceDisconnect={(): void => container.disconnect()}
-                        disposeContainer={(): void => container.dispose()}
+                        connectionState={containerConnectionState}
+                        tryConnect={(): void => clientDebugger.tryConnectContainer()}
+                        forceDisconnect={(): void => clientDebugger.disconnectContainer()}
+                        closeContainer={(): void => clientDebugger.closeContainer()}
                     />
                 </StackItem>
             </Stack>
@@ -155,11 +158,11 @@ interface ActionsBarProps {
     connectionState: ConnectionState;
     tryConnect(): void;
     forceDisconnect(): void;
-    disposeContainer(): void;
+    closeContainer(): void;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-    const { connectionState, tryConnect, forceDisconnect, disposeContainer } = props;
+    const { connectionState, tryConnect, forceDisconnect, closeContainer } = props;
 
     const connectButtonTooltipId = useId("connect-button-tooltip");
     const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
@@ -167,7 +170,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 
     const changeConnectionStateButton =
         connectionState === ConnectionState.Disconnected ? (
-            <TooltipHost content="Connect" id={connectButtonTooltipId}>
+            <TooltipHost content="Connect Container" id={connectButtonTooltipId}>
                 <IconButton
                     onClick={tryConnect}
                     menuIconProps={{ iconName: "PlugConnected" }}
@@ -175,7 +178,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
                 />
             </TooltipHost>
         ) : (
-            <TooltipHost content="Disconnect" id={disconnectButtonTooltipId}>
+            <TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
                 <IconButton
                     onClick={forceDisconnect}
                     menuIconProps={{ iconName: "PlugDisconnected" }}
@@ -185,9 +188,9 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
         );
 
     const disposeContainerButton = (
-        <TooltipHost content="Dispose container" id={disposeContainerButtonTooltipId}>
+        <TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
             <IconButton
-                onClick={disposeContainer}
+                onClick={closeContainer}
                 menuIconProps={{ iconName: "Delete" }}
                 aria-describedby={disposeContainerButtonTooltipId}
             />

@@ -6,6 +6,7 @@ import React from "react";
 
 import { LoadableObjectRecord } from "@fluidframework/fluid-static";
 
+import { HasClientDebugger } from "../CommonProps";
 import { SharedObjectRenderOptions } from "../RendererOptions";
 import { FluidObjectView } from "./data-object-views";
 import { Accordion } from "./utility-components";
@@ -13,12 +14,7 @@ import { Accordion } from "./utility-components";
 /**
  * {@link DataObjectsView} input props.
  */
-export interface DataObjectsViewProps {
-    /**
-     * The {@link Container}'s {@link Container.initialObjects} to be displayed.
-     */
-    initialObjects: LoadableObjectRecord;
-
+export interface DataObjectsViewProps extends HasClientDebugger {
     /**
      * {@inheritDoc RendererOptions}
      */
@@ -33,7 +29,9 @@ export interface DataObjectsViewProps {
  * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-    const { initialObjects, renderOptions: sharedObjectRenderers } = props;
+    const { clientDebugger, renderOptions } = props;
+
+    // TODO: get data
 
     const objects = Object.entries(initialObjects).map(([key, value]) => ({
         name: key,
@@ -44,7 +42,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
         <Accordion header={<b>{object.name}</b>}>
             <FluidObjectView
                 fluidObjectHandle={object.loadableObject.handle}
-                renderOptions={sharedObjectRenderers}
+                renderOptions={renderOptions}
             />
         </Accordion>
     ));
