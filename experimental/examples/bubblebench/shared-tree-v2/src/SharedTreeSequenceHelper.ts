@@ -7,10 +7,9 @@ import {
     FieldKey,
     ISharedTree,
     JsonableTree,
+    singleTextCursor,
     TransactionResult,
 } from "@fluid-internal/tree";
-/* eslint-disable-next-line import/no-internal-modules */
-import { singleTextCursor } from "@fluid-internal/tree/dist/feature-libraries";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 
 export class SharedTreeSequenceHelper {
@@ -38,7 +37,9 @@ export class SharedTreeSequenceHelper {
 
     public getAllAnchors() {
         const nodeAnchors: Anchor[] = [];
-        const cursor = this.treeNodeHelper.getCursor();
+        // const cursor = this.treeNodeHelper.getCursor();
+        const cursor = this.tree.forest.allocateCursor();
+        this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
         cursor.enterField(this.sequenceFieldKey);
         let currentNode = cursor.firstNode();
         if (currentNode === false) {

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -7,19 +6,15 @@ import {
     brand,
     emptyField,
     EmptyKey,
-    JsonableTree,
-    rootFieldKey,
-    // symbolFromKey,
-    // symbolFromKey,
-} from "@fluid-internal/tree";
-import { FieldKinds } from "@fluid-internal/tree/dist/feature-libraries";
-import {
+    FieldKinds,
     fieldSchema,
-    // GlobalFieldKey,
+    JsonableTree,
     namedTreeSchema,
+    rootFieldKey,
     SchemaData,
     ValueSchema,
-} from "@fluid-internal/tree/dist/schema-stored";
+    // symbolFromKey,
+} from "@fluid-internal/tree";
 
 export const stringSchema = namedTreeSchema({
     name: brand("String"),

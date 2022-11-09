@@ -4,13 +4,11 @@
  */
 import {
     ISharedTree,
+    rootFieldKeySymbol,
     SharedTreeFactory,
+    singleTextCursor,
     TransactionResult,
 } from "@fluid-internal/tree";
-/* eslint-disable import/no-internal-modules */
-import { singleTextCursor } from "@fluid-internal/tree/dist/feature-libraries";
-import { rootFieldKeySymbol } from "@fluid-internal/tree/dist/tree";
-/* eslint-enable import/no-internal-modules */
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
@@ -26,37 +24,15 @@ export class Bubblebench extends DataObject {
 
 
     protected async initializingFirstTime() {
-        // this.maybeTree = Bubblebench.treeFactory.create(
-        //     this.runtime,
-        //     "bubbleBench-tree",
-        // ); // Is this correct?
         this.maybeTree = this.runtime.createChannel(
-            "unqiue-bubblebench-key-1337",
+            undefined,
             Bubblebench.treeFactory.type
         ) as ISharedTree;
 
-        // initialize the schema of the shared tree to that of the Bubblebench AppState
-        this.maybeTree.storedSchema.update(AppStateSchemaData);
-
-        // Apply an edit to the tree which inserts a node with the initial AppState as the root of the tree
-        this.maybeTree.runTransaction((forest, editor) => {
-            // This cursor contains the initial state of the root of the bubblebench shared tree as a JsonableTree
-            const writeCursor = singleTextCursor({
-                type: AppStateSchema.name,
-                fields: {
-                    clients: [],
-                },
-            });
-            const field = editor.sequenceField(
-                undefined,
-                rootFieldKeySymbol,
-            );
-            field.insert(0, writeCursor);
-            return TransactionResult.Apply;
-        });
+        this.initializeTree(this.maybeTree);
 
         // This line will fail with the error 0x17b /* "Channel to be binded should be in not bounded set" */);
-        // this.root.set("tree-v2", this.maybeTree.handle);
+        this.root.set("unqiue-bubblebench-key-1337", this.maybeTree.handle);
     }
 
     // What is the replacement for this method?
@@ -101,6 +77,30 @@ export class Bubblebench extends DataObject {
         } else {
             this.runtime.once("connected", onConnected);
         }
+    }
+
+    initializeTree(tree: ISharedTree) {
+        // initialize the schema of the shared tree to that of the Bubblebench AppState
+        tree.storedSchema.update(AppStateSchemaData);
+
+        // Apply an edit to the tree which inserts a node with
+        // the initial AppState as the root of the tree
+        tree.runTransaction((forest, editor) => {
+            // This cursor contains the initial state of the root of the
+            // bubblebench shared tree as a JsonableTree
+            const writeCursor = singleTextCursor({
+                type: AppStateSchema.name,
+                fields: {
+                    clients: [],
+                },
+            });
+            const field = editor.sequenceField(
+                undefined,
+                rootFieldKeySymbol,
+            );
+            field.insert(0, writeCursor);
+            return TransactionResult.Apply;
+        });
     }
 
     private get tree() {

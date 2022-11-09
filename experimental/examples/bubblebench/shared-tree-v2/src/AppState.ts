@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, ISharedTree, JsonableTree } from "@fluid-internal/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { moveToDetachedField } from "@fluid-internal/tree/dist/forest";
+import { brand, ISharedTree, JsonableTree, moveToDetachedField } from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
     iBubbleSchema,
@@ -27,23 +25,27 @@ export class AppState implements IAppState {
         // Move to root node (which is the Shared AppState Node) and initialize this.clientsSequenceHelper
         const cursor = tree.forest.allocateCursor();
         moveToDetachedField(tree.forest, cursor);
+        cursor.enterNode(0);
         this.clientsSequenceHelper = new SharedTreeSequenceHelper(
             tree,
             cursor.buildAnchor(),
             brand("clients"),
         );
+        cursor.free();
 
         // Create the initial JsonableTree for the new local client
         const initialClientJsonTree =
             this.makeClientInitialJsonTree(numBubbles);
         // Insert it the local client the shared tree
-        cursor.free();
         this.clientsSequenceHelper.push(initialClientJsonTree);
         // Keep a reference to the local client inserted into the shared tree
+        const newClientIndex = this.clientsSequenceHelper.length() - 1;
+        console.log(`new client Index: ${newClientIndex}`);
         this.localClient = new Client(
             tree,
-            this.clientsSequenceHelper.getAnchor(0),
+            this.clientsSequenceHelper.getAnchor(newClientIndex),
         );
+        console.log(`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`);
     }
 
     public applyEdits() {} // Is it needed with the new shared tree?
@@ -61,7 +63,7 @@ export class AppState implements IAppState {
         };
 
         // create and add initial bubbles to initial client json tree
-        for (let i = 0; i < numBubbles; i++) {
+        for (let i = 0; i < 1; i++) {
             const bubble = makeBubble(this._width, this._height);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientInitialJsonTree.fields!.bubbles.push({
@@ -98,10 +100,14 @@ export class AppState implements IAppState {
     }
 
     public increaseBubbles() {
-        this.localClient.increaseBubbles(makeBubble(this._width, this._height));
+        // console.log('about to increase bubble');
+        // this.localClient.increaseBubbles(makeBubble(this._width, this._height));
+        // console.log('increased bubble');
     }
 
     public decreaseBubbles() {
-        this.localClient.decreaseBubbles();
+        // console.log('about to pop bubble');
+        // this.localClient.decreaseBubbles();
+        // console.log('popped bubble');
     }
 }

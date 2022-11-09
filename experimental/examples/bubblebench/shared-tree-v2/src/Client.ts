@@ -16,7 +16,6 @@ export class Client implements IClient {
 
     private readonly treeHelper: SharedTreeNodeHelper;
     readonly bubbleSeqeunceHelper: SharedTreeSequenceHelper;
-    readonly bubbles: Bubble[];
 
     constructor(
         public readonly tree: ISharedTree,
@@ -28,10 +27,6 @@ export class Client implements IClient {
             anchor,
             Client.bubblesFieldKey,
         );
-
-        this.bubbles = this.bubbleSeqeunceHelper
-            .getAllAnchors()
-            .map((bubbleAnchor) => new Bubble(this.tree, bubbleAnchor));
     }
 
     public get clientId() {
@@ -46,6 +41,13 @@ export class Client implements IClient {
     }
     public set color(value: string) {
         this.treeHelper.setFieldValue(Client.colorFieldKey, value);
+    }
+
+    public get bubbles() {
+        console.log(`clientId: ${this.clientId} retrieving bubbles`);
+        return this.bubbleSeqeunceHelper
+            .getAll()
+            .map((treeNode) => new Bubble(this.tree, treeNode.anchor));
     }
 
     public increaseBubbles(bubble: {
@@ -66,18 +68,11 @@ export class Client implements IClient {
             },
         };
         this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
-        this.bubbles.push(
-            new Bubble(
-                this.tree,
-                this.bubbleSeqeunceHelper.getAnchor(this.bubbles.length),
-            ),
-        );
     }
 
     public decreaseBubbles() {
-        if (this.bubbles.length > 1) {
+        if (this.bubbleSeqeunceHelper.length() > 1) {
             this.bubbleSeqeunceHelper.pop();
-            this.bubbles.pop();
         }
     }
 }
