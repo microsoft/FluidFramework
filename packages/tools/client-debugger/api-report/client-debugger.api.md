@@ -51,9 +51,9 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getContainerAttachState(): AttachState;
     getContainerConnectionState(): ConnectionState;
     getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerResolvedUrl(): IResolvedUrl | undefined;
     getMinimumSequenceNumber(): number;
     getOpsLog(): readonly OpsLogEntry[];
-    getResolvedUrl(): IResolvedUrl | undefined;
     isContainerClosed(): boolean;
     isContainerDirty(): boolean;
 }

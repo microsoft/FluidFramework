@@ -204,6 +204,13 @@ export interface IFluidClientDebugger
     // #region Container data
 
     /**
+     * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}.
+     *
+     * @remarks Will be undefined when the Container is not connected.
+     */
+    getClientId(): string | undefined;
+
+    /**
      * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}
      */
     getContainerAttachState(): AttachState;
@@ -219,16 +226,9 @@ export interface IFluidClientDebugger
     getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
 
     /**
-     * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}.
-     *
-     * @remarks Will be undefined when the Container is not connected.
-     */
-    getClientId(): string | undefined;
-
-    /**
      * Gets the Container's {@link @fluidframework/container-definitions#IContainer.resolvedUrl}.
      */
-    getResolvedUrl(): IResolvedUrl | undefined;
+    getContainerResolvedUrl(): IResolvedUrl | undefined;
 
     /**
      * Whether or not the Container is currently {@link @fluidframework/container-definitions#IContainer.isDirty | dirty}.
@@ -392,6 +392,13 @@ class FluidClientDebugger
     // #region Container data
 
     /**
+     * {@inheritDoc IFluidClientDebugger.getClientId}
+     */
+    public getClientId(): string | undefined {
+        return this.container.clientId;
+    }
+
+    /**
      * {@inheritDoc IFluidClientDebugger.getAttachState}
      */
     public getContainerAttachState(): AttachState {
@@ -414,16 +421,9 @@ class FluidClientDebugger
     }
 
     /**
-     * {@inheritDoc IFluidClientDebugger.getClientId}
-     */
-    public getClientId(): string | undefined {
-        return this.container.clientId;
-    }
-
-    /**
      * {@inheritDoc IFluidClientDebugger.getResolvedUrl}
      */
-    public getResolvedUrl(): IResolvedUrl | undefined {
+    public getContainerResolvedUrl(): IResolvedUrl | undefined {
         return this.container.resolvedUrl;
     }
 
