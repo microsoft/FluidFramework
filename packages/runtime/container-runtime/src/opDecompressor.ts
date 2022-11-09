@@ -27,12 +27,12 @@ export class OpDecompressor {
         // to pick up protocol change. Eventually only the top level property should
         // be used.
         if (message.metadata?.batch === true
-            && (message.metadata?.compressed || (message as any).compression !== undefined)) {
+            && (message.metadata?.compressed || message.compression !== undefined)) {
             // Beginning of a compressed batch
             assert(this.activeBatch === false, "shouldn't have multiple active batches");
-            if ((message as any).compression) {
+            if (message.compression) {
                 // lz4 is the only supported compression algorithm for now
-                assert((message as any).compression === CompressionAlgorithms.lz4,
+                assert(message.compression === CompressionAlgorithms.lz4,
                         "lz4 is currently the only supported compression algorithm");
             }
 
@@ -65,7 +65,7 @@ export class OpDecompressor {
         }
 
         if (message.metadata?.batch === undefined &&
-            (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
+            (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
             // Single compressed message
             assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
 

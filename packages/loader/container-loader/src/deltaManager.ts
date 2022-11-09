@@ -217,7 +217,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
             compression,
-        } as any;
+        };
 
         if (!batch) {
             this.flush();
