@@ -136,8 +136,8 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
  */
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
     /**
-     * When associated with a new connection (i.e. state transition to ConnectionState.Connected), will
-     * be the new client ID.
+     * When associated with a new connection (i.e. state transition to
+     * {@link @fluidframework/container-loader#ConnectionState.Connected}), this will be the new client ID.
      *
      * Will always be undefined for disconnects.
      */
@@ -182,6 +182,8 @@ export interface IFluidClientDebugger
         IDisposable {
     /**
      * The ID of the Container with which the debugger is associated.
+     *
+     * @remarks This value will not change during the lifetime of the debugger.
      */
     readonly containerId: string;
 
@@ -205,7 +207,7 @@ export interface IFluidClientDebugger
     /**
      * Gets the session user's {@link @fluidframework/container-definitions#IContainer.clientId}
      */
-    getMyClientId(): string | undefined;
+    getClientId(): string | undefined;
 
     /**
      * Whether or not the Container has been {@link @fluidframework/container-definitions#IContainer.disposed}.
@@ -382,9 +384,9 @@ class FluidClientDebugger
     }
 
     /**
-     * {@inheritDoc IFluidClientDebugger.getMyClientId}
+     * {@inheritDoc IFluidClientDebugger.getClientId}
      */
-    public getMyClientId(): string | undefined {
+    public getClientId(): string | undefined {
         return this.container.clientId;
     }
 

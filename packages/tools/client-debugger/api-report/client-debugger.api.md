@@ -47,10 +47,10 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getAttachState(): AttachState;
     getAudienceMembers(): Map<string, IClient>;
     getAuidienceHistory(): readonly AudienceChangeLogEntry[];
+    getClientId(): string | undefined;
     getConnectionState(): ConnectionState;
     getConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
     getMinimumSequenceNumber(): number;
-    getMyClientId(): string | undefined;
     getOpsLog(): readonly OpsLogEntry[];
     isContainerClosed(): boolean;
 }
