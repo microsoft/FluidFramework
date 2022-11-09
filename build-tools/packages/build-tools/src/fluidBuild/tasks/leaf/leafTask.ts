@@ -47,7 +47,7 @@ export abstract class LeafTask extends Task {
     }
 
     public get isDisabled() {
-        const isLintTask = this.executable === "eslint";
+        const isLintTask = this.executable === "eslint" || this.executable === "tsfmt";
         return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
     }
 

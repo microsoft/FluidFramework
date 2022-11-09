@@ -46,6 +46,7 @@ const executableToLeafTask: {
     "tsc": TscTask,
     "tslint": TsLintTask,
     "eslint": EsLintTask,
+    "tsfmt": TsFormatTask,
     "webpack": WebpackTask,
     "parallel-webpack": WebpackTask,
     "lessc": LesscTask,
