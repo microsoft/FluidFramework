@@ -128,7 +128,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      *
      * @param event - the event to send
      */
-    public abstract send(event: ITelemetryBaseEvent): void;
+    public abstract send(event: ITelemetryBaseEventExt): void;
 
     /**
      * Send a telemetry event with the logger
@@ -149,7 +149,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEventExt & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = convertToBaseEvent(event);
+        const newEvent = { ...event };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -158,7 +158,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
         if (typeof newEvent.duration === "number") {
             newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
         }
-
+        convertToBaseEvent(newEvent);
         this.send(newEvent);
     }
 
@@ -193,7 +193,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
         this.sendTelemetryEventCore(perfEvent, error);
     }
 
-    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEvent {
+    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEventExt = {
             ...event,
@@ -223,8 +223,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
                 }
             }
         }
-        const convertedBaseEvent: ITelemetryBaseEvent = convertToBaseEvent(newEvent);
-        return convertedBaseEvent;
+        convertToBaseEvent(newEvent);
+        return newEvent;
     }
 }
 
@@ -334,7 +334,7 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     private constructor(
-        protected readonly baseLogger: ITelemetryBaseLogger,
+        protected readonly baseLogger: ITelemetryBaseLoggerExt,
         namespace: string | undefined,
         properties: ITelemetryLoggerPropertyBags | undefined,
     ) {
@@ -601,18 +601,13 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
-    const newEvent: ITelemetryBaseEvent = {
-        category: event.category ? JSON.stringify(event.category) : "",
-        eventName: event.eventName,
-    };
+ function convertToBaseEvent(event: TelemetryEventTypes): void {
     for (const key of Object.keys(event)) {
         const filteredEventVal = convertToBasePropertyType(event[key]);
         if (filteredEventVal !== null) {
-            newEvent[key] = filteredEventVal;
+            event[key] = filteredEventVal;
         }
     }
-    return newEvent;
 }
 
 /**

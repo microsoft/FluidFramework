@@ -31,7 +31,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 // @public
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
-    protected readonly baseLogger: ITelemetryBaseLogger;
+    protected readonly baseLogger: ITelemetryBaseLoggerExt;
     static create(baseLogger?: ITelemetryBaseLoggerExt, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEventExt): void;
 }
@@ -354,12 +354,12 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     static numberFromString(str: string | null | undefined): string | number | undefined;
     static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean): void;
     // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEvent;
+    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt;
     // (undocumented)
     protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
     // (undocumented)
     static sanitizePkgName(name: string): string;
-    abstract send(event: ITelemetryBaseEvent): void;
+    abstract send(event: ITelemetryBaseEventExt): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;

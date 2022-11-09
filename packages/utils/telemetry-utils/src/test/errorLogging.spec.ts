@@ -22,6 +22,7 @@ import {
 } from "../errorLogging";
 import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
+import { ITelemetryBaseEventExt } from "../telemetryTypes";
 
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
@@ -121,10 +122,10 @@ describe("Error Logging", () => {
         });
     });
     describe("TaggedLoggerAdapter", () => {
-        const events: ITelemetryBaseEvent[] = [];
+        const events: ITelemetryBaseEventExt[] = [];
         class TestTelemetryLogger extends TelemetryLogger {
-            public events: ITelemetryBaseEvent[] = [];
-            public send(event: ITelemetryBaseEvent): void {
+            public events: ITelemetryBaseEventExt[] = [];
+            public send(event: ITelemetryBaseEventExt): void {
                 events.push(this.prepareEvent(event));
             }
         }
