@@ -29,8 +29,7 @@ import {
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { currentReadVersion, ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
 
@@ -49,6 +48,7 @@ export enum SnapshotFormatSupportType {
  * @param token - token used for authorization in the request
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
+ * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
  * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -56,14 +56,18 @@ export async function fetchSnapshot(
     snapshotUrl: string,
     token: string | null,
     versionId: string,
+    fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
-    // We just want to fetch tree here. So explicitly set to not fetch blobs and deltas
-    // as by default server will send that.
-    const queryParams: ISnapshotOptions = { deltas: 0, blobs: 0 };
+    let queryParams: ISnapshotOptions = {};
+
+    if (fetchFullSnapshot) {
+        queryParams = versionId !== "latest" ? { blobs: 2 } : { deltas: 1, blobs: 2 };
+    }
+
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(
         `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
@@ -192,14 +196,6 @@ async function fetchLatestSnapshotCore(
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
-        let controller: AbortController | undefined;
-        if (snapshotOptions?.timeout !== undefined) {
-            controller = new AbortController();
-            setTimeout(
-                () => controller!.abort(),
-                snapshotOptions.timeout,
-            );
-        }
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
@@ -219,12 +215,27 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
+                let controller: AbortController | undefined;
+                let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+                if (snapshotOptions?.timeout !== undefined) {
+                    controller = new AbortController();
+                    fetchTimeout = setTimeout(
+                        () => controller!.abort(),
+                        snapshotOptions.timeout,
+                    );
+                }
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
-                );
+                ).finally(() => {
+                    // Clear the fetchTimeout once the response is fetched.
+                    if (fetchTimeout !== undefined) {
+                        clearTimeout(fetchTimeout);
+                        fetchTimeout = undefined;
+                    }
+                });
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -242,7 +253,7 @@ async function fetchLatestSnapshotCore(
                     ...propsToLog,
                 });
 
-                let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
                 let contentTypeToRead: string | undefined;
                 if (contentType?.includes("application/ms-fluid")) {
                     contentTypeToRead = "application/ms-fluid";
@@ -265,8 +276,9 @@ async function fetchLatestSnapshotCore(
                         case "application/ms-fluid": {
                             const content = await odspResponse.content.arrayBuffer();
                             propsToLog.bodySize = content.byteLength;
-                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-                                new ReadBuffer(new Uint8Array(content)));
+                            const snapshotContents: ISnapshotContentsWithProps = parseCompactSnapshotResponse(
+                                new Uint8Array(content),
+                                logger);
                             if (snapshotContents.snapshotTree.trees === undefined ||
                                 snapshotContents.snapshotTree.blobs === undefined) {
                                     throw new NonRetryableError(
@@ -275,6 +287,15 @@ async function fetchLatestSnapshotCore(
                                         propsToLog,
                                     );
                                 }
+                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                            if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+                                logger.sendErrorEvent({
+                                    eventName: "SlowSnapshotParseCodePaths",
+                                    slowTreeStructureCount: slowTreeParseCodePaths,
+                                    slowBlobStructureCount: slowBlobParseCodePaths,
+                                });
+                            }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
@@ -393,6 +414,8 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
+                    slowTreeStructureCount: snapshot.slowTreeStructureCount ?? 0,
+                    slowBlobStructureCount: snapshot.slowBlobStructureCount ?? 0,
                     userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.

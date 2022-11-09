@@ -17,48 +17,17 @@ import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { ApiModuleLike, filterByKind, mergeSections } from "../../utilities";
-import { renderMemberTables } from "../helpers";
-import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
+import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for module-like API items (packages, namespaces).
  *
  * @remarks Format:
  *
- * - Tables
+ * - Tables: interfaces, classes, enums, type-aliases, functions, variables, namespaces
  *
- *   - interfaces
- *
- *   - classes
- *
- *   - enums
- *
- *   - type-aliases
- *
- *   - functions
- *
- *   - variables
- *
- *   - namespaces
- *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
- *
- * - Tables
- *
- *   - interfaces
- *
- *   - classes
- *
- *   - enums
- *
- *   - type-aliases
- *
- *   - functions
- *
- *   - variables
- *
- *   - namespaces
+ * - Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries}):
+ * interfaces, classes, enums, type-aliases, functions, variables, namespaces
  */
 export function renderModuleLikeSection(
     apiItem: ApiModuleLike,
@@ -68,36 +37,36 @@ export function renderModuleLikeSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiItem.members.length !== 0;
+    const hasAnyChildren = apiItem.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
         const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
-            (apiItem) => apiItem as ApiInterface,
+            (childItem) => childItem as ApiInterface,
         );
 
         const classes = filterByKind(childItems, [ApiItemKind.Class]).map(
-            (apiItem) => apiItem as ApiClass,
+            (childItem) => childItem as ApiClass,
         );
 
         const namespaces = filterByKind(childItems, [ApiItemKind.Namespace]).map(
-            (apiItem) => apiItem as ApiNamespace,
+            (childItem) => childItem as ApiNamespace,
         );
 
         const types = filterByKind(childItems, [ApiItemKind.TypeAlias]).map(
-            (apiItem) => apiItem as ApiTypeAlias,
+            (childItem) => childItem as ApiTypeAlias,
         );
 
         const functions = filterByKind(childItems, [ApiItemKind.Function]).map(
-            (apiItem) => apiItem as ApiFunction,
+            (childItem) => childItem as ApiFunction,
         );
 
         const enums = filterByKind(childItems, [ApiItemKind.Enum]).map(
-            (apiItem) => apiItem as ApiEnum,
+            (childItem) => childItem as ApiEnum,
         );
 
         const variables = filterByKind(childItems, [ApiItemKind.Variable]).map(
-            (apiItem) => apiItem as ApiVariable,
+            (childItem) => childItem as ApiVariable,
         );
 
         // Render summary tables

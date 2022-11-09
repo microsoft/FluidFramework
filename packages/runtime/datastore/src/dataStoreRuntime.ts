@@ -40,6 +40,7 @@ import {
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
+    BindState,
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
@@ -154,6 +155,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
+    private bindState: BindState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
@@ -199,8 +201,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.channelsBaseGCDetails = new LazyPromise(async () => {
-            const baseGCDetails = await
-                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
             return unpackChildNodesGCDetails(baseGCDetails);
         });
 
@@ -264,6 +265,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
+        // If exists on storage or loaded from a snapshot, it should already be bound.
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         /**
@@ -439,7 +442,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             handle.attachGraph();
         });
         this.pendingHandlesToMakeVisible.clear();
-        this.dataStoreContext.makeLocallyVisible();
+        this.bindToContext();
     }
 
     /**
@@ -447,6 +450,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public attachGraph() {
         this.makeVisibleAndAttachGraph();
+    }
+
+    /**
+     * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
+     * Binds this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching the graph if the data store becomes attached.
+     */
+    public bindToContext() {
+        if (this.bindState !== BindState.NotBound) {
+            return;
+        }
+        this.bindState = BindState.Binding;
+        this.dataStoreContext.bindToContext();
+        this.bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -638,10 +657,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
      * update their used routes.
      * @param usedRoutes - The routes that are used in all contexts in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of channel ids to routes used in it.
         const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -652,7 +669,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
         }
     }
 

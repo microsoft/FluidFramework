@@ -4,8 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
 import {
     createLoader,
     ITestContainerConfig,

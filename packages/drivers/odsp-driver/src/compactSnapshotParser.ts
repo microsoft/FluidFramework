@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
@@ -25,6 +26,16 @@ export const currentReadVersion = "1.0";
 interface ISnapshotSection {
     snapshotTree: ISnapshotTree;
     sequenceNumber: number;
+    slowTreeStructureCount: number;
+}
+
+/**
+ * The parsing is significantly faster if the position of props is well known instead of dynamic. So these variables
+ * represents how many times slower parsing path is executed. This will be then logged into telemetry.
+ */
+export interface ISnapshotContentsWithProps extends ISnapshotContents {
+    slowBlobStructureCount?: number;
+    slowTreeStructureCount?: number;
 }
 
 /**
@@ -33,15 +44,33 @@ interface ISnapshotSection {
  */
 function readBlobSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
+    let slowBlobStructureCount = 0;
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (const blob of node) {
         assertNodeCoreInstance(blob, "blob should be node");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+        if (blob.length === 4 && blob.getMaybeString(0) === "id" && blob.getMaybeString(2) === "data") {
+            // "id": <node name>
+            // "data": <blob>
+            blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+            continue;
+        }
+
+        /**
+         * More generalized workflow
+         */
+        slowBlobStructureCount += 1;
         const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
         const id = getStringInstance(records.id, "blob id should be string");
         blobs.set(id, records.data.arrayBuffer);
     }
-    return blobs;
+    return { blobs, slowBlobStructureCount };
 }
 
 /**
@@ -67,6 +96,7 @@ function readOpsSection(node: NodeTypes) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
+    let slowTreeStructureCount = 0;
     const trees = {};
     const snapshotTree: ISnapshotTree = {
         blobs: {},
@@ -74,6 +104,61 @@ function readTreeSection(node: NodeCore) {
     };
     for (const treeNode of node) {
         assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+         const length = treeNode.length;
+         if (length > 0 && treeNode.getMaybeString(0) === "name") {
+            if (length === 4) {
+                const content = treeNode.getMaybeString(2);
+                // "name": <node name>
+                // "children": <blob id>
+                if (content === "children") {
+                    const result = readTreeSection(treeNode.getNode(3));
+                    trees[treeNode.getString(1)] = result.snapshotTree;
+                    slowTreeStructureCount += result.slowTreeStructureCount;
+                    continue;
+                }
+                // "name": <node name>
+                // "value": <blob id>
+                if (content === "value") {
+                    snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+                    continue;
+                }
+            }
+
+            // "name": <node name>
+            // "nodeType": 3
+            // "value": <blob id>
+            if (length === 6 &&
+                    treeNode.getMaybeString(2) === "nodeType" &&
+                    treeNode.getMaybeString(4) === "value") {
+                snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+                continue;
+            }
+
+            // "name": <node name>
+            // "unreferenced": true
+            // "children": <blob id>
+            if (length === 6 &&
+                    treeNode.getMaybeString(2) === "unreferenced" &&
+                    treeNode.getMaybeString(4) === "children") {
+                const result = readTreeSection(treeNode.getNode(5));
+                trees[treeNode.getString(1)] = result.snapshotTree;
+                slowTreeStructureCount += result.slowTreeStructureCount;
+                assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
+                snapshotTree.unreferenced = true;
+                continue;
+            }
+        }
+
+        /**
+         * More generalized workflow
+         */
+        slowTreeStructureCount += 1;
         const records = getNodeProps(treeNode);
 
         if (records.unreferenced !== undefined) {
@@ -87,12 +172,14 @@ function readTreeSection(node: NodeCore) {
             snapshotTree.blobs[path] = getStringInstance(records.value, "Blob value should be string");
         } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
-            trees[path] = readTreeSection(records.children);
+            const result = readTreeSection(records.children);
+            trees[path] = result.snapshotTree;
+            slowTreeStructureCount += result.slowTreeStructureCount;
         } else {
             trees[path] = { blobs: {}, trees: {} };
         }
     }
-    return snapshotTree;
+    return { snapshotTree, slowTreeStructureCount };
 }
 
 /**
@@ -105,12 +192,13 @@ function readSnapshotSection(node: NodeTypes): ISnapshotSection {
 
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-    const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
+    const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
     snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
         snapshotTree,
+        slowTreeStructureCount,
     };
 }
 
@@ -119,8 +207,11 @@ function readSnapshotSection(node: NodeTypes): ISnapshotSection {
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns - tree, blobs and ops from the snapshot.
  */
-export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
-    const builder = TreeBuilder.load(buffer);
+export function parseCompactSnapshotResponse(
+    buffer: Uint8Array,
+    logger: ITelemetryLogger,
+): ISnapshotContentsWithProps {
+    const builder = TreeBuilder.load(new ReadBuffer(buffer), logger);
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
 
@@ -141,7 +232,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
 
     return {
         ...readSnapshotSection(records.snapshot),
-        blobs: readBlobSection(records.blobs),
+        ...readBlobSection(records.blobs),
         ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
         latestSequenceNumber: records.lsn,
     };

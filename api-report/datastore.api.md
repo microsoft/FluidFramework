@@ -52,6 +52,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     bind(handle: IFluidHandle): void;
     bindChannel(channel: IChannel): void;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
     // (undocumented)
@@ -114,7 +116,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     submitSignal(type: string, content: any): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
@@ -122,7 +124,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)

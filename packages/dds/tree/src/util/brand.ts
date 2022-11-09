@@ -16,8 +16,7 @@ import { Invariant, isAny } from "./typeCheck";
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  */
-export type Brand<ValueType, Name extends string> = ValueType &
-    BrandedType<ValueType, Name>;
+export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 /**
  * Helper for {@link Brand}.
@@ -63,10 +62,7 @@ export abstract class BrandedType<ValueType, Name extends string> {
  * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
  * ```
  */
-export type Opaque<T extends Brand<any, string>> = T extends Brand<
-    infer ValueType,
-    infer Name
->
+export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name>
     ? BrandedType<ValueType, Name>
     : never;
 
@@ -75,22 +71,32 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<
  */
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
     TOpaque extends BrandedType<infer ValueType, infer Name>
-        ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name>
+        ? isAny<ValueType> extends true
+            ? unknown
+            : Brand<ValueType, Name>
         : never;
 
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  */
-export type ValueFromBranded<T extends BrandedType<any, string>> =
-    T extends BrandedType<infer ValueType, string> ? ValueType : never;
+export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
+    infer ValueType,
+    string
+>
+    ? ValueType
+    : never;
 
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  */
-export type NameFromBranded<T extends BrandedType<any, string>> =
-    T extends BrandedType<any, infer Name> ? Name : never;
+export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
+    any,
+    infer Name
+>
+    ? Name
+    : never;
 
 /**
  * Converts a {@link Opaque} handle to the underlying branded type.

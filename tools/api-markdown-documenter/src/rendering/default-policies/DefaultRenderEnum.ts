@@ -19,7 +19,7 @@ export function renderEnumSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiEnum.members.length !== 0;
+    const hasAnyChildren = apiEnum.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

@@ -20,15 +20,22 @@ import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 // ContainerRuntime and Data Runtime API
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion";
-import { checkInstalled, ensureInstalled, getRequestedRange, loadPackage } from "./versionUtils";
+import {
+    checkInstalled,
+    ensureInstalled,
+    getRequestedRange,
+    loadPackage,
+    versionHasMovedSparsedMatrix,
+} from "./versionUtils";
 
 // List of package that needs to be install for legacy versions
 const packageList = [
@@ -142,7 +149,12 @@ export function getDataRuntimeApi(
             ConsensusRegisterCollection:
                 loadPackage(modulePath, "@fluidframework/register-collection").ConsensusRegisterCollection,
             SharedString: loadPackage(modulePath, "@fluidframework/sequence").SharedString,
-            SparseMatrix: loadPackage(modulePath, "@fluidframework/sequence").SparseMatrix,
+            SparseMatrix: loadPackage(
+                modulePath,
+                versionHasMovedSparsedMatrix(version)
+                    ? "@fluid-experimental/sequence-deprecated"
+                    : "@fluidframework/sequence",
+                ).SparseMatrix,
         },
     };
 }

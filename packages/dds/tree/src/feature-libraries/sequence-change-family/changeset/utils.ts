@@ -8,29 +8,27 @@ import { fail } from "../../../util";
 import { Skip, Transposed as T } from "./format";
 
 export function isAttach(mark: T.Mark): mark is T.Attach {
-    return isObjMark(mark)
-        && "type" in mark
-        && (
-            mark.type === "Insert"
-            || mark.type === "MInsert"
-            || mark.type === "MoveIn"
-            || mark.type === "MMoveIn"
-            || mark.type === "Bounce"
-            || mark.type === "Intake"
-        )
-    ;
+    return (
+        isObjMark(mark) &&
+        "type" in mark &&
+        (mark.type === "Insert" ||
+            mark.type === "MInsert" ||
+            mark.type === "MoveIn" ||
+            mark.type === "MMoveIn" ||
+            mark.type === "Bounce" ||
+            mark.type === "Intake")
+    );
 }
 
 export function isReattach(mark: T.Mark): mark is T.Reattach | T.ModifyReattach {
-    return isObjMark(mark)
-        && "type" in mark
-        && (
-            mark.type === "Revive"
-            || mark.type === "MRevive"
-            || mark.type === "Return"
-            || mark.type === "MReturn"
-        )
-    ;
+    return (
+        isObjMark(mark) &&
+        "type" in mark &&
+        (mark.type === "Revive" ||
+            mark.type === "MRevive" ||
+            mark.type === "Return" ||
+            mark.type === "MReturn")
+    );
 }
 
 export function isTomb(mark: T.Mark): mark is T.Tomb {
@@ -54,14 +52,18 @@ export function getAttachLength(attach: T.Attach): number {
             return attach.content.length;
         case "MoveIn":
             return attach.count;
-        default: unreachableCase(type);
+        default:
+            unreachableCase(type);
     }
 }
 
 /**
  * @returns `true` iff `lhs` and `rhs` are deeply structurally equal.
  */
-export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] | undefined): boolean {
+export function isEqualGaps(
+    lhs: T.GapEffect[] | undefined,
+    rhs: T.GapEffect[] | undefined,
+): boolean {
     if (lhs === rhs) {
         return true;
     }
@@ -79,20 +81,27 @@ export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] |
 /**
  * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
  */
-export function isEqualPlace(lhs: Readonly<T.HasPlaceFields>, rhs: Readonly<T.HasPlaceFields>): boolean {
-    return lhs.heed === rhs.heed
-    && lhs.tiebreak === rhs.tiebreak
-    && lhs.src?.id === rhs.src?.id
-    && lhs.src?.change === rhs.src?.change
-    && lhs.scorch?.id === rhs.scorch?.id
-    && lhs.scorch?.change === rhs.scorch?.change;
+export function isEqualPlace(
+    lhs: Readonly<T.HasPlaceFields>,
+    rhs: Readonly<T.HasPlaceFields>,
+): boolean {
+    return (
+        lhs.heed === rhs.heed &&
+        lhs.tiebreak === rhs.tiebreak &&
+        lhs.src?.id === rhs.src?.id &&
+        lhs.src?.change === rhs.src?.change &&
+        lhs.scorch?.id === rhs.scorch?.id &&
+        lhs.scorch?.change === rhs.scorch?.change
+    );
 }
 
 export function isEqualGapEffect(lhs: Readonly<T.GapEffect>, rhs: Readonly<T.GapEffect>): boolean {
-    return lhs.id === rhs.id
-        && lhs.type === rhs.type
-        && lhs.excludePriorInsertions === rhs.excludePriorInsertions
-        && lhs.includePosteriorInsertions === rhs.includePosteriorInsertions;
+    return (
+        lhs.id === rhs.id &&
+        lhs.type === rhs.type &&
+        lhs.excludePriorInsertions === rhs.excludePriorInsertions &&
+        lhs.includePosteriorInsertions === rhs.includePosteriorInsertions
+    );
 }
 
 /**
@@ -126,7 +135,8 @@ export function getOutputLength(mark: T.Mark): number {
         case "Intake":
         case "Bounce":
             return 0;
-        default: unreachableCase(type);
+        default:
+            unreachableCase(type);
     }
 }
 
@@ -156,7 +166,8 @@ export function getInputLength(mark: T.Mark): number {
         case "MDelete":
         case "MMoveOut":
             return 1;
-        default: unreachableCase(type);
+        default:
+            unreachableCase(type);
     }
 }
 
@@ -171,11 +182,16 @@ export function isSkipMark(mark: T.Mark): mark is Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends T.SizedMark>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMarkOnInput<TMark extends T.SizedMark>(
+    mark: TMark,
+    length: number,
+): [TMark, TMark] {
     const markLength = getInputLength(mark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
-        fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
+        fail(
+            `Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
+        );
     }
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
@@ -197,8 +213,12 @@ export function splitMarkOnInput<TMark extends T.SizedMark>(mark: TMark, length:
         case "Revive":
         case "Tomb":
         case "Gap":
-            return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
-        default: unreachableCase(type);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder },
+            ] as [TMark, TMark];
+        default:
+            unreachableCase(type);
     }
 }
 
@@ -209,11 +229,16 @@ export function splitMarkOnInput<TMark extends T.SizedMark>(mark: TMark, length:
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends T.Mark>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMarkOnOutput<TMark extends T.Mark>(
+    mark: TMark,
+    length: number,
+): [TMark, TMark] {
     const markLength = getOutputLength(mark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
-        fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
+        fail(
+            `Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
+        );
     }
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
@@ -244,8 +269,12 @@ export function splitMarkOnOutput<TMark extends T.Mark>(mark: TMark, length: num
         case "Revive":
         case "Tomb":
         case "Gap":
-            return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
-        default: unreachableCase(type);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder },
+            ] as [TMark, TMark];
+        default:
+            unreachableCase(type);
     }
 }
 
@@ -293,9 +322,9 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         case "MoveOut": {
             const lhsDetach = lhs as T.Detach;
             if (
-                rhs.id === lhsDetach.id
-                && rhs.tomb === lhsDetach.tomb
-                && isEqualGaps(rhs.gaps, lhsDetach.gaps)
+                rhs.id === lhsDetach.id &&
+                rhs.tomb === lhsDetach.tomb &&
+                isEqualGaps(rhs.gaps, lhsDetach.gaps)
             ) {
                 lhsDetach.count += rhs.count;
                 return true;
@@ -305,10 +334,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         case "Revive":
         case "Return": {
             const lhsReattach = lhs as T.Reattach;
-            if (
-                rhs.id === lhsReattach.id
-                && rhs.tomb === lhsReattach.tomb
-            ) {
+            if (rhs.id === lhsReattach.id && rhs.tomb === lhsReattach.tomb) {
                 lhsReattach.count += rhs.count;
                 return true;
             }
@@ -316,10 +342,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         }
         case "Gap": {
             const lhsGap = lhs as T.GapEffectSegment;
-            if (
-                rhs.tomb === lhsGap.tomb
-                && isEqualGaps(rhs.stack, lhsGap.stack)
-            ) {
+            if (rhs.tomb === lhsGap.tomb && isEqualGaps(rhs.stack, lhsGap.stack)) {
                 lhsGap.count += rhs.count;
                 return true;
             }
@@ -333,7 +356,8 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
             }
             break;
         }
-        default: break;
+        default:
+            break;
     }
     return false;
 }

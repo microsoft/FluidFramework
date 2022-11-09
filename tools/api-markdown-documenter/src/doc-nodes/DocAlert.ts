@@ -50,7 +50,7 @@ export class DocAlert extends DocNode {
      */
     public readonly content: DocNode;
 
-    public constructor(parameters: IDocAlertParameters, content: DocNode) {
+    constructor(parameters: IDocAlertParameters, content: DocNode) {
         super(parameters);
 
         this.type = parameters.type;

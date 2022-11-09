@@ -112,6 +112,78 @@ use_old_InterfaceDeclaration_DriverPreCheckInfo(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FetchSource": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_FetchSource():
+    TypeOnly<old.FetchSource>;
+declare function use_current_EnumDeclaration_FetchSource(
+    use: TypeOnly<current.FetchSource>);
+use_current_EnumDeclaration_FetchSource(
+    get_old_EnumDeclaration_FetchSource());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FetchSource": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_FetchSource():
+    TypeOnly<current.FetchSource>;
+declare function use_old_EnumDeclaration_FetchSource(
+    use: TypeOnly<old.FetchSource>);
+use_old_EnumDeclaration_FetchSource(
+    get_current_EnumDeclaration_FetchSource());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FiveDaysMs": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FiveDaysMs():
+    TypeOnly<old.FiveDaysMs>;
+declare function use_current_TypeAliasDeclaration_FiveDaysMs(
+    use: TypeOnly<current.FiveDaysMs>);
+use_current_TypeAliasDeclaration_FiveDaysMs(
+    get_old_TypeAliasDeclaration_FiveDaysMs());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FiveDaysMs": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FiveDaysMs():
+    TypeOnly<current.FiveDaysMs>;
+declare function use_old_TypeAliasDeclaration_FiveDaysMs(
+    use: TypeOnly<old.FiveDaysMs>);
+use_old_TypeAliasDeclaration_FiveDaysMs(
+    get_current_TypeAliasDeclaration_FiveDaysMs());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAnyDriverError():
+    TypeOnly<old.IAnyDriverError>;
+declare function use_current_InterfaceDeclaration_IAnyDriverError(
+    use: TypeOnly<current.IAnyDriverError>);
+use_current_InterfaceDeclaration_IAnyDriverError(
+    get_old_InterfaceDeclaration_IAnyDriverError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAnyDriverError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAnyDriverError():
+    TypeOnly<current.IAnyDriverError>;
+declare function use_old_InterfaceDeclaration_IAnyDriverError(
+    use: TypeOnly<old.IAnyDriverError>);
+use_old_InterfaceDeclaration_IAnyDriverError(
+    get_current_InterfaceDeclaration_IAnyDriverError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAuthorizationError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAuthorizationError():
@@ -227,7 +299,6 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*

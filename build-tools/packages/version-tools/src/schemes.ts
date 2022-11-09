@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import * as semver from "semver";
-import { isVersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
+
+import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
 import {
     bumpInternalVersion,
     isInternalVersionRange,
@@ -49,7 +49,7 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
         return "internal";
     }
 
-    if (isInternalVersionScheme(rangeOrVersion, true)) {
+    if (isInternalVersionScheme(rangeOrVersion, true, true)) {
         return "internalPrerelease";
     }
 
