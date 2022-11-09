@@ -103,7 +103,7 @@ module.exports = {
             // Rules only for TypeScript files
             files: ["**/*.{ts,tsx}"],
             rules: {
-                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
+                "editorconfig/indent": "off",
             },
         },
         {

@@ -6,12 +6,18 @@
 import { strict as assert } from "assert";
 import { Delta } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../rebase";
+import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
-import { cases, TestChangeset } from "./utils";
+import {
+    cases,
+    createDeleteChangeset,
+    createInsertChangeset,
+    rebaseTagged,
+    TestChangeset,
+} from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
@@ -25,23 +31,6 @@ function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
     return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
-}
-
-function rebaseTagged(
-    change: TaggedChange<TestChangeset>,
-    ...base: TaggedChange<TestChangeset>[]
-): TaggedChange<TestChangeset> {
-    deepFreeze(change);
-    deepFreeze(base);
-
-    let currChange = change;
-    for (const baseChange of base) {
-        currChange = tagChange(
-            SF.rebase(currChange.change, baseChange, TestChange.rebase),
-            change.revision,
-        );
-    }
-    return currChange;
 }
 
 describe("SequenceField - Rebase", () => {
@@ -437,35 +426,4 @@ describe("SequenceField - Rebase", () => {
 
 function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
     assertMarkListEqual(toDelta(actual), toDelta(expected));
-}
-
-function createInsertChangeset(index: number, size: number): TestChangeset {
-    const content = [];
-    while (content.length < size) {
-        content.push({ type, value: content.length });
-    }
-
-    const insertMark: SF.Insert = {
-        type: "Insert",
-        id: 0,
-        content,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(index);
-    factory.pushContent(insertMark);
-    return factory.list;
-}
-
-function createDeleteChangeset(startIndex: number, size: number): TestChangeset {
-    const deleteMark: SF.Detach = {
-        type: "Delete",
-        id: 0,
-        count: size,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(startIndex);
-    factory.pushContent(deleteMark);
-    return factory.list;
 }

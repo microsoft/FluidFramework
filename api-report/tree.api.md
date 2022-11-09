@@ -221,6 +221,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 export interface EditableTree extends Iterable<EditableField> {
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): EditableField | undefined;
     [getField](fieldKey: FieldKey): EditableField;
+    readonly [indexSymbol]: number;
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
@@ -472,6 +473,9 @@ export interface IForestSubscription extends Dependee {
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
+
+// @public
+export const indexSymbol: unique symbol;
 
 // @public
 function inputLength(mark: Mark<unknown>): number;
@@ -1194,6 +1198,7 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
+    readonly isInverse?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;
 }
