@@ -3,23 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { DiceRollerInstantiationFactory } from "./dataObject";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
 
 /**
- * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
+ * The data model for our application.
  *
- * Since we only need to instantiate and retrieve a single dice roller for our scenario, we can use a
- * ContainerRuntimeFactoryWithDefaultDataStore. We provide it with the type of the data object we want to create
- * and retrieve by default, and the registry entry mapping the type to the factory.
- *
- * This container code will create the single default data object on our behalf and make it available on the
- * Container with a URL of "/", so it can be retrieved via container.request("/").
+ * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
+ * complex models.
  */
-export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory,
-    new Map([
-        DiceRollerInstantiationFactory.registryEntry,
-    ]),
-);
+export interface IDiceRollerAppModel {
+    readonly diceRoller: IDiceRoller;
+}
+
+class DiceRollerAppModel implements IDiceRollerAppModel {
+    public constructor(public readonly diceRoller: IDiceRoller) { }
+}
+
+const diceRollerId = "dice-roller";
+
+/**
+ * The runtime factory for our Fluid container.
+ */
+export class DiceRollerContainerRuntimeFactory
+    extends ModelContainerRuntimeFactory<IDiceRollerAppModel> {
+    constructor() {
+        super(
+            new Map([
+                DiceRollerInstantiationFactory.registryEntry,
+            ]), // registryEntries
+        );
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+     */
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+        await diceRoller.trySetAlias(diceRollerId);
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+     */
+    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+        const diceRoller = await requestFluidObject<IDiceRoller>(
+            await runtime.getRootDataStore(diceRollerId),
+            "",
+        );
+        return new DiceRollerAppModel(diceRoller);
+    }
+}

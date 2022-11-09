@@ -96,6 +96,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
                     process.exit(1);
                 }
+                process.exit(0);
             },
         )
         .help()

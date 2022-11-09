@@ -176,7 +176,28 @@ export interface ChangeRebaser<TChangeset> {
 
 export interface TaggedChange<TChangeset> {
     readonly revision: RevisionTag | undefined;
+
+    /**
+     * Whether this change represents the inverse of the specified revision.
+     * Considered false if undefined.
+     */
+    readonly isInverse?: boolean;
     readonly change: TChangeset;
+}
+
+export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedChange<T> {
+    return { revision: tag, change };
+}
+
+export function tagInverse<T>(
+    inverseChange: T,
+    invertedRevision: RevisionTag | undefined,
+): TaggedChange<T> {
+    return {
+        revision: invertedRevision,
+        isInverse: true,
+        change: inverseChange,
+    };
 }
 
 export function makeAnonChange<T>(change: T): TaggedChange<T> {

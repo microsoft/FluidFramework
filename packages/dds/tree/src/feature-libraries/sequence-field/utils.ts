@@ -8,8 +8,9 @@ import { fail } from "../../util";
 import {
     Attach,
     Detach,
-    HasPlaceFields,
+    HasTiebreakPolicy,
     Insert,
+    LineageEvent,
     Mark,
     Modify,
     ModifyDetach,
@@ -29,11 +30,12 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
     return (
-        isObjMark(mark) &&
-        (mark.type === "Insert" ||
-            mark.type === "MInsert" ||
-            mark.type === "MoveIn" ||
-            mark.type === "MMoveIn")
+        (isObjMark(mark) &&
+            (mark.type === "Insert" ||
+                mark.type === "MInsert" ||
+                mark.type === "MoveIn" ||
+                mark.type === "MMoveIn")) ||
+        isReattach(mark)
     );
 }
 
@@ -58,10 +60,14 @@ export function getAttachLength(attach: Attach): number {
     switch (type) {
         case "MInsert":
         case "MMoveIn":
+        case "MRevive":
+        case "MReturn":
             return 1;
         case "Insert":
             return attach.content.length;
         case "MoveIn":
+        case "Revive":
+        case "Return":
             return attach.count;
         default:
             unreachableCase(type);
@@ -69,13 +75,33 @@ export function getAttachLength(attach: Attach): number {
 }
 
 /**
- * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
+ * @returns `true` iff `lhs` and `rhs`'s `HasTiebreakPolicy` fields are structurally equal.
  */
 export function isEqualPlace(
-    lhs: Readonly<HasPlaceFields>,
-    rhs: Readonly<HasPlaceFields>,
+    lhs: Readonly<HasTiebreakPolicy>,
+    rhs: Readonly<HasTiebreakPolicy>,
 ): boolean {
-    return lhs.heed === rhs.heed && lhs.tiebreak === rhs.tiebreak;
+    return (
+        lhs.heed === rhs.heed &&
+        lhs.tiebreak === rhs.tiebreak &&
+        areSameLineage(lhs.lineage ?? [], rhs.lineage ?? [])
+    );
+}
+
+function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boolean {
+    if (lineage1.length !== lineage2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < lineage1.length; i++) {
+        const event1 = lineage1[i];
+        const event2 = lineage2[i];
+        if (event1.revision !== event2.revision || event1.offset !== event2.offset) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -125,13 +151,9 @@ export function getInputLength(mark: Mark<unknown>): number {
     const type = mark.type;
     switch (type) {
         case "Tomb":
-        case "Revive":
-        case "Return":
         case "Delete":
         case "MoveOut":
             return mark.count;
-        case "MReturn":
-        case "MRevive":
         case "Modify":
         case "MDelete":
         case "MMoveOut":
@@ -172,13 +194,9 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
         case "Modify":
         case "MDelete":
         case "MMoveOut":
-        case "MReturn":
-        case "MRevive":
             fail(`Unable to split ${type} mark of length 1`);
         case "Delete":
         case "MoveOut":
-        case "Return":
-        case "Revive":
         case "Tomb":
             return [
                 { ...markObj, count: length },
