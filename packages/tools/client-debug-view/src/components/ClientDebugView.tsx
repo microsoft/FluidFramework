@@ -13,16 +13,16 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
-import { IFluidContainer, IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
-import { getInnerContainer } from "../Utilities";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { OpsStreamView } from "./OpsStreamView";
+import { HasClientDebugger, HasContainerId } from "../CommonProps";
+import {useMyAudienceData} from "../ReactHooks";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -34,24 +34,11 @@ initializeIcons();
 /**
  * {@link ClientDebugView} input props.
  */
-export interface ClientDebugViewProps {
-    /**
-     * ID of {@link ClientDebugViewProps.container | the container}.
-     */
-    containerId: string;
-
-    /**
-     * The Fluid container for which data will be displayed.
-     */
-    container: IFluidContainer;
-
-    /**
-     * Audience information.
-     */
-    audience: IServiceAudience<IMember>;
-
+export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
     /**
      * Rendering policies for different kinds of Fluid client and object data.
+     *
+     * @defaultValue Strictly use default visualization policies.
      */
     renderOptions?: RenderOptions;
 }
@@ -60,81 +47,36 @@ export interface ClientDebugViewProps {
  * Displays information about the provided container and its audience.
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
-    const { containerId, container, audience, renderOptions: userRenderOptions } = props;
+    const { containerId, clientDebugger, renderOptions: userRenderOptions } = props;
 
     const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
-    // #region Audience state
+    // TODO: unify state management, since it's now all bound to one object
 
-    const [myself, updateMyself] = React.useState<IMember | undefined>(audience.getMyself());
+    const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(
+        clientDebugger.isContainerClosed(),
+    );
+    const [clientId, setClientId] = React.useState<string | undefined>(container.clientId);
 
-    React.useEffect(() => {
-        function onUpdateAudienceMembers(): void {
-            updateMyself(audience.getMyself());
-        }
-
-        audience.on("membersChanged", onUpdateAudienceMembers);
-
-        return (): void => {
-            audience.off("membersChanged", onUpdateAudienceMembers);
-        };
-    }, [audience, updateMyself]);
-
-    // #endregion
-
-    // #region State bound to the outer container
-
-    const [isContainerDisposed, updateIsContainerDisposed] = React.useState<boolean>(
-        container.disposed,
+    const [minimumSequenceNumber, setMinimumSequenceNumber] = React.useState<number>(
+        container.deltaManager.minimumSequenceNumber,
     );
 
     React.useEffect(() => {
-        function onDispose(): void {
-            updateIsContainerDisposed(true);
+        function onContainerClose(): void {
+            setIsContainerClosed(true);
         }
 
-        container.on("disposed", onDispose);
+        clientDebugger.on("containerClosed", onContainerClose);
+        clientDebugger.on("containerConnected", onConnectionChange);
+        clientDebugger.on("containerDisconnected", onConnectionChange);
 
         return (): void => {
-            container.off("disposed", onDispose);
+            clientDebugger.off("containerClosed", onContainerClose);
+            clientDebugger.off("containerConnected", onConnectionChange);
+            clientDebugger.off("containerDisconnected", onConnectionChange);
         };
-    }, [container, updateIsContainerDisposed]);
-
-    // #endregion
-
-    const innerContainer = getInnerContainer(container);
-
-    // #region State bound to the inner container / deltaManager
-
-    const [clientId, updateClientId] = React.useState<string | undefined>(innerContainer.clientId);
-
-    const [minimumSequenceNumber, updateMinimumSequenceNumber] = React.useState<number>(
-        innerContainer.deltaManager.minimumSequenceNumber,
-    );
-    const [ops, updateOps] = React.useState<ISequencedDocumentMessage[]>([]);
-
-    React.useEffect(() => {
-        function onConnectionChange(): void {
-            updateClientId(innerContainer.clientId);
-        }
-
-        function onOp(message: ISequencedDocumentMessage): void {
-            updateMinimumSequenceNumber(message.minimumSequenceNumber);
-            updateOps([...ops, message]);
-        }
-
-        innerContainer.on("connected", onConnectionChange);
-        innerContainer.on("disconnected", onConnectionChange);
-        innerContainer.on("op", onOp);
-
-        return (): void => {
-            innerContainer.off("connected", onConnectionChange);
-            innerContainer.off("disconnected", onConnectionChange);
-            innerContainer.off("op", onOp);
-        };
-    }, [innerContainer, updateClientId, updateMinimumSequenceNumber, ops, updateOps]);
-
-    // #endregion
+    }, [clientDebugger, setIsContainerClosed, setClientId, setMinimumSequenceNumber, setOps]);
 
     // UI state
     const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
@@ -142,7 +84,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
     );
 
     let view: React.ReactElement;
-    if (isContainerDisposed) {
+    if (isContainerClosed) {
         view = <div>The container has been disposed.</div>;
     } else {
         let innerView: React.ReactElement;
@@ -206,10 +148,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
             }}
         >
             <ContainerSummaryView
-                container={container}
-                containerId={containerId}
-                clientId={clientId}
-                myself={myself}
+                clientDebugger={clientDebugger}
             />
             <div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
         </Stack>

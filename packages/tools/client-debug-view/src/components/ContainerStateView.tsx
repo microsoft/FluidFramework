@@ -7,49 +7,44 @@ import React from "react";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import { HasClientDebugger } from "../CommonProps";
 
 /**
  * {@link ContainerStateView} input props.
  */
-export interface ContainerStateViewProps {
-    /**
-     * The Fluid container for which data will be displayed.
-     */
-    container: IFluidContainer;
-}
+export type ContainerStateViewProps = HasClientDebugger
 
 /**
  * Displays information about the container's internal state, including its disposal status,
  * connection state, attach state, etc.
  */
 export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
-    const { container } = props;
+    const { clientDebugger } = props;
 
-    const [isDisposed, updateIsDisposed] = React.useState<boolean>(container.disposed);
-    const [attachState, updateAttachState] = React.useState(container.attachState);
-    const [connectionState, updateConnectionState] = React.useState(container.connectionState);
+    const [isDisposed, updateIsDisposed] = React.useState<boolean>(clientDebugger.disposed);
+    const [attachState, updateAttachState] = React.useState(clientDebugger.getAttachState());
+    const [connectionState, updateConnectionState] = React.useState(clientDebugger.getConnectionState());
 
     React.useEffect(() => {
         function onConnectionChange(): void {
-            updateConnectionState(container.connectionState); // Should be connected
-            updateAttachState(container.attachState);
+            updateConnectionState(clientDebugger.getConnectionState);
+            updateAttachState(clientDebugger.getAttachState);
         }
 
         function onDispose(): void {
             updateIsDisposed(true);
         }
 
-        container.on("connected", onConnectionChange);
-        container.on("disconnected", onConnectionChange);
-        container.on("disposed", onDispose);
+        clientDebugger.on("containerConnected", onConnectionChange);
+        clientDebugger.on("containerDisconnected", onConnectionChange);
+        clientDebugger.on("containerClosed", onDispose);
 
         return (): void => {
-            container.off("connected", onConnectionChange);
-            container.off("disconnected", onConnectionChange);
-            container.off("disposed", onDispose);
+            clientDebugger.off("containerConnected", onConnectionChange);
+            clientDebugger.off("containerDisconnected", onConnectionChange);
+            clientDebugger.off("containerClosed", onDispose);
         };
-    }, [container]);
+    }, [clientDebugger]);
 
     const children: React.ReactElement[] = [
         <span>

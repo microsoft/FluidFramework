@@ -25,8 +25,11 @@ import { ClientDebugView, CounterWidget } from "../../components";
 import {
     ContainerInfo,
     createFluidContainer,
+    initializeFluidClientDebugger,
     loadExistingFluidContainer,
 } from "../ClientUtilities";
+import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
+import { HasClientDebugger } from "../../CommonProps";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -85,11 +88,13 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
     });
 }
 
+interface ContainerInfoWithDebugger extends ContainerInfo, HasClientDebugger{};
+
 /**
  * React hook for asynchronously creating / loading the Fluid Container.
  */
-function useContainerInfo(): ContainerInfo | undefined {
-    const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
+function useContainerInfo(): ContainerInfoWithDebugger | undefined {
+    const [containerInfo, setContainerInfo] = React.useState<ContainerInfoWithDebugger>();
 
     // Get the Fluid Data data on app startup and store in the state
     React.useEffect(() => {
@@ -118,19 +123,32 @@ function useContainerInfo(): ContainerInfo | undefined {
 
         getFluidData().then(
             (data) => {
-                setContainerInfo(data);
                 if (getContainerIdFromLocation(window.location) !== data.containerId) {
                     window.location.hash = data.containerId;
                 }
+
+                const clientDebugger = initializeFluidClientDebugger(data);
+                setContainerInfo({
+                    ...data,
+                    clientDebugger,
+                });
             },
             (error) => {
                 throw error;
             },
         );
+
+        return (): void => {
+            if (containerInfo!== undefined) {
+                containerInfo.container.dispose();
+                closeFluidClientDebugger(containerInfo.containerId);
+            }
+        }
     }, []);
 
     return containerInfo;
 }
+
 
 const appTheme = createTheme({
     palette: {
@@ -195,8 +213,8 @@ export function App(): React.ReactElement {
 /**
  * {@link AppView} input props.
  */
-interface AppViewProps {
-    containerInfo: ContainerInfo;
+interface AppViewProps  {
+    containerInfo: ContainerInfoWithDebugger;
 }
 
 /**
@@ -206,7 +224,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
     const { containerInfo } = props;
-    const { container, containerId, audience } = containerInfo;
+    const { container, containerId, clientDebugger } = containerInfo;
 
     const rootMap = container.initialObjects.rootMap as SharedMap;
     if (rootMap === undefined) {
@@ -237,9 +255,8 @@ function AppView(props: AppViewProps): React.ReactElement {
             </StackItem>
             <StackItem className={debuggerViewPaneStackStyles}>
                 <ClientDebugView
-                    container={container}
                     containerId={containerId}
-                    audience={audience}
+                    clientDebugger={clientDebugger}
                 />
             </StackItem>
         </Stack>

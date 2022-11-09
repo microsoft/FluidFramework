@@ -22,6 +22,7 @@ export {
     ClientDebugViewProps,
 } from "./components";
 
+export { HasContainerId } from "./CommonProps";
 export {
     getRenderOptionsWithDefaults,
     getSharedObjectRendererOptionsWithDefaults,
