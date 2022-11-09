@@ -645,6 +645,9 @@ export class GarbageCollector implements IGarbageCollector {
                         gcSnapshotTree,
                         readAndParseBlob,
                     );
+                    if (baseGCData.tombstones !== undefined) {
+                        this.tombstones = baseGCData.tombstones;
+                    }
                     if (this.trackGCState) {
                         this.latestSummaryData = {
                             serializedGCState: JSON.stringify(generateSortedGCState(baseGCData.gcState)),
