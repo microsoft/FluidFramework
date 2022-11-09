@@ -26,9 +26,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -91,7 +89,6 @@
     "source-map-loader": "^0.2.4",
     "ts-loader": "^9.3.0",
     "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0",
     "webpack": "^5.72.0"
   }
 }
