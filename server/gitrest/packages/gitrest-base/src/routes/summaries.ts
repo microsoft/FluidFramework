@@ -58,6 +58,7 @@ async function getSummary(
             const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
                 fileSystemManager,
                 getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+                lumberjackProperties,
             );
             if (latestFullSummaryFromStorage !== undefined) {
                 return latestFullSummaryFromStorage;
@@ -80,6 +81,7 @@ async function getSummary(
     const wholeSummaryManager = new GitWholeSummaryManager(
         repoManagerParams.storageRoutingId.documentId,
         repoManager,
+        lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
     );
     const fullSummary = await wholeSummaryManager.readSummary(sha);
@@ -95,6 +97,7 @@ async function getSummary(
             fileSystemManager,
             getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
             fullSummary,
+            lumberjackProperties,
         ).catch((error) => {
             Lumberjack.error(
                 "Failed to persist latest full summary to storage during getSummary",
@@ -103,7 +106,7 @@ async function getSummary(
         });
     }
 
-    return wholeSummaryManager.readSummary(sha);
+    return fullSummary;
 }
 
 async function createSummary(
@@ -114,15 +117,18 @@ async function createSummary(
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
-    const wholeSummaryManager = new GitWholeSummaryManager(
-        repoManagerParams.storageRoutingId.documentId,
-        repoManager,
-        externalWriterConfig?.enabled ?? false,
-    );
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
         [BaseGitRestTelemetryProperties.summaryType]: payload?.type,
     };
+
+    const wholeSummaryManager = new GitWholeSummaryManager(
+        repoManagerParams.storageRoutingId.documentId,
+        repoManager,
+        lumberjackProperties,
+        externalWriterConfig?.enabled ?? false,
+    );
+
     Lumberjack.info("Creating summary", lumberjackProperties);
 
     const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
@@ -148,6 +154,7 @@ async function createSummary(
                         fileSystemManager,
                         getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
                         latestFullSummary,
+                        lumberjackProperties,
                     );
                 } catch(error) {
                     Lumberjack.error(
