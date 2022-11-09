@@ -189,7 +189,10 @@ export class Package {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc");
         const npmRC = path.join(this.directory, ".npmrc");
-        const npmCommand = this.monoRepo?.npmClient === "pnpm" ? "pnpm i" : "npm i --no-package-lock --no-shrinkwrap";
+        const npmCommand =
+            this.monoRepo?.npmClient === "pnpm"
+                ? "pnpm i"
+                : "npm i --no-package-lock --no-shrinkwrap";
 
         await copyFileAsync(rootNpmRC, npmRC);
         const result = await execWithErrorAsync(
