@@ -149,7 +149,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEventExt & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = { ...event };
+        const newEvent = convertToBaseEvent(event) as ITelemetryBaseEventExt;
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -158,7 +158,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
         if (typeof newEvent.duration === "number") {
             newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
         }
-        convertToBaseEvent(newEvent);
+
         this.send(newEvent);
     }
 
@@ -195,9 +195,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 
     protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
-        const newEvent: ITelemetryBaseEventExt = {
-            ...event,
-        };
+        const newEvent: ITelemetryBaseEventExt = convertToBaseEvent(event) as ITelemetryBaseEventExt;
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
@@ -223,7 +221,6 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
                 }
             }
         }
-        convertToBaseEvent(newEvent);
         return newEvent;
     }
 }
@@ -601,13 +598,17 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent(event: TelemetryEventTypes): void {
+ function convertToBaseEvent(event: TelemetryEventTypes): TelemetryEventTypes {
+    const newEvent = {
+        ...event
+    };
     for (const key of Object.keys(event)) {
         const filteredEventVal = convertToBasePropertyType(event[key]);
         if (filteredEventVal !== null) {
-            event[key] = filteredEventVal;
+            newEvent[key] = filteredEventVal;
         }
     }
+    return newEvent;
 }
 
 /**
