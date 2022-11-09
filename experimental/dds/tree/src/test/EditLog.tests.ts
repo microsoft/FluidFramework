@@ -338,6 +338,53 @@ describe('EditLog', () => {
 		expect(editsEvicted).to.equal(targetEditLogSize * 2 - collaborationWindowSize);
 	});
 
+	it("can handle sparse sequence numbers with a minimum sequence number that's not in memory", () => {
+		const targetEditLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
+		const ids: EditId[] = [];
+		const sequenceNumberInterval = 3;
+
+		let editsEvicted = 0;
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		let sequenceNumber = 0;
+
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+			});
+			sequenceNumber += sequenceNumberInterval;
+			ids.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
+
+		const extraEditsToKeep = 3;
+		const collaborationWindowSize = targetEditLogSize + extraEditsToKeep;
+		const minimumSequenceNumber = sequenceNumber + 1 - extraEditsToKeep * sequenceNumberInterval;
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber,
+			});
+			sequenceNumber += sequenceNumberInterval;
+		}
+
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(collaborationWindowSize, 'Edits should have been evicted');
+		expect(editsEvicted).to.equal(targetEditLogSize * 2 - collaborationWindowSize);
+	});
+
 	describe('does not evict edits in the collaboration window', () => {
 		[0, 2, 8, 23, 50, 68, 255].forEach((startSequenceNumber) => {
 			[1, 7, 10, 13, 52].forEach((targetEditLogSize) => {

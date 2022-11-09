@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import BTree from 'sorted-btree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, compareArrays, fail } from './Common';
@@ -213,7 +214,7 @@ export interface IEditLogEvents extends IEvent {
 export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 
-	private readonly sequenceNumberToIndexMap: Map<number, number> = new Map([[0, 0]]);
+	private readonly sequenceNumberToIndex: BTree<number, number> = new BTree([[0, 0]]);
 	private _minSequenceNumber = 0;
 
 	private readonly sequencedEdits: Edit<TChange>[] = [];
@@ -499,7 +500,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		};
 		this.allEditIds.set(id, sequencedEditId);
 		if (info !== undefined) {
-			this.sequenceNumberToIndexMap.set(info.sequenceNumber, index);
+			this.sequenceNumberToIndex.set(info.sequenceNumber, index);
 		}
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
@@ -527,7 +528,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	private evictEdits(): void {
-		const minSequenceIndex = this.sequenceNumberToIndexMap.get(this._minSequenceNumber) ?? 0;
+		const closestPair = this.sequenceNumberToIndex.getPairOrNextLower(this._minSequenceNumber);
+		const minSequenceIndex = closestPair !== undefined ? closestPair[1] : 0;
 		// Exclude any edits in the collab window from being evicted
 		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
 
@@ -547,11 +549,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			removedEdits.forEach((edit) => this.allEditIds.delete(edit.id));
 
 			// The minSequenceNumber is strictly increasing so we can clear sequence numbers before it
-			for (const key of this.sequenceNumberToIndexMap.keys()) {
-				if (key < this._minSequenceNumber) {
-					this.sequenceNumberToIndexMap.delete(key);
-				}
-			}
+			this.sequenceNumberToIndex.deleteRange(0, this._minSequenceNumber, false);
 		}
 	}
 
