@@ -212,8 +212,9 @@ export interface IEditLogEvents extends IEvent {
  */
 export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
+
+	private readonly sequenceNumberToIndexMap: Map<number, number> = new Map([[0, 0]]);
 	private _minSequenceNumber = 0;
-	private _minSequenceIndex = 0;
 
 	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
@@ -469,26 +470,15 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		info?: EditSequencingInfo,
 		minSequenceNumber: number = 0
 	): void {
-		// The index of the sequenced edit to add
-		const index = this._earliestAvailableEditIndex + this.numberOfSequencedEdits;
-
-		if (info !== undefined) {
-			assert(
-				minSequenceNumber >= this._minSequenceNumber,
-				'Sequenced edits should carry a monotonically increasing min number'
-			);
-			this._minSequenceNumber = minSequenceNumber;
-
-			// Calculate the index of the minSequenceNumber by comparing it to the index of this sequenced edit
-			const sequenceNumberDifference = info.sequenceNumber - minSequenceNumber;
-			const minSequenceIndex = sequenceNumberDifference > 0 ? index - sequenceNumberDifference : index;
-
-			// The new minSequenceIndex indicates that no future edit will require information from edits with a smaller or equal index
-			// for its resolution.
-			this._minSequenceIndex = minSequenceIndex > 0 ? minSequenceIndex : 0;
-		}
+		assert(
+			minSequenceNumber >= this._minSequenceNumber,
+			'Sequenced edits should carry a monotonically increasing min number'
+		);
+		this._minSequenceNumber = minSequenceNumber;
 
 		const { id } = edit;
+		// The index of the sequenced edit to add
+		const index = this._earliestAvailableEditIndex + this.numberOfSequencedEdits;
 
 		// Remove the edit from local edits if it exists.
 		const encounteredEditId = this.allEditIds.get(id);
@@ -508,6 +498,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			sequenceInfo: info,
 		};
 		this.allEditIds.set(id, sequencedEditId);
+		if (info !== undefined) {
+			this.sequenceNumberToIndexMap.set(info.sequenceNumber, index);
+		}
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
 		// Check if any edits need to be evicted due to this addition
@@ -534,8 +527,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	private evictEdits(): void {
+		const minSequenceIndex = this.sequenceNumberToIndexMap.get(this._minSequenceNumber) ?? 0;
 		// Exclude any edits in the collab window from being evicted
-		const numberOfEvictableEdits = this._minSequenceIndex - this.earliestAvailableEditIndex;
+		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
 
 		if (numberOfEvictableEdits > 0) {
 			// Evict either all but the target log size or the number of evictable edits, whichever is smaller
@@ -548,9 +542,16 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			// Remove the edits and move up the earliest available index
 			const removedEdits = this.sequencedEdits.splice(0, numberOfEditsToEvict);
 			this._earliestAvailableEditIndex += numberOfEditsToEvict;
-			this._minSequenceIndex -= numberOfEditsToEvict;
 
+			// On eviction, we need to remove the IDs of edits that have been evicted
 			removedEdits.forEach((edit) => this.allEditIds.delete(edit.id));
+
+			// The minSequenceNumber is strictly increasing so we can clear sequence numbers before it
+			for (const key of this.sequenceNumberToIndexMap.keys()) {
+				if (key < this._minSequenceNumber) {
+					this.sequenceNumberToIndexMap.delete(key);
+				}
+			}
 		}
 	}
 

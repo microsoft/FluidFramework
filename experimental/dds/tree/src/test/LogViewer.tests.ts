@@ -625,7 +625,13 @@ describe('CachingLogViewer', () => {
 		let editsEvicted = 0;
 		let retainedRevision = 0;
 		const targetEditLogSize = 10;
-		const log = new EditLog<ChangeInternal>(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
+		const log = new EditLog<ChangeInternal>(
+			undefined,
+			undefined,
+			undefined,
+			targetEditLogSize,
+			targetEditLogSize * 2
+		);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView, () => editsProcessed++);
 
 		log.registerEditEvictionHandler((editsToEvict) => {
