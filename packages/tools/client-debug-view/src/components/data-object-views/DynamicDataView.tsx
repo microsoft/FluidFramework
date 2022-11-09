@@ -55,6 +55,9 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
         return <div>NULL</div>;
     }
 
-    // If the underlying data was not a primitive, and it wasn't a Fluid handle, it must be a serializable record.
+    // If the underlying data was not a primitive, and it wasn't a Fluid handle, we may assume that
+    // it is a serializable record.
+    // Note: this is only valid because the debugger's containerData strictly takes in DDS handles,
+    // and DDS children must be either serializable or a fluid handle.
     return <RecordDataView data={data as Record<string, unknown>} renderOptions={renderOptions} />;
 }
