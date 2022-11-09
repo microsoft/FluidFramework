@@ -8,6 +8,7 @@ import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Container, IDetachedBlobStorage } from "@fluidframework/container-loader";
 import {
+    CompressionAlgorithms,
     ContainerMessageType,
     ContainerRuntime,
     DefaultSummaryConfiguration,
@@ -100,6 +101,30 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
+
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
+            if (op.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+            }
+        }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+
+        dataStore._root.set("my blob", blob);
+
+        await blobOpP;
+    });
+
+    it("attach sends an op with compression enabled", async function() {
+        const container = await provider.makeTestContainer({ ...testContainerConfig, runtimeOptions:
+            { ...testContainerConfig.runtimeOptions, compressionOptions: {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+        } } });
+
 
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
