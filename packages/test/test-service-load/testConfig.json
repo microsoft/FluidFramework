@@ -24,6 +24,15 @@
                 }
             }
         },
+        "ci_frs": {
+            "opRatePerMin": 10,
+            "progressIntervalMs": 15000,
+            "numClients": 100,
+            "totalSendCount": 10000,
+            "readWriteCycleMs": 30000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 150000
+        },
         "full": {
             "opRatePerMin": 1920,
             "progressIntervalMs": 1500000,
