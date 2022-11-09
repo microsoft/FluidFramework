@@ -224,6 +224,8 @@ async function fetchLatestSnapshotCore(
                         snapshotOptions.timeout,
                     );
                 }
+
+                const start = performance.now();
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
@@ -236,6 +238,7 @@ async function fetchLatestSnapshotCore(
                         fetchTimeout = undefined;
                     }
                 });
+                const networkTime2 = performance.now() - start;
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -405,6 +408,7 @@ async function fetchLatestSnapshotCore(
                     putInCache(valueWithEpoch);
                 }
 
+                const parseTime = snapshotParseEvent.duration;
                 snapshotParseEvent.end();
 
                 event.end({
@@ -435,11 +439,17 @@ async function fetchLatestSnapshotCore(
                     // Interval between starting the request for the resource until receiving the last byte but
                     // excluding the Snaphot request duration indicated on the snapshot response header.
                     networkTime,
+                    // Similar to networkTime, but measured from within JS code. There is data suggesting that
+                    // networkTime is wrong - see ADO #2530 for more details.
+                    networkTime2,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
+                    // time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
+                    // easier analyzes.
+                    parseTime,
                     ...propsToLog,
                 });
                 return snapshot;
