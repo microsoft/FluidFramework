@@ -9,7 +9,7 @@ It attempts to be detailed enough to start fleshing out proposed optimizations i
 A common feature in collaborative applications is the ability to attribute pieces of content to a particular user.
 This attribution information generally contains information about who edited the content as well as when the edit occurred.
 
-At the time of writing this document, the Fluid framework doesn't natively support this kind of functionality,
+At the time of writing this document, the Fluid Framework doesn't natively support this kind of functionality,
 though in theory it has all of the data it needs (the op envelope contains both a timestamp and a client id, which can
 be mapped to information about the user using the audience).
 This has forced Fluid consumers that want attribution information to use workaround schemes. For example, in SharedString it's
@@ -23,7 +23,7 @@ Besides unnecessarily complicating client code, this has several drawbacks:
   entirely invalidated the zamboni scheme, and even if the timestamps are binned this will unnecessarily include the same user info
   many times on different segments
 
-Rather than force this burden on consumers, it makes more sense to bake some attribution capability into the Fluid framework in an opt-in way.
+Rather than force this burden on consumers, it makes more sense to bake some attribution capability into the Fluid Framework in an opt-in way.
 Though this document will cover an approach for doing so in merge-tree (primarily targeted at support for attribution in SharedString),
 none of the above concerns are specific to a single DDS.
 It's imaginible that Fluid will eventually want to generalize this to a platform mechanism that's supported by each DDS that wants to opt in to it.
@@ -36,7 +36,7 @@ and every DDS retained information about which sequence number created/modified 
 attribution would be straightforward. Ask the DDS for the relevant sequence number, then look at this sequence number's op for a timestamp + clientId
 and use the client id to look up user information.
 
-All of this information is knowable from the fluid runtime perspective, though not all of it is persisted indefinitely.
+All of this information is knowable from the Fluid runtime perspective, though not all of it is persisted indefinitely.
 Notably:
 - Access to the entire op stream is an unreasonable assumption due to the summarization process
 - User information is only accessible for connected clients
@@ -308,7 +308,7 @@ class Attributor implements IAttributor {
     deltaManager.on("op", (message: ISequencedDocumentMessage) => {
       const attributionInfo = {
          /* note: for object interning to work, this needs to be a referentially equal user object. If that isn't provided by the
-            fluid framework, we probably would want a layer of caching here. For interning of overall attribution info objects,
+            Fluid Framework, we probably would want a layer of caching here. For interning of overall attribution info objects,
             we may want a similar cache. */
         user: audience.get(message.clientId).user,
         timestamp: bin(message.timestamp)
