@@ -251,6 +251,9 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+        if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+            return this.currentConnection;
+        }
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // Presence of getWebsocketToken callback dictates whether callback is used for fetching
@@ -504,6 +507,7 @@ export class OdspDocumentService implements IDocumentService {
         }
         this._opsCache?.dispose();
         this.clearJoinSessionTimer();
+        this.currentConnection = undefined;
     }
 
     protected get opsCache() {
