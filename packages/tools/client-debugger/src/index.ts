@@ -12,14 +12,20 @@
  */
 
 export {
-    AudienceChangeLogEntry,
-    closeFluidClientDebugger,
-    ConnectionStateChangeLogEntry,
-    getFluidClientDebugger,
     IFluidClientDebugger,
     IFluidClientDebuggerEvents,
     FluidClientDebuggerProps,
-    initializeFluidClientDebugger,
+} from "./IFluidClientDebugger";
+
+export {
+    AudienceChangeLogEntry,
+    ConnectionStateChangeLogEntry,
     LogEntry,
     StateChangeLogEntry,
-} from "./ClientDebugger";
+} from "./Logs";
+
+export {
+    closeFluidClientDebugger,
+    getFluidClientDebugger,
+    initializeFluidClientDebugger,
+} from "./Registry";

@@ -11,13 +11,13 @@ import {
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
+import { FluidClientDebuggerProps } from "../IFluidClientDebugger";
 import {
-    FluidClientDebuggerProps,
     clearDebuggerRegistry,
     closeFluidClientDebugger,
     getDebuggerRegistry,
     initializeFluidClientDebugger,
-} from "../ClientDebugger";
+} from "../Registry";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
