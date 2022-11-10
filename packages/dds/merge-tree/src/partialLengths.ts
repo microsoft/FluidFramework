@@ -123,6 +123,11 @@ export interface PartialSequenceLength {
      */
     clientId?: number;
     /**
+     * If this partial length obliterated remote segments, this is the length of
+     * those segments
+     */
+    remoteObliteratedLen?: number;
+    /**
      * This field maps each client to the size of the intersection between segments deleted at this seq
      * and segments concurrently deleted by that client.
      *
@@ -444,6 +449,7 @@ export class PartialSequenceLengths {
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
         let removeClientOverlap: number[] | undefined;
+        let remoteObliteratedLen: number | undefined;
 
         if (removalInfo && moveInfo) {
             const removalIsLocal = removalInfo.removedSeq === UnassignedSequenceNumber;
@@ -452,11 +458,16 @@ export class PartialSequenceLengths {
             assert(!moveIsLocal && !removalIsLocal || moveIsLocal !== removalIsLocal, "");
 
             if (removalIsLocal) {
-                seqOrLocalSeq = moveInfo.movedSeq;
-                segmentLen = -segmentLen;
                 // The client who performed the move is always stored
                 // in the first position of removalInfo.
                 clientId = moveInfo.movedClientIds[0];
+
+                if (clientId !== segment.clientId) {
+                    remoteObliteratedLen = segmentLen;
+                }
+
+                seqOrLocalSeq = moveInfo.movedSeq;
+                segmentLen = -segmentLen;
             } else {
                 seqOrLocalSeq = removalInfo.removedSeq;
                 segmentLen = -segmentLen;
@@ -476,12 +487,17 @@ export class PartialSequenceLengths {
             const hasOverlap = removalInfo.removedClientIds.length > 1;
             removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
         } else if (moveInfo) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            seqOrLocalSeq = isLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
-            segmentLen = -segmentLen;
             // The client who performed the move is always stored
             // in the first position of removalInfo.
             clientId = moveInfo.movedClientIds[0];
+
+            if (clientId !== segment.clientId) {
+                remoteObliteratedLen = segmentLen;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            seqOrLocalSeq = isLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
+            segmentLen = -segmentLen;
 
             // TODO: overlap?
             // const hasOverlap = removalInfo.removedClientIds.length > 1;
@@ -503,6 +519,10 @@ export class PartialSequenceLengths {
             partialLengthEntry = firstGte;
             // Existing entry at this seq--this occurs for ops that insert/delete more than one segment.
             partialLengthEntry.seglen += segmentLen;
+            if (remoteObliteratedLen) {
+                partialLengthEntry.remoteObliteratedLen ??= 0;
+                partialLengthEntry.remoteObliteratedLen += remoteObliteratedLen;
+            }
             if (removeClientOverlap) {
                 PartialSequenceLengths.accumulateRemoveClientOverlap(
                     firstGte,
@@ -515,6 +535,7 @@ export class PartialSequenceLengths {
                 clientId,
                 len: 0,
                 seglen: segmentLen,
+                remoteObliteratedLen,
                 overlapRemoveClients: removeClientOverlap
                     ? PartialSequenceLengths.getOverlapClients(removeClientOverlap, segmentLen)
                     : undefined,
@@ -649,6 +670,7 @@ export class PartialSequenceLengths {
         clientId: number,
         collabWindow: CollaborationWindow) {
         let seqSeglen = 0;
+        let remoteObliteratedLen = 0;
         let segCount = 0;
         // Compute length for seq across children
         for (let i = 0; i < node.childCount; i++) {
@@ -670,13 +692,20 @@ export class PartialSequenceLengths {
                 const removalInfo = toRemovalInfo(segment);
                 const moveInfo = toMoveInfo(segment);
 
+                // eslint-disable-next-line unicorn/prefer-switch
                 if (segment.seq === seq) {
                     if ((!removalInfo || removalInfo.removedSeq !== seq)
                         && ((!moveInfo || moveInfo.movedSeq !== seq))) {
                         seqSeglen += segment.cachedLength;
                     }
-                } else if (removalInfo?.removedSeq === seq || moveInfo?.movedSeq === seq) {
+                } else if (removalInfo?.removedSeq === seq) {
                     seqSeglen -= segment.cachedLength;
+                } else if (moveInfo?.movedSeq === seq) {
+                    seqSeglen -= segment.cachedLength;
+
+                    if (segment.clientId !== clientId) {
+                        remoteObliteratedLen += segment.cachedLength;
+                    }
                 }
                 segCount++;
             }
@@ -686,7 +715,7 @@ export class PartialSequenceLengths {
 
         PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
         this.clientSeqNumbers[clientId] ??= new PartialSequenceLengthsSet();
-        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen);
+        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen + remoteObliteratedLen, clientId);
         if (PartialSequenceLengths.options.zamboni) {
             this.zamboni(collabWindow);
         }
@@ -834,8 +863,9 @@ export class PartialSequenceLengths {
 
     // Assumes sequence number already coalesced and that this is called in increasing `seq` order.
     private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
+        const seglen = partialLength.seglen + (partialLength.remoteObliteratedLen ?? 0);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, partialLength.seglen);
+        this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, seglen);
         if (partialLength.overlapRemoveClients) {
             partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
                 // Original client entry was handled above
