@@ -553,7 +553,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Operation && message.contents.type !== ContainerMessageType.ChunkedOp) {
+    if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
             message.type = ContainerMessageType.FluidDataStoreOp;
@@ -1712,7 +1712,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message.contents = JSON.parse(message.contents);
         }
 
-
+        // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
+        // This format was not shipped to production workflows.
+        const runtimeMessage = unpackRuntimeMessage(message);
 
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
@@ -1728,12 +1730,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // once all pieces are available
             message = this.opSplitter.processRemoteMessage(message);
             message = this.opDecompressor.processMessage(message);
-            // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
-            // This format was not shipped to production workflows.
-            const runtimeMessage = unpackRuntimeMessage(message);
 
             let localOpMetadata: unknown;
-            if (local && runtimeMessage) {
+            if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
                 localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
             }
 

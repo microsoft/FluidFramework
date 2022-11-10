@@ -200,5 +200,5 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         assertMapValues(dataObject2map, messageCount, largeString);
-    }).timeout(50000);
+    }).timeout(500000);
 });
