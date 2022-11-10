@@ -16,6 +16,8 @@
   },
   "scripts": {
     "format": "npm run prettier:fix",
+    "preinstall": "npx only-allow yarn",
+    "install-strict": "npx midgard-yarn install",
     "lint": "npm run prettier",
     "lint:fix": "npm run prettier:fix",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",

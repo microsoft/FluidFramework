@@ -24,6 +24,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
+    "preinstall": "npx only-allow yarn",
+    "install-strict": "npx midgard-yarn install",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "perf": "mocha --config ./.mocharc.js --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",

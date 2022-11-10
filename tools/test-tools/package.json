@@ -22,6 +22,8 @@
     "clean": "rimraf dist *.tsbuildinfo",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
+    "preinstall": "npx only-allow yarn",
+    "install-strict": "npx midgard-yarn install",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "echo \"Error: no test specified\" && exit 1"
