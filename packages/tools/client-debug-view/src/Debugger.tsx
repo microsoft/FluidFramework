@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import React from "react";

@@ -1,8 +1,14 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
+
 /**
  * This module contains interfaces for common props used by React components in this library.
  * The primary goal is to offer a central place for documenting common input properties.
  */
-import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 /**
  * Base interface for component props that observe data and updates coming from the Client debugger.
