@@ -222,7 +222,7 @@ interface IUnreferencedEventProps {
 /**
  * The GC data that is tracked for a summary that is submitted.
  */
- interface IGCSummaryTrackingData {
+interface IGCSummaryTrackingData {
     serializedGCState: string | undefined;
     serializedTombstones: string | undefined;
 }
@@ -645,7 +645,7 @@ export class GarbageCollector implements IGarbageCollector {
                         gcSnapshotTree,
                         readAndParseBlob,
                     );
-                    if (baseGCData.tombstones !== undefined) {
+                    if (baseGCData.tombstones !== undefined && this.tombstoneMode) {
                         this.tombstones = baseGCData.tombstones;
                     }
                     if (this.trackGCState) {
