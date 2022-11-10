@@ -118,15 +118,3 @@ export enum GitObjectType {
     ofsdelta = 6,   /** < A delta, base is given by an offset. */
     refdelta = 7,   /** < A delta, base is given by object id. */
 }
-
-export enum BaseGitRestTelemetryProperties {
-    directoryPath = "directoryPath",
-    ref = "ref",
-    repoName = "repoName",
-    repoOwner = "repoOwner",
-    repoPerDocEnabled = "repoPerDocEnabled",
-    sha = "sha",
-    softDelete = "softDelete",
-    storageName = "storageName",
-    summaryType = "summaryType",
-}
