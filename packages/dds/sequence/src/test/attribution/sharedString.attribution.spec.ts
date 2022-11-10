@@ -26,7 +26,15 @@ import {
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { IAttributor, Attributor, makeGzipEncoder } from "@fluidframework/attributor";
+import {
+	chain as chainEncoders,
+	IAttributor,
+	OpStreamAttributor,
+	makeGzipEncoder,
+	AttributorSerializer,
+	Encoder,
+	deltaEncoder,
+} from "@fluid-internal/attributor";
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -69,6 +77,7 @@ interface FuzzTestState extends BaseFuzzTestState {
 	// Note: eventually each client will have an Attributor. While design/implementation is in flux, this test suite
 	// just stores a singleton attributor for the purposes of assessing its size.
 	attributor?: IAttributor;
+	serializer?: Encoder<IAttributor, string>;
 }
 
 interface ClientSpec {
@@ -202,20 +211,22 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 function createSharedString(
 	random: IRandom,
 	generator: Generator<Operation, FuzzTestState>,
-	makeAttributor?: (runtime: IFluidDataStoreRuntime) => IAttributor,
+	makeSerializer?: (runtime: IFluidDataStoreRuntime) => Encoder<IAttributor, string>,
 ): FuzzTestState {
 	const numClients = 3;
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
 	const audience = makeMockAudience(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	let attributor: IAttributor | undefined;
+	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 			const { deltaManager } = dataStoreRuntime;
-			// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); };
-			if (index === 0) {
-				attributor = makeAttributor?.(dataStoreRuntime);
+
+			if (index === 0 && makeSerializer !== undefined) {
+				attributor = new OpStreamAttributor(dataStoreRuntime);
+				serializer = makeSerializer(dataStoreRuntime);
 			}
 			const sharedString = new SharedString(
 				dataStoreRuntime,
@@ -246,6 +257,7 @@ function createSharedString(
 		random,
 	};
 	initialState.attributor = attributor;
+	initialState.serializer = serializer;
 
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
     // Also a reasonable point to inject logging of incremental state.
@@ -367,8 +379,8 @@ const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => 
 	const { summary } = await sharedString.summarize();
 	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just
 	// add a property to the root so that its size is reported
-	if (state.attributor) {
-		(summary as any).attribution = state.attributor.serialize();
+	if (state.attributor && state.serializer) {
+		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
 	return summary;
 };
@@ -455,38 +467,47 @@ describe.only("SharedString Attribution", () => {
 				filename: "prop-attribution-snap.json",
 			},
 			{
-				name: "Attributor without any compression",
+				name: "OpStreamAttributor without any compression",
 				factory: (operations: Operation[]) => createSharedString(
 					makeRandom(0),
 					generatorFromArray(operations),
-					(runtime) => new Attributor(
-						runtime,
-						undefined,
-						{ summary: noopEncoder, timestamps: noopEncoder },
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime, entries),
+							noopEncoder
+						),
+						noopEncoder
 					),
 				),
 				filename: "attributor-no-compression-snap.json",
 			},
 			{
-				name: "Attributor without delta encoding",
+				name: "OpStreamAttributor without delta encoding",
 				factory: (operations: Operation[]) => createSharedString(
 					makeRandom(0),
 					generatorFromArray(operations),
-					(runtime) => new Attributor(
-						runtime,
-						undefined,
-						{ summary: makeGzipEncoder(), timestamps: noopEncoder },
-					),
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime, entries),
+							noopEncoder
+						),
+						makeGzipEncoder(),
+					)
 				),
 				filename: "attributor-gzip-compression-snap.json",
 			},
 			{
-				name: "Attributor",
+				name: "OpStreamAttributor",
 				factory: (operations: Operation[]) => createSharedString(
 					makeRandom(0),
 					generatorFromArray(operations),
-					(runtime) => new Attributor(runtime),
-				),
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime, entries),
+							deltaEncoder
+						),
+						makeGzipEncoder(),
+					)				),
 				filename: "attributor-gzip-and-delta-snap.json",
 			},
 		];

@@ -5,16 +5,21 @@
 export {
 	Attributor,
 	AttributionInfo,
+	OpStreamAttributor,
 	IAttributor,
-	SerializedAttributor,
-	SummaryEncoder,
 } from "./attributor";
 export {
-	makeGzipEncoder,
+	AttributorSerializer,
+	chain,
 	deltaEncoder,
 	Encoder,
+	IAttributorSerializer,
+	SerializedAttributor,
 	TimestampEncoder,
 } from "./encoders";
+export {
+	makeGzipEncoder,
+} from "./gzipEncoder";
 export {
 	InternedStringId,
 	MutableStringInterner,

@@ -3,72 +3,32 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { Attributor } from "../attributor";
-import { makeMockAudience } from "./utils";
-
-const clientIds = ["A", "B", "C"];
-const defaultAudience = makeMockAudience(clientIds);
-
-class OpFactory {
-	private seq = 0;
-
-	public makeOp({ timestamp, clientId }: { timestamp: number; clientId: string; }): ISequencedDocumentMessage {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		return {
-			timestamp,
-			clientId,
-			sequenceNumber: this.seq++,
-		} as ISequencedDocumentMessage;
-	}
-}
-
-function makeMockRuntime(clientId: string, audience: IAudience = defaultAudience): IFluidDataStoreRuntime {
-	const runtime = new MockFluidDataStoreRuntime({ clientId });
-	runtime.getAudience = () => audience;
-	return runtime;
-}
+import { IUser } from "@fluidframework/protocol-definitions";
+import { AttributionInfo, Attributor } from "../attributor";
 
 describe("Attributor", () => {
-	let opFactory: OpFactory;
-	beforeEach(() => {
-		opFactory = new OpFactory();
+	it("can retrieve user information from its initial entries", () => {
+		const key = 42;
+		const timestamp = 50;
+		const user: IUser = { id: "user foo" };
+		const attributor = new Attributor([[key, { user, timestamp }]]);
+		assert.deepEqual(
+			attributor.getAttributionInfo(key),
+			{ user, timestamp },
+		);
 	});
 
-	describe("can retrieve user information", () => {
-		it("from ops submitted during the current session", () => {
-			const runtime = makeMockRuntime(clientIds[0]);
-			const attributor = new Attributor(runtime);
-			const clientId = clientIds[1];
-			const timestamp = 50;
-			const op = opFactory.makeOp({ timestamp, clientId });
-			(runtime.deltaManager as any).emit("op", op);
-			assert.deepEqual(
-				attributor.getAttributionInfo(op.sequenceNumber),
-				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp },
-			);
-		});
-
-		it("from ops submitted during a previous session", () => {
-			const runtime = makeMockRuntime(clientIds[0]);
-			const originalAttributor = new Attributor(runtime);
-			const clientId = clientIds[1];
-			const timestamp = 50;
-			const op = opFactory.makeOp({ timestamp, clientId });
-			(runtime.deltaManager as any).emit("op", op);
-			const attributor = new Attributor(makeMockRuntime(clientIds[0]), originalAttributor.serialize());
-			assert.deepEqual(
-				attributor.getAttributionInfo(op.sequenceNumber),
-				{ user: runtime.getAudience().getMember(clientId)?.user, timestamp },
-			);
-		});
+	it(".entries() retrieves all user information", () => {
+		const entries: Iterable<[number, AttributionInfo]> = [
+			[50, { user: { id: "a" }, timestamp: 30 }],
+			[51, { user: { id: "b" }, timestamp: 60 }]
+		];
+		const attributor = new Attributor(entries);
+		assert.deepEqual(Array.from(attributor.entries()), entries);
 	});
 
 	it("getAttributionInfo throws on attempt to retrieve user information for an invalid key", () => {
-		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
+		const attributor = new Attributor();
 		assert.throws(
 			() => attributor.getAttributionInfo(42),
 			/Requested attribution information for unstored key/,
@@ -77,7 +37,7 @@ describe("Attributor", () => {
 	});
 
 	it("tryGetAttributionInfo returns undefined to retrieve user information for an invalid key", () => {
-		const attributor = new Attributor(makeMockRuntime(clientIds[0]));
+		const attributor = new Attributor();
 		assert.equal(attributor.tryGetAttributionInfo(42), undefined);
 	});
 });

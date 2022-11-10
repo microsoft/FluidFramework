@@ -18,17 +18,32 @@ export interface AttributionInfo {
 
 // @public (undocumented)
 export class Attributor implements IAttributor {
-    constructor(runtime: IFluidDataStoreRuntime, serialized?: string, encoders?: {
-        summary: SummaryEncoder;
-        timestamps: TimestampEncoder;
-    });
+    constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
+    // (undocumented)
+    entries(): IterableIterator<[number, AttributionInfo]>;
     // (undocumented)
     getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
-    serialize(): string;
+    protected readonly keyToInfo: Map<number, AttributionInfo>;
     // (undocumented)
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
+
+// @public (undocumented)
+export class AttributorSerializer implements IAttributorSerializer {
+    constructor(makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor, timestampEncoder: TimestampEncoder);
+    // Warning: (ae-incompatible-release-tags) The symbol "decode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
+    //
+    // (undocumented)
+    decode(encoded: SerializedAttributor): IAttributor;
+    // Warning: (ae-incompatible-release-tags) The symbol "encode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
+    //
+    // (undocumented)
+    encode(attributor: IAttributor): SerializedAttributor;
+}
+
+// @public (undocumented)
+export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
 
 // @public (undocumented)
 export const deltaEncoder: TimestampEncoder;
@@ -44,12 +59,17 @@ export interface Encoder<TDecoded, TEncoded> {
 // @public (undocumented)
 export interface IAttributor {
     // (undocumented)
-    getAttributionInfo(key: number): AttributionInfo;
+    entries(): IterableIterator<[number, AttributionInfo]>;
     // (undocumented)
-    serialize(): string;
+    getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
+
+// Warning: (ae-incompatible-release-tags) The symbol "IAttributorSerializer" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
+//
+// @public (undocumented)
+export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
 // @public
 export type InternedStringId = number & {
@@ -70,6 +90,11 @@ export class MutableStringInterner implements StringInterner {
     getSerializable(): readonly string[];
     // (undocumented)
     getString(internId: number): string;
+}
+
+// @public (undocumented)
+export class OpStreamAttributor extends Attributor implements IAttributor {
+    constructor(runtime: IFluidDataStoreRuntime, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
 
 // @internal (undocumented)
@@ -93,11 +118,6 @@ export interface StringInterner {
     // (undocumented)
     getString(internedId: number): string;
 }
-
-// Warning: (ae-incompatible-release-tags) The symbol "SummaryEncoder" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-//
-// @public (undocumented)
-export type SummaryEncoder = Encoder<SerializedAttributor, string>;
 
 // @public (undocumented)
 export type TimestampEncoder = Encoder<number[], number[]>;

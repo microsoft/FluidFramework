@@ -64,7 +64,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/attributor": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-internal/attributor": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
