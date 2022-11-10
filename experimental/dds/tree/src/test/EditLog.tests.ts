@@ -294,7 +294,6 @@ describe('EditLog', () => {
 	it('can handle sparse sequence numbers', () => {
 		const targetEditLogSize = 10;
 		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
-		const ids: EditId[] = [];
 		const sequenceNumberInterval = 3;
 
 		let editsEvicted = 0;
@@ -312,7 +311,6 @@ describe('EditLog', () => {
 				referenceSequenceNumber: sequenceNumber - 1,
 			});
 			sequenceNumber += sequenceNumberInterval;
-			ids.push(edit.id);
 			expect(log.getIndexOfId(edit.id)).equals(i);
 		}
 		expect(log.length)
@@ -341,7 +339,6 @@ describe('EditLog', () => {
 	it("can handle sparse sequence numbers with a minimum sequence number that's not in memory", () => {
 		const targetEditLogSize = 10;
 		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
-		const ids: EditId[] = [];
 		const sequenceNumberInterval = 3;
 
 		let editsEvicted = 0;
@@ -359,7 +356,6 @@ describe('EditLog', () => {
 				referenceSequenceNumber: sequenceNumber - 1,
 			});
 			sequenceNumber += sequenceNumberInterval;
-			ids.push(edit.id);
 			expect(log.getIndexOfId(edit.id)).equals(i);
 		}
 		expect(log.length)
@@ -368,7 +364,8 @@ describe('EditLog', () => {
 
 		const extraEditsToKeep = 3;
 		const collaborationWindowSize = targetEditLogSize + extraEditsToKeep;
-		const minimumSequenceNumber = sequenceNumber + 1 - extraEditsToKeep * sequenceNumberInterval;
+        // Adjusts the minimum sequence number to one that's not associated with any of the edits added
+		const minimumSequenceNumber = sequenceNumber - 1 - extraEditsToKeep * sequenceNumberInterval;
 		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit, {
@@ -398,7 +395,6 @@ describe('EditLog', () => {
 								targetEditLogSize,
 								targetEditLogSize * 2
 							);
-							const ids: EditId[] = [];
 
 							let editsEvicted = 0;
 

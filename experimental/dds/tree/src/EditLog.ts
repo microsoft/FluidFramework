@@ -528,8 +528,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	private evictEdits(): void {
-		const closestPair = this.sequenceNumberToIndex.getPairOrNextLower(this._minSequenceNumber);
-		const minSequenceIndex = closestPair !== undefined ? closestPair[1] : 0;
+		const minSequenceIndex =
+			this.sequenceNumberToIndex.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
+			fail('No index associated with that sequence number.');
 		// Exclude any edits in the collab window from being evicted
 		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
 
