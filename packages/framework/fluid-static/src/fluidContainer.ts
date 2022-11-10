@@ -187,6 +187,18 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * Dispose of the container instance, permanently disabling it.
      */
     dispose(): void;
+
+    /**
+     * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
+     *
+     * FOR INTERNAL USE ONLY.
+     *
+     * @remarks Used to power debug tooling.
+     * @privateRemarks TODO: make this required in the future (breaking change).
+     *
+     * @internal
+     */
+    _getInternalContainer?: () => IContainer;
 }
 
 /**
@@ -301,5 +313,12 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         this.container.off("disconnected", this.disconnectedHandler);
         this.container.off("saved", this.savedHandler);
         this.container.off("dirty", this.dirtyHandler);
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer._getInternalContainer}
+     */
+    public _getInternalContainer(): IContainer {
+        return this.container;
     }
 }

@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_FluidContainer():
 declare function use_current_ClassDeclaration_FluidContainer(
     use: TypeOnly<current.FluidContainer>);
 use_current_ClassDeclaration_FluidContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_FluidContainer());
 
 /*
@@ -431,6 +432,7 @@ declare function get_old_ClassDeclaration_ServiceAudience():
 declare function use_current_ClassDeclaration_ServiceAudience(
     use: TypeOnly<current.ServiceAudience>);
 use_current_ClassDeclaration_ServiceAudience(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ServiceAudience());
 
 /*

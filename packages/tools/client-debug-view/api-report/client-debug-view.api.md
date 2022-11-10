@@ -4,27 +4,30 @@
 
 ```ts
 
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
+import { IClient } from '@fluidframework/protocol-definitions';
+import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IServiceAudience } from '@fluidframework/fluid-static';
 import { default as React_2 } from 'react';
 import { SharedObjectCore } from '@fluidframework/shared-object-base';
 
 // @public
+export interface AudienceMember {
+    clients: Map<string, IClient>;
+    userId: string;
+}
+
+// @public
 export interface AudienceMemberViewProps {
-    audienceMember: IMember;
-    isMyself: boolean;
+    audienceMember: AudienceMember;
+    myClientConnection: IClient | undefined;
+    myClientId: string | undefined;
 }
 
 // @public
 export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
 
 // @public
-export interface ClientDebugViewProps {
-    audience: IServiceAudience<IMember>;
-    container: IFluidContainer;
-    containerId: string;
+export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
     renderOptions?: RenderOptions;
 }
 
@@ -41,9 +44,19 @@ export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefi
 export function getSharedObjectRendererOptionsWithDefaults(userOptions: SharedObjectRenderOptions | undefined): SharedObjectRenderOptions;
 
 // @public
+export interface HasClientDebugger {
+    clientDebugger: IFluidClientDebugger;
+}
+
+// @public
+export interface HasContainerId {
+    containerId: string;
+}
+
+// @public
 export interface OpViewProps {
-    clientId: string | undefined;
-    message: ISequencedDocumentMessage;
+    myClientId: string | undefined;
+    op: ISequencedDocumentMessage;
 }
 
 // @public

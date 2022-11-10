@@ -22,6 +22,8 @@ export {
     ClientDebugViewProps,
 } from "./components";
 
+export { AudienceMember } from "./Audience";
+export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export {
     getRenderOptionsWithDefaults,
     getSharedObjectRendererOptionsWithDefaults,

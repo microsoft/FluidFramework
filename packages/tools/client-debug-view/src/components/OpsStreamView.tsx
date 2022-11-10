@@ -7,6 +7,8 @@ import React from "react";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { HasClientDebugger } from "../CommonProps";
+import { useMinimumSequenceNumber, useMyClientId } from "../ReactHooks";
 import { OpViewProps } from "./client-data-views";
 
 // TODOs:
@@ -18,22 +20,7 @@ import { OpViewProps } from "./client-data-views";
 /**
  * {@link OpsStreamView} input props.
  */
-export interface OpsStreamViewProps {
-    /**
-     * The list of ops to render.
-     */
-    ops: readonly ISequencedDocumentMessage[];
-
-    /**
-     * Current minimum sequence number of the container.
-     */
-    minimumSequenceNumber: number;
-
-    /**
-     * The client ID for the session.
-     */
-    clientId: string | undefined;
-
+export interface OpsStreamViewProps extends HasClientDebugger {
     /**
      * Callback to render data about an individual operation (op).
      */
@@ -44,9 +31,29 @@ export interface OpsStreamViewProps {
  * Displays information about the ops stream for the current container.
  */
 export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
-    const { ops, minimumSequenceNumber, clientId, onRenderOp } = props;
+    const { clientDebugger, onRenderOp } = props;
 
-    const reversedOpsList = [...ops].reverse(); // Copy to avoid mutating input
+    const myClientId = useMyClientId(clientDebugger);
+    const minimumSequenceNumber = useMinimumSequenceNumber(clientDebugger);
+
+    const [opsLog, setOpsLog] = React.useState<readonly ISequencedDocumentMessage[]>(
+        clientDebugger.getOpsLog(),
+    );
+
+    React.useEffect(() => {
+        function onIncomingOpProcessed(): void {
+            setOpsLog(clientDebugger.getOpsLog());
+        }
+
+        clientDebugger.on("incomingOpProcessed", onIncomingOpProcessed);
+
+        return (): void => {
+            clientDebugger.off("incomingOpProcessed", onIncomingOpProcessed);
+        };
+    }, [clientDebugger, setOpsLog]);
+
+    // Reverse log ordering to put newer entries at the top.
+    const reversedLog = [...opsLog].reverse();
 
     return (
         <Stack
@@ -69,10 +76,8 @@ export function OpsStreamView(props: OpsStreamViewProps): React.ReactElement {
                     },
                 }}
             >
-                {reversedOpsList.map((message) => (
-                    <StackItem key={message.sequenceNumber}>
-                        {onRenderOp({ message, clientId })}
-                    </StackItem>
+                {reversedLog.map((op) => (
+                    <StackItem key={op.sequenceNumber}>{onRenderOp({ op, myClientId })}</StackItem>
                 ))}
             </Stack>
         </Stack>

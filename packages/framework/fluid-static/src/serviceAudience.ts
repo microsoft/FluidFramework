@@ -153,4 +153,11 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     // Include only human members
     return member.details.capabilities.interactive;
   }
+
+    /**
+     * {@inheritDoc IServiceAudience._getInternalAudience}
+     */
+    public _getInternalAudience(): IAudience {
+        return this.audience;
+    }
 }

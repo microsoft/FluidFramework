@@ -11,9 +11,23 @@
  * @packageDocumentation
  */
 
+export { MemberChangeKind } from "./Audience";
+
 export {
     IFluidClientDebugger,
     IFluidClientDebuggerEvents,
     FluidClientDebuggerProps,
+} from "./IFluidClientDebugger";
+
+export {
+    AudienceChangeLogEntry,
+    ConnectionStateChangeLogEntry,
+    LogEntry,
+    StateChangeLogEntry,
+} from "./Logs";
+
+export {
+    closeFluidClientDebugger,
+    getFluidClientDebugger,
     initializeFluidClientDebugger,
-} from "./ClientDebugger";
+} from "./Registry";

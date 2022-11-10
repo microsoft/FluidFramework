@@ -4,38 +4,95 @@
 
 ```ts
 
-import { ConnectionState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+
+// @public
+export interface AudienceChangeLogEntry extends LogEntry {
+    changeKind: "added" | "removed";
+    client: IClient;
+    clientId: string;
+}
+
+// @public
+export function closeFluidClientDebugger(containerId: string): void;
+
+// @public
+export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
+    clientId: string | undefined;
+}
 
 // @public
 export interface FluidClientDebuggerProps {
     audience: IAudience;
     container: IContainer;
+    containerData: Record<string, IFluidLoadable>;
     containerId: string;
 }
 
 // @public
-export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents> {
-    // (undocumented)
-    get connectionState(): ConnectionState;
+export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
+
+// @public
+export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
+    closeContainer(): void;
+    readonly containerData: Record<string, IFluidLoadable>;
+    readonly containerId: string;
+    disconnectContainer(): void;
     dispose(): void;
+    getAudienceHistory(): readonly AudienceChangeLogEntry[];
+    getAudienceMembers(): Map<string, IClient>;
+    getClientId(): string | undefined;
+    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerResolvedUrl(): IResolvedUrl | undefined;
+    getMinimumSequenceNumber(): number;
+    getOpsLog(): readonly ISequencedDocumentMessage[];
+    isContainerAttached(): boolean;
+    isContainerClosed(): boolean;
+    isContainerConnected(): boolean;
+    isContainerDirty(): boolean;
+    tryConnectContainer(): void;
 }
 
 // @public
 export interface IFluidClientDebuggerEvents extends IEvent {
+    (event: "containerAttached", listener: () => void): void;
     (event: "containerConnected", listener: (clientId: string) => void): void;
     (event: "containerDisconnected", listener: () => void): void;
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;
-    (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void): any;
-    (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void): any;
+    (event: "containerDirty", listener: () => void): any;
+    (event: "containerSaved", listener: () => void): any;
+    (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
+    (event: "audienceMemberChange", listener: (change: MemberChangeKind, clientId: string, client: IClient) => void): any;
+    (event: "debuggerDisposed", listener: () => void): any;
 }
 
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger;
+
+// @public
+export interface LogEntry {
+    timestamp: number;
+}
+
+// @public
+export enum MemberChangeKind {
+    Added = "Added",
+    Removed = "Removed"
+}
+
+// @public
+export interface StateChangeLogEntry<TState> extends LogEntry {
+    newState: TState;
+}
 
 ```

@@ -5,34 +5,14 @@
 import { Stack } from "@fluentui/react";
 import React from "react";
 
-import { IFluidContainer, IMember } from "@fluidframework/fluid-static";
-
+import { HasClientDebugger } from "../CommonProps";
+import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { ContainerStateView } from "./ContainerStateView";
 
 /**
  * {@link ContainerSummaryView} input props.
  */
-export interface ContainerSummaryViewProps {
-    /**
-     * ID of {@link ContainerSummaryViewProps.container | the container}.
-     */
-    containerId: string;
-
-    /**
-     * The client ID for the session.
-     */
-    clientId: string | undefined;
-
-    /**
-     * The Fluid container for which data will be displayed.
-     */
-    container: IFluidContainer;
-
-    /**
-     * Audience member infor for the session user.
-     */
-    myself: IMember | undefined;
-}
+export type ContainerSummaryViewProps = HasClientDebugger;
 
 /**
  * Small header that displays core container data.
@@ -40,25 +20,30 @@ export interface ContainerSummaryViewProps {
  * @param props - See {@link ContainerSummaryViewProps}.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-    const { containerId, clientId, container, myself } = props;
+    const { clientDebugger } = props;
+
+    const { containerId } = clientDebugger;
+
+    const myClientId = useMyClientId(clientDebugger);
+    const myClientConnection = useMyClientConnection(clientDebugger);
 
     const maybeClientIdView =
-        clientId === undefined ? (
+        myClientId === undefined ? (
             <></>
         ) : (
             <div>
                 <b>Client ID: </b>
-                {clientId}
+                {myClientId}
             </div>
         );
 
     const maybeAudienceIdView =
-        myself === undefined ? (
+        myClientConnection === undefined ? (
             <></>
         ) : (
             <div>
                 <b>My audience ID: </b>
-                {myself.userId}
+                {myClientConnection.user.id}
             </div>
         );
 
@@ -70,7 +55,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
             </div>
             {maybeClientIdView}
             {maybeAudienceIdView}
-            <ContainerStateView container={container} />
+            <ContainerStateView clientDebugger={clientDebugger} />
         </Stack>
     );
 }
