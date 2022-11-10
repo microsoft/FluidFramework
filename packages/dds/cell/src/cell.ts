@@ -181,7 +181,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
-            return previousValue !== undefined;
+            return;
         }
 
         const op: IDeleteCellOperation = {
@@ -253,7 +253,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: any) {
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
@@ -320,7 +320,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    protected rollback(op: any, localOpMetadata: ICellLocalOpMetadata) {
+    protected rollback(op: any, localOpMetadata: any) {
         if (op.type === "setCell" || op.type === "deleteCell") {
             if (localOpMetadata.previousValue === undefined) {
                 this.deleteCore();

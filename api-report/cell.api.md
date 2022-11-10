@@ -38,7 +38,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell<any>;
-    delete(): boolean | undefined;
+    delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
     static getFactory(): IChannelFactory;
@@ -46,9 +46,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
-    // Warning: (ae-forgotten-export) The symbol "ICellLocalOpMetadata" needs to be exported by the entry point index.d.ts
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: ICellLocalOpMetadata): void;
-    protected rollback(op: any, localOpMetadata: ICellLocalOpMetadata): void;
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: any): void;
+    protected rollback(op: any, localOpMetadata: any): void;
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
