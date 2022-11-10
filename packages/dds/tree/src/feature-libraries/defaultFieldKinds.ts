@@ -211,8 +211,10 @@ export const counter: FieldKind = new FieldKind(
     new Set(),
 );
 
+export type NodeUpdate = { set: JsonableTree } | { revert: RevisionTag | undefined };
+
 export interface ValueChangeset {
-    value?: JsonableTree | RevisionTag;
+    value?: NodeUpdate;
     changes?: NodeChangeset;
 }
 
@@ -221,7 +223,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
         if (changes.length === 0) {
             return {};
         }
-        let newValue: JsonableTree | RevisionTag | undefined;
+        let newValue: NodeUpdate | undefined;
         const childChanges: NodeChangeset[] = [];
         for (const change of changes) {
             if (change.value !== undefined) {
@@ -258,7 +260,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
             inverse.changes = invertChild(change.changes);
         }
         if (change.value !== undefined) {
-            inverse.value = revision;
+            inverse.value = { revert: revision };
         }
         return inverse;
     },
@@ -276,7 +278,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 };
 
 interface EncodedValueChangeset {
-    value?: JsonableTree | RevisionTag;
+    value?: NodeUpdate;
     changes?: JsonCompatibleReadOnly;
 }
 
@@ -330,7 +332,7 @@ const valueFieldEditor: ValueFieldEditor = {
         return { changes: change };
     },
 
-    set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
+    set: (newValue: ITreeCursor) => ({ value: { set: jsonableTreeFromCursor(newValue) } }),
 };
 
 const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
@@ -341,10 +343,14 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
     intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
-            const newValue =
-                typeof change.value === "number"
-                    ? repair(change.value, 0, 1)[0]
-                    : singleTextCursor(change.value);
+            const newValue = (() => {
+                if ("revert" in change.value) {
+                    const revision = change.value.revert;
+                    assert(revision !== undefined, "Unable to revert to undefined revision");
+                    return repair(revision, 0, 1)[0];
+                }
+                return singleTextCursor(change.value.set);
+            })();
             if (change.changes === undefined) {
                 mark = {
                     type: Delta.MarkType.Insert,
@@ -390,11 +396,13 @@ export const value: FieldKind<ValueFieldEditor> = new FieldKind(
     new Set(),
 );
 
+export type OptNodeUpdate = { set: JsonableTree | undefined } | { revert: RevisionTag | undefined };
+
 export interface OptionalFieldChange {
     /**
      * The new content for the trait. If undefined, the trait will be cleared.
      */
-    newContent?: JsonableTree | RevisionTag;
+    newContent?: OptNodeUpdate;
 
     /**
      * Whether the field was empty in the state this change is based on.
@@ -463,7 +471,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
         if (change.fieldChange !== undefined) {
             inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
             if (!change.fieldChange.wasEmpty) {
-                inverse.fieldChange.newContent = revision;
+                inverse.fieldChange.newContent = { revert: revision };
             }
         }
 
@@ -522,7 +530,9 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
         fieldChange: {
-            newContent: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            newContent: {
+                set: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            },
             wasEmpty,
         },
     }),
@@ -618,10 +628,14 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         editor: optionalFieldEditor,
 
         intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
-            let content = change.fieldChange?.newContent;
-            if (typeof content === "number") {
-                content = repair(content, 0, 1)[0];
-            }
+            const content = ((update: OptNodeUpdate | undefined) => {
+                if (update === undefined || "set" in update) {
+                    return update?.set;
+                }
+                const revision = update.revert;
+                assert(revision !== undefined, "Unable to revert to undefined revision");
+                return repair(revision, 0, 1)[0];
+            })(change.fieldChange?.newContent);
             const insertDelta = deltaFromInsertAndChange(
                 content,
                 change.childChange,

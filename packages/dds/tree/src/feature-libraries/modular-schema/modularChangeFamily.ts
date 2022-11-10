@@ -169,12 +169,17 @@ export class ModularChangeFamily
     }
 
     private invertNodeChange(change: TaggedChange<NodeChangeset>): NodeChangeset {
-        // TODO: Correctly invert `change.valueChange`
-        if (change.change.fieldChanges === undefined) {
-            return {};
+        const inverse: NodeChangeset = {};
+
+        if (change.change.valueChange !== undefined) {
+            inverse.valueChange = { revert: change.revision };
         }
 
-        return { fieldChanges: this.invert({ ...change, change: change.change.fieldChanges }) };
+        if (change.change.fieldChanges !== undefined) {
+            inverse.fieldChanges = this.invert({ ...change, change: change.change.fieldChanges });
+        }
+
+        return inverse;
     }
 
     rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap {
@@ -274,6 +279,10 @@ export class ModularChangeFamily
             if ("revert" in valueChange) {
                 assert(path !== undefined, "Only existing node can have their value restored");
                 if (repairStore !== undefined) {
+                    assert(
+                        valueChange.revert !== undefined,
+                        "Unable to revert to undefined revision",
+                    );
                     modify.setValue = repairStore.getValue(valueChange.revert, path);
                 } else {
                     // TODO: remove this branch once the repairStore is mandatory

@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { FieldKinds, singleTextCursor, getSchemaString } from "../../feature-libraries";
+import {
+    FieldKinds,
+    singleTextCursor,
+    getSchemaString,
+    jsonableTreeFromCursor,
+} from "../../feature-libraries";
 import { brand } from "../../util";
 import {
+    FieldKey,
     JsonableTree,
     rootFieldKey,
     rootFieldKeySymbol,
@@ -19,6 +25,7 @@ import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
 
+const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
@@ -308,6 +315,58 @@ describe("SharedTree", () => {
                 readCursor.enterField(globalFieldKeySymbol);
                 assert(!readCursor.firstNode());
             }
+        });
+
+        it("can abandon a transaction", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1] = provider.trees;
+
+            const initialState: JsonableTree = {
+                type: brand("Node"),
+                fields: {
+                    foo: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                },
+            };
+            initializeTestTree(tree1, initialState);
+            tree1.runTransaction((forest, editor) => {
+                const rootPath = {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 0,
+                };
+                editor.setValue(
+                    {
+                        parent: rootPath,
+                        parentField: fooKey,
+                        parentIndex: 0,
+                    },
+                    41,
+                );
+                // const field = editor.sequenceField(rootPath, fooKey);
+                // field.delete(0, 2);
+                // field.insert(0, singleTextCursor({ type: brand("Test") }));
+                // editor.setValue(
+                //     {
+                //         parent: rootPath,
+                //         parentField: fooKey,
+                //         parentIndex: 1,
+                //     },
+                //     42,
+                // );
+                // Aborting the transaction should restore the forest
+                return TransactionResult.Abort;
+            });
+
+            const readCursor = tree1.forest.allocateCursor();
+            moveToDetachedField(tree1.forest, readCursor);
+            assert(readCursor.firstNode());
+            const actual = jsonableTreeFromCursor(readCursor);
+            assert.deepEqual(actual, initialState);
+            readCursor.free();
         });
 
         it("can insert multiple nodes", async () => {

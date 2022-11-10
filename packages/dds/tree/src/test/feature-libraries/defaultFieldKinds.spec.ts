@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { RepairDataStore } from "../../core";
 import {
     FieldChangeHandler,
     FieldKinds,
@@ -59,7 +58,7 @@ describe("Value field changesets", () => {
         FieldKinds.value.changeHandler;
 
     const change1WithChildChange: FieldKinds.ValueChangeset = {
-        value: tree1,
+        value: { set: tree1 },
         changes: nodeChange1,
     };
     const childChange1: FieldKinds.ValueChangeset = { changes: nodeChange1 };
@@ -71,7 +70,7 @@ describe("Value field changesets", () => {
 
     const detachedBy: RevisionTag = brand(42);
     const revertChange2: FieldKinds.ValueChangeset = {
-        value: detachedBy,
+        value: { revert: detachedBy },
     };
 
     const simpleChildComposer = (changes: NodeChangeset[]) => {
@@ -80,7 +79,7 @@ describe("Value field changesets", () => {
     };
 
     it("can be created", () => {
-        const expected: FieldKinds.ValueChangeset = { value: tree1 };
+        const expected: FieldKinds.ValueChangeset = { value: { set: tree1 } };
         assert.deepEqual(change1, expected);
     });
 
@@ -97,7 +96,7 @@ describe("Value field changesets", () => {
         );
 
         const expected: FieldKinds.ValueChangeset = {
-            value: tree1,
+            value: { set: tree1 },
             changes: nodeChange1,
         };
 
@@ -206,13 +205,13 @@ describe("Optional field changesets", () => {
         fieldHandler.editor as FieldKinds.OptionalFieldEditor;
 
     const change1: FieldKinds.OptionalChangeset = {
-        fieldChange: { newContent: tree1, wasEmpty: true },
+        fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
         childChange: nodeChange1,
     };
 
     const detachedBy: RevisionTag = brand(42);
     const revertChange2: FieldKinds.OptionalChangeset = {
-        fieldChange: { newContent: detachedBy, wasEmpty: false },
+        fieldChange: { newContent: { revert: detachedBy }, wasEmpty: false },
     };
 
     const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
@@ -222,7 +221,7 @@ describe("Optional field changesets", () => {
     it("can be created", () => {
         const actual: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
         const expected: FieldKinds.OptionalChangeset = {
-            fieldChange: { newContent: tree1, wasEmpty: true },
+            fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
         };
         assert.deepEqual(actual, expected);
     });

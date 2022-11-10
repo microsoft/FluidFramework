@@ -119,7 +119,7 @@ export type ValueChange =
           value?: Value;
       }
     | {
-          revert: RevisionTag;
+          revert: RevisionTag | undefined;
       };
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;

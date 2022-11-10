@@ -55,8 +55,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
         return this.modularFamily.encoder;
     }
 
-    intoDelta(change: DefaultChangeset): Delta.Root {
-        return this.modularFamily.intoDelta(change);
+    intoDelta(change: DefaultChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.modularFamily.intoDelta(change, repairStore);
     }
 
     buildEditor(
