@@ -364,7 +364,7 @@ describe('EditLog', () => {
 
 		const extraEditsToKeep = 3;
 		const collaborationWindowSize = targetEditLogSize + extraEditsToKeep;
-        // Adjusts the minimum sequence number to one that's not associated with any of the edits added
+		// Adjusts the minimum sequence number to one that's not associated with any of the edits added
 		const minimumSequenceNumber = sequenceNumber - 1 - extraEditsToKeep * sequenceNumberInterval;
 		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
