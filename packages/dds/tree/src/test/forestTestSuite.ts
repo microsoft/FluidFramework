@@ -21,7 +21,6 @@ import {
     cursorToJsonObject,
     jsonNumber,
     jsonObject,
-    jsonBoolean,
     jsonSchemaData,
     jsonRoot,
     singleJsonCursor,
@@ -30,7 +29,6 @@ import { recordDependency } from "../dependency-tracking";
 import {
     clonePath,
     Delta,
-    detachedFieldAsKey,
     FieldKey,
     ITreeCursor,
     JsonableTree,
@@ -47,11 +45,11 @@ import { testJsonableTreeCursor } from "./cursorTestSuite";
 /**
  * Generic forest test suite
  */
-function testForest(
+export function testForest(
     suiteName: string,
     factory: (schema: StoredSchemaRepository) => IEditableForest,
 ): void {
-    describe(suiteName, () => {
+    describe.only(suiteName, () => {
         // Use Json Cursor to insert and extract some Json data
         describe("insert and extract json", () => {
             // eslint-disable-next-line @typescript-eslint/ban-types
@@ -128,7 +126,7 @@ function testForest(
         });
 
         // TODOJ: unskip this once Noah makes the fix
-        it.only("moving a cursor to the root of an empty forest fails", () => {
+        it("moving a cursor to the root of an empty forest fails", () => {
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
             recordDependency(dependent, forest);
