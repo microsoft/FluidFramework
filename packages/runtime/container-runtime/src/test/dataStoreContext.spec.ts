@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
@@ -350,9 +348,10 @@ describe("Data Store Context Tests", () => {
                     isRootDataStore: false,
                 });
 
-                assert.doesNotThrow(() => {
-                    localDataStoreContext.tombstone();
-                }, `Local dataStores should not throw on tombstone`);
+                localDataStoreContext.setTombstone(true);
+                assert(localDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+                localDataStoreContext.setTombstone(false);
+                assert(!localDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
             });
         });
     });
@@ -744,9 +743,11 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                 });
-                assert.doesNotThrow(() => {
-                    remoteDataStoreContext.tombstone();
-                }, `Should be able to tombstone a non-root remote datastore!`);
+
+                remoteDataStoreContext.setTombstone(true);
+                assert(remoteDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+                remoteDataStoreContext.setTombstone(false);
+                assert(!remoteDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
             });
         });
     });
