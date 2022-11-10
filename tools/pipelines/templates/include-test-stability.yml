@@ -71,10 +71,6 @@ jobs:
           Pipeline Variables:
             releaseBuild=$(releaseBuildVar)
 
-          Override Parameters:
-            publishOverride=${{ parameters.publishOverride }}
-            releaseBuildOverride=${{ parameters.releaseBuildOverride }}
-
           Tasks Parameters:
             BuildDir=${{ parameters.buildDirectory }}
             Build=${{ parameters.taskBuild }}
