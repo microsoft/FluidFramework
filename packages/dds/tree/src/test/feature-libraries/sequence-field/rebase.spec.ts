@@ -5,11 +5,19 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
+import { makeAnonChange, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { cases, TestChangeset } from "./utils";
+import {
+    cases,
+    checkDeltaEquality,
+    createDeleteChangeset,
+    createInsertChangeset,
+    rebaseTagged,
+    TestChangeset,
+} from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -17,7 +25,7 @@ const tomb = "Dummy Changeset Tag";
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return SF.rebase(change, base, TestChange.rebase);
+    return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
 }
 
 describe("SequenceField - Rebase", () => {
@@ -350,5 +358,28 @@ describe("SequenceField - Rebase", () => {
             { type: "Revive", id: 3, count: 1, tomb },
         ];
         assert.deepEqual(actual, expected);
+    });
+
+    it("concurrent inserts ↷ delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const insertB = tagChange(createInsertChangeset(0, 1), brand(2));
+        const insertC = tagChange(createInsertChangeset(1, 1), brand(3));
+        const insertB2 = rebaseTagged(insertB, delA);
+        const insertC2 = rebaseTagged(insertC, delA, insertB2);
+        const expected = createInsertChangeset(1, 1);
+        checkDeltaEquality(insertC2.change, expected);
+    });
+
+    it("concurrent inserts ↷ connected delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const delB = tagChange(createDeleteChangeset(1, 1), brand(2));
+        const delC = tagChange(createDeleteChangeset(0, 1), brand(3));
+
+        const insertD = tagChange(createInsertChangeset(0, 1), brand(4));
+        const insertE = tagChange(createInsertChangeset(3, 1), brand(5));
+        const insertD2 = rebaseTagged(insertD, delA, delB, delC);
+        const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+        const expected = createInsertChangeset(1, 1);
+        checkDeltaEquality(insertE2.change, expected);
     });
 });

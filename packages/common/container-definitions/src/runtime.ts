@@ -121,6 +121,7 @@ export interface IBatchMessage {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
+    /** @deprecated Please pass in existing directly in instantiateRuntime */
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
