@@ -124,18 +124,29 @@ export function sequenceFieldToDelta<TNodeChange>(
                 }
                 case "MRevive": {
                     const modify = deltaFromChild(mark.changes, inputIndex);
-                    const fields =
-                        modify.fields ?? fail("MRevive marks should always carry field changes");
-                    const insertMark: Delta.InsertAndModify = {
-                        type: Delta.MarkType.InsertAndModify,
-                        content: repair(
-                            mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
-                            mark.detachIndex,
-                            1,
-                        )[0],
-                        fields,
-                    };
-                    out.pushContent(insertMark);
+                    const revived = repair(
+                        mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
+                        mark.detachIndex,
+                        1,
+                    )[0];
+                    const mutableTree = mapTreeFromCursor(revived);
+                    const outModifications = applyModifyToTree(mutableTree, modify);
+                    const content = singleMapTreeCursor(mutableTree);
+                    if (outModifications.size === 0) {
+                        const insertMark: Delta.Insert = {
+                            type: Delta.MarkType.Insert,
+                            content: [content],
+                        };
+                        out.pushContent(insertMark);
+                    } else {
+                        const insertMark: Delta.InsertAndModify = {
+                            type: Delta.MarkType.InsertAndModify,
+                            content,
+                            fields: outModifications,
+                        };
+                        out.pushContent(insertMark);
+                    }
+
                     break;
                 }
                 case "MMoveIn":

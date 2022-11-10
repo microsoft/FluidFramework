@@ -346,17 +346,18 @@ describe("SharedTree", () => {
                     },
                     41,
                 );
-                // const field = editor.sequenceField(rootPath, fooKey);
-                // field.delete(0, 2);
-                // field.insert(0, singleTextCursor({ type: brand("Test") }));
-                // editor.setValue(
-                //     {
-                //         parent: rootPath,
-                //         parentField: fooKey,
-                //         parentIndex: 1,
-                //     },
-                //     42,
-                // );
+                const field = editor.sequenceField(rootPath, fooKey);
+                field.delete(0, 2);
+                editor.setValue(rootPath, "RootValue");
+                field.insert(0, singleTextCursor({ type: brand("Test") }));
+                editor.setValue(
+                    {
+                        parent: rootPath,
+                        parentField: fooKey,
+                        parentIndex: 1,
+                    },
+                    42,
+                );
                 // Aborting the transaction should restore the forest
                 return TransactionResult.Abort;
             });
