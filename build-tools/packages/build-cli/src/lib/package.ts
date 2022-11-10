@@ -499,6 +499,17 @@ export function filterVersionsOlderThan(
     });
 }
 
+/**
+ * Gets the direct Fluid dependencies for a given package or release group. A Fluid dependency is a dependency on
+ * other packages or release groups in the repo.
+ *
+ * @param context - The {@link Context}.
+ * @param releaseGroupOrPackage - The release group or package to check.
+ * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
+ * depends, and the other contains independent packages on which the package depends.
+ *
+ * @internal
+ */
 export function getFluidDependencies(
     context: Context,
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
@@ -521,15 +532,21 @@ export function getFluidDependencies(
     for (const p of packagesToCheck) {
         for (const dep of p.combinedDependencies) {
             const pkg = context.fullPackageMap.get(dep.name);
-            if (pkg !== undefined) {
-                if (pkg.monoRepo === undefined) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    packages[pkg.name] = semver.minVersion(dep.version)!.version;
-                } else {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    releaseGroups[pkg.monoRepo.kind] = semver.minVersion(dep.version)!.version;
-                }
+            if (pkg === undefined) {
+                continue;
             }
+
+            const minVer = semver.minVersion(dep.version);
+            if (minVer === null) {
+                throw new Error(`Failed to parse depVersion: ${dep.version}`);
+            }
+
+            if (pkg.monoRepo !== undefined) {
+                releaseGroups[pkg.monoRepo.kind] = minVer.version;
+                continue;
+            }
+
+            packages[pkg.name] = minVer.version;
         }
     }
 

@@ -12,14 +12,23 @@ import {
 
 import { ReleaseGroup } from "../releaseGroups";
 
+/**
+ * A map of package names to their versions. This is the format of the "simple" release report.
+ */
 export interface PackageVersionList {
-    [packageName: string]: string;
+    [packageName: string]: ReleaseVersion;
 }
 
+/**
+ * A map of package names to full release reports. This is the format of the "full" release report.
+ */
 export interface ReleaseReport {
     [packageName: string]: ReleaseDetails;
 }
 
+/**
+ * Full details about a release.
+ */
 export interface ReleaseDetails {
     version: ReleaseVersion;
     previousVersion?: ReleaseVersion;
@@ -31,17 +40,46 @@ export interface ReleaseDetails {
     ranges: ReleaseRanges;
 }
 
+/**
+ * Version range strings. These strings are included in release reports so that partners can use the strings as-is in
+ * package.json dependencies.
+ *
+ * @remarks
+ *
+ * "minor" and "caret" are equivalent, as are "patch" and "tilde." All four are included because both terms are commonly
+ * used by partners, and having both eases confusion.
+ */
 export interface ReleaseRanges {
+    /**
+     * A minor version range. Equivalent to caret.
+     */
     minor: string;
+
+    /**
+     * A patch version range. Equivalent to tilde.
+     */
     patch: string;
+
+    /**
+     * A caret version range. Equivalent to minor.
+     */
     caret: string;
+
+    /**
+     * A tilde version range. Equivalent to patch.
+     */
     tilde: string;
 }
 
+/**
+ * @param version - The version.
+ * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
+ * version.
+ * @returns The {@link ReleaseRanges} for a version string
+ */
 export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): ReleaseRanges => {
-    // eslint-disable-next-line no-param-reassign
-    scheme = scheme ?? detectVersionScheme(version);
-    return scheme === "internal"
+    const schemeToUse = scheme ?? detectVersionScheme(version);
+    return schemeToUse === "internal"
         ? {
               patch: getVersionRange(version, "patch"),
               minor: getVersionRange(version, "minor"),
