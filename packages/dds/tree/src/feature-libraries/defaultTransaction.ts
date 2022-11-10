@@ -52,21 +52,23 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     const result = command(checkout.forest, t.editor);
     const changes = t.editor.getChanges();
     const inverses = changes.map((c) => checkout.changeFamily.rebaser.invert(c)).reverse();
-    const edit = checkout.changeFamily.rebaser.compose(changes.map((c) => c.change));
 
     // TODO: in the non-abort case, optimize this to not rollback the edit,
     // then reapply it (when the local edit is added) when possible.
     {
         // Roll back changes
-        const inverse = checkout.changeFamily.rebaser.compose(inverses);
-
-        // TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
-        // TODO: update schema in addition to anchors and tree data (in both places).
-        checkout.changeFamily.rebaser.rebaseAnchors(checkout.forest.anchors, inverse);
-        checkout.forest.applyDelta(checkout.changeFamily.intoDelta(inverse, t.editor.repairStore));
+        for (const inverse of inverses) {
+            // TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
+            // TODO: update schema in addition to anchors and tree data (in both places).
+            checkout.changeFamily.rebaser.rebaseAnchors(checkout.forest.anchors, inverse);
+            checkout.forest.applyDelta(
+                checkout.changeFamily.intoDelta(inverse, t.editor.repairStore),
+            );
+        }
     }
 
     if (result === TransactionResult.Apply) {
+        const edit = checkout.changeFamily.rebaser.compose(changes.map((c) => c.change));
         checkout.submitEdit(edit);
     }
 

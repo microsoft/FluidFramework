@@ -333,30 +333,48 @@ describe("SharedTree", () => {
             };
             initializeTestTree(tree1, initialState);
             tree1.runTransaction((forest, editor) => {
-                const rootPath = {
+                const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+                const root0Path = {
                     parent: undefined,
                     parentField: rootFieldKeySymbol,
                     parentIndex: 0,
                 };
+                const root1Path = {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 1,
+                };
+                const foo0 = editor.sequenceField(root0Path, fooKey);
+                const foo1 = editor.sequenceField(root1Path, fooKey);
                 editor.setValue(
                     {
-                        parent: rootPath,
-                        parentField: fooKey,
-                        parentIndex: 0,
-                    },
-                    41,
-                );
-                const field = editor.sequenceField(rootPath, fooKey);
-                field.delete(0, 2);
-                editor.setValue(rootPath, "RootValue");
-                field.insert(0, singleTextCursor({ type: brand("Test") }));
-                editor.setValue(
-                    {
-                        parent: rootPath,
+                        parent: root0Path,
                         parentField: fooKey,
                         parentIndex: 1,
                     },
+                    41,
+                );
+                editor.setValue(
+                    {
+                        parent: root0Path,
+                        parentField: fooKey,
+                        parentIndex: 2,
+                    },
                     42,
+                );
+                editor.setValue(root0Path, "RootValue1");
+                foo0.delete(0, 1);
+                rootField.insert(0, singleTextCursor({ type: brand("Test") }));
+                foo1.delete(0, 1);
+                editor.setValue(root1Path, "RootValue2");
+                foo1.insert(0, singleTextCursor({ type: brand("Test") }));
+                editor.setValue(
+                    {
+                        parent: root1Path,
+                        parentField: fooKey,
+                        parentIndex: 1,
+                    },
+                    82,
                 );
                 // Aborting the transaction should restore the forest
                 return TransactionResult.Abort;
