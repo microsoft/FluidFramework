@@ -7,10 +7,15 @@ import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import {
+    createResponseError,
+    generateHandleContextPath,
+    responseToException,
+    SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -19,6 +24,8 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
+import { ContainerRuntime } from "./containerRuntime";
+import { summarizerClientType } from "./summarizerClientElection";
 
 /**
  * This class represents blob (long string)
@@ -83,7 +90,7 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<ContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -123,6 +130,8 @@ export class BlobManager {
      * we must save it. This is true for both the online and offline flow.
      */
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
+
+    private readonly tombstonedBlobs: Set<string> = new Set();
 
     /**
      * Track ops in flight for online flow. Used to avoid searching pendingBlobs since BlobAttach ops
@@ -239,6 +248,17 @@ export class BlobManager {
     }
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+        const request = { url: blobId };
+        if (this.tombstonedBlobs.has(blobId) && this.runtime.clientDetails.type !== summarizerClientType) {
+            // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
+            this.logger.sendErrorEvent({
+                eventName: "TombstonedBlobRequested",
+                url: request.url,
+                viaHandle: true,
+            });
+            throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
+        }
+
         const pending = this.pendingBlobs.get(blobId);
         if (pending) {
             return pending.blob;
@@ -527,7 +547,7 @@ export class BlobManager {
      * When running GC in test mode, this is called to delete blobs that are unused.
      * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
         // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {
@@ -537,6 +557,11 @@ export class BlobManager {
                 0x2d5 /* "Invalid blob node id in unused routes." */,
             );
             const blobId = pathParts[2];
+
+            // GC tombstones these blobs
+            if (tombstone) {
+                this.tombstonedBlobs.add(blobId);
+            }
 
             // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
             // corresponding storageId may still be used either directly or via other localIds.
