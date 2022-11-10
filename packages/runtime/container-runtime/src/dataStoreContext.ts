@@ -316,12 +316,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public tombstone() {
-        if (this.tombstoned) {
+    public setTombstone(tombstone: boolean) {
+        if (this.tombstoned === tombstone) {
             return;
         }
 
-        this._tombstoned = true;
+        this._tombstoned = tombstone;
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
@@ -755,11 +755,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
         if (this._disposed) {
-            throw new Error(`Context is closed: Call site - ${callSite}!`);
+            throw new Error(`Context is closed! Call site [${callSite}]`);
         }
 
         if (checkTombstone && this.tombstoned) {
-            const messageString = `Context is tombstoned: Call site -  ${callSite}!`;
+            const messageString = `Context is tombstoned! Call site [${callSite}]`;
             throw new DataCorruptionError(messageString, {
                 errorMessage: messageString,
                 ...safeTelemetryProps,

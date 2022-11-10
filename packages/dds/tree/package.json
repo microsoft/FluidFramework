@@ -37,13 +37,11 @@
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
-    "test:benchmark:report": "mocha \"dist/**/*.bench.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r @fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
+    "test:benchmark:report": "mocha \"dist/**/*.bench.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
@@ -81,13 +79,13 @@
   "devDependencies": {
     "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluid-tools/benchmark": "^0.43.0",
-    "@fluid-tools/build-cli": "^0.5.0-103719",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.5.0-103719",
+    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/build-tools": "^0.5.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/container-loader": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-drivers": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
@@ -107,10 +105,9 @@
     "good-fences": "^1.1.1",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
-    "prettier": "^2.3.1",
+    "prettier": "~2.3.1",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }

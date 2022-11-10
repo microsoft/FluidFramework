@@ -550,7 +550,7 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "off"
         ],
         "import/no-unassigned-import": [
             "error"

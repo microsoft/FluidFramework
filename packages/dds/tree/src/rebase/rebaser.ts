@@ -150,7 +150,7 @@ export interface ChangeRebaser<TChangeset> {
      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
      * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeset): TChangeset;
+    invert(changes: TaggedChange<TChangeset>): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -166,12 +166,42 @@ export interface ChangeRebaser<TChangeset> {
      * - `rebase(a, compose([]))` is equal to `a`.
      * - `rebase(compose([]), a)` is equal to `a`.
      */
-    rebase(change: TChangeset, over: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+}
+
+export interface TaggedChange<TChangeset> {
+    readonly revision: RevisionTag | undefined;
+
+    /**
+     * Whether this change represents the inverse of the specified revision.
+     * Considered false if undefined.
+     */
+    readonly isInverse?: boolean;
+    readonly change: TChangeset;
+}
+
+export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedChange<T> {
+    return { revision: tag, change };
+}
+
+export function tagInverse<T>(
+    inverseChange: T,
+    invertedRevision: RevisionTag | undefined,
+): TaggedChange<T> {
+    return {
+        revision: invertedRevision,
+        isInverse: true,
+        change: inverseChange,
+    };
+}
+
+export function makeAnonChange<T>(change: T): TaggedChange<T> {
+    return { revision: undefined, change };
 }
 
 export interface FinalChange {
