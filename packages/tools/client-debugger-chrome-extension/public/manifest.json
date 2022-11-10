@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Fluid Client Debugger",
+  "description": "Displays a live debug view of the Fluid client in your application.",
+  "version": "1.0",
+  "permissions": ["activeTab", "scripting"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
