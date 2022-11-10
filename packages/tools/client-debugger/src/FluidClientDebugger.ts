@@ -52,7 +52,7 @@ export class FluidClientDebugger
     // #region Accumulated log state
 
     /**
-     * Accumulated data for {@link IFluidClientDebugger.getContainerConnectionStateLog}.
+     * Accumulated data for {@link IFluidClientDebugger.getContainerConnectionLog}.
      */
     private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
 
@@ -154,27 +154,27 @@ export class FluidClientDebugger
     /**
      * {@inheritDoc IFluidClientDebugger.getAttachState}
      */
-    public getContainerAttachState(): AttachState {
-        return this.container.attachState;
+    public isContainerAttached(): boolean {
+        return this.container.attachState === AttachState.Attached;
     }
 
     /**
      * {@inheritDoc IFluidClientDebugger.getConnectionState}
      */
-    public getContainerConnectionState(): ConnectionState {
-        return this.container.connectionState;
+    public isContainerConnected(): boolean {
+        return this.container.connectionState === ConnectionState.Connected;
     }
 
     /**
      * {@inheritDoc IFluidClientDebugger.getConnectionStateLog}
      */
-    public getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[] {
+    public getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._connectionStateLog.map((value) => value);
     }
 
     /**
-     * {@inheritDoc IFluidClientDebugger.getResolvedUrl}
+     * {@inheritDoc IFluidClientDebugger.getContainerResolvedUrl}
      */
     public getContainerResolvedUrl(): IResolvedUrl | undefined {
         return this.container.resolvedUrl;

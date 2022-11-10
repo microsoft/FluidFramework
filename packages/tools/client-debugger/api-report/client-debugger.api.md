@@ -4,7 +4,6 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -53,13 +52,13 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getAudienceMembers(): Map<string, IClient>;
     getClientId(): string | undefined;
-    getContainerAttachState(): AttachState;
-    getContainerConnectionState(): ConnectionState;
-    getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
     getContainerResolvedUrl(): IResolvedUrl | undefined;
     getMinimumSequenceNumber(): number;
     getOpsLog(): readonly ISequencedDocumentMessage[];
+    isContainerAttached(): boolean;
     isContainerClosed(): boolean;
+    isContainerConnected(): boolean;
     isContainerDirty(): boolean;
     tryConnectContainer(): void;
 }

@@ -2,11 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Spinner, Stack, StackItem } from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
-
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 import { HasClientDebugger } from "../CommonProps";
 
@@ -22,11 +19,11 @@ export type ContainerStateViewProps = HasClientDebugger;
 export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
     const { clientDebugger } = props;
 
-    const [containerAttachState, setContainerAttachState] = React.useState(
-        clientDebugger.getContainerAttachState(),
+    const [isContainerAttached, setIsContainerAttached] = React.useState<boolean>(
+        clientDebugger.isContainerAttached(),
     );
-    const [containerConnectionState, setContainerConnectionState] = React.useState(
-        clientDebugger.getContainerConnectionState(),
+    const [isContainerConnected, setIsContainerConnected] = React.useState<boolean>(
+        clientDebugger.isContainerConnected(),
     );
     const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
         clientDebugger.disposed,
@@ -34,11 +31,11 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 
     React.useEffect(() => {
         function onContainerAttached(): void {
-            setContainerAttachState(clientDebugger.getContainerAttachState());
+            setIsContainerAttached(true);
         }
 
         function onContainerConnectionChange(): void {
-            setContainerConnectionState(clientDebugger.getContainerConnectionState());
+            setIsContainerConnected(clientDebugger.isContainerConnected());
         }
 
         function onContainerDisposed(): void {
@@ -66,9 +63,10 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
     if (isContainerDisposed) {
         children.push(<span>Disposed</span>);
     } else {
-        children.push(<AttachStateView attachState={containerAttachState} />);
-        if (containerAttachState === AttachState.Attached) {
-            children.push(<ConnectionStateView connectionState={containerConnectionState} />);
+        children.push(<span>{isContainerAttached ? "Attached" : "Detached"}</span>);
+
+        if (isContainerAttached) {
+            children.push(<span>{isContainerConnected ? "Connected" : "Disconnected"}</span>);
         }
     }
 
@@ -81,70 +79,4 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
             ))}
         </Stack>
     );
-}
-
-/**
- * {@link AttachStateView} input props.
- */
-interface AttachStateViewProps {
-    attachState: AttachState;
-}
-
-/**
- * Simple view of {@link @fluidframework/container-definitions#AttachState} data.
- */
-function AttachStateView(props: AttachStateViewProps): React.ReactElement {
-    const { attachState } = props;
-
-    // TODO: typography
-    switch (attachState) {
-        case AttachState.Attached:
-            return <span>Attached</span>;
-        case AttachState.Attaching:
-            return (
-                <Stack horizontal>
-                    <Spinner /> Attaching...
-                </Stack>
-            );
-        case AttachState.Detached:
-            return <span>Detatched</span>;
-        default:
-            throw new Error(`Unrecognized AttachState value: "${attachState}".`);
-    }
-}
-
-/**
- * {@link ConnectionStateView} input props.
- */
-interface ConnectionStateViewProps {
-    connectionState: ConnectionState;
-}
-
-/**
- * Simple view of {@link @fluidframework/container-loader#ConnectionState} data.
- */
-function ConnectionStateView(props: ConnectionStateViewProps): React.ReactElement {
-    const { connectionState } = props;
-
-    // TODO: typography
-    switch (connectionState) {
-        case ConnectionState.CatchingUp:
-            return (
-                <Stack horizontal>
-                    <Spinner /> Catching up...
-                </Stack>
-            );
-        case ConnectionState.Connected:
-            return <span>Connected</span>;
-        case ConnectionState.Disconnected:
-            return <span>Disconnected</span>;
-        case ConnectionState.EstablishingConnection:
-            return (
-                <Stack horizontal>
-                    <Spinner /> Establishing connection...
-                </Stack>
-            );
-        default:
-            throw new Error(`Unrecognized ConnectionState value: "${connectionState}".`);
-    }
 }

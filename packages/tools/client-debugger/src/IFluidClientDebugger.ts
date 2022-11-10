@@ -4,12 +4,10 @@
  */
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-    AttachState,
     IAudience,
     IContainer,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -19,10 +17,6 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
-// - Audience history (including timestamps)
-// - Full ops history
-// - Audit events to simplify hooks for consumers
-// - Document association between data that changes, and the events that signal the changes.
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.
@@ -35,47 +29,59 @@ export interface IFluidClientDebuggerEvents extends IEvent {
      *
      * @remarks
      *
-     * Associated with the state transition of {@link @fluidframework/container-definitions#IContainer.attachState}
-     * to {@link @fluidframework/container-definitions#AttachState.Attached}.
+     * Signals that the following items have been updated:
+     *
+     * - {@link IFluidClientDebugger.isContainerAttached}
+     *
+     * - {@link IFluidClientDebugger.getContainerResolvedUrl}
      *
      * Once attached, the state will not change again for the lifetime of the Container.
      */
     (event: "containerAttached", listener: () => void): void;
 
     /**
-     * Emitted when the {@link @fluidframework/container-definitions#IContainer} completes connecting to the
-     * Fluid service.
+     * Emitted when the {@link @fluidframework/container-definitions#IContainer} becomes
+     * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected | connected}
+     * to the Fluid service.
      *
      * @remarks
      *
-     * Reflects connection state changes against the delta service acknowledging ops/edits.
+     * Signals that the following items have been updated:
      *
-     * Associated with the state transition of {@link @fluidframework/container-definitions#IContainer.connectionState}
-     * to {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected}.
+     * - {@link IFluidClientDebugger.isContainerConnected}
+     *
+     * - {@link IFluidClientDebugger.getContainerConnectionLog}
      */
     (event: "containerConnected", listener: (clientId: string) => void): void;
 
     /**
-     * Emitted when the {@link @fluidframework/container-definitions#IContainer} becomes disconnected from the
-     * Fluid service.
+     * Emitted when the {@link @fluidframework/container-definitions#IContainer} becomes
+     * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected | disconnected}
+     * from the Fluid service.
      *
      * @remarks
      *
-     * Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     * Signals that the following items have been updated:
      *
-     * Associated with the state transition of {@link @fluidframework/container-definitions#IContainer.connectionState}
-     * to {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected}.
+     * - {@link IFluidClientDebugger.isContainerConnected}
+     *
+     * - {@link IFluidClientDebugger.getContainerConnectionLog}
      */
     (event: "containerDisconnected", listener: () => void): void;
 
     /**
      * Emitted when the Container is closed, which permanently disables it.
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Listener parameters:
      *
      * - `error`: If container was closed due to error (as opposed to an explicit call to
      * {@link @fluidframework/container-definitions#IContainer.close}), this contains further details
      * about the error that caused the closure.
+     *
+     * Signals that {@link IFluidClientDebugger.isContainerClosed} has transitioned from `false` to `true`.
+     * Once closed, all Container events will cease, and no further debugger state transitions will occur.
      */
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void);
 
@@ -192,29 +198,46 @@ export interface IFluidClientDebugger
     getClientId(): string | undefined;
 
     /**
-     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}.
+     * Whether or not the Container is {@link @fluidframework/container-definitions#AttachState.Attached}.
      *
      * @remarks
      *
-     * The `containerAttached` event signals that this has transitioned to the
-     * {@link @fluidframework/container-definitions#AttachState.Attached} state.
+     * The `containerAttached` event signals that this has transitioned from `false` to `true`.
      *
      * It does not transition back for the lifetime of the Container.
      */
-    getContainerAttachState(): AttachState;
+    isContainerAttached(): boolean;
 
     /**
-     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.connectionState}.
+     * Whether or not the Container is {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected}.
+     *
+     * @remarks
+     *
+     * The `containerConnected` event signals that this has transitioned from `false` to `true`.
+     *
+     * The `containerDisconnected` events signals that this has transitioned from `true` to `false`.
      */
-    getContainerConnectionState(): ConnectionState;
+    isContainerConnected(): boolean;
 
     /**
      * Gets the history of all ConnectionState changes since the debugger session was initialized.
+     *
+     * @remarks
+     *
+     * The `containerConnected` and `containerDisconnected` events signal that this data has changed.
+     * Consumers will need to re-call this to get the most up-to-date data.
      */
-    getContainerConnectionStateLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 
     /**
      * Gets the Container's {@link @fluidframework/container-definitions#IContainer.resolvedUrl}.
+     *
+     * @remarks
+     *
+     * Will be `undefined` iff {@link IFluidClientDebugger.isContainerAttached} is `false`.
+     *
+     * The `containerAttached` event signals that this data has become available.
+     * It will remain available for lifetime of the Container.
      */
     getContainerResolvedUrl(): IResolvedUrl | undefined;
 

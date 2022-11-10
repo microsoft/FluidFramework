@@ -24,6 +24,8 @@ import { OpsStreamView } from "./OpsStreamView";
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
 // - History of client ID changes
+// - Move Container action bar (connection / disposal buttons) to summary header, rather than in
+//   the Container data view.
 
 // Initialize Fluent icons used this library's components.
 initializeIcons();
