@@ -199,7 +199,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             }, {});
 
             const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-            const messageCount = 1;
+            const messageCount = 3;
             setMapKeys(dataObject1map, messageCount, largeString);
             await provider.ensureSynchronized();
 

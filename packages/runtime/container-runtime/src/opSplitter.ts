@@ -57,7 +57,7 @@ export class OpSplitter {
             this.clearPartialChunks(clientId);
             return {
                 ...message,
-                contents: JSON.parse(serializedContent),
+                contents: serializedContent === "" ? undefined : JSON.parse(serializedContent),
                 type: chunkedContent.originalType,
                 metadata: chunkedContent.metadata,
                 compression: chunkedContent.compression,
@@ -83,25 +83,20 @@ export class OpSplitter {
         map.push(chunkedContent.contents);
     }
 
-    public submitChunkedBatch(batch: BatchMessage[]): number {
-        const cons = batch[0];
-        const contentToChunk = cons.contents ?? "";
-        if (cons.compression === undefined || contentToChunk.length < this.chunkSizeInBytes) {
-            return -1;
-        }
-
+    private splitOp(op: BatchMessage): number {
+        const contentToChunk = op.contents ?? "";
         const contentLength = contentToChunk.length;
-        const chunkN = Math.floor((contentLength - 1) / this.chunkSizeInBytes) + 1;
+        const chunkN = Math.floor((Math.max(contentLength, 1) - 1) / this.chunkSizeInBytes) + 1;
         let offset = 0;
         let clientSequenceNumber: number = 0;
         for (let i = 1; i <= chunkN; i++) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
                 contents: contentToChunk.substr(offset, this.chunkSizeInBytes),
-                originalType: cons.deserializedContent.type,
+                originalType: op.deserializedContent.type,
                 totalChunks: chunkN,
-                metadata: cons.metadata,
-                compression: cons.compression,
+                metadata: op.metadata,
+                compression: op.compression,
             };
 
             offset += this.chunkSizeInBytes;
@@ -112,11 +107,17 @@ export class OpSplitter {
                 deserializedContent: payload,
                 metadata: undefined,
                 localOpMetadata: undefined,
-                referenceSequenceNumber: cons.referenceSequenceNumber,
+                referenceSequenceNumber: op.referenceSequenceNumber,
             };
+
             clientSequenceNumber = this.submitBatchFn([messageToSend]);
         }
 
         return clientSequenceNumber;
+    }
+
+    public submitChunkedBatch(batch: BatchMessage[]): number {
+        // We're only interested in the last clientSequenceNumber
+        return batch.reduce((_sequenceNumber: number, op: BatchMessage) => this.splitOp(op), -1);
     }
 }
