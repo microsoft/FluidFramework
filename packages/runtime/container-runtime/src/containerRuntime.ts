@@ -2270,7 +2270,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * scenarios with accessing deleted content.
      * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]) {
+     public deleteUnusedRoutes(unusedRoutes: string[]) {
+        const blobManagerUnusedRoutes: string[] = [];
+        const dataStoreUnusedRoutes: string[] = [];
+        for (const route of unusedRoutes) {
+            if (this.isBlobPath(route)) {
+                blobManagerUnusedRoutes.push(route);
+            } else {
+                dataStoreUnusedRoutes.push(route);
+            }
+        }
+
         /**
          * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
          * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
@@ -2280,18 +2290,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // TODO: add blobs
         if (tombstone) {
             // If blob routes are passed in here, tombstone will fail and hit an assert
-            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
+            this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes, tombstone);
+            this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes, tombstone);
             return;
-        }
-
-        const blobManagerUnusedRoutes: string[] = [];
-        const dataStoreUnusedRoutes: string[] = [];
-        for (const route of unusedRoutes) {
-            if (this.isBlobPath(route)) {
-                blobManagerUnusedRoutes.push(route);
-            } else {
-                dataStoreUnusedRoutes.push(route);
-            }
         }
 
         this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
@@ -2439,7 +2440,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
+
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
                     };
                 }
@@ -2449,7 +2450,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
+
                         error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
