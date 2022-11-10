@@ -43,14 +43,6 @@ interface ICellValue {
 
 const snapshotFileName = "header";
 
-function createLocalOpMetadata(op: ICellOperation,
-    pendingMessageId: number, previousValue?: any): ICellLocalOpMetadata {
-    const localMetadata: ICellLocalOpMetadata = {
-        pendingMessageId, previousValue,
-    };
-    return localMetadata;
-}
-
 /**
  * The SharedCell distributed data structure can be used to store a single serializable value.
  *
@@ -304,6 +296,15 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
+    private createLocalOpMetadata(op: ICellOperation, previousValue?: any): ICellLocalOpMetadata {
+        const pendingMessageId = ++this.messageId;
+        this.pendingMessageIds.push(pendingMessageId);
+        const localMetadata: ICellLocalOpMetadata = {
+            pendingMessageId, previousValue,
+        };
+        return localMetadata;
+    }
+
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
@@ -311,7 +312,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected applyStashedOp(content: unknown): unknown {
         const cellContent = content as ICellOperation;
         const previousValue = this.applyInnerOp(cellContent);
-        return createLocalOpMetadata(cellContent, this.getMessageId(), previousValue);
+        return this.createLocalOpMetadata(cellContent, previousValue);
     }
 
     /**
@@ -336,19 +337,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         }
     }
 
-     private getMessageId(): number {
-        const pendingMessageId = ++this.messageId;
-        this.pendingMessageIds.push(pendingMessageId);
-        return pendingMessageId;
-     }
-
      /**
      * Submit a cell message to remote clients.
      * @param op - The cell message
      * @param previousValue - The value of the cell before this op
      */
     private submitCellMessage(op: ICellOperation, previousValue?: any): void {
-        const localMetadata = createLocalOpMetadata(op, this.getMessageId(), previousValue);
+        const localMetadata = this.createLocalOpMetadata(op, previousValue);
         this.submitLocalMessage(op, localMetadata);
     }
 }
