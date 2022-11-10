@@ -1713,7 +1713,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
         // This format was not shipped to production workflows.
-        let runtimeMessage = unpackRuntimeMessage(message);
+        const runtimeMessage = unpackRuntimeMessage(message);
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
         message = this.opSplitter.processRemoteMessage(message);
