@@ -21,9 +21,10 @@ export interface FluidClientDebuggerProps extends HasContainerId {
 }
 
 /**
- * TODO
+ * Renders the Client debug view by searching for an active debugger session associated with the provided
+ * {@link HasContainerId.containerId}.
  *
- * @remarks If no debugger corresponding with the specified {@link FluidClientDebuggerProps.containerId}
+ * @remarks If no debugger corresponding with the specified `containerId`
  * has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
