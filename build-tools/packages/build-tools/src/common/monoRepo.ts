@@ -89,13 +89,13 @@ export class MonoRepo {
         this.version = "";
         const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
         const lernaPath = path.join(repoPath, "lerna.json");
-        const yarnPath = path.join(repoPath, "yarn.lock");
+        const yarnLockPath = path.join(repoPath, "yarn.lock");
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
 
         this.packageManager = existsSync(pnpmWorkspace)
             ? "pnpm"
-            : existsSync(yarnPath)
+            : existsSync(yarnLockPath)
             ? "yarn"
             : "npm";
         if (existsSync(lernaPath)) {

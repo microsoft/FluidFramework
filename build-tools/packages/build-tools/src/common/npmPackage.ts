@@ -104,14 +104,14 @@ export class Package {
         public readonly monoRepo?: MonoRepo,
     ) {
         this._packageJson = readJsonSync(packageJsonFileName);
-        const pnpmWorkspace = path.join(this.directory, "pnpm-workspace.yaml");
-        const yarnPath = path.join(this.directory, "yarn.lock");
-        this.packageManager = existsSync(pnpmWorkspace)
+        const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
+        const yarnLockPath = path.join(this.directory, "yarn.lock");
+        this.packageManager = existsSync(pnpmWorkspacePath)
             ? "pnpm"
-            : existsSync(yarnPath)
+            : existsSync(yarnLockPath)
             ? "yarn"
             : "npm";
-        verbose(`Package Loaded: ${this.nameColored}`);
+        verbose(`Package loaded: ${this.nameColored}`);
     }
 
     public get name(): string {
@@ -222,11 +222,6 @@ export class Package {
             // No dependencies
             return true;
         }
-
-        // if (this.packageManager === "pnpm" || this.packageManager === "yarn") {
-        //     // yarn and pnpm have fast reinstall, so always run instead of checking the install status ourselves
-        //     return false;
-        // }
 
         if (!existsSync(path.join(this.directory, "node_modules"))) {
             if (print) {
