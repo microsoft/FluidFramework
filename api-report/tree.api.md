@@ -66,11 +66,11 @@ export abstract class ChangeEncoder<TChange> {
 // @public (undocumented)
 export interface ChangeFamily<TEditor, TChange> {
     // (undocumented)
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
+    buildEditor(deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchorSet: AnchorSet): TEditor;
     // (undocumented)
     readonly encoder: ChangeEncoder<TChange>;
     // (undocumented)
-    intoDelta(change: TChange): Delta.Root;
+    intoDelta(change: TChange, repairStore?: ReadonlyRepairDataStore): Delta.Root;
     // (undocumented)
     readonly rebaser: ChangeRebaser<TChange>;
 }
@@ -89,9 +89,6 @@ export interface ChangeRebaser<TChangeset> {
 
 // @public (undocumented)
 type Changeset<TNodeChange = NodeChangeType> = MarkList_2<TNodeChange>;
-
-// @public (undocumented)
-type ChangesetTag = number | string;
 
 // @public
 export type ChildCollection = FieldKey | RootField;
@@ -192,7 +189,7 @@ interface Detach extends HasOpId {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "Delete" | "MoveOut";
 }
@@ -200,9 +197,6 @@ interface Detach extends HasOpId {
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
-
-// @public
-const DUMMY_INVERT_TAG: ChangesetTag;
 
 // @public
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
@@ -300,7 +294,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repair: RepairData): Delta.MarkList;
     // (undocumented)
     rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
@@ -716,7 +710,7 @@ interface Modify_2<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "Modify";
 }
@@ -745,7 +739,7 @@ interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "MDelete" | "MMoveOut";
 }
@@ -773,7 +767,9 @@ interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlace
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb: ChangesetTag;
+    detachedBy: RevisionTag | undefined;
+    // (undocumented)
+    detachIndex: number;
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -782,7 +778,7 @@ interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlace
 export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap> {
     constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
     // (undocumented)
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): ModularEditBuilder;
+    buildEditor(deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
     compose(changes: FieldChangeMap[]): FieldChangeMap;
     // (undocumented)
@@ -790,7 +786,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
-    intoDelta(change: FieldChangeMap): Delta.Root;
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore, path?: UpPath): Delta.Root;
     // (undocumented)
     invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)
@@ -803,7 +799,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 
 // @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<FieldChangeMap> implements ProgressiveEditBuilder<FieldChangeMap> {
-    constructor(family: ChangeFamily<unknown, FieldChangeMap>, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
+    constructor(family: ChangeFamily<unknown, FieldChangeMap>, deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchors: AnchorSet);
+    // (undocumented)
+    apply(change: FieldChangeMap): void;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
@@ -958,7 +956,7 @@ export type PrimitiveValue = string | boolean | number;
 // @public (undocumented)
 interface PriorOp {
     // (undocumented)
-    change: ChangesetTag;
+    change: RevisionTag;
     // (undocumented)
     id: OpId;
 }
@@ -966,16 +964,20 @@ interface PriorOp {
 // @public (undocumented)
 export interface ProgressiveEditBuilder<TChange> {
     // (undocumented)
-    getChanges(): TChange[];
+    getChanges(): TaggedChange<TChange>[];
+    // (undocumented)
+    readonly repairStore: ReadonlyRepairDataStore;
 }
 
 // @public (undocumented)
 export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange> {
-    constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet);
+    constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
     // @sealed (undocumented)
-    getChanges(): TChange[];
+    getChanges(): TaggedChange<TChange>[];
+    // (undocumented)
+    readonly repairStore: RepairDataStore;
 }
 
 // @public
@@ -995,12 +997,22 @@ enum RangeType {
     Slice = "Slice"
 }
 
+// @public
+export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
+    // (undocumented)
+    getNodes(revision: RevisionTag, path: UpPath | undefined, field: FieldKey, index: number, count: number): TTree[];
+    // (undocumented)
+    getValue(revision: RevisionTag, path: UpPath): Value;
+}
+
 // @public (undocumented)
 interface Reattach extends HasOpId, HasPlaceFields {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
-    tomb: ChangesetTag;
+    detachedBy: RevisionTag | undefined;
+    // (undocumented)
+    detachIndex: number;
     // (undocumented)
     type: "Revive" | "Return";
 }
@@ -1010,6 +1022,15 @@ function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @public (undocumented)
+export type RepairData = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
+
+// @public (undocumented)
+export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
+    // (undocumented)
+    capture(destruction: TreeDestruction): void;
+}
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
@@ -1052,7 +1073,6 @@ declare namespace SequenceField {
     export {
         Attach,
         Changeset,
-        ChangesetTag,
         ClientId,
         Detach,
         Effects,
@@ -1104,7 +1124,6 @@ declare namespace SequenceField {
         MarkListFactory,
         NodeChangeRebaser_2 as NodeChangeRebaser,
         rebase,
-        DUMMY_INVERT_TAG,
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
@@ -1143,7 +1162,7 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
 const sequenceFieldEditor: SequenceFieldEditor;
 
 // @public (undocumented)
-function sequenceFieldToDelta<TNodeChange>(marks: MarkList_2<TNodeChange>, deltaFromChild: ToDelta_2<TNodeChange>): Delta.MarkList;
+function sequenceFieldToDelta<TNodeChange>(marks: MarkList_2<TNodeChange>, deltaFromChild: ToDelta_2<TNodeChange>, repair: RepairData): Delta.MarkList;
 
 // @public
 export class SharedTreeFactory implements IChannelFactory {
@@ -1212,15 +1231,15 @@ enum Tiebreak {
 }
 
 // @public (undocumented)
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
 // @public (undocumented)
-type ToDelta_2<TNodeChange> = (child: TNodeChange) => Delta.Modify;
+type ToDelta_2<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
 
 // @public (undocumented)
 interface Tomb {
     // (undocumented)
-    change: ChangesetTag;
+    change: RevisionTag;
     // (undocumented)
     count: number;
     // (undocumented)
@@ -1230,7 +1249,7 @@ interface Tomb {
 // @public
 interface Tombstones {
     // (undocumented)
-    change: ChangesetTag;
+    change: RevisionTag;
     // (undocumented)
     count: NodeCount;
 }
@@ -1241,6 +1260,13 @@ export enum TransactionResult {
     Abort = 0,
     // (undocumented)
     Apply = 1
+}
+
+// @public
+export interface TreeDestruction {
+    changes: Delta.Root;
+    // (undocumented)
+    revision: RevisionTag;
 }
 
 // @public (undocumented)
@@ -1314,9 +1340,11 @@ export interface UpPath {
 export type Value = undefined | TreeValue;
 
 // @public (undocumented)
-export interface ValueChange {
+export type ValueChange = {
     value?: Value;
-}
+} | {
+    revert: RevisionTag | undefined;
+};
 
 // @public (undocumented)
 export interface ValueFieldEditBuilder {

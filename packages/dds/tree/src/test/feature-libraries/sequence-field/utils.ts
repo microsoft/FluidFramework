@@ -5,9 +5,8 @@
 
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { TaggedChange } from "../../../core";
 import { deepFreeze } from "../../utils";
 import { tagChange } from "../../../rebase";
 

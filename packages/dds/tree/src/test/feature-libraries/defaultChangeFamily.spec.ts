@@ -59,7 +59,6 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 function setup(data?: JsonableTree) {
     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
     const forest = new ObjectForest(schema);

@@ -71,6 +71,9 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
+    TreeDestruction,
 } from "./core";
 
 export {
@@ -121,6 +124,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    RepairData,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
