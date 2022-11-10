@@ -31,12 +31,24 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     // #region Container-related events
 
     /**
+     * Emitted when the {@link @fluidframework/container-definitions#IContainer}'s becomes "attached" to the Fluid service.
+     *
+     * @remarks
+     *
+     * Associated with the state transition of {@link @fluidframework/container-definitions#IContainer.attachState}
+     * to {@link @fluidframework/container-definitions#AttachState.Attached}.
+     *
+     * Once attached, the state will not change again for the lifetime of the Container.
+     */
+    (event: "containerAttached", listener: () => void): void;
+
+    /**
      * Emitted when the {@link @fluidframework/container-definitions#IContainer} completes connecting to the
      * Fluid service.
      *
      * @remarks
      *
-     * Reflects connection state changes against the (delta) service acknowledging ops/edits.
+     * Reflects connection state changes against the delta service acknowledging ops/edits.
      *
      * Associated with the state transition of {@link @fluidframework/container-definitions#IContainer.connectionState}
      * to {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected}.
@@ -180,7 +192,14 @@ export interface IFluidClientDebugger
     getClientId(): string | undefined;
 
     /**
-     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}
+     * Gets the Container's {@link @fluidframework/container-definitions#IContainer.attachState}.
+     *
+     * @remarks
+     *
+     * The `containerAttached` event signals that this has transitioned to the
+     * {@link @fluidframework/container-definitions#AttachState.Attached} state.
+     *
+     * It does not transition back for the lifetime of the Container.
      */
     getContainerAttachState(): AttachState;
 

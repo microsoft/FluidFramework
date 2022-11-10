@@ -66,6 +66,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
 
 // @public
 export interface IFluidClientDebuggerEvents extends IEvent {
+    (event: "containerAttached", listener: () => void): void;
     (event: "containerConnected", listener: (clientId: string) => void): void;
     (event: "containerDisconnected", listener: () => void): void;
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;

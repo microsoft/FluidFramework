@@ -70,6 +70,7 @@ export class FluidClientDebugger
 
     // #region Container-related event handlers
 
+    private readonly containerAttachedHandler = (): boolean => this.emit("containerAttached");
     private readonly containerConnectedHandler = (clientId: string): boolean =>
         this.emit("containerConnected", clientId);
     private readonly containerDisconnectedHandler = (): boolean =>
@@ -120,6 +121,7 @@ export class FluidClientDebugger
         this._audienceChangeLog = [];
 
         // Bind Container events
+        this.container.on("attached", () => this.onContainerAttached());
         this.container.on("connected", (clientId) => this.onContainerConnected(clientId));
         this.container.on("disconnected", () => this.onContainerDisconnected());
         this.container.on("closed", (error) => this.onContainerClosed(error));
@@ -190,6 +192,10 @@ export class FluidClientDebugger
      */
     public isContainerClosed(): boolean {
         return this.container.closed;
+    }
+
+    private onContainerAttached(): void {
+        this.containerAttachedHandler();
     }
 
     private onContainerConnected(clientId: string): void {
@@ -319,6 +325,7 @@ export class FluidClientDebugger
      */
     public dispose(): void {
         // Bind Container events
+        this.container.off("attached", () => this.onContainerAttached());
         this.container.off("connected", (clientId) => this.onContainerConnected(clientId));
         this.container.off("disconnected", () => this.onContainerDisconnected());
         this.container.off("closed", (error) => this.onContainerClosed(error));
