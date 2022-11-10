@@ -1700,10 +1700,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.collabWindowTracker?.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
-    // private readonly ops: any[] = [];
+
     private processRemoteMessage(message: ISequencedDocumentMessage) {
         const local = this.clientId === message.clientId;
-        // this.ops.push(message);
+
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
 
