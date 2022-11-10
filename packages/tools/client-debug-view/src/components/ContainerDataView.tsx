@@ -77,11 +77,11 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         clientDebugger.on("containerClosed", onContainerClosed);
 
         return (): void => {
-            clientDebugger.on("containerConnected", onConnectionChange);
-            clientDebugger.on("containerDisconnected", onConnectionChange);
-            clientDebugger.on("containerDirty", onContainerDirty);
-            clientDebugger.on("containerSaved", onContainerSaved);
-            clientDebugger.on("containerClosed", onContainerClosed);
+            clientDebugger.off("containerConnected", onConnectionChange);
+            clientDebugger.off("containerDisconnected", onConnectionChange);
+            clientDebugger.off("containerDirty", onContainerDirty);
+            clientDebugger.off("containerSaved", onContainerSaved);
+            clientDebugger.off("containerClosed", onContainerClosed);
         };
     }, [
         clientDebugger,
