@@ -166,7 +166,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
         const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
         historyViews.push(
-            <li key={changeEntry.changeKind}>
+            <li key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
                 <b>Client ID: </b>
                 {changeEntry.clientId}
                 <br />
