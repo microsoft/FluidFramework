@@ -396,13 +396,11 @@ export const value: FieldKind<ValueFieldEditor> = new FieldKind(
     new Set(),
 );
 
-export type OptNodeUpdate = { set: JsonableTree | undefined } | { revert: RevisionTag | undefined };
-
 export interface OptionalFieldChange {
     /**
      * The new content for the trait. If undefined, the trait will be cleared.
      */
-    newContent?: OptNodeUpdate;
+    newContent?: NodeUpdate;
 
     /**
      * Whether the field was empty in the state this change is based on.
@@ -468,9 +466,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
     ): OptionalChangeset => {
         const inverse: OptionalChangeset = {};
 
-        if (change.fieldChange !== undefined) {
-            inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
-            if (!change.fieldChange.wasEmpty) {
+        const fieldChange = change.fieldChange;
+        if (fieldChange !== undefined) {
+            inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+            if (!fieldChange.wasEmpty) {
                 inverse.fieldChange.newContent = { revert: revision };
             }
         }
@@ -530,9 +529,12 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
         fieldChange: {
-            newContent: {
-                set: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
-            },
+            newContent:
+                newContent === undefined
+                    ? undefined
+                    : {
+                          set: jsonableTreeFromCursor(newContent),
+                      },
             wasEmpty,
         },
     }),
@@ -628,7 +630,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         editor: optionalFieldEditor,
 
         intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
-            const content = ((update: OptNodeUpdate | undefined) => {
+            const content = ((update: NodeUpdate | undefined) => {
                 if (update === undefined || "set" in update) {
                     return update?.set;
                 }

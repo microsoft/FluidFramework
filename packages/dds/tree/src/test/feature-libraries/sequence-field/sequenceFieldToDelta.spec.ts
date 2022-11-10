@@ -107,7 +107,7 @@ describe("SequenceField - toDelta", () => {
         assert.deepStrictEqual(actual, expected);
     });
 
-    it("revive", () => {
+    it("revive => insert", () => {
         const changeset: TestChangeset = [
             { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 1 },
         ];
@@ -127,7 +127,7 @@ describe("SequenceField - toDelta", () => {
         assertMarkListEqual(actual, expected);
     });
 
-    it("revive and modify", () => {
+    it("revive and modify => insert", () => {
         const nestedChange: FieldChange = {
             fieldKind: FieldKinds.sequence.identifier,
             change: brand("Dummy Child Change"),
@@ -154,9 +154,8 @@ describe("SequenceField - toDelta", () => {
         const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repair);
         const expected: Delta.MarkList = [
             {
-                type: Delta.MarkType.InsertAndModify,
-                content: contentCursor[0],
-                fields: fieldChanges,
+                type: Delta.MarkType.Insert,
+                content: contentCursor,
             },
         ];
         assertMarkListEqual(actual, expected);
