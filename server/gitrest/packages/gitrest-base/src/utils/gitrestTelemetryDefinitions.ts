@@ -7,7 +7,7 @@
 // Values in the enum must be strings.
 export enum GitRestLumberEventName {
     // Summaries
-    PersistLatestFullSummaryInStorage = "GitRestPersistLatestFullSummaryInStorage",
+    PersistLatestFullSummaryInStorage = "PersistLatestFullSummaryInStorage",
     RetrieveLatestFullSummaryFromStorage = "RetrieveLatestFullSummaryFromStorage",
     WholeSummaryManagerReadSummary = "ReadSummary",
     WholeSummaryManagerWriteSummary = "WriteSummary",
