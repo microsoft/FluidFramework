@@ -68,7 +68,7 @@ Usually container is returned when state of container (and data stores) is rehyd
 
 ### Closure
 
-Container can be closed directly by host by calling either `Container.close()` or `Container.dispose()`. If the container is expected to be used upon closure, use the `close()` API. Otherwise, use the `dispose()` API. The differences between these methods are detailed in the sections below.
+Container can be closed directly by host by calling `Container.close()` and/or `Container.dispose()`. If the container is expected to be used upon closure, use the `close()` API. Otherwise, use the `dispose()` API. The differences between these methods are detailed in the sections below.
 
 #### `Container.close()`
 

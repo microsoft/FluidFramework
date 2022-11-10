@@ -64,7 +64,7 @@ export class ContainerContext implements IContainerContext {
         submitSummaryFn: (summaryOp: ISummaryContent) => number,
         submitBatchFn: (batch: IBatchMessage[]) => number,
         submitSignalFn: (contents: any) => void,
-        disposeFn: () => void,
+        disposeFn: (error?: ICriticalContainerError) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         updateDirtyContainerState: (dirty: boolean) => void,
@@ -80,11 +80,11 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
-            disposeFn,
             submitFn,
             submitSummaryFn,
             submitBatchFn,
             submitSignalFn,
+            disposeFn,
             closeFn,
             version,
             updateDirtyContainerState,
@@ -178,12 +178,12 @@ export class ContainerContext implements IContainerContext {
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
-        public readonly disposeFn: () => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
         /** @returns clientSequenceNumber of last message in a batch */
         public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly submitSignalFn: (contents: any) => void,
+        public readonly disposeFn: (error?: ICriticalContainerError) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
@@ -209,13 +209,13 @@ export class ContainerContext implements IContainerContext {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
-    public dispose(error?: Error, emitDispose?: boolean): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
 
-        this.runtime.dispose(error, emitDispose !== true);
+        this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
     }

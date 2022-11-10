@@ -168,7 +168,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    readonly disposeFn: () => void;
+    readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
@@ -217,7 +217,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
-    (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)
     (event: "warning", listener: (error: ContainerWarning) => void): any;
     // (undocumented)
@@ -488,8 +488,6 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    // (undocumented)
-    dispose(error?: Error, skipEmitDisposed?: boolean): void;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean): any;

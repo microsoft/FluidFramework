@@ -84,7 +84,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     disconnect(): void;
     // (undocumented)
-    dispose(): void;
+    dispose(error?: ICriticalContainerError): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

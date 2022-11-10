@@ -67,7 +67,7 @@ export interface IConnectionArgs {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: ICriticalContainerError) => void);
+    (event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -144,6 +144,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
 
     private _closed = false;
+    private _disposed = false;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorage: IDocumentDeltaStorageService | undefined;
@@ -584,13 +585,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: ICriticalContainerError, emitDispose?: boolean): void {
+    public close(error?: ICriticalContainerError, emitDisposed?: boolean): void {
         if (this._closed) {
+            if (emitDisposed === true) {
+                this.disposeInternal(error);
+            }
             return;
         }
         this._closed = true;
 
-        this.connectionManager.dispose(error, emitDispose !== true);
+        this.connectionManager.dispose(error, emitDisposed !== true);
 
         this.closeAbortController.abort();
 
@@ -605,15 +609,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        if (emitDispose === true) {
-            this.emit("dispose");
+        if (emitDisposed === true) {
+            this.disposeInternal(error);
         } else {
-            // This needs to be the last thing we do (before removing listeners), as it causes
-            // Container to dispose context and break ability of data stores / runtime to "hear"
-            // from delta manager, including notification (above) about readonly state.
             this.emit("closed", error);
         }
+    }
 
+    private disposeInternal(error?: ICriticalContainerError): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        // This needs to be the last thing we do (before removing listeners), as it causes
+        // Container to dispose context and break ability of data stores / runtime to "hear"
+        // from delta manager, including notification (above) about readonly state.
+        this.emit("disposed", error);
         this.removeAllListeners();
     }
 

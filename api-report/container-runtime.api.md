@@ -105,11 +105,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    dispose(error?: Error, skipEmitDisposed?: boolean): void;
+    dispose(error?: Error): void;
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    get disposeFn(): () => void;
+    get disposeFn(): (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -525,8 +525,6 @@ export interface ISummarizerInternalsProvider {
 
 // @public (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
-    // (undocumented)
-    closeFn(): void;
     // (undocumented)
     disposeFn(): void;
     // (undocumented)

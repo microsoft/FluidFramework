@@ -747,6 +747,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
                     context.closeFn(error);
+                    if (context.disposeFn) {
+                        context.disposeFn(error);
+                    }
                 }
             }
         }
@@ -817,11 +820,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.reSubmit;
     }
 
-    public get disposeFn(): () => void {
+    public get disposeFn(): (error?: ICriticalContainerError) => void {
         return this.context.disposeFn ?? this.context.closeFn;
     }
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
+        if (this.context.disposeFn) {
+            // Also call disposeFn to retain functionality of runtime being disposed on close
+            return (error?: ICriticalContainerError) => {
+                this.context.closeFn(error);
+                this.context.disposeFn(error);
+            };
+        }
         return this.context.closeFn;
     }
 
@@ -1341,7 +1351,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         BindBatchTracker(this, this.logger);
     }
 
-    public dispose(error?: Error, skipEmitDisposed?: boolean): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
@@ -1361,9 +1371,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
-        if (skipEmitDisposed !== true) {
-            this.emit("dispose");
-        }
+        this.emit("dispose");
         this.removeAllListeners();
     }
 

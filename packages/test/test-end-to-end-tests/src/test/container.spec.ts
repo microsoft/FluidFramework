@@ -544,15 +544,15 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container = await createConnectedContainer();
         const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
-        let deltaManagerDispose = 0;
+        let deltaManagerDisposed = 0;
         let deltaManagerClosed = 0;
         let runtimeDispose = 0;
-        (container.deltaManager as any).on("dispose", () => deltaManagerDispose++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
         (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
         (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
 
         container.close();
-        assert.strictEqual(deltaManagerDispose, 0, "DeltaManager should not send dispose event on container close");
+        assert.strictEqual(deltaManagerDisposed, 0, "DeltaManager should not send disposed event on container close");
         assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event on container close");
         assert.strictEqual(runtimeDispose, 0, "ContainerRuntime should not send dispose event on container close");
     });
@@ -561,16 +561,34 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container = await createConnectedContainer();
         const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
-        let deltaManagerDispose = 0;
+        let deltaManagerDisposed = 0;
         let deltaManagerClosed = 0;
         let runtimeDispose = 0;
-        (container.deltaManager as any).on("dispose", () => deltaManagerDispose++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
         (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
         (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
 
         container.dispose();
-        assert.strictEqual(deltaManagerDispose, 1, "DeltaManager should send dispose event on container dispose");
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event on container dispose");
         assert.strictEqual(deltaManagerClosed, 0, "DeltaManager should not send closed event on container dispose");
+        assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event on container dispose");
+    });
+
+    it("Closing then disposing container should send close and dispose events", async () => {
+        const container = await createConnectedContainer();
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+
+        let deltaManagerDisposed = 0;
+        let deltaManagerClosed = 0;
+        let runtimeDispose = 0;
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+        (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+        (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
+
+        container.close();
+        container.dispose();
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event on container dispose");
+        assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event on container dispose");
         assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event on container dispose");
     });
 });

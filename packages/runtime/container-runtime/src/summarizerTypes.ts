@@ -95,7 +95,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     disposeFn(): void;
-    closeFn(): void;
 }
 
 /** Options affecting summarize behavior. */

@@ -732,9 +732,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler.quorum;
     }
 
-    public dispose() {
+    public dispose(error?: ICriticalContainerError) {
         // TODO: should maybe do close asserts as well?
-        this._deltaManager.close(undefined, true);
+        this._deltaManager.close(error, true);
+        this.verifyClosed();
     }
 
     public close(error?: ICriticalContainerError) {
@@ -743,13 +744,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
         //    "closing" will lose that info (can also solve by tracking extra state).
         this._deltaManager.close(error);
+        this.verifyClosed();
+    }
+
+    private verifyClosed(): void {
         assert(this.connectionState === ConnectionState.Disconnected,
             0x0cf /* "disconnect event was not raised!" */);
 
         assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
     }
 
-    private closeCore(error?: ICriticalContainerError, disposeCall?: boolean) {
+    private closeCore(error?: ICriticalContainerError) {
         assert(!this.closed, 0x315 /* re-entrancy */);
 
         try {
@@ -770,10 +775,33 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._protocolHandler?.close();
 
                 this.connectionStateHandler.dispose();
+            } catch (exception) {
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
+            }
 
-                // TODO
-                const errorForContext = error !== undefined ? new Error(error.message) : undefined;
-                this._context?.dispose(errorForContext, disposeCall === true);
+            this.emit("closed", error);
+
+            if (this.visibilityEventHandler !== undefined) {
+                document.removeEventListener("visibilitychange", this.visibilityEventHandler);
+            }
+        } finally {
+            this._lifecycleState = "closed";
+        }
+    }
+
+    private _disposed = false;
+    private disposeCore(error?: ICriticalContainerError) {
+        assert(!this._disposed, "Container already disposed");
+        this._disposed = true;
+
+        try {
+            // Ensure that we raise all key events even if one of these throws
+            try {
+                this._protocolHandler?.close();
+
+                this.connectionStateHandler.dispose();
+
+                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
                 this.storageService.dispose();
 
@@ -782,10 +810,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Driver need to ensure all caches are cleared on critical errors
                 this.service?.dispose(error);
             } catch (exception) {
-                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, exception);
             }
 
-            this.emit("closed", error);
+            this.emit("disposed", error);
 
             this.removeAllListeners();
             if (this.visibilityEventHandler !== undefined) {
@@ -1525,7 +1553,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.collabWindowTracker?.stopSequenceNumberUpdate();
-            this.connectionStateHandler.receivedDisconnectEvent(reason);
+            if (!this.closed) {
+                this.connectionStateHandler.receivedDisconnectEvent(reason);
+            }
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
@@ -1547,8 +1577,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.closeCore(error);
         });
 
-        deltaManager.on("dispose", () => {
-            this.closeCore(undefined, true);
+        deltaManager.on("disposed", (error?: ICriticalContainerError) => {
+            this.disposeCore(error);
         });
 
         return deltaManager;
@@ -1823,7 +1853,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
-            () => this.dispose(),
+            (error?: ICriticalContainerError) => this.dispose(error),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             (dirty: boolean) => this.updateDirtyContainerState(dirty),

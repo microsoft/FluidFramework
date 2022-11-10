@@ -102,9 +102,6 @@ export interface IRuntime extends IDisposable {
      * @param snapshot - snapshot created at attach time
      */
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-
-    // TODO
-    dispose(error?: Error, skipEmitDisposed?: boolean): void;
 }
 
 /**
@@ -137,7 +134,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
-    readonly disposeFn: () => void;
+    readonly disposeFn: (error?: ICriticalContainerError) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;
