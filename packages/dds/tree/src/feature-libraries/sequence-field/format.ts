@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree } from "../../core";
+import { JsonableTree, RevisionTag } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
@@ -23,8 +23,6 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Tomb
     | Modify<TNodeChange>
     | Detach
-    | Reattach
-    | ModifyReattach<TNodeChange>
     | ModifyDetach<TNodeChange>;
 
 export interface Tomb {
@@ -56,17 +54,40 @@ export interface HasPlaceFields {
     heed?: Effects | [Effects, Effects];
 
     /**
+     * Record of relevant information about changes this mark has been rebased over.
+     * Events are stored in the order in which they were rebased over.
+     */
+    lineage?: LineageEvent[];
+}
+
+export interface HasTiebreakPolicy extends HasPlaceFields {
+    /**
      * Omit if `Tiebreak.Right` for terseness.
      */
     tiebreak?: Tiebreak;
 }
 
-export interface Insert extends HasOpId, HasPlaceFields {
+/**
+ * Represents a position within a contiguous range of nodes detached by a single changeset.
+ * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
+ * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
+ * same detach.
+ */
+export interface LineageEvent {
+    readonly revision: RevisionTag;
+
+    /**
+     * The position of this mark within a range of nodes which were detached in this revision.
+     */
+    readonly offset: number;
+}
+
+export interface Insert extends HasOpId, HasTiebreakPolicy {
     type: "Insert";
     content: ProtoNode[];
 }
 
-export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
     type: "MInsert";
     content: ProtoNode;
     changes: TNodeChange;
@@ -89,9 +110,11 @@ export type Attach<TNodeChange = NodeChangeType> =
     | Insert
     | ModifyInsert<TNodeChange>
     | MoveIn
-    | ModifyMoveIn<TNodeChange>;
+    | ModifyMoveIn<TNodeChange>
+    | Reattach
+    | ModifyReattach<TNodeChange>;
 
-export type NodeMark = Detach | Reattach;
+export type NodeMark = Detach;
 
 export interface Detach extends HasOpId {
     tomb?: ChangesetTag;
@@ -105,12 +128,12 @@ export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     changes: TNodeChange;
 }
 
-export interface Reattach extends HasOpId {
+export interface Reattach extends HasOpId, HasPlaceFields {
     type: "Revive" | "Return";
     tomb: ChangesetTag;
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId {
+export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
     type: "MRevive" | "MReturn";
     tomb: ChangesetTag;
     changes: TNodeChange;

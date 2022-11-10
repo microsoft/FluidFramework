@@ -58,10 +58,15 @@ The following legacy events and event parameters have been marked as deprecated 
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
+- [Deprecate existing flag in IContainerContext](#deprecate-existing-flag-in-runtime)
 - [Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+
+### Deprecate existing flag in runtime
+The `existing` flag in IContainerContext has been deprecated and will be removed in a future breaking change. Furthermore,
+in the same breaking change, in ContainerRuntime existing will be required and expected in instantiateRuntime().
 
 ### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -210,7 +215,7 @@ The iframe-driver is now deprecated and should not be used, it will be removed i
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
 ### Remove ShareLinkTypes interface
-`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
+`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Signature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
 ```diff
     function createOdspCreateContainerRequest(
         siteUrl: string,

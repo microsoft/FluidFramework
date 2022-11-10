@@ -30,9 +30,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -62,8 +60,8 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0-103719",
-    "@fluidframework/build-common": "^1.0.0",
+    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@fluidframework/test-driver-definitions-previous": "npm:@fluidframework/test-driver-definitions@2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -75,8 +73,7 @@
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
