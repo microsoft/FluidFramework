@@ -21,7 +21,6 @@ import {
     Index,
     SharedTreeCore,
     Checkout as TransactionCheckout,
-    runSynchronousTransaction,
     Anchor,
     AnchorLocator,
     AnchorSet,
@@ -44,6 +43,7 @@ import {
     SchemaEditor,
     DefaultChangeset,
     EditManagerIndex,
+    runSynchronousTransaction,
 } from "../feature-libraries";
 
 /**
