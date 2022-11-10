@@ -16,8 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:build:tsc npm:build:copy",
-    "build:copy": "copyfiles \"src/test/test-data/**\" dist --up 1",
+    "build:compile": "npm run build:tsc",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
