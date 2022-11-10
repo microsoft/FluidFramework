@@ -913,13 +913,14 @@ export class ConnectionManager implements IConnectionManager {
                 this.noOpCount++;
             }
             // validate client sequence number has no gap. If there is gap, check if there were noops
+            // if there were noops, decrement the gap by number of noops and continue
             if (this.lastClientSequenceNumber !== undefined) {
-                const clientGap = clientSequenceNumber - this.clientSequenceNumberObserved - 1;
-                if (clientGap > 0) {
+                const clientSeqNumGap = clientSequenceNumber - this.clientSequenceNumberObserved - 1;
+                if (clientSeqNumGap > 0) {
                     if (this.noOpCount > 0) {
-                        this.noOpCount -= clientGap;
+                        this.noOpCount -= clientSeqNumGap;
                     } else {
-                        throw new Error("gap in client sequence number");
+                        throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
                     }
                 }
             }
