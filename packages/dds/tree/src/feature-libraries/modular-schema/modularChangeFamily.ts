@@ -363,6 +363,10 @@ export class ModularEditBuilder
         super(family, deltaReceiver, repairStore, anchors);
     }
 
+    public apply(change: FieldChangeMap): void {
+        this.applyChange(change);
+    }
+
     /**
      * Adds a change to the edit builder
      * @param path - path to the parent node of the field being edited

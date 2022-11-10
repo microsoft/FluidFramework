@@ -150,6 +150,32 @@ describe("DefaultEditBuilder", () => {
         assertDeltasEqual(deltas, expected);
     });
 
+    it("Allows repair data to flow in and out of the repair store", () => {
+        const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
+        const expected: Delta.Root[] = [];
+
+        builder.setValue(root, 42);
+        deltas.length = 0;
+        const change = builder.getChanges()[0];
+        const inverse = family.rebaser.invert(change);
+        builder.apply(inverse);
+
+        expected.push(
+            new Map([
+                [
+                    rootKey,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 41,
+                        },
+                    ],
+                ],
+            ]),
+        );
+        assertDeltasEqual(deltas, expected);
+    });
+
     describe("Node Edits", () => {
         it("Can set the root node value", () => {
             const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });

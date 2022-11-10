@@ -126,6 +126,10 @@ export class DefaultEditBuilder
         this.modularBuilder = new ModularEditBuilder(family, deltaReceiver, repairStore, anchors);
     }
 
+    public apply(change: DefaultChangeset): void {
+        this.modularBuilder.apply(change);
+    }
+
     public setValue(path: UpPath, value: Value): void {
         this.modularBuilder.setValue(path, value);
     }
