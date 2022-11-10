@@ -16,6 +16,9 @@ import {
     toInternalScheme,
 } from "@fluid-tools/version-tools";
 
+import { Context } from "../bumpVersion/context";
+import { MonoRepoKind } from "../common/monoRepo";
+
 export type PackageDetails = {
     readonly packageDir: string;
     readonly oldVersions: readonly string[];
@@ -275,6 +278,59 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
 }
 
 /**
+ * Returns a default {@link PreviousVersionStyle} for a branch and release group.
+ *
+ * Minor version series branches like lts and main use the ~previousMinor style.
+ * Major version series branches like next use the ^previousMajor style.
+ * Patch version series branches like release branches use the previousPatch style.
+ */
+const getVersionStyleForBranch = (
+    branch: string,
+    releaseGroup?: MonoRepoKind,
+): PreviousVersionStyle => {
+    let style: PreviousVersionStyle;
+    switch (releaseGroup) {
+        case "azure": {
+            if (branch === "main") {
+                // main is the major version series branch for azure
+                style = "^previousMajor";
+            } else if (branch === "lts") {
+                // lts is the minor version series branch for azure
+                style = "~previousMinor";
+            } else if (branch.startsWith("release/azure/")) {
+                style = "previousPatch";
+            } else {
+                style = "baseMinor";
+            }
+            break;
+        }
+
+        default: {
+            if (["main", "lts"].includes(branch)) {
+                style = "~previousMinor";
+            } else if (branch === "next") {
+                style = "^previousMajor";
+            } else if (branch.startsWith("release/")) {
+                style = "previousPatch";
+            } else {
+                style = "baseMinor";
+            }
+        }
+    }
+    if (["main", "lts"].includes(branch)) {
+        style = "~previousMinor";
+    } else if (branch === "next") {
+        style = "^previousMajor";
+    } else if (branch.startsWith("release/")) {
+        style = "previousPatch";
+    } else {
+        style = "baseMinor";
+    }
+
+    return style;
+};
+
+/**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
  * typetests against.
  *
@@ -293,13 +349,21 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
  * @internal
  */
 export async function getAndUpdatePackageDetails(
+    context: Context,
     packageDir: string,
     writeUpdates: boolean | undefined,
-    previousVersionStyle: PreviousVersionStyle,
+    previousVersionStyle?: PreviousVersionStyle,
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
+    const pkg = context.fullPackageMap.get(packageDetails.pkg.name);
+    if (pkg === undefined) {
+        return { skipReason: "Skipping package: not found in context" };
+    }
+    const constraint: PreviousVersionStyle =
+        previousVersionStyle ??
+        getVersionStyleForBranch(context.originalBranchName, pkg.monoRepo?.kind);
 
     if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
         // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
@@ -320,135 +384,7 @@ export async function getAndUpdatePackageDetails(
     let prevVersion: string;
 
     if (exactPreviousVersionString === undefined) {
-        const [previousMajorVersion, previousMinorVersion, previousPatchVersion] =
-            getPreviousVersions(version);
-        switch (previousVersionStyle) {
-            case "baseMajor": {
-                const sv = semver.parse(version);
-                if (sv === null) {
-                    throw new Error(`Cannot parse current version: ${version}`);
-                }
-
-                if (isInternalVersionScheme(sv)) {
-                    const [pubVer, intVer] = fromInternalScheme(sv);
-                    prevVersion = toInternalScheme(pubVer, `${intVer.major}.0.0`).version;
-                } else {
-                    prevVersion = `${sv.major}.0.0`;
-                }
-                break;
-            }
-
-            case "baseMinor": {
-                const sv = semver.parse(version);
-                if (sv === null) {
-                    throw new Error(`Cannot parse current version: ${version}`);
-                }
-
-                if (isInternalVersionScheme(sv)) {
-                    const [pubVer, intVer] = fromInternalScheme(sv);
-                    prevVersion = toInternalScheme(
-                        pubVer,
-                        `${intVer.major}.${intVer.minor}.0`,
-                    ).version;
-                } else {
-                    prevVersion = `${sv.major}.${sv.minor}.0`;
-                }
-
-                break;
-            }
-
-            case "~baseMinor": {
-                const sv = semver.parse(version);
-                if (sv === null) {
-                    throw new Error(`Cannot parse current version: ${version}`);
-                }
-
-                if (isInternalVersionScheme(sv)) {
-                    const [pubVer, intVer] = fromInternalScheme(sv);
-                    const baseMinor = toInternalScheme(pubVer, `${intVer.major}.${intVer.minor}.0`);
-                    prevVersion = getVersionRange(baseMinor, "~");
-                } else {
-                    prevVersion = `~${sv.major}.${sv.minor}.0`;
-                }
-
-                break;
-            }
-
-            case "previousMajor": {
-                if (previousMajorVersion === undefined) {
-                    throw new Error(`Previous major version is undefined.`);
-                }
-
-                prevVersion = previousMajorVersion;
-                break;
-            }
-
-            case "previousMinor": {
-                if (previousMinorVersion === undefined) {
-                    throw new Error(`Previous minor version is undefined.`);
-                }
-
-                prevVersion = previousMinorVersion;
-                break;
-            }
-
-            case "previousPatch": {
-                if (previousPatchVersion === undefined) {
-                    throw new Error(`Previous patch version is undefined.`);
-                }
-
-                prevVersion = previousPatchVersion;
-                break;
-            }
-
-            case "^previousMajor": {
-                if (previousMajorVersion === undefined) {
-                    throw new Error(`Previous major version is undefined.`);
-                }
-
-                prevVersion = isInternalVersionScheme(previousMajorVersion)
-                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      getVersionRange(previousMajorVersion!, "^")
-                    : `^${previousMajorVersion}`;
-                break;
-            }
-
-            case "^previousMinor": {
-                if (previousMinorVersion === undefined) {
-                    throw new Error(`Previous minor version is undefined.`);
-                }
-
-                prevVersion = isInternalVersionScheme(previousMinorVersion)
-                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      getVersionRange(previousMinorVersion!, "^")
-                    : `^${previousMinorVersion}`;
-                break;
-            }
-
-            case "~previousMajor": {
-                if (previousMajorVersion === undefined) {
-                    throw new Error(`Previous major version is undefined.`);
-                }
-
-                prevVersion = isInternalVersionScheme(previousMajorVersion)
-                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      getVersionRange(previousMajorVersion!, "~")
-                    : `~${previousMajorVersion}`;
-                break;
-            }
-
-            case "~previousMinor": {
-                if (previousMinorVersion === undefined) {
-                    throw new Error(`Previous minor version is undefined.`);
-                }
-
-                prevVersion = isInternalVersionScheme(previousMinorVersion)
-                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      getVersionRange(previousMinorVersion!, "~")
-                    : `~${previousMinorVersion}`;
-                break;
-            }
-        }
+        prevVersion = getPreviousVersionBaseline(version, constraint);
     } else {
         prevVersion = exactPreviousVersionString;
     }

@@ -13,56 +13,6 @@ import {
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { ReleaseGroup } from "../../releaseGroups";
-
-/**
- * Returns a default {@link PreviousVersionStyle} for a branch and release group.
- *
- * Minor version series branches like lts and main use the ~previousMinor style.
- * Major version series branches like next use the ^previousMajor style.
- * Patch version series branches like release branches use the previousPatch style.
- */
-const getVersionStyleForBranch = (branch: string, releaseGroup: ReleaseGroup): PreviousVersionStyle => {
-    let style: PreviousVersionStyle;
-    switch(releaseGroup) {
-        case "azure": {
-            if (branch === "main") {
-                // main is the major version series branch for azure
-                style = "^previousMajor";
-            } else if (branch === "lts") {
-                // lts is the minor version series branch for azure
-                style = "~previousMinor";
-            } else if (branch.startsWith("release/azure/")) {
-                style = "previousPatch";
-            } else {
-                style = "baseMinor";
-            }
-        }
-
-        default: {
-            if (["main", "lts"].includes(branch)) {
-                style = "~previousMinor";
-            } else if (branch === "next") {
-                style = "^previousMajor";
-            } else if (branch.startsWith("release/")) {
-                style = "previousPatch";
-            } else {
-                style = "baseMinor";
-            }
-        }
-    }
-    if (["main", "lts"].includes(branch)) {
-        style = "~previousMinor";
-    } else if (branch === "next") {
-        style = "^previousMajor";
-    } else if (branch.startsWith("release/")) {
-        style = "previousPatch";
-    } else {
-        style = "baseMinor";
-    }
-
-    return style;
-};
 
 export default class GenerateTypeTestsCommand extends BaseCommand<
     typeof GenerateTypeTestsCommand.flags
@@ -219,9 +169,6 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         const context = await this.getContext();
         const concurrency = 25;
         const runningGenerates: Promise<boolean>[] = [];
-        const constraint: PreviousVersionStyle =
-            (flags.versionConstraint as any | undefined) ??
-            getVersionStyleForBranch(context.originalBranchName);
 
         // this loop incrementally builds up the runningGenerates promise list
         // each dir with an index greater than concurrency looks back the concurrency value
@@ -245,9 +192,10 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     try {
                         const start = Date.now();
                         const packageData = await getAndUpdatePackageDetails(
+                            context,
                             packageDir,
                             /* writeUpdates */ runPrepare,
-                            constraint,
+                            flags.versionConstraint as PreviousVersionStyle | undefined,
                             flags.exact,
                             flags.reset,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
