@@ -15,8 +15,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|prerelease|none] [--patch <value>]
-    [--base <value>] [--tag <value>] [-i <value>] [-v]
+  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|prerelease|none] [--patch
+    <value>] [--base <value>] [--tag <value>] [-i <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -45,7 +45,7 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
+  $ flub generate bundleStats [-v] [--smallestAssetSize <value>]
 
 FLAGS
   -v, --verbose                Verbose logging.
@@ -113,10 +113,10 @@ Generates type tests based on the individual package settings in package.json.
 
 ```
 USAGE
-  $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
+  $ flub generate typetests [-v] [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
     (--exact <value> |  | -s
     ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor)
-    [--reset | ] [--generateInName] [-v]
+    [--reset | ] [--generateInName]
 
 FLAGS
   -d, --dir=<value>                 Run on the package in this directory.

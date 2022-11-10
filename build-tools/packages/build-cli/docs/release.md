@@ -12,8 +12,8 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x | --install |
-    --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+  $ flub release [-v] [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x |
+    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -52,8 +52,8 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
-    <value>]] [-p <value> ] [--limit <value> ] [-v]
+  $ flub release report [-v] [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
+    <value>]] [-p <value> ] [--limit <value> ]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
