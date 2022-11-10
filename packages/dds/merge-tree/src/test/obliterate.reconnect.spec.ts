@@ -312,4 +312,63 @@ describe("obliterate", () => {
 
         helper.logger.validate();
     });
+
+    it("updates lengths after obliterated insertion", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("C", 0, "A");
+        helper.insertText("B", 0, "X");
+        helper.insertText("C", 0, "N");
+        helper.obliterateRange("C", 0, 2);
+        helper.insertText("B", 1, "B");
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "");
+        assert.equal(helper.clients.B.getText(), "");
+        assert.equal(helper.clients.C.getText(), "");
+
+        assert.equal(helper.clients.A.getLength(), 0);
+        assert.equal(helper.clients.B.getLength(), 0);
+        assert.equal(helper.clients.C.getLength(), 0);
+
+        helper.logger.validate();
+    });
+
+    it("updates lengths when insertion causes tree to split", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("A", 0, "0");
+        helper.insertText("C", 0, "123");
+        helper.insertText("B", 0, "BB");
+        helper.insertText("C", 0, "GGG");
+        helper.obliterateRange("C", 2, 5);
+        helper.insertText("B", 1, "A");
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText().length, helper.clients.A.getLength());
+        assert.equal(helper.clients.B.getText().length, helper.clients.B.getLength());
+        assert.equal(helper.clients.C.getText().length, helper.clients.C.getLength());
+
+        assert.equal(helper.clients.A.getText(), "GG30");
+
+        helper.logger.validate();
+    });
+
+    it.skip("...", () => {
+        const helper = new ReconnectTestHelper();
+
+        helper.insertText("A", 0, "1");
+        helper.insertText("A", 0, "2");
+        helper.insertText("C", 0, "XXXX");
+        helper.insertText("B", 0, "AB");
+        helper.insertText("C", 0, "GGG");
+        helper.obliterateRange("C", 2, 6);
+        helper.insertText("C", 1, "C");
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "GCGX21");
+        assert.equal(helper.clients.C.getText(), "GCGX21");
+
+        helper.logger.validate();
+    });
 });

@@ -216,6 +216,13 @@ export class TestClientLogger {
                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId}`);
                 }
 
+                assert.equal(
+                    c.getLength(),
+                    baseText.length,
+                    // eslint-disable-next-line max-len
+                    `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} length does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId} length`,
+                );
+
                 if (c === this.clients[0]) { return; }
                 let pos = 0;
                 depthFirstNodeWalk(

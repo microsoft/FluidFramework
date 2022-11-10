@@ -1365,7 +1365,9 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
+                const localMovedSeq = pendingSegment.localMovedSeq;
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+
                 // TODO: This work should likely be done as part of the above `ack` call. However the exact format
                 // of the argument to pass isn't obvious given some planned extensibility points around customizing
                 // what types of operations are attributed and how. Since `ack` is in the public API, leaving it
@@ -1377,7 +1379,29 @@ export class MergeTree {
                     );
                 }
 
+                if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+                    forwardExcursion(pendingSegment, (seg) => {
+                        const moveInfo = toMoveInfo(seg);
+                        if (
+                            !moveInfo
+                            || moveInfo.localMovedSeq !== localMovedSeq
+                            || moveInfo.movedSeq !== UnassignedSequenceNumber
+                        ) {
+                            return false;
+                        }
+
+                        moveInfo.localMovedSeq = undefined;
+                        if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+                            moveInfo.movedSeq = seq;
+                            return true;
+                        }
+
+                        return true;
+                    });
+                }
+
                 overwrite = overlappingRemove || overwrite;
+
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.slideAckedRemovedSegmentReferences(pendingSegment);
                 }
@@ -1799,6 +1823,15 @@ export class MergeTree {
                     const moveInfo = minMoveDist(nearMoveInfo, farMoveInfo);
                     if (moveInfo) {
                         markSegmentMoved(newSegment, moveInfo);
+
+                        let parent: IMergeBlock | undefined = newSegment.parent;
+
+                        // TODO: do we already have functionality to do this?/is there
+                        // a more sane way
+                        while (parent) {
+                            this.blockUpdateLength(parent, seq, clientId);
+                            parent = parent.parent;
+                        }
                     }
                 }
             }
@@ -1830,17 +1863,23 @@ export class MergeTree {
     // Assume called only when pos == len
     private breakTie(pos: number, node: IMergeNode, seq: number) {
         if (node.isLeaf()) {
-            if (pos === 0) {
-                // normalize the seq numbers
-                // if the new seg is local (UnassignedSequenceNumber) give it the highest possible
-                // seq for comparison, as it will get a seq higher than any other seq once sequences
-                // if the current seg is local (UnassignedSequenceNumber) give it the second highest
-                // possible seq, as the highest is reserved for the previous.
-                const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
-                const segSeq = node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
-                return newSeq > segSeq;
+            if (pos !== 0) {
+                return false;
             }
-            return false;
+            // normalize the seq numbers
+            // if the new seg is local (UnassignedSequenceNumber) give it the highest possible
+            // seq for comparison, as it will get a seq higher than any other seq once sequences
+            // if the current seg is local (UnassignedSequenceNumber) give it the second highest
+            // possible seq, as the highest is reserved for the previous.
+            const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
+            const segSeq = node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+            return newSeq > segSeq
+                || (node.movedSeq !== undefined
+                    && node.movedSeq !== UnassignedSequenceNumber
+                    && node.movedSeq > seq)
+                || (node.removedSeq !== undefined
+                    && node.removedSeq !== UnassignedSequenceNumber
+                    && node.removedSeq > seq);
         } else {
             return true;
         }
@@ -1864,14 +1903,18 @@ export class MergeTree {
         let fromSplit: IMergeBlock | undefined;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId);
+            let len = this.nodeLength(child, refSeq, clientId);
             if (len === undefined) {
-                // if the seg len is undefined, the segment
-                // will be removed, so should just be skipped for now
-                continue;
-            } else {
-                assert(len >= 0, "Length should not be negative");
+                if (this.breakTie(_pos, child, seq)) {
+                    len = 0;
+                } else {
+                    // if the seg len is undefined, the segment
+                    // will be removed, so should just be skipped for now
+                    continue;
+                }
             }
+
+            assert(len >= 0, "Length should not be negative");
 
             if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, child, seq))) {
                 // Found entry containing pos

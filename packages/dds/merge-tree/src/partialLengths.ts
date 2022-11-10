@@ -671,13 +671,12 @@ export class PartialSequenceLengths {
                 const moveInfo = toMoveInfo(segment);
 
                 if (segment.seq === seq) {
-                    if (removalInfo?.removedSeq !== seq && moveInfo?.movedSeq !== seq) {
+                    if ((!removalInfo || removalInfo.removedSeq !== seq)
+                        && ((!moveInfo || moveInfo.movedSeq !== seq))) {
                         seqSeglen += segment.cachedLength;
                     }
-                } else {
-                    if (removalInfo?.removedSeq === seq || moveInfo?.movedSeq === seq) {
-                        seqSeglen -= segment.cachedLength;
-                    }
+                } else if (removalInfo?.removedSeq === seq || moveInfo?.movedSeq === seq) {
+                    seqSeglen -= segment.cachedLength;
                 }
                 segCount++;
             }
