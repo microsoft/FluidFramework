@@ -169,9 +169,8 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
-import { buildSummaryStorageAdapter } from "./summaryStorageAdapter";
-import { CompressionSummaryStorageHooks } from "./summaryStorageCompressionHooks";
 import { ScheduleManager } from "./scheduleManager";
+import { CompressionSummaryStorageAdapter } from "./summaryStorageCompressionAdapter";
 
 export enum SummaryCompressionAlgorithm {
     None = 1,
@@ -666,14 +665,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
-    private static buildSummaryConfiguration(runtimeOptions: IContainerRuntimeOptions): ISummaryConfiguration {
-        return {
-            // the defaults
-            ...DefaultSummaryConfiguration,
-            // the runtime configuration overrides
-            ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
-        };
-    }
 
     /**
      * Load the stores from a snapshot and returns the runtime.
@@ -718,7 +709,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const baseSnapshot: ISnapshotTree | undefined =
             pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        const summaryConfiguration = ContainerRuntime.buildSummaryConfiguration(runtimeOptions);
+        const summaryConfiguration = {
+            // the defaults
+            ...DefaultSummaryConfiguration,
+            // the runtime configuration overrides
+            ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
+        };
         const summaryConfigurationHeuristic =
             summaryOptions.summaryConfigOverrides?.state === "enabled"
                 ? summaryConfiguration as ISummaryConfigurationHeuristics
@@ -729,13 +725,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return context.storage;
             }, pendingRuntimeState.snapshotBlobs);
         if (summaryConfigurationHeuristic?.compressionAlgorithm !== undefined) {
-            storage = buildSummaryStorageAdapter(storage, [
-                new CompressionSummaryStorageHooks(
+            storage = new CompressionSummaryStorageAdapter(storage,
                     summaryConfigurationHeuristic.compressionAlgorithm,
                     summaryConfigurationHeuristic.minSizeToCompress,
-                    summaryConfigurationHeuristic.isUseB64OnCompressed
-                ),
-            ]);
+                    summaryConfigurationHeuristic.isUseB64OnCompressed,
+            );
             /*
             if (summaryConfiguration?.compressionAlgorithm === SummaryCompressionAlgorithms.None) {
                 console.log("SUMMARY COMPRESSION DISABLED / DECOMPRESSION ENABLED");

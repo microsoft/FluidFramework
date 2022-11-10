@@ -8,19 +8,30 @@ import {
     IContainerContext,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
-    MockLogger,
-} from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+    MockDeltaManager,
+    MockQuorumClients,
+} from "@fluidframework/test-runtime-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle, ISummaryTree, IVersion, SummaryType }
-    from "@fluidframework/protocol-definitions";
 import {
-    ContainerRuntime, SummaryCompressionAlgorithm, ISummaryRuntimeOptions,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
+import {
+    ICreateBlobResponse,
+    ISnapshotTree,
+    ISummaryHandle,
+    ISummaryTree,
+    IVersion,
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
+import {
+    ContainerRuntime,
+    SummaryCompressionAlgorithm,
+    ISummaryRuntimeOptions,
 } from "../containerRuntime";
-import { CompressionSummaryStorageHooks } from "../summaryStorageCompressionHooks";
-import { buildSummaryStorageAdapter } from "../summaryStorageAdapter";
+import { CompressionSummaryStorageAdapter } from "../summaryStorageCompressionAdapter";
 
 function genOptions(alg: SummaryCompressionAlgorithm | undefined) {
     const summaryOptions: ISummaryRuntimeOptions = {
@@ -53,107 +64,79 @@ function genBlobContent() {
 }
 
 describe("Compression", () => {
-    describe("Compression Symetrical Hook Test", () => {
-        it("LZ4 enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
-            runEncDecAtHooks(hook);
-        });
-        it("None enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
-            runEncDecAtHooks(hook);
-        });
-    });
-    describe("Compression Summary Tree Upload Hook Test", () => {
-        it("LZ4 upload / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
-            runTreeUploadAndDecAtHooks(hook);
-        });
-        it("None upload / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
-            runTreeUploadAndDecAtHooks(hook);
-        });
-    });
     describe("Compression Symetrical Adapter Test", () => {
         it("LZ4 enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
-            runEncDecAtAdapter(hook);
+            runEncDecAtAdapter(SummaryCompressionAlgorithm.LZ4);
         });
         it("None enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
-            runEncDecAtAdapter(hook);
+            runEncDecAtAdapter(SummaryCompressionAlgorithm.None);
         });
     });
     describe("Compression Summary Tree Upload Adapter Test", () => {
         it("LZ4 enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.LZ4, 500, false);
-            runTreeUploadAndDecAtAdapter(hook);
+            runTreeUploadAndDecAtAdapter(SummaryCompressionAlgorithm.LZ4);
         });
         it("None enc / dec", async () => {
-            const hook: CompressionSummaryStorageHooks =
-                new CompressionSummaryStorageHooks(SummaryCompressionAlgorithm.None, 500, false);
-                runTreeUploadAndDecAtAdapter(hook);
+            runTreeUploadAndDecAtAdapter(SummaryCompressionAlgorithm.None);
         });
     });
     describe("Compression Config Test", () => {
         describe("Setting", () => {
             let containerRuntime: ContainerRuntime;
             const myStorage = getMockupStorage(genBlobContent(), {});
-            const buildMockContext = ((): Partial<IContainerContext> => {
+            const buildMockContext = (): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     storage: myStorage,
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
-                    closeFn: (_error?: ICriticalContainerError): void => { },
-                    updateDirtyContainerState: (_dirty: boolean) => { },
+                    closeFn: (_error?: ICriticalContainerError): void => {},
+                    updateDirtyContainerState: (_dirty: boolean) => {},
                 };
-            });
+            };
             const mockContext = buildMockContext();
             it("LZ4 config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithm.LZ4);
+                const summaryOpt: ISummaryRuntimeOptions = genOptions(
+                    SummaryCompressionAlgorithm.LZ4
+                );
                 containerRuntime = await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
-                    { summaryOptions: summaryOpt }, // runtimeOptions
+                    { summaryOptions: summaryOpt } // runtimeOptions
                 );
 
                 const wrapper = containerRuntime.storage as any;
-                assert.strictEqual(wrapper.hasHooks, true);
-                const multihook = wrapper.hooks;
-                const hook: CompressionSummaryStorageHooks = multihook.hooks[0];
-                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithm.LZ4);
+                assert.strictEqual(
+                    wrapper.algorithm,
+                    SummaryCompressionAlgorithm.LZ4
+                );
             });
             it("None config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(SummaryCompressionAlgorithm.None);
+                const summaryOpt: ISummaryRuntimeOptions = genOptions(
+                    SummaryCompressionAlgorithm.None
+                );
                 containerRuntime = await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
-                    { summaryOptions: summaryOpt }, // runtimeOptions
+                    { summaryOptions: summaryOpt } // runtimeOptions
                 );
-
                 const wrapper = containerRuntime.storage as any;
-                assert.strictEqual(wrapper.hasHooks, true);
-                const multihook = wrapper.hooks;
-                const hook: CompressionSummaryStorageHooks = multihook.hooks[0];
-                assert.strictEqual(hook.algorithm, SummaryCompressionAlgorithm.None);
+                assert.strictEqual(
+                    wrapper.algorithm,
+                    SummaryCompressionAlgorithm.None
+                );
             });
             it("Empty config", async () => {
-                const summaryOpt: ISummaryRuntimeOptions = genOptions(undefined);
+                const summaryOpt: ISummaryRuntimeOptions =
+                    genOptions(undefined);
                 containerRuntime = await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
                     undefined, // requestHandler
-                    { summaryOptions: summaryOpt }, // runtimeOptions
+                    { summaryOptions: summaryOpt } // runtimeOptions
                 );
 
                 const wrapper = containerRuntime.storage as any;
@@ -162,46 +145,51 @@ describe("Compression", () => {
         });
     });
 });
-function runEncDecAtAdapter(hook: CompressionSummaryStorageHooks) {
+function runEncDecAtAdapter(algorithm: SummaryCompressionAlgorithm) {
     const inputBlobContent = genBlobContent();
     const storage = getMockupStorage(inputBlobContent, {});
-    const adapter: IDocumentStorageService = buildSummaryStorageAdapter(storage, [hook]);
+    const adapter: IDocumentStorageService =
+        new CompressionSummaryStorageAdapter(storage, algorithm);
     void adapter.createBlob(inputBlobContent).then((resp) => {
         // eslint-disable-next-line @typescript-eslint/dot-notation
         const compressed = resp["content"];
         const memento = {};
         const readStorage = getMockupStorage(compressed, memento);
-        const readAdapter: IDocumentStorageService = buildSummaryStorageAdapter(readStorage, [hook]);
+        const readAdapter: IDocumentStorageService =
+            new CompressionSummaryStorageAdapter(readStorage, algorithm);
         void readAdapter.readBlob(resp.id).then((outputBlobContent) => {
-            assert.deepEqual(inputBlobContent, IsoBuffer.from(outputBlobContent));
+            assert.deepEqual(
+                inputBlobContent,
+                IsoBuffer.from(outputBlobContent)
+            );
         });
     });
 }
-function runTreeUploadAndDecAtAdapter(hook: CompressionSummaryStorageHooks) {
+function runTreeUploadAndDecAtAdapter(algorithm: SummaryCompressionAlgorithm) {
     const inputBlobContent = genBlobContent();
     const inputSummary: ISummaryTree = buildSummary(inputBlobContent);
     const memento: any = {};
     const storage = getMockupStorage(inputBlobContent, memento);
-    const adapter: IDocumentStorageService = buildSummaryStorageAdapter(storage, [hook]);
-    void adapter.uploadSummaryWithContext(inputSummary,
-        { referenceSequenceNumber: 1, proposalHandle: undefined, ackHandle: undefined }).then((resp) => {
+    const adapter: IDocumentStorageService =
+        new CompressionSummaryStorageAdapter(storage, algorithm);
+    void adapter
+        .uploadSummaryWithContext(inputSummary, {
+            referenceSequenceNumber: 1,
+            proposalHandle: undefined,
+            ackHandle: undefined,
+        })
+        .then((resp) => {
             const compressed = memento.summaryTree.tree.myBlob.content;
             const readStorage = getMockupStorage(compressed, memento);
-            const readAdapter: IDocumentStorageService = buildSummaryStorageAdapter(readStorage, [hook]);
+            const readAdapter: IDocumentStorageService =
+                new CompressionSummaryStorageAdapter(readStorage, algorithm);
             void readAdapter.readBlob("abcd").then((outputBlobContent) => {
-                assert.deepEqual(inputBlobContent, IsoBuffer.from(outputBlobContent));
+                assert.deepEqual(
+                    inputBlobContent,
+                    IsoBuffer.from(outputBlobContent)
+                );
             });
         });
-}
-
-function runTreeUploadAndDecAtHooks(hook: CompressionSummaryStorageHooks) {
-    const inputBlobContent = genBlobContent();
-    const inputSummary: ISummaryTree = buildSummary(inputBlobContent);
-    const { prepSummary } = hook.onPreUploadSummaryWithContext(inputSummary,
-        { referenceSequenceNumber: 1, proposalHandle: undefined, ackHandle: undefined });
-    const compressed = (prepSummary.tree.myBlob as ISummaryBlob).content;
-    const outputBlobContent = IsoBuffer.from(hook.onPostReadBlob(IsoBuffer.from(compressed)));
-    assert.deepEqual(inputBlobContent, outputBlobContent);
 }
 
 function buildSummary(inputBlobContent): ISummaryTree {
@@ -211,24 +199,28 @@ function buildSummary(inputBlobContent): ISummaryTree {
     };
 }
 
-function runEncDecAtHooks(hook: CompressionSummaryStorageHooks) {
-    const inputBlobContent = genBlobContent();
-    const compressed = hook.onPreCreateBlob(inputBlobContent);
-    const outputBlobContent = IsoBuffer.from(hook.onPostReadBlob(compressed));
-    assert.deepEqual(inputBlobContent, outputBlobContent);
-}
-
-function getMockupStorage(blobFromRead: ArrayBufferLike, memento: any): IDocumentStorageService {
+function getMockupStorage(
+    blobFromRead: ArrayBufferLike,
+    memento: any
+): IDocumentStorageService {
     const storage: IDocumentStorageService = {
         repositoryUrl: "http://localhost",
-        getSnapshotTree: async (version?: IVersion, scenarioName?: string):
-            Promise<ISnapshotTree | null> => { return null; },
+        getSnapshotTree: async (
+            version?: IVersion,
+            scenarioName?: string
+        ): Promise<ISnapshotTree | null> => {
+            return null;
+        },
         getVersions: async (
             versionId: string | null,
             count: number,
-            scenarioName?: string,
-        ): Promise<IVersion[]> => { return []; },
-        createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => {
+            scenarioName?: string
+        ): Promise<IVersion[]> => {
+            return [];
+        },
+        createBlob: async (
+            file: ArrayBufferLike
+        ): Promise<ICreateBlobResponse> => {
             const obj: ICreateBlobResponse = { id: "abcd" };
             // eslint-disable-next-line @typescript-eslint/dot-notation
             obj["content"] = file;
@@ -237,16 +229,20 @@ function getMockupStorage(blobFromRead: ArrayBufferLike, memento: any): IDocumen
         readBlob: async (id: string): Promise<ArrayBufferLike> => {
             return blobFromRead;
         },
-        uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext): Promise<string> => {
+        uploadSummaryWithContext: async (
+            summary: ISummaryTree,
+            context: ISummaryContext
+        ): Promise<string> => {
             memento.summaryTree = summary;
             return "abcd";
         },
-        downloadSummary: async (handle: ISummaryHandle): Promise<ISummaryTree> => {
+        downloadSummary: async (
+            handle: ISummaryHandle
+        ): Promise<ISummaryTree> => {
             const ret: any = {};
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return ret;
         },
-
     };
     return storage;
 }

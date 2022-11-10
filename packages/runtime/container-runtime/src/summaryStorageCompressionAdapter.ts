@@ -6,24 +6,73 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { compress, decompress } from "lz4js";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-// import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType, SummaryObject }
-import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType }
-    from "@fluidframework/protocol-definitions";
+import {
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
+import {
+    ISummaryTree,
+    ISummaryBlob,
+    SummaryType,
+    ICreateBlobResponse,
+} from "@fluidframework/protocol-definitions";
 import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-// import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks } from "./summaryStorageAdapter";
-import { SummaryStorageHooks } from "./summaryStorageAdapter";
-import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
+import {
+    BlobHeaderBuilder,
+    readBlobHeader,
+    skipHeader,
+    writeBlobHeader,
+} from "./summaryBlobProtocol";
 import { SummaryCompressionAlgorithm } from "./containerRuntime";
+import { SummaryStorageAdapter } from "./summaryStorageAdapter";
 
 const algorithmKey = "ALG";
 const defaultMinSizeToCompress = 500;
 
 /**
- * This class implements the SummaryStorageHooks which can apply various kinds of compressions
+ * This class extends the SummaryStorageAdapter so that it can apply various kinds of compressions
  * to the blob payload.
  */
-export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
+export class CompressionSummaryStorageAdapter extends SummaryStorageAdapter {
+    constructor(
+        service: IDocumentStorageService,
+        private readonly _algorithm:
+            | SummaryCompressionAlgorithm
+            | undefined = undefined,
+        private readonly _minSizeToCompress: number | undefined = undefined,
+        private readonly _isUseB64OnCompressed: boolean | undefined = undefined
+    ) {
+        super(service);
+        if (this._minSizeToCompress === undefined) {
+            this._minSizeToCompress = defaultMinSizeToCompress;
+        }
+    }
+
+    public async createBlob(
+        file: ArrayBufferLike
+    ): Promise<ICreateBlobResponse> {
+        return super.createBlob(this.encodeBlob(file));
+    }
+    public async readBlob(id: string): Promise<ArrayBufferLike> {
+        return this.decodeBlob(await super.readBlob(id));
+    }
+    public async uploadSummaryWithContext(
+        summary: ISummaryTree,
+        context: ISummaryContext
+    ): Promise<string> {
+        const prep = {
+            prepSummary: recursivelyReplace(
+                summary,
+                this.blobReplacer,
+                context
+            ),
+            prepContext: context,
+        };
+        return super.uploadSummaryWithContext(
+            prep.prepSummary,
+            prep.prepContext
+        );
+    }
     public get algorithm() {
         return this._algorithm;
     }
@@ -73,58 +122,6 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             return input;
         }
     };
-    constructor(
-        private readonly _algorithm: SummaryCompressionAlgorithm | undefined,
-        private readonly _minSizeToCompress: number | undefined,
-        private readonly _isUseB64OnCompressed: boolean | undefined
-    ) {
-        if (this._minSizeToCompress === undefined) {
-            this._minSizeToCompress = defaultMinSizeToCompress;
-        }
-    }
-    public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
-        return this.encodeBlob(file);
-    }
-    public onPostReadBlob(file: ArrayBufferLike): ArrayBufferLike {
-        return this.decodeBlob(file);
-    }
-
-    /**
-     * All paths of ISummaryTree which lead to ISummaryBlob objects are iterated.
-     * At each ISummaryBlob, content is mapped to binary array and compressed.
-     * The header is then addded which shows, which algorithm was used for encryption.
-     * The result binary is base64 encoded due to the issue with summaryTreeUploadManager#writeSummaryBlob
-     * hash assertion
-     * New ISummaryBlob is created with the new string content obtained in the above step and the
-     * old blob is replaced by this new blob in the ISummaryTree.
-     */
-    public onPreUploadSummaryWithContext(
-        summary: ISummaryTree,
-        context: ISummaryContext
-    ): { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
-        return {
-            prepSummary: recursivelyReplace(
-                summary,
-                this.blobReplacer,
-                context
-            ),
-            prepContext: context,
-        };
-    }
-    /**
-     * TODO: This method is not yet implemented
-     */
-    public onPostGetSnapshotTree(
-        tree: ISnapshotTree | null
-    ): ISnapshotTree | null {
-        return tree;
-    }
-    /**
-     * TODO: This method is not yet implemented
-     */
-    public onPostDownloadSummary(summary: ISummaryTree): ISummaryTree {
-        return summary;
-    }
 
     private encodeBlob(file: ArrayBufferLike): ArrayBufferLike {
         let compressed: ArrayBufferLike;
@@ -177,7 +174,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
 export function recursivelyReplace(
     input: any,
     replacer: (input: any, context: any) => any,
-    context?: any,
+    context?: any
 ) {
     // Note: Caller is responsible for ensuring that `input` is defined / non-null.
     //       (Required for Object.keys() below.)
@@ -208,9 +205,8 @@ export function recursivelyReplace(
             // current property is replaced by the `replaced` value.
             if (replaced !== value) {
                 // Lazily create a shallow clone of the `input` object if we haven't done so already.
-                clone = clone ?? (Array.isArray(input)
-                    ? [...input]
-                    : { ...input });
+                clone =
+                    clone ?? (Array.isArray(input) ? [...input] : { ...input });
 
                 // Overwrite the current property `key` in the clone with the `replaced` value.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
