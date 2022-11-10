@@ -12,7 +12,7 @@ export interface LogEntry {
     /**
      * The time at which some data was recorded.
      */
-    timestamp: Date;
+    timestamp: number;
 }
 
 /**
@@ -42,6 +42,11 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 
 /**
  * Represents a processed operation (op), paired with a timestamp.
+ *
+ * @privateRemarks
+ *
+ * TODOs:
+ * - Annotate when the client is me, even though "me" can change. This is useful context when viewing the history.
  */
 export interface AudienceChangeLogEntry extends LogEntry {
     /**

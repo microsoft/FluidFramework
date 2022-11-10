@@ -220,7 +220,7 @@ export interface IFluidClientDebugger
     /**
      * Historical log of audience member changes.
      */
-    getAuidienceHistory(): readonly AudienceChangeLogEntry[];
+    getAudienceHistory(): readonly AudienceChangeLogEntry[];
 
     // #endregion
 

@@ -138,8 +138,12 @@ export class FluidClientDebugger
         this.container.on("saved", () => this.onContainerSaved());
 
         // Bind Audience events
-        this.audience.on("addMember", this.audienceMemberAddedHandler);
-        this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+        this.audience.on("addMember", (clientId, client) =>
+            this.onAudienceMemberAdded(clientId, client),
+        );
+        this.audience.on("removeMember", (clientId, client) =>
+            this.onAudienceMemberRemoved(clientId, client),
+        );
 
         // TODO: other events as needed
 
@@ -201,7 +205,7 @@ export class FluidClientDebugger
     private onContainerConnected(clientId: string): void {
         this._connectionStateLog.push({
             newState: ConnectionState.Connected,
-            timestamp: new Date(),
+            timestamp: Date.now(),
             clientId,
         });
         this.containerConnectedHandler(clientId);
@@ -210,7 +214,7 @@ export class FluidClientDebugger
     private onContainerDisconnected(): void {
         this._connectionStateLog.push({
             newState: ConnectionState.Disconnected,
-            timestamp: new Date(),
+            timestamp: Date.now(),
             clientId: undefined,
         });
         this.containerDisconnectedHandler();
@@ -266,9 +270,29 @@ export class FluidClientDebugger
     /**
      * {@inheritDoc IFluidClientDebugger.getAuidienceHistory}
      */
-    public getAuidienceHistory(): readonly AudienceChangeLogEntry[] {
+    public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._audienceChangeLog.map((value) => value);
+    }
+
+    private onAudienceMemberAdded(clientId: string, client: IClient): void {
+        this._audienceChangeLog.push({
+            clientId,
+            client,
+            changeKind: "added",
+            timestamp: Date.now(),
+        });
+        this.emit("audienceMemberAdded", clientId, client);
+    }
+
+    private onAudienceMemberRemoved(clientId: string, client: IClient): void {
+        this._audienceChangeLog.push({
+            clientId,
+            client,
+            changeKind: "removed",
+            timestamp: Date.now(),
+        });
+        this.emit("audienceMemberRemoved", clientId, client);
     }
 
     // #endregion

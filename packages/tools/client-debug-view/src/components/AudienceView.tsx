@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 import { Stack, StackItem } from "@fluentui/react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
+
+import { AudienceChangeLogEntry } from "@fluid-tools/client-debugger";
 
 import { combineMembersWithMultipleConnections } from "../Audience";
 import { HasClientDebugger } from "../CommonProps";
@@ -37,13 +39,17 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     const myClientId = useMyClientId(clientDebugger);
     const myClientConnection = useMyClientConnection(clientDebugger);
 
-    const [allAudienceMembers, setAllAudienceMembers] = useState<Map<string, IClient>>(
+    const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
         clientDebugger.getAudienceMembers(),
     );
+    const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
+        clientDebugger.getAudienceHistory(),
+    );
 
-    useEffect(() => {
+    React.useEffect(() => {
         function onAudienceMembersChanged(): void {
             setAllAudienceMembers(clientDebugger.getAudienceMembers());
+            setAudienceHistory(clientDebugger.getAudienceHistory());
         }
 
         clientDebugger.on("audienceMemberAdded", onAudienceMembersChanged);
@@ -53,9 +59,69 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
             clientDebugger.off("audienceMemberAdded", onAudienceMembersChanged);
             clientDebugger.off("audienceMemberRemoved", onAudienceMembersChanged);
         };
-    }, [clientDebugger, setAllAudienceMembers]);
+    }, [clientDebugger, setAllAudienceMembers, setAudienceHistory]);
 
-    const transformedAudience = combineMembersWithMultipleConnections(allAudienceMembers);
+    return (
+        <Stack
+            styles={{
+                root: {
+                    height: "100%",
+                },
+            }}
+        >
+            <StackItem>
+                <div className="audience-view-members-list">
+                    <h3>Audience members ({allAudienceMembers.size})</h3>
+                </div>
+                <MembersView
+                    audience={allAudienceMembers}
+                    myClientId={myClientId}
+                    myClientConnection={myClientConnection}
+                    onRenderAudienceMember={onRenderAudienceMember}
+                />
+            </StackItem>
+            <StackItem>
+                <div className="history-list">
+                    <h3>History</h3>
+                </div>
+                <HistoryView history={audienceHistory} />
+            </StackItem>
+        </Stack>
+    );
+}
+
+/**
+ * {@link MembersView} input props.
+ */
+interface MembersViewProps {
+    /**
+     * The current audience
+     */
+    audience: Map<string, IClient>;
+
+    /**
+     * My client ID, if the Container is connected.
+     */
+    myClientId: string | undefined;
+
+    /**
+     * My client connection data, if the Container is connected.
+     */
+    myClientConnection: IClient | undefined;
+
+    /**
+     * Callback to render data about an individual audience member.
+     */
+    onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
+}
+
+/**
+ * Displays a list of current audience members and their metadata.
+ */
+function MembersView(props: MembersViewProps): React.ReactElement {
+    const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
+
+    const transformedAudience = combineMembersWithMultipleConnections(audience);
 
     const memberViews: React.ReactElement[] = [];
     for (const member of transformedAudience.values()) {
@@ -70,22 +136,57 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         );
     }
 
+    return <Stack>{memberViews}</Stack>;
+}
+
+/**
+ * {@link HistoryView} input props.
+ */
+interface HistoryViewProps {
+    /**
+     * History of audience changes tracked by the debugger.
+     */
+    history: readonly AudienceChangeLogEntry[];
+}
+
+/**
+ * Displays a historical log of audience member changes.
+ */
+function HistoryView(props: HistoryViewProps): React.ReactElement {
+    const { history } = props;
+
+    const nowTimeStamp = new Date();
+
+    // Reverse history such that newest events are displayed first
+    const reversedHistoryLog = [...history].reverse();
+
+    const historyViews: React.ReactElement[] = [];
+    for (const changeEntry of reversedHistoryLog) {
+        const changeTimeStamp = new Date(changeEntry.timestamp);
+        const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+
+        historyViews.push(
+            <li key={changeEntry.changeKind}>
+                <b>Client ID: </b>
+                {changeEntry.clientId}
+                <br />
+                <b>Time: </b>{" "}
+                {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
+                <br />
+                <b>Type: </b> {changeEntry.changeKind}
+            </li>,
+        );
+    }
+
     return (
         <Stack
             styles={{
                 root: {
-                    height: "100%",
+                    overflowY: "auto",
                 },
             }}
         >
-            <StackItem>
-                <div className="audience-view-members-list">
-                    <b>Audience members ({allAudienceMembers.size})</b>
-                </div>
-            </StackItem>
-            <StackItem>
-                <Stack>{memberViews}</Stack>
-            </StackItem>
+            <ul>{historyViews}</ul>
         </Stack>
     );
 }

@@ -50,8 +50,8 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     readonly containerId: string;
     disconnectContainer(): void;
     dispose(): void;
+    getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getAudienceMembers(): Map<string, IClient>;
-    getAuidienceHistory(): readonly AudienceChangeLogEntry[];
     getClientId(): string | undefined;
     getContainerAttachState(): AttachState;
     getContainerConnectionState(): ConnectionState;
@@ -82,7 +82,7 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 
 // @public
 export interface LogEntry {
-    timestamp: Date;
+    timestamp: number;
 }
 
 // @public

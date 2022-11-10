@@ -48,8 +48,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
     const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
-    // TODO: unify state management, since it's now all bound to one object
-
     const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(
         clientDebugger.isContainerClosed(),
     );
