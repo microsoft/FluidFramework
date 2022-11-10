@@ -1711,10 +1711,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (typeof message.contents === "string" && message.contents !== "") {
             message.contents = JSON.parse(message.contents);
         }
-
         // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
         // This format was not shipped to production workflows.
-        const runtimeMessage = unpackRuntimeMessage(message);
+        let runtimeMessage = unpackRuntimeMessage(message);
+        // Chunk processing must come first given that we will transform the message to the unchunked version
+        // once all pieces are available
+        message = this.opSplitter.processRemoteMessage(message);
+        message = this.opDecompressor.processMessage(message);
+
+        if (message.contents?.contents) {
+            const innerContents = message.contents as ContainerRuntimeMessage;
+            message.contents = innerContents.contents;
+        }
 
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
@@ -1726,11 +1734,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            // Chunk processing must come first given that we will transform the message to the unchunked version
-            // once all pieces are available
-            message = this.opSplitter.processRemoteMessage(message);
-            message = this.opDecompressor.processMessage(message);
-
             let localOpMetadata: unknown;
             if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
                 localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
