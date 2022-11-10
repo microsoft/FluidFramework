@@ -5,9 +5,9 @@
 
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
+import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair, noRepair } from "../../utils";
 import { tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -95,4 +95,12 @@ export function rebaseTagged(
         );
     }
     return currChange;
+}
+
+export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+    assertMarkListEqual(toDelta(actual), toDelta(expected));
+}
+
+function toDelta(change: TestChangeset): Delta.MarkList {
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }

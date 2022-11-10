@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { Delta } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
+import { deepFreeze } from "../../utils";
 import {
     cases,
+    checkDeltaEquality,
     createDeleteChangeset,
     createInsertChangeset,
     rebaseTagged,
@@ -22,10 +22,6 @@ import {
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
 const detachedBy2: RevisionTag = brand(42);
-
-function toDelta(change: TestChangeset): Delta.MarkList {
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta, noRepair);
-}
 
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
@@ -424,7 +420,3 @@ describe("SequenceField - Rebase", () => {
         checkDeltaEquality(insertE2.change, expected);
     });
 });
-
-function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-    assertMarkListEqual(toDelta(actual), toDelta(expected));
-}

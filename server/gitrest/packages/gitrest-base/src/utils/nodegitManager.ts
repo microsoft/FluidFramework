@@ -16,9 +16,9 @@ import {
     IRepositoryManager,
     IFileSystemManagerFactory,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
     IFileSystemManager,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class NodegitRepositoryManager implements IRepositoryManager {

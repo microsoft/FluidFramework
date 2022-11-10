@@ -4,24 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { Delta } from "../../../core";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { brand, makeArray } from "../../../util";
+import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
-import { createInsertChangeset, rebaseTagged } from "./utils";
+import { deepFreeze, fakeRepair } from "../../utils";
+import { checkDeltaEquality, createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
-
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
-
-function fakeRepairData(revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-    assert.equal(revision, detachedBy);
-    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
-}
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
@@ -52,32 +44,27 @@ describe("SequenceField - Rebaser Axioms", () => {
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, mark1] of testMarks) {
             for (const [name2, mark2] of testMarks) {
-                if (name2 === "Delete") {
+                if (name2 === "Delete" && ["SetValue", "Delete"].includes(name1)) {
                     it.skip(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         /**
-                         * These cases are currently disabled because:
-                         * - Marks that affect existing content are removed instead of muted
-                         * when rebased over the deletion of that content. This prevents us
-                         * from then reinstating the mark when rebasing over the revive.
-                         * - Tombs are not added when rebasing an insert over a gap that is
-                         * immediately left of deleted content. This prevents us from being able to
-                         * accurately track the position of the insert.
+                         * These cases are currently disabled because marks that affect existing content are removed
+                         * instead of muted when rebased over the deletion of that content.
+                         * This prevents us from then reinstating the mark when rebasing over the revive.
                          */
                     });
                 } else {
                     it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         for (let offset1 = 1; offset1 <= 4; ++offset1) {
                             for (let offset2 = 1; offset2 <= 4; ++offset2) {
-                                const change1 = [offset1, mark1];
-                                const change2 = [offset2, mark2];
-                                const inv = SF.invert(makeAnonChange(change2), TestChange.invert);
-                                const r1 = SF.rebase(
-                                    change1,
-                                    makeAnonChange(change2),
-                                    TestChange.rebase,
+                                const change1 = tagChange([offset1, mark1], brand(1));
+                                const change2 = tagChange([offset2, mark2], brand(2));
+                                const inv = tagInverse(
+                                    SF.invert(change2, TestChange.invert),
+                                    change2.revision,
                                 );
-                                const r2 = SF.rebase(r1, makeAnonChange(inv), TestChange.rebase);
-                                assert.deepEqual(r2, change1);
+                                const r1 = rebaseTagged(change1, change2);
+                                const r2 = rebaseTagged(r1, inv);
+                                checkDeltaEquality(r2.change, change1.change);
                             }
                         }
                     });
@@ -132,11 +119,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                     const change = [mark];
                     const inv = SF.invert(makeAnonChange(change), TestChange.invert);
                     const actual = SF.compose([change, inv], TestChange.compose);
-                    const delta = SF.sequenceFieldToDelta(
-                        actual,
-                        TestChange.toDelta,
-                        fakeRepairData,
-                    );
+                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                     assert.deepEqual(delta, []);
                 });
             }
