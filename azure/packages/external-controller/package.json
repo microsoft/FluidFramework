@@ -44,13 +44,13 @@
   "dependencies": {
     "@fluidframework/azure-client": "^1.2.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "fluid-framework": "^1.3.0"
+    "fluid-framework": "^1.4.0-106438"
   },
   "devDependencies": {
-    "@fluid-experimental/get-container": "^1.3.0",
+    "@fluid-experimental/get-container": "^1.4.0-106438",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^1.1.0",
-    "@fluidframework/fluid-static": "^1.3.0",
+    "@fluidframework/fluid-static": "^1.4.0-106438",
     "@fluidframework/test-client-utils": "1.4.0-106438",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
