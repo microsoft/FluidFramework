@@ -350,7 +350,7 @@ describe("Data Store Context Tests", () => {
                 localDataStoreContext.setTombstone(true);
                 assert(localDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
                 localDataStoreContext.setTombstone(false);
-                assert(localDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
+                assert(!localDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
             });
         });
     });
@@ -746,7 +746,7 @@ describe("Data Store Context Tests", () => {
                 remoteDataStoreContext.setTombstone(true);
                 assert(remoteDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
                 remoteDataStoreContext.setTombstone(false);
-                assert(remoteDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
+                assert(!remoteDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
             });
         });
     });
