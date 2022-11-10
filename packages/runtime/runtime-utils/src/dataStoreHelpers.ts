@@ -39,11 +39,12 @@ export function exceptionToResponse(err: any): IResponse {
     // Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
     const errWithStack = generateErrorWithStack();
 
-    const { message, stack } = extractLogSafeErrorProperties(err, false);
+    const { message, errorType, stack } = extractLogSafeErrorProperties(err, false);
+    const errorTypePrefix = errorType === undefined ? "" : `[${errorType}] `;
     return {
         mimeType: "text/plain",
         status,
-        value: message,
+        value: `${errorTypePrefix}${message}`,
         get stack() { return stack ?? errWithStack.stack; },
     };
 }

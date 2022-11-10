@@ -18,7 +18,7 @@ import { oneDayMs } from "./garbageCollection";
  * Feature Gate Key -
  * How many days between closing the container from this error (avoids locking user out of their file altogether)
  */
-export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipForXDays";
+export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipClosureForXDays";
 
 /**
  * LocalStorage key (NOT via feature gate / monitoring context)
