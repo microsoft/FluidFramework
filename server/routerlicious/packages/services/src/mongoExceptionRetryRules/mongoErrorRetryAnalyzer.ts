@@ -6,42 +6,59 @@
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { DefaultExceptionRule } from "./defaultExceptionRule";
 import { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
-import { mongoErrorRetryRuleset } from "./mongoError";
-import { mongoNetworkErrorRetryRuleset } from "./mongoNetworkError";
+import { createMongoErrorRetryRuleset } from "./mongoError";
+import { createMongoNetworkErrorRetryRuleset } from "./mongoNetworkError";
 
-export const MongoErrorRetryAnalyzer = {
+export class MongoErrorRetryAnalyzer {
+    private static instance: MongoErrorRetryAnalyzer;
+    private readonly mongoNetworkErrorRetryRuleset: IMongoExceptionRetryRule[];
+    private readonly mongoErrorRetryRuleset: IMongoExceptionRetryRule[];
+    private readonly defaultRule: IMongoExceptionRetryRule;
+
+    public static getInstance(retryRuleOverride: Map<string, boolean>): MongoErrorRetryAnalyzer {
+        if (!this.instance) {
+            this.instance = new MongoErrorRetryAnalyzer(retryRuleOverride);
+        }
+        return this.instance;
+    }
+
+    private constructor(retryRuleOverride: Map<string, boolean>) {
+        this.mongoNetworkErrorRetryRuleset = createMongoNetworkErrorRetryRuleset(retryRuleOverride);
+        this.mongoErrorRetryRuleset = createMongoErrorRetryRuleset(retryRuleOverride);
+        this.defaultRule = new DefaultExceptionRule(retryRuleOverride);
+    }
+
     shouldRetry(error: Error): boolean {
-        const rule = MongoErrorRetryAnalyzer.getRetryRule(error);
+        const rule = this.getRetryRule(error);
         if (!rule) {
             // This should not happen.
             Lumberjack.error("MongoErrorRetryAnalyzer.shouldRetry() didn't get a rule", undefined, error);
             return false;
         }
+        const ruleName = rule.ruleName;
+        const decision = rule.shouldRetry();
+        const properties = {
+            ruleName,
+            decision,
+        };
 
-        return rule.shouldRetry;
-    },
+        Lumberjack.warning(`Error rule used ${rule.ruleName}, shouldRetry: ${decision}`, properties, error);
+        return decision;
+    }
 
     getRetryRule(error: Error): IMongoExceptionRetryRule {
         if (error.name === "MongoNetworkError") {
-            return MongoErrorRetryAnalyzer.getRetryRuleFromSet(error, mongoNetworkErrorRetryRuleset);
+            return this.getRetryRuleFromSet(error, this.mongoNetworkErrorRetryRuleset);
         }
 
         if (error.name === "MongoError") {
-            return MongoErrorRetryAnalyzer.getRetryRuleFromSet(error, mongoErrorRetryRuleset);
+            return this.getRetryRuleFromSet(error, this.mongoErrorRetryRuleset);
         }
 
-        return new DefaultExceptionRule();
-    },
+        return this.defaultRule;
+    }
 
     getRetryRuleFromSet(error: any, ruleSet: IMongoExceptionRetryRule[]): IMongoExceptionRetryRule {
-        const resultRule = ruleSet.find((rule) => rule.match(error)) || new DefaultExceptionRule();
-        const ruleName = resultRule.constructor.name;
-        const shouldRetry = resultRule.shouldRetry;
-        const properties = {
-            ruleName,
-            shouldRetry,
-        };
-        Lumberjack.warning(`Error rule used ${ruleName}, shouldRetry: ${shouldRetry}`, properties, error);
-        return resultRule;
-    },
+        return ruleSet.find((rule) => rule.match(error)) || this.defaultRule;
+    }
 };

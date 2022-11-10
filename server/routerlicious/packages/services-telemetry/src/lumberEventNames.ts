@@ -24,6 +24,9 @@ export enum LumberEventName {
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
 
+    // Database
+    MongoQuery = "MongoQuery",
+
     // Reliability
     SessionResult = "SessionResult",
     StartSessionResult = "StartSessionResult",

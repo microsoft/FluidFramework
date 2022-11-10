@@ -6,7 +6,7 @@
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -16,6 +16,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
     constructor(
         private readonly collection: Collection<T>,
         public readonly retryEnabled = false,
+        private readonly telemetryEnabled = false,
+        private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
     ) { }
 
     public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
@@ -134,7 +136,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
             );
             Lumberjack.info(`Created index ${indexName}`);
         } catch (error) {
-            Lumberjack.error(`Index creation failed`, error);
+            Lumberjack.error(`Index creation failed`, undefined, error);
         }
     }
 
@@ -147,7 +149,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
             );
             Lumberjack.info(`Created index ${indexName}`);
         } catch (error) {
-            Lumberjack.error(`Index creation failed`, error);
+            Lumberjack.error(`Index creation failed`, undefined, error);
         }
     }
 
@@ -204,16 +206,35 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
     }
 
     private async requestWithRetry<TOut>(request: () => Promise<TOut>, callerName: string): Promise<TOut> {
-        return requestWithRetry<TOut>(
-            request,
-            callerName,
-            {}, // telemetryProperties
-            (e) => this.retryEnabled && MongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
-            3, // maxRetries
-            1000, // retryAfterMs
-            (error: any, numRetries: number, retryAfterInterval: number) =>
-                numRetries * retryAfterInterval, // retryAfterIntervalCalculator
-        );
+        let metric: Lumber<LumberEventName.MongoQuery>;
+        if (this.telemetryEnabled) {
+            metric = Lumberjack.newLumberMetric(LumberEventName.MongoQuery);
+            metric.setProperty("callerName", callerName);
+        }
+        let metricError: any;
+        try {
+            return requestWithRetry<TOut>(
+                request,
+                callerName,
+                {}, // telemetryProperties
+                (e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+                3, // maxRetries
+                1000, // retryAfterMs
+                (error: any, numRetries: number, retryAfterInterval: number) =>
+                    numRetries * retryAfterInterval, // retryAfterIntervalCalculator
+            );
+        } catch (err) {
+            metricError = err;
+            throw err;
+        } finally {
+            if (metric) {
+                if (metricError) {
+                    metric.error("Query failed", metricError);
+                } else {
+                    metric.success("Query success");
+                }
+            }
+        }
     }
 }
 
@@ -221,6 +242,8 @@ export class MongoDb implements core.IDb {
     constructor(
         private readonly client: MongoClient,
         private readonly retryEnabled = false,
+        private readonly telemetryEnabled = false,
+        private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
     ) {
     }
 
@@ -235,7 +258,11 @@ export class MongoDb implements core.IDb {
 
     public collection<T>(name: string): core.ICollection<T> {
         const collection = this.client.db("admin").collection<T>(name);
-        return new MongoCollection<T>(collection, this.retryEnabled);
+        return new MongoCollection<T>(
+            collection,
+            this.retryEnabled,
+            this.telemetryEnabled,
+            this.mongoErrorRetryAnalyzer);
     }
 
     public async dropCollection(name: string): Promise<boolean> {
@@ -251,6 +278,8 @@ interface IMongoDBConfig {
     connectionPoolMinSize?: number;
     connectionPoolMaxSize?: number;
     facadeLevelRetry?: boolean;
+    facadeLevelTelemetry?: boolean;
+    facadeLevelRetryRuleOverride?: any;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -259,7 +288,9 @@ export class MongoDbFactory implements core.IDbFactory {
     private readonly globalDbEndpoint?: string;
     private readonly connectionPoolMinSize?: number;
     private readonly connectionPoolMaxSize?: number;
-    private readonly retryEnabled?: boolean;
+    private readonly retryEnabled: boolean = false;
+    private readonly telemetryEnabled: boolean = false;
+    private readonly retryRuleOverride: Map<string, boolean>;
     constructor(config: IMongoDBConfig) {
         const {
             operationsDbEndpoint,
@@ -277,7 +308,11 @@ export class MongoDbFactory implements core.IDbFactory {
         this.bufferMaxEntries = bufferMaxEntries;
         this.connectionPoolMinSize = connectionPoolMinSize;
         this.connectionPoolMaxSize = connectionPoolMaxSize;
-        this.retryEnabled = config.facadeLevelRetry;
+        this.retryEnabled = config.facadeLevelRetry || false;
+        this.telemetryEnabled = config.facadeLevelTelemetry || false;
+        this.retryRuleOverride = config.facadeLevelRetryRuleOverride
+            ? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
+            : new Map();
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -308,6 +343,8 @@ export class MongoDbFactory implements core.IDbFactory {
                 this.operationsDbEndpoint,
             options);
 
-        return new MongoDb(connection, this.retryEnabled);
+        const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(this.retryRuleOverride);
+
+        return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
     }
 }

@@ -3,17 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
+import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 
-class MongoNetworkTransientTransactionError implements IMongoExceptionRetryRule {
-    match(error: any): boolean {
-        return error.errorLabels?.length && (error.errorLabels as string[]).includes("TransientTransactionError");
+class MongoNetworkTransientTransactionError extends BaseMongoExceptionRetryRule {
+    protected defaultDecision: boolean = true;
+
+    constructor(retryRuleOverride: Map<string, boolean>) {
+        super(MongoNetworkTransientTransactionError.constructor.name, retryRuleOverride);
     }
 
-    shouldRetry: boolean = false;
+    public match(error: any): boolean {
+        return error.errorLabels?.length && (error.errorLabels as string[]).includes("TransientTransactionError");
+    }
 }
 
 // Maintain the list from more strick faster comparison to less strict slower comparison
-export const mongoNetworkErrorRetryRuleset: IMongoExceptionRetryRule[] = [
-    new MongoNetworkTransientTransactionError(),
-];
+export function createMongoNetworkErrorRetryRuleset(
+    retryRuleOverride: Map<string, boolean>,
+): IMongoExceptionRetryRule[] {
+    const mongoNetworkErrorRetryRuleset: IMongoExceptionRetryRule[] = [
+        new MongoNetworkTransientTransactionError(retryRuleOverride),
+    ];
+
+    return mongoNetworkErrorRetryRuleset;
+}

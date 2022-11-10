@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
+import { BaseMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 
-export class DefaultExceptionRule implements IMongoExceptionRetryRule {
-	match(error: any): boolean {
-		Lumberjack.error("DefaultRule.match() called for unknown error", undefined, error);
-		return true;
-	}
+export class DefaultExceptionRule extends BaseMongoExceptionRetryRule {
+    protected defaultDecision: boolean = false;
 
-	shouldRetry: boolean = false;
+    constructor(retryRuleOverride: Map<string, boolean>) {
+        super("DefaultExceptionRule", retryRuleOverride);
+    }
+
+    public match(error: any): boolean {
+        return true;
+    };
 }
