@@ -14,6 +14,7 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { MemberChangeKind } from "./Audience";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
@@ -78,29 +79,18 @@ export class FluidClientDebugger
     private readonly containerDirtyHandler = (): boolean => this.emit("containerDirty");
     private readonly containerSavedHandler = (): boolean => this.emit("containerSaved");
 
-    // #region DeltaManager-related event handlers
-
     private readonly incomingOpProcessedHandler = (op: ISequencedDocumentMessage): boolean =>
         this.emit("incomingOpProcessed", op);
 
     // #endregion
 
-    // #endregion
-
-    // #region Audience-related event handlers
-
-    private readonly audienceMemberAddedHandler = (clientId: string, client: IClient): boolean =>
-        this.emit("audienceMemberAdded", clientId, client);
-    private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): boolean =>
-        this.emit("audienceMemberRemoved", clientId, client);
-
-    // #endregion
-
-    // #region Debugger-specific event handlers
+    private readonly audienceMemberChangeHandler = (
+        change: MemberChangeKind,
+        clientId: string,
+        client: IClient,
+    ): boolean => this.emit("audienceMemberChange", change, clientId, client);
 
     private readonly debuggerDisposedHandler = (): boolean => this.emit("debuggerDisposed");
-
-    // #endregion
 
     /**
      * Whether or not the instance has been disposed yet.
@@ -138,10 +128,10 @@ export class FluidClientDebugger
         this.container.on("saved", () => this.onContainerSaved());
 
         // Bind Audience events
-        this.audience.on("addMember", (clientId, client) =>
+        this.audience.on("addMember", (clientId: string, client: IClient) =>
             this.onAudienceMemberAdded(clientId, client),
         );
-        this.audience.on("removeMember", (clientId, client) =>
+        this.audience.on("removeMember", (clientId: string, client: IClient) =>
             this.onAudienceMemberRemoved(clientId, client),
         );
 
@@ -282,7 +272,7 @@ export class FluidClientDebugger
             changeKind: "added",
             timestamp: Date.now(),
         });
-        this.emit("audienceMemberAdded", clientId, client);
+        this.audienceMemberChangeHandler(MemberChangeKind.Added, clientId, client);
     }
 
     private onAudienceMemberRemoved(clientId: string, client: IClient): void {
@@ -292,7 +282,7 @@ export class FluidClientDebugger
             changeKind: "removed",
             timestamp: Date.now(),
         });
-        this.emit("audienceMemberRemoved", clientId, client);
+        this.audienceMemberChangeHandler(MemberChangeKind.Removed, clientId, client);
     }
 
     // #endregion
@@ -337,8 +327,12 @@ export class FluidClientDebugger
         this.container.off("saved", () => this.onContainerSaved());
 
         // Bind Audience events
-        this.audience.off("addMember", this.audienceMemberAddedHandler);
-        this.audience.off("removeMember", this.audienceMemberRemovedHandler);
+        this.audience.off("addMember", (clientId: string, client: IClient) =>
+            this.onAudienceMemberAdded(clientId, client),
+        );
+        this.audience.off("removeMember", (clientId: string, client: IClient) =>
+            this.onAudienceMemberRemoved(clientId, client),
+        );
 
         this._disposed = true;
     }

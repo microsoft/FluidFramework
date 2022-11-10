@@ -52,12 +52,10 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
             setAudienceHistory(clientDebugger.getAudienceHistory());
         }
 
-        clientDebugger.on("audienceMemberAdded", onAudienceMembersChanged);
-        clientDebugger.on("audienceMemberRemoved", onAudienceMembersChanged);
+        clientDebugger.on("audienceMemberChange", onAudienceMembersChanged);
 
         return (): void => {
-            clientDebugger.off("audienceMemberAdded", onAudienceMembersChanged);
-            clientDebugger.off("audienceMemberRemoved", onAudienceMembersChanged);
+            clientDebugger.off("audienceMemberChange", onAudienceMembersChanged);
         };
     }, [clientDebugger, setAllAudienceMembers, setAudienceHistory]);
 

@@ -72,8 +72,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerDirty", listener: () => void): any;
     (event: "containerSaved", listener: () => void): any;
     (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
-    (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void): any;
-    (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void): any;
+    (event: "audienceMemberChange", listener: (change: MemberChangeKind, clientId: string, client: IClient) => void): any;
     (event: "debuggerDisposed", listener: () => void): any;
 }
 
@@ -83,6 +82,12 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 // @public
 export interface LogEntry {
     timestamp: number;
+}
+
+// @public
+export enum MemberChangeKind {
+    Added = "Added",
+    Removed = "Removed"
 }
 
 // @public

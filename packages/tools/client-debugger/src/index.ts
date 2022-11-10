@@ -11,6 +11,8 @@
  * @packageDocumentation
  */
 
+export { MemberChangeKind } from "./Audience";
+
 export {
     IFluidClientDebugger,
     IFluidClientDebuggerEvents,

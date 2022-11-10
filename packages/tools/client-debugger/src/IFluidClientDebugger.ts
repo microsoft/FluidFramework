@@ -14,6 +14,7 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { MemberChangeKind } from "./Audience";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
@@ -98,31 +99,29 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 
     // #endregion
 
-    // #region Audience-related events
-
     /**
-     * Emitted when a new member is added to the Audience.
+     * Emitted when a new member is added to or removed from the Audience.
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Signals that the following items have been updated:
+     *
+     * - {@link IFluidClientDebugger.getAudienceMembers}
+     *
+     * - {@link IFluidClientDebugger.getAudienceHistory}
+     *
+     * Listener parameters:
+     *
+     * - `change`: Whether the member was added to or removed from the Audience.
      *
      * - `clientId`: The unique ID of the newly added member client.
      *
      * - `client`: The newly added member client.
      */
-    (event: "audienceMemberAdded", listener: (clientId: string, client: IClient) => void);
-
-    /**
-     * Emitted when a member is removed from the Audience.
-     *
-     * @remarks Listener parameters:
-     *
-     * - `clientId`: The unique ID of the removed member client.
-     *
-     * - `client`: The removed member client.
-     */
-    (event: "audienceMemberRemoved", listener: (clientId: string, client: IClient) => void);
-
-    // #endregion
+    (
+        event: "audienceMemberChange",
+        listener: (change: MemberChangeKind, clientId: string, client: IClient) => void,
+    );
 
     /**
      * Emitted when the {@link IFluidClientDebugger} itself has been disposed.
@@ -214,11 +213,21 @@ export interface IFluidClientDebugger
 
     /**
      * Gets all of the Audience's {@link @fluidframework/container-definitions#IAudience.getMembers | members}.
+     *
+     * @remarks
+     *
+     * The `audienceMemberChange` event signals that this data has been updated.
+     * Consumers will need to re-call this to get the most up-to-date data.
      */
     getAudienceMembers(): Map<string, IClient>;
 
     /**
      * Historical log of audience member changes.
+     *
+     * @remarks
+     *
+     * The `audienceMemberChange` event signals that this data has been updated.
+     * Consumers will need to re-call this to get the most up-to-date data.
      */
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
 

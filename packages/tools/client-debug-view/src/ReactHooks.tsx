@@ -40,32 +40,40 @@ export function useMyClientId(clientDebugger: IFluidClientDebugger): string | un
 }
 
 /**
+ * React hook for getting the current Audience of the session client.
+ *
+ * @internal
+ */
+export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, IClient> {
+    const [audience, setAudience] = React.useState<Map<string, IClient>>(
+        clientDebugger.getAudienceMembers(),
+    );
+
+    React.useEffect(() => {
+        function onAudienceMemberChange(): void {
+            setAudience(clientDebugger.getAudienceMembers());
+        }
+
+        clientDebugger.on("audienceMemberChange", onAudienceMemberChange);
+
+        return (): void => {
+            clientDebugger.off("audienceMemberChange", onAudienceMemberChange);
+        };
+    }, [clientDebugger, setAudience]);
+
+    return audience;
+}
+
+/**
  * React hook for getting the audience member data for the session client.
  *
  * @internal
  */
 export function useMyClientConnection(clientDebugger: IFluidClientDebugger): IClient | undefined {
     const myClientId = useMyClientId(clientDebugger);
+    const audience = useAudience(clientDebugger);
 
-    const [audienceMembers, setAudienceMembers] = React.useState<Map<string, IClient>>(
-        clientDebugger.getAudienceMembers(),
-    );
-
-    React.useEffect(() => {
-        function onAudienceMembersChange(): void {
-            setAudienceMembers(clientDebugger.getAudienceMembers());
-        }
-
-        clientDebugger.on("audienceMemberAdded", onAudienceMembersChange);
-        clientDebugger.on("audienceMemberRemoved", onAudienceMembersChange);
-
-        return (): void => {
-            clientDebugger.off("audienceMemberAdded", onAudienceMembersChange);
-            clientDebugger.off("audienceMemberRemoved", onAudienceMembersChange);
-        };
-    }, [clientDebugger, setAudienceMembers]);
-
-    return myClientId === undefined ? undefined : audienceMembers.get(myClientId);
+    return myClientId === undefined ? undefined : audience.get(myClientId);
 }
 
 /**
