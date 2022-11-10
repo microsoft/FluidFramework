@@ -175,7 +175,7 @@ export class Package {
             ? "pnpm i"
             : this.packageManager === "yarn"
             ? "npm run install-strict"
-            : "npm i --no-package-lock --no-shrinkwrap";
+            : "npm i";
     }
 
     private get color() {
@@ -208,7 +208,7 @@ export class Package {
 
         await copyFileAsync(rootNpmRC, npmRC);
         const result = await execWithErrorAsync(
-            this.installCommand,
+            `${this.installCommand} --no-package-lock --no-shrinkwrap`,
             { cwd: this.directory },
             this.nameColored,
         );
@@ -223,10 +223,10 @@ export class Package {
             return true;
         }
 
-        if (this.packageManager === "pnpm" || this.packageManager === "yarn") {
-            // yarn and pnpm have fast reinstall, so always run instead of checking the install status ourselves
-            return false;
-        }
+        // if (this.packageManager === "pnpm" || this.packageManager === "yarn") {
+        //     // yarn and pnpm have fast reinstall, so always run instead of checking the install status ourselves
+        //     return false;
+        // }
 
         if (!existsSync(path.join(this.directory, "node_modules"))) {
             if (print) {
