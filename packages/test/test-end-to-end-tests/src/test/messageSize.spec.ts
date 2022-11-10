@@ -185,20 +185,24 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it.only("Single large op passes when compression enabled, compressed content is over max op size", async function() {
-        const maxMessageSizeInBytes = 15 * 1024 * 1024; // 15MB
-        await setupContainers({
-            ...testContainerConfig,
-            runtimeOptions: {
-                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-            },
-        }, {});
+    itExpects.only(
+        "Single large op passes when compression enabled, compressed content is over max op size",
+        [
+            { eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
+        ], async function() {
+            const maxMessageSizeInBytes = 15 * 1024 * 1024; // 15MB
+            await setupContainers({
+                ...testContainerConfig,
+                runtimeOptions: {
+                    compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+                },
+            }, {});
 
-        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-        const messageCount = 1;
-        setMapKeys(dataObject1map, messageCount, largeString);
-        await provider.ensureSynchronized();
+            const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+            const messageCount = 1;
+            setMapKeys(dataObject1map, messageCount, largeString);
+            await provider.ensureSynchronized();
 
-        assertMapValues(dataObject2map, messageCount, largeString);
-    }).timeout(500000);
+            assertMapValues(dataObject2map, messageCount, largeString);
+        }).timeout(500000);
 });
