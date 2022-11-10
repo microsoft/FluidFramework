@@ -155,9 +155,9 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   }
 
     /**
-     * {@inheritDoc IServiceAudience._getRuntimeAudience}
+     * {@inheritDoc IServiceAudience._getInternalAudience}
      */
-    public _getRuntimeAudience(): IAudience {
+    public _getInternalAudience(): IAudience {
         return this.audience;
     }
 }

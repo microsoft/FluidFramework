@@ -71,8 +71,8 @@ describe("ClientDebugger unit tests", () => {
 
         _debuggerProps = {
             containerId,
-            container: tinyliciousContainer._getRuntimeContainer!(),
-            audience: tinyliciousServices.audience._getRuntimeAudience!(),
+            container: tinyliciousContainer._getInternalContainer!(),
+            audience: tinyliciousServices.audience._getInternalAudience!(),
             containerData: tinyliciousContainer.initialObjects,
         };
     });

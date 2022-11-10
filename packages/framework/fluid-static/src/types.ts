@@ -193,7 +193,7 @@ export interface IServiceAudience<M extends IMember>
      *
      * @internal
      */
-    _getRuntimeAudience?: () => IAudience;
+    _getInternalAudience?: () => IAudience;
 }
 
 /**
