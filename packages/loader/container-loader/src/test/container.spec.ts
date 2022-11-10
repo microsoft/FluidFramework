@@ -7,11 +7,11 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import assert from "assert";
-import { AttachState, IAudience, IContainer, IContainerEvents, IDeltaManager, IDeltaManagerEvents, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { AttachState, IAudience, IContainer, IContainerEvents, IDeltaManager, IDeltaManagerEvents, IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, IDocumentMessage, IClientConfiguration, IClientDetails, ISignalMessage } from "@fluidframework/protocol-definitions";
 import { waitContainerToCatchUp } from "../container";
 import { ConnectionState } from "../connectionState";
 
@@ -19,6 +19,35 @@ class MockDeltaManager
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Partial<Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "on" | "off" | "once">>
 { // eslint-disable-line @typescript-eslint/brace-style
+    hasCheckpointSequenceNumber = true;
+    lastKnownSeqNumber = 2;
+    lastSequenceNumber = 1;
+}
+class MockDeltaManagerDisconnect
+    extends TypedEventEmitter<IDeltaManagerEvents>
+    implements Partial<Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "on" | "off" | "once">> {
+    inbound?: IDeltaQueue<ISequencedDocumentMessage> | undefined;
+    outbound?: IDeltaQueue<IDocumentMessage[]> | undefined;
+    inboundSignal?: IDeltaQueue<ISignalMessage> | undefined;
+    minimumSequenceNumber?: number | undefined;
+    lastMessage?: ISequencedDocumentMessage | undefined;
+    initialSequenceNumber?: number | undefined;
+    clientDetails?: IClientDetails | undefined;
+    version?: string | undefined;
+    maxMessageSize?: number | undefined;
+    serviceConfiguration?: IClientConfiguration | undefined;
+    active?: boolean | undefined;
+    readOnlyInfo?: ReadOnlyInfo | undefined;
+    submitSignal?(content: any): void {
+        throw new Error("Method not implemented.");
+    }
+    flush?(): void {
+        throw new Error("Method not implemented.");
+    }
+    disposed?: boolean | undefined;
+    dispose(error?: Error | undefined): void {
+        this.emit("disconnect", "test");
+    };
     hasCheckpointSequenceNumber = true;
     lastKnownSeqNumber = 2;
     lastSequenceNumber = 1;
@@ -77,15 +106,12 @@ describe("Container", () => {
             await waitP;
         });
 
-        it("Disconnected Container gets Connected then waits for catching up", async () => {
-            const mockContainer = new MockContainer();
-            mockContainer.connectionState = ConnectionState.Disconnected;
-
-            const waitP = waitContainerToCatchUp(mockContainer as any as IContainer);
-            mockContainer.mockDeltaManager.emit("op", { sequenceNumber: 2 });
-
-            // Should resolve immediately, otherwise test will time out
-            await waitP;
+        it.only("it emits a reason", async () => {
+            const mockContainer = new MockDeltaManagerDisconnect();
+            mockContainer.on("disconnect", console.log);
+            mockContainer.dispose();
+            await new Promise<void>((resolve, reject) => mockContainer.on("disconnect", resolve));
+            mockContainer.on("disconnect", (reason) => console.log(reason));
         });
     });
 });

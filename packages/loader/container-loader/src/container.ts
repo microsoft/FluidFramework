@@ -1519,6 +1519,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.on("disconnect", (reason: string) => {
             this.collabWindowTracker?.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
+            console.log("disconnect from container.ts", reason);
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
