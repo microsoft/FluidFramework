@@ -29,7 +29,7 @@ const startingExternalData =
 const localStorageKey = "fake-external-data";
 
 export interface IExternalDataSourceEvents extends IEvent {
-    (event: "dataWritten", listener: (data: string) => void);
+    (event: "dataWritten", listener: () => void);
 }
 
 /**
@@ -58,7 +58,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
         // Write to persisted storage
         window.localStorage.setItem(localStorageKey, data);
         // Emit for debug views to update
-        this.emit("dataWritten", data);
+        this.emit("dataWritten");
     }
 
     /**
@@ -66,6 +66,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      */
     public readonly debugResetData = (): void => {
         window.localStorage.setItem(localStorageKey, startingExternalData);
+        // Emit for debug views to update
+        this.emit("dataWritten");
     };
 }
 
