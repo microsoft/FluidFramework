@@ -4,9 +4,6 @@
  */
 import program from "commander";
 
-import { findPackagesUnderPath, getAndUpdatePackageDetails } from "./packageJson";
-import { generateTests } from "./testGeneration";
-
 /**
  * argument parsing
  */
@@ -29,7 +26,9 @@ program
     .parse(process.argv);
 
 async function run(): Promise<boolean> {
-    console.error(`fluid-type-validator is deprecated. Install @fluid-tools/build-cli instead and use 'flub generate typetests.`);
+    console.error(
+        `fluid-type-validator is deprecated. Install @fluid-tools/build-cli instead and use 'flub generate typetests.`,
+    );
     return false;
 }
 
