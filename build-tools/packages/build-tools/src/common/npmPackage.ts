@@ -12,7 +12,7 @@ import sortPackageJson from "sort-package-json";
 import { options } from "../fluidBuild/options";
 import { IPackageManifest } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
 import {
     ExecAsyncResult,
     copyFileAsync,
@@ -26,7 +26,7 @@ import {
     writeFileAsync,
 } from "./utils";
 
-const { info, verbose } = defaultLogger;
+const { info, verbose, errorLog: error } = defaultLogger;
 export type ScriptDependencies = { [key: string]: string[] };
 
 interface IPerson {
@@ -96,6 +96,7 @@ export class Package {
     private _markForBuild: boolean = false;
 
     private _packageJson: IPackage;
+    public readonly packageManager: PackageManager;
 
     constructor(
         private readonly packageJsonFileName: string,
@@ -103,6 +104,13 @@ export class Package {
         public readonly monoRepo?: MonoRepo,
     ) {
         this._packageJson = readJsonSync(packageJsonFileName);
+        const pnpmWorkspace = path.join(this.directory, "pnpm-workspace.yaml");
+        const yarnPath = path.join(this.directory, "yarn.lock");
+        this.packageManager = existsSync(pnpmWorkspace)
+            ? "pnpm"
+            : existsSync(yarnPath)
+            ? "yarn"
+            : "npm";
         verbose(`Package Loaded: ${this.nameColored}`);
     }
 
@@ -162,6 +170,14 @@ export class Package {
         return path.dirname(this.packageJsonFileName);
     }
 
+    public get installCommand(): string {
+        return this.packageManager === "pnpm"
+            ? "pnpm i"
+            : this.packageManager === "yarn"
+            ? "npm run install-strict"
+            : "npm i --no-package-lock --no-shrinkwrap";
+    }
+
     private get color() {
         return Package.chalkColor[this.packageId % Package.chalkColor.length];
     }
@@ -189,14 +205,10 @@ export class Package {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc");
         const npmRC = path.join(this.directory, ".npmrc");
-        const npmCommand =
-            this.monoRepo?.npmClient === "pnpm"
-                ? "pnpm i"
-                : "npm i --no-package-lock --no-shrinkwrap";
 
         await copyFileAsync(rootNpmRC, npmRC);
         const result = await execWithErrorAsync(
-            npmCommand,
+            this.installCommand,
             { cwd: this.directory },
             this.nameColored,
         );
@@ -210,9 +222,15 @@ export class Package {
             // No dependencies
             return true;
         }
+
+        if (this.packageManager === "pnpm" || this.packageManager === "yarn") {
+            // yarn and pnpm have fast reinstall, so always run instead of checking the install status ourselves
+            return false;
+        }
+
         if (!existsSync(path.join(this.directory, "node_modules"))) {
             if (print) {
-                console.error(`${this.nameColored}: node_modules not installed`);
+                error(`${this.nameColored}: node_modules not installed`);
             }
             return false;
         }
@@ -226,7 +244,7 @@ export class Package {
             ) {
                 succeeded = false;
                 if (print) {
-                    console.error(`${this.nameColored}: dependency ${dep.name} not found`);
+                    error(`${this.nameColored}: dependency ${dep.name} not found`);
                 }
             }
         }
@@ -237,9 +255,9 @@ export class Package {
         if (this.monoRepo) {
             throw new Error("Package in a monorepo shouldn't be installed");
         }
-        console.log(`${this.nameColored}: Installing - npm i`);
-        const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.directory }, this.directory);
+
+        info(`${this.nameColored}: Installing - ${this.installCommand}`);
+        return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
     }
 }
 
@@ -339,7 +357,7 @@ export class Packages {
 
             const globPkg = globPath + "/package.json";
             for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-                console.log(`Loading from glob: ${pkg}`);
+                info(`Loading from glob: ${pkg}`);
                 packages.push(new Package(pkg, group, monoRepo));
             }
         } else {
@@ -357,7 +375,10 @@ export class Packages {
     }
 
     public async noHoistInstall(repoRoot: string) {
-        return this.queueExecOnAllPackage((pkg) => pkg.noHoistInstall(repoRoot), `(p)npm install`);
+        return this.queueExecOnAllPackage(
+            (pkg) => pkg.noHoistInstall(repoRoot),
+            "install dependencies",
+        );
     }
 
     public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
