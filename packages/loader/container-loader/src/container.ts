@@ -1526,7 +1526,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Some "warning" events come from outside the container and are logged
             // elsewhere (e.g. summarizing container). We shouldn't log these here.
             if (warn.logged !== true) {
-                this.logContainerError(warn);
+                this.mc.logger.sendTelemetryEvent({ eventName: "ContainerWarning" }, warn);
             }
             this.emit("warning", warn);
         });
@@ -1828,10 +1828,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._dirtyContainer = dirty;
         this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-    }
-
-    private logContainerError(warning: ContainerWarning) {
-        this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 
     /**
