@@ -22,30 +22,34 @@ export type ContainerStateViewProps = HasClientDebugger;
 export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
     const { clientDebugger } = props;
 
-    const [isDisposed, updateIsDisposed] = React.useState<boolean>(clientDebugger.disposed);
-    const [attachState, updateAttachState] = React.useState(clientDebugger.getAttachState());
-    const [connectionState, updateConnectionState] = React.useState(
-        clientDebugger.getConnectionState(),
+    const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
+        clientDebugger.disposed,
+    );
+    const [containerAttachState, setContainerAttachState] = React.useState(
+        clientDebugger.getContainerAttachState(),
+    );
+    const [containerConnectionState, setContainerConnectionState] = React.useState(
+        clientDebugger.getContainerConnectionState(),
     );
 
     React.useEffect(() => {
-        function onConnectionChange(): void {
-            updateConnectionState(clientDebugger.getConnectionState);
-            updateAttachState(clientDebugger.getAttachState);
+        function onContainerConnectionChange(): void {
+            setContainerConnectionState(clientDebugger.getContainerConnectionState());
+            setContainerAttachState(clientDebugger.getContainerAttachState());
         }
 
-        function onDispose(): void {
-            updateIsDisposed(true);
+        function onContainerDisposed(): void {
+            setIsContainerDisposed(true);
         }
 
-        clientDebugger.on("containerConnected", onConnectionChange);
-        clientDebugger.on("containerDisconnected", onConnectionChange);
-        clientDebugger.on("containerClosed", onDispose);
+        clientDebugger.on("containerConnected", onContainerConnectionChange);
+        clientDebugger.on("containerDisconnected", onContainerConnectionChange);
+        clientDebugger.on("containerClosed", onContainerDisposed);
 
         return (): void => {
-            clientDebugger.off("containerConnected", onConnectionChange);
-            clientDebugger.off("containerDisconnected", onConnectionChange);
-            clientDebugger.off("containerClosed", onDispose);
+            clientDebugger.off("containerConnected", onContainerConnectionChange);
+            clientDebugger.off("containerDisconnected", onContainerConnectionChange);
+            clientDebugger.off("containerClosed", onContainerDisposed);
         };
     }, [clientDebugger]);
 
@@ -54,12 +58,12 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
             <b>Status: </b>
         </span>,
     ];
-    if (isDisposed) {
+    if (isContainerDisposed) {
         children.push(<span>Disposed</span>);
     } else {
-        children.push(<AttachStateView attachState={attachState} />);
-        if (attachState === AttachState.Attached) {
-            children.push(<ConnectionStateView connectionState={connectionState} />);
+        children.push(<AttachStateView attachState={containerAttachState} />);
+        if (containerAttachState === AttachState.Attached) {
+            children.push(<ConnectionStateView connectionState={containerConnectionState} />);
         }
     }
 

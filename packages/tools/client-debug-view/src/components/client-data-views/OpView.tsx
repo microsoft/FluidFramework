@@ -20,32 +20,32 @@ import { Accordion } from "../utility-components";
  */
 export interface OpViewProps {
     /**
-     * The op (message) to render.
+     * The time-stamped operation (op) log entry to render.
      */
-    message: ISequencedDocumentMessage;
+    op: ISequencedDocumentMessage;
 
     /**
-     * The client ID for the session.
+     * The client ID for the session, if the Container is connected.
      */
-    clientId: string | undefined;
+    myClientId: string | undefined;
 }
 
 /**
  * Simple view for a single op (message).
  */
 export function OpView(props: OpViewProps): React.ReactElement {
-    const { message, clientId } = props;
+    const { op, myClientId: clientId } = props;
 
-    const opTimeStamp = new Date(message.timestamp);
+    const opTimeStamp = new Date(op.timestamp);
     const nowTimeStamp = new Date();
 
     const wasOpToday = nowTimeStamp.getDate() === opTimeStamp.getDate();
-    const doesOpBelongToMe = message.clientId === clientId;
+    const doesOpBelongToMe = op.clientId === clientId;
 
     const header = (
         <Stack horizontal tokens={{ childrenGap: 5 }}>
             <StackItem>
-                <b>Op #{message.sequenceNumber}</b>:{" "}
+                <b>Op #{op.sequenceNumber}</b>:{" "}
                 {wasOpToday ? opTimeStamp.toTimeString() : opTimeStamp.toDateString()}
             </StackItem>
             <StackItem>
@@ -55,9 +55,9 @@ export function OpView(props: OpViewProps): React.ReactElement {
     );
 
     let dataView: React.ReactElement = <></>;
-    if (message.data !== undefined) {
+    if (op.data !== undefined) {
         /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-        const json = JSON.parse(message.data);
+        const json = JSON.parse(op.data);
         dataView = (
             <Accordion header={<b>Raw Data</b>}>
                 <ReactJson src={json} />
@@ -66,11 +66,7 @@ export function OpView(props: OpViewProps): React.ReactElement {
         /* eslint-enable @typescript-eslint/no-unsafe-assignment */
     }
 
-    const headerBackgroundColor = !message.clientId
-        ? "lightyellow"
-        : doesOpBelongToMe
-        ? "lightgreen"
-        : "lightblue";
+    const headerBackgroundColor = doesOpBelongToMe ? "lightblue" : "lightyellow";
 
     return (
         <Accordion
@@ -92,19 +88,19 @@ export function OpView(props: OpViewProps): React.ReactElement {
                 </StackItem>
                 <StackItem>
                     <b>Client: </b>
-                    {`${message.clientId}${doesOpBelongToMe ? " (me)" : ""}`}
+                    {`${op.clientId}${doesOpBelongToMe ? " (me)" : ""}`}
                 </StackItem>
                 <StackItem>
                     <b>Type: </b>
-                    {message.type}
+                    {op.type}
                 </StackItem>
                 <StackItem>
                     <b>Client sequence number: </b>
-                    {message.clientSequenceNumber}
+                    {op.clientSequenceNumber}
                 </StackItem>
                 <StackItem>
                     <b>Reference sequence number: </b>
-                    {message.referenceSequenceNumber}
+                    {op.referenceSequenceNumber}
                 </StackItem>
                 <StackItem>{dataView}</StackItem>
             </Stack>

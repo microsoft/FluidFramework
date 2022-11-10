@@ -29,6 +29,7 @@ export type ContainerDataViewProps = HasClientDebugger;
  */
 export function ContainerDataView(props: ContainerDataViewProps): React.ReactElement {
     const { clientDebugger } = props;
+    const { containerId } = clientDebugger;
 
     // State bound to outer container
     const [isContainerDirty, setIsContainerDirty] = useState<boolean>(

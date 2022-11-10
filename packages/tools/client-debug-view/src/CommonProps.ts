@@ -5,6 +5,16 @@
 import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 /**
+ * Base interface for component props that observe data and updates coming from the Client debugger.
+ */
+export interface HasClientDebugger {
+    /**
+     * Debugger object that is collecting session data to be displayed.
+     */
+    clientDebugger: IFluidClientDebugger;
+}
+
+/**
  * Base interface for component props that include the ID of a Fluid Container.
  */
 export interface HasContainerId {
@@ -15,11 +25,11 @@ export interface HasContainerId {
 }
 
 /**
- * Base interface for component props that observe data and updates coming from the Client debugger.
+ * Base interface for component props that include a session client ID.
  */
-export interface HasClientDebugger {
+export interface HasClientId {
     /**
-     * Debugger object that is collecting session data to be displayed.
+     * The unique ID of the session client.
      */
-    clientDebugger: IFluidClientDebugger;
+    clientId: string;
 }

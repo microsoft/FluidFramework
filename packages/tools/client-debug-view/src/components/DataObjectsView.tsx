@@ -4,8 +4,6 @@
  */
 import React from "react";
 
-import { LoadableObjectRecord } from "@fluidframework/fluid-static";
-
 import { HasClientDebugger } from "../CommonProps";
 import { SharedObjectRenderOptions } from "../RendererOptions";
 import { FluidObjectView } from "./data-object-views";
@@ -31,9 +29,9 @@ export interface DataObjectsViewProps extends HasClientDebugger {
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
     const { clientDebugger, renderOptions } = props;
 
-    // TODO: get data
+    const { containerData } = clientDebugger;
 
-    const objects = Object.entries(initialObjects).map(([key, value]) => ({
+    const objects = Object.entries(containerData).map(([key, value]) => ({
         name: key,
         loadableObject: value,
     }));
@@ -49,7 +47,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
     return (
         <div className="data-objects-view">
-            <h3>initialObjects Tree</h3>
+            <h3>Container Data</h3>
             {children}
         </div>
     );

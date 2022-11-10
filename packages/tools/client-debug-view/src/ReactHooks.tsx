@@ -19,12 +19,12 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  */
 export function useMyClientId(clientDebugger: IFluidClientDebugger): string | undefined {
     const [myClientId, setMyClientId] = React.useState<string | undefined>(
-        clientDebugger.getMyClientId(),
+        clientDebugger.getClientId(),
     );
 
     React.useEffect(() => {
         function onContainerConnectionChange(): void {
-            setMyClientId(clientDebugger.getMyClientId());
+            setMyClientId(clientDebugger.getClientId());
         }
 
         clientDebugger.on("containerConnected", onContainerConnectionChange);
@@ -40,11 +40,11 @@ export function useMyClientId(clientDebugger: IFluidClientDebugger): string | un
 }
 
 /**
- * React hook for getting the member data for the session user.
+ * React hook for getting the audience member data for the session client.
  *
  * @internal
  */
-export function useMyAudienceData(clientDebugger: IFluidClientDebugger): IClient | undefined {
+export function useMyClientConnection(clientDebugger: IFluidClientDebugger): IClient | undefined {
     const myClientId = useMyClientId(clientDebugger);
 
     const [audienceMembers, setAudienceMembers] = React.useState<Map<string, IClient>>(

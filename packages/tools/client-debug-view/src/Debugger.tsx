@@ -33,16 +33,41 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
         getFluidClientDebugger(containerId),
     );
 
-    // TODO: respond to disposal of debugger
-
-    return clientDebugger === undefined ? (
-        <NoDebuggerInstance
-            containerId={containerId}
-            onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
-        />
-    ) : (
-        <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />
+    const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
+        clientDebugger?.disposed ?? false,
     );
+
+    React.useEffect(() => {
+        function onDebuggerDisposed(): void {
+            setIsContainerDisposed(true);
+        }
+
+        clientDebugger?.on("debuggerDisposed", onDebuggerDisposed);
+
+        return (): void => {
+            clientDebugger?.off("debuggerDisposed", onDebuggerDisposed);
+        };
+    }, [clientDebugger, setIsContainerDisposed]);
+
+    if (clientDebugger === undefined) {
+        return (
+            <NoDebuggerInstance
+                containerId={containerId}
+                onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+            />
+        );
+    }
+
+    if (isContainerDisposed) {
+        return (
+            <DebuggerDisposed
+                containerId={containerId}
+                onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+            />
+        );
+    }
+
+    return <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />;
 }
 
 /**
@@ -66,6 +91,7 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
 
     const retryButtonTooltipId = useId("retry-button-tooltip");
 
+    // TODO: give more info and link to docs, etc. for using the tooling.
     return (
         <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
             <StackItem>

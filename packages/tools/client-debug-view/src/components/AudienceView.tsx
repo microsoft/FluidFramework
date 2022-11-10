@@ -5,9 +5,11 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
-import { IMember } from "@fluidframework/fluid-static";
+import { IClient } from "@fluidframework/protocol-definitions";
 
+import { combineMembersWithMultipleConnections } from "../Audience";
 import { HasClientDebugger } from "../CommonProps";
+import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
@@ -30,31 +32,41 @@ export interface AudienceViewProps extends HasClientDebugger {
  * @param props - See {@link AudienceViewProps}.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-    const { audience, myself, onRenderAudienceMember } = props;
+    const { clientDebugger, onRenderAudienceMember } = props;
 
-    const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
+    const myClientId = useMyClientId(clientDebugger);
+    const myClientConnection = useMyClientConnection(clientDebugger);
+
+    const [allAudienceMembers, setAllAudienceMembers] = useState<Map<string, IClient>>(
+        clientDebugger.getAudienceMembers(),
+    );
 
     useEffect(() => {
-        function onUpdateMembers(): void {
-            updateAllMembers(audience.getMembers());
+        function onAudienceMembersChanged(): void {
+            setAllAudienceMembers(clientDebugger.getAudienceMembers());
         }
 
-        audience.on("membersChanged", onUpdateMembers);
+        clientDebugger.on("audienceMemberAdded", onAudienceMembersChanged);
+        clientDebugger.on("audienceMemberRemoved", onAudienceMembersChanged);
 
         return (): void => {
-            audience.off("membersChanged", onUpdateMembers);
+            clientDebugger.off("audienceMemberAdded", onAudienceMembersChanged);
+            clientDebugger.off("audienceMemberRemoved", onAudienceMembersChanged);
         };
-    }, [audience]);
+    }, [clientDebugger, setAllAudienceMembers]);
+
+    const transformedAudience = combineMembersWithMultipleConnections(allAudienceMembers);
 
     const memberViews: React.ReactElement[] = [];
-    for (const member of allMembers.values()) {
+    for (const member of transformedAudience.values()) {
         memberViews.push(
-            <li key={member.userId}>
+            <StackItem key={member.userId}>
                 {onRenderAudienceMember({
                     audienceMember: member,
-                    isMyself: member.userId === myself?.userId,
+                    myClientId,
+                    myClientConnection,
                 })}
-            </li>,
+            </StackItem>,
         );
     }
 
@@ -68,11 +80,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         >
             <StackItem>
                 <div className="audience-view-members-list">
-                    <b>Audience members ({allMembers.size})</b>
+                    <b>Audience members ({allAudienceMembers.size})</b>
                 </div>
             </StackItem>
             <StackItem>
-                <ul>{memberViews}</ul>
+                <Stack>{memberViews}</Stack>
             </StackItem>
         </Stack>
     );

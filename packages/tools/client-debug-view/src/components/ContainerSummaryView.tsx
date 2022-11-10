@@ -6,7 +6,7 @@ import { Stack } from "@fluentui/react";
 import React from "react";
 
 import { HasClientDebugger } from "../CommonProps";
-import { useMyAudienceData } from "../ReactHooks";
+import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { ContainerStateView } from "./ContainerStateView";
 
 /**
@@ -24,16 +24,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
     const { containerId } = clientDebugger;
 
-    const myAudienceData = useMyAudienceData(clientDebugger);
-
-    React.useEffect(() => {
-        function onAudienceMemberAdded(): void {
-            setMyClientId(clientDebugger.getMyClientId());
-        }
-
-        clientDebugger.on("audienceMemberAdded", onAudienceMemberAdded);
-        clientDebugger.on("audienceMemberRemoved", onAudienceMemberAdded);
-    }, [clientDebugger]);
+    const myClientId = useMyClientId(clientDebugger);
+    const myClientConnection = useMyClientConnection(clientDebugger);
 
     const maybeClientIdView =
         myClientId === undefined ? (
@@ -46,12 +38,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
         );
 
     const maybeAudienceIdView =
-        myself === undefined ? (
+        myClientConnection === undefined ? (
             <></>
         ) : (
             <div>
                 <b>My audience ID: </b>
-                {myself.userId}
+                {myClientConnection.user.id}
             </div>
         );
 
