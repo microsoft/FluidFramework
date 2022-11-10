@@ -70,12 +70,20 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     /**
      * Emitted when the Container has new pending local operations (ops)
      * (i.e. {@link @fluidframework/container-definitions#IContainer.dirty} is `true`).
+     *
+     * @remarks
+     *
+     * Signals that {@link IFluidClientDebugger.isContainerDirty} has transitioned from `false` to `true`.
      */
     (event: "containerDirty", listener: () => void);
 
     /**
      * Emitted when the Container finishes processing all pending local operations (ops)
      * (i.e. {@link @fluidframework/container-definitions#IContainer.dirty} is `false`).
+     *
+     * @remarks
+     *
+     * Signals that {@link IFluidClientDebugger.isContainerDirty} has transitioned from `true` to `false`.
      */
     (event: "containerSaved", listener: () => void);
 
@@ -84,7 +92,15 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     /**
      * Emitted when an incoming operation (op) has been processed.
      *
-     * @remarks Listener parameters:
+     * @remarks
+     *
+     * Signals that the following items have been updated:
+     *
+     * - {@link IFluidClientDebugger.getOpsLog}
+     *
+     * - {@link IFluidClientDebugger.getMinimumSequenceNumber}
+     *
+     * Listener parameters:
      *
      * - `message`: The op that was processed.
      *
@@ -185,11 +201,22 @@ export interface IFluidClientDebugger
 
     /**
      * Whether or not the Container is currently {@link @fluidframework/container-definitions#IContainer.isDirty | dirty}.
+     *
+     * @remarks
+     *
+     * The `containerDirty` event signals that this has transitioned from `false` to `true`.
+     *
+     * The `containerSaved` event signals that this has transitioned from `true` to `false`.
      */
     isContainerDirty(): boolean;
 
     /**
      * Whether or not the Container has been {@link @fluidframework/container-definitions#IContainer.disposed}.
+     *
+     * @remarks
+     *
+     * The `containerClosed` event signals that this has transitioned from `false` to `true`.
+     * It will never transition back.
      */
     isContainerClosed(): boolean;
 
@@ -197,11 +224,21 @@ export interface IFluidClientDebugger
 
     /**
      * Gets the Container's current {@link @fluid-framework/container-definitions#IDeltaManager.minimumSequenceNumber}.
+     *
+     * @remarks
+     *
+     * The `incomingOpProcessed` event signals that this data has been updated.
+     * Consumers will need to re-call this to get the most up-to-date data.
      */
     getMinimumSequenceNumber(): number;
 
     /**
      * All operations (ops) processed since the debugger was initialized.
+     *
+     * @remarks
+     *
+     * The `incomingOpProcessed` event signals that this data has been updated.
+     * Consumers will need to re-call this to get the most up-to-date data.
      */
     getOpsLog(): readonly ISequencedDocumentMessage[];
 
