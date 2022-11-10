@@ -145,6 +145,7 @@ export class ScribeLambda implements IPartitionLambda {
                         const lastSummary = await this.summaryReader.readLastSummary();
                         if (!lastSummary.fromSummary) {
                             const errorMsg = `Required summary can't be fetched`;
+                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                             throw Error(errorMsg);
                         }
                         this.term = lastSummary.term;
@@ -191,6 +192,7 @@ export class ScribeLambda implements IPartitionLambda {
                         const errorMsg = `Invalid message sequence number.`
                             + `Current message @${value.operation.sequenceNumber}.`
                             + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
+                        Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                         throw new Error(errorMsg);
                     }
                 }
@@ -250,15 +252,6 @@ export class ScribeLambda implements IPartitionLambda {
                                     this.updateProtocolHead(this.protocolHandler.sequenceNumber);
                                     this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
                                     const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
-                                    this.context.log?.info(
-                                        summaryResult,
-                                        {
-                                            messageMetaData: {
-                                                documentId: this.documentId,
-                                                tenantId: this.tenantId,
-                                            },
-                                        },
-                                    );
                                     Lumberjack.info(summaryResult,
                                         getLumberBaseProperties(this.documentId, this.tenantId));
                                 } else {
@@ -375,29 +368,35 @@ export class ScribeLambda implements IPartitionLambda {
         }
 
         // Create the checkpoint
-        const checkpoint = this.generateScribeCheckpoint(message.offset);
-        this.checkpointInfo.rawMessagesSinceCheckpoint++;
         this.updateCheckpointMessages(message);
+        this.checkpointInfo.rawMessagesSinceCheckpoint++;
         const checkpointReason = this.getCheckpointReason();
         if (checkpointReason !== undefined) {
             // checkpoint the current up-to-date state
+            this.prepareCheckpoint(message, checkpointReason);
+        } else if (this.noActiveClients) {
+            this.prepareCheckpoint(message, ScribeCheckpointReason.NoClients);
+            this.noActiveClients = false;
+        } else {
+            this.updateCheckpointIdleTimer();
+        }
+    }
+
+    public prepareCheckpoint(message: IQueuedMessage, checkpointReason: ScribeCheckpointReason) {
+        // Get checkpoint context
+        const checkpoint = this.generateScribeCheckpoint(message.offset);
+        this.updateCheckpointMessages(message);
+
+        // write the checkpoint with the current up-to-date state
             this.checkpoint(checkpointReason);
             this.checkpointCore(
                 checkpoint,
                 message,
                 this.clearCache);
             this.lastOffset = message.offset;
-        } else if (this.noActiveClients) {
-            this.checkpoint(ScribeCheckpointReason.NoClients);
-            this.checkpointCore(
-                checkpoint,
-                message,
-                this.clearCache);
-            this.lastOffset = message.offset;
-            this.noActiveClients = false;
-        } else {
-            this.updateCheckpointIdleTimer();
-        }
+
+            const checkpointResult = `Writing checkpoint. Reason: ${ScribeCheckpointReason[checkpointReason]}`;
+            Lumberjack.info(checkpointResult, getLumberBaseProperties(this.documentId, this.tenantId));
     }
 
     public close(closeType: LambdaCloseType) {
@@ -509,6 +508,8 @@ export class ScribeLambda implements IPartitionLambda {
                     tenantId: this.tenantId,
                     documentId: this.documentId,
                 });
+                const message = "Checkpoint error";
+                Lumberjack.error(message, getLumberBaseProperties(this.documentId, this.tenantId), error);
             });
     }
 
@@ -654,7 +655,6 @@ export class ScribeLambda implements IPartitionLambda {
         this.clearCheckpointIdleTimer();
         this.checkpointInfo.lastCheckpointTime = Date.now();
         this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
-       // const checkpointParams = this.generateCheckpoint(reason);
     }
 
     private updateCheckpointIdleTimer() {
@@ -669,6 +669,12 @@ export class ScribeLambda implements IPartitionLambda {
             // same implementation as in Deli
             if (initialScribeCheckpointMessage === this.checkpointInfo.currentScribeCheckpointMessage) {
                 this.checkpoint(ScribeCheckpointReason.IdleTime);
+                if (initialScribeCheckpointMessage) {
+                    this.checkpointCore(
+                        this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset),
+                        initialScribeCheckpointMessage,
+                        this.clearCache);
+                }
             }
         }, this.serviceConfiguration.scribe.scribeCheckpointHeuristics.idleTime);
     }
