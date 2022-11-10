@@ -13,7 +13,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions';
+import { Jsonable } from '@fluidframework/core-interfaces';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
@@ -56,7 +56,6 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
     // (undocumented)
     get type(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

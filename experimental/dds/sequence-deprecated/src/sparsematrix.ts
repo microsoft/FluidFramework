@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, Jsonable } from "@fluidframework/core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -18,8 +18,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-    Serializable,
-    Jsonable,
+    Serializable
 } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";

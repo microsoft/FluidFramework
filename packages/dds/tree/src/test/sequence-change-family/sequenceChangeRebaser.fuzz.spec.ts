@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/core-interfaces";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
 import {

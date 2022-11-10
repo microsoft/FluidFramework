@@ -10,7 +10,7 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { Jsonable } from '@fluidframework/datastore-definitions';
+import { Jsonable } from '@fluidframework/core-interfaces';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public

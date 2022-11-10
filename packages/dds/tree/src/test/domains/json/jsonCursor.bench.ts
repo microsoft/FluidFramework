@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/core-interfaces";
 import {
     ITreeCursor,
     singleJsonCursor,

@@ -186,6 +186,11 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 // @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
+// @public
+export type Jsonable<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? {
+    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
+} : never;
+
 // (No @packageDocumentation comment for this package)
 
 ```

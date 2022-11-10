@@ -33,6 +33,10 @@ export {
 } from "./handles";
 
 export {
+    Jsonable
+} from "./jsonable";
+
+export {
     IFluidPackageEnvironment,
     IFluidPackage,
     isFluidPackage,

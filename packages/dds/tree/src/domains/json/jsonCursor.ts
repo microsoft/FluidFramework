@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/core-interfaces";
 import {
     LocalFieldKey,
     ITreeCursor,

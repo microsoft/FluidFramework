@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/core-interfaces";
 import { forEachNode, forEachField, ITreeCursor } from "../../../tree";
 
 export function sum(cursor: ITreeCursor): number {

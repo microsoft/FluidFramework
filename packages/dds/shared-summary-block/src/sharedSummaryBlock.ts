@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Jsonable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-    Jsonable,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";

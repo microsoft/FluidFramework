@@ -9,7 +9,7 @@ import {
     MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/core-interfaces";
 import { SharedJson1, Json1Factory } from "..";
 
 const createLocalOT = (id: string) => {

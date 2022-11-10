@@ -13,7 +13,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { Jsonable } from '@fluidframework/datastore-definitions';
+import { Jsonable } from '@fluidframework/core-interfaces';
 import { PropertySet } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
