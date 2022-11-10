@@ -131,6 +131,9 @@ export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
 export interface HasReattachFields extends HasOpId, HasPlaceFields {
     /**
      * The tag of the change that detached the data being reattached.
+     *
+     * Undefined when the reattach is the product of a tag-less change being inverted.
+     * It is invalid to try convert such a reattach mark to a delta.
      */
     detachedBy: RevisionTag | undefined;
     /**
