@@ -194,18 +194,18 @@ class TopologyDestroyed extends BaseMongoExceptionRetryRule {
 }
 
 // this handles the incorrect credentials set. Should not retry
-class UnUnauthorizedRule extends BaseMongoExceptionRetryRule {
+class UnauthorizedRule extends BaseMongoExceptionRetryRule {
     private static readonly codeName = "Unauthorized";
     protected defaultDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
-        super("UnUnauthorizedRule", retryRuleOverride);
+        super("UnauthorizedRule", retryRuleOverride);
     }
 
     public match(error: any): boolean {
         return error.code === 13
             && error.codeName
-            && (error.codeName as string) === UnUnauthorizedRule.codeName;
+            && (error.codeName as string) === UnauthorizedRule.codeName;
     }
 }
 
@@ -221,7 +221,7 @@ export function createMongoErrorRetryRuleset(
         new RequestTimedOutWithRateLimitTrue(retryRuleOverride),
         new RequestTimedOutWithRateLimitFalse(retryRuleOverride),
         new TopologyDestroyed(retryRuleOverride),
-        new UnUnauthorizedRule(retryRuleOverride),
+        new UnauthorizedRule(retryRuleOverride),
 
         // The rules are using multiple compare
         new PoolDestroyedRule(retryRuleOverride),
