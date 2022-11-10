@@ -528,8 +528,6 @@ export type InternedStringId = number & {
     readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
 };
 
-// Warning: (ae-internal-missing-underscore) The name "isDetachedSequenceId" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId;
 
