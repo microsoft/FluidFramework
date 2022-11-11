@@ -12,6 +12,8 @@ import {
     ICache,
     ICollection,
     IDocument,
+    ISequencedOperationMessage,
+    IChecker,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -24,8 +26,15 @@ import {
     bindCorrelationId,
     jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
+import {
+    LivenessMonitor,
+    livenessRoutes,
+    oldestOpCheck,
+    redisPingCheck,
+    RestLessServer,
+} from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
+import Redis from "ioredis";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -38,7 +47,10 @@ export function create(
     appTenants: IAlfredTenant[],
     deltaService: IDeltaService,
     producer: IProducer,
-    documentsCollection: ICollection<IDocument>) {
+    documentsCollection: ICollection<IDocument>,
+    opsCollection: ICollection<ISequencedOperationMessage>,
+    redisClients: Redis.Redis[],
+) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -96,6 +108,20 @@ export function create(
         documentsCollection);
 
     app.use(routes.api);
+
+    const redisChecks = redisClients.map((client, i) => ({
+        checkerName: `redis-${i}`,
+        checker: async () => redisPingCheck(client),
+    }));
+    const oldestOpChecker: IChecker = {
+        checkerName: "oldestOp",
+        checker: async () => oldestOpCheck(opsCollection),
+    };
+    const monitor = new LivenessMonitor([
+        oldestOpChecker,
+        ...redisChecks,
+    ]);
+    app.use(livenessRoutes(monitor));
 
     // Catch 404 and forward to error handler
     app.use(catch404());

@@ -54,3 +54,15 @@ spec:
         - name: config
           configMap:
             name: {{ template "routerlicious.fullname" . }}
+      livenessProbe:
+        httpGet:
+          path: /live
+        failureThreshold: 3
+        initialDelaySeconds: 10
+        # Allow sufficient amount of time (90 seconds = periodSeconds * failureThreshold)
+        # for the registered shutdown handlers to run to completion.
+        periodSeconds: 30
+        successThreshold: 1
+        # Setting a very low timeout value (e.g. 1 second) can cause false-positive
+        # checks and service interruption.
+        timeoutSeconds: 5

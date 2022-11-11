@@ -24,6 +24,11 @@ export enum LumberEventName {
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
 
+    // Liveness
+    LivenessMonitor = "LivenessMonitor",
+    OldestOpCheck = "OldestOpCheck",
+    RedisPing = "RedisPing",
+
     // Reliability
     SessionResult = "SessionResult",
     StartSessionResult = "StartSessionResult",

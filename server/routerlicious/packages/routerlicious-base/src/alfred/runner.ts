@@ -19,6 +19,7 @@ import {
     IThrottleAndUsageStorageManager,
     IWebServer,
     IWebServerFactory,
+    ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -26,6 +27,7 @@ import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import Redis from "ioredis";
 import * as app from "./app";
 
 export class AlfredRunner implements IRunner {
@@ -50,6 +52,8 @@ export class AlfredRunner implements IRunner {
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,
+        private readonly opsCollection: ICollection<ISequencedOperationMessage>,
+        private readonly redisClients: Redis.Redis[],
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
     ) {
@@ -69,7 +73,9 @@ export class AlfredRunner implements IRunner {
             this.appTenants,
             this.deltaService,
             this.producer,
-            this.documentsCollection);
+            this.documentsCollection,
+            this.opsCollection,
+            this.redisClients);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
