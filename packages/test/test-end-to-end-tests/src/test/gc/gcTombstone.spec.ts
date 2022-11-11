@@ -75,8 +75,10 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             return createSummarizerWithContainer(
                 provider,
                 documentAbsoluteUrl,
-                testContainerConfig,
-                summaryVersion);
+                summaryVersion,
+                gcOptions,
+                mockConfigProvider(settings),
+            );
         };
         const summarize = async (summarizer: ISummarizer) => {
             await provider.ensureSynchronized();
