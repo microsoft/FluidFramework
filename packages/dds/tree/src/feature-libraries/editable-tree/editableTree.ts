@@ -169,10 +169,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * `optional` fields will be created following the "last-write-wins" semantics,
      * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
-    [createField](
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
 
 /**
@@ -434,10 +431,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             .values();
     }
 
-    public createField(
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined {
+    public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
         assert(!this.has(fieldKey), "The field already exists.");
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
@@ -447,12 +441,12 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
                     !Array.isArray(newContent),
                     "Use single cursor to create the optional field",
                 );
-                if (this.context.setOptionalField(path, fieldKey, newContent, true))
-                    return this.proxifyField(fieldKey, false);
+                this.context.setOptionalField(path, fieldKey, newContent, true);
+                break;
             }
             case Multiplicity.Sequence: {
-                if (this.context.insertNodes(path, fieldKey, 0, newContent))
-                    return this.proxifyField(fieldKey, false);
+                this.context.insertNodes(path, fieldKey, 0, newContent);
+                break;
             }
             case Multiplicity.Value:
                 fail("It is invalid to create fields of kind `value` as they should always exist.");
