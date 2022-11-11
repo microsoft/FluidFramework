@@ -6,6 +6,7 @@ import * as path from "path";
 
 import { VersionBumpType } from "@fluid-tools/version-tools";
 
+import { PreviousVersionStyle } from "../typeValidator/packageJson";
 import { getPackageManifest } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
@@ -36,7 +37,7 @@ export interface IFluidRepoPackage {
     directory: string;
     ignoredDirs?: string[];
     branchReleaseTypes?: {
-        [name: string]: VersionBumpType;
+        [name: string]: VersionBumpType | PreviousVersionStyle;
     };
 }
 

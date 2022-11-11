@@ -4,6 +4,7 @@
  */
 import child_process from "child_process";
 import * as fs from "fs";
+import minimatch from "minimatch";
 import * as semver from "semver";
 import * as util from "util";
 
@@ -14,6 +15,7 @@ import {
     getPreviousVersions,
     getVersionRange,
     isInternalVersionScheme,
+    isVersionBumpType,
     toInternalScheme,
 } from "@fluid-tools/version-tools";
 
@@ -322,32 +324,7 @@ export async function getAndUpdatePackageDetails(
     const pkg = context.fullPackageMap.get(packageDetails.pkg.name);
     if (pkg === undefined) {
         return { skipReason: "Skipping package: not found in context" };
-    }
-
-    const releaseGroup = pkg.monoRepo?.kind;
-    if (releaseGroup === undefined || pkg.monoRepo === undefined) {
-        return { skipReason: `Package has no release group: ${pkg.name}` };
-    }
-
-    const config = context.packageManifest.repoPackages[pkg.monoRepo.kind];
-    let releaseType: VersionBumpType | undefined;
-
-    if (typeof config === "object") {
-        const rpg = config as IFluidRepoPackage;
-        releaseType = rpg.branchReleaseTypes?.[context.originalBranchName];
-    }
-
-    const previousVersionStyle: PreviousVersionStyle | undefined =
-        style ??
-        (releaseType === "major"
-            ? "^previousMajor"
-            : releaseType === "minor"
-            ? "~previousMinor"
-            : releaseType === "patch"
-            ? "previousPatch"
-            : undefined);
-
-    if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
+    } else if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
         // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
         // compatibility promises for them, so they're excluded from type tests.
         return { skipReason: "Skipping package: @fluid-internal" };
@@ -360,7 +337,49 @@ export async function getAndUpdatePackageDetails(
     } else if (packageDetails.pkg.typeValidation?.disabled === true) {
         // Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
         return { skipReason: "Skipping package: type validation disabled" };
-    } else if (previousVersionStyle === undefined) {
+    }
+
+    const releaseGroup = pkg.monoRepo?.kind;
+    if (releaseGroup === undefined || pkg.monoRepo === undefined) {
+        return { skipReason: `Package has no release group: ${pkg.name}` };
+    }
+
+    const releaseGroupConfig = context.packageManifest.repoPackages[pkg.monoRepo.kind];
+    let releaseType: VersionBumpType | undefined;
+    let previousVersionStyle: PreviousVersionStyle | undefined;
+
+    if (typeof releaseGroupConfig === "object") {
+        const rpg = releaseGroupConfig as IFluidRepoPackage;
+        const releaseTypes = rpg.branchReleaseTypes;
+        if (releaseTypes === undefined) {
+            return { skipReason: `Package has no branchReleaseTypes defined: ${pkg.name}` };
+        }
+
+        for (const [branchPattern, branchReleaseType] of Object.entries(releaseTypes)) {
+            if (minimatch(context.originalBranchName, branchPattern)) {
+                // The config can be either a VersionBumpType (major/minor/patch) which will be used to calculate the
+                // previous version or a PreviousVersionStyle that will used as-is.
+                if (isVersionBumpType(branchReleaseType)) {
+                    releaseType = branchReleaseType;
+                } else {
+                    previousVersionStyle = branchReleaseType;
+                }
+            }
+        }
+    }
+
+    previousVersionStyle =
+        previousVersionStyle ??
+        style ??
+        (releaseType === "major"
+            ? "^previousMajor"
+            : releaseType === "minor"
+            ? "~previousMinor"
+            : releaseType === "patch"
+            ? "previousPatch"
+            : undefined);
+
+    if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
         return { skipReason: "Skipping package: previousVersionStyle is undefined" };
     }

@@ -143,7 +143,7 @@
         "branchReleaseTypes": {
           "main": "major",
           "lts": "minor",
-          "release/*": "patch"
+          "release/azure/*": "patch"
         }
       },
       "build-tools": "build-tools",
@@ -154,7 +154,7 @@
         "branchReleaseTypes": {
           "main": "minor",
           "lts": "minor",
-          "release/*": "patch",
+          "release/**": "patch",
           "next": "major"
         }
       },
