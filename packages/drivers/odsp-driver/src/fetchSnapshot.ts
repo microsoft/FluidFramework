@@ -244,7 +244,7 @@ async function fetchLatestSnapshotCore(
                         fetchTimeout = undefined;
                     }
                 });
-                const networkTimeJs = performance.now() - start;
+                const fetchTime = performance.now() - start;
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -353,7 +353,7 @@ async function fetchLatestSnapshotCore(
                 let responseNetworkTime: number | undefined; // responsEnd - responseStart
                 let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
                 let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
-                let networkTimeBrowser: number | undefined; // responseEnd - startTime
+                let networkTime: number | undefined; // responseEnd - startTime
                 const spReqDuration = odspResponse.headers.get("sprequestduration");
 
                 // getEntriesByType is only available in browser performance object
@@ -376,10 +376,10 @@ async function fetchLatestSnapshotCore(
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
                         reqStartToResponseEndTime = (indResTime.requestStart > 0) ?
                             (indResTime.responseEnd - indResTime.requestStart) : undefined;
-                        networkTimeBrowser = (indResTime.startTime > 0) ?
+                        networkTime = (indResTime.startTime > 0) ?
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
-                        if (spReqDuration !== undefined && networkTimeBrowser !== undefined) {
-                            networkTimeBrowser = networkTimeBrowser - parseInt(spReqDuration, 10);
+                        if (spReqDuration !== undefined && networkTime !== undefined) {
+                            networkTime = networkTime - parseInt(spReqDuration, 10);
                         }
                         break;
                     }
@@ -444,10 +444,9 @@ async function fetchLatestSnapshotCore(
                     reqStartToResponseEndTime,
                     // Interval between starting the request for the resource until receiving the last byte but
                     // excluding the Snaphot request duration indicated on the snapshot response header.
-                    networkTimeBrowser,
-                    // Similar to networkTime, but measured from within JS code. There is data suggesting that
-                    // networkTime is wrong - see ADO #2530 for more details.
-                    networkTimeJs,
+                    networkTime,
+                    // Measures total time to make fetch call. Should be similar to networkTime + sprequestduration.
+                    fetchTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate

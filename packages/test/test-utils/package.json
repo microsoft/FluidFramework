@@ -109,6 +109,9 @@
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
     "broken": {
+      "ClassDeclaration_TestFluidObject": {
+        "forwardCompat": false
+      },
       "InterfaceDeclaration_ITestContainerConfig": {
         "backCompat": false
       }

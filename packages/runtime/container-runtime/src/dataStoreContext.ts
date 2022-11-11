@@ -1026,6 +1026,15 @@ export class LocalDetachedFluidDataStoreContext
 
         super.bindRuntime(dataStoreChannel);
 
+        // Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
+        // initialization function is called before the data store gets attached and potentially connected to the
+        // delta stream, so it gets a chance to do things while the data store is still "purely local".
+        // This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+        // of data store factories tends to construct the data object (at least kick off an async method that returns
+        // it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+        // before the data store is attached.
+        await dataStoreChannel.entryPoint?.get();
+
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();
         }
