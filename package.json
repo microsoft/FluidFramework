@@ -138,12 +138,25 @@
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
       "protocol-def": "common/lib/protocol-definitions",
-      "azure": "azure",
+      "azure": {
+        "directory": "azure",
+        "branchReleaseTypes": {
+          "main": "major",
+          "lts": "minor",
+          "release/*": "patch"
+        }
+      },
       "build-tools": "build-tools",
       "server": "server/routerlicious",
       "client": {
         "directory": "",
-        "ignoredDirs": []
+        "ignoredDirs": [],
+        "branchReleaseTypes": {
+          "main": "minor",
+          "lts": "minor",
+          "release/*": "patch",
+          "next": "major"
+        }
       },
       "tools": [
         "tools/api-markdown-documenter",

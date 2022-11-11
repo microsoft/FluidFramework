@@ -9,6 +9,7 @@ import * as util from "util";
 
 import {
     ReleaseVersion,
+    VersionBumpType,
     fromInternalScheme,
     getPreviousVersions,
     getVersionRange,
@@ -17,7 +18,10 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { Context } from "../bumpVersion/context";
+import { IFluidRepoPackage } from "../common/fluidRepo";
+import { getPackageManifest } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
+import { Package } from "../common/npmPackage";
 
 export type PackageDetails = {
     readonly packageDir: string;
@@ -110,6 +114,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  *
  * baseMajor: 2.0.0-internal.2.0.0
  * baseMinor: 2.0.0-internal.2.3.0
+ * ~baseMinor: >=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0
+ * previousPatch: 2.0.0-internal.2.3.4
  * previousMajor: 2.0.0-internal.1.0.0
  * previousMinor: 2.0.0-internal.2.2.0
  * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
@@ -123,6 +129,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  *
  * baseMajor: 2.0.0-internal.2.0.0
  * baseMinor: 2.0.0-internal.2.0.0
+ * ~baseMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
+ * previousPatch: 2.0.0-internal.2.0.0
  * previousMajor: 2.0.0-internal.1.0.0
  * previousMinor: 2.0.0-internal.2.0.0
  * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
@@ -144,6 +152,13 @@ export type PreviousVersionStyle =
     | "~previousMajor"
     | "~previousMinor";
 
+/**
+ * Calculates the correct version baseline to use for typetests based on the {@link PreviousVersionStyle}.
+ *
+ * @param version - The version.
+ * @param style - The version style to calculate.
+ * @returns A valid semver version range for the previous version.
+ */
 function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVersionStyle): string {
     const [previousMajorVersion, previousMinorVersion, previousPatchVersion] =
         getPreviousVersions(version);
@@ -278,59 +293,6 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
 }
 
 /**
- * Returns a default {@link PreviousVersionStyle} for a branch and release group.
- *
- * Minor version series branches like lts and main use the ~previousMinor style.
- * Major version series branches like next use the ^previousMajor style.
- * Patch version series branches like release branches use the previousPatch style.
- */
-const getVersionStyleForBranch = (
-    branch: string,
-    releaseGroup?: MonoRepoKind,
-): PreviousVersionStyle => {
-    let style: PreviousVersionStyle;
-    switch (releaseGroup) {
-        case "azure": {
-            if (branch === "main") {
-                // main is the major version series branch for azure
-                style = "^previousMajor";
-            } else if (branch === "lts") {
-                // lts is the minor version series branch for azure
-                style = "~previousMinor";
-            } else if (branch.startsWith("release/azure/")) {
-                style = "previousPatch";
-            } else {
-                style = "baseMinor";
-            }
-            break;
-        }
-
-        default: {
-            if (["main", "lts"].includes(branch)) {
-                style = "~previousMinor";
-            } else if (branch === "next") {
-                style = "^previousMajor";
-            } else if (branch.startsWith("release/")) {
-                style = "previousPatch";
-            } else {
-                style = "baseMinor";
-            }
-        }
-    }
-    if (["main", "lts"].includes(branch)) {
-        style = "~previousMinor";
-    } else if (branch === "next") {
-        style = "^previousMajor";
-    } else if (branch.startsWith("release/")) {
-        style = "previousPatch";
-    } else {
-        style = "baseMinor";
-    }
-
-    return style;
-};
-
-/**
  * Based on the current version of the package as per package.json, determines the previous version that we should run
  * typetests against.
  *
@@ -352,7 +314,7 @@ export async function getAndUpdatePackageDetails(
     context: Context,
     packageDir: string,
     writeUpdates: boolean | undefined,
-    previousVersionStyle?: PreviousVersionStyle,
+    style?: PreviousVersionStyle,
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
@@ -361,9 +323,31 @@ export async function getAndUpdatePackageDetails(
     if (pkg === undefined) {
         return { skipReason: "Skipping package: not found in context" };
     }
-    const constraint: PreviousVersionStyle =
-        previousVersionStyle ??
-        getVersionStyleForBranch(context.originalBranchName, pkg.monoRepo?.kind);
+
+    const releaseGroup = pkg.monoRepo?.kind;
+    if (releaseGroup === undefined || pkg.monoRepo === undefined) {
+        return { skipReason: `Package has no release group: ${pkg.name}` };
+    }
+
+    const config = context.packageManifest.repoPackages[pkg.monoRepo.kind];
+    let releaseType: VersionBumpType | undefined;
+
+    if (typeof config === "object") {
+        const rpg = config as IFluidRepoPackage;
+        releaseType = rpg.branchReleaseTypes?.[
+            context.originalBranchName
+        ];
+    }
+
+    const previousVersionStyle: PreviousVersionStyle | undefined =
+        style ??
+        (releaseType === "major"
+            ? "^previousMajor"
+            : releaseType === "minor"
+            ? "~previousMinor"
+            : releaseType === "patch"
+            ? "previousPatch"
+            : undefined);
 
     if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
         // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
@@ -378,13 +362,16 @@ export async function getAndUpdatePackageDetails(
     } else if (packageDetails.pkg.typeValidation?.disabled === true) {
         // Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
         return { skipReason: "Skipping package: type validation disabled" };
+    } else if (previousVersionStyle === undefined) {
+        // Skip if there's no previous version style defined for the package.
+        return { skipReason: "Skipping package: previousVersionStyle is undefined" };
     }
 
     const version = packageDetails.pkg.version;
     let prevVersion: string;
 
     if (exactPreviousVersionString === undefined) {
-        prevVersion = getPreviousVersionBaseline(version, constraint);
+        prevVersion = getPreviousVersionBaseline(version, previousVersionStyle);
     } else {
         prevVersion = exactPreviousVersionString;
     }

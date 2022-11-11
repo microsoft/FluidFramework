@@ -4,6 +4,8 @@
  */
 import * as path from "path";
 
+import { VersionBumpType } from "@fluid-tools/version-tools";
+
 import { getPackageManifest } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
@@ -33,6 +35,9 @@ export interface PolicyConfig {
 export interface IFluidRepoPackage {
     directory: string;
     ignoredDirs?: string[];
+    branchReleaseTypes?: {
+        [name: string]: VersionBumpType;
+    };
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];

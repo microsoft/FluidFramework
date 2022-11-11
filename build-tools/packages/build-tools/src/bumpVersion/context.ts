@@ -23,7 +23,7 @@ export class Context {
     public readonly fullPackageMap: Map<string, Package>;
 
     private readonly timer: Timer;
-    private readonly packageManifest: IPackageManifest;
+    public readonly packageManifest: IPackageManifest;
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
