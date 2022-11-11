@@ -31,7 +31,6 @@ import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * TODO: add test coverage.
  */
 export interface EditableTreeContext {
     /**
@@ -128,8 +127,6 @@ export class ProxyContext implements EditableTreeContext {
         }
         assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
-        this.forest.removeDependent(this.observer);
-        this.afterChangeHandlers.clear();
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
@@ -208,7 +205,6 @@ export class ProxyContext implements EditableTreeContext {
             this.transactionCheckout !== undefined,
             0x45a /* `transactionCheckout` is required to edit the EditableTree */,
         );
-        this.prepareForEdit();
         const result = runSynchronousTransaction(
             this.transactionCheckout,
             (forest: IForestSubscription, editor: DefaultEditBuilder) => {
