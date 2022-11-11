@@ -107,14 +107,24 @@ export interface IRepositoryManagerFactory {
 
 /** Basic type (loose or packed) of any Git object. */
 export enum GitObjectType {
-    any = -2,       /** < Object can be any of the following */
-    bad = -1,       /** < Object is invalid. */
-    ext1 = 0,       /** < Reserved for future use. */
-    commit = 1,     /** < A commit object. */
-    tree = 2,       /** < A tree (directory listing) object. */
-    blob = 3,       /** < A file revision object. */
-    tag = 4,        /** < An annotated tag object. */
-    ext2 = 5,       /** < Reserved for future use. */
-    ofsdelta = 6,   /** < A delta, base is given by an offset. */
-    refdelta = 7,   /** < A delta, base is given by object id. */
+    /** Object can be any of the following */
+    any = -2,
+    /** Object is invalid. */
+    bad = -1,
+    /** Reserved for future use. */
+    ext1 = 0,
+    /** A commit object. */
+    commit = 1,
+    /** A tree (directory listing) object. */
+    tree = 2,
+    /** A file revision object. */
+    blob = 3,
+    /** An annotated tag object. */
+    tag = 4,
+    /** Reserved for future use. */
+    ext2 = 5,
+    /** A delta, base is given by an offset. */
+    ofsdelta = 6,
+    /** A delta, base is given by object id. */
+    refdelta = 7,
 }
