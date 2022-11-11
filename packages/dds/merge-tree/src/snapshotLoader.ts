@@ -138,7 +138,7 @@ export class SnapshotLoader {
         if (chunk.attribution) {
             AttributionCollection.populateAttributionCollections(segs, chunk.attribution);
         }
-        // TODO: attribution
+
         this.mergeTree.reloadFromSegments(segs);
 
         if (chunk.headerMetadata === undefined) {

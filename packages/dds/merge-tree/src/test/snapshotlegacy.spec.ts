@@ -64,8 +64,8 @@ describe("snapshot", () => {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, serializer);
-            await catchupOpsP;
+            await client2.load(runtime as IFluidDataStoreRuntime, services, serializer);
+
             const client2Len = client2.getLength();
             assert.equal(
                 client2Len,
