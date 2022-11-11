@@ -95,7 +95,6 @@ declare function get_old_ClassDeclaration_TinyliciousAudience():
 declare function use_current_ClassDeclaration_TinyliciousAudience(
     use: TypeOnly<current.TinyliciousAudience>);
 use_current_ClassDeclaration_TinyliciousAudience(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TinyliciousAudience());
 
 /*

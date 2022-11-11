@@ -16,7 +16,7 @@ import { FluidClientDebuggerProps, IFluidClientDebugger } from "./IFluidClientDe
 export function initializeFluidClientDebugger(
     props: FluidClientDebuggerProps,
 ): IFluidClientDebugger {
-    const { containerId, container, audience, containerData } = props;
+    const { containerId, container, containerData } = props;
 
     const debuggerRegistry = getDebuggerRegistry();
 
@@ -28,7 +28,7 @@ export function initializeFluidClientDebugger(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return debuggerRegistry.get(containerId)!;
     } else {
-        clientDebugger = new FluidClientDebugger(containerId, container, audience, containerData);
+        clientDebugger = new FluidClientDebugger(containerId, container, containerData);
         debuggerRegistry.set(containerId, clientDebugger);
         return clientDebugger;
     }

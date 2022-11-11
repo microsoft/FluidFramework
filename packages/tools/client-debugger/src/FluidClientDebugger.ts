@@ -105,7 +105,6 @@ export class FluidClientDebugger
     constructor(
         containerId: string,
         container: IContainer,
-        audience: IAudience,
         containerData: Record<string, IFluidLoadable>,
     ) {
         super();
@@ -113,7 +112,7 @@ export class FluidClientDebugger
         this.containerId = containerId;
         this.containerData = containerData;
         this.container = container;
-        this.audience = audience;
+        this.audience = container.audience;
 
         // TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
         this._connectionStateLog = [];
