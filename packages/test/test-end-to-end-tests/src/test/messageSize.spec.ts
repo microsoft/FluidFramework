@@ -121,7 +121,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Large ops passes when smaller than the max op size", async () => {
+    it("Single large op passes when smaller than the max op size", async () => {
         await setupContainers(testContainerConfig, {});
         // Max op size is 768000, round down to account for some overhead
         const largeString = generateStringOfSize(750000);

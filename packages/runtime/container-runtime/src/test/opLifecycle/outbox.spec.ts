@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IBatchProcessor, Outbox } from "../../opLifecycle";
-import { IBatch } from "../../batchManager";
+import { BatchMessage, IBatch } from "../../batchManager";
 import { PendingStateManager } from "../../pendingStateManager";
-import { ContainerMessageType } from "../..";
+import { ContainerMessageType, ContainerRuntimeMessage } from "../..";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;
@@ -40,6 +41,105 @@ describe("Outbox", () => {
         state.pendingOpContents.splice(0);
         state.opsSubmitted = 0;
     });
+
+    it("Sending batches", () => {
+        const outbox = new Outbox(
+            () => state.canSendOps,
+            getMockPendingStateManager() as PendingStateManager,
+            getMockContext() as IContainerContext,
+            {
+                enableOpReentryCheck: false,
+                maxBatchSizeInBytes,
+            },
+            {
+                compressor: getMockCompressor(),
+            },
+        );
+
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.Attach, "3"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submitAttach(messages[3]);
+
+        outbox.flush();
+
+        outbox.submit(messages[4]);
+        outbox.flush();
+
+        outbox.submit(messages[5]);
+
+        assert.equal(state.opsSubmitted, 5);
+        assert.equal(state.individualOpsSubmitted.length, 0);
+        assert.deepEqual(state.batchesSubmitted, [
+            [
+                batchedMessage(messages[2], true),
+                batchedMessage(messages[3], false),
+            ], // Attach messages are always flushed first
+            [
+                batchedMessage(messages[0], true),
+                batchedMessage(messages[1], false),
+            ],
+            [
+                batchedMessage(messages[4]),
+            ], // The last message was not batched
+        ]);
+    });
+
+    it("Will send messages when only when allowed", () => {
+        // const outbox = new Outbox(
+        //     () => state.canSendOps,
+        //     getMockPendingStateManager() as PendingStateManager,
+        //     getMockLegacyContext() as IContainerContext,
+        //     {
+        //         enableOpReentryCheck: false,
+        //         maxBatchSizeInBytes,
+        //     },
+        //     {
+        //         compressor: getMockCompressor(),
+        //     },
+        // );
+        // state.canSendOps = false;
+
+
+    });
+
+    it("Uses legacy path for legacy contexts", () => {
+        const outbox = new Outbox(
+            () => state.canSendOps,
+            getMockPendingStateManager() as PendingStateManager,
+            getMockLegacyContext() as IContainerContext,
+            {
+                enableOpReentryCheck: false,
+                maxBatchSizeInBytes,
+            },
+            {
+                compressor: getMockCompressor(),
+            },
+        );
+        outbox.flush();
+    });
+
+    it("No limits set on batch managers if compression is enabled", () => {
+
+    });
+
+    it("Compress only if compression is enabled", () => {
+
+    });
+
+    it("Compress only if the batch is larger than the configured limit", () => {
+
+    });
+
 
     const getMockDeltaManager = (): Partial<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>> => ({
         flush() {
@@ -95,55 +195,20 @@ describe("Outbox", () => {
         }
     });
 
-    it("Sending batches", () => {
-        const outbox = new Outbox(
-            () => state.canSendOps,
-            getMockPendingStateManager() as PendingStateManager,
-            getMockContext() as IContainerContext,
-            {
-                enableOpReentryCheck: false,
-                maxBatchSizeInBytes,
-            },
-            {
-                compressor: getMockCompressor(),
-            },
-        );
-        outbox.flush();
-    });
+    const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
+        const deserializedContent: ContainerRuntimeMessage = { type, contents };
+        return {
+            contents: JSON.stringify(deserializedContent),
+            deserializedContent,
+            metadata: { "test": true },
+            localOpMetadata: {},
+            referenceSequenceNumber: Infinity,
+        };
+    };
 
-    it("Will persist pending messages when flushing", () => {
-
-    });
-
-    it("Will send messages when only when allowed", () => {
-
-    });
-
-    it("Uses legacy path for legacy contexts", () => {
-        const outbox = new Outbox(
-            () => state.canSendOps,
-            getMockPendingStateManager() as PendingStateManager,
-            getMockLegacyContext() as IContainerContext,
-            {
-                enableOpReentryCheck: false,
-                maxBatchSizeInBytes,
-            },
-            {
-                compressor: getMockCompressor(),
-            },
-        );
-        outbox.flush();
-    });
-
-    it("No limits set on batch managers if compression is enabled", () => {
-
-    });
-
-    it("Compress only if compression is enabled", () => {
-
-    });
-
-    it("Compress only if the batch is larger than the configured limit", () => {
-
-    });
+    const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) => {
+        return batchMarker === undefined ?
+            { contents: message.contents, metadata: message.metadata } :
+            { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
+    }
 });

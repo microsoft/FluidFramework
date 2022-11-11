@@ -76,7 +76,7 @@ export class Outbox {
             // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
             // when queue is not empty.
             // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-            this.flushBatch(this.attachFlowBatch.popBatch());
+            this.flushInternal(this.attachFlowBatch.popBatch());
             if (!this.attachFlowBatch.push(message)) {
                 throw new GenericError(
                     "BatchTooLarge",
@@ -91,8 +91,12 @@ export class Outbox {
     }
 
     public flush() {
-        this.flushBatch(this.prepareBatch(this.attachFlowBatch.popBatch()));
-        this.flushBatch(this.prepareBatch(this.mainBatch.popBatch()));
+        this.flushInternal(this.attachFlowBatch.popBatch());
+        this.flushInternal(this.mainBatch.popBatch());
+    }
+
+    private flushInternal(batch: IBatch) {
+        this.flushBatch(this.prepareBatch(batch));
     }
 
     private markBatchMessage(message: BatchMessage, batch: boolean) {
@@ -100,7 +104,6 @@ export class Outbox {
     }
 
     private addBatchMetadataToBatch(batch: IBatch) {
-        assert(batch.content.length > 0, "Expecting a non-empty batch");
         this.markBatchMessage(batch.content[0], true);
         this.markBatchMessage(batch.content[batch.content.length - 1], false);
     }
@@ -110,7 +113,9 @@ export class Outbox {
             return batch;
         }
 
-        this.addBatchMetadataToBatch(batch);
+        if (batch.content.length > 1) {
+            this.addBatchMetadataToBatch(batch);
+        }
 
         if (this.options.compressionOptions !== undefined
             && this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
