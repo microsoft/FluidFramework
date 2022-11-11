@@ -26,9 +26,6 @@ module.exports = {
             {
                 allow: [
                     "@oclif/core/lib/interfaces",
-                    "@oclif/core/lib/util",
-                    "oclif/lib/commands/**",
-                    "oclif/lib/util",
                     "npm-check-updates/build/src/types/**",
                     "**/commands/**",
                 ],
