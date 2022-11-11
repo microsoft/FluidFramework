@@ -370,15 +370,18 @@ export class ScribeLambda implements IPartitionLambda {
         // Create the checkpoint
         this.updateCheckpointMessages(message);
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
-        const checkpointReason = this.getCheckpointReason();
-        if (checkpointReason !== undefined) {
-            // checkpoint the current up-to-date state
-            this.prepareCheckpoint(message, checkpointReason);
-        } else if (this.noActiveClients) {
+
+        if (this.noActiveClients) {
             this.prepareCheckpoint(message, ScribeCheckpointReason.NoClients);
             this.noActiveClients = false;
         } else {
-            this.updateCheckpointIdleTimer();
+            const checkpointReason = this.getCheckpointReason();
+            if (checkpointReason !== undefined) {
+                // checkpoint the current up-to-date state
+                this.prepareCheckpoint(message, checkpointReason);
+            } else {
+                this.updateCheckpointIdleTimer();
+            }
         }
     }
 
@@ -394,7 +397,6 @@ export class ScribeLambda implements IPartitionLambda {
                 message,
                 this.clearCache);
             this.lastOffset = message.offset;
-
             const checkpointResult = `Writing checkpoint. Reason: ${ScribeCheckpointReason[checkpointReason]}`;
             Lumberjack.info(checkpointResult, getLumberBaseProperties(this.documentId, this.tenantId));
     }
@@ -674,6 +676,8 @@ export class ScribeLambda implements IPartitionLambda {
                         this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset),
                         initialScribeCheckpointMessage,
                         this.clearCache);
+                    const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
+                    Lumberjack.info(checkpointResult, getLumberBaseProperties(this.documentId, this.tenantId));
                 }
             }
         }, this.serviceConfiguration.scribe.scribeCheckpointHeuristics.idleTime);
