@@ -98,6 +98,8 @@ export class AlfredResources implements core.IResources {
         public documentsCollectionName: string,
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
+        public opsCollection: core.ICollection<core.ISequencedOperationMessage>,
+        public redisClients: Redis.Redis[],
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
     ) {
@@ -329,6 +331,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+        const deltaCollection = (await operationsDbMongoManager.getDatabase())
+            .collection<core.ISequencedOperationMessage>(deltasCollectionName);
 
         return new AlfredResources(
             config,
@@ -351,6 +355,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             documentsCollectionName,
             metricClientConfig,
             documentsCollection,
+            deltaCollection,
+            [
+                redisClient,
+                redisClientForJwtCache,
+                redisClientForThrottling,
+            ],
             redisThrottleAndUsageStorageManager,
             verifyMaxMessageSize);
     }
@@ -376,6 +386,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.producer,
             resources.metricClientConfig,
             resources.documentsCollection,
+            resources.opsCollection,
+            resources.redisClients,
             resources.throttleAndUsageStorageManager,
             resources.verifyMaxMessageSize);
     }

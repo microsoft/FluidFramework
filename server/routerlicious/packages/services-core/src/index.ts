@@ -40,6 +40,7 @@ export {
 	LambdaCloseType,
 	LambdaName,
 } from "./lambdas";
+export { IChecker, ILivenessMonitor } from "./livenessMonitor";
 export {
 	BoxcarType,
 	ControlMessageType,

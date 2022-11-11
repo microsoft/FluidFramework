@@ -5,6 +5,12 @@
 
 export { containsPathTraversal, defaultErrorMessage, handleResponse, validateRequestParams } from "./http";
 export {
+	LivenessMonitor,
+	livenessRoutes,
+	oldestOpCheck,
+	redisPingCheck,
+} from "./livenessMonitor";
+export {
 	ISocketIoRedisConnection,
 	ISocketIoRedisOptions,
 	ISocketIoRedisSubscriptionConnection,

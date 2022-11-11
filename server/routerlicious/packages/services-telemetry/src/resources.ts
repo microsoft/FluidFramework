@@ -96,6 +96,11 @@ export enum ThrottlingTelemetryProperties {
     weight = "weight",
 }
 
+export enum LivenessMonitorProperties {
+    oldestOpAge = "oldestOpAge",
+    redisHost = "redisHost",
+}
+
 export enum SessionState {
     // State set when the document lambdas are up and first op for the document is ticketed
     started = "started",

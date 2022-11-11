@@ -9,7 +9,7 @@ import request from "supertest";
 import nconf from "nconf";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
-import { IDocument, MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
+import { IDocument, ISequencedOperationMessage, MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
@@ -96,6 +96,7 @@ describe("Routerlicious", () => {
             const defaultDb = await defaultMongoManager.getDatabase();
             const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
             const defaultDocumentsCollection = defaultDb.collection<IDocument>(documentsCollectionName);
+            const defaultOpsCollection = defaultDb.collection<ISequencedOperationMessage>(deltasCollectionName);
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
             describe("throttling", () => {
@@ -111,7 +112,9 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentsCollection,
+                        defaultOpsCollection,
+                        []);
                     supertest = request(app);
                 });
 
@@ -203,7 +206,9 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentsCollection,
+                        defaultOpsCollection,
+                        []);
                     supertest = request(app);
                 });
 
@@ -269,7 +274,9 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentsCollection,
+                        defaultOpsCollection,
+                        []);
                     supertest = request(app);
                 });
 
@@ -331,7 +338,9 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentsCollection,
+                        defaultOpsCollection,
+                        []);
                     supertest = request(app);
                 });
                 describe("/documents", () => {
@@ -372,7 +381,9 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentsCollection,
+                        defaultOpsCollection,
+                        []);
                     supertest = request(app);
                 });
 
