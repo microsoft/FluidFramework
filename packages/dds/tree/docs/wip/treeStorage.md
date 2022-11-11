@@ -332,7 +332,7 @@ graph TD;
     A-->D(1/0/0/1, 1/0/0/2, 1/0/1)
 ```
 
-The overall idea here is that the original, unbalanced logical tree has been reshaped into a balanced tree, so now reading or writing any part of the tree is bounded by `O(log(n))`. The branching factor of the tree is chosen such that it aligns with the chunk size. The above tree, with a branching factor of three, would be optimized for fitting three nodes into each "leaf chunk":
+The overall idea here is that the original, unbalanced logical tree has been reshaped into a balanced tree, so now reading or writing any part of the tree is bounded by `O(log(n))`. The branching factor of the tree is chosen such that it aligns with the chunk size. The above tree, with a branching factor of three, optimized for fitting three nodes into each "leaf chunk":
 
 ```mermaid
 graph TD;
@@ -345,7 +345,9 @@ graph TD;
     style D fill:#484
 ```
 
-In this approach, every so many consecutive nodes in sorted order comprise a chunk.
+> These diagrams only show the keys for each node, but the value/content of each node can be stored either inline alongside the keys, or out of line in separate blobs, depending on the size and consistency of the data. As nodes are added/deleted or their content grows/shrinks in size, the tree rebalances automatically just like any B-tree.
+
+Every so many consecutive nodes in sorted order comprise a chunk:
 
 Chunk | Nodes
 ------|------
@@ -353,13 +355,11 @@ Chunk | Nodes
 2     | [D, E, F]
 3     | [G, H, I]
 
-> TODO talk about chunk sizes and rebalancing a bit?
-
 Advantages:
 
 * The lookup of any node by path requires at most `log(n)` chunk reads.
 * Editing a node requires at most `log(n)` chunk updates.
-* The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries.
+* The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries, i.e. it doesn't need a special chunking algorithm at all; the "chunking algorithm" is just the B-tree algorithm.
 * A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see Potential Optimizations below).
 
 Drawbacks:
