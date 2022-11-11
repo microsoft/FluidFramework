@@ -11,6 +11,7 @@ import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
@@ -52,6 +53,7 @@ export interface TinyliciousClientProps {
 export interface TinyliciousConnectionConfig {
     domain?: string;
     port?: number;
+    tokenProvider?: ITokenProvider;
 }
 
 // @public
