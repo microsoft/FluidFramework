@@ -500,7 +500,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
                         return true;
                     }
-                    if (dataModel.haveTaskLock()) {
+                    if (dataModel.assigned()) {
                         dataModel.counter.increment(1);
                         opsSent = dataModel.counter.value;
                         if (opsSent % opsPerCycle === 0) {
@@ -515,13 +515,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         }
                     } 
                     else {
-                        await dataModel.lockTask();
+                        await dataModel.volunteerForTask();
                     }
                 }
             }
             else {
                 while (opsSent < clientSendCount && !this.disposed) {
-                    if (dataModel.haveTaskLock()) {
+                    if (dataModel.assigned()) {
                         var opPayload = generateStringOfSize(opSizeinBytes);
                         var opKey = Math.random().toString();
                         dataModel.sharedmap.set(opKey, opPayload);
@@ -535,7 +535,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         }
                     }
                     else {
-                        await dataModel.lockTask();
+                        await dataModel.volunteerForTask();
                     }
                 }
             }
