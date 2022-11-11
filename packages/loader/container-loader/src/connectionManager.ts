@@ -571,7 +571,13 @@ export class ConnectionManager implements IConnectionManager {
      * @param args - The connection arguments
      */
     private triggerConnect(connectionMode: ConnectionMode) {
-        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+        // reconnect() has async await of waitForConnectedState(), and that causes potential race conditions
+        // where we might already have a connection. If it were to happen, it's possible that we will connect
+        // with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
+        // fine (if needed, reconnect flow will get triggered again). Places where new mode matters should encode it
+        // directly in connectCore - see this.shouldJoinWrite() test as an example.
+        // assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }

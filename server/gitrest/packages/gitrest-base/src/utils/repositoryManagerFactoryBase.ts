@@ -15,9 +15,9 @@ import {
     IFileSystemManagerFactory,
     IRepoManagerParams,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
     Constants,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 
 type RepoOperationType = "create" | "open";
 
