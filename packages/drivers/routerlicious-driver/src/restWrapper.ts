@@ -157,14 +157,14 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
                     const storageToken = await tokenProvider.fetchStorageToken(
                         tenantId,
                         documentId,
-                        refreshToken
+                        refreshToken,
                     );
                     const credentials = {
                         password: storageToken.jwt,
                         user: tenantId,
                     };
                     return getAuthorizationTokenFromCredentials(credentials);
-                }
+                },
             );
         };
 
@@ -217,7 +217,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
                         refreshToken,
                     );
                     return `Basic ${ordererToken.jwt}`;
-                }
+                },
             );
         };
 

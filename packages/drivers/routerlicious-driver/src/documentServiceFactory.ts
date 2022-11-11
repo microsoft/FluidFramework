@@ -130,7 +130,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     docId: typeof postRes === "string" ? postRes : postRes.id,
                 });
                 return postRes;
-            }
+            },
         );
 
         // For supporting backward compatibility, when the request has generateToken === true, it will return

@@ -203,7 +203,7 @@ export class DocumentService implements api.IDocumentService {
                         this.documentId,
                         refreshToken,
                     );
-                }
+                },
             );
 
             return PerformanceEvent.timedExecAsync(
@@ -222,7 +222,7 @@ export class DocumentService implements api.IDocumentService {
                         this.ordererUrl,
                         this.logger,
                     );
-                }
+                },
             );
         };
 
