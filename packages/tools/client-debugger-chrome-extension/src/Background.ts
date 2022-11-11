@@ -3,20 +3,11 @@
  * Licensed under the MIT License.
  */
 
-let active = false;
-
-function makeOrange(color: string): void {
-    document.body.style.backgroundColor = color;
-}
-
 chrome.action.onClicked.addListener((tab) => {
-    active = !active;
-    const color = active ? "orange" : "white";
     chrome.scripting
         .executeScript({
-            target: { tabId: tab.id === undefined ? -1 : tab.id },
-            func: makeOrange,
-            args: [color],
+            target: { tabId: tab.id ?? -1 },
+            files: ["content.js"],
         })
         .then(
             () => {
