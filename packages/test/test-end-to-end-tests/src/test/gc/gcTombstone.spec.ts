@@ -556,7 +556,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         });
     });
 
-    describe.only("Tombstone information in summary", () => {
+    describe("Tombstone information in summary", () => {
         function validateTombstoneState(summaryTree: ISummaryTree, expectedTombstones: string [] | undefined) {
             const actualTombstones = getGCTombstoneStateFromSummary(summaryTree);
             if (expectedTombstones === undefined) {
