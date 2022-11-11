@@ -131,7 +131,7 @@ async function createSummary(
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -156,7 +156,7 @@ async function createSummary(
                         latestFullSummary,
                         lumberjackProperties,
                     );
-                } catch(error) {
+                } catch (error) {
                     Lumberjack.error(
                         "Failed to persist latest full summary to storage during createSummary",
                         lumberjackProperties,
@@ -181,7 +181,7 @@ async function deleteSummary(
     softDelete: boolean,
     repoPerDocEnabled: boolean,
     externalWriterConfig?: IExternalWriterConfig): Promise<void> {
-    if(!repoPerDocEnabled) {
+    if (!repoPerDocEnabled) {
         throw new NetworkError(501, "Not Implemented");
     }
     const lumberjackProperties = {
@@ -206,7 +206,7 @@ async function deleteSummary(
         Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
     } catch (error: any) {
         if (error?.code === "ENOENT" ||
-                (error instanceof NetworkError &&
+            (error instanceof NetworkError &&
                 error?.code === 400 &&
                 error?.message.startsWith("Repo does not exist"))) {
             // File does not exist.
