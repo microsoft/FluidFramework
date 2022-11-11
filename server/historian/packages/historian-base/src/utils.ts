@@ -34,7 +34,7 @@ export function normalizePort(val) {
 
 export function getTokenLifetimeInSec(token: string): number {
     const claims = jwt.decode(token) as ITokenClaims;
-    if (claims && claims.exp) {
+    if (claims?.exp) {
         return (claims.exp - Math.round((new Date().getTime()) / 1000));
     }
     return undefined;
@@ -87,16 +87,16 @@ export function parseToken(tenantId: string, authorization: string): string {
  * Check a given path string for path traversal (e.g. "../" or "/").
  * TODO: replace with containsPathTraversal from services-shared
  */
- export function containsPathTraversal(path: string): boolean {
+export function containsPathTraversal(path: string): boolean {
     const parsedPath = parse(path);
     return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**
  * Pass into `.catch()` block of a RestWrapper call to output a more standardized network error.
- * @param url request url to be output in error log
- * @param method request method (e.g. "GET", "POST") to be output in error log
- * @param lumberProperties Collection of Lumberjack telemetry properties associated with the request
+ * @param url - request url to be output in error log
+ * @param method - request method (e.g. "GET", "POST") to be output in error log
+ * @param lumberProperties - Collection of Lumberjack telemetry properties associated with the request
  */
 export function getRequestErrorTranslator(
     url: string,
