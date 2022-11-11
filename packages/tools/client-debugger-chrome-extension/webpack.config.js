@@ -6,13 +6,13 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 
-const sourceDirectoryPath = path.resolve(__dirname, "src", "Background.ts");
+const sourceDirectoryPath = path.resolve(__dirname, "src");
 const buildDirectoryPath = path.join(__dirname, "dist"); // TODO: resolve?
 
 module.exports = {
     mode: "production",
     entry: {
-        background: sourceDirectoryPath,
+        background: path.join(sourceDirectoryPath, "background.ts"),
     },
     output: {
         path: buildDirectoryPath,

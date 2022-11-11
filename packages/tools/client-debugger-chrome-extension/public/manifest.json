@@ -4,6 +4,9 @@
   "description": "Displays a live debug view of the Fluid client in your application.",
   "version": "1.0",
   "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_icon": "images/icon.png"
+  },
   "background": {
     "service_worker": "background.js"
   }
