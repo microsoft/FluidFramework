@@ -169,7 +169,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
                 {changeEntry.clientId}
                 <br />
                 <b>Time: </b>{" "}
-                {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
+                {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toTimeString()}
                 <br />
                 <b>Type: </b> {changeEntry.changeKind}
             </li>,
