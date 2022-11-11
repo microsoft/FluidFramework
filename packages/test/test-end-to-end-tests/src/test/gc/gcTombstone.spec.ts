@@ -20,7 +20,7 @@ import {
     createSummarizer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
-import { delay } from "@fluidframework/common-utils";
+import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -559,19 +559,35 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
     });
 
     describe("Tombstone information in summary", () => {
-        function validateTombstoneState(summaryTree: ISummaryTree, expectedTombstones: string [] | undefined) {
+        /**
+         * Validates that the give summary tree contains correct information in the tombstone blob in GC tree.
+         * @param summaryTree - The summary tree that may contain the tombstone blob.
+         * @param tombstones - A list of ids that should be present in the tombstone blob.
+         * @param notTombstones - A list of ids that should not be present in the tombstone blob.
+         */
+        function validateTombstoneState(
+            summaryTree: ISummaryTree,
+            tombstones: string [] | undefined,
+            notTombstones: string[],
+        ) {
             const actualTombstones = getGCTombstoneStateFromSummary(summaryTree);
-            if (expectedTombstones === undefined) {
+            if (tombstones === undefined) {
                 assert(actualTombstones === undefined, "GC tree should not have tombstones in summary");
                 return;
             }
             assert(actualTombstones !== undefined, "GC tree should have tombstones in summary");
-            assert.deepStrictEqual(actualTombstones, expectedTombstones.sort(), "Tombstone state is incorrect");
+            for (const url of tombstones) {
+                assert(actualTombstones.includes(url), `${url} should be in tombstone blob`);
+            }
+            for (const url of notTombstones) {
+                assert(!actualTombstones.includes(url), `${url} should not be in tombstone blob`);
+            }
         }
 
         it("adds tombstone data stores information to tombstone blob in summary", async () => {
             const mainContainer = await provider.makeTestContainer(testContainerConfig);
             const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+            const mainDataStoreUrl = `/${mainDataStore._context.id}`;
             await waitForContainerConnection(mainContainer);
 
             const summarizer = await createSummarizer(
@@ -598,12 +614,12 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             mainDataStore._root.delete("newDataStore");
             mainDataStore._root.delete("newDataStore2");
 
-            // Summarize such that the above data stores are marked unreferenced.
+            // Summarize so that the above data stores are marked unreferenced.
             await provider.ensureSynchronized();
             const summary = await summarizeNow(summarizer);
-            validateTombstoneState(summary.summaryTree, undefined /* tombstoneUrls */);
+            validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
-            // Wait for sweep timeout so that the data stores become tombstoned.
+            // Wait for sweep timeout so that the data stores are tombstoned.
             await delay(sweepTimeoutMs + 10);
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
@@ -611,14 +627,56 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
 
             // Summarize. The tombstoned data stores should now be part of the summary.
             const summary2 = await summarizeNow(summarizer);
-            validateTombstoneState(summary2.summaryTree, [newDataStoreUrl, newDataStore2Url]);
+            validateTombstoneState(summary2.summaryTree, [newDataStoreUrl, newDataStore2Url], [mainDataStoreUrl]);
         });
 
-        itExpects("removes un-tombstoned data store from tombstone blob in summary",
-            [{ eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" }],
-            async () => {
+        it("adds tombstone attachment blob information to tombstone blob in summary", async () => {
             const mainContainer = await provider.makeTestContainer(testContainerConfig);
             const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+            const mainDataStoreUrl = `/${mainDataStore._context.id}`;
+            await waitForContainerConnection(mainContainer);
+
+            const summarizer = await createSummarizer(
+                provider,
+                mainContainer,
+                undefined /* summaryVersion */,
+                gcOptions,
+                mockConfigProvider(settings),
+            );
+
+            // Upload an attachment blobs and mark it referenced.
+            const blobContents = "Blob contents";
+            const blobHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("blob", blobHandle);
+
+            // Remove the blob's handle to make it unreferenced.
+            mainDataStore._root.delete("blob");
+
+            // Summarize so that the above attachment blob is marked unreferenced.
+            await provider.ensureSynchronized();
+            const summary = await summarizeNow(summarizer);
+            validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
+
+            // Wait for sweep timeout so that the blob is tombstoned.
+            await delay(sweepTimeoutMs + 10);
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize. The tombstoned attachment blob should now be part of the tombstone blob.
+            const summary2 = await summarizeNow(summarizer);
+            validateTombstoneState(summary2.summaryTree, [blobHandle.absolutePath], [mainDataStoreUrl]);
+        });
+
+        itExpects("removes un-tombstoned data store and attachment blob from tombstone blob in summary",
+        [
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "DataStore" },
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "Blob" }
+        ],
+        async () => {
+            const mainContainer = await provider.makeTestContainer(testContainerConfig);
+            const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+            const mainDataStoreUrl = `/${mainDataStore._context.id}`;
             await waitForContainerConnection(mainContainer);
 
             const summarizer = await createSummarizer(
@@ -645,28 +703,39 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             mainDataStore._root.delete("newDataStore");
             mainDataStore._root.delete("newDataStore2");
 
-            // Summarize such that the above data stores are marked unreferenced.
+            // Upload an attachment blobs and mark it referenced.
+            const blobContents = "Blob contents";
+            const blobHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("blob", blobHandle);
+
+            // Remove the blob's handle to make it unreferenced.
+            mainDataStore._root.delete("blob");
+
+            // Summarize so that the above data stores and blobs are marked unreferenced.
             await provider.ensureSynchronized();
             const summary = await summarizeNow(summarizer);
-            validateTombstoneState(summary.summaryTree, undefined /* tombstoneUrls */);
+            validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
-            // Wait for sweep timeout so that the data stores become tombstoned.
+            // Wait for sweep timeout so that the data stores are tombstoned.
             await delay(sweepTimeoutMs + 10);
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned data stores should now be part of the summary.
+            // Summarize. The tombstoned data stores should now be part of the tombstone blob.
             const summary2 = await summarizeNow(summarizer);
-            validateTombstoneState(summary2.summaryTree, [newDataStoreUrl, newDataStore2Url]);
+            validateTombstoneState(
+                summary2.summaryTree, [newDataStoreUrl, newDataStore2Url, blobHandle.absolutePath], [mainDataStoreUrl]);
 
-            // Mark one of the data stores as referenced so that its not tombstone anymore.
+            // Mark one of the data stores and attachment blob as referenced so that they are not tombstones anymore.
             mainDataStore._root.set("newDataStore", newDataStore.handle);
+            mainDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned data stores should now be part of the summary.
+            // Summarize. The un-tombstoned data store and attachment blob should not be part of the tombstone blob.
             const summary3 = await summarizeNow(summarizer);
-            validateTombstoneState(summary3.summaryTree, [newDataStore2Url]);
+            validateTombstoneState(
+                summary3.summaryTree, [newDataStore2Url], [mainDataStoreUrl, newDataStoreUrl, blobHandle.absolutePath]);
         });
 
         it("does not re-summarize GC state on only tombstone state changed", async () => {
@@ -692,13 +761,13 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             // Remove the data store's handle to make it unreferenced.
             mainDataStore._root.delete("newDataStore");
 
-            // Summarize such that the above data stores are marked unreferenced.
+            // Summarize so that the above data stores are marked unreferenced.
             await provider.ensureSynchronized();
             const summary = await summarizeNow(summarizer);
             const gcState = getGCStateFromSummary(summary.summaryTree);
             assert(gcState !== undefined, "GC state should be available and should not be a handle");
 
-            // Wait for sweep timeout so that the data stores become tombstoned.
+            // Wait for sweep timeout so that the data stores are tombstoned.
             await delay(sweepTimeoutMs + 10);
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
