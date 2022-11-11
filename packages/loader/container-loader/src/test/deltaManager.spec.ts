@@ -354,17 +354,6 @@ describe("Loader", () => {
 
                     deltaManager.connectionManager.forceReadonly(true);
                 });
-
-                it.only("Should return a reason on disconnect", async () => {
-                    await startDeltaManager(false /* startDeltaManager */);
-
-                    deltaManager.dispose();
-
-                    await new Promise<void>((resolve, reject) => deltaManager.on("disconnected", resolve));
-
-
-
-                });
             });
         });
     });
