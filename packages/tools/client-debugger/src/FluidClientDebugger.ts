@@ -70,26 +70,68 @@ export class FluidClientDebugger
 
     // #region Container-related event handlers
 
-    private readonly containerAttachedHandler = (): boolean => this.emit("containerAttached");
-    private readonly containerConnectedHandler = (clientId: string): boolean =>
-        this.emit("containerConnected", clientId);
-    private readonly containerDisconnectedHandler = (): boolean =>
-        this.emit("containerDisconnected");
-    private readonly containerClosedHandler = (error?: ICriticalContainerError): boolean =>
-        this.emit("containerClosed", error);
-    private readonly containerDirtyHandler = (): boolean => this.emit("containerDirty");
-    private readonly containerSavedHandler = (): boolean => this.emit("containerSaved");
+    private readonly containerAttachedHandler = (): void => {
+        this.emit("containerAttached");
+    };
 
-    private readonly incomingOpProcessedHandler = (op: ISequencedDocumentMessage): boolean =>
+    private readonly containerConnectedHandler = (clientId: string): void => {
+        this._connectionStateLog.push({
+            newState: ConnectionState.Connected,
+            timestamp: Date.now(),
+            clientId,
+        });
+        this.emit("containerConnected", clientId);
+    };
+
+    private readonly containerDisconnectedHandler = (): void => {
+        this._connectionStateLog.push({
+            newState: ConnectionState.Disconnected,
+            timestamp: Date.now(),
+            clientId: undefined,
+        });
+        this.emit("containerDisconnected");
+    };
+
+    private readonly containerDirtyHandler = (): void => {
+        // TODO: dirtiness history log?
+        this.emit("containerDirty");
+    };
+
+    private readonly containerSavedHandler = (): void => {
+        // TODO: dirtiness history log?
+        this.emit("containerSaved");
+    };
+
+    private readonly containerClosedHandler = (error?: ICriticalContainerError): void => {
+        this.emit("containerClosed", error);
+    };
+
+    private readonly incomingOpProcessedHandler = (op: ISequencedDocumentMessage): void => {
+        this._opsLog.push(op);
         this.emit("incomingOpProcessed", op);
+    };
 
     // #endregion
 
-    private readonly audienceMemberChangeHandler = (
-        change: MemberChangeKind,
-        clientId: string,
-        client: IClient,
-    ): boolean => this.emit("audienceMemberChange", change, clientId, client);
+    private readonly audienceMemberAddedHandler = (clientId: string, client: IClient): void => {
+        this._audienceChangeLog.push({
+            clientId,
+            client,
+            changeKind: "added",
+            timestamp: Date.now(),
+        });
+        this.emit("audienceMemberChange", MemberChangeKind.Added, clientId, client);
+    };
+
+    private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
+        this._audienceChangeLog.push({
+            clientId,
+            client,
+            changeKind: "removed",
+            timestamp: Date.now(),
+        });
+        this.emit("audienceMemberChange", MemberChangeKind.Removed, clientId, client);
+    };
 
     private readonly debuggerDisposedHandler = (): boolean => this.emit("debuggerDisposed");
 
@@ -120,21 +162,17 @@ export class FluidClientDebugger
         this._audienceChangeLog = [];
 
         // Bind Container events
-        this.container.on("attached", () => this.onContainerAttached());
-        this.container.on("connected", (clientId) => this.onContainerConnected(clientId));
-        this.container.on("disconnected", () => this.onContainerDisconnected());
-        this.container.on("closed", (error) => this.onContainerClosed(error));
-        this.container.on("op", (op) => this.onIncomingOpProcessed(op));
-        this.container.on("dirty", () => this.onContainerDirty());
-        this.container.on("saved", () => this.onContainerSaved());
+        this.container.on("attached", this.containerAttachedHandler);
+        this.container.on("connected", this.containerConnectedHandler);
+        this.container.on("disconnected", this.containerDisconnectedHandler);
+        this.container.on("closed", this.containerClosedHandler);
+        this.container.on("op", this.incomingOpProcessedHandler);
+        this.container.on("dirty", this.containerDirtyHandler);
+        this.container.on("saved", this.containerSavedHandler);
 
         // Bind Audience events
-        this.audience.on("addMember", (clientId: string, client: IClient) =>
-            this.onAudienceMemberAdded(clientId, client),
-        );
-        this.audience.on("removeMember", (clientId: string, client: IClient) =>
-            this.onAudienceMemberRemoved(clientId, client),
-        );
+        this.audience.on("addMember", this.audienceMemberAddedHandler);
+        this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
         // TODO: other events as needed
 
@@ -193,42 +231,6 @@ export class FluidClientDebugger
         return this.container.closed;
     }
 
-    private onContainerAttached(): void {
-        this.containerAttachedHandler();
-    }
-
-    private onContainerConnected(clientId: string): void {
-        this._connectionStateLog.push({
-            newState: ConnectionState.Connected,
-            timestamp: Date.now(),
-            clientId,
-        });
-        this.containerConnectedHandler(clientId);
-    }
-
-    private onContainerDisconnected(): void {
-        this._connectionStateLog.push({
-            newState: ConnectionState.Disconnected,
-            timestamp: Date.now(),
-            clientId: undefined,
-        });
-        this.containerDisconnectedHandler();
-    }
-
-    private onContainerDirty(): void {
-        // TODO: dirtiness history log?
-        this.containerDirtyHandler();
-    }
-
-    private onContainerSaved(): void {
-        // TODO: dirtiness history log?
-        this.containerSavedHandler();
-    }
-
-    private onContainerClosed(error?: ICriticalContainerError): void {
-        this.containerClosedHandler(error);
-    }
-
     // #endregion
 
     // #region DeltaManager data
@@ -243,12 +245,6 @@ export class FluidClientDebugger
     public getOpsLog(): readonly ISequencedDocumentMessage[] {
         // Clone array contents so consumers don't see local changes
         return this._opsLog.map((value) => value);
-    }
-
-    private onIncomingOpProcessed(op: ISequencedDocumentMessage): void {
-        this._opsLog.push(op);
-
-        this.incomingOpProcessedHandler(op);
     }
 
     // #endregion
@@ -268,26 +264,6 @@ export class FluidClientDebugger
     public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
         // Clone array contents so consumers don't see local changes
         return this._audienceChangeLog.map((value) => value);
-    }
-
-    private onAudienceMemberAdded(clientId: string, client: IClient): void {
-        this._audienceChangeLog.push({
-            clientId,
-            client,
-            changeKind: "added",
-            timestamp: Date.now(),
-        });
-        this.audienceMemberChangeHandler(MemberChangeKind.Added, clientId, client);
-    }
-
-    private onAudienceMemberRemoved(clientId: string, client: IClient): void {
-        this._audienceChangeLog.push({
-            clientId,
-            client,
-            changeKind: "removed",
-            timestamp: Date.now(),
-        });
-        this.audienceMemberChangeHandler(MemberChangeKind.Removed, clientId, client);
     }
 
     // #endregion
@@ -323,22 +299,18 @@ export class FluidClientDebugger
      * {@inheritDoc IFluidClientDebugger.dispose}
      */
     public dispose(): void {
-        // Bind Container events
-        this.container.off("attached", () => this.onContainerAttached());
-        this.container.off("connected", (clientId) => this.onContainerConnected(clientId));
-        this.container.off("disconnected", () => this.onContainerDisconnected());
-        this.container.off("closed", (error) => this.onContainerClosed(error));
-        this.container.off("op", (op) => this.onIncomingOpProcessed(op));
-        this.container.off("dirty", () => this.onContainerDirty());
-        this.container.off("saved", () => this.onContainerSaved());
+        // Unbind Container events
+        this.container.off("attached", this.containerAttachedHandler);
+        this.container.off("connected", this.containerConnectedHandler);
+        this.container.off("disconnected", this.containerDisconnectedHandler);
+        this.container.off("closed", this.containerClosedHandler);
+        this.container.off("op", this.incomingOpProcessedHandler);
+        this.container.off("dirty", this.containerDirtyHandler);
+        this.container.off("saved", this.containerSavedHandler);
 
-        // Bind Audience events
-        this.audience.off("addMember", (clientId: string, client: IClient) =>
-            this.onAudienceMemberAdded(clientId, client),
-        );
-        this.audience.off("removeMember", (clientId: string, client: IClient) =>
-            this.onAudienceMemberRemoved(clientId, client),
-        );
+        // Unbind Audience events
+        this.audience.off("addMember", this.audienceMemberAddedHandler);
+        this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 
         this._disposed = true;
     }
