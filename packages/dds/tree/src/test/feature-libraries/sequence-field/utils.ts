@@ -7,7 +7,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeRepair, noRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");

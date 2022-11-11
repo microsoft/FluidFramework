@@ -431,6 +431,12 @@ interface HasPlaceFields {
 }
 
 // @public (undocumented)
+interface HasReattachFields extends HasOpId, HasPlaceFields {
+    detachedBy: RevisionTag | undefined;
+    detachIndex: number;
+}
+
+// @public (undocumented)
 interface HasTiebreakPolicy extends HasPlaceFields {
     tiebreak?: Tiebreak;
 }
@@ -763,13 +769,9 @@ interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFi
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields {
     // (undocumented)
     changes: TNodeChange;
-    // (undocumented)
-    detachedBy: RevisionTag | undefined;
-    // (undocumented)
-    detachIndex: number;
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -1006,13 +1008,9 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 }
 
 // @public (undocumented)
-interface Reattach extends HasOpId, HasPlaceFields {
+interface Reattach extends HasReattachFields {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    detachedBy: RevisionTag | undefined;
-    // (undocumented)
-    detachIndex: number;
     // (undocumented)
     type: "Revive" | "Return";
 }
@@ -1108,6 +1106,7 @@ declare namespace SequenceField {
         TreeRootPath,
         Skip_2 as Skip,
         LineageEvent,
+        HasReattachFields,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,

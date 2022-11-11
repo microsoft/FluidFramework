@@ -41,6 +41,7 @@ export {
     TreeRootPath,
     Skip,
     LineageEvent,
+    HasReattachFields,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
