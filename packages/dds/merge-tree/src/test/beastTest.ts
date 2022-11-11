@@ -1227,7 +1227,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync().map((seg) => seg.toJSONObject());
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);

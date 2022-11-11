@@ -22,9 +22,8 @@ import {
     MergeTreeChunkV1,
 } from "./snapshotChunks";
 import { SnapshotV1 } from "./snapshotV1";
-import { SerializedAttributionBlob, SnapshotLegacy } from "./snapshotlegacy";
+import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { AttributionCollection } from "./attributionCollection";
 
 export class SnapshotLoader {
@@ -42,15 +41,6 @@ export class SnapshotLoader {
     public async initialize(
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
-        const attributionSerializedP: Promise<undefined | SerializedAttributionBlob> = services
-            .contains(SnapshotLegacy.attribution).then(async (exists) => {
-            if (!exists) {
-                return undefined;
-            }
-            const buffer = await services.readBlob(SnapshotLegacy.attribution);
-            const entries: SerializedAttributionBlob = JSON.parse(bufferToString(buffer, "utf8"));
-            return entries;
-        });
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
@@ -58,7 +48,7 @@ export class SnapshotLoader {
             });
 
         const catchupOpsP =
-            this.loadBodyAndCatchupOps(headerLoadedP, attributionSerializedP, services);
+            this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
             (err) => this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
@@ -68,25 +58,8 @@ export class SnapshotLoader {
         return { catchupOpsP };
     }
 
-    private async loadAttribution(attributionBlob: SerializedAttributionBlob | undefined) {
-        if (!attributionBlob) {
-            return;
-        }
-        assert(this.mergeTree.length === attributionBlob?.length, "Mismatched attribution info length");
-        // TODO: Test that this is the right set of segments to walk for legacy and v1 snapshots.
-        // Also reconsider things like whether to put attribution in its own blob, API around loading it
-        // (if things could be structured to not need immediately that would be convenient)
-        const segments: ISegment[] = [];
-        walkAllChildSegments(this.mergeTree.root, (segment) => {
-            segments.push(segment);
-            return true;
-        });
-        AttributionCollection.populateAttributionCollections(segments, attributionBlob);
-    }
-
     private async loadBodyAndCatchupOps(
         headerChunkP: Promise<MergeTreeChunkV1>,
-        attributionSerializedP: Promise<SerializedAttributionBlob | undefined>,
         services: IChannelStorageService,
     ): Promise<ISequencedDocumentMessage[]> {
         const blobsP = services.list("");
@@ -95,7 +68,6 @@ export class SnapshotLoader {
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
-        await this.loadAttribution(await attributionSerializedP);
 
         const blobs = await blobsP;
         if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
@@ -163,6 +135,9 @@ export class SnapshotLoader {
             this.mergeTree.options,
             this.serializer);
         const segs = chunk.segments.map(this.specToSegment);
+        if (chunk.attribution) {
+            AttributionCollection.populateAttributionCollections(segs, chunk.attribution);
+        }
         // TODO: attribution
         this.mergeTree.reloadFromSegments(segs);
 
@@ -214,8 +189,12 @@ export class SnapshotLoader {
                 this.mergeTree.options,
                 this.serializer);
             lengthSofar += chunk.length;
+            const newSegs = chunk.segments.map(this.specToSegment);
+            if (chunk.attribution) {
+                AttributionCollection.populateAttributionCollections(newSegs, chunk.attribution);
+            }
             // Deserialize each chunk segment and append it to the end of the MergeTree.
-            segs.push(...chunk.segments.map(this.specToSegment));
+            segs.push(...newSegs);
         }
         assert(
             lengthSofar === chunk1.headerMetadata!.totalLength,

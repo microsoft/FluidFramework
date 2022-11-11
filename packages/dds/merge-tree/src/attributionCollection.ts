@@ -107,8 +107,8 @@ export class AttributionCollection<T> {
     /**
      * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
      */
-    public static serializeAttributionCollections(
-        segments: Iterable<ISegment>,
+    public static serializeAttributionCollections<T>(
+        segments: Iterable<{ attribution?: AttributionCollection<T>; cachedLength: number }>,
     ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
         const keys: unknown[] = [];

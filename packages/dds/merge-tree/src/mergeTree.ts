@@ -1620,7 +1620,7 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
-                newSegment.attribution = new AttributionCollection(newSegment.seq, newSegment.cachedLength);
+                newSegment.attribution ??= new AttributionCollection(newSegment.seq, newSegment.cachedLength);
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
                     if (markerId) {

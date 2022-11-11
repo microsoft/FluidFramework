@@ -16,7 +16,6 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { AttributionCollection } from "./attributionCollection";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
 import { matchProperties } from "./properties";
 import {
     MergeTreeChunkLegacy,
@@ -33,13 +32,6 @@ interface SnapshotHeader {
     // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
     minSeq?: number;
-}
-
-export interface SerializedAttributionBlob {
-    keys: unknown[];
-    posBreakpoints: number[];
-    /* Total length; only necessary for validation */
-    length: number;
 }
 
 /**
@@ -61,9 +53,7 @@ export class SnapshotLegacy {
 
     private header: SnapshotHeader | undefined;
     private seq: number | undefined;
-    private segments: IJSONSegment[] | undefined;
-    private segmentLengths: number[] | undefined;
-    private attributionBlob: SerializedAttributionBlob | undefined;
+    private segments: ISegment[] | undefined;
     private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
@@ -74,19 +64,24 @@ export class SnapshotLegacy {
     }
 
     private getSeqLengthSegs(
-        allSegments: IJSONSegment[],
-        allLengths: number[],
+        allSegments: ISegment[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkLegacy {
-        const segs: IJSONSegment[] = [];
+        const segs: ISegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
+        let hasAttribution = false;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
             const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
-            sequenceLength += allLengths[startIndex + segCount];
+            if (pseg.attribution) {
+                // TODO: Validate this is all-or-nothing?
+                hasAttribution = true;
+            }
+            sequenceLength += pseg.cachedLength;
             segCount++;
         }
+
         return {
             version: undefined,
             chunkStartSegmentIndex: startIndex,
@@ -95,7 +90,8 @@ export class SnapshotLegacy {
             totalLengthChars: this.header!.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header!.seq,
-            segmentTexts: segs,
+            segmentTexts: segs.map((seg) => seg.toJSONObject()),
+            attribution: hasAttribution ? AttributionCollection.serializeAttributionCollections(segs) : undefined
         };
     }
 
@@ -108,7 +104,7 @@ export class SnapshotLegacy {
         serializer: IFluidSerializer,
         bind: IFluidHandle,
     ): ISummaryTreeWithStats {
-        const chunk1 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!, this.chunkSize);
+        const chunk1 = this.getSeqLengthSegs(this.segments!, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const builder = new SummaryTreeBuilder();
@@ -121,7 +117,7 @@ export class SnapshotLegacy {
             bind));
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount!) {
-            const chunk2 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!,
+            const chunk2 = this.getSeqLengthSegs(this.segments!,
                 this.header!.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
@@ -146,13 +142,6 @@ export class SnapshotLegacy {
             builder.addBlob(
                 this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
                 serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs));
-        }
-
-        if (this.attributionBlob !== undefined && this.attributionBlob.keys.length > 0) {
-            builder.addBlob(
-                this.mergeTree.options?.attributionBlobName ?? SnapshotLegacy.attribution,
-                serializer ? serializer.stringify(this.attributionBlob, bind) : JSON.stringify(this.attributionBlob),
-            );
         }
 
         return builder.getSummaryTree();
@@ -196,15 +185,11 @@ export class SnapshotLegacy {
         }
 
         this.segments = [];
-        this.segmentLengths = [];
         let totalLength: number = 0;
         segs.map((segment) => {
             totalLength += segment.cachedLength;
-            this.segments!.push(segment.toJSONObject());
-            this.segmentLengths!.push(segment.cachedLength);
+            this.segments!.push(segment);
         });
-
-        this.attributionBlob = AttributionCollection.serializeAttributionCollections(segs);
 
         // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
         // When this condition happens, we might not write out all segments in getSeqLengthSegs()
