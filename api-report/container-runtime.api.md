@@ -58,6 +58,12 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum CompressionAlgorithms {
+    // (undocumented)
+    lz4 = "lz4"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -312,7 +318,8 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
-    readonly minimumSize?: number;
+    readonly compressionAlgorithm: CompressionAlgorithms;
+    readonly minimumBatchSizeInBytes: number;
 }
 
 // @public (undocumented)
@@ -416,7 +423,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public
+// @public @deprecated
 export interface IPendingFlush {
     // (undocumented)
     type: "flush";
@@ -756,8 +763,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 

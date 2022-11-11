@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
-import { ContainerRuntimeMessage } from "./containerRuntime";
+import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
+import { OpCompressor } from "./opCompressor";
 
 /**
  * Message type used by BatchManager
@@ -20,24 +22,28 @@ export interface IBatchManagerOptions {
     readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
+    readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
 /**
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-    private pendingBatch: BatchMessage[] = [];
+    private readonly opCompressor: OpCompressor;
+    private pendingBatch: BatchMessage [] = [];
     private batchContentSize = 0;
 
     public get empty() { return this.pendingBatch.length === 0; }
     public get length() { return this.pendingBatch.length; }
 
-    constructor(public readonly options: IBatchManagerOptions) { }
+    constructor(public readonly logger: ITelemetryLogger, public readonly options: IBatchManagerOptions) {
+        this.opCompressor = new OpCompressor(logger);
+    }
 
     public push(message: BatchMessage): boolean {
         this.checkReferenceSequenceNumber(message);
 
-        const contentSize = this.batchContentSize + message.contents.length;
+        const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
         // Attempt to estimate batch size, aka socket message size.
@@ -50,11 +56,17 @@ export class BatchManager {
         // If we were provided soft limit, check for exceeding it.
         // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
         // and start over. That's not an option if we have no ops.
-        if (this.options.softLimit !== undefined && this.length > 0 && socketMessageSize >= this.options.softLimit) {
+        // If compression is enabled, the soft and hard limit are ignored and the message will be pushed anyways.
+        // Cases where the message is still too large will be handled by the maxConsecutiveReconnects path.
+        if (this.options.softLimit !== undefined
+            && this.length > 0
+            && socketMessageSize >= this.options.softLimit
+            && Infinity === (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
             return false;
         }
 
-        if (socketMessageSize >= this.options.hardLimit) {
+        if (socketMessageSize >= this.options.hardLimit
+            && Infinity === (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
             return false;
         }
 
@@ -65,8 +77,16 @@ export class BatchManager {
 
     public popBatch() {
         const batch = this.pendingBatch;
+        const size = this.batchContentSize;
         this.pendingBatch = [];
         this.batchContentSize = 0;
+
+        if (batch.length > 0
+            && this.options.compressionOptions !== undefined
+            && this.options.compressionOptions.minimumBatchSizeInBytes < size) {
+            return this.opCompressor.compressBatch(batch, size);
+        }
+
         return batch;
     }
 
@@ -80,7 +100,7 @@ export class BatchManager {
                 for (let i = this.pendingBatch.length; i > startPoint;) {
                     i--;
                     const message = this.pendingBatch[i];
-                    this.batchContentSize -= message.contents.length;
+                    this.batchContentSize -= message.contents?.length ?? 0;
                     process(message);
                 }
 
