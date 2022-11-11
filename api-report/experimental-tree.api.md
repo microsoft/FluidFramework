@@ -562,7 +562,10 @@ export type LocalCompressedId = number & {
 
 // @public
 export interface LogViewer {
+    // @deprecated
     getRevisionView(revision: Revision): Promise<RevisionView>;
+    getRevisionViewInMemory(revision: Revision): RevisionView;
+    // @deprecated
     getRevisionViewInSession(revision: Revision): RevisionView;
 }
 
@@ -893,6 +896,12 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
+export interface SharedTreeBaseOptions {
+    editEvictionFrequency?: number;
+    inMemoryHistorySize?: number;
+}
+
+// @public
 export enum SharedTreeDiagnosticEvent {
     AppliedEdit = "appliedEdit",
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
@@ -939,7 +948,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 }
 
 // @public
-export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
+export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
 
 // @public
 export interface SharedTreeOptions_0_0_2 {

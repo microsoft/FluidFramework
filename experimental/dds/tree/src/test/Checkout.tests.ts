@@ -325,7 +325,7 @@ export function checkoutTests(
 			const editId = checkout.closeEdit();
 			await checkout.waitForPendingUpdates();
 			expect(tree.edits.length).equals(1);
-			expect(tree.edits.tryGetEdit(editId)).is.not.undefined;
+			expect(tree.edits.tryGetEditFromId(editId)).is.not.undefined;
 		});
 
 		it('will emit invalidation messages in response to changes', async () => {

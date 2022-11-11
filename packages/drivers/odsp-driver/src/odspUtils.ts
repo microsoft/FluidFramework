@@ -325,10 +325,10 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `The Host-provided token fetcher threw an error: ${errorMessage}`,
+                        `The Host-provided token fetcher threw an error`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
-                        { method: name, driverVersion }));
+                        { method: name, errorMessage, driverVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });
