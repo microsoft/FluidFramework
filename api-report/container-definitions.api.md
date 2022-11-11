@@ -133,7 +133,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     connect(): void;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    disconnect(): void;
+    disconnect(reason: string): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -211,7 +211,9 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
-    (event: "disconnected" | "attached", listener: () => void): any;
+    (event: "attached", listener: () => void): any;
+    // (undocumented)
+    (event: "disconnected", listener: (reason: string) => void): any;
     // (undocumented)
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)

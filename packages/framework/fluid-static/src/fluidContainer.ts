@@ -42,7 +42,7 @@ export interface IFluidContainerEvents extends IEvent {
      *
      * - {@link IFluidContainer.disconnect}
      */
-    (event: "disconnected", listener: () => void): void;
+    (event: "disconnected", listener: (reason: string) => void): void;
 
     /**
      * Emitted when all local changes/edits have been acknowledged by the service.
@@ -166,7 +166,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      *
      * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
-    disconnect(): void;
+    disconnect(reason: string): void;
 
     /**
      * Create a new data object or Distributed Data Store (DDS) of the specified type.
@@ -199,7 +199,10 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
-    private readonly disconnectedHandler = () => this.emit("disconnected");
+    private readonly disconnectedHandler = (reason: string) => {
+        console.log("disconnected from FluidContainer:", reason);
+        this.emit("disconnected", reason);
+    };
     private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");
@@ -280,8 +283,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.connect}
      */
-    public async disconnect(): Promise<void> {
-        this.container.disconnect?.();
+    public async disconnect(reason: string): Promise<void> {
+        this.container.disconnect?.(reason);
     }
 
     /**

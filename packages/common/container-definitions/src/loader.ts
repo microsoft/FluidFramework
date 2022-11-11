@@ -109,7 +109,8 @@ export interface IContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "attached", listener: () => void);
+    (event: "attached", listener: () => void);
+    (event: "disconnected", listener: (reason: string) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -266,7 +267,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect(): void;
+    disconnect(reason: string): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session

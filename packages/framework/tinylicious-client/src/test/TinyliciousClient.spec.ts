@@ -359,4 +359,33 @@ describe("TinyliciousClient", () => {
             "Getting a container with only write permission is not in write mode",
         );
     });
+
+    /**
+     * Scenario: Test if TinyliciousClient disconnects with a reason.
+     *
+     * Expected behavior: TinyliciousClient should disconnects with a reason.
+     */
+     it.only("disconnects with a reason", async () => {
+        const client = new TinyliciousClient();
+
+        const { container } = await client.createContainer(schema);
+        // const containerId = await container.attach();
+        container.on("disconnected", (reason: string) => console.log(`disconnected from TinyliciousClientTest: ${reason}`));
+        await container.attach();
+        console.log("container attached");
+        await timeoutPromise(
+            (resolve) => container.once("connected", resolve),
+            {
+                durationMs: 1000,
+                errorMsg: "container connect() timeout",
+            },
+        );
+        console.log("container connected");
+        // const { container: containerGet } = await client.getContainer(
+        //     containerId,
+        //     schema,
+        // );
+        container.disconnect("test reason");
+        console.log("container disconnected");
+    });
 });

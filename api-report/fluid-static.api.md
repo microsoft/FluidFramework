@@ -46,7 +46,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     connect(): Promise<void>;
     get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    disconnect(): Promise<void>;
+    disconnect(reason: string): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
     get initialObjects(): LoadableObjectRecord;
@@ -66,7 +66,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     connect(): void;
     readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    disconnect(): void;
+    disconnect(reason: string): void;
     dispose(): void;
     readonly disposed: boolean;
     readonly initialObjects: LoadableObjectRecord;
@@ -76,7 +76,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 // @public
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: () => void): void;
-    (event: "disconnected", listener: () => void): void;
+    (event: "disconnected", listener: (reason: string) => void): void;
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
