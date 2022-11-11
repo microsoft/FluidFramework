@@ -100,7 +100,7 @@ export function create(
                 refsP,
                 response,
                 false);
-    });
+        });
 
     router.get("/repos/:ignored?/:tenantId/git/refs/*",
         throttle(throttler, winston, commonThrottleOptions),
@@ -110,7 +110,7 @@ export function create(
                 refP,
                 response,
                 false);
-    });
+        });
 
     router.post("/repos/:ignored?/:tenantId/git/refs",
         throttle(throttler, winston, commonThrottleOptions),
@@ -122,7 +122,7 @@ export function create(
                 false,
                 undefined,
                 201);
-    });
+        });
 
     router.patch("/repos/:ignored?/:tenantId/git/refs/*",
         utils.validateRequestParams("tenantId", 0),
@@ -137,7 +137,7 @@ export function create(
                 refP,
                 response,
                 false);
-    });
+        });
 
     router.delete("/repos/:ignored?/:tenantId/git/refs/*",
         utils.validateRequestParams("tenantId", 0),
@@ -150,7 +150,7 @@ export function create(
                 false,
                 undefined,
                 204);
-    });
+        });
 
     return router;
 }

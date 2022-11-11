@@ -3,16 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TaggedChange } from "../../core";
+import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, ChangesetTag, Mark, MarkList, OpId } from "./format";
-import { isSkipMark } from "./utils";
-
-/**
- * Dummy value used in place of the actual tag.
- * TODO: give `invert` access real tag data.
- */
-export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
+import { Changeset, Mark, MarkList, OpId } from "./format";
+import { getInputLength, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -32,13 +26,13 @@ export function invert<TNodeChange>(
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Changeset<TNodeChange> {
     // TODO: support the input change being a squash
-    const opIdToTag = (id: OpId): ChangesetTag => {
-        return DUMMY_INVERT_TAG;
+    const opIdToTag = (id: OpId): RevisionTag | undefined => {
+        return change.revision;
     };
     return invertMarkList(change.change, opIdToTag, invertChild);
 }
 
-type IdToTagLookup = (id: OpId) => ChangesetTag;
+type IdToTagLookup = (id: OpId) => RevisionTag | undefined;
 
 function invertMarkList<TNodeChange>(
     markList: MarkList<TNodeChange>,
@@ -46,15 +40,18 @@ function invertMarkList<TNodeChange>(
     invertChild: NodeChangeInverter<TNodeChange>,
 ): MarkList<TNodeChange> {
     const inverseMarkList: MarkList<TNodeChange> = [];
+    let inputIndex = 0;
     for (const mark of markList) {
-        const inverseMarks = invertMark(mark, opIdToTag, invertChild);
+        const inverseMarks = invertMark(mark, inputIndex, opIdToTag, invertChild);
         inverseMarkList.push(...inverseMarks);
+        inputIndex += getInputLength(mark);
     }
     return inverseMarkList;
 }
 
 function invertMark<TNodeChange>(
     mark: Mark<TNodeChange>,
+    inputIndex: number,
     opIdToTag: IdToTagLookup,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Mark<TNodeChange>[] {
@@ -77,7 +74,8 @@ function invertMark<TNodeChange>(
                     {
                         type: "Revive",
                         id: mark.id,
-                        tomb: opIdToTag(mark.id),
+                        detachedBy: opIdToTag(mark.id),
+                        detachIndex: inputIndex,
                         count: mark.count,
                     },
                 ];

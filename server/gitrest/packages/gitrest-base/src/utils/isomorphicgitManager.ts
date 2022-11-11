@@ -16,8 +16,8 @@ import {
     IFileSystemManager,
     IFileSystemManagerFactory,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
@@ -27,7 +27,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         private readonly repoName: string,
         private readonly directory: string,
         private readonly lumberjackBaseProperties: Record<string, any>,
-    ) {}
+    ) { }
 
     public get path(): string {
         return this.directory;
@@ -35,10 +35,10 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         const commit = await isomorphicGit.readCommit({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.commitToICommit(commit);
     }
 
@@ -153,20 +153,20 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
     public async getContent(commit: string, contentPath: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: commit,
-                filepath: contentPath,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: commit,
+            filepath: contentPath,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
@@ -387,11 +387,11 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
         lumberjackBaseProperties: Record<string, any>): IRepositoryManager {
-            return new IsomorphicGitRepositoryManager(
-                fileSystemManager,
-                repoOwner,
-                repoName,
-                gitdir,
-                lumberjackBaseProperties);
+        return new IsomorphicGitRepositoryManager(
+            fileSystemManager,
+            repoOwner,
+            repoName,
+            gitdir,
+            lumberjackBaseProperties);
     }
 }

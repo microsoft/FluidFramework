@@ -66,7 +66,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
             [BaseGitRestTelemetryProperties.ref]: ref,
             [BaseGitRestTelemetryProperties.sha]: sha,
             update,
-         };
+        };
         if (!this.config.get("externalStorage:enabled")) {
             Lumberjack.info("External storage is not enabled", lumberjackProperties);
             return;

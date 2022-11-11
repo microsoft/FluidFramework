@@ -15,7 +15,6 @@ import {
     ITreeCursor,
     IForestSubscription,
     TransactionResult,
-    runSynchronousTransaction,
     Checkout as TransactionCheckout,
     UpPath,
     FieldKey,
@@ -26,6 +25,7 @@ import {
     afterChangeToken,
 } from "../../core";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
+import { runSynchronousTransaction } from "../defaultTransaction";
 import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
 
 /**

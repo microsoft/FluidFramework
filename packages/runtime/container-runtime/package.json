@@ -105,6 +105,11 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
