@@ -91,7 +91,7 @@ When container is closed, the following is true (in no particular order):
 
 #### `Container.dispose()`
 
-Once disposed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container is **NOT** expected to be used anymore. It acts like a lightweight version of `Container.closed()`.
+Once disposed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container is **NOT** expected to be used anymore.
 
 When container is disposed, the following is true (in no particular order):
 
