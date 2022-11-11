@@ -174,8 +174,6 @@ export class FluidClientDebugger
         this.audience.on("addMember", this.audienceMemberAddedHandler);
         this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
-        // TODO: other events as needed
-
         this._disposed = false;
     }
 
