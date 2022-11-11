@@ -222,7 +222,11 @@ describeNoCompat("Summarizer fetches expected number of times",
         summarizer1.close();
     });
 
-    it("Second summarizer from latest should not fetch", async () => {
+    it("Second summarizer from latest should not fetch", async function() {
+        // Local driver does not use cache and will not fetch.
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         let versionWrap = await incrementCellValueAndRunSummary(summarizer1, 1 /* expectedMatrixCellValue */);
@@ -237,14 +241,19 @@ describeNoCompat("Summarizer fetches expected number of times",
 
         const summarizer2 = await createSummarizer(provider, mainContainer);
         versionWrap = await incrementCellValueAndRunSummary(summarizer2, 4 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        assert(versionWrap.fetchCount === 1, "Fetch should have happened when using cache");
 
         versionWrap = await incrementCellValueAndRunSummary(summarizer2, 5 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
         summarizer2.close();
     });
 
-    it("Loading Summary from older version should fetch", async () => {
+    it("Loading Summary from older version should fetch", async function() {
+        // Local driver does not use cache and will not fetch.
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
+
         const summarizerClient = await createSummarizer(provider, mainContainer);
         let versionWrap = await incrementCellValueAndRunSummary(summarizerClient, 1 /* expectedMatrixCellValue */);
         const summaryVersion = versionWrap.summaryVersion;
@@ -255,14 +264,14 @@ describeNoCompat("Summarizer fetches expected number of times",
         // Add more summaries and we can have more recent ones.
         const secondSummarizer = await createSummarizer(provider, mainContainer);
         versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        assert(versionWrap.fetchCount === 1, "Fetch should have happened when using cache");
         versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 3 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
         await provider.ensureSynchronized();
         secondSummarizer.close();
 
         // Load summarizer from previous version triggers fetch.
-         const newSummarizerClient = await createSummarizer(provider, mainContainer, summaryVersion);
+         const newSummarizerClient = await createSummarizer(provider, mainContainer);
          versionWrap = await incrementCellValueAndRunSummary(newSummarizerClient, 4 /* expectedMatrixCellValue */);
          assert(versionWrap.fetchCount === 1, "Single fetch should have happened once");
          assert(versionWrap.summaryVersion, "Summarizer should have happened");
