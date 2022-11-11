@@ -13,6 +13,9 @@ import {
 } from "../core";
 import { brand } from "../util";
 
+// This is intended to be used by checkout, and not depend on it.
+// This allows transaction to be tested in isolation.
+
 /**
  * Keeps a forest in sync with a ProgressiveEditBuilder.
  */
