@@ -62,8 +62,8 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
             const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.entryPoint?.get();
-            assert(maybeRouter !== undefined, "entryPoint should have been initialized by now");
-            assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entryPoint is not an IFluidRouter");
+            assert(maybeRouter !== undefined, 0x468 /* entryPoint should have been initialized by now */);
+            assert(maybeRouter?.IFluidRouter !== undefined, 0x469 /* Data store runtime entryPoint is not an IFluidRouter */);
             return maybeRouter?.IFluidRouter.request(request);
         },
         runtimeClass);
@@ -75,7 +75,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
         sharedObjectRegistry,
         existing,
         async (rt: IFluidDataStoreRuntime) => {
-            assert(instance !== undefined, "entryPoint is undefined");
+            assert(instance !== undefined, 0x46a /* entryPoint is undefined */);
             // Calling finishInitialization here like PureDataObject.getDataObject did, to keep the same behavior,
             // since accessing the runtime's entryPoint is how we want the data object to be retrieved going forward.
             // Without this I ran into issues with the load-existing flow not working correctly.
