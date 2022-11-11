@@ -6,7 +6,7 @@
 import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 class InternalErrorRule extends BaseMongoExceptionRetryRule {
     private static readonly codeName = "InternalError";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("InternalErrorRule", retryRuleOverride);
@@ -22,7 +22,7 @@ class InternalErrorRule extends BaseMongoExceptionRetryRule {
 // This handles the requested queued on client side buffer overflow. Should relies on reconnect instead of retry?
 class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
     private static readonly messagePrefix = "no connection available for operation and number of stored operation";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("NoConnectionAvailableRule", retryRuleOverride);
@@ -42,7 +42,7 @@ class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 // Should not retry but relays on reconnect.
 class NoPrimaryInReplicasetRule extends BaseMongoExceptionRetryRule {
     private static readonly message = "no primary found in replicaset or invalid replica set name";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("NoPrimaryInReplicasetRule", retryRuleOverride);
@@ -62,7 +62,7 @@ class NoPrimaryInReplicasetRule extends BaseMongoExceptionRetryRule {
 class PoolDestroyedRule extends BaseMongoExceptionRetryRule {
     private static readonly message1 = "pool destroyed";
     private static readonly message2 = "server instance pool was destroyed";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("PoolDestroyedRule", retryRuleOverride);
@@ -80,7 +80,7 @@ class PoolDestroyedRule extends BaseMongoExceptionRetryRule {
 class RequestSizeLargeRule extends BaseMongoExceptionRetryRule {
     private static readonly errorMsgPrefix =
         "Error=16, Details='Response status code does not indicate success: RequestEntityTooLarge (413)";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("RequestSizeLargeRule", retryRuleOverride);
@@ -96,7 +96,7 @@ class RequestSizeLargeRule extends BaseMongoExceptionRetryRule {
 // This handles request timeout from server without additional rate limit info.
 class RequestTimedNoRateLimitInfo extends BaseMongoExceptionRetryRule {
     private static readonly errmsg = "Request timed out.";
-    protected defaultDecision: boolean = true;
+    protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("RequestTimedNoRateLimitInfo", retryRuleOverride);
@@ -113,7 +113,7 @@ class RequestTimedNoRateLimitInfo extends BaseMongoExceptionRetryRule {
 class RequestTimedOutWithHttpInfo extends BaseMongoExceptionRetryRule {
     private static readonly errmsgPrefix =
         "Error=50, Details='Response status code does not indicate success: RequestTimeout (408);";
-    protected defaultDecision: boolean = true;
+    protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("RequestTimedOutWithHttpInfo", retryRuleOverride);
@@ -130,7 +130,7 @@ class RequestTimedOutWithHttpInfo extends BaseMongoExceptionRetryRule {
 class RequestTimedOutWithRateLimitTrue extends BaseMongoExceptionRetryRule {
     private static readonly codeName = "ExceededTimeLimit";
     private static readonly errorMsg = "Request timed out. Retries due to rate limiting: True.";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("RequestTimedOutWithRateLimitTrue", retryRuleOverride);
@@ -148,7 +148,7 @@ class RequestTimedOutWithRateLimitTrue extends BaseMongoExceptionRetryRule {
 class RequestTimedOutWithRateLimitFalse extends BaseMongoExceptionRetryRule {
     private static readonly codeName = "ExceededTimeLimit";
     private static readonly errorMsg = "Request timed out. Retries due to rate limiting: False.";
-    protected defaultDecision: boolean = true;
+    protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("RequestTimedOutWithRateLimitFalse", retryRuleOverride);
@@ -165,7 +165,7 @@ class RequestTimedOutWithRateLimitFalse extends BaseMongoExceptionRetryRule {
 // This handles server side temporary 503 issue
 class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
     private static readonly errorDetails = "Response status code does not indicate success: ServiceUnavailable (503)";
-    protected defaultDecision: boolean = true;
+    protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("ServiceUnavailableRule", retryRuleOverride);
@@ -181,7 +181,7 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 // this handles the pool destroyed error from client side. Should relies on reconnect instead of retry?
 class TopologyDestroyed extends BaseMongoExceptionRetryRule {
     private static readonly message = "Topology was destroyed";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("TopologyDestroyed", retryRuleOverride);
@@ -196,7 +196,7 @@ class TopologyDestroyed extends BaseMongoExceptionRetryRule {
 // this handles the incorrect credentials set. Should not retry
 class UnauthorizedRule extends BaseMongoExceptionRetryRule {
     private static readonly codeName = "Unauthorized";
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("UnauthorizedRule", retryRuleOverride);

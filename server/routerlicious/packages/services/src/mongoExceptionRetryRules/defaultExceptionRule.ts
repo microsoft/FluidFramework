@@ -6,7 +6,7 @@
 import { BaseMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 
 export class DefaultExceptionRule extends BaseMongoExceptionRetryRule {
-    protected defaultDecision: boolean = false;
+    protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super("DefaultExceptionRule", retryRuleOverride);

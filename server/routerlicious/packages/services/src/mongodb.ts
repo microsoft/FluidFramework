@@ -6,7 +6,7 @@
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
-import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -206,35 +206,18 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
     }
 
     private async requestWithRetry<TOut>(request: () => Promise<TOut>, callerName: string): Promise<TOut> {
-        let metric: Lumber<LumberEventName.MongoQuery>;
-        if (this.telemetryEnabled) {
-            metric = Lumberjack.newLumberMetric(LumberEventName.MongoQuery);
-            metric.setProperty("callerName", callerName);
-        }
-        let metricError: any;
-        try {
-            return requestWithRetry<TOut>(
-                request,
-                callerName,
-                {}, // telemetryProperties
-                (e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
-                3, // maxRetries
-                1000, // retryAfterMs
-                (error: any, numRetries: number, retryAfterInterval: number) =>
-                    numRetries * retryAfterInterval, // retryAfterIntervalCalculator
-            );
-        } catch (err) {
-            metricError = err;
-            throw err;
-        } finally {
-            if (metric) {
-                if (metricError) {
-                    metric.error("Query failed", metricError);
-                } else {
-                    metric.success("Query success");
-                }
-            }
-        }
+        return requestWithRetry<TOut>(
+            request,
+            callerName,
+            {}, // telemetryProperties
+            (e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+            3, // maxRetries
+            1000, // retryAfterMs
+            (error: any, numRetries: number, retryAfterInterval: number) =>
+                numRetries * retryAfterInterval, // retryAfterIntervalCalculator
+            undefined, /* onErrorFn */
+            this.telemetryEnabled, // telemetryEnabled
+        );
     }
 }
 

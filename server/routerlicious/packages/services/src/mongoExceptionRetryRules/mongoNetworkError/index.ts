@@ -6,7 +6,7 @@
 import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 
 class MongoNetworkTransientTransactionError extends BaseMongoExceptionRetryRule {
-    protected defaultDecision: boolean = true;
+    protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
         super(MongoNetworkTransientTransactionError.constructor.name, retryRuleOverride);

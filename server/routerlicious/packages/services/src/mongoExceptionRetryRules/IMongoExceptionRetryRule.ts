@@ -11,10 +11,10 @@ export interface IMongoExceptionRetryRule {
 
 export abstract class BaseMongoExceptionRetryRule implements IMongoExceptionRetryRule {
 	public abstract match(error: any): boolean;
-	protected abstract defaultDecision: boolean;
+	protected abstract defaultRetryDecision: boolean;
 
 	public shouldRetry(): boolean {
-		return this.overrideRetryDecision ?? this.defaultDecision;
+		return this.overrideRetryDecision ?? this.defaultRetryDecision;
 	}
 
 	private readonly overrideRetryDecision?: boolean;
