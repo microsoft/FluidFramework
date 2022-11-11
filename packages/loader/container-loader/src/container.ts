@@ -733,7 +733,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public dispose(error?: ICriticalContainerError) {
-        // TODO: should maybe do close asserts as well?
         this._deltaManager.close(error, true);
         this.verifyClosed();
     }
@@ -1110,7 +1109,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         // pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
-        this.close(new GenericError("Existing context does not satisfy incoming proposal"));
+        const error = new GenericError("Existing context does not satisfy incoming proposal");
+        this.close(error);
+        this.dispose(error);
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1175,7 +1176,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.storageService.connectToService(this.service);
         } else {
             // if we have pendingLocalState we can load without storage; don't wait for connection
-            this.storageService.connectToService(this.service).catch((error) => this.close(error));
+            this.storageService.connectToService(this.service).catch((error) => {
+                this.close(error);
+                this.dispose(error);
+            });
         }
 
         this._attachState = AttachState.Attached;
@@ -1446,7 +1450,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         });
                     }
                     this.processCodeProposal().catch((error) => {
-                        this.close(normalizeError(error));
+                        const normalizedError = normalizeError(error);
+                        this.close(normalizedError);
+                        this.dispose(normalizedError);
                         throw error;
                     });
                 }
