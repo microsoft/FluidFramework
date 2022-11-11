@@ -64,6 +64,10 @@ export interface ILoadTestConfig {
      * Override loader options to force a specific value
      */
     optionOverrides?: Record<TestDriverTypes, OptionOverride | undefined>;
+    /**
+     * Specify Ops payload size for the test run.
+     */
+    opSizeinBytes? : number,
 }
 
 export interface OptionOverride{
