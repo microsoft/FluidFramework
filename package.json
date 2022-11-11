@@ -190,6 +190,7 @@
         ]
       },
       "additionalLockfilePaths": [
+        "azure",
         "common/build/build-common",
         "common/build/eslint-config-fluid",
         "docs",
