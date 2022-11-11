@@ -75,7 +75,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         // PureDataObjectFactory already provides an entryPoint initialization function to the data store runtime,
         // so this object should always have access to a non-null entryPoint. Need to cast because PureDataObject
         // tried to be too smart with its typing for handles :).
-        assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
+        assert(this.runtime.entryPoint !== undefined, 0x46b /* EntryPoint was undefined */);
         return this.runtime.entryPoint as IFluidHandle<this>;
     }
 
