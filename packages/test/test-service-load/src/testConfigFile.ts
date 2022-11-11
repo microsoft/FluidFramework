@@ -67,7 +67,7 @@ export interface ILoadTestConfig {
     /**
      * Specify Ops payload size for the test run.
      */
-    opSizeinBytes? : number,
+    opSizeinBytes? : number;
 }
 
 export interface OptionOverride{
