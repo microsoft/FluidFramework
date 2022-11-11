@@ -161,7 +161,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // unless stop() was called earlier
         this.dispose();
         this.runtime.disposeFn();
-        // TODO
     }
 
     private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {

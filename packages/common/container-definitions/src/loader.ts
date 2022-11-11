@@ -207,8 +207,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      */
     readonly isDirty: boolean;
 
-    // TODO
-    dispose(): void;
+    /**
+     * Disposes the container
+     */
+    dispose(error?: ICriticalContainerError): void;
 
     /**
      * Closes the container
