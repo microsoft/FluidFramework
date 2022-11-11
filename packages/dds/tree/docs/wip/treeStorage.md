@@ -78,9 +78,7 @@ The chunks produced by a chunking algorithm are the smallest units of tree that 
 
 ## The Chunk Data Structure
 
-This document will soon explore in detail how one might store and access chunks, but first, here are some high-level observations about a data structure that supports such operations.
-
-Because the chunks compose to form a tree, chunks contain references to the chunks below them in the tree. In the diagram below, Chunk A has a reference to Chunk B, and Chunk B has a reference to Chunk C:
+Chunks contain references to the chunks below them in the tree. In the diagram below, Chunk A has a reference to Chunk B, and Chunk B has a reference to Chunk C:
 
 ```mermaid
 graph TD;
@@ -98,7 +96,14 @@ graph TD;
     d-->f
 ```
 
-Node _b_ recognizes that it has two children, _c_ and _d_, but _c_ is inlined and part of the same chunk as _b_ (Chunk A) whereas _d_ is in a different chunk (Chunk B) and is stored by reference. Walking from _b_ to _c_ is a synchronous operation; walking from _b_ to _d_ is an asynchronous operation that may require downloading Chunk B first. This is the pattern of virtualization for walking down the tree; chunks are loaded only as necessary.
+Node _b_ recognizes that it has two children, _c_ and _d_, but _c_ is inlined and part of the same chunk as _b_ (Chunk A) whereas _d_ is in a different chunk (Chunk B) and is stored by reference. Walking from _b_ to _c_ is a synchronous operation; walking from _b_ to _d_ is an asynchronous operation that may require downloading Chunk B first. This is the pattern of virtualization for walking down the tree; chunks are loaded only as necessary. The chunks implicitly form a sort of data structure of their own. In fact, it's another tree:
+
+```mermaid
+graph TD;
+    A(Chunk A)-->B(Chunk B)-->C(Chunk C)
+```
+
+This data structure can be optimized in various ways, some of which will be demonstrated later. First, let's examine some of the high-level properties of this "chunk tree".
 
 ### Immutable Blobs
 
@@ -244,85 +249,91 @@ So far, it appears that both random writes and random reads require the upload o
 
 ## Chunk Data Structure Implementations
 
-Below are detailed a couple of examples of "chunk data structures": data structures which contain the chunks of a `logical tree`. The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. To demonstrate, below is the same logical tree from the beginning of the document, but it has been annotated with the edges from parent to child nodes so that the path to each node is visible:
+Below are detailed a couple of examples of "chunk data structures": data structures which contain the chunks of a `logical tree`.
+
+### Simple Chunk Tree
+
+The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. To demonstrate, consider the logical tree below. It has been annotated with the edges from parent to child nodes so that the path to each node is visible:
 
 ```mermaid
 graph TD;
-    A--0-->B--0-->C
-    B--1-->D--0-->E
-    A--1-->F--0-->G
-    F--1-->H
+    a--0-->b;
+    a--1-->c--0-->d--0-->e;
+    d--1-->i;
+    e--0-->f;
+    e--1-->g;
+    e--2-->h;
 ```
 
-> The path to node _E_ is "0/1/0"
+> The path to node _h_ is "1/0/0/2"
 
 It is chunked by a chunking algorithm:
 
 ```mermaid
 graph TD;
-    A--0-->B--0-->C
-    B--1-->D--0-->E
-    A--1-->F--0-->G
-    F--1-->H
-    subgraph Chunk C
-    F
-    G
-    H
+    a--0-->b;
+    a--1-->c--0-->d--0-->e;
+    d--1-->i;
+    e--0-->f;
+    e--1-->g;
+    e--2-->h;
+    subgraph Chunk A
+        a
+        b
+        c
     end
     subgraph Chunk B
-    D
-    E
+        d
+        i
     end
-    subgraph Chunk A
-    A
-    B
-    C
+    subgraph Chunk C
+        e
+        f
+        g
+        h
     end
 ```
 
-And this implicitly forms a tree of chunks. Note how the edges in the logical tree concatenate to form the edges in the chunk tree; these are necessary to look up nodes by their paths. For example, the path "0/1/0" has a prefix "0/1" which matches the edge from the root chunk A to Chunk B; the rest of the path ("0") is used to find node _E_ within Chunk B.
+And this implicitly forms a tree of chunks:
 
 ```mermaid
 graph TD;
-    A(Chunk A)--0/1-->B(Chunk B)
-    A--1-->C(Chunk C)
+    A(Chunk A)--1/0-->B(Chunk B)--0-->C(Chunk C)
 ```
 
-This data structure suffers from the the problems with read and write amplification discussed above. A deep logical tree might form a very deep chunk tree. The next two data structures provide strategies to mitigate that problem.
+Note how the edges in the logical tree concatenate to form the edges in the chunk tree; these are necessary to look up nodes by their paths. For example, the path "1/0/0/2" has a prefix "1/0" which matches the edge from the root chunk A to Chunk B; the next part of the path ("0") is used to find Chunk C, and the rest ("2") points to node _h_ within Chunk C. This data structure is simple but suffers from the the problems with read and write amplification discussed above. A deep logical tree might form a very deep chunk tree. The next two data structures provide strategies to mitigate that problem.
 
 ### Path-Based B-Tree
 
-This approach puts all the nodes in a key-value data structure optimized for sorted keys, like a [B-tree](https://en.wikipedia.org/wiki/B-tree) or similar, using the path of each node as its key.
-
-Consider a tree and the paths to each of its nodes:
+This approach puts all the nodes in a key-value data structure optimized for sorted keys, like a [B-tree](https://en.wikipedia.org/wiki/B-tree) or similar, using the path of each node as its key. Consider the same logical tree as above:
 
 ```mermaid
 graph TD;
-    A--0-->B;
-    A--1-->C--0-->D--0-->E;
-    D--1-->I;
-    E--0-->F;
-    E--1-->G;
-    E--2-->H;
+    a--0-->b;
+    a--1-->c--0-->d--0-->e;
+    d--1-->i;
+    e--0-->f;
+    e--1-->g;
+    e--2-->h;
 ```
+
+Note that its paths are sortable. For example, they can be sorted lexically to order the nodes as **a**, **b**, **c**, **d**, **e**, **f**, **h**, **h**, **i** which produces an in-order traversal of the tree.
 
  Node | Path
 ------|-----
-   A  | "_"
-   B  | "0"
-   C  | "1"
-   D  | "1/0"
-   E  | "1/0/0"
-   F  | "1/0/0/0"
-   G  | "1/0/0/1"
-   H  | "1/0/0/2"
-   I  | "1/0/1"
-
-Paths are sortable; for example, the paths above can be sorted lexically to order the nodes as `[A, B, C, D, E, F, G, H, I]` (an in-order traversal of the tree).
+   a  | "_"
+   b  | "0"
+   c  | "1"
+   d  | "1/0"
+   e  | "1/0/0"
+   f  | "1/0/0/0"
+   g  | "1/0/0/1"
+   h  | "1/0/0/2"
+   i  | "1/0/1"
 
 > Other sorts are possible too, but this one allows for some helpful optimizations in the B-tree itself (see Potential Optimizations below).
 
-The path for each node and the data stored at each node can then be used as keys and values, respectively, in the B-tree. After inserting these into a B-tree with a branching factor of three, for example, the tree might look like:
+Sortability is the only requirement for keys of a B-tree, thus the path for each node and the data stored at each node can then be used as keys and values, respectively, in a B-tree. After inserting these into a B-tree with a branching factor of three, for example, the tree might look like:
 
 ```mermaid
 graph TD;
@@ -332,7 +343,7 @@ graph TD;
     A-->D(1/0/0/1, 1/0/0/2, 1/0/1)
 ```
 
-The overall idea here is that the original, unbalanced logical tree has been reshaped into a balanced tree, so now reading or writing any part of the tree is bounded by `O(log(n))`. The branching factor of the tree is chosen such that it aligns with the chunk size. The above tree, with a branching factor of three, optimized for fitting three nodes into each "leaf chunk":
+The branching factor of the B-tree is ideally as large as possible while still keeping each interior node within the maximum chunk size. Each interior node of the B-tree can then be stored in a single chunk, as can each leaf node:
 
 ```mermaid
 graph TD;
@@ -343,32 +354,49 @@ graph TD;
     style B fill:#844
     style C fill:#448
     style D fill:#484
+    subgraph Chunk A
+    A
+    end
+    subgraph Chunk D
+    D
+    end
+    subgraph Chunk C
+    C
+    end
+    subgraph Chunk B
+    B
+    end
 ```
 
-> These diagrams only show the keys for each node, but the value/content of each node can be stored either inline alongside the keys, or out of line in separate blobs, depending on the size and consistency of the data. As nodes are added/deleted or their content grows/shrinks in size, the tree rebalances automatically just like any B-tree.
+> These diagrams only show the keys for each node, but the value/content of each node can be stored either inline alongside the keys, or out of line in separate blobs, depending on the size and consistency of the data. As nodes are added or deleted the tree rebalances automatically just like any B-tree.
 
-Every so many consecutive nodes in sorted order comprise a chunk:
+Every so many consecutive nodes in sorted order comprise a leaf chunk, and interior nodes are stored in chunks as well:
 
 Chunk | Nodes
-------|------
-1     | [A, B, C]
-2     | [D, E, F]
-3     | [G, H, I]
+-----------|------
+A          | Interior Node
+B          | [a, b, c]
+C          | [d, e, f]
+D          | [g, h, i]
+
+With this approach, the unbalanced logical tree has been organized into a tree of chunks that guarantee at most **O(log(N))** uploads/downloads per write/read, because B-trees by definition remain balanced. Even in this small example, the advantage over the "Simple Chunk Tree" in the previous section is clear: traversing from the root chunk to a leaf chunk walks only two chunks, whereas in the simple chunk tree it walks three. These differences become more dramatic as the tree gets deeper.
+
+> The path-based B-tree in this example has more total chunks than the simple chunk tree (four vs. three) and therefore requires more storage. However, that overhead also scales logarithmically and becomes fairly negligible for trees with large branching factors.
 
 Advantages:
 
-* The lookup of any node by path requires at most `log(n)` chunk reads.
-* Editing a node requires at most `log(n)` chunk updates.
+* The lookup of any node by path requires at most **O(log(n))** chunk downloads.
+* Editing a node requires at most **log(n)** chunk uploads.
 * The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries, i.e. it doesn't need a special chunking algorithm at all; the "chunking algorithm" is just the B-tree algorithm.
 * A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see Potential Optimizations below).
 
 Drawbacks:
 
-* The chunking algorithm is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape.
+* The chunking algorithm is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
 
 Potential Optimizations:
 
-* Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Eliminate this redundant shared prefix from all paths to greatly reduce the storage needed for the keys, especially for very deep trees (which will have very long paths).
+* Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Note how in the diagrams above, Eliminate this redundant shared prefix from all paths to greatly reduce the storage needed for the keys, especially for very deep trees (which will have very long paths).
 * Deduplicate/intern sections of paths within a B-Tree node that are repeated to save additional storage. This can be done with a prefix tree on each B-Tree node.
 
 ### SPICE Tree
