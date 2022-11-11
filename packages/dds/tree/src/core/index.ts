@@ -26,6 +26,7 @@ export {
     AnchorSet,
     DetachedField,
     UpPath,
+    FieldUpPath,
     Anchor,
     RootField,
     ChildCollection,
@@ -74,6 +75,7 @@ export {
     initializeForest,
     FieldAnchor,
     moveToDetachedField,
+    afterChangeToken,
 } from "../forest";
 
 export {
@@ -109,7 +111,13 @@ export {
     ProgressiveEditBuilderBase,
 } from "../change-family";
 
-export { Rebaser, ChangeRebaser, RevisionTag, ChangesetFromChangeRebaser } from "../rebase";
+export {
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    TaggedChange,
+    ChangesetFromChangeRebaser,
+} from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";
 

@@ -5,19 +5,28 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
+import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { cases, TestChangeset } from "./utils";
+import {
+    cases,
+    checkDeltaEquality,
+    createDeleteChangeset,
+    createInsertChangeset,
+    rebaseTagged,
+    TestChangeset,
+} from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy: RevisionTag = brand(41);
+const detachedBy2: RevisionTag = brand(42);
 
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return SF.rebase(change, base, TestChange.rebase);
+    return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
 }
 
 describe("SequenceField - Rebase", () => {
@@ -67,11 +76,11 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ modify", () => {
         const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 2, tomb },
+            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 2, tomb },
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 2 },
             4,
-            { type: "Revive", id: 3, count: 2, tomb },
+            { type: "Revive", id: 3, count: 2, detachedBy, detachIndex: 4 },
         ];
         const mods: TestChangeset = [
             { type: "Modify", changes: TestChange.mint([0], 1) },
@@ -128,21 +137,21 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ delete", () => {
         const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 1, tomb },
+            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 1 },
             4,
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 2 },
         ];
         const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
         const actual = rebase(revive, deletion);
         const expected: TestChangeset = [
             // Earlier revive is unaffected
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             1, // Overlapping revive has its index reduced
-            { type: "Revive", id: 2, count: 1, tomb },
+            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 1 },
             2, // Later revive has its index reduced
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 2 },
         ];
         assert.deepEqual(actual, expected);
     });
@@ -250,11 +259,11 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ insert", () => {
         const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 2, tomb },
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
             2,
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
         ];
         const insert: TestChangeset = [
             2,
@@ -263,11 +272,11 @@ describe("SequenceField - Rebase", () => {
         ];
         const actual = rebase(revive, insert);
         const expected: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 2, tomb },
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
             3,
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
         ];
         assert.deepEqual(actual, expected);
     });
@@ -278,7 +287,10 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
-        const revive: TestChangeset = [2, { type: "Revive", id: 1, count: 1, tomb }];
+        const revive: TestChangeset = [
+            2,
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+        ];
         const expected: TestChangeset = [
             // Modify at earlier index is unaffected
             { type: "Modify", changes: TestChange.mint([0], 1) },
@@ -300,7 +312,10 @@ describe("SequenceField - Rebase", () => {
             { type: "Delete", id: 1, count: 1 },
         ];
         // Revives content between C and D
-        const revive: TestChangeset = [3, { type: "Revive", id: 1, count: 1, tomb }];
+        const revive: TestChangeset = [
+            3,
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+        ];
         const expected: TestChangeset = [
             // Delete with earlier index is unaffected
             { type: "Delete", id: 1, count: 1 },
@@ -322,7 +337,10 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Insert", id: 2, content: [{ type, value: 2 }] },
         ];
-        const revive: TestChangeset = [1, { type: "Revive", id: 1, count: 1, tomb }];
+        const revive: TestChangeset = [
+            1,
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+        ];
         const actual = rebase(insert, revive);
         const expected: TestChangeset = [
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
@@ -332,23 +350,73 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive ↷ revive", () => {
+    it("revive ↷ different revive", () => {
         const reviveA: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 2, tomb },
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
             2,
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
         ];
-        const reviveB: TestChangeset = [2, { type: "Revive", id: 1, count: 1, tomb }];
+        const reviveB: TestChangeset = [
+            2,
+            { type: "Revive", id: 1, count: 1, detachedBy: detachedBy2, detachIndex: 0 },
+        ];
         const actual = rebase(reviveA, reviveB);
         const expected: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, tomb },
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
             2,
-            { type: "Revive", id: 2, count: 2, tomb },
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
             3,
-            { type: "Revive", id: 3, count: 1, tomb },
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
         ];
         assert.deepEqual(actual, expected);
+    });
+
+    // TODO: update rebase to detect overlap of revives
+    it.skip("revive ↷ same revive", () => {
+        const reviveA: TestChangeset = [
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+            2,
+            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
+            2,
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
+        ];
+        const reviveB: TestChangeset = [
+            2,
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 1 },
+        ];
+        const actual = rebase(reviveA, reviveB);
+        const expected: TestChangeset = [
+            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
+            2,
+            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 2 },
+            3,
+            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
+        ];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("concurrent inserts ↷ delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const insertB = tagChange(createInsertChangeset(0, 1), brand(2));
+        const insertC = tagChange(createInsertChangeset(1, 1), brand(3));
+        const insertB2 = rebaseTagged(insertB, delA);
+        const insertC2 = rebaseTagged(insertC, delA, insertB2);
+        const expected = createInsertChangeset(1, 1);
+        checkDeltaEquality(insertC2.change, expected);
+    });
+
+    it("concurrent inserts ↷ connected delete", () => {
+        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
+        const delB = tagChange(createDeleteChangeset(1, 1), brand(2));
+        const delC = tagChange(createDeleteChangeset(0, 1), brand(3));
+
+        const insertD = tagChange(createInsertChangeset(0, 1), brand(4));
+        const insertE = tagChange(createInsertChangeset(3, 1), brand(5));
+        const insertD2 = rebaseTagged(insertD, delA, delB, delC);
+        const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+        const expected = createInsertChangeset(1, 1);
+        checkDeltaEquality(insertE2.change, expected);
     });
 });

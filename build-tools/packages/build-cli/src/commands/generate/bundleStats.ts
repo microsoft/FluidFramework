@@ -58,7 +58,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
                 }
 
                 const report = readJSONSync(reportPath);
-                if (report.assets?.length !== undefined) {
+                if (report.assets?.length === undefined || report.assets?.length === 0) {
                     this.error(`${reportPath} doesn't have any assets info`);
                 }
 

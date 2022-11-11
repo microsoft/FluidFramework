@@ -316,12 +316,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public tombstone() {
-        if (this.tombstoned) {
+    public setTombstone(tombstone: boolean) {
+        if (this.tombstoned === tombstone) {
             return;
         }
 
-        this._tombstoned = true;
+        this._tombstoned = tombstone;
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
@@ -755,11 +755,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     private verifyNotClosed(callSite: string, checkTombstone = true, safeTelemetryProps: ITelemetryProperties = {}) {
         if (this._disposed) {
-            throw new Error(`Context is closed: Call site - ${callSite}!`);
+            throw new Error(`Context is closed! Call site [${callSite}]`);
         }
 
         if (checkTombstone && this.tombstoned) {
-            const messageString = `Context is tombstoned: Call site -  ${callSite}!`;
+            const messageString = `Context is tombstoned! Call site [${callSite}]`;
             throw new DataCorruptionError(messageString, {
                 errorMessage: messageString,
                 ...safeTelemetryProps,
@@ -1019,6 +1019,15 @@ export class LocalDetachedFluidDataStoreContext
         this.registry = entry.registry;
 
         super.bindRuntime(dataStoreChannel);
+
+        // Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
+        // initialization function is called before the data store gets attached and potentially connected to the
+        // delta stream, so it gets a chance to do things while the data store is still "purely local".
+        // This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+        // of data store factories tends to construct the data object (at least kick off an async method that returns
+        // it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+        // before the data store is attached.
+        await dataStoreChannel.entryPoint?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();
