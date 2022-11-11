@@ -29,7 +29,7 @@ import { TestClient } from "./testClient";
 export class TestServer extends TestClient {
     seq = 1;
     clients: TestClient[] = [];
-    listeners: TestClient[] = []; // Listeners do not generate edits
+    private messageListeners: TestClient[] = []; // Listeners do not generate edits
     clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
     upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
     constructor(options?: PropertySet) {
@@ -53,7 +53,7 @@ export class TestServer extends TestClient {
         }
     }
     addListeners(listeners: TestClient[]) {
-        this.listeners = listeners;
+        this.messageListeners = listeners;
     }
     applyMsg(msg: ISequencedDocumentMessage) {
         super.applyMsg(msg);
@@ -124,8 +124,8 @@ export class TestServer extends TestClient {
                     for (const client of this.clients) {
                         client.enqueueMsg(msg);
                     }
-                    if (this.listeners) {
-                        for (const listener of this.listeners) {
+                    if (this.messageListeners) {
+                        for (const listener of this.messageListeners) {
                             listener.enqueueMsg(this.copyMsg(msg));
                         }
                     }

@@ -89,7 +89,6 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            disableSummaries: true,
             summaryConfigOverrides: { state: "disabled" },
         },
         gcOptions: { gcAllowed: true },
