@@ -16,8 +16,6 @@
   "scripts": {
     "eslint": "eslint ./index.js",
     "eslint:fix": "eslint ./index.js --fix",
-    "preinstall": "npx only-allow yarn",
-    "install-strict": "npx midgard-yarn install",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node ./index.js",

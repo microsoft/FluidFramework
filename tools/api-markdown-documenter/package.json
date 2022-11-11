@@ -28,8 +28,6 @@
     "eslint:fix": "eslint src --fix",
     "format": "npm run prettier:fix",
     "format-and-build": "npm run format && npm run build",
-    "preinstall": "npx only-allow yarn",
-    "install-strict": "npx midgard-yarn install",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
