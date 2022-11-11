@@ -437,7 +437,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
     container.deltaManager.on("submitOp", (message) => {
         if (message?.type === "op") {
             submittedOps++;
-            let currOpSize = (JSON.stringify(message)).length;
+            const currOpSize = (JSON.stringify(message)).length;
             submittedOpsSize += currOpSize;
         }
     });
@@ -447,7 +447,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
     container.deltaManager.on("op", (message) => {
         if (message?.type === "op") {
             receivedOps++;
-            let currOpSize = (JSON.stringify(message)).length;
+            const currOpSize = (JSON.stringify(message)).length;
             receivedOpsSize += currOpSize;
         }
     });

@@ -518,8 +518,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             } else {
                 while (opsSent < clientSendCount && !this.disposed) {
                     if (dataModel.assigned()) {
-                        let opPayload = generateStringOfSize(opSizeinBytes);
-                        let opKey = Math.random().toString();
+                        const opPayload = generateStringOfSize(opSizeinBytes);
+                        const opKey = Math.random().toString();
                         dataModel.sharedmap.set(opKey, opPayload);
                         opsSent++;
                         if (opsSent % opsPerCycle === 0) {
