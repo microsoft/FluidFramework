@@ -72,9 +72,13 @@ Container can be closed directly by host by calling `Container.close()` and/or `
 
 #### `Container.close()`
 
-Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
+Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container **IS** still expected to be used and the container needs to be switched to a "safe" state for viewing.
 
-Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details.
+The "closed" state effectively means the container is disconnected forever and cannot be reconnected.
+
+If after some time a closed container is no longer needed, calling `Container.dispose()` will dispose the runtime resources.
+
+Container can also be closed and disposed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details.
 
 When container is closed, the following is true (in no particular order):
 
@@ -87,15 +91,16 @@ When container is closed, the following is true (in no particular order):
 
 #### `Container.dispose()`
 
-Once disposed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container is not expected to be used anymore. It acts like a lightweight version of `Container.closed()`.
+Once disposed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container is **NOT** expected to be used anymore. It acts like a lightweight version of `Container.closed()`.
 
 When container is disposed, the following is true (in no particular order):
 
 1. Container.closed property is set to true
-2. "closed" event fires on container
+2. "disposed" event fires on container
 3. "disconnected" event fires, if connection was active at the moment of container closure.
+4. "dispose" event fires on container runtime
 
-`"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is disposed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
+`"disposed"` event is available on Container for hosts. `"dispose"` event is delivered to container runtime when container is disposed, but container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
 
 ## Audience
 
