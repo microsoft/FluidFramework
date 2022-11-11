@@ -30,7 +30,7 @@ Type test generation is primarily configured in the package.json file of the pac
 ```
 
 The `broken` section is used to indicate known breaking changes. Type tests can be completely disabled for a package
-using the `disabled1 property. See [API Type Validation][] for more information.
+using the `disabled` property. See [API Type Validation][] for more information.
 
 Generating type tests has two parts: _preparing package.json_ and _generating test modules_. By default, both steps are
 run for each package. You can run only one part at a time using the `--prepare` and `--generate` flags.
