@@ -28,6 +28,7 @@ export {
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
     gcBlobPrefix,
+    gcTombstoneBlobKey,
     gcTreeKey,
     IGCStats,
 } from "./garbageCollection";
