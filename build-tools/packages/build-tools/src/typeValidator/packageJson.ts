@@ -334,9 +334,7 @@ export async function getAndUpdatePackageDetails(
 
     if (typeof config === "object") {
         const rpg = config as IFluidRepoPackage;
-        releaseType = rpg.branchReleaseTypes?.[
-            context.originalBranchName
-        ];
+        releaseType = rpg.branchReleaseTypes?.[context.originalBranchName];
     }
 
     const previousVersionStyle: PreviousVersionStyle | undefined =
