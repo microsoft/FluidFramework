@@ -42,8 +42,6 @@
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
@@ -110,7 +108,6 @@
     "prettier": "~2.3.1",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }
