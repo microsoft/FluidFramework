@@ -3192,6 +3192,7 @@ const waitForSeq = async (
 ): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
+    deltaManager.on("disposed" as any, reject);
 
     // If we already reached target sequence number, simply resolve the promise.
     if (deltaManager.lastSequenceNumber >= targetSeq) {
