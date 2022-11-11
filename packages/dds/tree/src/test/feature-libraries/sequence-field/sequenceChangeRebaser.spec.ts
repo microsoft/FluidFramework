@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, tagInverse } from "../../../rebase";
+import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -13,7 +13,7 @@ import { deepFreeze } from "../../utils";
 import { checkDeltaEquality, createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy: RevisionTag = brand(41);
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
@@ -33,7 +33,7 @@ const testMarks: [string, SF.Mark<TestChange>][] = [
         },
     ],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
-    ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
+    ["Revive", { type: "Revive", id: 0, count: 2, detachedBy, detachIndex: 0 }],
 ];
 deepFreeze(testMarks);
 
