@@ -385,7 +385,7 @@ describe("TinyliciousClient", () => {
         //     containerId,
         //     schema,
         // );
-        container.disconnect("test reason");
+        container.disconnect();
         console.log("container disconnected");
     });
 });

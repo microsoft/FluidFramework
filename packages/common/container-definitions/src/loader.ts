@@ -267,7 +267,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect(reason: string): void;
+    disconnect(): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session

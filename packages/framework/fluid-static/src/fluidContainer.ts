@@ -166,7 +166,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      *
      * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
-    disconnect(reason: string): void;
+    disconnect(): void;
 
     /**
      * Create a new data object or Distributed Data Store (DDS) of the specified type.
@@ -283,8 +283,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.connect}
      */
-    public async disconnect(reason: string): Promise<void> {
-        this.container.disconnect?.(reason);
+    public async disconnect(): Promise<void> {
+        this.container.disconnect?.();
     }
 
     /**
