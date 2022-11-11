@@ -244,8 +244,10 @@ stages:
                 echo "Unpack test files for ${{ execTestPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(execTestPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
+                mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
+                mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/dist/test
+                mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ execTestPackage }}/src/test
 
           - task: Bash@3
             displayName: 'Run execution-time tests'
@@ -256,7 +258,6 @@ stages:
                 echo "Run execution-time tests for ${{ execTestPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i;
-                npm run build:test;
                 npm run test:benchmark:report;
 
           - task: CopyFiles@2
@@ -345,8 +346,10 @@ stages:
                 echo "Unpack test files for ${{ testPackage }}"
                 TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
                 mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+                mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
                 tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-                mv $(Pipeline.Workspace)/test-files/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+                mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+                mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
 
           - task: Bash@3
             displayName: 'Run memory performance test'
@@ -357,8 +360,6 @@ stages:
                 echo "Run memory performance test for ${{ testPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
                 npm i ;
-                ls -la;
-                npm run build:test;
                 npm run test:memory-profiling:report;
 
           - task: CopyFiles@2
