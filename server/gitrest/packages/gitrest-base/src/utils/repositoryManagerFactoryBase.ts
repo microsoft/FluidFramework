@@ -53,7 +53,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
-        private readonly enableRepositoryManagerMetrics: boolean,
+        private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {
         if (repoPerDocEnabled) {
             this.internalHandler = this.repoPerDocInternalHandler.bind(this);
