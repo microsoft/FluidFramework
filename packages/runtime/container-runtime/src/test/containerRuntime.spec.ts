@@ -412,7 +412,7 @@ describe("Runtime", () => {
                     existing: false,
                     runtimeOptions: undefined,
                     containerScope: {},
-            });
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
             });
@@ -426,7 +426,7 @@ describe("Runtime", () => {
                     existing: false,
                     requestHandler: undefined,
                     runtimeOptions: {},
-            });
+                });
                 assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
                 assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
