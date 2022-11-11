@@ -62,7 +62,7 @@ async function main() {
             runId: config.runId,
             scenarioName: config.scenarioName,
         },
-        ["scenario:runner"],
+        ["scenario:runner", "fluid:telemetry"],
     );
 
     const ac = await createAzureClient({
@@ -85,7 +85,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             scenarioName: config.scenarioName,
             namespace: "scenario:runner:DocCreator",
         },
-        ["scenario:runner"],
+        ["scenario:runner", "fluid:telemetry"],
     );
 
     try {
