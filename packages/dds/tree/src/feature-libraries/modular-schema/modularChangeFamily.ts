@@ -20,10 +20,9 @@ import {
     RepairDataStore,
     ReadonlyRepairDataStore,
     RevisionTag,
-    TreeSchemaIdentifier,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly, makeArray } from "../../util";
-import { singleTextCursor } from "../treeTextCursor";
+import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { fakeRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
     FieldChangeMap,
@@ -233,10 +232,20 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.intoDeltaImpl(change, repairStore ?? fakeRepairDataStore, undefined);
+    }
+
+    /**
+     * @param change - The change to convert into a delta.
+     * @param repairStore - The store to query for repair data.
+     * @param path - The path of the node being altered by the change as defined by the input context.
+     * Undefined for the root and for nodes that do not exist in the input context.
+     */
+    private intoDeltaImpl(
         change: FieldChangeMap,
-        repairStore?: ReadonlyRepairDataStore,
-        path?: UpPath,
+        repairStore: ReadonlyRepairDataStore,
+        path: UpPath | undefined,
     ): Delta.Root {
         const delta: Delta.Root = new Map();
         for (const [field, fieldChange] of change) {
@@ -254,11 +263,8 @@ export class ModularChangeFamily
                                   parentIndex: index,
                               },
                     ),
-                repairStore === undefined
-                    ? // TODO: remove this branch once the repairStore is mandatory
-                      fakeRepairData
-                    : (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-                          repairStore.getNodes(revision, path, field, index, count),
+                (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+                    repairStore.getNodes(revision, path, field, index, count),
             );
             delta.set(field, deltaField);
         }
@@ -267,7 +273,7 @@ export class ModularChangeFamily
 
     private deltaFromNodeChange(
         change: NodeChangeset,
-        repairStore: ReadonlyRepairDataStore | undefined,
+        repairStore: ReadonlyRepairDataStore,
         path?: UpPath,
     ): Delta.Modify {
         const modify: Delta.Modify = {
@@ -277,23 +283,16 @@ export class ModularChangeFamily
         const valueChange = change.valueChange;
         if (valueChange !== undefined) {
             if ("revert" in valueChange) {
-                assert(path !== undefined, "Only existing node can have their value restored");
-                if (repairStore !== undefined) {
-                    assert(
-                        valueChange.revert !== undefined,
-                        "Unable to revert to undefined revision",
-                    );
-                    modify.setValue = repairStore.getValue(valueChange.revert, path);
-                } else {
-                    // TODO: remove this branch once the repairStore is mandatory
-                }
+                assert(path !== undefined, "Only existing nodes can have their value restored");
+                assert(valueChange.revert !== undefined, "Unable to revert to undefined revision");
+                modify.setValue = repairStore.getValue(valueChange.revert, path);
             } else {
                 modify.setValue = valueChange.value;
             }
         }
 
         if (change.fieldChanges !== undefined) {
-            modify.fields = this.intoDelta(change.fieldChanges, repairStore, path);
+            modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
         }
 
         return modify;
@@ -306,12 +305,6 @@ export class ModularChangeFamily
     ): ModularEditBuilder {
         return new ModularEditBuilder(this, deltaReceiver, repairStore, anchors);
     }
-}
-
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
-
-function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
 export function getFieldKind(

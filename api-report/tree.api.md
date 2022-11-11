@@ -788,7 +788,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
-    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore, path?: UpPath): Delta.Root;
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root;
     // (undocumented)
     invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap;
     // (undocumented)

@@ -89,5 +89,6 @@ export {
 } from "./editManagerIndex";
 
 export { ForestRepairDataStore } from "./forestRepairDataStore";
+export { fakeRepairDataStore } from "./fakeRepairDataStore";
 
 export { runSynchronousTransaction } from "./defaultTransaction";
