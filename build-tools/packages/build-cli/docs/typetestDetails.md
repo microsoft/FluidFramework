@@ -52,9 +52,6 @@ Generating test modules takes the type test information from package.json, most 
 generates test files that should be committed. By default, the generated files will contain `.generated` in their name,
 but this can be suppressed with the `--no-generateInName` flag.
 
-For more detailed usage information see the
-[bump deps command reference](bump.md#flub-bump-deps-packageorreleasegroup).
-
 ## Branch configuration
 
 Type tests can be configured to use different baseline versions on a given branch depending on the type of release that
