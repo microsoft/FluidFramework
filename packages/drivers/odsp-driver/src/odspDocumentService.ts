@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -251,9 +251,8 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
-            return this.currentConnection;
-        }
+        assert(this.currentConnection === undefined || this.currentConnection.disposed,
+            "Should not be called when connection is already present!");
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // Presence of getWebsocketToken callback dictates whether callback is used for fetching
@@ -306,6 +305,7 @@ export class OdspDocumentService implements IDocumentService {
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
                     }
+                    this.currentConnection = undefined;
                 });
                 this.currentConnection = connection;
                 return connection;
