@@ -150,7 +150,10 @@ DESCRIPTION
   preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
 
   Generating test modules takes the type test information from package.json, most notably any known broken type tests,
-  and generates an appropriate
+  and generates test files that should be committed.
+
+  To learn more about how to configure type tests, see the detailed documentation at
+  <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md>.
 
 EXAMPLES
   Prepare the package.json for all packages in the client release group.

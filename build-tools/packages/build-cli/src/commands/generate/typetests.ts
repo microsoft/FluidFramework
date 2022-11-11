@@ -17,16 +17,17 @@ import { releaseGroupFlag } from "../../flags";
 export default class GenerateTypeTestsCommand extends BaseCommand<
     typeof GenerateTypeTestsCommand.flags
 > {
-    static summary =
-        "Generates type tests based on the individual package settings in package.json.";
+    static description = `Generates type tests based on the individual package settings in package.json.
 
-    static description = `Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
+    Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
 
     Preparing package.json determines the baseline previous version to use, then sets that version in package.json. If the previous version changes after running preparation, then npm install must be run before the generate step will run correctly.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
 
-    Generating test modules takes the type test information from package.json, most notably any known broken type tests, and generates an appropriate `;
+    Generating test modules takes the type test information from package.json, most notably any known broken type tests, and generates test files that should be committed.
+
+    To learn more about how to configure type tests, see the detailed documentation at <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md>.`;
 
     static flags = {
         dir: Flags.directory({
