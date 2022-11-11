@@ -119,6 +119,12 @@ export type ValueChange =
           value?: Value;
       }
     | {
+          /**
+           * The tag of the change that overwrote the value being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
           revert: RevisionTag | undefined;
       };
 

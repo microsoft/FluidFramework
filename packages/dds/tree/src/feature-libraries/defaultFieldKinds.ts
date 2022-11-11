@@ -211,7 +211,17 @@ export const counter: FieldKind = new FieldKind(
     new Set(),
 );
 
-export type NodeUpdate = { set: JsonableTree } | { revert: RevisionTag | undefined };
+export type NodeUpdate =
+    | { set: JsonableTree }
+    | {
+          /**
+           * The tag of the change that deleted the node being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
+          revert: RevisionTag | undefined;
+      };
 
 export interface ValueChangeset {
     value?: NodeUpdate;
