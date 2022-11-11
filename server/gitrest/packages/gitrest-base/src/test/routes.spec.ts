@@ -211,7 +211,6 @@ testModes.forEach((mode) => {
                     fileSystemManagerFactory,
                     externalStorageManager,
                     testMode.repoPerDocEnabled,
-                    false, // enableRepositoryManagerMetrics not necessary during tests
                 );
             }
 
@@ -221,7 +220,6 @@ testModes.forEach((mode) => {
                 fileSystemManagerFactory,
                 externalStorageManager,
                 testMode.repoPerDocEnabled,
-                false, // enableRepositoryManagerMetrics not necessary during tests
             );
         }
         describe("Routes", () => {

@@ -202,20 +202,18 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         apiArgs: T,
         apiName: string,
         additionalProperties?: Record<string, any>): Promise<U> {
-        const metric = this.enableRepositoryManagerMetrics ?
-            Lumberjack.newLumberMetric(
-                apiName,
-                {
-                    ...this.lumberjackBaseProperties,
-                    ...additionalProperties,
-                })
-            : undefined;
+        const metric = Lumberjack.newLumberMetric(
+            apiName,
+            {
+                ...this.lumberjackBaseProperties,
+                ...additionalProperties,
+            });
         try {
             const result = await api(...apiArgs);
-            metric?.success(`RepositoryManager: ${apiName} success`);
+            metric.success(`RepositoryManager: ${apiName} success`);
             return result;
         } catch (error: any) {
-            metric?.error(`RepositoryManager: ${apiName} error`, error);
+            metric.error(`RepositoryManager: ${apiName} error`, error);
             throw error;
         }
     }
