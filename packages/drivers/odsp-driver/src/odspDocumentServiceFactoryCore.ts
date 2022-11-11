@@ -42,7 +42,7 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 
 /**
@@ -80,6 +80,25 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             throw new Error("File path should be provided!!");
         }
 
+        let fileInfo: INewFileInfo | IExistingFileInfo;
+        let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+        if (odspResolvedUrl.fileName) {
+            createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
+            fileInfo = {
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                filePath,
+                filename: odspResolvedUrl.fileName,
+                createLinkType: createShareLinkParam,
+            };
+        } else if (odspResolvedUrl.itemId) {
+            fileInfo = {
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                itemId: odspResolvedUrl.itemId
+            };
+        }
+
         const protocolSummary = createNewSummary?.tree[".protocol"];
         if (protocolSummary) {
             const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
@@ -87,15 +106,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 throw new Error("Seq number in detached ODSP container should be 0");
             }
         }
-
-        const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
-        const newFileInfo: INewFileInfo = {
-            driveId: odspResolvedUrl.driveId,
-            siteUrl: odspResolvedUrl.siteUrl,
-            filePath,
-            filename: odspResolvedUrl.fileName,
-            createLinkType: createShareLinkParam,
-        };
 
         const odspLogger = createOdspLogger(logger);
 
@@ -112,7 +122,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
-                createShareLinkParam: JSON.stringify(createShareLinkParam),
+                createShareLinkParam: createShareLinkParam ? JSON.stringify(createShareLinkParam) : undefined,
                 enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
                 enableSingleRequestForShareLinkWithCreate:
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
@@ -125,7 +135,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
-                    newFileInfo,
+                    fileInfo,
                     odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,

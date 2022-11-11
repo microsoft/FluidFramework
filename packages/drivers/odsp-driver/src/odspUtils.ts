@@ -224,9 +224,13 @@ export async function fetchAndParseAsJSONHelper<T>(
     return res;
 }
 
-export interface INewFileInfo {
+
+export interface IFileInfoBase {
     siteUrl: string;
     driveId: string;
+}
+
+export interface INewFileInfo extends IFileInfoBase {
     filename: string;
     filePath: string;
     /**
@@ -237,6 +241,14 @@ export interface INewFileInfo {
      * share link type and the role type.
      */
     createLinkType?: ShareLinkTypes | ISharingLinkKind;
+}
+
+export interface IExistingFileInfo extends IFileInfoBase {
+    itemId: string;
+}
+
+export function isNewFileInfo(fileInfo: INewFileInfo | IExistingFileInfo): fileInfo is INewFileInfo {
+    return !!(fileInfo as INewFileInfo).filename;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
