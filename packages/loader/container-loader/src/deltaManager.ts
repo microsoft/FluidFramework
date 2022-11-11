@@ -405,7 +405,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     public dispose() {
-        this.emit("disconnect", "test_reason");
+        throw new Error("Not implemented.");
     }
 
     /**

@@ -69,10 +69,9 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
             tenantId,
             user,
             iat: now,
-            exp: now + 30,
+            exp: now + lifetime,
             ver,
         };
-        setTimeout(() => console.log("expired"), 30 * 1000);
 
         const utf8Key = { utf8: "12345" };
         return jsrsasign.jws.JWS.sign(
