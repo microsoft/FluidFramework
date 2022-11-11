@@ -102,7 +102,7 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
     const logger = await getLogger({
         runId: config.runId,
         scenarioName: config.scenarioName,
-        namespace: "scenario:runner:maptraffic:client",
+        namespace: "scenario:runner:MapTraffic",
     });
 
     const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);

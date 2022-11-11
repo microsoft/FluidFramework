@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree } from "../../../feature-libraries";
+import { emptyField, FieldKinds, EditableTree, EditableField } from "../../../feature-libraries";
 import {
     namedTreeSchema,
     ValueSchema,
@@ -12,8 +12,15 @@ import {
     TreeSchemaIdentifier,
     SchemaData,
     GlobalFieldKey,
+    LocalFieldKey,
 } from "../../../schema-stored";
-import { EmptyKey, rootFieldKey, JsonableTree } from "../../../tree";
+import {
+    EmptyKey,
+    rootFieldKey,
+    JsonableTree,
+    symbolFromKey,
+    GlobalFieldKeySymbol,
+} from "../../../tree";
 import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
@@ -45,21 +52,6 @@ export const complexPhoneSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-// This schema is really unnecessary: it could just use a sequence field instead.
-// Array nodes are only needed when you want polymorphism over array vs not-array.
-// Using this tests handling of array nodes (though it makes this example not cover other use of sequence fields).
-export const phonesSchema = namedTreeSchema({
-    name: brand("Test:Phones-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [
-            stringSchema.name,
-            int32Schema.name,
-            complexPhoneSchema.name,
-        ]),
-    },
-    extraLocalFields: emptyField,
-});
-
 export const simplePhonesSchema = namedTreeSchema({
     name: brand("Test:SimplePhones-1.0.0"),
     localFields: {
@@ -68,8 +60,27 @@ export const simplePhonesSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
-const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
+export const phonesSchema = namedTreeSchema({
+    name: brand("Test:Phones-1.0.0"),
+    localFields: {
+        [EmptyKey]: fieldSchema(FieldKinds.sequence, [
+            stringSchema.name,
+            int32Schema.name,
+            complexPhoneSchema.name,
+            // array of arrays
+            simplePhonesSchema.name,
+        ]),
+    },
+    extraLocalFields: emptyField,
+});
+
+export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
+export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(
+    globalFieldKeySequencePhones,
+);
+export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [
+    stringSchema.name,
+]);
 
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
@@ -77,7 +88,6 @@ export const addressSchema = namedTreeSchema({
         street: fieldSchema(FieldKinds.value, [stringSchema.name]),
         zip: fieldSchema(FieldKinds.optional, [stringSchema.name, int32Schema.name]),
         phones: fieldSchema(FieldKinds.optional, [phonesSchema.name]),
-        simplePhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
     globalFields: [globalFieldKeySequencePhones],
@@ -86,7 +96,8 @@ export const addressSchema = namedTreeSchema({
 
 export const mapStringSchema = namedTreeSchema({
     name: brand("Map<String>"),
-    extraLocalFields: fieldSchema(FieldKinds.value, [stringSchema.name]),
+    extraLocalFields: fieldSchema(FieldKinds.optional, [stringSchema.name]),
+    // currently it has no effect since EditableTree does not support (de-)serialization of `object`s
     value: ValueSchema.Serializable,
 });
 
@@ -96,7 +107,7 @@ export const personSchema = namedTreeSchema({
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.value, [int32Schema.name]),
         salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
-        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
+        friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.value, [addressSchema.name]),
     },
     extraLocalFields: emptyField,
@@ -159,23 +170,24 @@ export type ComplexPhoneType = EditableTree & {
     prefix: string;
 };
 
-export type PhonesType = (number | string | ComplexPhoneType)[];
+export type SimplePhonesType = EditableField & string[];
 
-export type SimplePhonesType = string[];
+export type PhonesType = EditableField & (number | string | ComplexPhoneType | SimplePhonesType)[];
 
 export type AddressType = EditableTree & {
     street: string;
     zip?: string;
     phones?: PhonesType;
-    simplePhones?: SimplePhonesType;
     sequencePhones?: SimplePhonesType;
 };
+
+export type FriendsType = EditableTree & Record<LocalFieldKey, string>;
 
 export type PersonType = EditableTree & {
     name: string;
     age: Int32;
     salary: number;
-    friends: Record<string, string>;
+    friends: FriendsType;
     address: AddressType;
 };
 
@@ -211,15 +223,16 @@ export const personData: JsonableTree = {
                                             prefix: [{ value: "0123", type: stringSchema.name }],
                                         },
                                     },
+                                    {
+                                        type: simplePhonesSchema.name,
+                                        fields: {
+                                            [EmptyKey]: [
+                                                { type: stringSchema.name, value: "112" },
+                                                { type: stringSchema.name, value: "113" },
+                                            ],
+                                        },
+                                    },
                                 ],
-                            },
-                        },
-                    ],
-                    simplePhones: [
-                        {
-                            type: simplePhonesSchema.name,
-                            fields: {
-                                [EmptyKey]: [{ type: stringSchema.name, value: "112" }],
                             },
                         },
                     ],

@@ -4,13 +4,14 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { RevisionTag } from "../../../core";
 import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
 import {
     FieldChange,
     FieldKinds,
     NodeChangeset,
     SequenceField as SF,
-    singleTextCursorNew,
+    singleTextCursor,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
@@ -21,9 +22,9 @@ import { TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: "X" };
 const content = [nodeX];
-const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew(nodeX)];
+const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const opId = 42;
-const tag = "TestTag";
+const tag: RevisionTag = brand(42);
 const moveId = brandOpaque<Delta.MoveId>(opId);
 const fooField = brand<FieldKey>("foo");
 
@@ -58,7 +59,7 @@ describe("SequenceField - toDelta", () => {
         const actual = toDelta([
             {
                 type: "Modify",
-                tomb: "DummyTag",
+                tomb: tag,
                 changes: TestChange.mint([0], 1),
             },
         ]);
@@ -70,7 +71,7 @@ describe("SequenceField - toDelta", () => {
         const actual = toDelta([
             {
                 type: "Tomb",
-                change: "DummyTag",
+                change: tag,
                 count: 3,
             },
         ]);
@@ -96,7 +97,9 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive", () => {
-        const changeset: TestChangeset = [{ type: "Revive", id: opId, tomb: tag, count: 2 }];
+        const changeset: TestChangeset = [
+            { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 2 },
+        ];
         const actual = toDelta(changeset);
         assert.equal(actual.length, 1);
         const mark = actual[0];
@@ -116,7 +119,7 @@ describe("SequenceField - toDelta", () => {
             fieldChanges: new Map([[fooField, nestedChange]]),
         };
         const changeset: SF.Changeset = [
-            { type: "MRevive", id: opId, tomb: tag, changes: nodeChange },
+            { type: "MRevive", id: opId, detachedBy: tag, detachIndex: 0, changes: nodeChange },
         ];
         const fieldChanges = new Map([
             [fooField, [{ type: Delta.MarkType.Insert, id: opId, content: [] }]],
@@ -203,7 +206,7 @@ describe("SequenceField - toDelta", () => {
             2,
             {
                 type: "Tomb",
-                change: "DummyTag",
+                change: tag,
                 count: 3,
             },
         ];
@@ -236,7 +239,7 @@ describe("SequenceField - toDelta", () => {
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: [
-                singleTextCursorNew({
+                singleTextCursor({
                     type,
                     value: "1",
                 }),

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
+import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -15,12 +16,16 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
-    return SF.invert(change, TestChange.invert);
+    return SF.invert(makeAnonChange(change), TestChange.invert);
 }
+
+const tag: RevisionTag = brand(42);
 
 function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
     deepFreeze(change);
-    return SF.invert(change, () => assert.fail("Unexpected call to child inverter"));
+    return SF.invert(tagChange(change, tag), () =>
+        assert.fail("Unexpected call to child inverter"),
+    );
 }
 
 describe("SequenceField - Invert", () => {
@@ -95,7 +100,8 @@ describe("SequenceField - Invert", () => {
                 type: "Revive",
                 id: 1,
                 count: 2,
-                tomb: SF.DUMMY_INVERT_TAG,
+                detachedBy: tag,
+                detachIndex: 0,
             },
         ];
         const actual = shallowInvert(input);
@@ -108,7 +114,8 @@ describe("SequenceField - Invert", () => {
                 type: "Revive",
                 id: 1,
                 count: 2,
-                tomb: SF.DUMMY_INVERT_TAG,
+                detachedBy: tag,
+                detachIndex: 0,
             },
         ];
         const expected: SF.Changeset = [

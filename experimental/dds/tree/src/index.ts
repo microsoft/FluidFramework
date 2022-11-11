@@ -123,6 +123,7 @@ export { getTraitLocationOfRange, placeFromStablePlace, rangeFromStableRange } f
 export {
 	SharedTreeArgs,
 	SharedTreeOptions,
+	SharedTreeBaseOptions,
 	SharedTreeOptions_0_0_2,
 	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
@@ -141,7 +142,6 @@ export { StringInterner } from './StringInterner';
  * TODO:#61413: Publish test utilities from a separate test package
  */
 export {
-	/** @deprecated Use `getSerializedUploadedEditChunkContents` instead. */
 	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
 	getSerializedUploadedEditChunkContents,
 } from './SummaryTestUtilities';

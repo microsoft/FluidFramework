@@ -134,6 +134,12 @@ function getViewAfterEdit(sharedTree: SharedTree, editId: EditId): TreeView {
 }
 ```
 
+### Listening to changes to the tree
+
+SharedTree exposes an `EditCommitted` event which fires whenever local or remote edits are applied to the tree. Beware! This API has a severe pitfall. It is not guaranteed that the edit provided by `EditCommitted` is the most recent edit in the tree's edit log. This is because local edits are always considered to be most recent in the log, but there might be remote edits from other clients which are _sequenced before_ but _discovered after_ the local edits. Therefore, code which is using the `EditId` of the edit provided by `EditCommitted` to query the `LogViewer` requires very careful attention and is prone to bugs.
+
+You are _strongly_ encouraged to use a `Checkout` instead which provides a cleaner and safer API for listening to changes to the tree. See "Use a Checkout" below for more information.
+
 ## Editing
 
 For simple edits (ones in which transactionality isn't important), `SharedTree` provides convenient, imperative APIs along the following lines:
@@ -216,17 +222,6 @@ A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies
 
     > If a change failed to apply, `closeEdit` will throw an error. Detect this case by checking `getEditStatus` and calling `abortEdit` instead.
 
--   Change notifications are emitted when any changes are applied to the `Checkout`. This allows updating of application state even in response to changes within an ongoing edit. Notifications are also emitted when the underlying SharedTree's view changes, _unless there is an ongoing edit (i.e., `openEdit` has been called)_.
-
-    ```typescript
-    const checkout = new EagerCheckout(sharedTree);
-    checkout.on('viewChange', (before: TreeView, after: TreeView) => {
-    	// Use the delta object as a convenient way to see which nodes were added, deleted, or changed between views
-    	const delta = after.delta(before);
-    }));
-
-    ```
-
 -   Checkouts can rebase an edit in progress.
 
     ```typescript
@@ -239,7 +234,30 @@ A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies
     checkout.closeEdit(); // This submits the changes to the tree in an edit
     ```
 
--   Checkout implementations can choose how often they synchronize their view with the underlying `SharedTree` when not in an edit (i.e. snapshot isolated). If you want to synchronize as frequently as possible (this is likely), use `EagerCheckout`. If you prefer to control the cadence for synchronization, `LazyCheckout` can manage this through `Checkout.waitForPendingUpdates`.
+-   Checkout implementations can choose how often they synchronize their view with the underlying `SharedTree` when not in an edit (i.e. snapshot isolated). If you want to synchronize as frequently as possible (this is likely), use `EagerCheckout`. If you prefer to control the cadence for synchronization, `LazyCheckout` can manage this through `Checkout.waitForPendingUpdates`. Clients may implement their own checkout if a more complicated policy is desirable.
+
+-   Checkouts provide the `viewChange` event: a convenient API for observing changes to the Checkout's `currentView`. Clients are expected to subscribe to the `viewChange` event and update their application accordingly whenever a `viewChange` happens. This is almost always desirable over the lower-level `SharedTree.EditCommitted` event because it lets app authors respond directly to changes to the content of the tree, rather than needing to be aware of the underlying edits that caused the changes. For most applications, the `viewChange` event "just works", because it follows special rules regarding when to fire. `viewChange` is fired under the following circumstances:
+
+    -   If there is **not** an ongoing edit for this checkout (i.e. not between `openEdit()` and `closeEdit()`), `viewChange` is fired...
+        -   when an edit is applied directly to the _Checkout_ by the local client
+        -   by `EagerCheckout` when an edit is applied to the _SharedTree_ by the local or a remote client
+        -   by `LazyCheckout` when `waitForPendingUpdates()` is called and there are outstanding edits to the tree from the local or a remote client
+    -   If there **is** an ongoing edit for this checkout, `viewChange` is fired...
+        -   when a change is applied to the ongoing edit in the checkout
+        -   when the ongoing edit is rebased via `rebaseCurrentEdit()`
+
+    This policy may seem complicated at first glance, but in practice it provides a natural flow. Checkouts always notify listeners of changes that are applied directly to the checkout itself, but changes from outside the checkout (e.g. from a remote client) are buffered according to the checkout's policy. `EagerCheckout` doesn't buffer them at all and fires a change event right away, whereas `LazyCheckout` avoids firing a change event until asked (via `waitForPendingUpdates()`). Note that every kind of checkout provides [snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation), meaning that while the checkout is in the middle of an edit (i.e. between `openEdit()` and `closeEdit()`) it will not fire an event for changes coming from outside of the Checkout. This is desirable because it prevents the view from changing "out from under" the current edit that is being built.
+
+    The `viewChange` event also provides the previous view as well as the new view, which allows clients to generate a delta of the two views if they desire:
+
+    ```typescript
+    const checkout = new EagerCheckout(sharedTree);
+    checkout.on('viewChange', (before: TreeView, after: TreeView) => {
+    	// Use the delta object as a convenient way to see which nodes were added, deleted, or changed between views
+    	const delta = before.delta(after);
+    }));
+
+    ```
 
 ## Conflicts
 

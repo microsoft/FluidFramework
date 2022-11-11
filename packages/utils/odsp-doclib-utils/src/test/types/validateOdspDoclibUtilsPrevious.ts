@@ -544,6 +544,30 @@ use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_hasFacetCodes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_hasFacetCodes():
+    TypeOnly<typeof old.hasFacetCodes>;
+declare function use_current_FunctionDeclaration_hasFacetCodes(
+    use: TypeOnly<typeof current.hasFacetCodes>);
+use_current_FunctionDeclaration_hasFacetCodes(
+    get_old_FunctionDeclaration_hasFacetCodes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_hasFacetCodes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_hasFacetCodes():
+    TypeOnly<typeof current.hasFacetCodes>;
+declare function use_old_FunctionDeclaration_hasFacetCodes(
+    use: TypeOnly<typeof old.hasFacetCodes>);
+use_old_FunctionDeclaration_hasFacetCodes(
+    get_current_FunctionDeclaration_hasFacetCodes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClientConfig():
@@ -564,18 +588,6 @@ declare function use_old_InterfaceDeclaration_IClientConfig(
     use: TypeOnly<old.IClientConfig>);
 use_old_InterfaceDeclaration_IClientConfig(
     get_current_InterfaceDeclaration_IClientConfig());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFacetCodes": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFacetCodes": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -744,6 +756,30 @@ declare function use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
     use: TypeOnly<old.OdspErrorResponseInnerError>);
 use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
     get_current_InterfaceDeclaration_OdspErrorResponseInnerError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_OdspRedirectError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_OdspRedirectError():
+    TypeOnly<old.OdspRedirectError>;
+declare function use_current_ClassDeclaration_OdspRedirectError(
+    use: TypeOnly<current.OdspRedirectError>);
+use_current_ClassDeclaration_OdspRedirectError(
+    get_old_ClassDeclaration_OdspRedirectError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_OdspRedirectError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_OdspRedirectError():
+    TypeOnly<current.OdspRedirectError>;
+declare function use_old_ClassDeclaration_OdspRedirectError(
+    use: TypeOnly<old.OdspRedirectError>);
+use_old_ClassDeclaration_OdspRedirectError(
+    get_current_ClassDeclaration_OdspRedirectError());
 
 /*
 * Validate forward compat by using old type in place of current type

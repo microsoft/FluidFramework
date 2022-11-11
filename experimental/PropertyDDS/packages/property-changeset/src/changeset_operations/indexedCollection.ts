@@ -44,7 +44,7 @@ const _fastIsEmptyObject = function(in_object: any): boolean {
         return isEmpty(in_object);
     }
 
-    // eslint-disable-next-line guard-for-in
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const _entry in in_object) {
         return false;
     }
