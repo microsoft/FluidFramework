@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import {
-    IAudience,
-    IContainer,
-    ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { IContainer, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -356,11 +352,6 @@ export interface FluidClientDebuggerProps {
      * The Container with which the debugger will be associated.
      */
     container: IContainer;
-
-    /**
-     * The session audience with which the debugger will be associated.
-     */
-    audience: IAudience;
 
     /**
      * Data belonging to the Container.

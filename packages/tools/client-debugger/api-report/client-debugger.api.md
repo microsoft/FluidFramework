@@ -5,7 +5,6 @@
 ```ts
 
 import { ConnectionState } from '@fluidframework/container-loader';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -33,7 +32,6 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 
 // @public
 export interface FluidClientDebuggerProps {
-    audience: IAudience;
     container: IContainer;
     containerData: Record<string, IFluidLoadable>;
     containerId: string;

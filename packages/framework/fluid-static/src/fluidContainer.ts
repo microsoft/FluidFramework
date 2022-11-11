@@ -198,7 +198,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      *
      * @internal
      */
-    _getRuntimeContainer?: () => IContainer;
+    _getInternalContainer?: () => IContainer;
 }
 
 /**
@@ -316,9 +316,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer._getRuntimeContainer}
+     * {@inheritDoc IFluidContainer._getInternalContainer}
      */
-    public _getRuntimeContainer(): IContainer {
+    public _getInternalContainer(): IContainer {
         return this.container;
     }
 }

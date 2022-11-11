@@ -4,7 +4,6 @@
  */
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -182,18 +181,6 @@ export interface IServiceAudience<M extends IMember>
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
     getMyself(): Myself<M> | undefined;
-
-    /**
-     * Gets the underlying {@link @fluidframework/container-definitions#IAudience}.
-     *
-     * FOR INTERNAL USE ONLY.
-     *
-     * @remarks Used to power debug tooling.
-     * @privateRemarks TODO: make this required in the future (breaking change).
-     *
-     * @internal
-     */
-    _getRuntimeAudience?: () => IAudience;
 }
 
 /**

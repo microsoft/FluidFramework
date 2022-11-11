@@ -55,8 +55,7 @@ describe("ClientDebugger unit tests", () => {
         }
         console.log("Container created!");
 
-        const { container: tinyliciousContainer, services: tinyliciousServices } =
-            createContainerResult;
+        const { container: tinyliciousContainer } = createContainerResult;
 
         // Attach container
         let containerId: string;
@@ -71,8 +70,7 @@ describe("ClientDebugger unit tests", () => {
 
         _debuggerProps = {
             containerId,
-            container: tinyliciousContainer._getRuntimeContainer!(),
-            audience: tinyliciousServices.audience._getRuntimeAudience!(),
+            container: tinyliciousContainer._getInternalContainer!(),
             containerData: tinyliciousContainer.initialObjects,
         };
     });
