@@ -14,7 +14,7 @@ import { BuildResult } from "./buildGraph";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
 
-const { info, errorLog: error } = defaultLogger;
+const { info, errorLog: error, warning: warn } = defaultLogger;
 
 parseOptions(process.argv);
 
@@ -68,7 +68,7 @@ async function main() {
                 errorStep = "build";
             }
             if (errorStep) {
-                console.warn(`WARNING: Skipping ${errorStep} after uninstall`);
+                warn(`Skipping ${errorStep} after uninstall`);
             }
             process.exit(0);
         }
@@ -76,7 +76,7 @@ async function main() {
 
     // Install or check install
     if (options.install) {
-        console.log("Installing packages");
+        info("Installing packages");
         if (!(await repo.install(options.nohoist))) {
             error(`Install failed`);
             process.exit(-5);

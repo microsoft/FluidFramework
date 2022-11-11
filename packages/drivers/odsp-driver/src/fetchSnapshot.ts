@@ -115,10 +115,7 @@ export async function fetchSnapshotWithRedeem(
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
-            logger.sendErrorEvent({
-                eventName: "RedeemFallback",
-                errorType: error.errorType,
-            }, error);
+
             await redeemSharingLink(
                 odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
@@ -129,6 +126,15 @@ export async function fetchSnapshotWithRedeem(
                     sharingLinkToRedeem: undefined,
                 },
             };
+
+            // Log initial failure only if redeem succeeded - it points out to some bug somewhere
+            // If redeem failed, that most likely means user has no permissions to access a file,
+            // and thus it's not worth it logging extra errors - same error will be logged by end-to-end
+            // flow (container open) based on a failure above.
+            logger.sendErrorEvent({
+                eventName: "RedeemFallback",
+                errorType: error.errorType,
+            }, error);
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -196,14 +202,6 @@ async function fetchLatestSnapshotCore(
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
-        let controller: AbortController | undefined;
-        if (snapshotOptions?.timeout !== undefined) {
-            controller = new AbortController();
-            setTimeout(
-                () => controller!.abort(),
-                snapshotOptions.timeout,
-            );
-        }
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
@@ -223,12 +221,30 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
+                let controller: AbortController | undefined;
+                let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+                if (snapshotOptions?.timeout !== undefined) {
+                    controller = new AbortController();
+                    fetchTimeout = setTimeout(
+                        () => controller!.abort(),
+                        snapshotOptions.timeout,
+                    );
+                }
+
+                const start = performance.now();
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
-                );
+                ).finally(() => {
+                    // Clear the fetchTimeout once the response is fetched.
+                    if (fetchTimeout !== undefined) {
+                        clearTimeout(fetchTimeout);
+                        fetchTimeout = undefined;
+                    }
+                });
+                const fetchTime = performance.now() - start;
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -398,6 +414,7 @@ async function fetchLatestSnapshotCore(
                     putInCache(valueWithEpoch);
                 }
 
+                const parseTime = snapshotParseEvent.duration;
                 snapshotParseEvent.end();
 
                 event.end({
@@ -428,11 +445,16 @@ async function fetchLatestSnapshotCore(
                     // Interval between starting the request for the resource until receiving the last byte but
                     // excluding the Snaphot request duration indicated on the snapshot response header.
                     networkTime,
+                    // Measures total time to make fetch call. Should be similar to networkTime + sprequestduration.
+                    fetchTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
+                    // time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
+                    // easier analyzes.
+                    parseTime,
                     ...propsToLog,
                 });
                 return snapshot;

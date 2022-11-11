@@ -4,13 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { EmptyKey, ITreeCursor, TreeNavigationResult } from "../../..";
-import { FieldKey } from "../../../tree";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
+import { EmptyKey, ITreeCursor, singleJsonCursor, cursorToJsonObject } from "../../..";
+import { CursorLocationType, FieldKey, mapCursorFields, rootFieldKeySymbol } from "../../../tree";
 import { brand } from "../../../util";
-import { testCursors } from "../../cursorLegacy.spec";
+import { testCursors } from "../../cursorTestSuite";
 
 const testCases = [
     ["null", [null]],
@@ -29,9 +26,20 @@ const testCases = [
                 b: true,
                 i: 0,
                 s: "",
-                a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }],
+                a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [0] }],
             },
             [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
+        ],
+    ],
+    [
+        "problematic field names",
+        [
+            {
+                ["__proto__"]: 1,
+                [""]: 2,
+                hasOwnProperty: 3,
+                toString: 4,
+            },
         ],
     ],
 ];
@@ -43,7 +51,7 @@ describe("JsonCursor", () => {
         for (const [name, testValues] of testCases) {
             for (const expected of testValues) {
                 it(`${name}: ${JSON.stringify(expected)}`, () => {
-                    const cursor = new JsonCursor(expected);
+                    const cursor = singleJsonCursor(expected);
 
                     assert.deepEqual(
                         cursorToJsonObject(cursor),
@@ -64,35 +72,59 @@ describe("JsonCursor", () => {
     });
 
     describe("keys", () => {
+        const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
+        const getKeysAsSet = (cursor: ITreeCursor) => new Set(mapCursorFields(cursor, getFieldKey));
+
+        function doesNotHaveKeys(cursor: ITreeCursor, keys: (string | FieldKey)[]): void {
+            const actualKeys = getKeysAsSet(cursor);
+            for (const key of keys) {
+                assert(!actualKeys.has(key as FieldKey));
+                cursor.enterField(key as FieldKey);
+                assert(!cursor.firstField());
+            }
+        }
+
+        const unexpectedKeys = [
+            "__proto__",
+            rootFieldKeySymbol,
+            "hasOwnProperty",
+            "toString",
+            "toFixed",
+        ];
+
         it("object", () => {
-            assert.deepEqual([...new JsonCursor({}).keys], []);
-            assert.deepEqual([...new JsonCursor({ x: {} }).keys], ["x"]);
+            doesNotHaveKeys(singleJsonCursor({}), unexpectedKeys);
+            assert.deepEqual(getKeysAsSet(singleJsonCursor({})), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor({ x: {} })), new Set(["x"]));
             assert.deepEqual(
-                new Set(new JsonCursor({ x: {}, test: 6 }).keys),
+                getKeysAsSet(singleJsonCursor({ x: {}, test: 6 })),
                 new Set(["x", "test"]),
             );
         });
 
         it("array", () => {
-            // TODO: should empty arrays report this key?
-            assert.deepEqual([...new JsonCursor([]).keys], [EmptyKey]);
-            assert.deepEqual([...new JsonCursor([0]).keys], [EmptyKey]);
-            assert.deepEqual([...new JsonCursor(["test", {}]).keys], [EmptyKey]);
+            doesNotHaveKeys(singleJsonCursor([]), unexpectedKeys);
+            assert.deepEqual(getKeysAsSet(singleJsonCursor([])), new Set([]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor([0])), new Set([EmptyKey]));
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(["test", {}])), new Set([EmptyKey]));
         });
 
         it("string", () => {
-            assert.deepEqual([...new JsonCursor("").keys], []);
-            assert.deepEqual([...new JsonCursor("test").keys], []);
+            doesNotHaveKeys(singleJsonCursor("x"), unexpectedKeys);
+            assert.deepEqual(getKeysAsSet(singleJsonCursor("")), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor("test")), new Set());
         });
 
         it("number", () => {
-            assert.deepEqual([...new JsonCursor(0).keys], []);
-            assert.deepEqual([...new JsonCursor(6.5).keys], []);
+            doesNotHaveKeys(singleJsonCursor(0), unexpectedKeys);
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(0)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(6.5)), new Set());
         });
 
         it("boolean", () => {
-            assert.deepEqual([...new JsonCursor(false).keys], []);
-            assert.deepEqual([...new JsonCursor(true).keys], []);
+            doesNotHaveKeys(singleJsonCursor(true), unexpectedKeys);
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(false)), new Set());
+            assert.deepEqual(getKeysAsSet(singleJsonCursor(true)), new Set());
         });
     });
 
@@ -105,148 +137,152 @@ describe("JsonCursor", () => {
 
             tests.forEach(([name, key]) => {
                 it(`permits offset of zero with ${name} map key`, () => {
-                    const cursor = new JsonCursor({ [key as string]: 0 });
-                    assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
+                    const cursor = singleJsonCursor({ [key as string]: 0 });
+                    cursor.enterField(key);
+                    assert.equal(cursor.firstNode(), true);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(0), TreeNavigationResult.Ok);
+                    assert.deepEqual(cursor.seekNodes(0), true);
                     assert.equal(cursor.value, 0);
                 });
 
                 it(`disallows non-zero offset with ${name} map key`, () => {
-                    const cursor = new JsonCursor({ [key as string]: 0 });
-                    assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
+                    const cursor = singleJsonCursor({ [key as string]: 0 });
+                    cursor.enterField(key);
+                    assert.equal(cursor.firstNode(), true);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
-                    assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
-                    assert.equal(cursor.value, 0);
+                    assert.deepEqual(cursor.seekNodes(1), false);
+                    assert.equal(
+                        cursor.mode,
+                        CursorLocationType.Fields,
+                        "A failed seek will exit the node",
+                    );
+                    assert.equal(cursor.firstNode(), true);
+                    assert.deepEqual(cursor.seekNodes(-1), false);
+                    assert.equal(
+                        cursor.mode,
+                        CursorLocationType.Fields,
+                        "A failed seek will exit the node",
+                    );
                 });
             });
         });
 
         describe("with array-like node", () => {
             it(`can seek forward`, () => {
-                const cursor = new JsonCursor([0, 1]);
-                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                assert.equal(cursor.firstNode(), true);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(1), TreeNavigationResult.Ok);
+                assert.deepEqual(cursor.nextNode(), true);
                 assert.equal(cursor.value, 1);
             });
 
             it(`can seek backward`, () => {
-                const cursor = new JsonCursor([0, 1]);
-                assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                cursor.enterNode(1);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.Ok);
+                assert.deepEqual(cursor.seekNodes(-1), true);
                 assert.equal(cursor.value, 0);
             });
 
             it(`can not seek past end of array`, () => {
-                const cursor = new JsonCursor([0, 1]);
-                assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                cursor.enterNode(1);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
-                assert.equal(cursor.value, 1);
+                assert.deepEqual(cursor.seekNodes(1), false);
+                assert.equal(
+                    cursor.mode,
+                    CursorLocationType.Fields,
+                    "A failed seek will exit the node",
+                );
             });
 
             it(`can not seek before beginning of array`, () => {
-                const cursor = new JsonCursor([0, 1]);
-                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                assert.equal(cursor.firstNode(), true);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
-                assert.equal(cursor.value, 0);
+                assert.deepEqual(cursor.seekNodes(-1), false);
+                assert.equal(
+                    cursor.mode,
+                    CursorLocationType.Fields,
+                    "A failed seek will exit the node",
+                );
             });
 
             it(`can get a length of array from within the field`, () => {
-                const cursor = new JsonCursor([0, 1]);
-                const length = cursor.childFieldLength(EmptyKey);
-                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
-                assert.equal(cursor.currentFieldLength(), length);
+                const cursor = singleJsonCursor([0, 1]);
+                cursor.enterField(EmptyKey);
+                assert.equal(cursor.getFieldLength(), 2);
+                assert.equal(cursor.firstNode(), true);
             });
         });
     });
 
-    describe("TreeNavigationResult", () => {
+    describe("enterNode", () => {
         const notFoundKey: FieldKey = brand("notFound");
         const foundKey: FieldKey = brand("found");
 
-        function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0, childFieldLength = 1) {
+        function expectError(cursor: ITreeCursor, key: FieldKey, index = 0) {
+            cursor.enterField(key);
             assert(
-                0 <= index && index < cursor.childFieldLength(key),
-                `.length() must include index of existing child '${String(key)}[${index}]'.`,
+                !(index >= 0) || index >= cursor.getFieldLength(),
+                `.getFieldLength() must exclude index of missing child '${String(key)}[${index}]'.`,
             );
 
-            assert.equal(
-                cursor.down(key, index),
-                TreeNavigationResult.Ok,
-                `Must navigate to child '${String(key)}[${index}]'.`,
+            assert.throws(
+                () => cursor.enterNode(index),
+                `Must error for missing child '${String(key)}[${index}]'`,
             );
 
-            assert.equal(
-                cursor.currentFieldLength(),
-                childFieldLength,
-                `A field with existing child '${String(
-                    key,
-                )}[${index}]' must have a length '${childFieldLength}'.`,
-            );
+            cursor.exitField();
         }
 
-        function expectNotFound(
-            cursor: ITreeCursor,
-            key: FieldKey,
-            index = 0,
-            currentFieldLength = 1,
-        ) {
-            assert(
-                !(index >= 0) || index >= cursor.childFieldLength(key),
-                `.length() must exclude index of missing child '${String(key)}[${index}]'.`,
-            );
-
-            assert.equal(
-                cursor.down(key, index),
-                TreeNavigationResult.NotFound,
-                `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
-            );
-
-            assert.equal(
-                cursor.currentFieldLength(),
-                currentFieldLength,
-                `Must stay at parent field with length '${currentFieldLength}' if 'NotFound'.`,
-            );
-        }
-
-        it("Missing key in map returns NotFound", () => {
-            const cursor = new JsonCursor({ [foundKey as string]: true });
-            expectNotFound(cursor, notFoundKey);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, foundKey);
+        it("Missing key in map errors", () => {
+            const cursor = singleJsonCursor({ [foundKey as string]: true });
+            expectError(cursor, notFoundKey);
         });
 
-        it("Out of bounds map index returns NotFound", () => {
-            const cursor = new JsonCursor({ [foundKey as string]: true });
-            expectNotFound(cursor, foundKey, 1);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, foundKey);
+        it("Out of bounds map index errors", () => {
+            const cursor = singleJsonCursor({ [foundKey as string]: true });
+            expectError(cursor, foundKey, 1);
         });
 
         it("Empty array must not contain 0th item", () => {
-            const cursor = new JsonCursor([]);
-            expectNotFound(cursor, EmptyKey, 0);
+            const cursor = singleJsonCursor([]);
+            expectError(cursor, EmptyKey, 0);
         });
 
-        it("Out of bounds array index returns NotFound", () => {
-            const cursor = new JsonCursor([0, 1]);
-            expectNotFound(cursor, EmptyKey, -1);
-            expectNotFound(cursor, EmptyKey, 2);
-
-            // A failed navigation attempt should leave the cursor in a valid state.  Verify
-            // by subsequently moving to an existing key.
-            expectFound(cursor, EmptyKey, 1, 2);
+        it("Out of bounds array index errors", () => {
+            const cursor = singleJsonCursor([0, 1]);
+            expectError(cursor, EmptyKey, -1);
+            expectError(cursor, EmptyKey, 2);
         });
+    });
+
+    for (const [name, data] of testCases) {
+        const restrictedKeys: FieldKey[] = [
+            brand("__proto__"),
+            brand("toString"),
+            brand("toFixed"),
+            brand("hasOwnProperty"),
+        ];
+
+        it(`returns no values for retricted keys on ${name} tree`, () => {
+            for (const key of restrictedKeys) {
+                const cursor = singleJsonCursor(data);
+                cursor.enterField(key);
+                assert.equal(cursor.getFieldLength(), 0);
+            }
+        });
+    }
+
+    it(`returns no values for number keys on a non-empty array`, () => {
+        const cursor = singleJsonCursor(["oneItem"]);
+        cursor.enterField(brand("0"));
+        assert.equal(cursor.getFieldLength(), 0);
     });
 });
 
@@ -256,7 +292,7 @@ for (const [name, testValues] of testCases) {
     for (const data of testValues) {
         cursors.push({
             cursorName: `${name}: ${JSON.stringify(data)}`,
-            cursor: new JsonCursor(data),
+            cursor: singleJsonCursor(data),
         });
     }
 }

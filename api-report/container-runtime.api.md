@@ -74,6 +74,8 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
+// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
+//
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -334,17 +336,6 @@ export interface IContainerRuntimeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
-}
-
-// @public
-export interface IGarbageCollectionRuntime {
-    closeFn: (error?: ICriticalContainerError) => void;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
-    getCurrentReferenceTimestampMs(): number | undefined;
-    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    getNodeType(nodePath: string): GCNodeType;
-    updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)
@@ -757,8 +748,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 

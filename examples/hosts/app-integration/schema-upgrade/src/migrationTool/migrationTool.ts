@@ -106,6 +106,10 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this.taskManager.assigned(migrateTaskName);
     }
 
+    public completeMigrationTask(): void {
+        this.taskManager.complete(migrateTaskName);
+    }
+
     protected async initializingFirstTime() {
         const quorum = Quorum.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);

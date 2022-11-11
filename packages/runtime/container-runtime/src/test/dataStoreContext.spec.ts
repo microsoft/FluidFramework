@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
+import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import {
@@ -34,7 +32,9 @@ import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@flui
 import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
+    LocalDetachedFluidDataStoreContext,
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
@@ -334,6 +334,25 @@ describe("Data Store Context Tests", () => {
                 localDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+            });
+
+            it("can tombstone a local datastore", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["TestComp", "SubComp"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: false,
+                });
+
+                localDataStoreContext.setTombstone(true);
+                assert(localDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+                localDataStoreContext.setTombstone(false);
+                assert(!localDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
             });
         });
     });
@@ -701,6 +720,178 @@ describe("Data Store Context Tests", () => {
                     summaryFormatVersion: 2,
                 };
                 updateReferencedStateTest();
+            });
+
+            it("can successfully tombstone a remote datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    trees: {},
+                };
+
+                remoteDataStoreContext = new RemoteFluidDataStoreContext({
+                    id: dataStoreId,
+                    snapshotTree,
+                    getBaseGCDetails: async () => undefined,
+                    runtime: containerRuntime,
+                    storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                });
+
+                remoteDataStoreContext.setTombstone(true);
+                assert(remoteDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+                remoteDataStoreContext.setTombstone(false);
+                assert(!remoteDataStoreContext.tombstoned, `Local data store should not be tombstoned!`);
+            });
+        });
+    });
+
+    describe("LocalDetachedFluidDataStoreContext", () => {
+        let localDataStoreContext: LocalDetachedFluidDataStoreContext;
+        let storage: IDocumentStorageService;
+        let scope: FluidObject;
+        let factory: IFluidDataStoreFactory;
+        const makeLocallyVisibleFn = () => {};
+        let containerRuntime: ContainerRuntime;
+        let provideDsRuntimeWithFailingEntrypoint = false;
+
+        beforeEach(async () => {
+            const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
+                new TelemetryNullLogger(),
+                (() => undefined) as unknown as SummarizeInternalFn,
+                0,
+                0);
+            summarizerNode.startSummary(0, new TelemetryNullLogger());
+
+            createSummarizerNodeFn = (
+                summarizeInternal: SummarizeInternalFn,
+                getGCDataFn: () => Promise<IGarbageCollectionData>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            ) => summarizerNode.createChild(
+                summarizeInternal,
+                dataStoreId,
+                { type: CreateSummarizerNodeSource.Local },
+                // DDS will not create failure summaries
+                { throwOnFailure: true },
+                getGCDataFn,
+                getBaseGCDetailsFn,
+            );
+
+            const failingEntryPoint = new FluidObjectHandle<FluidObject>(
+                new LazyPromise(async () => {
+                    throw new Error("Simulating failure when initializing EntryPoint");
+                }),
+                "",
+                undefined as unknown as IFluidHandleContext,
+            );
+
+            factory = {
+                type: "store-type",
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: async (context: IFluidDataStoreContext, existing: boolean) =>
+                    provideDsRuntimeWithFailingEntrypoint
+                        ? new MockFluidDataStoreRuntime({ entryPoint: failingEntryPoint })
+                        : new MockFluidDataStoreRuntime(),
+            };
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
+                get: async (pkg) => (pkg === factory.type ? factory : undefined),
+            };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            containerRuntime = {
+                IFluidDataStoreRegistry: registry,
+                on: (event, listener) => { },
+                logger: new TelemetryNullLogger(),
+            } as ContainerRuntime;
+        });
+
+        describe("Initialization", () => {
+            it("rejects ids with forward slashes", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = () => new LocalDetachedFluidDataStoreContext({
+                    id: invalidId,
+                    pkg: [factory.type],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: true,
+                });
+
+                assert.throws(codeBlock,
+                    (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
+            });
+
+            describe("should error on attach if data store cannot be constructed/initialized", () => {
+                // Tests in this suite should be scenarios that lead to a data store which cannot be constructed for
+                // some reason.
+
+                it("because of package type for data store not present in registry", async () => {
+                    let exceptionOccurred = false;
+                    localDataStoreContext = new LocalDetachedFluidDataStoreContext({
+                            id: dataStoreId,
+                            pkg: ["some-datastore-type-not-present-in-registry"],
+                            runtime: containerRuntime,
+                            storage,
+                            scope,
+                            createSummarizerNodeFn,
+                            makeLocallyVisibleFn,
+                            snapshotTree: undefined,
+                            isRootDataStore: false,
+                        },
+                    );
+
+                    const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+                    await localDataStoreContext.attachRuntime(factory, dataStore)
+                        .catch((error) => {
+                            assert.strictEqual(
+                                error.message,
+                                "Registry does not contain entry for the package",
+                                "Unexpected exception thrown");
+                            exceptionOccurred = true;
+                        });
+                    assert.strictEqual(exceptionOccurred, true, "attachRuntime() call did not fail as expected.");
+                    assert.strictEqual(localDataStoreContext.attachState, AttachState.Detached);
+                });
+
+                it("because of entryPoint that fails to initialize", async () => {
+                    let exceptionOccurred = false;
+                    provideDsRuntimeWithFailingEntrypoint = true;
+
+                    localDataStoreContext = new LocalDetachedFluidDataStoreContext({
+                            id: dataStoreId,
+                            pkg: [factory.type],
+                            runtime: containerRuntime,
+                            storage,
+                            scope,
+                            createSummarizerNodeFn,
+                            makeLocallyVisibleFn,
+                            snapshotTree: undefined,
+                            isRootDataStore: false,
+                        },
+                    );
+
+                    const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+                    await localDataStoreContext.attachRuntime(factory, dataStore)
+                        .catch((error) => {
+                            assert.strictEqual(
+                                error.message,
+                                "Simulating failure when initializing EntryPoint",
+                                "Unexpected exception thrown");
+                            exceptionOccurred = true;
+                        });
+                    assert.strictEqual(exceptionOccurred, true, "attachRuntime() call did not fail as expected.");
+                    assert.strictEqual(localDataStoreContext.attachState, AttachState.Detached);
+                });
             });
         });
     });

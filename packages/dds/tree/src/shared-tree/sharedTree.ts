@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannel,
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
@@ -13,7 +12,22 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { ICheckout, TransactionResult } from "../checkout";
+import {
+    ICheckout,
+    TransactionResult,
+    IForestSubscription,
+    StoredSchemaRepository,
+    InMemoryStoredSchemaRepository,
+    Index,
+    SharedTreeCore,
+    Checkout as TransactionCheckout,
+    runSynchronousTransaction,
+    Anchor,
+    AnchorLocator,
+    AnchorSet,
+    UpPath,
+    EditManager,
+} from "../core";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
@@ -24,16 +38,13 @@ import {
     defaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
+    IDefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
     DefaultChangeset,
+    EditManagerIndex,
 } from "../feature-libraries";
-import { IForestSubscription } from "../forest";
-import { StoredSchemaRepository, InMemoryStoredSchemaRepository } from "../schema-stored";
-import { Index, SharedTreeCore } from "../shared-tree-core";
-import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../transaction";
-import { Anchor, AnchorLocator, AnchorSet, UpPath } from "../tree";
 
 /**
  * Collaboratively editable tree distributed data-structure,
@@ -41,7 +52,7 @@ import { Anchor, AnchorLocator, AnchorSet, UpPath } from "../tree";
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *
@@ -110,13 +121,19 @@ class SharedTree
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         const forest = new ObjectForest(schema, anchors);
+        const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
+            defaultChangeFamily,
+            anchors,
+        );
         const indexes: Index<DefaultChangeset>[] = [
             new SchemaIndex(runtime, schema),
             new ForestIndex(runtime, forest),
+            new EditManagerIndex(runtime, editManager),
         ];
         super(
             indexes,
             defaultChangeFamily,
+            editManager,
             anchors,
             id,
             runtime,
@@ -132,7 +149,7 @@ class SharedTree
             submitEdit: (edit) => this.submitEdit(edit),
         };
 
-        this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest, this.transactionCheckout);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
@@ -141,7 +158,7 @@ class SharedTree
     }
 
     public get root(): UnwrappedEditableField {
-        return this.context.root;
+        return this.context.unwrappedRoot;
     }
 
     public runTransaction(
@@ -187,7 +204,7 @@ export class SharedTreeFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
+    ): Promise<ISharedTree> {
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
