@@ -82,12 +82,15 @@ describe("editable-tree context", () => {
 
         assert.doesNotThrow(() => {
             assert(isUnwrappedNode(tree.root));
+            assert.equal(tree.root[ageField], 35);
             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete tree.root[ageField];
+            assert.equal(tree.root[ageField], undefined);
             tree.root[createField](
                 ageField,
                 singleTextCursor({ type: int32Schema.name, value: 55 }),
             );
+            assert.equal(tree.root[ageField], 55);
         });
     });
 });
