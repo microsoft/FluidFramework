@@ -488,10 +488,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         0 : config.testConfig.opSizeinBytes;
         assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
-        var opsSent = 0; 
+        let opsSent = 0; 
         try {
-            if (opSizeinBytes === 0)
-            {
+            if (opSizeinBytes === 0) {
                 while (dataModel.counter.value < clientSendCount && !this.disposed) {
                     // this enables a quick ramp down. due to restart, some clients can lag
                     // leading to a slow ramp down. so if there are less than half the clients
@@ -508,33 +507,28 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                             dataModel.abandonTask();
                             // give our partner a half cycle to get the task
                             await delay(cycleMs / 2);
-                        }
-                        else {
+                        } else {
                             // Random jitter of +- 50% of opWaitMs
                             await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                         }
-                    } 
-                    else {
+                    } else {
                         await dataModel.volunteerForTask();
                     }
                 }
-            }
-            else {
+            } else {
                 while (opsSent < clientSendCount && !this.disposed) {
                     if (dataModel.assigned()) {
-                        var opPayload = generateStringOfSize(opSizeinBytes);
-                        var opKey = Math.random().toString();
+                        let opPayload = generateStringOfSize(opSizeinBytes);
+                        let opKey = Math.random().toString();
                         dataModel.sharedmap.set(opKey, opPayload);
                         opsSent++;
                         if (opsSent % opsPerCycle === 0) {
                             dataModel.abandonTask();
                             await delay(cycleMs / 2);
-                        }
-                        else {
+                        } else {
                             await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                         }
-                    }
-                    else {
+                    } else {
                         await dataModel.volunteerForTask();
                     }
                 }
