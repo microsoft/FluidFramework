@@ -35,7 +35,7 @@ export class DocList extends DocNodeContainer {
      */
     public readonly listKind: ListKind;
 
-    constructor(parameters: IDocListParameters, childNodes?: ReadonlyArray<DocNode>) {
+    constructor(parameters: IDocListParameters, childNodes?: readonly DocNode[]) {
         super(parameters, childNodes);
 
         this.listKind = parameters.listKind ?? ListKind.Unordered;

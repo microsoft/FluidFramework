@@ -6,6 +6,7 @@
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
 import { TransactionResult } from "../checkout";
+import { brand } from "../util";
 
 /**
  * The interface a checkout has to implement for a transaction to be able to be applied to it.
@@ -19,22 +20,22 @@ export interface Checkout<TEditor, TChange> {
 /**
  * Keeps a forest in sync with a ProgressiveEditBuilder.
  */
-class Transaction<
-    TEditor extends ProgressiveEditBuilder<TChange>,
-    TChange,
-> {
+class Transaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange> {
     public readonly editor: TEditor;
-    constructor(private readonly forest: IEditableForest, changeFamily: ChangeFamily<TEditor, TChange>) {
-        this.editor = changeFamily.buildEditor((delta) => this.forest.applyDelta(delta), forest.anchors);
+    constructor(
+        private readonly forest: IEditableForest,
+        changeFamily: ChangeFamily<TEditor, TChange>,
+    ) {
+        this.editor = changeFamily.buildEditor(
+            (delta) => this.forest.applyDelta(delta),
+            forest.anchors,
+        );
     }
 }
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
     checkout: Checkout<TEditor, TChange>,
-    command: (
-        forest: IForestSubscription,
-        editor: TEditor
-    ) => TransactionResult,
+    command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);
@@ -45,7 +46,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     // then reapply it (when the local edit is added) when possible.
     {
         // Roll back changes
-        const inverse = checkout.changeFamily.rebaser.invert(edit);
+        const inverse = checkout.changeFamily.rebaser.invert({ revision: brand(-1), change: edit });
 
         // TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
         // TODO: update schema in addition to anchors and tree data (in both places).

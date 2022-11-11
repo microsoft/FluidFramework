@@ -83,7 +83,7 @@ export function setLongTimeout(
             maxSetTimeoutMs,
         );
     } else {
-        timeoutId = setTimeout(() => timeoutFn(), timeoutMs);
+        timeoutId = setTimeout(() => timeoutFn(), Math.max(timeoutMs, 0));
     }
 
     setTimeoutIdFn?.(timeoutId);

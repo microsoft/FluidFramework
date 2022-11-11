@@ -23,9 +23,8 @@ export class TestCollection implements ICollection<any> {
         return this.collection;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public findOne(query: any): Promise<any> {
-        return Promise.resolve(this.findOneInternal(query));
+    public async findOne(query: any): Promise<any> {
+        return this.findOneInternal(query);
     }
 
     public async update(filter: any, set: any, addToSet: any): Promise<void> {
@@ -100,8 +99,7 @@ export class TestCollection implements ICollection<any> {
         throw new Error("Method not implemented.");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createIndex(index: any, unique: boolean): Promise<void> {
+    public async createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
@@ -184,10 +182,7 @@ export class TestDb implements IDb {
     constructor(private collections: { [key: string]: any[]; }) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
+    public async close(): Promise<void> { }
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.emitter.on(event, listener);
@@ -223,8 +218,7 @@ export class TestDbFactory implements ITestDbFactory {
         this.testDatabase = new TestDb(collections);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public connect(): Promise<IDb> {
-        return Promise.resolve(this.testDatabase);
+    public async connect(): Promise<IDb> {
+        return this.testDatabase;
     }
 }

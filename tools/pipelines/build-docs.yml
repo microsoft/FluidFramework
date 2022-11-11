@@ -75,6 +75,9 @@ variables:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
     ${{ if eq( parameters['deployEnvironment'], 'old') }}:
       value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+  # skip injected CG detection as we manually trigger it in a parallel job
+  - name: skipComponentGovernanceDetection
+    value: true
 
 # no PR triggers
 trigger:
@@ -153,7 +156,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Small
+      pool: Large
       strategy:
         runOnce:
           deploy:
@@ -206,19 +209,18 @@ stages:
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
-        - task: PublishBuildArtifacts@1
+        - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            PathtoPublish: '$(Build.SourcesDirectory)/docs/public'
-            ArtifactName: 'fluidframework-docs'
-            publishLocation: 'Container'
+            targetPath: '$(Build.SourcesDirectory)/docs/public'
+            artifactName: 'fluidframework-docs'
+            publishLocation: 'pipeline'
 
   # BEGIN Secure development tasks
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool:
-    vmImage: windows-latest
+  pool: Large
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -277,7 +279,7 @@ stages:
           condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
           inputs:
             targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
-            artifact: .gdn
+            artifactName: .gdn
 # END Secure development tasks
 
 - stage: deploy

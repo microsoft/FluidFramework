@@ -236,7 +236,15 @@ module.exports = {
         "no-param-reassign": "error",
         "no-redeclare": "off", // Superseded by @typescript-eslint/no-redeclare
         "no-regex-spaces": "error",
-        "no-restricted-syntax": ["error", "ForInStatement"],
+        "no-restricted-syntax": [
+            "error",
+            {
+                selector: "ExportAllDeclaration",
+                message:
+                    "Exporting * is not permitted. You should export only named items you intend to export.",
+            },
+            "ForInStatement",
+        ],
         "no-return-await": "error",
         "no-sequences": "error",
         "no-shadow": "off", // Superseded by @typescript-eslint/no-shadow

@@ -292,7 +292,7 @@ export class LoadTestDataStoreModel {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return Date.now() - (this.haveTaskLock() ? this.taskStartTime : this.startTime);
+        return Date.now() - (this.assigned() ? this.taskStartTime : this.startTime);
     }
 
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
@@ -336,26 +336,26 @@ export class LoadTestDataStoreModel {
         return handle.get();
     }
 
-    public haveTaskLock() {
+    public assigned() {
         if (this.runtime.disposed) {
             return false;
         }
-        return this.taskManager.haveTaskLock(this.taskId);
+        return this.taskManager.assigned(this.taskId);
     }
 
     public abandonTask() {
-        if (this.haveTaskLock()) {
+        if (this.assigned()) {
             // We are becoming the reader. Remove the reference to the GC data store.
             this.runDir.delete(gcDataStoreKey);
             this.taskManager.abandon(this.taskId);
         }
     }
 
-    public async lockTask() {
+    public async volunteerForTask() {
         if (this.runtime.disposed) {
             return;
         }
-        if (!this.haveTaskLock()) {
+        if (!this.assigned()) {
             try {
                 if (!this.runtime.connected) {
                     await new Promise<void>((resolve, reject) => {
@@ -374,7 +374,7 @@ export class LoadTestDataStoreModel {
                         this.runtime.once("disconnected", rejAndClear);
                     });
                 }
-                await this.taskManager.lockTask(this.taskId);
+                await this.taskManager.volunteerForTask(this.taskId);
                 this.taskStartTime = Date.now();
 
                 // We just became the writer. Add a reference to the GC data store.
@@ -412,7 +412,7 @@ export class LoadTestDataStoreModel {
                 ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
                 ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
                 ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-                `hasTask: ${this.haveTaskLock().toString().padStart(5)}`,
+                `hasTask: ${this.assigned().toString().padStart(5)}`,
                 blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
                 blobsEnabled ? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}` : "",
                 !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",

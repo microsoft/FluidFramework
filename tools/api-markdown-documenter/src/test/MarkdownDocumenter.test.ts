@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
@@ -73,6 +74,9 @@ async function snapshotTest(
 
     // If this fails, then the docs build has generated new content.
     // View the diff in git and determine if the changes are appropriate or not.
+
+    // False positive
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(result.same).to.be.true;
 }
 
@@ -115,13 +119,13 @@ function apiTestSuite(
 ): Suite {
     return describe(modelName, () => {
         for (const configProps of configs) {
-            describe(configProps.configName, async () => {
+            describe(configProps.configName, () => {
                 /**
                  * Complete config generated in `before` hook.
                  */
                 let markdownDocumenterConfig: Required<MarkdownDocumenterConfiguration>;
 
-                before(async () => {
+                before(() => {
                     const apiModel = new ApiModel();
                     for (const apiReportFilePath of apiReportFilePaths) {
                         apiModel.loadPackage(apiReportFilePath);
@@ -153,13 +157,12 @@ function apiTestSuite(
 
                     const pathMap = new Map<string, MarkdownDocument>();
                     for (const document of documents) {
-                        if (pathMap.has(document.path)) {
+                        const existingEntry = pathMap.get(document.path);
+                        if (existingEntry !== undefined) {
                             expect.fail(
-                                `Rendering generated multiple documents to be rendered to the same file path: "${
-                                    document.path
-                                }". Requested by the following items: "${
-                                    document.apiItem.displayName
-                                }" & "${pathMap.get(document.path)!.apiItem.displayName}".`,
+                                `Rendering generated multiple documents to be rendered to the same file path: ` +
+                                    `"${document.path}". Requested by the following items: ` +
+                                    `"${document.apiItem.displayName}" & "${existingEntry.apiItem.displayName}".`,
                             );
                         } else {
                             pathMap.set(document.path, document);
@@ -237,7 +240,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         {
             configName: "flat-config",
             configLessApiModel: flatConfig,
-            generateFrontMatter: (apiItem) =>
+            generateFrontMatter: (apiItem): string =>
                 `<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
         },
         {

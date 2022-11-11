@@ -484,7 +484,7 @@ export class NodeCore {
         }
 
         // This also ensures that stack.length === 0.
-        assert(children === this.children, "Unpaired start/end list/set markers!");
+        assert(children === this.children, 0x3e7 /* Unpaired start/end list/set markers! */);
 
         /**
          * Process all the strings at once!
@@ -497,7 +497,7 @@ export class NodeCore {
 
         length = 0;
         const input = buffer.buffer;
-        assert(input.byteOffset === 0, "code below assumes no offset");
+        assert(input.byteOffset === 0, 0x3e8 /* code below assumes no offset */);
 
         for (const el of stringsToResolve) {
             for (let it = el.startPos; it < el.endPos; it++) {
@@ -507,19 +507,21 @@ export class NodeCore {
             stringBuffer[length] = 0;
             length++;
         }
+        assert(length === stringBuffer.length, 0x418 /* properly encoded */);
 
-        if (length === stringBuffer.length) {
+        const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
+        if (result.length === stringsToResolve.length + 1) {
             // All is good, we expect all the cases to get here
-            const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
-            assert(result.length === stringsToResolve.length + 1, "String content has \\0 chars!");
             for (let i = 0; i < stringsToResolve.length; i++) {
                 stringsToResolve[i].content = result[i];
             }
         } else {
+            // String content has \0 chars!
             // Recovery code
             logger.sendErrorEvent({ eventName: "StringParsingError" });
             for (const el of stringsToResolve) {
-                assert(el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"), "test");
+                assert(el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"),
+                    0x3ea /* test */);
             }
         }
     }

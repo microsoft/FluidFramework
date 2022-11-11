@@ -13,18 +13,13 @@ export interface IAudienceOwner extends IAudience {
     /**
      * Adds a new client to the audience
      */
-     addMember(clientId: string, details: IClient);
+     addMember(clientId: string, details: IClient): void;
 
      /**
      * Removes a client from the audience. Only emits an event if a client is actually removed
      * @returns if a client was removed from the audience
      */
      removeMember(clientId: string): boolean;
-
-     /**
-      * Clears the audience
-      */
-     clear();
 }
 
 /**

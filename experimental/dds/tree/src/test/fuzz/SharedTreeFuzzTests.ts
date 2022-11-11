@@ -120,9 +120,10 @@ export async function performFuzzActions(
 						const editLogB = tree.edits;
 						const minEdits = Math.min(editLogA.length, editLogB.length);
 						for (let j = 0; j < minEdits - 1; j++) {
-							const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
-							const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
-							expect(editA.id).to.equal(editB.id);
+							const editA = editLogA.tryGetEditAtIndex(editLogA.length - j - 1);
+							const editB = editLogB.tryGetEditAtIndex(editLogB.length - j - 1);
+							expect(editA).to.not.be.undefined;
+							expect(editA?.id).to.equal(editB?.id);
 						}
 						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
 							.be.true;
