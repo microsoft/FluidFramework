@@ -736,7 +736,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
-            assert(this.length === 0, 0x455 /* A non-sequence field cannot have more than one node. */);
+            assert(
+                this.length === 0,
+                0x455 /* A non-sequence field cannot have more than one node. */,
+            );
         }
         assert(
             keyIsValidIndex(index, this.length + 1),
