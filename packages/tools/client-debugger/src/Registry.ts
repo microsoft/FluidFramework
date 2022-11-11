@@ -63,6 +63,8 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 /**
  * Gets all registered client debuggers from the registry.
+ *
+ * @internal
  */
 export function getFluidClientDebuggers(): IFluidClientDebugger[] {
     const debuggerRegistry = getDebuggerRegistry();

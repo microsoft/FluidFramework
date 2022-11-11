@@ -40,6 +40,9 @@ export interface FluidClientDebuggerProps {
 // @public
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
 
+// @internal
+export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
 // @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     closeContainer(): void;
