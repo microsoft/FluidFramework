@@ -91,7 +91,9 @@ export class AttributionCollection<T> {
         summary: SerializedAttributionCollection,
     ): void {
         const { keys, posBreakpoints } = summary;
-        assert(keys.length === posBreakpoints.length && keys.length > 0, 0x445 /* Invalid attribution summary blob provided */);
+        assert(
+            keys.length === posBreakpoints.length && keys.length > 0,
+            0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
         let cumulativeSegPos = 0;
         let currentInfo = keys[curIndex];

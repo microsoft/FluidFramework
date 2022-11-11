@@ -431,7 +431,8 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
         // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
         // while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
-        assert(entryPoint?.IAgentScheduler !== undefined, 0x467 /* The data store's entryPoint is not an AgentScheduler! */);
+        assert(entryPoint?.IAgentScheduler !== undefined,
+            0x467 /* The data store's entryPoint is not an AgentScheduler! */);
         return entryPoint as unknown as AgentScheduler;
     }
 

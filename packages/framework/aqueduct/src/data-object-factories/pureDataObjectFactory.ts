@@ -63,7 +63,8 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
             const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.entryPoint?.get();
             assert(maybeRouter !== undefined, 0x468 /* entryPoint should have been initialized by now */);
-            assert(maybeRouter?.IFluidRouter !== undefined, 0x469 /* Data store runtime entryPoint is not an IFluidRouter */);
+            assert(maybeRouter?.IFluidRouter !== undefined,
+                0x469 /* Data store runtime entryPoint is not an IFluidRouter */);
             return maybeRouter?.IFluidRouter.request(request);
         },
         runtimeClass);
