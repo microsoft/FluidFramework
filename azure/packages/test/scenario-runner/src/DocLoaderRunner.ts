@@ -25,6 +25,7 @@ export interface DocLoaderRunnerConfig {
     schema: DocLoaderSchema;
     docIds: string[];
     clientStartDelayMs: number;
+    numOfLoads?: number;
 }
 
 export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
@@ -67,13 +68,16 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
         }
 
         const children: Promise<boolean>[] = [];
-        for (const runnerArg of runnerArgs) {
-            try {
-                children.push(this.createChild(runnerArg));
-            } catch {
-                throw new Error("Failed to spawn child");
+        const numOfLoads = this.c.numOfLoads ?? 1;
+        for (let j = 0; j < numOfLoads; j++) {
+            for (const runnerArg of runnerArgs) {
+                try {
+                    children.push(this.createChild(runnerArg));
+                } catch {
+                    throw new Error("Failed to spawn child");
+                }
+                await delay(this.c.clientStartDelayMs);
             }
-            await delay(this.c.clientStartDelayMs);
         }
 
         try {

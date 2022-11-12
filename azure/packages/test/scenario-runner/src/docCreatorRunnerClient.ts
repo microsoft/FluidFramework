@@ -15,6 +15,37 @@ import { ContainerFactorySchema } from "./interface";
 import { getLogger, loggerP } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
 
+const eventMap = new Map([
+    [
+        "fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
+        "scenario:runner:DocCreator:Attach:FetchOrdererToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:CreateNew",
+        "scenario:runner:DocCreator:Attach:CreateNew",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:DocPostCreateCallback",
+        "scenario:runner:DocCreator:Attach:DocPostCreateCallback",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:FetchStorageToken",
+        "scenario:runner:DocCreator:Attach:FetchStorageToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
+        "scenario:runner:DocCreator:Connection:GetDeltaStreamToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
+        "scenario:runner:DocCreator:Connection:ConnectToDeltaStream",
+    ],
+    [
+        "fluid:telemetry:Container:ConnectionStateChange",
+        "scenario:runner:DocCreator:Connection:ConnectionStateChange",
+    ],
+]);
+
 export interface DocCreatorRunnerConfig {
     runId: string;
     scenarioName: string;
@@ -62,7 +93,8 @@ async function main() {
             runId: config.runId,
             scenarioName: config.scenarioName,
         },
-        ["scenario:runner", "fluid:telemetry"],
+        ["scenario:runner"],
+        eventMap,
     );
 
     const ac = await createAzureClient({
@@ -85,7 +117,8 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             scenarioName: config.scenarioName,
             namespace: "scenario:runner:DocCreator",
         },
-        ["scenario:runner", "fluid:telemetry"],
+        ["scenario:runner"],
+        eventMap,
     );
 
     try {
@@ -128,7 +161,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             { eventName: "connected" },
             async () => {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
+                    durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
             },
