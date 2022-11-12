@@ -1,5 +1,5 @@
- title: ODSP create and load of 20 docs
- description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
+ title: ODSP multi-docs internal.2.0.1
+ description: In this scenario we create 10 docs then try to load them 20 times each for each load stage.
  env:
     schema:
       initialObjects:
@@ -26,7 +26,7 @@
       opsBeforeReturn: cached
       deltaConnection: none
       clientStartDelayMs: 1000
-      numOfLoads: 5
+      numOfLoads: 20
   - stage-3:
     id: 3
     name: Load doc - cached ops
@@ -36,4 +36,4 @@
       docIds: ${docIds}
       opsBeforeReturn: cached
       clientStartDelayMs: 1000
-      numOfLoads: 5
+      numOfLoads: 20
