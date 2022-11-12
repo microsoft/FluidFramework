@@ -51,6 +51,8 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
                 config.runId,
                 "--scenarioName",
                 config.scenarioName,
+                "--stageName",
+                config.stageName,
                 "--childId",
                 (i++).toString(),
                 "--docId",

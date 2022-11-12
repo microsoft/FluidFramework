@@ -226,6 +226,7 @@ export class TestOrchestrator {
         return runner.run({
             runId: this.runId,
             scenarioName: this.doc?.title ?? "",
+            stageName: stage.name,
         });
     }
 

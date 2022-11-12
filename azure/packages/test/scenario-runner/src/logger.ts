@@ -14,6 +14,7 @@ import { pkgName, pkgVersion } from "./packageVersion";
 
 export interface LoggerConfig {
     scenarioName?: string;
+    stageName?: string;
     namespace?: string;
     runId?: string;
 }
@@ -91,6 +92,7 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
             event.category = event.testCategoryOverride;
         }
         this.baseLogger?.send({ ...event, hostName: pkgName });
+        // console.log("event----->", event);
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
@@ -129,6 +131,7 @@ export async function getLogger(
         all: {
             runId: config.runId,
             scenarioName: config.scenarioName,
+            stageName: config.stageName,
         },
     });
 }

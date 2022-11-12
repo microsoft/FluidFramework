@@ -11,31 +11,32 @@
  stages:
   - stage-1:
     id: 1
-    name: Create single azure client
-    package: azure-client
-    params:
-      connectionConfig: ${connectionConfig}
-      userId: SomeUserId;
-      userName: SomeName;
-    out: ${client}
-  - stage-2:
-    id: 2
     name: Create empty documents
     package: doc-creator
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 50
-      clientStartDelayMs: 10
+      numDocs: 10
+      clientStartDelayMs: 1000
     out: ${docIds}
-  - stage-3:
-    id: 3
-    name: Load documents
+  - stage-2:
+    id: 2
+    name: Load doc - cached ops and no delta
     package: doc-loader
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
       docIds: ${docIds}
-      clientStartDelayMs: 10
-
-
+      opsBeforeReturn: cached
+      deltaConnection: none
+      clientStartDelayMs: 1000
+  - stage-3:
+    id: 3
+    name: Load doc - cached ops
+    package: doc-loader
+    params:
+      connectionConfig: ${connectionConfig}
+      schema: ${schema}
+      docIds: ${docIds}
+      opsBeforeReturn: cached
+      clientStartDelayMs: 1000

@@ -17,6 +17,7 @@ export interface IRunnerEvents extends IEvent {
 
 export interface IRunConfig {
     runId: string;
+    stageName: string;
     scenarioName: string;
 }
 
