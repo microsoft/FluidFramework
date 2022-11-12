@@ -18,8 +18,8 @@ describe("Outbox", () => {
         canSendOps: boolean;
         batchesSubmitted: IBatchMessage[][];
         batchesCompressed: IBatch[];
-        individualOpsSubmitted: { type: MessageType; contents: any; batch: boolean; appData?: any; }[];
-        pendingOpContents: { type: ContainerMessageType; content: any; }[];
+        individualOpsSubmitted: any[];
+        pendingOpContents: any[];
         opsSubmitted: number;
     };
     const state: State = {
@@ -43,19 +43,7 @@ describe("Outbox", () => {
     });
 
     it("Sending batches", () => {
-        const outbox = new Outbox(
-            () => state.canSendOps,
-            getMockPendingStateManager() as PendingStateManager,
-            getMockContext() as IContainerContext,
-            {
-                enableOpReentryCheck: false,
-                maxBatchSizeInBytes,
-            },
-            {
-                compressor: getMockCompressor(),
-            },
-        );
-
+        const outbox = getOutbox(getMockContext() as IContainerContext);
         const messages = [
             createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
             createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
@@ -77,13 +65,13 @@ describe("Outbox", () => {
 
         outbox.submit(messages[5]);
 
-        assert.equal(state.opsSubmitted, 5);
+        assert.equal(state.opsSubmitted, messages.length - 1);
         assert.equal(state.individualOpsSubmitted.length, 0);
         assert.deepEqual(state.batchesSubmitted, [
             [
                 batchedMessage(messages[2], true),
                 batchedMessage(messages[3], false),
-            ], // Attach messages are always flushed first
+            ],
             [
                 batchedMessage(messages[0], true),
                 batchedMessage(messages[1], false),
@@ -92,40 +80,74 @@ describe("Outbox", () => {
                 batchedMessage(messages[4]),
             ], // The last message was not batched
         ]);
+        assert.equal(state.deltaManagerFlushCalls, 0);
+        const messagesInFlushOrder = [
+            messages[2], messages[3], messages[0], messages[1], messages[4],
+        ];
+        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
     });
 
-    it("Will send messages when only when allowed", () => {
-        // const outbox = new Outbox(
-        //     () => state.canSendOps,
-        //     getMockPendingStateManager() as PendingStateManager,
-        //     getMockLegacyContext() as IContainerContext,
-        //     {
-        //         enableOpReentryCheck: false,
-        //         maxBatchSizeInBytes,
-        //     },
-        //     {
-        //         compressor: getMockCompressor(),
-        //     },
-        // );
-        // state.canSendOps = false;
+    it("Will send messages only when allowed, but will store them in the pending state", () => {
+        const outbox = getOutbox(getMockContext() as IContainerContext);
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+        ];
+        outbox.submit(messages[0]);
+        outbox.flush();
 
+        outbox.submit(messages[1]);
+        state.canSendOps = false;
+        outbox.flush();
 
+        assert.equal(state.opsSubmitted, 1);
+        assert.deepEqual(state.batchesSubmitted, [
+            [
+                batchedMessage(messages[0]),
+            ],
+        ]);
+        assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
     });
 
     it("Uses legacy path for legacy contexts", () => {
-        const outbox = new Outbox(
-            () => state.canSendOps,
-            getMockPendingStateManager() as PendingStateManager,
-            getMockLegacyContext() as IContainerContext,
-            {
-                enableOpReentryCheck: false,
-                maxBatchSizeInBytes,
-            },
-            {
-                compressor: getMockCompressor(),
-            },
-        );
+        const outbox = getOutbox(getMockLegacyContext() as IContainerContext);
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submit(messages[3]);
+
         outbox.flush();
+
+        assert.equal(state.opsSubmitted, messages.length);
+        assert.equal(state.batchesSubmitted.length, 0);
+        assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
+        assert.equal(state.deltaManagerFlushCalls, 2);
+        const messagesInFlushOrder = [
+            messages[2], messages[0], messages[1], messages[3],
+        ];
+        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
     });
 
     it("No limits set on batch managers if compression is enabled", () => {
@@ -186,12 +208,12 @@ describe("Outbox", () => {
         onSubmitMessage: (
             type: ContainerMessageType,
             _clientSequenceNumber: number,
-            _referenceSequenceNumber: number,
+            referenceSequenceNumber: number,
             content: any,
             _localOpMetadata: unknown,
-            _opMetadata: Record<string, unknown> | undefined,
+            opMetadata: Record<string, unknown> | undefined,
         ): void => {
-            state.pendingOpContents.push({ type, content });
+            state.pendingOpContents.push({ type, content, referenceSequenceNumber, opMetadata });
         }
     });
 
@@ -210,5 +232,18 @@ describe("Outbox", () => {
         return batchMarker === undefined ?
             { contents: message.contents, metadata: message.metadata } :
             { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
-    }
+    };
+
+    const getOutbox = (context: IContainerContext) => new Outbox(
+        () => state.canSendOps,
+        getMockPendingStateManager() as PendingStateManager,
+        context,
+        {
+            enableOpReentryCheck: false,
+            maxBatchSizeInBytes,
+        },
+        {
+            compressor: getMockCompressor(),
+        },
+    );
 });
