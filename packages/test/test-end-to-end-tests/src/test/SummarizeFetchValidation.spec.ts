@@ -223,8 +223,8 @@ describeNoCompat("Summarizer fetches expected number of times",
     });
 
     it("Second summarizer from latest should not fetch", async function() {
-        // Local driver does not use cache and will not fetch.
-        if (provider.driver.type === "local") {
+        // Only validate fetch with odsp for now.
+        if (provider.driver.type !== "odsp") {
             this.skip();
         }
         const summarizer1 = await createSummarizer(provider, mainContainer);
@@ -249,8 +249,8 @@ describeNoCompat("Summarizer fetches expected number of times",
     });
 
     it("Loading Summary from older version should fetch", async function() {
-        // Local driver does not use cache and will not fetch.
-        if (provider.driver.type === "local") {
+        // Only validate fetch with odsp for now.
+        if (provider.driver.type !== "odsp") {
             this.skip();
         }
 
