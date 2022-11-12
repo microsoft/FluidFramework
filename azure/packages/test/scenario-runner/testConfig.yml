@@ -1,4 +1,4 @@
- title: Single doc load test
+ title: ODSP create and load of 10 docs
  description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
  env:
     schema:
