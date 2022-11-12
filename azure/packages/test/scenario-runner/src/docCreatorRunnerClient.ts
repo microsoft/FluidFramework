@@ -44,8 +44,6 @@ async function main() {
         .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
         .requiredOption("-sn, --stageName <stageName>", "stage name.")
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
-        .requiredOption("-ct, --connType <connType>", "Connection type")
-        .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -73,6 +71,28 @@ async function main() {
 async function execRun(config: DocCreatorRunnerConfig): Promise<void> {
     let schema;
 
+    const eventMap = new Map([
+        [
+            "fluid:telemetry:OdspDriver:CreateNew",
+            "scenario:runner:DocCreator:Driver:CreateNew",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:JoinSession",
+            "scenario:runner:DocCreator:Driver:JoinSession",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:GetWebsocketToken_GetToken",
+            "scenario:runner:DocCreator:Driver:GetToken",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:JoinSession",
+            "scenario:runner:DocCreator:Driver:JoinSession",
+        ],
+        [
+            "fluid:telemetry:Container:ConnectionStateChange",
+            "scenario:runner:DocCreator:Container:ConnectionStateChange",
+        ],
+    ])
     const baseLogger = await getLogger(
         {
             runId: config.runId,
@@ -80,6 +100,7 @@ async function execRun(config: DocCreatorRunnerConfig): Promise<void> {
             stageName: config.stageName,
         },
         ["scenario:runner"],
+        eventMap
     );
 
     const scenarioLogger = await getLogger(
@@ -90,6 +111,7 @@ async function execRun(config: DocCreatorRunnerConfig): Promise<void> {
             namespace: "scenario:runner:DocCreator",
         },
         ["scenario:runner"],
+        eventMap
     );
 
     try {
@@ -155,7 +177,7 @@ async function execRun(config: DocCreatorRunnerConfig): Promise<void> {
             async () => {
                 container.connect();
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 30000,
+                    durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
             },

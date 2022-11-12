@@ -9,8 +9,8 @@ import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
-    type: "remote" | "local";
-    endpoint: string;
+    type?: "remote" | "local";
+    endpoint?: string;
     key?: string;
     tenantId?: string;
 }
@@ -46,7 +46,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         this.status = "running";
         const runnerArgs: string[][] = [];
         for (let i = 0; i < this.c.numDocs; i++) {
-            const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/docCreatorRunnerClient.js",
                 "--runId",
@@ -59,10 +58,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
                 i.toString(),
                 "--schema",
                 JSON.stringify(this.c.schema),
-                "--connType",
-                connection.type,
-                "--connEndpoint",
-                connection.endpoint,
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);

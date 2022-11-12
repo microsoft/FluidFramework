@@ -25,6 +25,7 @@ export interface DocLoaderRunnerConfig {
     schema: DocLoaderSchema;
     docIds: string[];
     clientStartDelayMs: number;
+    numOfLoads: number;
 }
 
 export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
@@ -44,7 +45,6 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
         const runnerArgs: string[][] = [];
         let i = 0;
         for (const docId of this.c.docIds) {
-            const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/docLoaderRunnerClient.js",
                 "--runId",
@@ -59,23 +59,22 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
                 docId,
                 "--schema",
                 JSON.stringify(this.c.schema),
-                "--connType",
-                connection.type,
-                "--connEndpoint",
-                connection.endpoint,
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
         }
 
         const children: Promise<boolean>[] = [];
-        for (const runnerArg of runnerArgs) {
-            try {
-                children.push(this.createChild(runnerArg));
-            } catch {
-                throw new Error("Failed to spawn child");
+        const numOfLoads = this.c.numOfLoads ?? 1;
+        for (let j = 0; j < numOfLoads; j++) {
+            for (const runnerArg of runnerArgs) {
+                try {
+                    children.push(this.createChild(runnerArg));
+                } catch {
+                    throw new Error("Failed to spawn child");
+                }
+                await delay(this.c.clientStartDelayMs);
             }
-            await delay(this.c.clientStartDelayMs);
         }
 
         try {

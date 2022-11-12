@@ -5,9 +5,6 @@
       initialObjects:
         key1: SharedMap
         key2: SharedMap
-    connectionConfig:
-      type: remote
-      endpoint: https://alfred.westus2.fluidrelay.azure.com
  stages:
   - stage-1:
     id: 1
@@ -16,7 +13,7 @@
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 20
+      numDocs: 10
       clientStartDelayMs: 1000
     out: ${docIds}
   - stage-2:
@@ -24,19 +21,19 @@
     name: Load doc - cached ops and no delta
     package: doc-loader
     params:
-      connectionConfig: ${connectionConfig}
       schema: ${schema}
       docIds: ${docIds}
       opsBeforeReturn: cached
       deltaConnection: none
       clientStartDelayMs: 1000
+      numOfLoads: 5
   - stage-3:
     id: 3
     name: Load doc - cached ops
     package: doc-loader
     params:
-      connectionConfig: ${connectionConfig}
       schema: ${schema}
       docIds: ${docIds}
       opsBeforeReturn: cached
       clientStartDelayMs: 1000
+      numOfLoads: 5

@@ -9,8 +9,8 @@ import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
-    type: "remote" | "local";
-    endpoint: string;
+    type?: "remote" | "local";
+    endpoint?: string;
     key?: string;
     tenantId?: string;
 }
@@ -48,7 +48,6 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
         this.status = "running";
         const runnerArgs: string[][] = [];
         for (let i = 0; i < this.c.numClients; i++) {
-            const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/mapTrafficRunnerClient.js",
                 "--runId",
@@ -67,10 +66,6 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
                 this.c.totalWriteCount.toString(),
                 "--sharedMapKey",
                 this.c.sharedMapKey,
-                "--connType",
-                connection.type,
-                "--connEndpoint",
-                connection.endpoint,
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);

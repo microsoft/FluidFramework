@@ -43,8 +43,6 @@ async function main() {
         .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
         .requiredOption("-sn, --stageName <stageName>", "stage name.")
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
-        .requiredOption("-ct, --connType <connType>", "Connection type")
-        .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -76,6 +74,32 @@ async function main() {
 
 async function execRun(config: DocLoaderRunnerConfig): Promise<void> {
     let schema;
+    const eventMap = new Map([
+        [
+            "fluid:telemetry:OdspDriver:JoinSession",
+            "scenario:runner:DocLoader:Driver:JoinSession",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:GetDeltas",
+            "scenario:runner:DocLoader:Driver:GetDeltas",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:OpsFetch",
+            "scenario:runner:DocLoader:Driver:OpsFetch",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:GetWebsocketToken_GetToken",
+            "scenario:runner:DocLoader:Driver:GetToken",
+        ],
+        [
+            "fluid:telemetry:OdspDriver:JoinSession",
+            "scenario:runner:DocLoader:Driver:JoinSession",
+        ],
+        [
+            "fluid:telemetry:Container:ConnectionStateChange",
+            "scenario:runner:DocLoader:Container:ConnectionStateChange",
+        ],
+    ]);
     const baseLogger = await getLogger(
         {
             runId: config.runId,
@@ -83,14 +107,8 @@ async function execRun(config: DocLoaderRunnerConfig): Promise<void> {
             stageName: config.stageName,
         },
         ["scenario:runner"],
+        eventMap
     );
-
-    const eventMap = new Map([
-        [
-            "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
-            "scenario:runner:DocLoader:getSummary",
-        ],
-    ]);
     const scenarioLogger = await getLogger(
         {
             runId: config.runId,
@@ -150,7 +168,7 @@ async function execRun(config: DocLoaderRunnerConfig): Promise<void> {
             { eventName: "connected" },
             async () => {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 30000,
+                    durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
             },
