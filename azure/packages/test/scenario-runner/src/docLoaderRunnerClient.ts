@@ -150,7 +150,7 @@ async function execRun(config: DocLoaderRunnerConfig): Promise<void> {
             { eventName: "connected" },
             async () => {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
+                    durationMs: 30000,
                     errorMsg: "container connect() timeout",
                 });
             },

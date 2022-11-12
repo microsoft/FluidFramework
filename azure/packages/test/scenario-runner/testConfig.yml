@@ -17,7 +17,7 @@
       connectionConfig: ${connectionConfig}
       schema: ${schema}
       numDocs: 20
-      clientStartDelayMs: 500
+      clientStartDelayMs: 1000
     out: ${docIds}
   - stage-2:
     id: 2
@@ -29,7 +29,7 @@
       docIds: ${docIds}
       opsBeforeReturn: cached
       deltaConnection: none
-      clientStartDelayMs: 500
+      clientStartDelayMs: 1000
   - stage-3:
     id: 3
     name: Load doc - cached ops
@@ -39,4 +39,4 @@
       schema: ${schema}
       docIds: ${docIds}
       opsBeforeReturn: cached
-      clientStartDelayMs: 500
+      clientStartDelayMs: 1000

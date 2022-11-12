@@ -155,7 +155,7 @@ async function execRun(config: DocCreatorRunnerConfig): Promise<void> {
             async () => {
                 container.connect();
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
+                    durationMs: 30000,
                     errorMsg: "container connect() timeout",
                 });
             },
