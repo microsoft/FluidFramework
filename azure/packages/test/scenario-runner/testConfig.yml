@@ -1,4 +1,4 @@
- title: ODSP create and load of 10 docs
+ title: ODSP create and load of 20 docs
  description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
  env:
     schema:
@@ -16,8 +16,8 @@
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 10
-      clientStartDelayMs: 1000
+      numDocs: 20
+      clientStartDelayMs: 500
     out: ${docIds}
   - stage-2:
     id: 2
@@ -29,7 +29,7 @@
       docIds: ${docIds}
       opsBeforeReturn: cached
       deltaConnection: none
-      clientStartDelayMs: 1000
+      clientStartDelayMs: 500
   - stage-3:
     id: 3
     name: Load doc - cached ops
@@ -39,4 +39,4 @@
       schema: ${schema}
       docIds: ${docIds}
       opsBeforeReturn: cached
-      clientStartDelayMs: 1000
+      clientStartDelayMs: 500
