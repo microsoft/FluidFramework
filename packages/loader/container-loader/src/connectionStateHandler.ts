@@ -388,17 +388,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     private shouldWaitForJoinSignal() {
-        // No connection - no wait.
-        if (this.connection === undefined) {
-            return false;
-        }
-
-        // Pending clientId could have joined already (i.e. join op/signal already processed).
-        // We are fetching ops from storage in parallel to connecting to Relay Service,
-        // and given async processes, it's possible that we have already processed our own join message before
-        // connection was fully established.
-        return (this.connection.mode === "write" || this.readClientsWaitForJoinSignal) &&
-            !this.hasMember(this._pendingClientId);
+        assert(this.connection !== undefined, "all callers call here with active connection");
+        return this.connection.mode === "write" || this.readClientsWaitForJoinSignal;
     }
 
     /**
@@ -437,8 +428,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
         this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState);
 
-        if (this.shouldWaitForJoinSignal()) {
-            // Previous client left, and we are waiting for our own join op / signal. When it is processed
+        // Check if we need to wait for join op/signal, and if we need to wait for leave op from previous connection.
+        // Pending clientId could have joined already (i.e. join op/signal already processed):
+        //    We are fetching ops from storage in parallel to connecting to Relay Service,
+        //    and given async processes, it's possible that we have already processed our own join message before
+        //    connection was fully established.
+        if (!this.hasMember(this._pendingClientId) && this.shouldWaitForJoinSignal()) {
+            // We are waiting for our own join op / signal. When it is processed
             // we'll attempt to transition to Connected state via receivedAddMemberEvent() flow.
             this.startJoinOpTimer();
         } else if (!this.waitingForLeaveOp) {
