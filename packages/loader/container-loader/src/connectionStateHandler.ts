@@ -234,6 +234,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     private readonly joinOpTimer: Timer;
     private protocol?: IProtocolHandler;
     private connection?: IConnectionDetails;
+    private _clientId?: string;
 
     private waitEvent: PerformanceEvent | undefined;
 
@@ -252,8 +253,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     constructor(
         private readonly handler: IConnectionStateHandlerInputs,
         private readonly readClientsWaitForJoinSignal: boolean,
-        private _clientId?: string,
+        clientIdFromPausedSession?: string,
     ) {
+        this._clientId = clientIdFromPausedSession;
         this.prevClientLeftTimer = new Timer(
             // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
             // the max time on server after which leave op is sent.
@@ -266,7 +268,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         );
 
         this.joinOpTimer = new Timer(
-            JoinOpTimeoutMs, // default value is not used - startJoinOpTimer() explicitly provides timeout
+            0, // default value is not used - startJoinOpTimer() explicitly provides timeout
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
@@ -284,10 +286,11 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         );
     }
 
-    private startJoinOpTimer(writeConnection: boolean) {
+    private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        assert(this.connection !== undefined, "have connection");
         this.joinOpTimer.start(
-            writeConnection ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
+            this.connection.mode === "write" ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
         );
     }
 
@@ -390,18 +393,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
             return false;
         }
 
-        /* We can go this route, or have NoDeltaStream.initialClients contains "self"
-        if (this.connection instanceof NoDeltaStream) {
-            return false;
-        }
-        */
-
         // Pending clientId could have joined already (i.e. join op/signal already processed).
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
-        // If protocol is not initialized yet, receivedAddMemberEvent() will be called by initProtocol()
-        // later in boot sequence if needed.
         return (this.connection.mode === "write" || this.readClientsWaitForJoinSignal) &&
             !this.hasMember(this._pendingClientId);
     }
@@ -422,10 +417,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.CatchingUp;
 
-        const writeConnection = details.mode === "write";
-
         // The following checks are wrong. They are only valid if user has write access to a file.
         // If user lost such access mid-session, user will not be able to get "write" connection.
+        //
+        // const writeConnection = details.mode === "write";
         // assert(!this.handler.shouldClientJoinWrite() || writeConnection,
         //    0x30a /* shouldClientJoinWrite should imply this is a writeConnection */);
         // assert(!this.waitingForLeaveOp || writeConnection,
@@ -445,7 +440,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         if (this.shouldWaitForJoinSignal()) {
             // Previous client left, and we are waiting for our own join op / signal. When it is processed
             // we'll attempt to transition to Connected state via receivedAddMemberEvent() flow.
-            this.startJoinOpTimer(writeConnection);
+            this.startJoinOpTimer();
         } else if (!this.waitingForLeaveOp) {
             // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
             // go ahead and declare the state to be Connected!
@@ -521,8 +516,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     // Old design was checking only quorum for "write" clients.
     // Latest change checks audience for all types of connections.
     protected get membership(): IMembership | undefined {
-        // It should not matter if we use Audience when this.readClientsWaitForJoinSignal === false.
-        // But only if it's superset of quorum, i.e. when filters to "write" clients, they are always identical!
+        // We could always use audience here, and in practice it will probably be correct.
+        // (including case when this.readClientsWaitForJoinSignal === false).
+        // But only if it's superset of quorum, i.e. when filtered to "write" clients, they are always identical!
         // It's safer to assume that we have bugs and engaging kill-bit switch should bring us back to well-known
         // and tested state!
         return this.readClientsWaitForJoinSignal ? this.protocol?.audience : this.protocol?.quorum;
@@ -532,18 +528,23 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         this.protocol = protocol;
 
         this.membership?.on("addMember", (clientId, details) => {
-            assert((details as IClient).mode === "read" || this.protocol?.quorum.getMember(clientId) !== undefined,
+            assert((details as IClient).mode === "read" || protocol.quorum.getMember(clientId) !== undefined,
                 "Audience is subset of quorum");
             this.receivedAddMemberEvent(clientId);
         });
 
         this.membership?.on("removeMember", (clientId) => {
-            assert(this.protocol?.quorum.getMember(clientId) === undefined, "Audience is subset of quorum");
+            assert(protocol.quorum.getMember(clientId) === undefined, "Audience is subset of quorum");
             this.receivedRemoveMemberEvent(clientId);
         });
 
-        // Very unlikely race condition, but theoretically can happen - our new connection is already
-        // summarized and we are loading from such summary.
+        /* There is a tiny tiny race possible, where these events happen in this order:
+          1. A connection is established (no "cached" mode is used, so it happens in parallel / faster than other steps)
+          2. Some other client produces a summary
+          3. We get "lucky" and load from that summary as our initial snapshot
+          4. ConnectionStateHandler.initProtocol is called, "self" is already in the quorum.
+        We could avoid this sequence (and delete test case for it) if we move connection lower in Container.load()
+        */
         if (this.hasMember(this.pendingClientId)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.receivedAddMemberEvent(this.pendingClientId!);

@@ -158,6 +158,12 @@ describe("ConnectionStateHandler Tests", () => {
             };
     });
 
+    afterEach(() => {
+        // Get rid of timers
+        connectionStateHandler.receivedDisconnectEvent("the end of test");
+        connectionStateHandler.dispose();
+    });
+
     it("Should move to connected state on normal flow for read client", async () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in disconnected state");
@@ -339,6 +345,15 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in connecting state");
 
+        /*
+        There is a tiny tiny race possible, where these events happen in this order:
+          1. A connection is established (no "cached" mode is used, so it happens in parallel / faster than other steps)
+          2. Some other client produces a summary
+          3. We get "lucky" and load from that summary as our initial snapshot
+          4. ConnectionStateHandler.initProtocol is called, "self" is already in the quorum.
+        We could avoid this sequence (and delete this test case and handling in initProtocol()) if
+          we move connection lower in Container.load().
+        */
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
 
         // init protocol
@@ -488,7 +503,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert(connectionStateHandler.pendingClientId === undefined, "pendingClientId should not be set after receiving 'disconnect' event");
     });
 
-    async function testComplex(mode: ConnectionMode) {
+    async function testComplex(client3mode: ConnectionMode) {
         connectionDetails.mode = "write";
         connectionStateHandler.receivedConnectEvent(connectionDetails);
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
@@ -510,9 +525,9 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 2 should be in disconnected state");
 
         // Make new client 3 join so that it waits for client 1 to leave
-        // This is rather tricky case when mode === "read", as we are testing adding "read" client when
+        // This is rather tricky case when client3mode === "read", as we are testing adding "read" client when
         // shouldClientJoinWrite() reports true.
-        connectionDetails3.mode = mode;
+        connectionDetails3.mode = client3mode;
         connectionStateHandler.receivedConnectEvent(connectionDetails3);
         connectionStateHandler_receivedAddMemberEvent(pendingClientId3);
 

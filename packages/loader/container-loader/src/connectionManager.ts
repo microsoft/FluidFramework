@@ -85,7 +85,7 @@ const clientNoDeltaStream: IClient = {
     mode: "read",
     details: { capabilities: { interactive: true } },
     permission: [],
-    user: { id: "unknown" }, // we need some "fake" ID here.
+    user: { id: "storage-only client" }, // we need some "fake" ID here.
     scopes: [],
 };
 const clientIdNoDeltaStream: string = "storage-only client";
