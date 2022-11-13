@@ -33,7 +33,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -53,6 +52,7 @@ import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -69,7 +69,8 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser);
+    user: IUser,
+    scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -302,8 +303,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
@@ -345,6 +344,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
+        entryPoint?: IFluidHandle<FluidObject>;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -378,6 +378,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
+    // (undocumented)
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -450,7 +452,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     updateMinSequenceNumber(value: number): void;
     // (undocumented)
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)

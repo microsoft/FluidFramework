@@ -23,7 +23,6 @@ declare function get_old_TypeAliasDeclaration_AliasResult():
 declare function use_current_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<current.AliasResult>);
 use_current_TypeAliasDeclaration_AliasResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_AliasResult());
 
 /*
@@ -37,6 +36,30 @@ declare function use_old_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<old.AliasResult>);
 use_old_TypeAliasDeclaration_AliasResult(
     get_current_TypeAliasDeclaration_AliasResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_BindState():
+    TypeOnly<old.BindState>;
+declare function use_current_EnumDeclaration_BindState(
+    use: TypeOnly<current.BindState>);
+use_current_EnumDeclaration_BindState(
+    get_old_EnumDeclaration_BindState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_BindState():
+    TypeOnly<current.BindState>;
+declare function use_old_EnumDeclaration_BindState(
+    use: TypeOnly<old.BindState>);
+use_old_EnumDeclaration_BindState(
+    get_current_EnumDeclaration_BindState());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -360,7 +383,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>);
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -373,7 +395,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>);
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -386,7 +407,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>);
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -411,7 +431,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>);
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -641,30 +660,6 @@ declare function use_old_InterfaceDeclaration_IGarbageCollectionState(
     use: TypeOnly<old.IGarbageCollectionState>);
 use_old_InterfaceDeclaration_IGarbageCollectionState(
     get_current_InterfaceDeclaration_IGarbageCollectionState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails():
-    TypeOnly<old.IGarbageCollectionSummaryDetails>;
-declare function use_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    use: TypeOnly<current.IGarbageCollectionSummaryDetails>);
-use_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    get_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails():
-    TypeOnly<current.IGarbageCollectionSummaryDetails>;
-declare function use_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    use: TypeOnly<old.IGarbageCollectionSummaryDetails>);
-use_old_TypeAliasDeclaration_IGarbageCollectionSummaryDetails(
-    get_current_TypeAliasDeclaration_IGarbageCollectionSummaryDetails());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { v4 as uuid } from "uuid";
 
-import { generateUser } from "@fluidframework/server-services-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
     AzureClient,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
+import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**
@@ -21,6 +22,11 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
     const tenantId = useAzure
         ? (process.env.azure__fluid__relay__service__tenantId as string)
         : "frs-client-tenant";
+    const user = {
+        id: userID ?? uuid(),
+        name: userName ?? uuid(),
+    };
+    const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
@@ -28,12 +34,12 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
-              tokenProvider: createAzureTokenProvider(userID, userName),
-              endpoint: "https://alfred.westus2.fluidrelay.azure.com",
+              tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
+              endpoint: endPoint ?? "https://alfred.westus2.fluidrelay.azure.com",
               type: "remote",
           }
         : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
+              tokenProvider: new InsecureTokenProvider("fooBar", user),
               endpoint: "http://localhost:7071",
               type: "local",
           };

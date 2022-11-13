@@ -13,6 +13,7 @@ import { ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { insertSegments } from "./testUtils";
 
 describe("TestClient", () => {
     const localUserLongId = "localUser";
@@ -20,13 +21,15 @@ describe("TestClient", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.mergeTree.insertSegments(
-            0,
-            [TextSegment.make("")],
-            UniversalSequenceNumber,
-            client.getClientId(),
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree: client.mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("")],
+            refSeq: UniversalSequenceNumber,
+            clientId: client.getClientId(),
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         client.startOrUpdateCollaboration(localUserLongId);
     });
 

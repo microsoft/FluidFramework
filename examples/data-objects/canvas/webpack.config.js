@@ -5,13 +5,14 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
+const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 
 const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
 
 module.exports = env => {
-    const isProduction = env && env.production;
+    const isProduction = env?.production;
 
     return merge({
         entry: {
@@ -30,21 +31,21 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
+                loader: "ts-loader"
             },
             {
                 test: /\.less$/,
                 use: [{
-                    loader: require.resolve('style-loader') // creates style nodes from JS strings
+                    loader: 'style-loader' // creates style nodes from JS strings
                 }, {
-                    loader: require.resolve('css-loader') // translates CSS into CommonJS
+                    loader: 'css-loader' // translates CSS into CommonJS
                 }, {
-                    loader: require.resolve('less-loader') // compiles Less to CSS
+                    loader: 'less-loader' // compiles Less to CSS
                 }]
             },
             {
                 test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                loader: require.resolve('url-loader'),
+                loader: 'url-loader',
                 options: {
                     limit: 10000
                 }
@@ -59,6 +60,11 @@ module.exports = env => {
             devtoolNamespace: fluidPackageName,
             libraryTarget: "umd"
         },
+        plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
+        ],
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
         // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.

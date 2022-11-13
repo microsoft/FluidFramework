@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as fs from "fs";
 import * as path from "path";
+
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { isMonoRepoKind, MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
+import { MonoRepoKind, isMonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { Context } from "./context";
 
 /**
@@ -24,7 +24,7 @@ export async function writeReleaseVersions(context: Context) {
 
     const packageVersions: { [packageName: string]: string } = {};
     for (const [name] of depVersions.repoVersions) {
-        const version = depVersions.get(name)
+        const version = depVersions.get(name);
         if (version !== undefined) {
             packageVersions[name] = version;
         }

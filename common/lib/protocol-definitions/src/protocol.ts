@@ -33,6 +33,11 @@ export enum MessageType {
     Reject = "reject",
 
     /**
+     * Message sent by client accepting proposal
+     */
+    Accept = "accept",
+
+    /**
      * Summary operation (op).
      */
     Summarize = "summarize",
@@ -166,6 +171,12 @@ export interface IDocumentMessage {
      * Traces related to the packet.
      */
     traces?: ITrace[];
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use
+     */
+    compression?: string;
 }
 
 /**
@@ -272,11 +283,20 @@ export interface ISequencedDocumentMessage {
      */
     timestamp: number;
 
+    // Data provided by service. Only present in service generated messages.
+    data?: string;
+
     /**
      * Experimental field for storing the rolling hash at sequence number.
      * @alpha
      */
     expHash1?: string;
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use.
+     */
+    compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
