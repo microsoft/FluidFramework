@@ -77,7 +77,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
         for (let i = 0; i < count; i++) {
-            const value = dataObject2map.get(`key${i}`);
+            const value = map.get(`key${i}`);
             assert.strictEqual(value, expected, `Wrong value for key${i}`);
         }
     };
