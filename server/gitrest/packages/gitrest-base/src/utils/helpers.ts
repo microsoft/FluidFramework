@@ -29,7 +29,7 @@ import {
 /**
  * Validates that the input encoding is valid
  */
- export function validateBlobEncoding(encoding: BufferEncoding): boolean {
+export function validateBlobEncoding(encoding: BufferEncoding): boolean {
     return encoding === "utf-8" || encoding === "base64";
 }
 
@@ -178,7 +178,7 @@ export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutin
     if (!storageRoutingId) {
         return undefined;
     }
-    const [tenantId,documentId] = storageRoutingId.split(":");
+    const [tenantId, documentId] = storageRoutingId.split(":");
     return {
         tenantId,
         documentId,
@@ -224,7 +224,7 @@ export async function getRepoManagerFromWriteAPI(
     repoPerDocEnabled: boolean) {
     try {
         return await repoManagerFactory.open(repoManagerParams);
-    } catch(error: any) {
+    } catch (error: any) {
         // If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
         // creating the repository on the fly. So, if the open operation fails with a 400 code (representing
         // the repo does not exist), we try to create the reposiroty instead.
@@ -232,7 +232,7 @@ export async function getRepoManagerFromWriteAPI(
             error instanceof Error &&
             error?.name === "NetworkError" &&
             (error as NetworkError)?.code === 400) {
-                return repoManagerFactory.create(repoManagerParams);
+            return repoManagerFactory.create(repoManagerParams);
         }
         throw error;
     }

@@ -35,7 +35,7 @@ export interface ITenantService {
     /**
      * Removes any existing cache for the given tenant and token.
      */
-     deleteFromCache(tenantId: string, token: string): Promise<boolean>;
+    deleteFromCache(tenantId: string, token: string): Promise<boolean>;
 }
 
 /**
