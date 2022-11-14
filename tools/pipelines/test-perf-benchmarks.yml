@@ -92,7 +92,7 @@ stages:
             feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
         steps:
-        # Setup
+        # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
         - checkout: self
           clean: true
 
