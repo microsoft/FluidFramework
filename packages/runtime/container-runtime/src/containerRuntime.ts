@@ -2275,15 +2275,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
-            // Todo: Add tombstone for attachment blobs. For now, we ignore attachment blobs that should be tombstoned.
-            if (this.isBlobPath(route) && !tombstone) {
+            if (this.isBlobPath(route)) {
                 blobManagerUnusedRoutes.push(route);
             } else {
                 dataStoreUnusedRoutes.push(route);
             }
         }
 
-        this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
+        // Todo: Add tombstone for attachment blobs. For now, we ignore attachment blobs that should be tombstoned.
+        if (!tombstone) {
+            this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
+        }
         this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
     }
 

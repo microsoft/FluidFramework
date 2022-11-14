@@ -991,8 +991,8 @@ describe("Garbage Collection Tests", () => {
                     false /* isSummarizerClient */,
                 );
 
-                // Trigger loading GC data from base snapshot - but don't call GC since that's not what happens in real flow
-                await (garbageCollector as any).initializeBaseStateP;
+                // Trigger loading GC state from base snapshot - but don't call GC since that's not what happens in real flow
+                await (garbageCollector as any).initializeStateFromBaseSnapshotP;
 
                 // Update nodes and validate that all events for node 3 are logged.
                 updateAllNodes(garbageCollector);
