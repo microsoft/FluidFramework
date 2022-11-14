@@ -338,7 +338,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
+        assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
         super(context, cursor);
     }
 
@@ -367,10 +367,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     set value(value: Value) {
-        assert(isPrimitive(this.type), "Cannot set a value of a non-primitive field");
+        assert(isPrimitive(this.type), 0x44d /* Cannot set a value of a non-primitive field */);
         assertPrimitiveValueType(value, this.type);
         const path = this.cursor.getPath();
-        assert(path !== undefined, "Cannot locate a path to set a value of the node");
+        assert(path !== undefined, 0x44e /* Cannot locate a path to set a value of the node */);
         this.context.setNodeValue(path, value);
     }
 
@@ -432,14 +432,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
-        assert(!this.has(fieldKey), "The field already exists.");
+        assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
                 assert(
                     !Array.isArray(newContent),
-                    "Use single cursor to create the optional field",
+                    0x450 /* Use single cursor to create the optional field */,
                 );
                 this.context.setOptionalField(path, fieldKey, newContent, true);
                 break;
@@ -521,11 +521,11 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             const fieldKind = target.lookupFieldKind(fieldKey);
             assert(
                 fieldKind.multiplicity !== Multiplicity.Sequence,
-                "Cannot set a value of a sequence field.",
+                0x451 /* Cannot set a value of a sequence field. */,
             );
             assert(
                 target.has(fieldKey),
-                "The field does not exist. Create the field first using `newFieldSymbol`.",
+                0x452 /* The field does not exist. Create the field first using `newFieldSymbol`. */,
             );
             const field = target.proxifyField(fieldKey, false);
             field.getNode(0)[valueSymbol] = value;
@@ -655,7 +655,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
-        assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+        assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
         super(context, cursor);
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
@@ -706,7 +706,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public getNode(index: number): EditableTree {
         assert(
             keyIsValidIndex(index, this.length),
-            "A child node must exist at index to get it without unwrapping.",
+            0x454 /* A child node must exist at index to get it without unwrapping. */,
         );
         return this.proxifyNode(index, false);
     }
@@ -730,11 +730,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
-            assert(this.length === 0, "A non-sequence field cannot have more than one node.");
+            assert(
+                this.length === 0,
+                0x455 /* A non-sequence field cannot have more than one node. */,
+            );
         }
         assert(
             keyIsValidIndex(index, this.length + 1),
-            "Index must be less than or equal to length.",
+            0x456 /* Index must be less than or equal to length. */,
         );
         const fieldPath = this.cursor.getFieldPath();
         this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
@@ -747,9 +750,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         assert(
             this.length === 0 || keyIsValidIndex(index, this.length),
-            "Index must be less than length.",
+            0x457 /* Index must be less than length. */,
         );
-        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
+        if (count !== undefined) assert(count >= 0, 0x458 /* Count must be non-negative. */);
         const maxCount = this.length - index;
         const _count = count === undefined || count > maxCount ? maxCount : count;
         const fieldPath = this.cursor.getFieldPath();
@@ -805,7 +808,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         return undefined;
     },
     set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
-        assert(keyIsValidIndex(key, target.length), "The node does not exist.");
+        assert(keyIsValidIndex(key, target.length), 0x459 /* The node does not exist. */);
         const node = target.proxifyNode(Number(key), false);
         node[valueSymbol] = value;
         return true;
