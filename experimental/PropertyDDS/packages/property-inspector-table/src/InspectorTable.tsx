@@ -282,17 +282,18 @@ class InspectorTable<
   }
 
   public componentDidMount() {
-    const { data, fillExpanded } = this.props;
+    const { data, fillExpanded, treeContext } = this.props;
     const { expanded } = this.state;
     if (data) {
-      const updatedTableRows = this.props.toTableRows!({ data, id: "" }, this.props, this.toTableRowOptions);
+      const updatedTableRows =
+        this.props.toTableRows!({ data, id: "", treeContext }, this.props, this.toTableRowOptions);
       fillExpanded(expanded, updatedTableRows, this.props, this.toTableRowOptions);
       this.setState({ tableRows: updatedTableRows });
     }
   }
 
   public componentDidUpdate(prevProps: ITableProps, prevState: IInspectorTableState) {
-    const { data, checkoutInProgress, followReferences } = this.props;
+    const { data, checkoutInProgress, followReferences, treeContext } = this.props;
     const { currentResult, expanded, tableRows, searchExpression, sortBy } = this.state;
     let { foundMatches, childToParentMap } = this.state;
     this.toTableRowOptions.followReferences = followReferences;
@@ -309,7 +310,7 @@ class InspectorTable<
     // This has the undesired side effect that we also restart search when the browser window is resized, for example.
     if ((prevProps !== this.props || prevState.sortBy.order !== sortBy.order) && !checkoutInProgress) {
       if (data) {
-        const updatedTableRows = this.props.toTableRows!({ data, id: "" }, this.props,
+        const updatedTableRows = this.props.toTableRows!({ data, id: "", treeContext }, this.props,
           this.toTableRowOptions);
         this.props.fillExpanded(expanded, updatedTableRows, this.props, this.toTableRowOptions);
         // We need to update the table rows directly, because they might be used in the search call below.
@@ -593,8 +594,12 @@ class InspectorTable<
   // @TODO turn it private when refactoring editing workflow
   private readonly handleCreateData = async (rowData: T, name: string, type: string, context: string) => {
     if (this.dataCreation) {
-      await this.props.dataCreationHandler!(rowData, name, type, context);
+      // TODO: this change appeared to be required since otherwise (having it below the `await` line)
+      // it is not executed due to unknown reason, letting the `renderCreationRow` to be called again
+      // with a wrong `showFormRowID` and causing the app to crash due to the freed EditableTree root.
+      // To be investigated.
       this.setState({ showFormRowID: "0" });
+      await this.props.dataCreationHandler!(rowData, name, type, context);
     }
   };
 
@@ -743,7 +748,7 @@ class InspectorTable<
       const tableRows = this.state.tableRows;
       tableRows.forEach((item) => {
         this.traverseTree(item, (item) => {
-          if (item.children && !item.isReference) {
+          if (item.children && !item.isReference && item.children[0] !== undefined) {
             if (item.children[0].context === "d") {
               this.props.fillExpanded({ [item.id]: true }, [item], this.props, this.toTableRowOptions);
             }

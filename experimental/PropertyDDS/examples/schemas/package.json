@@ -26,6 +26,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc"
   },
+  "dependencies": {
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-experimental/property-properties": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-internal/tree": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
+  },
   "devDependencies": {
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",

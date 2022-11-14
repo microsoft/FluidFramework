@@ -30,11 +30,13 @@ import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { CursorWithNode } from "../treeCursorUtils";
 import {
+    EditableTree,
     EditableTreeOrPrimitive,
     isUnwrappedNode,
     NodeProxyTarget,
     proxyTargetSymbol,
     typeNameSymbol,
+    typeSymbol,
     UnwrappedEditableField,
     valueSymbol,
 } from "./editableTree";
@@ -90,6 +92,15 @@ export function getPrimaryField(
         return field;
     }
     return { key: EmptyKey, schema: field };
+}
+
+export function hasPrimaryField(node: EditableTree): boolean {
+    const primaryField = getPrimaryField(node[typeSymbol]);
+    if (primaryField === undefined) {
+        return false;
+    }
+    const kind = getFieldKind(primaryField.schema);
+    return primaryField.key === EmptyKey && kind.multiplicity === Multiplicity.Sequence;
 }
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.

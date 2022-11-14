@@ -9,8 +9,10 @@ const webpack = require("webpack");
 module.exports = env => {
     const htmlTemplate = "./src/index.html";
     return {
-        devtool: "inline-source-map",
-        entry: "./src/app.tsx",
+        devtool: "eval-source-map",
+        entry: {
+            app: "./src/azureApp.tsx"
+        },
         mode: "development",
         devServer: {
             port: 9000
@@ -49,7 +51,15 @@ module.exports = env => {
             })
         ],
         resolve: {
-            extensions: [".ts", ".tsx", ".js"]
+            extensions: [".ts", ".tsx", ".js"],
+            fallback: {
+                dgram: false,
+                fs: false,
+                net: false,
+                tls: false,
+                child_process: false,
+                "console": require.resolve("console-browserify"),
+            }
         },
     }
 }

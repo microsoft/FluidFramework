@@ -37,7 +37,7 @@ import {
     NodeProxyTarget,
     nodeProxyHandler,
 } from "./editableTree";
-import { adaptWithProxy, cursorFromSchemaAndData } from "./utilities";
+import { adaptWithProxy, cursorFromData, cursorFromSchemaAndData } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -57,7 +57,7 @@ export interface EditableTreeContext {
      *
      * Not (yet) supported: create properties, set values and delete properties.
      */
-    readonly root: EditableField;
+    root: EditableField;
 
     /**
      * Same as `root`, but with unwrapped fields.
@@ -151,6 +151,12 @@ export class ProxyContext implements EditableTreeContext {
 
     public get root(): EditableField {
         return this.getRoot(false);
+    }
+
+    public set root(value: EditableField) {
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
+        const cursors = [...value].map((v) => cursorFromData(this, rootSchema, v));
+        this.getRoot(false).insertNodes(0, cursors);
     }
 
     private getRoot(unwrap: false): EditableField;

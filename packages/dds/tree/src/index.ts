@@ -73,6 +73,9 @@ export {
     TaggedChange,
     RepairDataStore,
     ReadonlyRepairDataStore,
+    // TODO: seems to be missing in the API
+    isGlobalFieldKey,
+    symbolIsFieldKey, // end of TODO
 } from "./core";
 
 export {
@@ -147,6 +150,11 @@ export {
     typeNameSymbol,
     valueSymbol,
     indexSymbol,
+    // TODO: not yet commited
+    hasPrimaryField,
+    fieldKinds,
+    singleTextCursor,
+    // end of TODO
     proxyTargetSymbol,
     getField,
     createField,

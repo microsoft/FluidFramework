@@ -37,6 +37,7 @@ export {
     IPropertyToTableRowOptions,
     IShowNextResultResult,
     SearchResult,
+    IEditableTreeRow,
 } from "./InspectorTableTypes";
 export { ModalManager, ModalContext, ModalConsumer } from "./ModalManager";
 export { ModalRoot } from "./ModalRoot";
@@ -70,3 +71,5 @@ export {
 } from "./propertyInspectorUtils";
 export { TypeColumn, useChipStyles } from "./TypeColumn";
 export { search, showNextResult } from "./utils";
+
+export { NewDataForm, INewDataFormProps } from "./NewDataForm";

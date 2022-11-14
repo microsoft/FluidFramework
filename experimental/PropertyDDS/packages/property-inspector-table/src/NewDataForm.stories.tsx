@@ -7,7 +7,7 @@ import { storiesOf } from '@storybook/react';
 import * as React from 'react';
 import { InspectorDecorator } from './InspectorDecorator';
 import { InspectorTableDecorator } from './InspectorTableDecorator';
-import { IInspectorRow } from './InspectorTableTypes';
+import { IEditableTreeRow, IInspectorRow } from './InspectorTableTypes';
 import { NewDataForm } from './NewDataForm';
 
 storiesOf('NewDataForm', module)
@@ -18,7 +18,7 @@ storiesOf('NewDataForm', module)
       <div style={{border: '1px solid rgba(1,1,1,0)', width: '400px', fontFamily: 'sans-serif'}}>
           <NewDataForm
             onCancelCreate={() => alert('onCancelCreate called')}
-            onDataCreate={(rowData: IInspectorRow, name: string, typeid: string, context: string) =>
+            onDataCreate={(rowData: IInspectorRow | IEditableTreeRow, name: string, typeid: string, context: string) =>
               alert(
                 'onDataCreate called with the following parameters:' +
                 '\nname: ' + name +

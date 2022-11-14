@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EditableField, EditableTree, EditableTreeContext, Value } from "@fluid-internal/tree";
 import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 
@@ -62,6 +63,7 @@ export interface IRowData<T = never> {
 	isReference?: boolean;
 	context?: string;
   isNewDataRow?: boolean;
+  isEditableTree?: boolean;
 }
 
 export type IToTableRowsProps = Pick<IInspectorTableProps,
@@ -107,6 +109,21 @@ export interface IInspectorRow extends IRowData<BaseProxifiedProperty>{
   parentIsConstant: boolean;
   propertyId: string;
 }
+
+export interface IEditableTreeRow extends IRowData<EditableTree | EditableField> {
+  context?: string;
+  typeid: string;
+  isReference?: boolean;
+  parent: EditableTree | EditableField;
+  value?: Value;
+  name: string;
+  treeContext?: EditableTreeContext;
+}
+
+export function isEditableTreeRow(data: IInspectorRow | IEditableTreeRow): data is IEditableTreeRow {
+  return data.isEditableTree ?? false;
+}
+
 /**
  * The interface for the cell data getter function parameter
  */
