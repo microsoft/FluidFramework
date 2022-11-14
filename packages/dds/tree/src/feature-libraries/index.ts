@@ -86,3 +86,5 @@ export {
     parseSummary as loadSummary,
     stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { runSynchronousTransaction } from "./defaultTransaction";

@@ -119,6 +119,10 @@
       "InterfaceDeclaration_IContainerRuntimeOptions": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
