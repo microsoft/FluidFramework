@@ -18,6 +18,7 @@ import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -137,6 +138,35 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             this.skip();
         }
         await setupContainers({ ...testContainerConfig, runtimeOptions: { flushMode: FlushMode.Immediate } }, {});
+        const largeString = generateStringOfSize(500000);
+        const messageCount = 10;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Single large op passes when compression enabled and over max op size", async () => {
+        const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 }
+            }
+        }, {});
+
+        const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
+        const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
+    });
+
+    it("Batched small ops pass when compression enabled and batch is larger than max op size", async function() {
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            }
+        }, {});
         const largeString = generateStringOfSize(500000);
         const messageCount = 10;
         setMapKeys(dataObject1map, messageCount, largeString);
