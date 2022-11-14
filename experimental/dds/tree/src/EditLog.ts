@@ -270,6 +270,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		}
 
 		if (targetLength !== Infinity) {
+            if (targetLength < 0 || evictionFrequency < 0) {
+                fail('targetLength and evictionFrequency should not be negative');
+            }
 			this.sequenceNumberToIndex = new BTree([[0, 0]]);
 			for (const handler of editEvictionHandlers) {
 				this.registerEditEvictionHandler(handler);
