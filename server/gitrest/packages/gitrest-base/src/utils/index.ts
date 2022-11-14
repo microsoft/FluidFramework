@@ -4,7 +4,6 @@
  */
 
 export {
-	BaseGitRestTelemetryProperties,
 	Constants,
 	GitObjectType,
 	IExternalWriterConfig,
@@ -18,6 +17,10 @@ export {
 	IStorageDirectoryConfig,
 	IStorageRoutingId,
 } from "./definitions";
+export {
+    BaseGitRestTelemetryProperties,
+    GitRestLumberEventName,
+} from "./gitrestTelemetryDefinitions";
 export {
 	GitWholeSummaryManager,
 	isChannelSummary,

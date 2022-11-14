@@ -7,7 +7,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+    FluidObject,
+    IFluidHandle,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -149,6 +154,13 @@ class DataStore implements IDataStore {
 
     async request(request: IRequest): Promise<IResponse> {
         return this.fluidDataStoreChannel.request(request);
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
+     */
+    get entryPoint(): IFluidHandle<FluidObject> | undefined {
+        return this.fluidDataStoreChannel.entryPoint;
     }
 
     constructor(

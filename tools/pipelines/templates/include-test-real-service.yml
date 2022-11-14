@@ -40,10 +40,6 @@ parameters:
   type: string
   default: null
 
-- name: extraDependencies
-  type: string
-  default: null
-
 - name: downloadAzureTestArtifacts
   type: boolean
   default: false
@@ -149,7 +145,6 @@ jobs:
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
               testFileTarName=${{ parameters.testFileTarName }}
-              extraDependencies=${{ parameters.extraDependencies }}
             "
 
       # Install
