@@ -209,7 +209,8 @@ function composeMarks<TNodeChange>(
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         id: baseMark.id,
-                        tomb: baseMark.tomb,
+                        detachedBy: baseMark.detachedBy,
+                        detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
                     return modRevive;

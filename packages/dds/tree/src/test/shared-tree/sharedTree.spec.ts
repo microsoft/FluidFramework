@@ -190,7 +190,7 @@ describe("SharedTree", () => {
     });
 
     describe("Editing", () => {
-        it("can insert and delete a node", async () => {
+        it("can insert and delete a node in a sequence field", async () => {
             const value = "42";
             const provider = await TestTreeProvider.create(2);
             const [tree1, tree2] = provider.trees;
@@ -214,6 +214,37 @@ describe("SharedTree", () => {
 
             assert.equal(getTestValue(tree1), undefined);
             assert.equal(getTestValue(tree2), undefined);
+        });
+
+        it("can insert and delete a node in an optional field", async () => {
+            const value = "42";
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            // Insert node
+            initializeTestTreeWithValue(tree1, value);
+
+            // Delete node
+            tree1.runTransaction((forest, editor) => {
+                const field = editor.optionalField(undefined, rootFieldKeySymbol);
+                field.set(undefined, false);
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+            assert.equal(getTestValue(tree1), undefined);
+            assert.equal(getTestValue(tree2), undefined);
+
+            // Set node
+            tree1.runTransaction((forest, editor) => {
+                const field = editor.optionalField(undefined, rootFieldKeySymbol);
+                field.set(singleTextCursor({ type: brand("TestValue"), value: 43 }), true);
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+            assert.equal(getTestValue(tree1), 43);
+            assert.equal(getTestValue(tree2), 43);
         });
 
         it("can edit a global field", async () => {
@@ -311,6 +342,25 @@ describe("SharedTree", () => {
             }
         });
     });
+
+    describe("Rebasing", () => {
+        it("can rebase two inserts", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            insert(tree1, 0, "y");
+            await provider.ensureSynchronized();
+
+            insert(tree1, 0, "x");
+            insert(tree2, 1, "a", "c");
+            insert(tree2, 2, "b");
+            await provider.ensureSynchronized();
+
+            const expected = ["x", "y", "a", "b", "c"];
+            validateTree(tree1, expected);
+            validateTree(tree2, expected);
+        });
+    });
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
@@ -366,6 +416,7 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();
     moveToDetachedField(forest, readCursor);
     if (!readCursor.firstNode()) {
+        readCursor.free();
         return undefined;
     }
     const { value } = readCursor;
@@ -382,10 +433,11 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTree, index: number, value: string): void {
+function insert(tree: ISharedTree, index: number, ...values: string[]): void {
     tree.runTransaction((forest, editor) => {
         const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-        field.insert(index, singleTextCursor({ type: brand("Node"), value }));
+        const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
+        field.insert(index, nodes);
         return TransactionResult.Apply;
     });
 }
