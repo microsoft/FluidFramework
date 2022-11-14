@@ -53,30 +53,30 @@ export type TelemetryErrorCategory = "verbose" | "information" | "warning" | "er
 export interface ITelemetryGenEventBase extends ITelemetryBaseEvent {
     /*
      * Flag indicating this is general use event.
-     * Note: It may seem redundant if we end up emitting general use events separately.
-     * It may be useful if all (dev and general-use) telemetry is routed to a singlee table.
+     * Note: It may seem redundant if we end up emitting general use-events separately.
+     * However, it still may be useful if all (dev and general-use) telemetry is routed to a single table.
      */
     genUse: true;
     /*
-     * Subtype. Further description in sublasses.
+     * Subtype (Further description in sublasses).
      */
     type: "api" | "service" | "event" | "error";
     /*
-     * Package name where this event was emitted from.
-     * It may be useful for consumers to filter out packages whose APIs they are consuming directly.
+     * Package this event was emitted from.
+     * It may be useful for consumers to filter out specific packages they are working with.
      */
     packageName: string;
     /*
      * Class name where this event was emitted from.
-     * It may be useful for consumers to filter out classes whose APIs they are consuming directly.
+     * It may be useful for consumers to filter out specific classes they are working with.
      */
     className: string;
     /*
-     * Fluid document ID (when applicable).
+     * Fluid document ID (when applicable). This could be ID, resolved URL etc.
      */
     docId?: string;
     /*
-     * Client ID that generated this telemetry event (when applicable).
+     * Id of a client who generated this telemetry event (when applicable).
      */
     clientId?: string;
 }
@@ -107,6 +107,9 @@ export interface ITelemetryGenApiEvent extends ITelemetryGenEventBase {
      * Optional response status.
      */
     status?: string;
+    /*
+     * Optional bag od details on the event.
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: any;
 }
@@ -129,19 +132,19 @@ export interface ITelemetryGenErrorEvent extends ITelemetryGenEventBase {
      */
     severityLevel: TelemetryErrorCategory;
     /*
-     * Optional strack trac
+     * Optional strack trace
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stackTrace?: any;
     /*
-     * Stack track or more details on conditions leading to error
+     * More details on condition(s) leading to this error
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: any;
 }
 
 /**
- * General-use dependency event. Represents a call from app to an external service or storage.
+ * General-use Service event. Represents a call from app to an external service or storage.
  */
 export interface ITelemetryGenServiceEvent extends ITelemetryGenEventBase {
     type: "service";
@@ -168,7 +171,7 @@ export interface ITelemetryGenServiceEvent extends ITelemetryGenEventBase {
 }
 
 /**
- * General-use API event - Represents an event firing on a specific class.
+ * General-use class event - Represents an event firing on a specific object.
  * (Need a better name. "Event" has few different meanings in logger.)
  */
 export interface ITelemetryGenClassEvent extends ITelemetryGenEventBase {
