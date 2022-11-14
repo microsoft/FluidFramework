@@ -418,6 +418,17 @@ export class EpochTracker implements IPersistedFileCache {
 export class EpochTrackerWithRedemption extends EpochTracker {
     private readonly treesLatestDeferral = new Deferred<void>();
 
+    constructor(
+        protected readonly cache: IPersistedCache,
+        protected readonly fileEntry: IFileEntry,
+        protected readonly logger: ITelemetryLogger,
+        protected readonly clientIsSummarizer?: boolean,
+    ) {
+        super(cache, fileEntry, logger, clientIsSummarizer);
+        // Handles the rejected promise within treesLatestDeferral.
+        this.treesLatestDeferral.promise.catch(() => {});
+    }
+
     protected validateEpochFromResponse(
         epochFromResponse: string | undefined,
         fetchType: FetchType,

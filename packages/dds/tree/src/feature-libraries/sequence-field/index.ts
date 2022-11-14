@@ -6,7 +6,6 @@
 export {
     Attach,
     Changeset,
-    ChangesetTag,
     ClientId,
     Detach,
     Effects,
@@ -14,6 +13,7 @@ export {
     HasOpId,
     HasLength,
     HasPlaceFields,
+    HasTiebreakPolicy,
     Insert,
     Mark,
     MarkList,
@@ -40,6 +40,8 @@ export {
     TreeForestPath,
     TreeRootPath,
     Skip,
+    LineageEvent,
+    HasReattachFields,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
@@ -57,5 +59,5 @@ export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
-export { DUMMY_INVERT_TAG, invert, NodeChangeInverter } from "./invert";
+export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";

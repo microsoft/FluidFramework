@@ -4,20 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, noFailure, verifyChangeRebaser } from "../../rebase";
+import { ChangeRebaser, TaggedChange, noFailure, verifyChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 
 const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-    invert: (change: number) => -change,
-    rebase: (change: number, over: number) => change,
+    invert: (change: TaggedChange<number>) => -change.change,
+    rebase: (change: number, over: TaggedChange<number>) => change,
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
 };
 
 const incorrectCounterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b - 1, 0),
-    invert: (change: number) => -change + 1,
-    rebase: (change: number, over: number) => change + 1,
+    invert: (change: TaggedChange<number>) => -change.change + 1,
+    rebase: (change: number, over: TaggedChange<number>) => change + 1,
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
 };
 

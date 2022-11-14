@@ -48,6 +48,23 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
     return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
+export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
+    assert(isPrimitiveValue(nodeValue), 0x45b /* The value is not primitive */);
+    switch (schema.value) {
+        case ValueSchema.String:
+            assert(typeof nodeValue === "string", 0x45c /* Expected string */);
+            break;
+        case ValueSchema.Number:
+            assert(typeof nodeValue === "number", 0x45d /* Expected number */);
+            break;
+        case ValueSchema.Boolean:
+            assert(typeof nodeValue === "boolean", 0x45e /* Expected boolean */);
+            break;
+        default:
+            fail("wrong value schema");
+    }
+}
+
 export function getPrimaryField(
     schema: TreeSchema,
 ): { key: LocalFieldKey; schema: FieldSchema } | undefined {
@@ -111,6 +128,12 @@ export function adaptWithProxy<From extends object, To extends object>(
     return new Proxy<From>(target, proxyHandler as ProxyHandler<From>) as unknown as To;
 }
 
-export function getArrayOwnKeys(length: number): string[] {
+export function getOwnArrayKeys(length: number): string[] {
     return Object.getOwnPropertyNames(Array.from(Array(length)));
+}
+
+export function keyIsValidIndex(key: string | number, length: number): boolean {
+    const index = Number(key);
+    if (typeof key === "string" && String(index) !== key) return false;
+    return Number.isInteger(index) && 0 <= index && index < length;
 }

@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { runSynchronousTransaction, Checkout } from "./transaction";
+export { Checkout } from "./transaction";

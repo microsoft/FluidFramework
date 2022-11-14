@@ -17,7 +17,7 @@ export class CSVFileLogger extends BaseFileLogger {
     private readonly columns = new Set();
 
     public async flush(): Promise<void> {
-        // Do nothing
+        // No flushing is performed since we need all log entries to determine set of CSV columns
     }
 
     public send(event: ITelemetryBaseEvent): void {
