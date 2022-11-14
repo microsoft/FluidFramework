@@ -24,6 +24,7 @@ export {
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";
+export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
 export {
     getRenderOptionsWithDefaults,
     getSharedObjectRendererOptionsWithDefaults,

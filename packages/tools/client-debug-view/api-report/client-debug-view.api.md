@@ -38,6 +38,14 @@ export const defaultRenderOptions: Required<RenderOptions>;
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
+export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
+
+// @public
+export interface FluidClientDebuggerProps extends HasContainerId {
+    renderOptions?: RenderOptions;
+}
+
+// @public
 export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefined): Required<RenderOptions>;
 
 // @public

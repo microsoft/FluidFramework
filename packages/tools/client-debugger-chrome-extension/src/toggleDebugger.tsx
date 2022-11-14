@@ -2,6 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import React from "react";
+import ReactDOM from "react-dom";
+
+import { DebuggerPanel, panelClassName } from "./debuggerPanel";
 
 /**
  * Toggles the debugger UI. If not currently displayed, will open it. Otherwise, will close it.
@@ -9,21 +13,14 @@
  * @returns Whether or not the extension is now displayed.
  */
 async function toggleDebugView(): Promise<boolean> {
-    const panelClassName = "fluid-debug-view-panel";
     // eslint-disable-next-line unicorn/prefer-query-selector
     const matches = document.body.getElementsByClassName(panelClassName);
     if (matches.length === 0) {
-        const debugViewElement = document.createElement("div");
-        debugViewElement.textContent = "TODO";
-        debugViewElement.className = panelClassName;
-        debugViewElement.style.position = "fixed";
-        debugViewElement.style.width = "400px";
-        debugViewElement.style.height = "100%";
-        debugViewElement.style.top = "0px";
-        debugViewElement.style.right = "0px";
-        debugViewElement.style.zIndex = "999999999";
+        const element = document.createElement("div");
+        element.className = panelClassName;
+        document.body.append(element);
 
-        document.body.append(debugViewElement);
+        ReactDOM.render(<DebuggerPanel />, element);
 
         return true;
     } else {

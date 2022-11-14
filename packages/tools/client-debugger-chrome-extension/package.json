@@ -40,7 +40,9 @@
   },
   "dependencies": {
     "@fluid-tools/client-debug-view": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0",
-    "@fluid-tools/client-debugger": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0"
+    "@fluid-tools/client-debugger": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
@@ -57,6 +59,7 @@
     "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "eslint-config-prettier": "~8.5.0",
+    "html-webpack-plugin": "^5.5.0",
     "prettier": "~2.3.1",
     "rimraf": "^2.6.2",
     "tinylicious": "^0.4.94771",
