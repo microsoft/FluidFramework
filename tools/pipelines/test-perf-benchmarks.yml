@@ -291,7 +291,7 @@ stages:
           inputs:
             targetPath: '${{ variables.testWorkspace }}/benchmarkOutput'
             artifactName: 'perf-test-outputs_execution-time'
-            condition: succeededOrFailed()
+          condition: succeededOrFailed()
 
 
         - ${{ each testPackage in parameters.memoryTestPackages }}:
