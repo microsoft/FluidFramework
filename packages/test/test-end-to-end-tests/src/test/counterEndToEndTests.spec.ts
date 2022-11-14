@@ -127,7 +127,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await provider.ensureSynchronized(this.timeout() / 3);
+                await provider.ensureSynchronized();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);
