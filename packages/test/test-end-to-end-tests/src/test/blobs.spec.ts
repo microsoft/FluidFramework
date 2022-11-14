@@ -8,6 +8,7 @@ import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Container, IDetachedBlobStorage } from "@fluidframework/container-loader";
 import {
+    CompressionAlgorithms,
     ContainerMessageType,
     ContainerRuntime,
     DefaultSummaryConfiguration,
@@ -117,6 +118,30 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         await blobOpP;
     });
 
+    it("attach sends an op with compression enabled", async function() {
+        const container = await provider.makeTestContainer({ ...testContainerConfig, runtimeOptions:
+            { ...testContainerConfig.runtimeOptions, compressionOptions: {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+        } } });
+
+
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
+            if (op.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+            }
+        }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+
+        dataStore._root.set("my blob", blob);
+
+        await blobOpP;
+    });
+
     it("can get remote attached blob", async function() {
         const testString = "this is a test string";
         const testKey = "a blob";
@@ -130,7 +155,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
-        await provider.ensureSynchronized(this.timeout() / 3);
+        await provider.ensureSynchronized();
 
         const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
@@ -181,7 +206,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
-            await provider.ensureSynchronized(this.timeout() / 3);
+            await provider.ensureSynchronized();
             const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();
