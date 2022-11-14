@@ -24,6 +24,7 @@ export {
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
 	normalizeError,
+    packagePathToTelemetryProperty,
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging";

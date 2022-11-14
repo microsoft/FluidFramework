@@ -38,6 +38,7 @@ import {
     generateStack,
     loggerToMonitoringContext,
     MonitoringContext,
+    packagePathToTelemetryProperty,
     PerformanceEvent,
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
@@ -1514,7 +1515,7 @@ export class GarbageCollector implements IGarbageCollector {
                 this.mc.logger.sendErrorEvent({
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
-                    pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                    pkg: packagePathToTelemetryProperty(packagePath),
                     stack: generateStack(),
                 });
             }

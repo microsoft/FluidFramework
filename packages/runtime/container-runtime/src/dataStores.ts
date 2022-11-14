@@ -431,7 +431,7 @@ export class DataStores implements IDisposable {
         if (context.tombstoned) {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
-                eventName: "TombstonedDataStoreRequested",
+                eventName: "Tombstone:DataStore_Requested",
                 url: request.url,
                 viaHandle,
             });
