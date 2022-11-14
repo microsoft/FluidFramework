@@ -48,7 +48,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export type TelemetryErrorCategory = "verbose" | "information" | "warning" | "error" | "critical";
 
 /**
- * General-use event. These statically typed events that consumers can understand and act on.
+ * General-use event. These are statically typed events that clients can understand and act on.
  */
 export interface ITelemetryGenEventBase extends ITelemetryBaseEvent {
     /*
