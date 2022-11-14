@@ -11,8 +11,10 @@ import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
+const MaxRetryAttempts = 3;
+const InitialRetryIntervalInMs = 1000;
 
-export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble {
+export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
     constructor(
         private readonly collection: Collection<T>,
         public readonly retryEnabled = false,
@@ -45,7 +47,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
         const req: () => Promise<T> = async () => this.collection.findOne(query);
         return this.requestWithRetry(
             req, // request
-            "MongoCollection.findAll", // callerName
+            "MongoCollection.findOne", // callerName
         );
     }
 
@@ -211,8 +213,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryAble 
             callerName,
             {}, // telemetryProperties
             (e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
-            3, // maxRetries
-            1000, // retryAfterMs
+            MaxRetryAttempts, // maxRetries
+            InitialRetryIntervalInMs, // retryAfterMs
             (error: any, numRetries: number, retryAfterInterval: number) =>
                 numRetries * retryAfterInterval, // retryAfterIntervalCalculator
             undefined, /* onErrorFn */

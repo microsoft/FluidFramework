@@ -28,7 +28,7 @@ export class MongoErrorRetryAnalyzer {
         this.defaultRule = new DefaultExceptionRule(retryRuleOverride);
     }
 
-    shouldRetry(error: Error): boolean {
+    public shouldRetry(error: Error): boolean {
         const rule = this.getRetryRule(error);
         if (!rule) {
             // This should not happen.
@@ -46,7 +46,7 @@ export class MongoErrorRetryAnalyzer {
         return decision;
     }
 
-    getRetryRule(error: Error): IMongoExceptionRetryRule {
+    private getRetryRule(error: Error): IMongoExceptionRetryRule {
         if (error.name === "MongoNetworkError") {
             return this.getRetryRuleFromSet(error, this.mongoNetworkErrorRetryRuleset);
         }
@@ -58,7 +58,7 @@ export class MongoErrorRetryAnalyzer {
         return this.defaultRule;
     }
 
-    getRetryRuleFromSet(error: any, ruleSet: IMongoExceptionRetryRule[]): IMongoExceptionRetryRule {
+    private getRetryRuleFromSet(error: any, ruleSet: IMongoExceptionRetryRule[]): IMongoExceptionRetryRule {
         return ruleSet.find((rule) => rule.match(error)) || this.defaultRule;
     }
 };

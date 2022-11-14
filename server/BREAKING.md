@@ -1,8 +1,8 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
 ## 0.1038 Breaking Changes
-- [aggregate function from `MongoCollection` become async](#aggregate-function-from-MongoCollection-become-async)
-#### `aggregate` function from `MongoCollection` become async
+- [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
+#### `aggregate` function from `MongoCollection` became async
 Before: `const cursor = collection.aggregate([ ... ]);`
 
 Now: `const cursor = await collection.aggregate([ ... ]);`
