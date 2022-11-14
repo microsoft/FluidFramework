@@ -6,7 +6,7 @@ import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-defi
 import { IContainer, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 import { MemberChangeKind } from "./Audience";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -100,32 +100,6 @@ export interface IFluidClientDebuggerEvents extends IEvent {
      * Signals that {@link IFluidClientDebugger.isContainerDirty} has transitioned from `true` to `false`.
      */
     (event: "containerSaved", listener: () => void);
-
-    // #region DeltaManager-related events
-
-    /**
-     * Emitted when an incoming operation (op) has been processed.
-     *
-     * @remarks
-     *
-     * Signals that the following items have been updated:
-     *
-     * - {@link IFluidClientDebugger.getOpsLog}
-     *
-     * - {@link IFluidClientDebugger.getMinimumSequenceNumber}
-     *
-     * Listener parameters:
-     *
-     * - `message`: The op that was processed.
-     *
-     * - `processingTime`: The amount of time it took to process the op, expressed in milliseconds.
-     */
-    (
-        event: "incomingOpProcessed",
-        listener: (op: ISequencedDocumentMessage, processingTime: number) => void,
-    );
-
-    // #endregion
 
     // #endregion
 
@@ -257,30 +231,6 @@ export interface IFluidClientDebugger
      * It will never transition back.
      */
     isContainerClosed(): boolean;
-
-    // #region DeltaManager data
-
-    /**
-     * Gets the Container's current {@link @fluid-framework/container-definitions#IDeltaManager.minimumSequenceNumber}.
-     *
-     * @remarks
-     *
-     * The `incomingOpProcessed` event signals that this data has been updated.
-     * Consumers will need to re-call this to get the most up-to-date data.
-     */
-    getMinimumSequenceNumber(): number;
-
-    /**
-     * All operations (ops) processed since the debugger was initialized.
-     *
-     * @remarks
-     *
-     * The `incomingOpProcessed` event signals that this data has been updated.
-     * Consumers will need to re-call this to get the most up-to-date data.
-     */
-    getOpsLog(): readonly ISequencedDocumentMessage[];
-
-    // #endregion
 
     // #endregion
 

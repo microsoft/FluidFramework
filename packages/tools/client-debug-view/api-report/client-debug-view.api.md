@@ -6,7 +6,6 @@
 
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { default as React_2 } from 'react';
 import { SharedObjectCore } from '@fluidframework/shared-object-base';
 
@@ -54,18 +53,11 @@ export interface HasContainerId {
 }
 
 // @public
-export interface OpViewProps {
-    myClientId: string | undefined;
-    op: ISequencedDocumentMessage;
-}
-
-// @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
 export interface RenderOptions {
     onRenderAudienceMember?: (props: AudienceMemberViewProps) => React_2.ReactElement;
-    onRenderOp?: (props: OpViewProps) => React_2.ReactElement;
     sharedObjectRenderOptions?: SharedObjectRenderOptions;
 }
 

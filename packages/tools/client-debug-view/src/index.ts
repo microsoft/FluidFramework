@@ -15,12 +15,7 @@
  * @packageDocumentation
  */
 
-export {
-    AudienceMemberViewProps,
-    OpViewProps,
-    ClientDebugView,
-    ClientDebugViewProps,
-} from "./components";
+export { AudienceMemberViewProps, ClientDebugView, ClientDebugViewProps } from "./components";
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";

@@ -12,7 +12,7 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 import { MemberChangeKind } from "./Audience";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
@@ -55,11 +55,6 @@ export class FluidClientDebugger
      * Accumulated data for {@link IFluidClientDebugger.getContainerConnectionLog}.
      */
     private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
-
-    /**
-     * Accumulated data for {@link IFluidClientDebugger.getOpsLog}.
-     */
-    private readonly _opsLog: ISequencedDocumentMessage[];
 
     /**
      * Accumulated data for {@link IFluidClientDebugger.getAudienceHistory}.
@@ -106,12 +101,9 @@ export class FluidClientDebugger
         this.emit("containerClosed", error);
     };
 
-    private readonly incomingOpProcessedHandler = (op: ISequencedDocumentMessage): void => {
-        this._opsLog.push(op);
-        this.emit("incomingOpProcessed", op);
-    };
-
     // #endregion
+
+    // #region Audience-related event handlers
 
     private readonly audienceMemberAddedHandler = (clientId: string, client: IClient): void => {
         this._audienceChangeLog.push({
@@ -132,6 +124,8 @@ export class FluidClientDebugger
         });
         this.emit("audienceMemberChange", MemberChangeKind.Removed, clientId, client);
     };
+
+    // #endregion
 
     private readonly debuggerDisposedHandler = (): boolean => this.emit("debuggerDisposed");
 
@@ -158,7 +152,6 @@ export class FluidClientDebugger
 
         // TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
         this._connectionStateLog = [];
-        this._opsLog = [];
         this._audienceChangeLog = [];
 
         // Bind Container events
@@ -166,7 +159,6 @@ export class FluidClientDebugger
         this.container.on("connected", this.containerConnectedHandler);
         this.container.on("disconnected", this.containerDisconnectedHandler);
         this.container.on("closed", this.containerClosedHandler);
-        this.container.on("op", this.incomingOpProcessedHandler);
         this.container.on("dirty", this.containerDirtyHandler);
         this.container.on("saved", this.containerSavedHandler);
 
@@ -231,22 +223,6 @@ export class FluidClientDebugger
 
     // #endregion
 
-    // #region DeltaManager data
-
-    /**
-     * {@inheritDoc IFluidClientDebugger.getMinimumSequenceNumber}
-     */
-    public getMinimumSequenceNumber(): number {
-        return this.container.deltaManager.minimumSequenceNumber;
-    }
-
-    public getOpsLog(): readonly ISequencedDocumentMessage[] {
-        // Clone array contents so consumers don't see local changes
-        return this._opsLog.map((value) => value);
-    }
-
-    // #endregion
-
     // #region Audience data
 
     /**
@@ -302,7 +278,6 @@ export class FluidClientDebugger
         this.container.off("connected", this.containerConnectedHandler);
         this.container.off("disconnected", this.containerDisconnectedHandler);
         this.container.off("closed", this.containerClosedHandler);
-        this.container.off("op", this.incomingOpProcessedHandler);
         this.container.off("dirty", this.containerDirtyHandler);
         this.container.off("saved", this.containerSavedHandler);
 

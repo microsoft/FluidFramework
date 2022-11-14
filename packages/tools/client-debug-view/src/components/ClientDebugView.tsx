@@ -19,7 +19,6 @@ import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
-import { OpsStreamView } from "./OpsStreamView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -96,14 +95,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
                     />
                 );
                 break;
-            case RootView.OpsStream:
-                innerView = (
-                    <OpsStreamView
-                        clientDebugger={clientDebugger}
-                        onRenderOp={renderOptions.onRenderOp}
-                    />
-                );
-                break;
             default:
                 throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
         }
@@ -156,11 +147,6 @@ enum RootView {
      * Corresponds with {@link AudienceView}.
      */
     Audience = "Audience",
-
-    /**
-     * Corresponds with {@link OpsStreamView}.
-     */
-    OpsStream = "Ops Stream",
 }
 
 /**

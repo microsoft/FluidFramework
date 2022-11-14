@@ -75,28 +75,3 @@ export function useMyClientConnection(clientDebugger: IFluidClientDebugger): ICl
 
     return myClientId === undefined ? undefined : audience.get(myClientId);
 }
-
-/**
- * React hook for getting the minimum sequence number of the delta service.
- *
- * @internal
- */
-export function useMinimumSequenceNumber(clientDebugger: IFluidClientDebugger): number {
-    const [minimumSequenceNumber, setMinimumSequenceNumber] = React.useState<number>(
-        clientDebugger.getMinimumSequenceNumber(),
-    );
-
-    React.useEffect(() => {
-        function onIncomingOpProcessed(): void {
-            setMinimumSequenceNumber(clientDebugger.getMinimumSequenceNumber());
-        }
-
-        clientDebugger.on("incomingOpProcessed", onIncomingOpProcessed);
-
-        return (): void => {
-            clientDebugger.off("incomingOpProcessed", onIncomingOpProcessed);
-        };
-    }, [clientDebugger, setMinimumSequenceNumber]);
-
-    return minimumSequenceNumber;
-}

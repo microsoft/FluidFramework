@@ -12,8 +12,6 @@ import { SharedObjectCore } from "@fluidframework/shared-object-base";
 import {
     AudienceMemberView,
     AudienceMemberViewProps,
-    OpView,
-    OpViewProps,
     SharedCounterView,
     SharedMapView,
     SharedStringView,
@@ -116,12 +114,6 @@ export function getSharedObjectRendererOptionsWithDefaults(
 export interface RenderOptions {
     /**
      * Override policy for rendering data about an individual
-     * {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage | op}.
-     */
-    onRenderOp?: (props: OpViewProps) => React.ReactElement;
-
-    /**
-     * Override policy for rendering data about an individual
      * {@link @fluidframework/fluid-static#IMember | audience member}.
      */
     onRenderAudienceMember?: (props: AudienceMemberViewProps) => React.ReactElement;
@@ -138,7 +130,6 @@ export interface RenderOptions {
  * System default render options.
  */
 export const defaultRenderOptions: Required<RenderOptions> = {
-    onRenderOp: (props) => <OpView {...props} />,
     onRenderAudienceMember: (props) => <AudienceMemberView {...props} />,
     sharedObjectRenderOptions: defaultSharedObjectRenderers,
 };

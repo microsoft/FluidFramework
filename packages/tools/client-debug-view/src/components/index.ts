@@ -13,7 +13,6 @@ export * from "./widgets";
 export * from "./AudienceView";
 export * from "./ClientDebugView";
 export * from "./ContainerDataView";
-export * from "./OpsStreamView";
 export * from "./ContainerStateView";
 
 /* eslint-enable no-restricted-syntax */

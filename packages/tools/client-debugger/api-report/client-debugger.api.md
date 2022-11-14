@@ -13,7 +13,6 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
 // @public
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -52,8 +51,6 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getClientId(): string | undefined;
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
     getContainerResolvedUrl(): IResolvedUrl | undefined;
-    getMinimumSequenceNumber(): number;
-    getOpsLog(): readonly ISequencedDocumentMessage[];
     isContainerAttached(): boolean;
     isContainerClosed(): boolean;
     isContainerConnected(): boolean;
@@ -69,7 +66,6 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "containerDirty", listener: () => void): any;
     (event: "containerSaved", listener: () => void): any;
-    (event: "incomingOpProcessed", listener: (op: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "audienceMemberChange", listener: (change: MemberChangeKind, clientId: string, client: IClient) => void): any;
     (event: "debuggerDisposed", listener: () => void): any;
 }
