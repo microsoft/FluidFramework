@@ -35,10 +35,10 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 
     protected async getCommitCore(sha: string): Promise<resources.ICommit> {
         const commit = await isomorphicGit.readCommit({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.commitToICommit(commit);
     }
 
@@ -153,20 +153,20 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 
     protected async getBlobCore(sha: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
     protected async getContentCore(commit: string, contentPath: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: commit,
-                filepath: contentPath,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: commit,
+            filepath: contentPath,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 

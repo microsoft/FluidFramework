@@ -38,11 +38,11 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
-    "@rushstack/eslint-config": "^2.5.1",
-    "concurrently": "^6.2.0",
-    "eslint": "~8.6.0",
-    "rimraf": "^2.6.2",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@rushstack/eslint-config": "^2.6.1",
+    "concurrently": "^7.5.0",
+    "eslint": "~8.27.0",
+    "rimraf": "^3.0.2",
     "typescript": "~4.5.5"
   }
 }

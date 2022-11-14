@@ -55,11 +55,9 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repoPerDocEnabled: boolean,
         private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {
-        if (repoPerDocEnabled) {
-            this.internalHandler = this.repoPerDocInternalHandler.bind(this);
-        } else {
-            this.internalHandler = this.repoPerTenantInternalHandler.bind(this);
-        }
+        this.internalHandler = repoPerDocEnabled
+            ? this.repoPerDocInternalHandler.bind(this)
+            : this.repoPerTenantInternalHandler.bind(this);
     }
 
     public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -96,9 +94,9 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                     ...(lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: gitdir,
                 });
-                // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${gitdir}`);
-            };
+            // services-client/getOrCreateRepository depends on a 400 response code
+            throw new NetworkError(400, `Repo does not exist ${gitdir}`);
+        };
 
         return this.internalHandler(params, onRepoNotExists, "open");
     }
