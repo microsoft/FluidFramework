@@ -39,7 +39,7 @@ interface IWriteSummaryInfo {
     /**
      * Response containing commit sha for "container" write or tree sha for "channel" write.
      */
-     writeSummaryResponse: IWriteSummaryResponse;
+    writeSummaryResponse: IWriteSummaryResponse;
 }
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
@@ -81,7 +81,7 @@ export class GitWholeSummaryManager {
         private readonly repoManager: IRepositoryManager,
         private readonly lumberjackProperties: Record<string, any>,
         private readonly externalStorageEnabled = true,
-    ) {}
+    ) { }
 
     public async readSummary(sha: string): Promise<IWholeFlatSummary> {
         const readSummaryMetric = Lumberjack.newLumberMetric(
@@ -234,6 +234,7 @@ export class GitWholeSummaryManager {
             };
         }
         const commit = await this.repoManager.createCommit(commitParams);
+        // eslint-disable-next-line unicorn/prefer-ternary
         if (existingRef) {
             await this.repoManager.patchRef(
                 `refs/heads/${this.documentId}`,
@@ -294,7 +295,7 @@ export class GitWholeSummaryManager {
         summaryObject: SummaryObject,
         currentPath: string,
     ): Promise<string> {
-        switch(summaryObject.type) {
+        switch (summaryObject.type) {
             case SummaryType.Blob:
                 return this.writeSummaryBlob(
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob),

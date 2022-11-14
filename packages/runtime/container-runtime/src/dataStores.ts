@@ -612,7 +612,7 @@ export class DataStores implements IDisposable {
 
             // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
             const dataStore = this.contexts.get(id);
-            assert(dataStore !== undefined, "No data store retrieved with specified id");
+            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
             dataStore.setTombstone(false /* tombstone */);
         }
 
