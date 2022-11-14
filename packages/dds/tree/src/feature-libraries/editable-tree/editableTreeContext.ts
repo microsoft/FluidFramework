@@ -23,10 +23,21 @@ import {
     Delta,
     Dependent,
     afterChangeToken,
+    TreeSchemaIdentifier,
 } from "../../core";
+import { Brand } from "../../util";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
-import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
+import {
+    ProxyTarget,
+    EditableField,
+    proxifyField,
+    UnwrappedEditableField,
+    EditableTree,
+    NodeProxyTarget,
+    nodeProxyHandler,
+} from "./editableTree";
+import { adaptWithProxy, cursorFromSchemaAndData } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -75,6 +86,11 @@ export interface EditableTreeContext {
      * is committed successfully.
      */
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+
+    newDetachedNode<T extends Brand<any, string> | undefined>(
+        data: T,
+        type: TreeSchemaIdentifier,
+    ): T & EditableTree;
 }
 
 /**
@@ -213,6 +229,16 @@ export class ProxyContext implements EditableTreeContext {
             },
         );
         return result === TransactionResult.Apply;
+    }
+
+    public newDetachedNode<T extends Brand<any, string> | undefined>(
+        data: T,
+        type: TreeSchemaIdentifier,
+    ): T & EditableTree {
+        const schema = this.forest.schema;
+        const cursor = cursorFromSchemaAndData(schema, type, data);
+        const target = new NodeProxyTarget(this, cursor);
+        return adaptWithProxy(target, nodeProxyHandler) as T & EditableTree;
     }
 }
 

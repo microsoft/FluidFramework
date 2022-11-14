@@ -228,6 +228,8 @@ export interface EditableTree extends Iterable<EditableField> {
 export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     free(): void;
+    // (undocumented)
+    newDetachedNode<T extends Brand<any, string> | undefined>(data: T, type: TreeSchemaIdentifier): T & EditableTree;
     prepareForEdit(): void;
     readonly root: EditableField;
     readonly unwrappedRoot: UnwrappedEditableField;

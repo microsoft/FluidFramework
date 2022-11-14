@@ -20,7 +20,7 @@ import {
     ValueSchema,
 } from "../../../core";
 import { ISharedTree } from "../../../shared-tree";
-import { brand } from "../../../util";
+import { brand, clone } from "../../../util";
 import {
     singleTextCursor,
     isUnwrappedNode,
@@ -33,11 +33,18 @@ import {
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
-    ComplexPhoneType,
+    addressSchema,
+    complexPhoneSchema,
     fullSchemaData,
+    Int32,
+    int32Schema,
     personData,
     PersonType,
+    phonesSchema,
+    PhonesType,
     schemaMap,
+    simplePhonesSchema,
+    StRing,
     stringSchema,
 } from "./mockData";
 
@@ -88,23 +95,129 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
+    it("create using assignment", async () => {
+        const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
+
+        const person = trees[0].root as PersonType;
+        const context = trees[0].context;
+        delete person.age;
+
+        {
+            person.age = brand(32);
+
+            const phones: PhonesType = brand([
+                context.newDetachedNode(brand(12345), int32Schema.name),
+            ]);
+            person.address = brand({
+                street: brand("foo"),
+                phones,
+                sequencePhones: brand([brand("999")]),
+            });
+            assert(person.address !== undefined);
+
+            const zip: Int32 = context.newDetachedNode(brand(123), int32Schema.name);
+            person.address.zip = zip;
+
+            const clonedAddress = clone(person.address);
+            assert.deepEqual(clonedAddress, {
+                street: "foo",
+                zip: 123,
+                phones: {
+                    "0": 12345,
+                },
+                sequencePhones: {
+                    "0": "999",
+                },
+            });
+
+            person.address.sequencePhones = brand([brand("111")]);
+            person.address.phones = brand([
+                context.newDetachedNode(brand("54321"), stringSchema.name),
+            ]);
+            assert(person.address.phones !== undefined);
+            person.address.phones[1] = context.newDetachedNode(
+                brand([context.newDetachedNode(brand<StRing>("555"), stringSchema.name)]),
+                simplePhonesSchema.name,
+            );
+            person.address.phones[2] = context.newDetachedNode(brand(3), int32Schema.name);
+            const clonedPerson = clone(person);
+            assert.deepEqual(clonedPerson, {
+                name: "Adam",
+                age: 32,
+                salary: 10420.2,
+                friends: {
+                    Mat: "Mat",
+                },
+                address: {
+                    street: "foo",
+                    zip: 123,
+                    phones: {
+                        "0": "54321",
+                        "1": {
+                            "0": "555",
+                        },
+                        "2": 3,
+                    },
+                    sequencePhones: {
+                        "0": "111",
+                    },
+                },
+            });
+            person.address.phones[1] = brand(
+                context.newDetachedNode(
+                    { number: brand("123"), prefix: brand("456") },
+                    complexPhoneSchema.name,
+                ),
+            );
+            assert.deepEqual(clone(person.address.phones), {
+                "0": "54321",
+                "1": { number: "123", prefix: "456" },
+                "2": 3,
+            });
+        }
+
+        {
+            const zip: StRing = context.newDetachedNode(brand("999"), stringSchema.name);
+            person.address = context.newDetachedNode(
+                brand({
+                    street: brand("foo"),
+                    zip,
+                }),
+                addressSchema.name,
+            );
+            const cloned = clone(person.address);
+            assert.deepEqual(cloned, { street: "foo", zip: "999" });
+            assert(isUnwrappedNode(person.address));
+            person.address.phones = context.newDetachedNode(
+                brand([context.newDetachedNode(brand("999"), stringSchema.name)]),
+                phonesSchema.name,
+            );
+            person.address.sequencePhones = brand([
+                context.newDetachedNode(brand("12345"), stringSchema.name),
+            ]);
+        }
+    });
+
     it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         const person = trees[0].root as PersonType;
         const nameNode = person[getField](brand("name")).getNode(0);
         const ageNode = person[getField](brand("age")).getNode(0);
-        const phonesField = person.address.phones;
-        assert(isEditableField(phonesField));
+        const phonesField = person.address?.phones;
+        assert(phonesField !== undefined);
 
         assert.throws(
-            () => (person.friends[valueSymbol] = { kate: "kate" }),
+            () => {
+                assert(person.friends !== undefined);
+                person.friends[valueSymbol] = { kate: "kate" };
+            },
             (e) => validateAssertionError(e, "The value is not primitive"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                phonesField[2] = {} as ComplexPhoneType;
+                assert(person.address !== undefined);
+                person.address[valueSymbol] = 123;
             },
             (e) => validateAssertionError(e, "Cannot set a value of a non-primitive field"),
             "Expected exception was not thrown",

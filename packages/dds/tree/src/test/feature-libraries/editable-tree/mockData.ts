@@ -37,8 +37,8 @@ export const int32Schema = namedTreeSchema({
     value: ValueSchema.Number,
 });
 
-export const float32Schema = namedTreeSchema({
-    name: brand("Float32"),
+export const float64Schema = namedTreeSchema({
+    name: brand("Float64"),
     extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
@@ -106,9 +106,9 @@ export const personSchema = namedTreeSchema({
     localFields: {
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.optional, [int32Schema.name]),
-        salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
+        salary: fieldSchema(FieldKinds.optional, [float64Schema.name, int32Schema.name]),
         friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
-        address: fieldSchema(FieldKinds.value, [addressSchema.name]),
+        address: fieldSchema(FieldKinds.optional, [addressSchema.name]),
     },
     extraLocalFields: emptyField,
 });
@@ -136,7 +136,7 @@ export const schemaTypes: Set<NamedTreeSchema> = new Set([
     arraySchema,
     optionalChildSchema,
     stringSchema,
-    float32Schema,
+    float64Schema,
     int32Schema,
     complexPhoneSchema,
     phonesSchema,
@@ -163,40 +163,60 @@ export const fullSchemaData: SchemaData = {
 
 // TODO: derive types like these from those schema, which subset EditableTree
 
-export type Int32 = Brand<number, "Int32">;
+export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
+export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
+export type StRing = Brand<string, "editable-tree.String"> & EditableTree;
 
-export type ComplexPhoneType = EditableTree & {
-    number: string;
-    prefix: string;
-};
+export type ComplexPhoneType = EditableTree &
+    Brand<
+        {
+            number: StRing;
+            prefix: StRing;
+        },
+        "editable-tree.Test:Phone-1.0.0"
+    >;
 
-export type SimplePhonesType = EditableField & string[];
+export type SimplePhonesType = EditableField &
+    Brand<StRing[], "editable-tree.Test:SimplePhones-1.0.0">;
 
-export type PhonesType = EditableField & (number | string | ComplexPhoneType | SimplePhonesType)[];
+export type PhonesType = EditableField &
+    Brand<
+        (Int32 | StRing | ComplexPhoneType | SimplePhonesType)[],
+        "editable-tree.Test:Phones-1.0.0"
+    >;
 
-export type AddressType = EditableTree & {
-    street: string;
-    zip?: string;
-    phones?: PhonesType;
-    sequencePhones?: SimplePhonesType;
-};
+export type AddressType = EditableTree &
+    Brand<
+        {
+            street: StRing;
+            zip?: StRing | Int32;
+            phones?: PhonesType;
+            sequencePhones?: SimplePhonesType;
+        },
+        "editable-tree.Test:Address-1.0.0"
+    >;
 
-export type FriendsType = EditableTree & Record<LocalFieldKey, string>;
+export type FriendsType = EditableTree &
+    Brand<Record<LocalFieldKey, string>, "editable-tree.Map<String>">;
 
-export type PersonType = EditableTree & {
-    name: string;
-    age?: Int32;
-    salary: number;
-    friends: FriendsType;
-    address: AddressType;
-};
+export type PersonType = EditableTree &
+    Brand<
+        {
+            name: StRing;
+            age?: Int32;
+            salary?: Float64 | Int32;
+            friends?: FriendsType;
+            address?: AddressType;
+        },
+        "editable-tree.Test:Person-1.0.0"
+    >;
 
 export const personData: JsonableTree = {
     type: personSchema.name,
     fields: {
         name: [{ value: "Adam", type: stringSchema.name }],
         age: [{ value: 35, type: int32Schema.name }],
-        salary: [{ value: 10420.2, type: float32Schema.name }],
+        salary: [{ value: 10420.2, type: float64Schema.name }],
         friends: [
             {
                 fields: {
