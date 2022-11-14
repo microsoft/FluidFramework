@@ -57,8 +57,9 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
                 const maybeRouter: FluidObject<IProvideFluidRouter> | undefined = await rt.entryPoint?.get();
-                assert(maybeRouter !== undefined, "entryPoint should have been initialized by now");
-                assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entryPoint is not an IFluidRouter");
+                assert(maybeRouter !== undefined, 0x46c /* entryPoint should have been initialized by now */);
+                assert(maybeRouter?.IFluidRouter !== undefined,
+                    0x46d /* Data store runtime entryPoint is not an IFluidRouter */);
                 return maybeRouter.IFluidRouter.request(request);
             });
 
