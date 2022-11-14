@@ -270,9 +270,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		}
 
 		if (targetLength !== Infinity) {
-            if (targetLength < 0 || evictionFrequency < 0) {
-                fail('targetLength and evictionFrequency should not be negative');
-            }
+			if (targetLength < 0 || evictionFrequency < 0) {
+				fail('targetLength and evictionFrequency should not be negative');
+			}
 			this.sequenceNumberToIndex = new BTree([[0, 0]]);
 			for (const handler of editEvictionHandlers) {
 				this.registerEditEvictionHandler(handler);
@@ -511,7 +511,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
 		// Check if any edits need to be evicted due to this addition
-		if (this.numberOfSequencedEdits >= this.evictionFrequency) {
+		if (this.sequenceNumberToIndex !== undefined && this.numberOfSequencedEdits >= this.evictionFrequency) {
 			this.evictEdits();
 		}
 	}
@@ -534,7 +534,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	private evictEdits(): void {
-        assert(this.sequenceNumberToIndex !== undefined, 'Edits should never be evicted if the target length is set to infinity');
+		assert(
+			this.sequenceNumberToIndex !== undefined,
+			'Edits should never be evicted if the target length is set to infinity'
+		);
 
 		const minSequenceIndex =
 			this.sequenceNumberToIndex.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
