@@ -135,9 +135,7 @@ export class SnapshotLoader {
             this.mergeTree.options,
             this.serializer);
         const segs = chunk.segments.map(this.specToSegment);
-        if (chunk.attribution) {
-            AttributionCollection.populateAttributionCollections(segs, chunk.attribution);
-        }
+        this.extractAttribution(segs, chunk);
 
         this.mergeTree.reloadFromSegments(segs);
 
@@ -190,9 +188,8 @@ export class SnapshotLoader {
                 this.serializer);
             lengthSofar += chunk.length;
             const newSegs = chunk.segments.map(this.specToSegment);
-            if (chunk.attribution) {
-                AttributionCollection.populateAttributionCollections(newSegs, chunk.attribution);
-            }
+            this.extractAttribution(newSegs, chunk);
+
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...newSegs);
         }
@@ -237,6 +234,18 @@ export class SnapshotLoader {
         }
 
         flushBatch();
+    }
+
+    private someChunkHadAttribution = false;
+    private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
+        if (chunk.attribution) {
+            this.mergeTree.options ??= {};
+            this.mergeTree.options.trackAttribution = true;
+            this.someChunkHadAttribution = true;
+            AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
+        } else {
+            assert(!this.someChunkHadAttribution, "all or no chunks should have attribution information");
+        }
     }
 
     /**

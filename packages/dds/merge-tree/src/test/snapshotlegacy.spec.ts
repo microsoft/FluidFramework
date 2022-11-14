@@ -10,6 +10,8 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
+import { createClientsAtInitialState } from "./testClientLogger";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 describe("snapshot", () => {
     it("header only", async () => {
@@ -79,4 +81,80 @@ describe("snapshot", () => {
     })
 
         .timeout(5000);
+
+
+    async function assertAttributionKeysMatch(client: TestClient, expected: number[] | undefined): Promise<void> {
+        assert.deepEqual(client.getAllAttributionKeys(), expected, "Keys don't match before round-tripping");
+        const serializer = new TestSerializer();
+        // This avoids necessitating catchup ops.
+        client.mergeTree.setMinSeq(client.mergeTree.getCollabWindow().currentSeq);
+        const snapshot = new SnapshotLegacy(client.mergeTree, client.logger);
+        snapshot.extractSync();
+        const summaryTree = snapshot.emit([], serializer, undefined!);
+        const services = MockStorage.createFromSummary(summaryTree.summary);
+
+        const roundTripClient = new TestClient({ trackAttribution: true });
+        const runtime: Partial<IFluidDataStoreRuntime> = {
+            logger: roundTripClient.logger,
+            clientId: "round-trips summary",
+        };
+        await roundTripClient.load(runtime as IFluidDataStoreRuntime, services, serializer);
+        assert.deepEqual(roundTripClient.getAllAttributionKeys(), expected, "Keys don't match after round-tripping");
+    }
+
+    it("preserves attribution information", async () => {
+        const clients = createClientsAtInitialState({
+            initialState: "",
+            options: { trackAttribution: true }
+        }, "A", "B");
+
+        const ops: ISequencedDocumentMessage[] = [];
+        const applyAllOps = () => ops.splice(0)
+            .forEach((op) => clients.all.map((client) => client.applyMsg(op)));
+
+        ops.push(
+            clients.A.makeOpMessage(
+                clients.A.insertTextLocal(0, "hello world"),
+                /* seq */ 1
+            )
+        );
+
+        applyAllOps();
+
+        ops.push(
+            clients.B.makeOpMessage(
+                clients.B.insertTextLocal(6, "new "),
+                /* seq */ 2,
+                /* refSeq */ 1
+            )
+        );
+
+        applyAllOps();
+
+        // "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
+        const expectedAttribution = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1];
+        assertAttributionKeysMatch(clients.A, expectedAttribution);
+    });
+
+    it("doesn't include attribution information when trackAttribution is false on doc creation", () => {
+        const clients = createClientsAtInitialState({
+            initialState: "",
+            options: { trackAttribution: false }
+        }, "A");
+
+        const ops: ISequencedDocumentMessage[] = [];
+        const applyAllOps = () => ops.splice(0)
+            .forEach((op) => clients.all.map((client) => client.applyMsg(op)));
+
+        ops.push(
+            clients.A.makeOpMessage(
+                clients.A.insertTextLocal(0, "hello world"),
+                /* seq */ 1
+            )
+        );
+
+        applyAllOps();
+
+        assertAttributionKeysMatch(clients.A, undefined);
+    });
 });

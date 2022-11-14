@@ -13,11 +13,12 @@ import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
+import { IMergeTreeOptions } from "../mergeTree";
 
 // Reconstitutes a MergeTree client from a summary
-async function loadSnapshot(summary: ISummaryTree) {
+async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
     const services = MockStorage.createFromSummary(summary);
-    const client2 = new TestClient(undefined);
+    const client2 = new TestClient(options);
     const runtime: Partial<IFluidDataStoreRuntime> = {
         logger: client2.logger,
         clientId: "1",
@@ -30,12 +31,13 @@ async function loadSnapshot(summary: ISummaryTree) {
 
 // Wrapper around MergeTree client that provides a convenient SharedString-like API for tests.
 class TestString {
-    private client = new TestClient();
+    private client: TestClient;
     private readonly pending: ISequencedDocumentMessage[] = [];
     private seq = 0;
     private minSeq = 0;
 
-    constructor(id: string) {
+    constructor(id: string, options?: IMergeTreeOptions) {
+        this.client = new TestClient(options);
         this.client.startOrUpdateCollaboration(id);
     }
 
@@ -62,11 +64,11 @@ class TestString {
     }
 
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-    public async checkSnapshot() {
+    public async checkSnapshot(options?: IMergeTreeOptions) {
         this.applyPending();
         const expectedAttributionKeys = this.client.getAllAttributionKeys();
-        const tree = this.getSummary();
-        const client2 = await loadSnapshot(tree);
+        const summary = this.getSummary();
+        const client2 = await loadSnapshot(summary, options);
 
         assert.equal(this.client.getText(), client2.getText(),
             "Snapshot must produce a MergeTree with the same text as the original");
@@ -118,11 +120,11 @@ class TestString {
     }
 }
 
-describe("snapshot", () => {
+function makeSnapshotSuite(options?: IMergeTreeOptions): void {
     let str: TestString;
 
     beforeEach(() => {
-        str = new TestString("fakeId");
+        str = new TestString("fakeId", options);
     });
 
     afterEach(async () => {
@@ -211,5 +213,27 @@ describe("snapshot", () => {
         }
 
         await str.checkSnapshot();
+    });
+}
+
+describe("snapshot", () => {
+    describe("with attribution", () => {
+        makeSnapshotSuite({ trackAttribution: true });
+    });
+
+    describe("without attribution", () => {
+        makeSnapshotSuite({ trackAttribution: false });
+    });
+
+    it("presence of attribution overrides merge-tree initialization value", () => {
+        const str = new TestString("id", { trackAttribution: true });
+        str.append("hello world", /* increaseMsn: */ true);
+        str.checkSnapshot({ trackAttribution: false });
+    });
+
+    it("lack of attribution overrides merge-tree initialization", () => {
+        const str = new TestString("id", { trackAttribution: false });
+        str.append("hello world", /* increaseMsn: */ true);
+        str.checkSnapshot({ trackAttribution: true });
     });
 });

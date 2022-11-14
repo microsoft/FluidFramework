@@ -443,8 +443,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 assert(this.seq === UnassignedSequenceNumber, 0x045 /* "On insert, seq number already assigned!" */);
                 this.seq = opArgs.sequencedMessage!.sequenceNumber;
                 this.localSeq = undefined;
-                // TODO: Evaluate where this gets set up.
-                this.attribution = new AttributionCollection(this.seq, this.cachedLength);
                 return true;
 
             case MergeTreeDeltaType.REMOVE:
@@ -512,15 +510,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, other);
-        // TODO: Clean this up for optional attribution on segments.
-
-        if (!this.attribution) {
-            this.attribution = new AttributionCollection(UnassignedSequenceNumber, this.cachedLength);
+        if (this.attribution) {
+            assert(other.attribution !== undefined, "attribution should be set on appendee");
+            this.attribution.append(other.attribution);
+        } else {
+            assert(other.attribution === undefined, "attribution should not be set on appendee");
         }
 
-        this.attribution.append(
-            other.attribution ?? new AttributionCollection(UnassignedSequenceNumber, other.cachedLength),
-        );
         this.cachedLength += other.cachedLength;
     }
 
