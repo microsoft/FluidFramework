@@ -16,12 +16,12 @@ import { ClientDebugView } from "./components";
  * {@link FluidClientDebugger} input props.
  */
 export interface FluidClientDebuggerProps extends HasContainerId {
-    /**
-     * Rendering policies for different kinds of Fluid client and object data.
-     *
-     * @defaultValue Strictly use default visualization policies.
-     */
-    renderOptions?: RenderOptions;
+	/**
+	 * Rendering policies for different kinds of Fluid client and object data.
+	 *
+	 * @defaultValue Strictly use default visualization policies.
+	 */
+	renderOptions?: RenderOptions;
 }
 
 /**
@@ -32,47 +32,47 @@ export interface FluidClientDebuggerProps extends HasContainerId {
  * has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
-    const { containerId } = props;
+	const { containerId } = props;
 
-    const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
-        getFluidClientDebugger(containerId),
-    );
+	const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
+		getFluidClientDebugger(containerId),
+	);
 
-    const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
-        clientDebugger?.disposed ?? false,
-    );
+	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
+		clientDebugger?.disposed ?? false,
+	);
 
-    React.useEffect(() => {
-        function onDebuggerDisposed(): void {
-            setIsContainerDisposed(true);
-        }
+	React.useEffect(() => {
+		function onDebuggerDisposed(): void {
+			setIsContainerDisposed(true);
+		}
 
-        clientDebugger?.on("debuggerDisposed", onDebuggerDisposed);
+		clientDebugger?.on("debuggerDisposed", onDebuggerDisposed);
 
-        return (): void => {
-            clientDebugger?.off("debuggerDisposed", onDebuggerDisposed);
-        };
-    }, [clientDebugger, setIsContainerDisposed]);
+		return (): void => {
+			clientDebugger?.off("debuggerDisposed", onDebuggerDisposed);
+		};
+	}, [clientDebugger, setIsContainerDisposed]);
 
-    if (clientDebugger === undefined) {
-        return (
-            <NoDebuggerInstance
-                containerId={containerId}
-                onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
-            />
-        );
-    }
+	if (clientDebugger === undefined) {
+		return (
+			<NoDebuggerInstance
+				containerId={containerId}
+				onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+			/>
+		);
+	}
 
-    if (isContainerDisposed) {
-        return (
-            <DebuggerDisposed
-                containerId={containerId}
-                onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
-            />
-        );
-    }
+	if (isContainerDisposed) {
+		return (
+			<DebuggerDisposed
+				containerId={containerId}
+				onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+			/>
+		);
+	}
 
-    return <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />;
+	return <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />;
 }
 
 /**
@@ -80,10 +80,10 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
  * associated with some Container ID.
  */
 interface CanLookForDebugger {
-    /**
-     * Retry looking for the debugger instance.
-     */
-    onRetryDebugger(): void;
+	/**
+	 * Retry looking for the debugger instance.
+	 */
+	onRetryDebugger(): void;
 }
 
 /**
@@ -92,27 +92,27 @@ interface CanLookForDebugger {
 interface NoDebuggerInstanceProps extends HasContainerId, CanLookForDebugger {}
 
 function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement {
-    const { containerId, onRetryDebugger } = props;
+	const { containerId, onRetryDebugger } = props;
 
-    const retryButtonTooltipId = useId("retry-button-tooltip");
+	const retryButtonTooltipId = useId("retry-button-tooltip");
 
-    // TODO: give more info and link to docs, etc. for using the tooling.
-    return (
-        <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-            <StackItem>
-                <div>No debugger has been initialized for container ID "${containerId}".</div>
-            </StackItem>
-            <StackItem>
-                <TooltipHost content="Look again" id={retryButtonTooltipId}>
-                    <IconButton
-                        onClick={onRetryDebugger}
-                        menuIconProps={{ iconName: "Refresh" }}
-                        aria-describedby={retryButtonTooltipId}
-                    />
-                </TooltipHost>
-            </StackItem>
-        </Stack>
-    );
+	// TODO: give more info and link to docs, etc. for using the tooling.
+	return (
+		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+			<StackItem>
+				<div>No debugger has been initialized for container ID "${containerId}".</div>
+			</StackItem>
+			<StackItem>
+				<TooltipHost content="Look again" id={retryButtonTooltipId}>
+					<IconButton
+						onClick={onRetryDebugger}
+						menuIconProps={{ iconName: "Refresh" }}
+						aria-describedby={retryButtonTooltipId}
+					/>
+				</TooltipHost>
+			</StackItem>
+		</Stack>
+	);
 }
 
 /**
@@ -121,26 +121,26 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
 interface DebuggerDisposedProps extends HasContainerId, CanLookForDebugger {}
 
 function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
-    const { containerId, onRetryDebugger } = props;
+	const { containerId, onRetryDebugger } = props;
 
-    const retryButtonTooltipId = useId("retry-button-tooltip");
+	const retryButtonTooltipId = useId("retry-button-tooltip");
 
-    return (
-        <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-            <StackItem>
-                <div>
-                    The debugger associated with container ID "${containerId}" has been disposed.
-                </div>
-            </StackItem>
-            <StackItem>
-                <TooltipHost content="Look again" id={retryButtonTooltipId}>
-                    <IconButton
-                        onClick={onRetryDebugger}
-                        menuIconProps={{ iconName: "Refresh" }}
-                        aria-describedby={retryButtonTooltipId}
-                    />
-                </TooltipHost>
-            </StackItem>
-        </Stack>
-    );
+	return (
+		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+			<StackItem>
+				<div>
+					The debugger associated with container ID "${containerId}" has been disposed.
+				</div>
+			</StackItem>
+			<StackItem>
+				<TooltipHost content="Look again" id={retryButtonTooltipId}>
+					<IconButton
+						onClick={onRetryDebugger}
+						menuIconProps={{ iconName: "Refresh" }}
+						aria-describedby={retryButtonTooltipId}
+					/>
+				</TooltipHost>
+			</StackItem>
+		</Stack>
+	);
 }

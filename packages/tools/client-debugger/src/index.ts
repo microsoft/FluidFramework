@@ -14,20 +14,20 @@
 export { MemberChangeKind } from "./Audience";
 
 export {
-    IFluidClientDebugger,
-    IFluidClientDebuggerEvents,
-    FluidClientDebuggerProps,
+	IFluidClientDebugger,
+	IFluidClientDebuggerEvents,
+	FluidClientDebuggerProps,
 } from "./IFluidClientDebugger";
 
 export {
-    AudienceChangeLogEntry,
-    ConnectionStateChangeLogEntry,
-    LogEntry,
-    StateChangeLogEntry,
+	AudienceChangeLogEntry,
+	ConnectionStateChangeLogEntry,
+	LogEntry,
+	StateChangeLogEntry,
 } from "./Logs";
 
 export {
-    closeFluidClientDebugger,
-    getFluidClientDebugger,
-    initializeFluidClientDebugger,
+	closeFluidClientDebugger,
+	getFluidClientDebugger,
+	initializeFluidClientDebugger,
 } from "./Registry";

@@ -14,24 +14,24 @@ import { FluidClientDebuggerProps, IFluidClientDebugger } from "./IFluidClientDe
  * the existing debugger session object will be returned, rather than creating a new one.
  */
 export function initializeFluidClientDebugger(
-    props: FluidClientDebuggerProps,
+	props: FluidClientDebuggerProps,
 ): IFluidClientDebugger {
-    const { containerId, container, containerData } = props;
+	const { containerId, container, containerData } = props;
 
-    const debuggerRegistry = getDebuggerRegistry();
+	const debuggerRegistry = getDebuggerRegistry();
 
-    let clientDebugger = debuggerRegistry.get(containerId);
-    if (clientDebugger !== undefined) {
-        console.warn(
-            `Active debugger registry already contains an entry for container ID "${containerId}". Returning existing entry.`,
-        );
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return debuggerRegistry.get(containerId)!;
-    } else {
-        clientDebugger = new FluidClientDebugger(containerId, container, containerData);
-        debuggerRegistry.set(containerId, clientDebugger);
-        return clientDebugger;
-    }
+	let clientDebugger = debuggerRegistry.get(containerId);
+	if (clientDebugger !== undefined) {
+		console.warn(
+			`Active debugger registry already contains an entry for container ID "${containerId}". Returning existing entry.`,
+		);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return debuggerRegistry.get(containerId)!;
+	} else {
+		clientDebugger = new FluidClientDebugger(containerId, container, containerData);
+		debuggerRegistry.set(containerId, clientDebugger);
+		return clientDebugger;
+	}
 }
 
 /**
@@ -39,17 +39,17 @@ export function initializeFluidClientDebugger(
  * provided Container ID.
  */
 export function closeFluidClientDebugger(containerId: string): void {
-    const debuggerRegistry = getDebuggerRegistry();
+	const debuggerRegistry = getDebuggerRegistry();
 
-    const clientDebugger = debuggerRegistry.get(containerId);
-    if (clientDebugger === undefined) {
-        console.warn(
-            `No active client debugger associated with container ID "${containerId}" was found.`,
-        );
-    } else {
-        clientDebugger.dispose();
-        debuggerRegistry.delete(containerId);
-    }
+	const clientDebugger = debuggerRegistry.get(containerId);
+	if (clientDebugger === undefined) {
+		console.warn(
+			`No active client debugger associated with container ID "${containerId}" was found.`,
+		);
+	} else {
+		clientDebugger.dispose();
+		debuggerRegistry.delete(containerId);
+	}
 }
 
 /**
@@ -57,22 +57,22 @@ export function closeFluidClientDebugger(containerId: string): void {
  * Will return `undefined` if no such debugger is registered.
  */
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined {
-    const debuggerRegistry = getDebuggerRegistry();
-    return debuggerRegistry.get(containerId);
+	const debuggerRegistry = getDebuggerRegistry();
+	return debuggerRegistry.get(containerId);
 }
 
 /**
  * Gets all registered client debuggers from the registry.
  */
 export function getFluidClientDebuggers(): IFluidClientDebugger[] {
-    const debuggerRegistry = getDebuggerRegistry();
+	const debuggerRegistry = getDebuggerRegistry();
 
-    const clientDebuggers: IFluidClientDebugger[] = [];
-    for (const [, clientDebugger] of debuggerRegistry) {
-        clientDebuggers.push(clientDebugger);
-    }
+	const clientDebuggers: IFluidClientDebugger[] = [];
+	for (const [, clientDebugger] of debuggerRegistry) {
+		clientDebuggers.push(clientDebugger);
+	}
 
-    return clientDebuggers;
+	return clientDebuggers;
 }
 
 /**
@@ -83,18 +83,18 @@ export function getFluidClientDebuggers(): IFluidClientDebugger[] {
  * @internal
  */
 export function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
-    if (globalThis.fluidClientDebuggers === undefined) {
-        // If no client debuggers have been bound, initialize list
-        globalThis.fluidClientDebuggers = new Map<string, IFluidClientDebugger>();
-    }
+	if (globalThis.fluidClientDebuggers === undefined) {
+		// If no client debuggers have been bound, initialize list
+		globalThis.fluidClientDebuggers = new Map<string, IFluidClientDebugger>();
+	}
 
-    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
+	const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
 
-    if (debuggerRegistry === undefined) {
-        throw new Error("Fluid Client debugger registry initialization failed.");
-    }
+	if (debuggerRegistry === undefined) {
+		throw new Error("Fluid Client debugger registry initialization failed.");
+	}
 
-    return debuggerRegistry;
+	return debuggerRegistry;
 }
 
 /**
@@ -103,16 +103,16 @@ export function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
  * @internal
  */
 export function clearDebuggerRegistry(): void {
-    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
-    if (debuggerRegistry !== undefined) {
-        for (const [, clientDebugger] of debuggerRegistry) {
-            if (clientDebugger.disposed) {
-                console.warn(`Fluid Client debugger has already been disposed.`);
-            } else {
-                clientDebugger.dispose();
-            }
-        }
-    }
+	const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
+	if (debuggerRegistry !== undefined) {
+		for (const [, clientDebugger] of debuggerRegistry) {
+			if (clientDebugger.disposed) {
+				console.warn(`Fluid Client debugger has already been disposed.`);
+			} else {
+				clientDebugger.dispose();
+			}
+		}
+	}
 
-    globalThis.fluidClientDebuggers = undefined;
+	globalThis.fluidClientDebuggers = undefined;
 }

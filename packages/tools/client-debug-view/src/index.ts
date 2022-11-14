@@ -20,13 +20,13 @@ export { AudienceMemberViewProps, ClientDebugView, ClientDebugViewProps } from "
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export {
-    getRenderOptionsWithDefaults,
-    getSharedObjectRendererOptionsWithDefaults,
-    defaultRenderOptions,
-    defaultSharedObjectRenderers,
-    RenderChild,
-    RenderOptions,
-    RenderSharedObject,
-    SharedObjectRenderOptions,
-    SharedObjectType,
+	getRenderOptionsWithDefaults,
+	getSharedObjectRendererOptionsWithDefaults,
+	defaultRenderOptions,
+	defaultSharedObjectRenderers,
+	RenderChild,
+	RenderOptions,
+	RenderSharedObject,
+	SharedObjectRenderOptions,
+	SharedObjectType,
 } from "./RendererOptions";
