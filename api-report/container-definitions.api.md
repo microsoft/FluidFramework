@@ -85,7 +85,9 @@ export interface IAudienceOwner extends IAudience {
 // @public
 export interface IBatchMessage {
     // (undocumented)
-    contents: string;
+    compression?: string;
+    // (undocumented)
+    contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
 }
@@ -498,7 +500,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
 // @public

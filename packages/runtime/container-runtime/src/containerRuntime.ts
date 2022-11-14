@@ -34,7 +34,6 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
-    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -108,7 +107,6 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
-import { compress, decompress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -147,7 +145,6 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
@@ -170,6 +167,7 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
+import { OpDecompressor } from "./opDecompressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -379,40 +377,6 @@ export interface ISummaryRuntimeOptions {
      * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
-
-    /**
-     * Flag that disables summaries if it is set to true.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @defaultValue 7000 operations (ops)
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
-     */
-    maxOpsSinceLastSummary?: number;
-
-    /**
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     *
-     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
-     */
-    summarizerClientElection?: boolean;
-
-    /**
-     * Options that control the running summarizer behavior.
-     *
-     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
-     * */
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -421,10 +385,14 @@ export interface ISummaryRuntimeOptions {
  */
 export interface ICompressionRuntimeOptions {
     /**
-     * The minimum size the content payload must exceed before it is compressed.
-     * Compression is disabled if undefined.
+     * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
      */
-    readonly minimumSize?: number;
+    readonly minimumBatchSizeInBytes: number;
+
+    /**
+     * The compression algorithm that will be used to compress the op.
+     */
+    readonly compressionAlgorithm: CompressionAlgorithms;
 }
 
 /**
@@ -454,7 +422,7 @@ export interface IContainerRuntimeOptions {
      */
     readonly enableOfflineLoad?: boolean;
     /**
-     * Enables the runtime to compress ops.
+     * Enables the runtime to compress ops. Compression is disabled when undefined.
      * @experimental Not ready for use.
      */
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -469,6 +437,17 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If enabled, the runtime will block all attempts to send an op inside the
+     * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
+     * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
+     * will disallow modifying DDSes while handling DDS events.
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -492,6 +471,13 @@ export enum RuntimeHeaders {
     externalRequest = "externalRequest",
     /** True if the request is coming from an IFluidHandle. */
     viaHandle = "viaHandle",
+}
+
+/**
+ * Available compression algorithms for op compression.
+ */
+export enum CompressionAlgorithms {
+    lz4 = "lz4",
 }
 
 /**
@@ -576,15 +562,6 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.metadata?.compressed) {
-        const contents = IsoBuffer.from(message.contents.contents, "base64");
-        const decompressedMessage = decompress(contents);
-        const intoString = new TextDecoder().decode(decompressedMessage);
-        const asObj = JSON.parse(intoString);
-        message.contents.contents = asObj;
-        message.metadata.compressed = false;
-    }
-
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -592,7 +569,6 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined, 0x121 /* "Undefined inner contents type!" */);
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
@@ -642,6 +618,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     /**
+     * @deprecated - use loadRuntime instead.
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -657,6 +634,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
+        let existingFlag = true;
+        if (!existing) {
+            existingFlag = false;
+        }
+        return this.loadRuntime({
+            context,
+            registryEntries,
+            existing: existingFlag,
+            requestHandler,
+            runtimeOptions,
+            containerScope,
+        });
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param params - An object housing the runtime properties:
+     * - context - Context of the container.
+     * - registryEntries - Mapping to the stores.
+     * - existing - When loading from an existing snapshot
+     * - requestHandler - Request handlers for the container runtime
+     * - runtimeOptions - Additional options to be passed to the runtime
+     * - containerScope - runtime services provided with context
+     */
+     public static async loadRuntime(
+        params: {
+            context: IContainerContext;
+            registryEntries: NamedFluidDataStoreRegistryEntries;
+            existing: boolean;
+            requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+            runtimeOptions?: IContainerRuntimeOptions;
+            containerScope?: FluidObject;
+        },
+    ): Promise<ContainerRuntime> {
+        const { context, registryEntries, existing, requestHandler, runtimeOptions = {}, containerScope = {} } = params;
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
         const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
@@ -674,8 +686,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = {},
+            compressionOptions = { minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+                                   compressionAlgorithm: CompressionAlgorithms.lz4 },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -753,6 +767,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 enableOfflineLoad,
                 compressionOptions,
                 maxBatchSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -830,6 +845,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
+
+    private readonly opDecompressor: OpDecompressor = new OpDecompressor();
+
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -854,13 +872,39 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
-    private compressedOpCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
      * attachment blobs that were added while disconnected
      */
     private delayConnectClientId?: string;
+
+    private ensureNoDataModelChangesCalls = 0;
+
+    /**
+     * Tracks the number of detected reentrant ops to report,
+     * in order to self-throttle the telemetry events.
+     *
+     * This should be removed as part of ADO:2322
+     */
+    private opReentryCallsToReport = 5;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    public ensureNoDataModelChanges<T>(callback: () => T): T {
+        this.ensureNoDataModelChangesCalls++;
+        try {
+            return callback();
+        } finally {
+            this.ensureNoDataModelChangesCalls--;
+        }
+    }
 
     public get connected(): boolean {
         return this._connected;
@@ -876,6 +920,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -919,21 +964,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summariesDisabled: boolean;
     private isSummariesDisabled(): boolean {
-        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disabled";
     }
 
     private readonly heuristicsDisabled: boolean;
     private isHeuristicsDisabled(): boolean {
-        // back-compat: disableHeuristics was moved from ISummarizerOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
-            return true;
-        }
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
@@ -942,22 +977,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
             return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
         }
-        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
-            return true;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.summarizerClientElection === true
             : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
-        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
-        //   to ISummaryConfiguration in 0.60.
-        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
-            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
-        }
         return this.summaryConfiguration.state !== "disabled"
             ? this.summaryConfiguration.maxOpsSinceLastSummary
             : 0;
@@ -1018,6 +1043,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -1034,8 +1063,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // latency of processing a batch.
         // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
         // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes, 64 * 1024);
-        this.pendingBatch = new BatchManager(runtimeOptions.maxBatchSizeInBytes);
+        this.pendingAttachBatch = new BatchManager(this.mc.logger, {
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+            softLimit: 64 * 1024,
+            compressionOptions: runtimeOptions.compressionOptions
+        });
+        this.pendingBatch = new BatchManager(this.mc.logger, {
+            enableOpReentryCheck: this.enableOpReentryCheck,
+            hardLimit: runtimeOptions.maxBatchSizeInBytes,
+            compressionOptions: runtimeOptions.compressionOptions
+        });
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -1146,7 +1184,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientId: () => this.clientId,
                 close: this.closeFn,
                 connected: () => this.connected,
-                flush: this.flush.bind(this),
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),
@@ -1684,6 +1721,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message.contents = JSON.parse(message.contents);
         }
 
+        message = this.opDecompressor.processMessage(message);
+
         // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
         // This format was not shipped to production workflows.
         const runtimeMessage = unpackRuntimeMessage(message);
@@ -1846,16 +1885,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;
@@ -1865,46 +1894,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.canSendOps()) {
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
+
                 for (const message of batch) {
-                    let contents = message.contents;
-                    let metadata = message.metadata;
-                    if (this.runtimeOptions.compressionOptions.minimumSize &&
-                        this.runtimeOptions.compressionOptions.minimumSize < message.contents.length) {
-                        this.compressedOpCount++;
-                        const copiedMessage = { ...message.deserializedContent };
-
-                        const compressionStart = Date.now();
-                        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(copiedMessage.contents));
-                        const compressedContents = compress(contentsAsBuffer);
-                        const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-                        const duration = Date.now() - compressionStart;
-
-                        if (this.compressedOpCount % 100) {
-                            this.mc.logger.sendPerformanceEvent({
-                                eventName: "compressedOp",
-                                duration,
-                                sizeBeforeCompression: message.contents.length,
-                                sizeAfterCompression: compressedContent.length,
-                            });
-                        }
-
-                        copiedMessage.contents = compressedContent;
-                        const stringifiedContents = JSON.stringify(copiedMessage);
-
-                        if (stringifiedContents.length < message.contents.length) {
-                            contents = JSON.stringify(copiedMessage);
-                            metadata = { ...message.metadata, compressed: true };
-                        }
-                    }
-
-                    batchToSend.push({ contents, metadata });
+                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
                 }
+
                 // returns clientSequenceNumber of last message in a batch
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
                 // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
                 // version that has support for batches (submitBatchFn)
                 for (const message of batch) {
+                    // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
+                    if (message.metadata?.compressed) {
+                        delete message.metadata.compressed;
+                    }
+
                     clientSequenceNumber = this.context.submitFn(
                         MessageType.Operation,
                         message.deserializedContent,
@@ -1933,8 +1938,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        this.pendingStateManager.onFlush();
     }
 
     public orderSequentially(callback: () => void): void {
@@ -1977,7 +1980,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+        // We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
+        if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
     }
@@ -2696,6 +2700,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
+        this.verifyCanSubmitOps();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
@@ -2748,9 +2753,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             "BatchTooLarge",
                             /* error */ undefined,
                             {
-                                opSize: message.contents.length,
+                                opSize: (message.contents?.length) ?? 0,
                                 count: this.pendingAttachBatch.length,
-                                limit: this.pendingAttachBatch.limit,
+                                limit: this.pendingAttachBatch.options.hardLimit,
                             });
                     }
                 }
@@ -2760,9 +2765,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         "BatchTooLarge",
                         /* error */ undefined,
                         {
-                            opSize: message.contents.length,
+                            opSize: (message.contents?.length) ?? 0,
                             count: this.pendingBatch.length,
-                            limit: this.pendingBatch.limit,
+                            limit: this.pendingBatch.options.hardLimit,
                         });
                 }
                 if (!this.currentlyBatching()) {
@@ -2810,6 +2815,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
+        }
+    }
+
+    private verifyCanSubmitOps() {
+        if (this.ensureNoDataModelChangesCalls > 0) {
+            if (this.opReentryCallsToReport > 0) {
+                this.mc.logger.sendTelemetryEvent(
+                    { eventName: "Op reentry detected" },
+                    // We need to capture the call stack in order to inspect the source of this usage pattern
+                    new GenericError("Op reentry detected"),
+                );
+                this.opReentryCallsToReport--;
+            }
+
+            // Creating ops while processing ops can lead
+            // to undefined behavior and events observed in the wrong order.
+            // For example, we have two callbacks registered for a DDS, A and B.
+            // Then if on change #1 callback A creates change #2, the invocation flow will be:
+            //
+            // A because of #1
+            // A because of #2
+            // B because of #2
+            // B because of #1
+            //
+            // The runtime must enforce op coherence by not allowing ops to be submitted
+            // while ops are being processed.
+            if (this.enableOpReentryCheck) {
+                throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+            }
         }
     }
 

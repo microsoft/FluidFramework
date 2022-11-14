@@ -28,7 +28,7 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
      * events in order.
      * @param expectedEvents - events in order that are expected to appear in the recorded log.
      * These event objects may be subsets of the logged events.
-     * Note: category is ommitted from the type because it's usually uninteresting and tedious to type.
+     * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
      */
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
         const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
@@ -55,7 +55,7 @@ ${JSON.stringify(actualEvents)}`);
      * expected events.
      * @param expectedEvents - events that are expected to appear in the recorded log.
      * These event objects may be subsets of the logged events.
-     * Note: category is ommitted from the type because it's usually uninteresting and tedious to type.
+     * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
      * @returns if any of the expected events is found.
      */
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
@@ -74,6 +74,30 @@ ${JSON.stringify(expectedEvents)}
 actual:
 ${JSON.stringify(actualEvents)}`);
             }
+    }
+
+    /**
+    * Search events logged since the last time matchEvents was called, looking only for the given expected
+    * events in order.
+    * @param expectedEvents - events in order that are expected to be the only events in the recorded log.
+    * These event objects may be subsets of the logged events.
+    * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+     */
+    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+        return expectedEvents.length === this.events.length && this.matchEvents(expectedEvents);
+    }
+
+    /** Asserts that matchEvents is true, and prints the actual/expected output if not */
+    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
+        const actualEvents = this.events;
+        if (!this.matchEventStrict(expectedEvents)) {
+            throw new Error(`${message}
+expected:
+${JSON.stringify(expectedEvents)}
+
+actual:
+${JSON.stringify(actualEvents)}`);
+        }
     }
 
     /** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */

@@ -108,8 +108,9 @@ export interface IRuntime extends IDisposable {
  * Payload type for IContainerContext.submitBatchFn()
  */
 export interface IBatchMessage {
-    contents: string;
+    contents?: string;
     metadata: Record<string, unknown> | undefined;
+    compression?: string;
 }
 
 /**
@@ -202,5 +203,5 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * @param context - container context to be supplied to the runtime
      * @param existing - whether to instantiate for the first time or from an existing context
      */
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
