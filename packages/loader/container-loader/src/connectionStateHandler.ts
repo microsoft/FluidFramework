@@ -7,13 +7,19 @@ import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-d
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
-import { ConnectionMode } from "@fluidframework/protocol-definitions";
+import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { IProtocolHandler } from "./protocol";
 
+// Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+// timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+// if retrying fixes the problem, we should not see these events.
 const JoinOpTimeoutMs = 45000;
+
+// Timeout waiting for "self" join signal, before giving up
+const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
@@ -39,7 +45,7 @@ export interface IConnectionStateHandler {
     containerSaved(): void;
     dispose(): void;
     initProtocol(protocol: IProtocolHandler): void;
-    receivedConnectEvent(connectionMode: ConnectionMode, details: IConnectionDetails): void;
+    receivedConnectEvent(details: IConnectionDetails): void;
     receivedDisconnectEvent(reason: string): void;
 }
 
@@ -50,7 +56,8 @@ export function createConnectionStateHandler(
 ) {
     const mc = loggerToMonitoringContext(inputs.logger);
     return createConnectionStateHandlerCore(
-        mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true,
+        mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
+        mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
         inputs,
         deltaManager,
         clientId,
@@ -58,18 +65,32 @@ export function createConnectionStateHandler(
 }
 
 export function createConnectionStateHandlerCore(
-    wait: boolean,
+    connectedRaisedWhenCaughtUp: boolean,
+    readClientsWaitForJoinSignal: boolean,
     inputs: IConnectionStateHandlerInputs,
     deltaManager: IDeltaManager<any, any>,
     clientId?: string,
 ) {
-    if (!wait) {
-        return new ConnectionStateHandler(inputs, clientId);
+    if (!connectedRaisedWhenCaughtUp) {
+        return new ConnectionStateHandler(inputs, readClientsWaitForJoinSignal, clientId);
     }
     return new ConnectionStateCatchup(
         inputs,
-        (handler: IConnectionStateHandlerInputs) => new ConnectionStateHandler(handler, clientId),
+        (handler: IConnectionStateHandlerInputs) => new ConnectionStateHandler(
+            handler,
+            readClientsWaitForJoinSignal,
+            clientId),
         deltaManager);
+}
+
+/**
+ * Helper internal interface to abstract away Audience & Quorum
+ */
+interface IMembership {
+    on(
+        eventName: "addMember" | "removeMember",
+        listener: (clientId: string, details: IClient | ISequencedClient) => void);
+    getMember(clientId: string): undefined | unknown;
 }
 
 /**
@@ -97,8 +118,8 @@ class ConnectionStateHandlerPassThrough implements IConnectionStateHandler, ICon
     public initProtocol(protocol: IProtocolHandler) { return this.pimpl.initProtocol(protocol); }
     public receivedDisconnectEvent(reason: string) { return this.pimpl.receivedDisconnectEvent(reason); }
 
-    public receivedConnectEvent(connectionMode: ConnectionMode, details: IConnectionDetails) {
-        return this.pimpl.receivedConnectEvent(connectionMode, details);
+    public receivedConnectEvent(details: IConnectionDetails) {
+        return this.pimpl.receivedConnectEvent(details);
     }
 
     /**
@@ -201,8 +222,8 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
  *
  * For (a) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
  *
- * For (b) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
- * and we are added to the Quorum.
+ * For (b) we log telemetry if it takes too long, but still only transition to Connected when the Join op/signal is
+ * processed.
  *
  * For (c) this is optional behavior, controlled by the parameters of receivedConnectEvent
  */
@@ -212,6 +233,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
     private protocol?: IProtocolHandler;
+    private connection?: IConnectionDetails;
+    private _clientId?: string;
 
     private waitEvent: PerformanceEvent | undefined;
 
@@ -229,8 +252,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
     constructor(
         private readonly handler: IConnectionStateHandlerInputs,
-        private _clientId?: string,
+        private readonly readClientsWaitForJoinSignal: boolean,
+        clientIdFromPausedSession?: string,
     ) {
+        this._clientId = clientIdFromPausedSession;
         this.prevClientLeftTimer = new Timer(
             // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
             // the max time on server after which leave op is sent.
@@ -242,11 +267,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
             },
         );
 
-        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
-        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
-        // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            JoinOpTimeoutMs,
+            0, // default value is not used - startJoinOpTimer() explicitly provides timeout
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
@@ -266,7 +288,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
     private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
-        this.joinOpTimer.start();
+        assert(this.connection !== undefined, "have connection");
+        this.joinOpTimer.start(
+            this.connection.mode === "write" ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
+        );
     }
 
     private stopJoinOpTimer() {
@@ -297,8 +322,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         if (clientId === this.pendingClientId) {
             if (this.joinOpTimer.hasTimer) {
                 this.stopJoinOpTimer();
-            } else {
-                // timer has already fired, meaning it took too long to get join on.
+            } else if (this.shouldWaitForJoinSignal()) {
+                // timer has already fired, meaning it took too long to get join op/signal.
                 // Record how long it actually took to recover.
                 this.handler.logConnectionIssue("ReceivedJoinOp");
             }
@@ -333,9 +358,11 @@ class ConnectionStateHandler implements IConnectionStateHandler {
             this.setConnectionState(ConnectionState.Connected);
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
+            // We may not see any ops due to being disconnected all that time - that's not an error!
+            const error = source === "timeout" && this.connectionState !== ConnectionState.Disconnected;
             this.handler.logger.sendTelemetryEvent({
                 eventName: "connectedStateRejected",
-                category: source === "timeout" ? "error" : "generic",
+                category: error ? "error" : "generic",
                 details: JSON.stringify({
                     source,
                     pendingClientId: this.pendingClientId,
@@ -356,29 +383,35 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     public receivedDisconnectEvent(reason: string) {
+        this.connection = undefined;
         this.setConnectionState(ConnectionState.Disconnected, reason);
+    }
+
+    private shouldWaitForJoinSignal() {
+        assert(this.connection !== undefined, "all callers call here with active connection");
+        return this.connection.mode === "write" || this.readClientsWaitForJoinSignal;
     }
 
     /**
      * The "connect" event indicates the connection to the Relay Service is live.
      * However, some additional conditions must be met before we can fully transition to
      * "Connected" state. This function handles that interim period, known as "Connecting" state.
-     * @param connectionMode - Read or Write connection
      * @param details - Connection details returned from the Relay Service
      * @param deltaManager - DeltaManager to be used for delaying Connected transition until caught up.
      * If it's undefined, then don't delay and transition to Connected as soon as Leave/Join op are accounted for
      */
     public receivedConnectEvent(
-        connectionMode: ConnectionMode,
         details: IConnectionDetails,
     ) {
+        this.connection = details;
+
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.CatchingUp;
 
-        const writeConnection = connectionMode === "write";
-
         // The following checks are wrong. They are only valid if user has write access to a file.
         // If user lost such access mid-session, user will not be able to get "write" connection.
+        //
+        // const writeConnection = details.mode === "write";
         // assert(!this.handler.shouldClientJoinWrite() || writeConnection,
         //    0x30a /* shouldClientJoinWrite should imply this is a writeConnection */);
         // assert(!this.waitingForLeaveOp || writeConnection,
@@ -395,16 +428,14 @@ class ConnectionStateHandler implements IConnectionStateHandler {
         // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
         this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState);
 
-        // For write connections, this pending clientId could be in the quorum already (i.e. join op already processed).
-        // We are fetching ops from storage in parallel to connecting to Relay Service,
-        // and given async processes, it's possible that we have already processed our own join message before
-        // connection was fully established.
-        // If protocol is not initialized yet, we expect it will process the join op after it's initialized.
-        const waitingForJoinOp = writeConnection && !this.hasMember(this._pendingClientId);
-
-        if (waitingForJoinOp) {
-            // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
-            // and attempt to transition to Connected state via receivedAddMemberEvent.
+        // Check if we need to wait for join op/signal, and if we need to wait for leave op from previous connection.
+        // Pending clientId could have joined already (i.e. join op/signal already processed):
+        //    We are fetching ops from storage in parallel to connecting to Relay Service,
+        //    and given async processes, it's possible that we have already processed our own join message before
+        //    connection was fully established.
+        if (!this.hasMember(this._pendingClientId) && this.shouldWaitForJoinSignal()) {
+            // We are waiting for our own join op / signal. When it is processed
+            // we'll attempt to transition to Connected state via receivedAddMemberEvent() flow.
             this.startJoinOpTimer();
         } else if (!this.waitingForLeaveOp) {
             // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
@@ -426,6 +457,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
         const oldState = this._connectionState;
         this._connectionState = value;
+
+        // This is the only place in code that deals with quorum. The rest works with audience
+        // The code below ensures that we do not send ops until we know that old "write" client's disconnect
+        // produced (and sequenced) leave op
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
             client = this.protocol?.quorum?.getMember(this._clientId);
@@ -476,23 +511,36 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     // Helper method to switch between quorum and audience.
     // Old design was checking only quorum for "write" clients.
     // Latest change checks audience for all types of connections.
-    protected get membership() {
-        return this.protocol?.quorum;
+    protected get membership(): IMembership | undefined {
+        // We could always use audience here, and in practice it will probably be correct.
+        // (including case when this.readClientsWaitForJoinSignal === false).
+        // But only if it's superset of quorum, i.e. when filtered to "write" clients, they are always identical!
+        // It's safer to assume that we have bugs and engaging kill-bit switch should bring us back to well-known
+        // and tested state!
+        return this.readClientsWaitForJoinSignal ? this.protocol?.audience : this.protocol?.quorum;
     }
 
     public initProtocol(protocol: IProtocolHandler) {
         this.protocol = protocol;
 
-        this.membership?.on("addMember", (clientId) => {
+        this.membership?.on("addMember", (clientId, details) => {
+            assert((details as IClient).mode === "read" || protocol.quorum.getMember(clientId) !== undefined,
+                "Audience is subset of quorum");
             this.receivedAddMemberEvent(clientId);
         });
 
         this.membership?.on("removeMember", (clientId) => {
+            assert(protocol.quorum.getMember(clientId) === undefined, "Audience is subset of quorum");
             this.receivedRemoveMemberEvent(clientId);
         });
 
-        // Very unlikely race condition, but theoretically can happen - our new connection is already
-        // summarized and we are loading from such summary.
+        /* There is a tiny tiny race possible, where these events happen in this order:
+          1. A connection is established (no "cached" mode is used, so it happens in parallel / faster than other steps)
+          2. Some other client produces a summary
+          3. We get "lucky" and load from that summary as our initial snapshot
+          4. ConnectionStateHandler.initProtocol is called, "self" is already in the quorum.
+        We could avoid this sequence (and delete test case for it) if we move connection lower in Container.load()
+        */
         if (this.hasMember(this.pendingClientId)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.receivedAddMemberEvent(this.pendingClientId!);
