@@ -133,7 +133,8 @@
     "typescript": "~4.5.5"
   },
   "engines": {
-    "node": ">=14.13.0"
+    "node": ">=14.13.0",
+    "npm": "^6"
   },
   "fluidBuild": {
     "repoPackages": {
