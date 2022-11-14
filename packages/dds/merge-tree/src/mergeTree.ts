@@ -46,7 +46,6 @@ import {
 	MaxNodesInBlock,
 	MergeBlock,
 	MergeNode,
-	MergeTreeStats,
 	MinListener,
 	SegmentActions,
 	SegmentGroup,
@@ -773,52 +772,6 @@ export class MergeTree {
 
     public getCollabWindow() {
         return this.collabWindow;
-    }
-
-    public getStats() {
-        const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
-            const stats: MergeTreeStats = {
-                maxHeight: 0,
-                nodeCount: 0,
-                leafCount: 0,
-                removedLeafCount: 0,
-                liveCount: 0,
-                histo: [],
-            };
-            for (let k = 0; k < MaxNodesInBlock; k++) {
-                stats.histo[k] = 0;
-            }
-            for (let i = 0; i < block.childCount; i++) {
-                const child = block.children[i];
-                let height = 1;
-                if (!child.isLeaf()) {
-                    const childStats = nodeGetStats(child);
-                    height = 1 + childStats.maxHeight;
-                    stats.nodeCount += childStats.nodeCount;
-                    stats.leafCount += childStats.leafCount;
-                    stats.removedLeafCount += childStats.removedLeafCount;
-                    stats.liveCount += childStats.liveCount;
-                    for (let j = 0; j < MaxNodesInBlock; j++) {
-                        stats.histo[j] += childStats.histo[j];
-                    }
-                } else {
-                    stats.leafCount++;
-                    const segment = child;
-                    if (segment.removedSeq !== undefined) {
-                        stats.removedLeafCount++;
-                    }
-                }
-                if (height > stats.maxHeight) {
-                    stats.maxHeight = height;
-                }
-            }
-            stats.histo[block.childCount]++;
-            stats.nodeCount++;
-            stats.liveCount += block.childCount;
-            return stats;
-        };
-        const rootStats = nodeGetStats(this.root);
-        return rootStats;
     }
 
     public getLength(refSeq: number, clientId: number) {

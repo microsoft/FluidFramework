@@ -609,6 +609,11 @@ export class DataStores implements IDisposable {
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
+
+            // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
+            const dataStore = this.contexts.get(id);
+            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
+            dataStore.setTombstone(false /* tombstone */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -642,8 +647,7 @@ export class DataStores implements IDisposable {
             if (tombstone) {
                 const dataStore = this.contexts.get(dataStoreId);
                 assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-                // Delete the contexts of unused data stores.
-                dataStore.tombstone();
+                dataStore.setTombstone(true /* tombstone */);
                 continue;
             }
 

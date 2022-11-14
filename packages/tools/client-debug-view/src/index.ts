@@ -15,24 +15,19 @@
  * @packageDocumentation
  */
 
-export {
-    AudienceMemberViewProps,
-    OpViewProps,
-    ClientDebugView,
-    ClientDebugViewProps,
-} from "./components";
+export { AudienceMemberViewProps, ClientDebugView, ClientDebugViewProps } from "./components";
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
 export {
-    getRenderOptionsWithDefaults,
-    getSharedObjectRendererOptionsWithDefaults,
-    defaultRenderOptions,
-    defaultSharedObjectRenderers,
-    RenderChild,
-    RenderOptions,
-    RenderSharedObject,
-    SharedObjectRenderOptions,
-    SharedObjectType,
+	getRenderOptionsWithDefaults,
+	getSharedObjectRendererOptionsWithDefaults,
+	defaultRenderOptions,
+	defaultSharedObjectRenderers,
+	RenderChild,
+	RenderOptions,
+	RenderSharedObject,
+	SharedObjectRenderOptions,
+	SharedObjectType,
 } from "./RendererOptions";

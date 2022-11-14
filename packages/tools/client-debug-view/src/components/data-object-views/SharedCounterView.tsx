@@ -11,38 +11,38 @@ import { SharedCounter } from "@fluidframework/counter";
  * {@link SharedCounterView} input props.
  */
 export interface SharedCounterViewProps {
-    /**
-     * {@link @fluidframework/map#SharedMap} whose data will be displayed.
-     */
-    sharedCounter: SharedCounter;
+	/**
+	 * {@link @fluidframework/map#SharedMap} whose data will be displayed.
+	 */
+	sharedCounter: SharedCounter;
 }
 
 /**
  * Default {@link @fluidframework/counter#SharedCounter} viewer.
  */
 export function SharedCounterView(props: SharedCounterViewProps): React.ReactElement {
-    const { sharedCounter } = props;
+	const { sharedCounter } = props;
 
-    const [value, setValue] = React.useState<number>(sharedCounter.value);
+	const [value, setValue] = React.useState<number>(sharedCounter.value);
 
-    React.useEffect(() => {
-        function updateValue(delta: number, newValue: number): void {
-            setValue(newValue);
-        }
+	React.useEffect(() => {
+		function updateValue(delta: number, newValue: number): void {
+			setValue(newValue);
+		}
 
-        sharedCounter.on("incremented", updateValue);
+		sharedCounter.on("incremented", updateValue);
 
-        return (): void => {
-            sharedCounter.off("incremented", updateValue);
-        };
-    }, [sharedCounter, setValue]);
+		return (): void => {
+			sharedCounter.off("incremented", updateValue);
+		};
+	}, [sharedCounter, setValue]);
 
-    return (
-        <Stack>
-            <StackItem>
-                <b>SharedCounter</b>
-            </StackItem>
-            <StackItem>Value: {value}</StackItem>
-        </Stack>
-    );
+	return (
+		<Stack>
+			<StackItem>
+				<b>SharedCounter</b>
+			</StackItem>
+			<StackItem>Value: {value}</StackItem>
+		</Stack>
+	);
 }

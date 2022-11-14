@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "@fluid-tools/client-debugger";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
+import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "@fluid-tools/client-debugger";
 
 /**
  * {@link @fluid-tools/client-debugger#IFluidClientDebugger} implementation which listens to window
@@ -15,8 +15,8 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
  * Messages are posted by the debugger instance on the client side.
  */
 export class ExtensionDebugger
-    extends TypedEventEmitter<IFluidClientDebuggerEvents>
-    implements IFluidClientDebugger
+	extends TypedEventEmitter<IFluidClientDebuggerEvents>
+	implements IFluidClientDebugger
 {
-    public constructor()
+	public constructor();
 }

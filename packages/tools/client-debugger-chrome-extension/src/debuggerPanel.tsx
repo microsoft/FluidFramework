@@ -17,25 +17,24 @@ export const panelClassName = "fluid-debug-view-panel";
  * Mounts itself automatically to the right side of the screen.
  */
 export function DebuggerPanel(): React.ReactElement {
-    // KLUDGE until we have component that manages registry stuff.
-    const debuggers = getFluidClientDebuggers();
-    const containerId = debuggers.length === 0 ? "0" : debuggers[0].containerId;
+	// KLUDGE until we have component that manages registry stuff.
+	const debuggers = getFluidClientDebuggers();
+	const containerId = debuggers.length === 0 ? "0" : debuggers[0].containerId;
 
-
-    return (
-        <div
-            style={{
-                position: "fixed",
-                width: "400px",
-                height: "100%",
-                top: "0px",
-                right: "0px",
-                zIndex: "999999999",
-                backgroundColor: "darkgray", // TODO: remove
-            }}
-            className={panelClassName}
-        >
-            <FluidClientDebugger containerId={containerId} />
-        </div>
-    );
+	return (
+		<div
+			style={{
+				position: "fixed",
+				width: "400px",
+				height: "100%",
+				top: "0px",
+				right: "0px",
+				zIndex: "999999999",
+				backgroundColor: "darkgray", // TODO: remove
+			}}
+			className={panelClassName}
+		>
+			<FluidClientDebugger containerId={containerId} />
+		</div>
+	);
 }

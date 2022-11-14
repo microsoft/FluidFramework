@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import {
-    IStackItemStyles,
-    IStackStyles,
-    IconButton,
-    Stack,
-    StackItem,
-    TooltipHost,
+	IStackItemStyles,
+	IStackStyles,
+	IconButton,
+	Stack,
+	StackItem,
+	TooltipHost,
 } from "@fluentui/react";
 import React from "react";
 
@@ -32,7 +32,7 @@ const incrementButtonTooltipId = "increment-counter-button";
  * {@link CounterWidget} input props.
  */
 export interface CounterWidgetProps {
-    counter: SharedCounter;
+	counter: SharedCounter;
 }
 
 /**
@@ -41,75 +41,75 @@ export interface CounterWidgetProps {
  * Affords simple incrementing and decrementing via buttons.
  */
 export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
-    const { counter } = props;
+	const { counter } = props;
 
-    const [counterValue, setCounterValue] = React.useState<number>(counter.value);
+	const [counterValue, setCounterValue] = React.useState<number>(counter.value);
 
-    React.useEffect(() => {
-        function updateCounterValue(delta: number, newValue: number): void {
-            setCounterValue(Math.max(newValue, 0));
-        }
+	React.useEffect(() => {
+		function updateCounterValue(delta: number, newValue: number): void {
+			setCounterValue(Math.max(newValue, 0));
+		}
 
-        counter.on("incremented", updateCounterValue);
+		counter.on("incremented", updateCounterValue);
 
-        return (): void => {
-            counter.off("incremented", updateCounterValue);
-        };
-    }, [counter]);
+		return (): void => {
+			counter.off("incremented", updateCounterValue);
+		};
+	}, [counter]);
 
-    /**
-     * Decrement the shared counter by 1.
-     */
-    function decrementCounter(): void {
-        counter.increment(-1);
-    }
+	/**
+	 * Decrement the shared counter by 1.
+	 */
+	function decrementCounter(): void {
+		counter.increment(-1);
+	}
 
-    /**
-     * Increment the shared counter by 1.
-     */
-    function incrementCounter(): void {
-        counter.increment(1);
-    }
+	/**
+	 * Increment the shared counter by 1.
+	 */
+	function incrementCounter(): void {
+		counter.increment(1);
+	}
 
-    const stackStyles: IStackStyles = {
-        root: {
-            alignItems: "center",
-        },
-    };
+	const stackStyles: IStackStyles = {
+		root: {
+			alignItems: "center",
+		},
+	};
 
-    const stackItemStyles: IStackItemStyles = {
-        root: {
-            padding: "5px",
-        },
-    };
+	const stackItemStyles: IStackItemStyles = {
+		root: {
+			padding: "5px",
+		},
+	};
 
-    return (
-        <Stack horizontal styles={stackStyles}>
-            <StackItem styles={stackItemStyles}>
-                <TooltipHost
-                    content="Decrement counter by 1 (min 0)."
-                    id={decrementButtonTooltipId}
-                >
-                    <IconButton
-                        onClick={decrementCounter}
-                        disabled={counterValue === 0}
-                        menuIconProps={{ iconName: "CalculatorSubtract" }}
-                        aria-describedby={decrementButtonTooltipId}
-                    />
-                </TooltipHost>
-            </StackItem>
-            <StackItem styles={stackItemStyles}>
-                <div>{counterValue}</div>
-            </StackItem>
-            <StackItem styles={stackItemStyles}>
-                <TooltipHost content="Increment counter by 1." id={incrementButtonTooltipId}>
-                    <IconButton
-                        onClick={incrementCounter}
-                        menuIconProps={{ iconName: "CalculatorAddition" }}
-                        aria-describedby={incrementButtonTooltipId}
-                    />
-                </TooltipHost>
-            </StackItem>
-        </Stack>
-    );
+	return (
+		<Stack horizontal styles={stackStyles}>
+			<StackItem styles={stackItemStyles}>
+				<TooltipHost
+					content="Decrement counter by 1 (min 0)."
+					id={decrementButtonTooltipId}
+				>
+					<IconButton
+						onClick={decrementCounter}
+						disabled={counterValue === 0}
+						menuIconProps={{ iconName: "CalculatorSubtract" }}
+						aria-describedby={decrementButtonTooltipId}
+					/>
+				</TooltipHost>
+			</StackItem>
+			<StackItem styles={stackItemStyles}>
+				<div>{counterValue}</div>
+			</StackItem>
+			<StackItem styles={stackItemStyles}>
+				<TooltipHost content="Increment counter by 1." id={incrementButtonTooltipId}>
+					<IconButton
+						onClick={incrementCounter}
+						menuIconProps={{ iconName: "CalculatorAddition" }}
+						aria-describedby={incrementButtonTooltipId}
+					/>
+				</TooltipHost>
+			</StackItem>
+		</Stack>
+	);
 }

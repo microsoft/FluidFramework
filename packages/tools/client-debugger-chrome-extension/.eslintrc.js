@@ -4,12 +4,12 @@
  */
 
 module.exports = {
-    extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-    parserOptions: {
-        project: ["./tsconfig.json"],
-    },
-    rules: {
-        // Disabled because they conflict with Prettier.
-        "unicorn/no-nested-ternary": "off",
-    },
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+	rules: {
+		// Disabled because they conflict with Prettier.
+		"unicorn/no-nested-ternary": "off",
+	},
 };

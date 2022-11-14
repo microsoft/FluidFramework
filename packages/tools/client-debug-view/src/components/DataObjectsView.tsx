@@ -13,10 +13,10 @@ import { Accordion } from "./utility-components";
  * {@link DataObjectsView} input props.
  */
 export interface DataObjectsViewProps extends HasClientDebugger {
-    /**
-     * {@inheritDoc RendererOptions}
-     */
-    renderOptions: SharedObjectRenderOptions;
+	/**
+	 * {@inheritDoc RendererOptions}
+	 */
+	renderOptions: SharedObjectRenderOptions;
 }
 
 /**
@@ -27,28 +27,28 @@ export interface DataObjectsViewProps extends HasClientDebugger {
  * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-    const { clientDebugger, renderOptions } = props;
+	const { clientDebugger, renderOptions } = props;
 
-    const { containerData } = clientDebugger;
+	const { containerData } = clientDebugger;
 
-    const objects = Object.entries(containerData).map(([key, value]) => ({
-        name: key,
-        loadableObject: value,
-    }));
+	const objects = Object.entries(containerData).map(([key, value]) => ({
+		name: key,
+		loadableObject: value,
+	}));
 
-    const children = objects.map((object) => (
-        <Accordion header={<b>{object.name}</b>}>
-            <FluidObjectView
-                fluidObjectHandle={object.loadableObject.handle}
-                renderOptions={renderOptions}
-            />
-        </Accordion>
-    ));
+	const children = objects.map((object) => (
+		<Accordion header={<b>{object.name}</b>}>
+			<FluidObjectView
+				fluidObjectHandle={object.loadableObject.handle}
+				renderOptions={renderOptions}
+			/>
+		</Accordion>
+	));
 
-    return (
-        <div className="data-objects-view">
-            <h3>Container Data</h3>
-            {children}
-        </div>
-    );
+	return (
+		<div className="data-objects-view">
+			<h3>Container Data</h3>
+			{children}
+		</div>
+	);
 }

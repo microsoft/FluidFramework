@@ -10,13 +10,11 @@ import { SharedString } from "@fluidframework/sequence";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
 
 import {
-    AudienceMemberView,
-    AudienceMemberViewProps,
-    OpView,
-    OpViewProps,
-    SharedCounterView,
-    SharedMapView,
-    SharedStringView,
+	AudienceMemberView,
+	AudienceMemberViewProps,
+	SharedCounterView,
+	SharedMapView,
+	SharedStringView,
 } from "./components";
 
 // TODOs:
@@ -37,8 +35,8 @@ export type RenderChild = (childObject: unknown) => React.ReactElement;
  * Signature for data object view renderer callbacks.
  */
 export type RenderSharedObject = (
-    sharedObject: SharedObjectCore, // TODO: is this the right type?
-    renderChild: RenderChild,
+	sharedObject: SharedObjectCore, // TODO: is this the right type?
+	renderChild: RenderChild,
 ) => React.ReactElement;
 
 /**
@@ -61,10 +59,10 @@ export type SharedObjectType = string;
  * specified type and renders a `ReactElement` visualizing the data as desired.
  */
 export interface SharedObjectRenderOptions {
-    /**
-     * Individual render policies, keyed by {@link SharedObjectType}.
-     */
-    [k: SharedObjectType]: RenderSharedObject;
+	/**
+	 * Individual render policies, keyed by {@link SharedObjectType}.
+	 */
+	[k: SharedObjectType]: RenderSharedObject;
 }
 
 /**
@@ -81,15 +79,15 @@ export interface SharedObjectRenderOptions {
  * - {@link @fluidframework/sequence#SharedString}
  */
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions = {
-    [SharedCounter.getFactory().type]: (sharedObject) => (
-        <SharedCounterView sharedCounter={sharedObject as SharedCounter} />
-    ),
-    [SharedMap.getFactory().type]: (sharedObject, renderChild) => (
-        <SharedMapView sharedMap={sharedObject as SharedMap} renderChild={renderChild} />
-    ),
-    [SharedString.getFactory().type]: (sharedObject) => (
-        <SharedStringView sharedString={sharedObject as SharedString} />
-    ),
+	[SharedCounter.getFactory().type]: (sharedObject) => (
+		<SharedCounterView sharedCounter={sharedObject as SharedCounter} />
+	),
+	[SharedMap.getFactory().type]: (sharedObject, renderChild) => (
+		<SharedMapView sharedMap={sharedObject as SharedMap} renderChild={renderChild} />
+	),
+	[SharedString.getFactory().type]: (sharedObject) => (
+		<SharedStringView sharedString={sharedObject as SharedString} />
+	),
 };
 
 /**
@@ -98,49 +96,42 @@ export const defaultSharedObjectRenderers: SharedObjectRenderOptions = {
  * @remarks Custom renderers will take precendence over library defaults.
  */
 export function getSharedObjectRendererOptionsWithDefaults(
-    userOptions: SharedObjectRenderOptions | undefined,
+	userOptions: SharedObjectRenderOptions | undefined,
 ): SharedObjectRenderOptions {
-    if (userOptions === undefined) {
-        return defaultSharedObjectRenderers;
-    }
+	if (userOptions === undefined) {
+		return defaultSharedObjectRenderers;
+	}
 
-    return {
-        ...defaultSharedObjectRenderers,
-        ...userOptions,
-    };
+	return {
+		...defaultSharedObjectRenderers,
+		...userOptions,
+	};
 }
 
 /**
  * Customizable rendering policies.
  */
 export interface RenderOptions {
-    /**
-     * Override policy for rendering data about an individual
-     * {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage | op}.
-     */
-    onRenderOp?: (props: OpViewProps) => React.ReactElement;
+	/**
+	 * Override policy for rendering data about an individual
+	 * {@link @fluidframework/fluid-static#IMember | audience member}.
+	 */
+	onRenderAudienceMember?: (props: AudienceMemberViewProps) => React.ReactElement;
 
-    /**
-     * Override policy for rendering data about an individual
-     * {@link @fluidframework/fluid-static#IMember | audience member}.
-     */
-    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React.ReactElement;
-
-    /**
-     * Optional policies for rendering data for different kinds of Fluid Objects.
-     *
-     * @defaultValue {@link defaultSharedObjectRenderers}
-     */
-    sharedObjectRenderOptions?: SharedObjectRenderOptions;
+	/**
+	 * Optional policies for rendering data for different kinds of Fluid Objects.
+	 *
+	 * @defaultValue {@link defaultSharedObjectRenderers}
+	 */
+	sharedObjectRenderOptions?: SharedObjectRenderOptions;
 }
 
 /**
  * System default render options.
  */
 export const defaultRenderOptions: Required<RenderOptions> = {
-    onRenderOp: (props) => <OpView {...props} />,
-    onRenderAudienceMember: (props) => <AudienceMemberView {...props} />,
-    sharedObjectRenderOptions: defaultSharedObjectRenderers,
+	onRenderAudienceMember: (props) => <AudienceMemberView {...props} />,
+	sharedObjectRenderOptions: defaultSharedObjectRenderers,
 };
 
 /**
@@ -149,17 +140,17 @@ export const defaultRenderOptions: Required<RenderOptions> = {
  * @remarks Custom renderers will take precendence over library defaults.
  */
 export function getRenderOptionsWithDefaults(
-    userOptions: RenderOptions | undefined,
+	userOptions: RenderOptions | undefined,
 ): Required<RenderOptions> {
-    if (userOptions === undefined) {
-        return defaultRenderOptions;
-    }
+	if (userOptions === undefined) {
+		return defaultRenderOptions;
+	}
 
-    return {
-        ...defaultRenderOptions,
-        ...userOptions,
-        sharedObjectRenderOptions: getSharedObjectRendererOptionsWithDefaults(
-            userOptions.sharedObjectRenderOptions,
-        ),
-    };
+	return {
+		...defaultRenderOptions,
+		...userOptions,
+		sharedObjectRenderOptions: getSharedObjectRendererOptionsWithDefaults(
+			userOptions.sharedObjectRenderOptions,
+		),
+	};
 }

@@ -10,17 +10,17 @@
  * When the extension icon is clicked, launch the debug view.
  */
 chrome.action.onClicked.addListener((tab) => {
-    chrome.scripting
-        .executeScript({
-            target: { tabId: tab.id ?? -1 },
-            files: ["toggleDebugger.js"],
-        })
-        .then(
-            () => {
-                /* No-op */
-            },
-            (error) => {
-                console.error(error);
-            },
-        );
+	chrome.scripting
+		.executeScript({
+			target: { tabId: tab.id ?? -1 },
+			files: ["toggleDebugger.js"],
+		})
+		.then(
+			() => {
+				/* No-op */
+			},
+			(error) => {
+				console.error(error);
+			},
+		);
 });

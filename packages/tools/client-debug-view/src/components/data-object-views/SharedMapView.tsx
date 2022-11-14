@@ -14,56 +14,56 @@ import { Accordion } from "../utility-components";
  * {@link SharedMapView} input props.
  */
 export interface SharedMapViewProps {
-    /**
-     * {@link @fluidframework/map#SharedMap} whose data will be displayed.
-     */
-    sharedMap: SharedMap;
+	/**
+	 * {@link @fluidframework/map#SharedMap} whose data will be displayed.
+	 */
+	sharedMap: SharedMap;
 
-    /**
-     * Callback to render child values in {@link SharedMapViewProps.sharedMap}.
-     */
-    renderChild: RenderChild;
+	/**
+	 * Callback to render child values in {@link SharedMapViewProps.sharedMap}.
+	 */
+	renderChild: RenderChild;
 }
 
 /**
  * Default {@link @fluidframework/map#SharedMap} viewer.
  */
 export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
-    const { sharedMap, renderChild } = props;
+	const { sharedMap, renderChild } = props;
 
-    const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
+	const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
 
-    React.useEffect(() => {
-        function updateEntries(): void {
-            setEntries([...sharedMap.entries()]);
-        }
+	React.useEffect(() => {
+		function updateEntries(): void {
+			setEntries([...sharedMap.entries()]);
+		}
 
-        sharedMap.on("valueChanged", updateEntries);
+		sharedMap.on("valueChanged", updateEntries);
 
-        return (): void => {
-            sharedMap.off("valueChanged", updateEntries);
-        };
-    }, []);
+		return (): void => {
+			sharedMap.off("valueChanged", updateEntries);
+		};
+	}, []);
 
-    return (
-        <Stack>
-            <StackItem>
-                <b>SharedMap</b>
-            </StackItem>
-            <StackItem>Entry count: {entries.length}</StackItem>
-            {entries.map(([key, value]) => (
-                <StackItem key={`map-entry-${key}`}>
-                    <Accordion
-                        header={
-                            <div>
-                                <b>"{key}"</b>
-                            </div>
-                        }
-                    >
-                        {renderChild(value)}
-                    </Accordion>
-                </StackItem>
-            ))}
-        </Stack>
-    );
+	return (
+		<Stack>
+			<StackItem>
+				<b>SharedMap</b>
+			</StackItem>
+			<StackItem>Entry count: {entries.length}</StackItem>
+			{entries.map(([key, value]) => (
+				<StackItem key={`map-entry-${key}`}>
+					<Accordion
+						header={
+							<div>
+								<b>"{key}"</b>
+							</div>
+						}
+					>
+						{renderChild(value)}
+					</Accordion>
+				</StackItem>
+			))}
+		</Stack>
+	);
 }
