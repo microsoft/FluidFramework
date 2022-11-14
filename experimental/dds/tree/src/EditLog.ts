@@ -534,8 +534,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	private evictEdits(): void {
+        assert(this.sequenceNumberToIndex !== undefined, 'Edits should never be evicted if the target length is set to infinity');
+
 		const minSequenceIndex =
-			this.sequenceNumberToIndex?.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
+			this.sequenceNumberToIndex.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
 			fail('No index associated with that sequence number.');
 		// Exclude any edits in the collab window from being evicted
 		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
@@ -556,7 +558,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			removedEdits.forEach((edit) => this.allEditIds.delete(edit.id));
 
 			// The minSequenceNumber is strictly increasing so we can clear sequence numbers before it
-			this.sequenceNumberToIndex?.deleteRange(0, this._minSequenceNumber, false);
+			this.sequenceNumberToIndex.deleteRange(0, this._minSequenceNumber, false);
 		}
 	}
 
