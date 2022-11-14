@@ -117,7 +117,7 @@ export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
 
 function getRegionFromEndpointUrl(endpointUrl: string): string | undefined {
     const definedRegions = ['westus2', 'westus3', 'eastus', 'europe']
-    for (var region in definedRegions) {
+    for (const region in definedRegions) {
         if (endpointUrl.includes(region)) {
             return region
         }
