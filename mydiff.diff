@@ -1,0 +1,246 @@
+diff --git a/azure/packages/test/scenario-runner/package.json b/azure/packages/test/scenario-runner/package.json
+index c80efd2903..658b681778 100644
+--- a/azure/packages/test/scenario-runner/package.json
++++ b/azure/packages/test/scenario-runner/package.json
+@@ -26,6 +26,7 @@
+     "lint": "npm run eslint",
+     "lint:fix": "npm run eslint:fix",
+     "start": "node ./dist/orchestratorRunner.js --config v1",
++    "start:v2": "node ./dist/orchestratorRunner.js --config v2",
+     "start:server": "node ./dist/server.js",
+     "test": "echo \"Error: no test specified\" && exit 1",
+     "test:realsvc": "npm run test:realsvc:tinylicious",
+diff --git a/azure/packages/test/scenario-runner/src/docCreatorRunnerClient.ts b/azure/packages/test/scenario-runner/src/docCreatorRunnerClient.ts
+index da3a54a4e6..020784ea2c 100644
+--- a/azure/packages/test/scenario-runner/src/docCreatorRunnerClient.ts
++++ b/azure/packages/test/scenario-runner/src/docCreatorRunnerClient.ts
+@@ -84,6 +84,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
+             runId: config.runId,
+             scenarioName: config.scenarioName,
+             namespace: "scenario:runner:DocCreator",
++            endpoint: "",//TODO
+         },
+         ["scenario:runner", "fluid:telemetry"],
+     );
+diff --git a/azure/packages/test/scenario-runner/src/logger.ts b/azure/packages/test/scenario-runner/src/logger.ts
+index a74380f7e5..6f325a754d 100644
+--- a/azure/packages/test/scenario-runner/src/logger.ts
++++ b/azure/packages/test/scenario-runner/src/logger.ts
+@@ -129,6 +129,7 @@ export async function getLogger(
+         all: {
+             runId: config.runId,
+             scenarioName: config.scenarioName,
++            endpoint: config.endpoint //TODO
+         },
+     });
+ }
+diff --git a/azure/packages/test/scenario-runner/testConfigV2.yml b/azure/packages/test/scenario-runner/testConfigV2.yml
+index 1f5d11054a..0476667782 100644
+--- a/azure/packages/test/scenario-runner/testConfigV2.yml
++++ b/azure/packages/test/scenario-runner/testConfigV2.yml
+@@ -7,7 +7,7 @@
+         key2: SharedMap
+     connectionConfig:
+       type: remote
+-      endpoint: https://alfred.westus2.fluidrelay.azure.com
++      endpoint: https://alfred.westus3.fluidrelay.azure.com
+  stages:
+   - stage-1:
+     id: 1
+@@ -20,24 +20,22 @@
+     out: ${client}
+   - stage-2:
+     id: 2
+-    name: Create empty document
++    name: Create empty documents
+     package: doc-creator
+     params:
+       connectionConfig: ${connectionConfig}
+       schema: ${schema}
+-      numDocs: 1
+-      clientStartDelayMs: 0
+-    out: ${docId}
++      numDocs: 50
++      clientStartDelayMs: 10
++    out: ${docIds}
+   - stage-3:
+     id: 3
+-    name: Create traffic on SharedMap
+-    package: shared-map-traffic
++    name: Load documents
++    package: doc-loader
+     params:
+       connectionConfig: ${connectionConfig}
+-      docId: ${docId}
+       schema: ${schema}
+-      numClients: 90
+-      clientStartDelayMs: 100
+-      writeRatePerMin: 120
+-      sharedMapKey: key1
+-      totalWriteCount: 60
++      docIds: ${docIds}
++      clientStartDelayMs: 10
++
++
+diff --git a/tools/pipelines/test-azure-frs.yml b/tools/pipelines/test-azure-frs.yml
+index 7008a866a0..7844d962b3 100644
+--- a/tools/pipelines/test-azure-frs.yml
++++ b/tools/pipelines/test-azure-frs.yml
+@@ -8,84 +8,100 @@ name: $(Build.BuildId)
+ trigger:
+   branches:
+     include:
+-    - main
+-    - next
+-    - lts
+-    - release/*
++      - main
++      - next
++      - lts
++      - release/*
+   paths:
+     include:
+-    - azure/packages/azure-client
+-    - packages/framework/loader/container-loader
+-    - packages/framework/fluid-static
+-    - packages/drivers/routerlicious-driver
+-    - packages/dds/map
+-    - tools/pipelines/test-azure-frs.yml
+-    - tools/pipelines/templates/include-test-real-service.yml
++      - azure/packages/azure-client
++      - packages/framework/loader/container-loader
++      - packages/framework/fluid-static
++      - packages/drivers/routerlicious-driver
++      - packages/dds/map
++      - tools/pipelines/test-azure-frs.yml
++      - tools/pipelines/templates/include-test-real-service.yml
+ 
+ pr: none
+ 
+ resources:
+   pipelines:
+-  - pipeline: client
+-    source: Build - client packages
+-  - pipeline: azure
+-    source: Build - azure
+-    trigger:
+-      branches:
+-        include:
+-        - releases/*
+-        - main
+-        - next
+-        - lts
++    - pipeline: client
++      source: Build - client packages
++    - pipeline: azure
++      source: Build - azure
++      trigger:
++        branches:
++          include:
++            - releases/*
++            - main
++            - next
++            - lts
+ 
+ variables:
+-- group: prague-key-vault
+-- name: testWorkspace
+-  value: $(Pipeline.Workspace)/test
++  - group: prague-key-vault
++  - name: testWorkspace
++    value: $(Pipeline.Workspace)/test
+ 
+ stages:
+   # Run Azure Client FRS Tests
+   - stage:
+-    displayName: e2e - frs perf tests
++    displayName: e2e - frs perf tests (westus2)
+     dependsOn: []
+     jobs:
+-    - template: templates/include-test-real-service.yml
+-      parameters:
+-        poolBuild: Small
+-        testPackage: "@fluidframework/azure-scenario-runner"
+-        testWorkspace: ${{ variables.testWorkspace }}
+-        testCommand: start
+-        downloadAzureTestArtifacts: true
+-        env:
+-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+-          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+-          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
++      - template: templates/include-test-real-service.yml
++        parameters:
++          poolBuild: Small
++          testPackage: "@fluidframework/azure-scenario-runner"
++          testWorkspace: ${{ variables.testWorkspace }}
++          testCommand: start
++          downloadAzureTestArtifacts: true
++          env:
++            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
++            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
++            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
++  # Run Azure Client FRS Tests
++  - stage:
++    displayName: e2e - frs perf tests (westus3)
++    dependsOn: []
++    jobs:
++      - template: templates/include-test-real-service.yml
++        parameters:
++          poolBuild: Small
++          testPackage: "@fluidframework/azure-scenario-runner"
++          testWorkspace: ${{ variables.testWorkspace }}
++          testCommand: start:v2
++          downloadAzureTestArtifacts: true
++          env:
++            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
++            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
++            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+   - stage:
+     displayName: e2e - azure client with frs
+     dependsOn: []
+     jobs:
+-    - template: templates/include-test-real-service.yml
+-      parameters:
+-        poolBuild: Small
+-        testPackage: "@fluidframework/azure-end-to-end-tests"
+-        testWorkspace: ${{ variables.testWorkspace }}
+-        testCommand: test:realsvc:azure
+-        downloadAzureTestArtifacts: true
+-        env:
+-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+-          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+-          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
++      - template: templates/include-test-real-service.yml
++        parameters:
++          poolBuild: Small
++          testPackage: "@fluidframework/azure-end-to-end-tests"
++          testWorkspace: ${{ variables.testWorkspace }}
++          testCommand: test:realsvc:azure
++          downloadAzureTestArtifacts: true
++          env:
++            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
++            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
++            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+ 
+   - stage:
+     displayName: e2e - azure client with azure local service
+     dependsOn: []
+     jobs:
+-    - template: templates/include-test-real-service.yml
+-      parameters:
+-        poolBuild: Small
+-        testPackage: "@fluidframework/azure-end-to-end-tests"
+-        testWorkspace: ${{ variables.testWorkspace }}
+-        testCommand: test:realsvc:tinylicious
+-        downloadAzureTestArtifacts: true
+-        env:
+-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
++      - template: templates/include-test-real-service.yml
++        parameters:
++          poolBuild: Small
++          testPackage: "@fluidframework/azure-end-to-end-tests"
++          testWorkspace: ${{ variables.testWorkspace }}
++          testCommand: test:realsvc:tinylicious
++          downloadAzureTestArtifacts: true
++          env:
++            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

@@ -76,8 +76,10 @@ export class TestOrchestrator {
 
     public static getConfigs(): VersionedRunConfig[] {
         return [
-            { version: "v1", config: this.getConfig("v1") },
-            { version: "v2", config: this.getConfig("v2") },
+            { version: "westus2", config: this.getConfig("westus2") },
+            { version: "westus3", config: this.getConfig("westus3") },
+            { version: "eastus", config: this.getConfig("eastus") },
+            { version: "europe", config: this.getConfig("europe") },
         ];
     }
 
@@ -231,11 +233,17 @@ export class TestOrchestrator {
 
     private static getConfigFileName(version: string): string {
         switch (version) {
-            case "v1": {
-                return "./testConfig.yml";
+            case "westus2": {
+                return "./testConfig_westus2.yml";
             }
-            case "v2": {
-                return "./testConfigV2.yml";
+            case "westus3": {
+                return "./testConfig_westus3.yml";
+            }
+            case "eastus": {
+                return "./testConfig_eastus.yml";
+            }
+            case "europe": {
+                return "./testConfig_europe.yml";
             }
             default: {
                 return "";

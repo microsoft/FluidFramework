@@ -61,6 +61,7 @@ async function main() {
         {
             runId: config.runId,
             scenarioName: config.scenarioName,
+            endpoint: config.connEndpoint,
         },
         ["scenario:runner", "fluid:telemetry"],
     );
@@ -84,6 +85,7 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             runId: config.runId,
             scenarioName: config.scenarioName,
             namespace: "scenario:runner:DocCreator",
+            endpoint: config.connEndpoint,
         },
         ["scenario:runner", "fluid:telemetry"],
     );

@@ -16,6 +16,7 @@ export interface LoggerConfig {
     scenarioName?: string;
     namespace?: string;
     runId?: string;
+    endpoint?: string;
 }
 
 class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
@@ -113,6 +114,18 @@ export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
     }
 });
 
+
+function getRegionFromEndpointUrl(endpointUrl: string): string | undefined {
+    const definedRegions = ['westus2', 'westus3', 'eastus', 'europe']
+    for (var region in definedRegions) {
+        if (endpointUrl.includes(region)) {
+            return region
+        }
+    }
+    return undefined
+}
+
+
 export async function getLogger(
     config: LoggerConfig,
     events?: string[],
@@ -129,6 +142,7 @@ export async function getLogger(
         all: {
             runId: config.runId,
             scenarioName: config.scenarioName,
+            endpoint: getRegionFromEndpointUrl(config.endpoint) // parse URL to only contain the region
         },
     });
 }
