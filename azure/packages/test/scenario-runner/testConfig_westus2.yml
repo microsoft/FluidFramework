@@ -1,5 +1,5 @@
- title: Single doc load test
- description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
+ title: 10 new empty docs 20 loads eeach
+ description: In this scenario we create 10 docs with no data, then just try to load them 20 times each
  env:
     schema:
       initialObjects:
@@ -25,8 +25,8 @@
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 50
-      clientStartDelayMs: 10
+      numDocs: 10
+      clientStartDelayMs: 500
     out: ${docIds}
   - stage-3:
     id: 3
@@ -34,8 +34,9 @@
     package: doc-loader
     params:
       connectionConfig: ${connectionConfig}
+      numOfLoads: 20
       schema: ${schema}
       docIds: ${docIds}
-      clientStartDelayMs: 10
+      clientStartDelayMs: 500
 
 

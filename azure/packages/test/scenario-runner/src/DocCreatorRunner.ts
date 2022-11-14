@@ -82,9 +82,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
             throw new Error("Not all clients closed sucesfully.");
         }
 
-        if (this.docIds.length > 0) {
-            return this.docIds.length === 1 ? this.docIds[0] : this.docIds;
-        }
+        return this.docIds;
     }
 
     public stop(): void {}
