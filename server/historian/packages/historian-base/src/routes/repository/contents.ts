@@ -53,7 +53,7 @@ export function create(
                 contentP,
                 response,
                 false);
-    });
+        });
 
     return router;
 }

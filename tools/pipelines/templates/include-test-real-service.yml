@@ -40,10 +40,6 @@ parameters:
   type: string
   default: null
 
-- name: extraDependencies
-  type: string
-  default: null
-
 - name: downloadAzureTestArtifacts
   type: boolean
   default: false
@@ -149,7 +145,6 @@ jobs:
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
               testFileTarName=${{ parameters.testFileTarName }}
-              extraDependencies=${{ parameters.extraDependencies }}
             "
 
       # Install
@@ -292,7 +287,9 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+          # --use-openssl-ca flag required so node uses the build agent's cert store, where we installed
+          # the self-signed cert for the r11s deployment
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }} --use-openssl-ca'
 
       # Upload results
       - task: PublishTestResults@2

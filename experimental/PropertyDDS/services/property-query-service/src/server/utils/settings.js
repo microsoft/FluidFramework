@@ -12,7 +12,6 @@
 var fs = require('fs'),
     path = require('path'),
     nconf = require('nconf'),
-    jsonlint = require('jsonlint'),
     utils = require('./settings_utils.js');
 
 /**
@@ -117,7 +116,7 @@ function Settings(in_configJSONPaths, in_dynamicDefaults, in_options) {
     for (itr = 0; itr < configJSONPaths.length; itr++) {
       const fileText = fs.readFileSync(configJSONPaths[itr], 'utf8');
       try {
-        availableData.push(jsonlint.parse(fileText, configJSONPaths[itr]));
+        availableData.push(JSON.parse(fileText, configJSONPaths[itr]));
       } catch (err) {
         console.error('Error parsing: ', configJSONPaths[itr]);
         if (exitOnError) {

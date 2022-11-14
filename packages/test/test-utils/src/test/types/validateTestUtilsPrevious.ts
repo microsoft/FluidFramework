@@ -395,6 +395,7 @@ declare function get_current_InterfaceDeclaration_ITestContainerConfig():
 declare function use_old_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<old.ITestContainerConfig>);
 use_old_InterfaceDeclaration_ITestContainerConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestContainerConfig());
 
 /*
@@ -623,6 +624,7 @@ declare function get_old_ClassDeclaration_TestFluidObject():
 declare function use_current_ClassDeclaration_TestFluidObject(
     use: TypeOnly<current.TestFluidObject>);
 use_current_ClassDeclaration_TestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestFluidObject());
 
 /*

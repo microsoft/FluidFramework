@@ -338,7 +338,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         return { parent: anchor, fieldKey: path.field };
     }
     getFieldPath(): FieldUpPath {
-        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        assert(this.innerCursor !== undefined, 0x45f /* Cursor must be current to be used */);
         return this.innerCursor.getFieldPath();
     }
     get mode(): CursorLocationType {
@@ -463,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
-        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
         return new Cursor(this.forest, this.innerCursor.fork());
     }
 
