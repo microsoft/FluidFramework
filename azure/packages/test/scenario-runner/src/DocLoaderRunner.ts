@@ -100,7 +100,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
     private async createChild(childArgs: string[]): Promise<boolean> {
         const envVar = { ...process.env };
         const runnerProcess = child_process.spawn("node", childArgs, {
-            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            stdio: ["inherit", "inherit", "inherit", "ipc"],
             env: envVar,
         });
 
