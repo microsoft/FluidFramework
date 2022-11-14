@@ -41,7 +41,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getCommitCore.bind(this),
-                [ sha ],
+                [sha],
                 GitRestLumberEventName.GetCommit,
                 { [BaseGitRestTelemetryProperties.sha]: sha })
             : this.getCommitCore(sha);
@@ -55,7 +55,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getCommitsCore.bind(this),
-                [ sha, count, externalWriterConfig ],
+                [sha, count, externalWriterConfig],
                 GitRestLumberEventName.GetCommits,
                 {
                     [BaseGitRestTelemetryProperties.sha]: sha,
@@ -68,7 +68,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getTreeCore.bind(this),
-                [ rootSha, recursive ],
+                [rootSha, recursive],
                 GitRestLumberEventName.GetTree,
                 {
                     [BaseGitRestTelemetryProperties.sha]: rootSha,
@@ -81,7 +81,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getBlobCore.bind(this),
-                [ sha ],
+                [sha],
                 GitRestLumberEventName.GetBlob,
                 { [BaseGitRestTelemetryProperties.sha]: sha })
             : this.getBlobCore(sha);
@@ -91,7 +91,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getContentCore.bind(this),
-                [ commit, contentPath ],
+                [commit, contentPath],
                 GitRestLumberEventName.GetContent)
             : this.getContentCore(commit, contentPath);
     }
@@ -100,7 +100,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getRefCore.bind(this),
-                [ refId, externalWriterConfig ],
+                [refId, externalWriterConfig],
                 GitRestLumberEventName.GetRef,
                 { [BaseGitRestTelemetryProperties.ref]: refId })
             : this.getRefCore(refId, externalWriterConfig);
@@ -119,7 +119,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.createBlobCore.bind(this),
-                [ createBlobParams ],
+                [createBlobParams],
                 GitRestLumberEventName.CreateBlob)
             : this.createBlobCore(createBlobParams);
     }
@@ -128,7 +128,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.createTreeCore.bind(this),
-                [ params ],
+                [params],
                 GitRestLumberEventName.CreateTree)
             : this.createTreeCore(params);
     }
@@ -137,7 +137,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.createCommitCore.bind(this),
-                [ commit ],
+                [commit],
                 GitRestLumberEventName.CreateCommit)
             : this.createCommitCore(commit);
     }
@@ -149,7 +149,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.createRefCore.bind(this),
-                [ createRefParams, externalWriterConfig ],
+                [createRefParams, externalWriterConfig],
                 GitRestLumberEventName.CreateRef)
             : this.createRefCore(createRefParams, externalWriterConfig);
     }
@@ -162,7 +162,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.patchRefCore.bind(this),
-                [ refId, patchRefParams, externalWriterConfig ],
+                [refId, patchRefParams, externalWriterConfig],
                 GitRestLumberEventName.PatchRef,
                 { [BaseGitRestTelemetryProperties.ref]: refId })
             : this.patchRefCore(refId, patchRefParams, externalWriterConfig);
@@ -172,7 +172,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.deleteRefCore.bind(this),
-                [ refId ],
+                [refId],
                 GitRestLumberEventName.DeleteRef,
                 { [BaseGitRestTelemetryProperties.ref]: refId })
             : this.deleteRefCore(refId);
@@ -182,7 +182,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.getTagCore.bind(this),
-                [ tagId ],
+                [tagId],
                 GitRestLumberEventName.GetTag,
                 { [BaseGitRestTelemetryProperties.tag]: tagId })
             : this.getTagCore(tagId);
@@ -192,7 +192,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         return this.enableRepositoryManagerMetrics ?
             this.executeApiWithMetric(
                 this.createTagCore.bind(this),
-                [ tagParams ],
+                [tagParams],
                 GitRestLumberEventName.CreateTag)
             : this.createTagCore(tagParams);
     }
