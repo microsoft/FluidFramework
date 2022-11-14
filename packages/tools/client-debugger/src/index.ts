@@ -27,8 +27,8 @@ export {
 } from "./Logs";
 
 export {
-    closeFluidClientDebugger,
-    getFluidClientDebuggers,
-    getFluidClientDebugger,
-    initializeFluidClientDebugger,
+	closeFluidClientDebugger,
+	getFluidClientDebuggers,
+	getFluidClientDebugger,
+	initializeFluidClientDebugger,
 } from "./Registry";
