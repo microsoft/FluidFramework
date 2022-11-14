@@ -16,9 +16,9 @@ import {
     IRepositoryManager,
     IFileSystemManagerFactory,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
     IFileSystemManager,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
@@ -29,7 +29,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly directory: string,
         private readonly externalStorageManager: IExternalStorageManager,
         private readonly lumberjackBaseProperties: Record<string, any>,
-    ) {}
+    ) { }
 
     public get path(): string {
         return this.directory;
@@ -378,12 +378,12 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
         lumberjackBaseProperties: Record<string, any>): IRepositoryManager {
-            return new NodegitRepositoryManager(
-                repoOwner,
-                repoName,
-                repo,
-                gitdir,
-                externalStorageManager,
-                lumberjackBaseProperties);
+        return new NodegitRepositoryManager(
+            repoOwner,
+            repoName,
+            repo,
+            gitdir,
+            externalStorageManager,
+            lumberjackBaseProperties);
     }
 }

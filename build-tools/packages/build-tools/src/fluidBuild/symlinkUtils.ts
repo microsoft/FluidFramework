@@ -21,7 +21,7 @@ import {
 } from "../common/utils";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 
-const { verbose } = defaultLogger;
+const { warning, verbose } = defaultLogger;
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
     verbose(`Writing ${outFile}`);
@@ -151,7 +151,7 @@ export async function symlinkPackage(
     if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
         // If the node_modules isn't install at all, just don't check
         if (options.symlink) {
-            console.warn(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`);
+            warning(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`);
         }
         return { pkg, count };
     }
@@ -170,7 +170,7 @@ export async function symlinkPackage(
             );
             if (!satisfied) {
                 if (sameMonoRepo) {
-                    console.warn(
+                    warning(
                         `${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`,
                     );
                 }
@@ -206,7 +206,7 @@ export async function symlinkPackage(
                                         await revertSymlink(symlinkPath, pkg, depBuildPackage);
                                         count++;
                                     } else {
-                                        console.warn(
+                                        warning(
                                             `${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`,
                                         );
                                     }
@@ -231,7 +231,7 @@ export async function symlinkPackage(
                 }
 
                 if (!options.symlink) {
-                    console.warn(
+                    warning(
                         `${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} not linked. Use --symlink or --symlink:full to fix.`,
                     );
                     continue;

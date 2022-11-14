@@ -20,6 +20,7 @@ export {
     getEditableTreeContext,
     typeSymbol,
     typeNameSymbol,
+    indexSymbol,
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
@@ -85,3 +86,5 @@ export {
     parseSummary as loadSummary,
     stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { runSynchronousTransaction } from "./defaultTransaction";

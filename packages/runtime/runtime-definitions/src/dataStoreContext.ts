@@ -108,7 +108,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
- * A fluid router with the capability of being assigned an alias
+ * Exposes some functionality/features of a data store:
+ * - Handle to the data store's entryPoint
+ * - Fluid router for the data store
+ * - Can be assigned an alias
  */
 export interface IDataStore extends IFluidRouter {
     /**
@@ -119,6 +122,17 @@ export interface IDataStore extends IFluidRouter {
      * @param alias - Given alias for this datastore.
      */
     trySetAlias(alias: string): Promise<AliasResult>;
+
+    /**
+     * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
+     * with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a
+     * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
+     *
+     * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
+     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
+     * the data store's entryPoint.
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
 }
 
 /**
@@ -161,10 +175,11 @@ export interface IContainerRuntimeBase extends
     ): Promise<IDataStore>;
 
     /**
-     * Creates data store. Returns router of data store. Data store is not bound to container,
-     * store in such state is not persisted to storage (file). Storing a handle to this store
-     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
-     * gets attached to storage) will result in this store being attached to storage.
+     * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
+     * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
+     * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
+     * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
+     * store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
@@ -203,9 +218,9 @@ export enum BindState {
 }
 
 /**
- * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
+ * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
- * Functionality include attach, snapshot, op/signal processing, request routes,
+ * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
  */
 export interface IFluidDataStoreChannel extends
@@ -299,6 +314,18 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
+
+    /**
+     * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
+     * with the component. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented
+     * in a particular scenario) fall back to the current approach of requesting the root object through the request
+     * pattern.
+     *
+     * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
+     * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
+     * the component's entryPoint.
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
 }
 
 export type CreateChildSummarizerNodeFn = (

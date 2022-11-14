@@ -25,6 +25,7 @@ import {
     ISummarizeResult,
     ITelemetryContext,
     IGarbageCollectionNodeData,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
@@ -34,6 +35,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    generateStack,
     loggerToMonitoringContext,
     MonitoringContext,
     PerformanceEvent,
@@ -60,6 +62,8 @@ const GCVersion = 1;
 export const gcTreeKey = "gc";
 // They prefix for GC blobs in the GC tree in summary.
 export const gcBlobPrefix = "__gc";
+// The key for tombstone blob in the GC tree in summary.
+export const gcTombstoneBlobKey = "__tombstones";
 
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -213,6 +217,14 @@ interface IUnreferencedEventProps {
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
+}
+
+/**
+ * The GC data that is tracked for a summary that is submitted.
+ */
+interface IGCSummaryTrackingData {
+    serializedGCState: string | undefined;
+    serializedTombstones: string | undefined;
 }
 
 /**
@@ -395,17 +407,19 @@ export class GarbageCollector implements IGarbageCollector {
 
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
-    /**
-     * Keeps track of the serialized GC blob from the latest summary successfully submitted to the server.
-     */
-    private latestSerializedSummaryState: string | undefined;
-    /**
-     * Keeps track of the serialized GC blob from the last GC run of the client.
-     */
-    private pendingSerializedSummaryState: string | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
+    private tombstones: string[] = [];
+
+    /**
+     * Keeps track of the GC data from the latest summary successfully submitted to and acked from the server.
+     */
+    private latestSummaryData: IGCSummaryTrackingData | undefined;
+    /**
+     * Keeps track of the GC data from the last summary submitted to the server but not yet acked.
+     */
+    private pendingSummaryData: IGCSummaryTrackingData | undefined;
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
@@ -627,14 +641,20 @@ export class GarbageCollector implements IGarbageCollector {
                 // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
                 const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
                 if (gcSnapshotTree !== undefined) {
-                    const baseGCState = await getGCStateFromSnapshot(
+                    const baseGCData = await getGCDataFromSnapshot(
                         gcSnapshotTree,
                         readAndParseBlob,
                     );
-                    if (this.trackGCState) {
-                        this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(baseGCState));
+                    if (baseGCData.tombstones !== undefined && this.tombstoneMode) {
+                        this.tombstones = baseGCData.tombstones;
                     }
-                    return baseGCState;
+                    if (this.trackGCState) {
+                        this.latestSummaryData = {
+                            serializedGCState: JSON.stringify(generateSortedGCState(baseGCData.gcState)),
+                            serializedTombstones: JSON.stringify(baseGCData.tombstones),
+                        };
+                    }
+                    return baseGCData.gcState;
                 }
 
                 // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
@@ -941,35 +961,74 @@ export class GarbageCollector implements IGarbageCollector {
             };
         }
 
-        const newSerializedSummaryState = JSON.stringify(generateSortedGCState(gcState));
+        const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
+        const serializedTombstones = this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined;
 
         /**
-         * As an optimization if the GC tree hasn't changed and we're tracking the gc state, return a tree handle
-         * instead of returning the whole GC tree. If there are changes, then we want to return the whole tree.
+         * Incremental summary of GC data - If any of the GC state or tombstone state hasn't changed since the last
+         * summary, send summary handles for them. Otherwise, send the data in summary blobs.
          */
         if (this.trackGCState) {
-            this.pendingSerializedSummaryState = newSerializedSummaryState;
-            if (
-                this.latestSerializedSummaryState !== undefined &&
-                this.latestSerializedSummaryState === newSerializedSummaryState &&
-                !fullTree &&
-                trackState
-            ) {
-                const stats = mergeStats();
-                stats.handleNodeCount++;
-                return {
-                    summary: {
-                        type: SummaryType.Handle,
-                        handle: `/${gcTreeKey}`,
-                        handleType: SummaryType.Tree,
-                    },
-                    stats,
-                };
+            this.pendingSummaryData = { serializedGCState, serializedTombstones };
+            if (trackState && !fullTree && this.latestSummaryData !== undefined) {
+                // If neither GC state or tombstone state changed, send a summary handle for the entire GC data.
+                if (this.latestSummaryData.serializedGCState === serializedGCState
+                    && this.latestSummaryData.serializedTombstones === serializedTombstones) {
+                    const stats = mergeStats();
+                    stats.handleNodeCount++;
+                    return {
+                        summary: {
+                            type: SummaryType.Handle,
+                            handle: `/${gcTreeKey}`,
+                            handleType: SummaryType.Tree,
+                        },
+                        stats,
+                    };
+                }
+
+                // If either or both of GC state or tombstone state changed, build a GC summary tree.
+                return this.buildGCSummaryTree(serializedGCState, serializedTombstones, true /* trackState */);
             }
         }
+        // If not tracking GC state, build a GC summary tree without any summary handles.
+        return this.buildGCSummaryTree(serializedGCState, serializedTombstones, false /* trackState */);
+    }
 
+    /**
+     * Builds the GC summary tree which contains GC state and tombstone state.
+     * If trackState is false, both GC state and tombstone state are written as summary blobs.
+     * If trackState is true, summary blob is written for GC state or tombstone state if they changed.
+     * @param serializedGCState - The GC state serialized as string.
+     * @param serializedTombstones - THe tombstone state serialized as string.
+     * @param trackState - Whether we are tracking GC state across summaries.
+     * @returns the GC summary tree.
+     */
+    private buildGCSummaryTree(
+        serializedGCState: string,
+        serializedTombstones: string | undefined,
+        trackState: boolean,
+    ): ISummaryTreeWithStats {
+        const gcStateBlobKey = `${gcBlobPrefix}_root`;
         const builder = new SummaryTreeBuilder();
-        builder.addBlob(`${gcBlobPrefix}_root`, newSerializedSummaryState);
+
+        // If the GC state hasn't changed, write a summary handle, else write a summary blob for it.
+        if (this.latestSummaryData?.serializedGCState === serializedGCState && trackState) {
+            builder.addHandle(gcStateBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcStateBlobKey}`);
+        } else {
+            builder.addBlob(gcStateBlobKey, serializedGCState);
+        }
+
+        // If there is no tombstone data, return only the GC state.
+        if (serializedTombstones === undefined) {
+            return builder.getSummaryTree();
+        }
+
+        // If the tombstone state hasn't changed, write a summary handle, else write a summary blob for it.
+        if (this.latestSummaryData?.serializedTombstones === serializedTombstones && trackState) {
+            builder.addHandle(gcTombstoneBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcTombstoneBlobKey}`);
+        } else {
+            builder.addBlob(gcTombstoneBlobKey, serializedTombstones);
+        }
         return builder.getSummaryTree();
     }
 
@@ -1012,8 +1071,8 @@ export class GarbageCollector implements IGarbageCollector {
             this.latestSummaryGCVersion = this.currentGCVersion;
             this.initialStateNeedsReset = false;
             if (this.trackGCState) {
-                this.latestSerializedSummaryState = this.pendingSerializedSummaryState;
-                this.pendingSerializedSummaryState = undefined;
+                this.latestSummaryData = this.pendingSummaryData;
+                this.pendingSummaryData = undefined;
             }
             return;
         }
@@ -1028,15 +1087,18 @@ export class GarbageCollector implements IGarbageCollector {
 
         const gcSnapshotTree = snapshot.trees[gcTreeKey];
         if (gcSnapshotTree !== undefined && this.trackGCState) {
-            const latestGCState = await getGCStateFromSnapshot(
+            const latestGCData = await getGCDataFromSnapshot(
                 gcSnapshotTree,
                 readAndParseBlob,
             );
-            this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(latestGCState));
+            this.latestSummaryData = {
+                serializedGCState: JSON.stringify(generateSortedGCState(latestGCData.gcState)),
+                serializedTombstones: JSON.stringify(latestGCData.tombstones),
+            };
         } else {
-            this.latestSerializedSummaryState = undefined;
+            this.latestSummaryData = undefined;
         }
-        this.pendingSerializedSummaryState = undefined;
+        this.pendingSummaryData = undefined;
     }
 
     /**
@@ -1114,6 +1176,7 @@ export class GarbageCollector implements IGarbageCollector {
         currentReferenceTimestampMs: number,
     ) {
         this.previousGCDataFromLastRun = cloneGCData(gcData);
+        this.tombstones = [];
         this.newReferencesSinceLastRun.clear();
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
@@ -1146,6 +1209,12 @@ export class GarbageCollector implements IGarbageCollector {
                 );
             } else {
                 nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+                if (this.tombstoneMode && nodeStateTracker.state === UnreferencedState.SweepReady) {
+                    const nodeType = this.runtime.getNodeType(nodeId);
+                    if (nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) {
+                        this.tombstones.push(nodeId);
+                    }
+                }
             }
         }
     }
@@ -1446,6 +1515,7 @@ export class GarbageCollector implements IGarbageCollector {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                    stack: generateStack(),
                 });
             }
 
@@ -1485,15 +1555,21 @@ export class GarbageCollector implements IGarbageCollector {
 }
 
 /**
- * Gets the garbage collection state from the given snapshot tree. The GC state may be written into multiple blobs.
- * Merge the GC state from all such blobs and return the merged GC state.
+ * Gets the garbage collection data from the given snapshot tree. It contains GC state and tombstone state.
+ * The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
  */
-async function getGCStateFromSnapshot(
+async function getGCDataFromSnapshot(
     gcSnapshotTree: ISnapshotTree,
     readAndParseBlob: ReadAndParseBlob,
-): Promise<IGarbageCollectionState> {
+) {
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
+    let tombstones: string[] | undefined;
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
+        if (key === gcTombstoneBlobKey) {
+            tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+            continue;
+        }
+
         // Skip blobs that do not start with the GC prefix.
         if (!key.startsWith(gcBlobPrefix)) {
             continue;
@@ -1508,7 +1584,7 @@ async function getGCStateFromSnapshot(
         // Merge the GC state of this blob into the root GC state.
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
-    return rootGCState;
+    return { gcState: rootGCState, tombstones };
 }
 
 function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
