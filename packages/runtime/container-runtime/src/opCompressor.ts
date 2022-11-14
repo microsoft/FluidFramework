@@ -24,7 +24,7 @@ export class OpCompressor implements IBatchProcessor {
         this.logger = ChildLogger.create(logger, "OpCompressor");
     }
 
-    process(batch: IBatch): IBatch {
+    processOutgoing(batch: IBatch): IBatch {
         const messages: BatchMessage[] = [];
         this.compressedBatchCount++;
         const contentToCompress: ContainerRuntimeMessage[] = [];

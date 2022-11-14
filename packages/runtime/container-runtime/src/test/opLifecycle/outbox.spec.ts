@@ -198,7 +198,7 @@ describe("Outbox", () => {
     });
 
     const getMockCompressor = (): IBatchProcessor => ({
-        process: (batch: IBatch): IBatch => {
+        processOutgoing: (batch: IBatch): IBatch => {
             state.batchesCompressed.push(batch);
             return batch;
         },

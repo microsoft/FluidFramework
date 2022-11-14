@@ -21,7 +21,7 @@ describe("OpCompressor", () => {
     });
 
     it("Compresses single op batch", () => {
-        const compressedBatch = compressor.process(messagesToBatch([
+        const compressedBatch = compressor.processOutgoing(messagesToBatch([
             {
                 metadata: undefined,
                 localOpMetadata: undefined,
@@ -38,7 +38,7 @@ describe("OpCompressor", () => {
     });
 
     it("Compresses batch of multiple ops", () => {
-        const compressedBatch = compressor.process(messagesToBatch([{
+        const compressedBatch = compressor.processOutgoing(messagesToBatch([{
             metadata: undefined,
             localOpMetadata: undefined,
             deserializedContent: {

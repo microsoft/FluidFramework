@@ -18,7 +18,7 @@ export interface IOutboxOptions {
 };
 
 export interface IBatchProcessor {
-    process(batch: IBatch): IBatch;
+    processOutgoing(batch: IBatch): IBatch;
 }
 
 export interface IBatchProcessors {
@@ -119,7 +119,7 @@ export class Outbox {
 
         if (this.options.compressionOptions !== undefined
             && this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
-            return this.batchProcessors.compressor.process(batch);
+            return this.batchProcessors.compressor.processOutgoing(batch);
         }
 
         return batch;
