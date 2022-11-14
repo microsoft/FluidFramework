@@ -1505,6 +1505,9 @@ export class GarbageCollector implements IGarbageCollector {
         // For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
         // For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
         // but it's a good signal nonetheless and we can consume it with a grain of salt.
+        // Events generated:
+        // InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
+        // SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
