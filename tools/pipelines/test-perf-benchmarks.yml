@@ -167,7 +167,7 @@ stages:
               "
 
         - task: Bash@3
-          displayName: 'Install aria-logger'
+          displayName: 'Prepare telemetry-generator'
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
