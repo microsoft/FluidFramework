@@ -84,7 +84,7 @@
     "fluid-framework": "^1.4.0-108057",
     "js-yaml": "^4.1.0",
     "mocha": "^10.0.0",
-    "prettier": "^2.7.1",
+    "prettier": "^2.6.2",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.89251",
