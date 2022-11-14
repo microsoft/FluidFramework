@@ -214,7 +214,7 @@ export interface IEditLogEvents extends IEvent {
 export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 
-	private readonly sequenceNumberToIndex: BTree<number, number> = new BTree([[0, 0]]);
+	private readonly sequenceNumberToIndex?: BTree<number, number>;
 	private _minSequenceNumber = 0;
 
 	private readonly sequencedEdits: Edit<TChange>[] = [];
@@ -269,8 +269,11 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			this.registerEditAddedHandler(handler);
 		}
 
-		for (const handler of editEvictionHandlers) {
-			this.registerEditEvictionHandler(handler);
+		if (targetLength !== Infinity) {
+			this.sequenceNumberToIndex = new BTree([[0, 0]]);
+			for (const handler of editEvictionHandlers) {
+				this.registerEditEvictionHandler(handler);
+			}
 		}
 
 		editChunks.forEach((editChunkOrHandle) => {
@@ -500,7 +503,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		};
 		this.allEditIds.set(id, sequencedEditId);
 		if (info !== undefined) {
-			this.sequenceNumberToIndex.set(info.sequenceNumber, index);
+			this.sequenceNumberToIndex?.set(info.sequenceNumber, index);
 		}
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
@@ -529,7 +532,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	private evictEdits(): void {
 		const minSequenceIndex =
-			this.sequenceNumberToIndex.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
+			this.sequenceNumberToIndex?.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
 			fail('No index associated with that sequence number.');
 		// Exclude any edits in the collab window from being evicted
 		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
@@ -550,7 +553,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			removedEdits.forEach((edit) => this.allEditIds.delete(edit.id));
 
 			// The minSequenceNumber is strictly increasing so we can clear sequence numbers before it
-			this.sequenceNumberToIndex.deleteRange(0, this._minSequenceNumber, false);
+			this.sequenceNumberToIndex?.deleteRange(0, this._minSequenceNumber, false);
 		}
 	}
 
