@@ -11,8 +11,8 @@ import {
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
-import { FluidClientDebuggerProps } from "../IFluidClientDebugger";
 import {
+	FluidClientDebuggerProps,
 	clearDebuggerRegistry,
 	closeFluidClientDebugger,
 	getDebuggerRegistry,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IContainer, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -287,26 +287,4 @@ export interface IFluidClientDebugger
 	 * All data recording will stop, and no further state change events will be emitted.
 	 */
 	dispose(): void;
-}
-
-/**
- * Properties for configuring a {@link IFluidClientDebugger}.
- */
-export interface FluidClientDebuggerProps {
-	/**
-	 * The ID of the Container with which the debugger will be associated.
-	 */
-	containerId: string;
-
-	/**
-	 * The Container with which the debugger will be associated.
-	 */
-	container: IContainer;
-
-	/**
-	 * Data belonging to the Container.
-	 *
-	 * @remarks The debugger will not mutate this data.
-	 */
-	containerData: Record<string, IFluidLoadable>;
 }
