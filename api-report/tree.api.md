@@ -468,6 +468,7 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IForestSubscription;
     forgetAnchor(anchor: Anchor): void;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
