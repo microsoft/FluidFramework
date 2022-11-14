@@ -205,7 +205,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: pack
-              patterns: "**/${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz"
+              patterns: "**/${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
@@ -216,7 +216,7 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
                 echo "Install ${{ execTestPackage }}"
-                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(execTestPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
                 echo $TEST_PACKAGE_FILE_PATTERN
@@ -225,12 +225,12 @@ stages:
                 echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
                 echo `ls $TEST_PACKAGE_PATH_PATTERN`
 
-                # if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-                # else
-                #   ls -1 $TEST_PACKAGE_PATH_PATTERN
-                #   echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
-                # fi
+                if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+                  TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
+                else
+                  ls -1 $TEST_PACKAGE_PATH_PATTERN
+                  echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
+                fi
 
                 npm install $TEST_PACKAGE_TGZ
 
