@@ -177,7 +177,6 @@ stages:
               npm i;
               npm run build:compile;
 
-        # Download Test Files
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
