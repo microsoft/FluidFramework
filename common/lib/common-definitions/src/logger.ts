@@ -45,12 +45,167 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
     eventName: string;
 }
 
+export type TelemetryErrorCategory = "verbose" | "information" | "warning" | "error" | "critical";
+
+/**
+ * General-use event. These statically typed events that consumers can understand and act on.
+ */
+export interface ITelemetryGenEventBase extends ITelemetryBaseEvent {
+    /*
+     * Flag indicating this is general use event.
+     * Note: It may seem redundant if we end up emitting general use events separately.
+     * It may be useful if all (dev and general-use) telemetry is routed to a singlee table.
+     */
+    genUse: true;
+    /*
+     * Subtype. Further description in sublasses.
+     */
+    type: "api" | "service" | "event" | "error";
+    /*
+     * Package name where this event was emitted from.
+     * It may be useful for consumers to filter out packages whose APIs they are consuming directly.
+     */
+    packageName: string;
+    /*
+     * Class name where this event was emitted from.
+     * It may be useful for consumers to filter out classes whose APIs they are consuming directly.
+     */
+    className: string;
+    /*
+     * Fluid document ID (when applicable).
+     */
+    docId?: string;
+    /*
+     * Client ID that generated this telemetry event (when applicable).
+     */
+    clientId?: string;
+}
+
+/**
+ * General-use API event. Generated to log a request received by API.
+ */
+export interface ITelemetryGenApiEvent extends ITelemetryGenEventBase {
+    type: "api";
+    /*
+     * API name that generated this telemetry.
+     */
+    apiName: string;
+    /*
+     * Duration of the call.
+     */
+    duration: number;
+    /*
+     * Identifier of a request call instance.
+     * Used for correlation (TODO) between request and other telemetry items.
+     */
+    id: string;
+    /*
+     * Flag indicating if call suceeded or failed.
+     */
+    success: boolean;
+    /*
+     * Optional response status.
+     */
+    status?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    details?: any;
+}
+
+/**
+ * General-use Error event. Typically represents an exception that causes an operation to fail.
+ */
+export interface ITelemetryGenErrorEvent extends ITelemetryGenEventBase {
+    type: "error";
+    /*
+     * Used for exceptions grouping (ex exception type + function).
+     */
+    errorCode: string;
+    /*
+     * Optional message.
+     */
+    message?: string;
+    /*
+     * Severity level.
+     */
+    severityLevel: TelemetryErrorCategory;
+    /*
+     * Optional strack trac
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stackTrace?: any;
+    /*
+     * Stack track or more details on conditions leading to error
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    details?: any;
+}
+
+/**
+ * General-use dependency event. Represents a call from app to an external service or storage.
+ */
+export interface ITelemetryGenServiceEvent extends ITelemetryGenEventBase {
+    type: "service";
+    /*
+     * Duration of the call.
+     */
+    duration: number;
+    /*
+     * Identifier of a dependency call instance (correlation id).
+     */
+    id?: string;
+    /*
+     * Target site of a dependency call. Examples are server name, host address (with PII considerations).
+     */
+    target: string;
+    /*
+     * Result code. Ex. HTTP status code.
+     */
+    resultCode: string;
+    /*
+     * Flag indicating success/failure.
+     */
+    success: boolean;
+}
+
+/**
+ * General-use API event - Represents an event firing on a specific class.
+ * (Need a better name. "Event" has few different meanings in logger.)
+ */
+export interface ITelemetryGenClassEvent extends ITelemetryGenEventBase {
+    type: "event";
+    /*
+     * Optional bag od details on the event.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    details?: any;
+}
+
+export type ITelemetryGenEvent =
+    | ITelemetryGenClassEvent
+    | ITelemetryGenServiceEvent
+    | ITelemetryGenErrorEvent
+    | ITelemetryGenClassEvent;
+
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
+    /**
+     * Unstructured dev-only telemetry. Event properties can change across minor or major releases.
+     * This stream is inteded to generate telemetry that is actionable to Fluid developers.
+     * Implemented by derived classes
+     * @param event - Telemetry event to send over
+     */
     send(event: ITelemetryBaseEvent): void;
+
+    /**
+     * General-use, static telemetry that is meant for general consumption. Events are strongly typed and follow
+     * minor/major "breaking" rules.
+     * Implemented by derived classes
+     * @param event - General-use telemetry event to send over
+     */
+    sendGenTelemetry?(event: ITelemetryGenEvent): void;
 }
 
 /**
@@ -94,13 +249,6 @@ export interface ILoggingError extends Error {
  * Creates sub-logger that appends properties to all events
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    /**
-     * Actual implementation that sends telemetry event
-     * Implemented by derived classes
-     * @param event - Telemetry event to send over
-     */
-    send(event: ITelemetryBaseEvent): void;
-
     /**
      * Send information telemetry event
      * @param event - Event to send
