@@ -222,6 +222,7 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			dataStoreRuntime.options.trackAttribution = true;
 			const { deltaManager } = dataStoreRuntime;
 
 			if (index === 0 && makeSerializer !== undefined) {
@@ -435,7 +436,7 @@ class DataTable<T> {
 
 const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
 
-describe.only("SharedString Attribution", () => {
+describe("SharedString Attribution", () => {
 	/**
 	 * This test suite is aimed at assessing the overhead of storing attribution information in a document.
 	 * See 'documents/README.md' for more details.
@@ -595,6 +596,7 @@ describe.only("SharedString Attribution", () => {
 				const clientId = random.uuid4();
 				const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
 				const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+				dataStoreRuntime.options.trackAttribution = true;
 				const sharedString = new SharedString(
 					dataStoreRuntime,
 					"mock observer client",
