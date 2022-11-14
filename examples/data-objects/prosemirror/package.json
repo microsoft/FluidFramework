@@ -22,7 +22,6 @@
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run webpack:dev",
-
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
@@ -80,8 +79,6 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "css-loader": "^1.0.0",
-    "esbuild": "^0.15.5",
-    "esbuild-loader": "^2.19.0",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
     "style-loader": "^1.0.0",

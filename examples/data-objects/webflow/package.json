@@ -26,7 +26,6 @@
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run build:esnext -- --watch",
-
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
@@ -106,8 +105,6 @@
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",
-    "esbuild": "^0.15.5",
-    "esbuild-loader": "^2.19.0",
     "eslint": "~8.6.0",
     "file-loader": "^3.0.1",
     "html-loader": "^3.1.0",
