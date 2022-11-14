@@ -36,4 +36,4 @@ esbuild.build(buildOptions).catch(() => process.exit(1));
 
 module.exports = {
     buildOptions,
-}
+};
