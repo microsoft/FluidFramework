@@ -27,12 +27,12 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack serve",
+    "start": "node serve.cjs",
     "test": "npm run test:jest",
     "test:jest": "jest --passWithNoTests",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
     "tsc": "tsc",
-    "webpack": "webpack --env production",
+    "webpack": "npm run esbuild",
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {

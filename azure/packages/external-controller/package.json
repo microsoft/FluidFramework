@@ -30,14 +30,14 @@
     "prepack": "npm run webpack",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-    "start": "webpack serve",
-    "start:azure": "webpack serve --define process.env.FLUID_CLIENT='\"azure\"'",
+    "start": "node serve.cjs",
+    "start:azure": "node serve.cjs --define process.env.FLUID_CLIENT='\"azure\"'",
     "start:test": "webpack serve --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "tsc": "tsc",
-    "webpack": "webpack --env production",
+    "webpack": "npm run esbuild",
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {

@@ -26,7 +26,6 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:webpack": "npm run webpack",
-    "esbuild": "node esbuild.cjs",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -85,12 +84,9 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "enzyme": "^3.10.0",
-<<<<<<< HEAD
-=======
     "enzyme-adapter-react-16": "^1.14.0",
     "esbuild": "^0.15.5",
     "esbuild-loader": "^2.19.0",
->>>>>>> 6d9e89cf08 (add esbuild dep)
     "eslint": "~8.6.0",
     "html-webpack-plugin": "^5.5.0",
     "identity-obj-proxy": "^3.0.0",
