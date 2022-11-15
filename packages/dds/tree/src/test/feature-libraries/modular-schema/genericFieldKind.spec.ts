@@ -16,6 +16,7 @@ import {
 import { makeAnonChange } from "../../../rebase";
 import { Delta, FieldKey } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { noRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -337,7 +338,7 @@ describe("Generic FieldKind", () => {
 
         const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
+        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
         assert.deepEqual(actual, expected);
     });
 
