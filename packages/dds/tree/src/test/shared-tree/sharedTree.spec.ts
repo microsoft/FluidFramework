@@ -30,9 +30,9 @@ import {
 import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./bubble-bench/SharedTreeSequenceHelper";
 import { AppState } from "./bubble-bench/AppState";
-import { AppStateSchemaData } from "./bubble-bench/schema";
 import { Bubblebench } from "./bubble-bench/Bubblebench";
 import { Bubble } from "./bubble-bench/Bubble";
+import { AppStateSchemaData } from "./bubble-bench/schema";
 /* eslint-enable import/no-internal-modules */
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
