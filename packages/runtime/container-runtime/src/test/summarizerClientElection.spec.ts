@@ -145,7 +145,6 @@ describe("Summarizer Client Election", () => {
                 SummarizerClientElection.isClientEligible,
             ),
             maxOps,
-            electionEnabled,
         );
         connectedState = new TestConnectedState();
         summaryManager = new SummaryManager(
