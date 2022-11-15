@@ -12,6 +12,7 @@ import {
     ITreeCursor,
     TaggedChange,
     RevisionTag,
+    ITreeCursorSynchronous,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -353,14 +354,14 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
     intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
-            const newValue = (() => {
-                if ("revert" in change.value) {
-                    const revision = change.value.revert;
-                    assert(revision !== undefined, "Unable to revert to undefined revision");
-                    return repair(revision, 0, 1)[0];
-                }
-                return singleTextCursor(change.value.set);
-            })();
+            let newValue: ITreeCursorSynchronous;
+            if ("revert" in change.value) {
+                const revision = change.value.revert;
+                assert(revision !== undefined, "Unable to revert to undefined revision");
+                newValue = repair(revision, 0, 1)[0];
+            } else {
+                newValue = singleTextCursor(change.value.set);
+            }
             if (change.changes === undefined) {
                 mark = {
                     type: Delta.MarkType.Insert,
@@ -640,14 +641,15 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         editor: optionalFieldEditor,
 
         intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
-            const content = ((update: NodeUpdate | undefined) => {
-                if (update === undefined || "set" in update) {
-                    return update?.set;
-                }
+            const update = change.fieldChange?.newContent;
+            let content: JsonableTree | ITreeCursorSynchronous | undefined;
+            if (update === undefined || "set" in update) {
+                content = update?.set;
+            } else {
                 const revision = update.revert;
                 assert(revision !== undefined, "Unable to revert to undefined revision");
-                return repair(revision, 0, 1)[0];
-            })(change.fieldChange?.newContent);
+                content = repair(revision, 0, 1)[0];
+            }
             const insertDelta = deltaFromInsertAndChange(
                 content,
                 change.childChange,
