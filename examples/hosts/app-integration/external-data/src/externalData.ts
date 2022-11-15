@@ -9,10 +9,10 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 /**
  * Parse string data into an array of simple objects that are easily imported into an
  * task list.
- * @param stringData - version:one formatted string data
+ * @param stringData - formatted string data
  * @returns An array of objects, each representing a single task
  */
- export function parseStringData(stringData: string) {
+export function parseStringData(stringData: string) {
     const taskStrings = stringData.split("\n");
     return taskStrings.map((taskString) => {
         const [taskIdString, taskNameString, taskPriorityString] = taskString.split(":");
@@ -35,8 +35,9 @@ export interface IExternalDataSourceEvents extends IEvent {
 /**
  * Class to let us fake having an external data source and abstract the particulars of its implementation.
  * In a more-real scenario, maybe this is communicating with some server via RESTful APIs.
- * Here we make it an event emitter just so we can render a reasonable debug view on it for demo purposes -- in those
- * more-realistic cases there's not an expectation that the data source pushes updates or anything.
+ * It's an event emitter just so we can render a reasonable debug view on it for demo purposes - in more-realistic
+ * cases we would expect to learn about data updates through webhooks or similar.
+ * TODO: Implement a debug control to simulate data changing remotely, webhook, etc.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
     public constructor() {

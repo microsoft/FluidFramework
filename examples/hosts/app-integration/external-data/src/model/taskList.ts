@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { SharedString } from "@fluidframework/sequence";
 
 import { externalDataSource, parseStringData } from "../externalData";
-import type { ITask, ITaskList } from "../modelInterfaces";
+import type { ITask, ITaskEvents, ITaskList } from "../modelInterfaces";
 
-class Task extends EventEmitter implements ITask {
+class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id() {
         return this._id;
     }
@@ -35,6 +35,9 @@ class Task extends EventEmitter implements ITask {
         private readonly _priority: SharedCell<number>,
     ) {
         super();
+        this._name.on("sequenceDelta", () => {
+            this.emit("nameChanged");
+        });
         this._priority.on("valueChanged", () => {
             this.emit("priorityChanged");
         });
@@ -110,12 +113,22 @@ export class TaskList extends DataObject implements ITaskList {
         await Promise.all(updateTaskPs);
     }
 
+    /**
+     * Save the current data in the container back to the external data source.
+     * @remarks This method is public, and would map to clicking a "Save" button in some UX.  For more-automatic
+     * sync'ing this method probably wouldn't exist.
+     * @returns A promise that resolves when the write completes
+     */
     public readonly saveChanges = async () => {
+        // TODO: this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In the "save"
+        // button case this might be fine, but in more-automatic sync'ing this should maybe only include ack'd
+        // changes.
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
+        // TODO: Handle failure, retry, etc.
         return externalDataSource.writeData(stringDataToWrite);
     };
 
@@ -138,8 +151,8 @@ export class TaskList extends DataObject implements ITaskList {
                 // Must be from a deletion
                 this.handleTaskDeleted(changed.key);
             } else {
-                // Since all data modifications happen within the SharedString or SharedCell, the root directory
-                // should never see anything except adds and deletes.
+                // Since all data modifications happen within the SharedString or SharedCell (task IDs are immutable),
+                // the root directory should never see anything except adds and deletes.
                 console.error("Unexpected modification to task list");
             }
         });
