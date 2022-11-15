@@ -108,10 +108,9 @@ export interface ITelemetryGenApiEvent extends ITelemetryGenEventBase {
      */
     status?: string;
     /*
-     * Optional bag od details on the event.
+     * JSON stringifed bag od details on the event.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    details?: any;
+    details?: string;
 }
 
 /**
@@ -132,15 +131,13 @@ export interface ITelemetryGenErrorEvent extends ITelemetryGenEventBase {
      */
     severityLevel: TelemetryErrorCategory;
     /*
-     * Optional strack trace
+     * JSON stringifed stack trace
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stackTrace?: any;
+    stackTrace?: string;
     /*
-     * More details on condition(s) leading to this error
+     * JSON stringifed details on condition(s) leading to this error
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    details?: any;
+    details?: string;
 }
 
 /**
@@ -177,10 +174,9 @@ export interface ITelemetryGenServiceEvent extends ITelemetryGenEventBase {
 export interface ITelemetryGenClassEvent extends ITelemetryGenEventBase {
     type: "event";
     /*
-     * Optional bag od details on the event.
+     * JSON stringifed bag od details on the event.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    details?: any;
+    details?: string;
 }
 
 export type ITelemetryGenEvent =
