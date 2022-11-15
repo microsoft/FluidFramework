@@ -104,6 +104,8 @@ designation. To do this, you can use any of the following strings instead of maj
 - `~previousMajor`
 - `~previousMinor`
 
+#### Examples
+
 Given the version 3.4.5:
 
 | Previous version style | Baseline version for **3.4.5** |
