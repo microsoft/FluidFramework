@@ -71,6 +71,7 @@ export {
     allowsRepoSuperset,
     GenericChangeset,
     genericFieldKind,
+    NodeReviver,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -86,5 +87,8 @@ export {
     parseSummary as loadSummary,
     stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { ForestRepairDataStore } from "./forestRepairDataStore";
+export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { runSynchronousTransaction } from "./defaultTransaction";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange } from "../../core";
+import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -18,7 +18,7 @@ export interface FieldChangeHandler<
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 
     // TODO
     // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
@@ -90,7 +90,17 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+/**
+ * The `index` represents the index of the child node in the input context.
+ * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ */
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+
+export type NodeReviver = (
+    revision: RevisionTag,
+    index: number,
+    count: number,
+) => Delta.ProtoNode[];
 
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
@@ -109,12 +119,22 @@ export interface NodeChangeset {
     valueChange?: ValueChange;
 }
 
-export interface ValueChange {
-    /**
-     * Can be left unset to represent the value being cleared.
-     */
-    value?: Value;
-}
+export type ValueChange =
+    | {
+          /**
+           * Can be left unset to represent the value being cleared.
+           */
+          value?: Value;
+      }
+    | {
+          /**
+           * The tag of the change that overwrote the value being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
+          revert: RevisionTag | undefined;
+      };
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
