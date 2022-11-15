@@ -230,6 +230,7 @@ stages:
                 else
                   ls -1 $TEST_PACKAGE_PATH_PATTERN
                   echo "##vso[task.logissue type=error]Test package '${{ execTestPackage }}' not found, or there are more then one found"
+                  exit -1
                 fi
 
                 npm install $TEST_PACKAGE_TGZ
@@ -332,6 +333,7 @@ stages:
                 else
                   ls -1 $TEST_PACKAGE_PATH_PATTERN
                   echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
+                  exit -1
                 fi
 
                 npm install $TEST_PACKAGE_TGZ
