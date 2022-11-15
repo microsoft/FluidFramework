@@ -37,6 +37,8 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) {
+        // TODO: This might be where we eventually set up routing of the container-level signals
+        // However, the actual interpretation of those signals probably lives in the TaskList.
     }
 
     /**
