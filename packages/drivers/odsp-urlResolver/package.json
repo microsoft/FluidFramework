@@ -32,7 +32,8 @@
     "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate -s previousMinor -d .",
+    "typetests:prepare": "flub generate typetests --prepare -s previousMinor -d ."
   },
   "dependencies": {
     "@fluidframework/core-interfaces": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
@@ -46,7 +47,7 @@
     "@fluidframework/build-tools": "^0.5.0",
     "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.0.0-internal.2.0.0",
+    "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.0.0-internal.2.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "concurrently": "^6.2.0",
@@ -57,7 +58,8 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {}
   }
 }

@@ -48,7 +48,7 @@
     "test:stress:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:stress:tinylicious",
     "test:stress:tinylicious:run": "npm run test:stress:run",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate -s baseMinor -d .",
+    "typetests:gen": "flub generate typetests --generate -s previousMinor -d .",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
   "nyc": {

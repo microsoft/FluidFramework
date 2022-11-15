@@ -37,8 +37,8 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "flub generate typetests --generate -s previousMinor -d .",
+    "typetests:prepare": "flub generate typetests --prepare -s previousMinor -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1"

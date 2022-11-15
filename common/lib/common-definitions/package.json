@@ -37,8 +37,8 @@
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "flub generate typetests --generate -s previousMinor -d .",
+    "typetests:prepare": "flub generate typetests --prepare -s previousMinor -d ."
   },
   "dependencies": {},
   "devDependencies": {

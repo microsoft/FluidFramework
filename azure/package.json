@@ -62,7 +62,7 @@
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root .. -s tsc",
     "typetests:gen": "lerna run typetests:gen --no-sort --stream --no-bail",
-    "typetests:prepare": "npm run typetests:gen -- -- -- -p -v",
+    "typetests:prepare": "lerna run typetests:prepare --no-sort --stream --no-bail",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",

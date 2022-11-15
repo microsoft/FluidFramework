@@ -42,7 +42,8 @@
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate -s previousMinor -d .",
+    "typetests:prepare": "flub generate typetests --prepare -s previousMinor -d ."
   },
   "nyc": {
     "all": true,
