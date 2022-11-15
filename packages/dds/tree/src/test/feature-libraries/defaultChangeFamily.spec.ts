@@ -8,6 +8,7 @@ import {
     AnchorSet,
     Delta,
     FieldKey,
+    IForestSubscription,
     initializeForest,
     InMemoryStoredSchemaRepository,
     ITreeCursorSynchronous,
@@ -25,7 +26,7 @@ import {
     DefaultEditBuilder,
     defaultSchemaPolicy,
     ForestRepairDataStore,
-    ObjectForest,
+    buildForest,
     singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
@@ -66,13 +67,13 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
  * @param data - The data to initialize the forest with.
  */
 function initializeEditableForest(data?: JsonableTree): {
-    forest: ObjectForest;
+    forest: IForestSubscription;
     builder: DefaultEditBuilder;
     changes: TaggedChange<DefaultChangeset>[];
     deltas: Delta.Root[];
 } {
     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-    const forest = new ObjectForest(schema);
+    const forest = buildForest(schema);
     if (data !== undefined) {
         initializeForest(forest, [singleTextCursor(data)]);
     }

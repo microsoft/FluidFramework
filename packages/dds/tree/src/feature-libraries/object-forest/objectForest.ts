@@ -49,7 +49,7 @@ function makeRoot(): MapTree {
  * This implementation focuses on correctness and simplicity, not performance.
  * It does not use compressed chunks: instead nodes are implemented using objects.
  */
-export class ObjectForest extends SimpleDependee implements IEditableForest {
+class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly roots: MapTree = makeRoot();
@@ -463,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(schema: StoredSchemaRepository): IEditableForest {
+export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
     return new ObjectForest(schema);
 }
 

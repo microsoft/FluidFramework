@@ -15,10 +15,10 @@ import {
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
 import {
+    buildForest,
     defaultSchemaPolicy,
     ForestRepairDataStore,
     jsonableTreeFromCursor,
-    ObjectForest,
     singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
@@ -36,7 +36,7 @@ const root: UpPath = {
 describe("ForestRepairDataStore", () => {
     it("Captures deleted nodes", () => {
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema);
+        const forest = buildForest(schema);
         let revision = revision1;
         const store = new ForestRepairDataStore((rev) => {
             assert.equal(rev, revision);
@@ -119,7 +119,7 @@ describe("ForestRepairDataStore", () => {
 
     it("Captures overwritten values", () => {
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema);
+        const forest = buildForest(schema);
         const store = new ForestRepairDataStore((rev) => {
             assert.equal(rev, revision1);
             return forest;
