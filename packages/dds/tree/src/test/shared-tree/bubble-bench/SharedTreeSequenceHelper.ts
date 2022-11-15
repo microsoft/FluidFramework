@@ -11,7 +11,7 @@
 //     TransactionResult,
 // } from "@fluid-internal/tree";
 import { TransactionResult } from "../../../checkout";
-import { singleTextCursor } from "../../../feature-libraries";
+import { IDefaultEditBuilder, singleTextCursor } from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey, JsonableTree } from "../../../tree";
 import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
@@ -22,8 +22,13 @@ export class SharedTreeSequenceHelper {
         public readonly tree: ISharedTree,
         public readonly parentAnchor: Anchor,
         public readonly sequenceFieldKey: FieldKey,
+        public readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[],
     ) {
-        this.treeNodeHelper = new SharedTreeNodeHelper(tree, parentAnchor);
+        this.treeNodeHelper = new SharedTreeNodeHelper(
+            tree,
+            parentAnchor,
+            this.editBuilderCallbacks,
+        );
     }
 
     public getAnchor(index: number): Anchor {
@@ -36,7 +41,11 @@ export class SharedTreeSequenceHelper {
     }
 
     public get(index: number): SharedTreeNodeHelper {
-        return new SharedTreeNodeHelper(this.tree, this.getAnchor(index));
+        return new SharedTreeNodeHelper(
+            this.tree,
+            this.getAnchor(index),
+            this.editBuilderCallbacks,
+        );
     }
 
     public getAllAnchors() {
@@ -58,7 +67,9 @@ export class SharedTreeSequenceHelper {
     }
 
     public getAll(): SharedTreeNodeHelper[] {
-        return this.getAllAnchors().map((anchor) => new SharedTreeNodeHelper(this.tree, anchor));
+        return this.getAllAnchors().map(
+            (anchor) => new SharedTreeNodeHelper(this.tree, anchor, this.editBuilderCallbacks),
+        );
     }
 
     public length(): number {
@@ -95,6 +106,34 @@ export class SharedTreeSequenceHelper {
             cursor.free();
             field.delete(this.length() - 1, 1);
             return TransactionResult.Apply;
+        });
+    }
+
+    public stashPush(jsonTree: JsonableTree) {
+        const cursor = this.tree.forest.allocateCursor();
+        this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
+        const parentPath = this.tree.locate(cursor.buildAnchor());
+        if (!parentPath) {
+            throw new Error("path to anchor does not exist");
+        }
+        cursor.free();
+        this.editBuilderCallbacks.push((editor: IDefaultEditBuilder) => {
+            const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+            field.insert(this.length(), singleTextCursor(jsonTree));
+        });
+    }
+
+    public stashPop() {
+        const cursor = this.tree.forest.allocateCursor();
+        this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
+        const parentPath = this.tree.locate(cursor.buildAnchor());
+        if (!parentPath) {
+            throw new Error("path to anchor does not exist");
+        }
+        cursor.free();
+        this.editBuilderCallbacks.push((editor: IDefaultEditBuilder) => {
+            const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+            field.delete(this.length() - 1, 1);
         });
     }
 }

@@ -5,6 +5,7 @@
 import {
     Anchor,
     FieldKey,
+    IDefaultEditBuilder,
     ISharedTree,
     ITreeSubscriptionCursor,
     TransactionResult,
@@ -15,6 +16,7 @@ export class SharedTreeNodeHelper {
     constructor(
         public readonly tree: ISharedTree,
         public readonly anchor: Anchor,
+        public readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[],
     ) {}
 
     /**
@@ -61,5 +63,21 @@ export class SharedTreeNodeHelper {
             editor.setValue(path, value);
             return TransactionResult.Apply;
         });
+    }
+
+    stashSetFieldValue(fieldKey: FieldKey, value: Value): void {
+        const cursor = this.getCursor();
+        cursor.enterField(fieldKey);
+        cursor.enterNode(0);
+        const fieldAnchor = cursor.buildAnchor();
+
+        const path = this.tree.locate(fieldAnchor);
+        if (!path) {
+            throw new Error("path to anchor does not exist");
+        }
+        cursor.free();
+        this.editBuilderCallbacks.push((editor: IDefaultEditBuilder) =>
+            editor.setValue(path, value),
+        );
     }
 }

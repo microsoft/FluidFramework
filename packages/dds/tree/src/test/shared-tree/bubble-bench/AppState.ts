@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 // import { brand, ISharedTree, JsonableTree, moveToDetachedField } from "@fluid-internal/tree";
+import { TransactionResult } from "../../../checkout";
+import { IDefaultEditBuilder } from "../../../feature-libraries";
 import { moveToDetachedField } from "../../../forest";
 import { ISharedTree } from "../../../shared-tree";
 import { JsonableTree } from "../../../tree";
 import { brand } from "../../../util";
 import { Client } from "./Client";
 import { iBubbleSchema, iClientSchema, int32Schema, stringSchema } from "./schema";
+import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./SharedTreeSequenceHelper";
 
 export class AppState {
-    readonly localClient: Client; // Note I am not using the interface IClient unlike other bubblebench examples
     readonly clientsSequenceHelper: SharedTreeSequenceHelper;
+    readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[] = [];
+    readonly localClientNode: SharedTreeNodeHelper;
 
     constructor(
         private readonly tree: ISharedTree,
@@ -29,22 +33,47 @@ export class AppState {
             tree,
             cursor.buildAnchor(),
             brand("clients"),
+            this.editBuilderCallbacks,
         );
+        cursor.free();
 
         // Create the initial JsonableTree for the new local client
         const initialClientJsonTree = this.makeClientInitialJsonTree(numBubbles);
+
         // Insert it the local client the shared tree
-        cursor.free();
         this.clientsSequenceHelper.push(initialClientJsonTree);
         // Keep a reference to the local client inserted into the shared tree
-        this.localClient = new Client(
+        const newClientIndex = this.clientsSequenceHelper.length() - 1;
+        console.log(`new client Index: ${newClientIndex}`);
+        // this.localClient = new Client(
+        //     tree,
+        //     this.clientsSequenceHelper.getAnchor(newClientIndex),
+        //     this.editBuilderCallbacks,
+        // );
+        this.localClientNode = new SharedTreeNodeHelper(
             tree,
-            this.clientsSequenceHelper.getAnchor(Math.max(0, this.clientsSequenceHelper.length() - 1)),
+            this.clientsSequenceHelper.getAnchor(newClientIndex),
+            this.editBuilderCallbacks,
         );
-        console.log(`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`)
+        console.log(
+            `created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,
+        );
+
+        // this.applyEdits();
     }
 
-    public applyEdits() {} // Is it needed with the new shared tree?
+    public get localClient() {
+        return new Client(this.tree, this.localClientNode.anchor, this.editBuilderCallbacks);
+    }
+
+    public applyEdits() {
+        this.tree.runTransaction((forest, editor) => {
+            this.tree.context.prepareForEdit();
+            this.editBuilderCallbacks.forEach((editCallback) => editCallback(editor));
+            return TransactionResult.Apply;
+        });
+        this.editBuilderCallbacks.length = 0;
+    }
 
     makeClientInitialJsonTree(numBubbles: number): JsonableTree {
         const clientInitialJsonTree: JsonableTree = {
@@ -78,7 +107,7 @@ export class AppState {
     public get clients() {
         return this.clientsSequenceHelper
             .getAll()
-            .map((treeNode) => new Client(this.tree, treeNode.anchor));
+            .map((treeNode) => new Client(this.tree, treeNode.anchor, this.editBuilderCallbacks));
     }
 
     public get width() {
@@ -107,15 +136,15 @@ export class AppState {
     }
 
     public increaseBubblesT(bubble: { x: number; y: number; r: number; vx: number; vy: number }) {
-        console.log("about to increase bubble");
+        // console.log("about to increase bubble");
         // this.localClient.increaseBubbles(makeBubble(this._width, this._height));
         this.localClient.increaseBubbles(bubble);
-        console.log("increased bubble");
+        // console.log("increased bubble");
     }
 
     public decreaseBubbles() {
-        console.log("about to pop bubble");
+        // console.log("about to pop bubble");
         this.localClient.decreaseBubbles();
-        console.log("popped bubble");
+        // console.log("popped bubble");
     }
 }

@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 import {
+    // brand,
     ISharedTree,
+    // moveToDetachedField,
     rootFieldKeySymbol,
     SharedTreeFactory,
     singleTextCursor,
     TransactionResult,
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+// import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
-import { AppStateSchema, AppStateSchemaData } from "./schema";
+// eslint-disable-next-line import/no-internal-modules
+import { AppStateSchema, AppStateSchemaData } from "./tree-utils/schema";
 
 export class Bubblebench extends DataObject {
     public static get Name() {
@@ -39,9 +42,16 @@ export class Bubblebench extends DataObject {
     protected async initializingFromExisting() {
         // console.log("existing initialization");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.maybeTree = await this.root
-            .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
-            .get();
+        // this.maybeTree = await this.root
+        //     .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
+        //     .get();
+
+        // const cursor = this.maybeTree.forest.allocateCursor();
+        // moveToDetachedField(this.maybeTree.forest, cursor);
+        // cursor.enterNode(0);
+        // cursor.enterField(brand('clients'));
+        // console.log(`existing tree can see clients length of ${cursor.getFieldLength()}`);
+        // cursor.free();
     }
 
     protected async hasInitialized() {
@@ -60,15 +70,15 @@ export class Bubblebench extends DataObject {
         const onConnected = () => {
             // Out of paranoia, we periodically check to see if your client Id has changed and
             // update the tree if it has.
-            setInterval(() => {
-                const clientId = this.runtime.clientId;
-                if (
-                    clientId !== undefined &&
-                    clientId !== this.appState.localClient.clientId
-                ) {
-                    this.appState.localClient.clientId = clientId;
-                }
-            }, 1000);
+            // setInterval(() => {
+            //     const clientId = this.runtime.clientId;
+            //     if (
+            //         clientId !== undefined &&
+            //         clientId !== this.appState.localClient.clientId
+            //     ) {
+            //         this.appState.localClient.clientId = clientId;
+            //     }
+            // }, 1000);
         };
 
         // Wait for connection to begin checking client Id.

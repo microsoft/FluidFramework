@@ -4,6 +4,7 @@
  */
 
 import { TransactionResult } from "../../../checkout";
+import { IDefaultEditBuilder } from "../../../feature-libraries";
 import { ITreeSubscriptionCursor } from "../../../forest";
 import { ISharedTree } from "../../../shared-tree";
 import { Anchor, FieldKey, Value } from "../../../tree";
@@ -18,7 +19,11 @@ import { Anchor, FieldKey, Value } from "../../../tree";
 // } from "@fluid-internal/tree";
 
 export class SharedTreeNodeHelper {
-    constructor(public readonly tree: ISharedTree, public readonly anchor: Anchor) {}
+    constructor(
+        public readonly tree: ISharedTree,
+        public readonly anchor: Anchor,
+        public readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[],
+    ) {}
 
     /**
      * Gets the value at a given field of the Shared Tree node held by this class instance.
@@ -64,5 +69,21 @@ export class SharedTreeNodeHelper {
             editor.setValue(path, value);
             return TransactionResult.Apply;
         });
+    }
+
+    stashEditBuilderCallback(fieldKey: FieldKey, value: Value): void {
+        const cursor = this.getCursor();
+        cursor.enterField(fieldKey);
+        cursor.enterNode(0);
+        const fieldAnchor = cursor.buildAnchor();
+
+        const path = this.tree.locate(fieldAnchor);
+        if (!path) {
+            throw new Error("path to anchor does not exist");
+        }
+        this.editBuilderCallbacks.push((editor: IDefaultEditBuilder) =>
+            editor.setValue(path, value),
+        );
+        cursor.free();
     }
 }

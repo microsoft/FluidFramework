@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { Anchor, brand, FieldKey, ISharedTree } from "@fluid-internal/tree";
+import { Anchor, brand, FieldKey, IDefaultEditBuilder, ISharedTree } from "@fluid-internal/tree";
 import { Bubble } from "./Bubble";
-import { iBubbleSchema, int32Schema } from "./schema";
-import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
-import { SharedTreeSequenceHelper } from "./SharedTreeSequenceHelper";
+// eslint-disable-next-line import/no-internal-modules
+import { iBubbleSchema, int32Schema } from "./tree-utils/schema";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeNodeHelper } from "./tree-utils/SharedTreeNodeHelper";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeSequenceHelper } from "./tree-utils/SharedTreeSequenceHelper";
 
 export class Client implements IClient {
     static clientIdFieldKey: FieldKey = brand("clientId");
@@ -20,12 +23,15 @@ export class Client implements IClient {
     constructor(
         public readonly tree: ISharedTree,
         public readonly anchor: Anchor,
+        readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[],
+        public shouldStashTransactions: boolean = true,
     ) {
-        this.treeHelper = new SharedTreeNodeHelper(tree, anchor);
+        this.treeHelper = new SharedTreeNodeHelper(tree, anchor, this.editBuilderCallbacks);
         this.bubbleSeqeunceHelper = new SharedTreeSequenceHelper(
             tree,
             anchor,
             Client.bubblesFieldKey,
+            this.editBuilderCallbacks,
         );
     }
 
@@ -33,21 +39,28 @@ export class Client implements IClient {
         return this.treeHelper.getFieldValue(Client.clientIdFieldKey) as string;
     }
     public set clientId(value: string) {
-        this.treeHelper.setFieldValue(Client.clientIdFieldKey, value);
+        if (this.shouldStashTransactions) {
+            this.treeHelper.stashSetFieldValue(Client.clientIdFieldKey, value);
+        } else {
+            this.treeHelper.setFieldValue(Client.clientIdFieldKey, value);
+        }
     }
 
     public get color() {
         return this.treeHelper.getFieldValue(Client.colorFieldKey) as string;
     }
     public set color(value: string) {
-        this.treeHelper.setFieldValue(Client.colorFieldKey, value);
+        if (this.shouldStashTransactions) {
+            this.treeHelper.stashSetFieldValue(Client.colorFieldKey, value);
+        } else {
+            this.treeHelper.setFieldValue(Client.colorFieldKey, value);
+        }
     }
 
     public get bubbles() {
-        console.log(`clientId: ${this.clientId} retrieving bubbles`);
         return this.bubbleSeqeunceHelper
             .getAll()
-            .map((treeNode) => new Bubble(this.tree, treeNode.anchor));
+            .map((treeNode) => new Bubble(this.tree, treeNode.anchor, this.editBuilderCallbacks));
     }
 
     public increaseBubbles(bubble: {
@@ -57,22 +70,50 @@ export class Client implements IClient {
         vx: number;
         vy: number;
     }) {
-        const newBubbleJsonableTree = {
-            type: iBubbleSchema.name,
-            fields: {
-                x: [{ type: int32Schema.name, value: bubble.x }],
-                y: [{ type: int32Schema.name, value: bubble.y }],
-                r: [{ type: int32Schema.name, value: bubble.r }],
-                vx: [{ type: int32Schema.name, value: bubble.vx }],
-                vy: [{ type: int32Schema.name, value: bubble.vy }],
-            },
-        };
-        this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
+        if (this.bubbleSeqeunceHelper.length() < 10) {
+            const newBubbleJsonableTree = {
+                type: iBubbleSchema.name,
+                fields: {
+                    x: [{ type: int32Schema.name, value: bubble.x }],
+                    y: [{ type: int32Schema.name, value: bubble.y }],
+                    r: [{ type: int32Schema.name, value: bubble.r }],
+                    vx: [{ type: int32Schema.name, value: bubble.vx }],
+                    vy: [{ type: int32Schema.name, value: bubble.vy }],
+                },
+            };
+            if (this.shouldStashTransactions) {
+                this.bubbleSeqeunceHelper.stashPush(newBubbleJsonableTree);
+            } else {
+                this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
+            }
+            // this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
+        }
+        // const newBubbleJsonableTree = {
+        //     type: iBubbleSchema.name,
+        //     fields: {
+        //         x: [{ type: int32Schema.name, value: bubble.x }],
+        //         y: [{ type: int32Schema.name, value: bubble.y }],
+        //         r: [{ type: int32Schema.name, value: bubble.r }],
+        //         vx: [{ type: int32Schema.name, value: bubble.vx }],
+        //         vy: [{ type: int32Schema.name, value: bubble.vy }],
+        //     },
+        // };
+        // if (this.shouldStashTransactions) {
+        //     this.bubbleSeqeunceHelper.stashPush(newBubbleJsonableTree);
+        // } else {
+        //     this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
+        // }
+        // // this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
     }
 
     public decreaseBubbles() {
-        if (this.bubbleSeqeunceHelper.length() > 1) {
-            this.bubbleSeqeunceHelper.pop();
-        }
+        // if (this.bubbleSeqeunceHelper.length() > 1) {
+        //     if (this.shouldStashTransactions) {
+        //         this.bubbleSeqeunceHelper.stashPop();
+        //     } else {
+        //         this.bubbleSeqeunceHelper.pop();
+        //     }
+        //     // this.bubbleSeqeunceHelper.pop();
+        // }
     }
 }

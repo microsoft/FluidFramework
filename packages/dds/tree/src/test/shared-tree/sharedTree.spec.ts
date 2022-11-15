@@ -16,7 +16,7 @@ import {
     Value,
 } from "../../tree";
 import { moveToDetachedField } from "../../forest";
-import { SharedTreeTestFactory, TestTreeProvider } from "../utils";
+import { ITestTreeProvider, SharedTreeTestFactory, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import {
@@ -400,7 +400,11 @@ describe("SharedTree", () => {
                 moveToDetachedField(provider.trees[0].forest, cursor);
                 cursor.enterNode(0);
 
-                const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+                const treeNode = new SharedTreeNodeHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    [],
+                );
                 assert.equal(treeNode.getFieldValue(testFieldKey), expectedInitialNodeValue);
             });
 
@@ -413,7 +417,11 @@ describe("SharedTree", () => {
                 moveToDetachedField(provider.trees[0].forest, cursor);
                 cursor.enterNode(0);
 
-                const treeNode = new SharedTreeNodeHelper(provider.trees[0], cursor.buildAnchor());
+                const treeNode = new SharedTreeNodeHelper(
+                    provider.trees[0],
+                    cursor.buildAnchor(),
+                    [],
+                );
                 const originalNodeValue = treeNode.getFieldValue(testFieldKey) as number;
                 const newNodeValue = originalNodeValue + 99;
                 cursor.free();
@@ -507,6 +515,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
 
                 const firstNodeAnchor = treeSequence.getAnchor(0);
@@ -537,6 +546,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
 
                 const firstNode = treeSequence.get(0);
@@ -561,6 +571,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
                 const treeAnchors = treeSequence.getAllAnchors();
 
@@ -590,6 +601,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
                 const treeNodes = treeSequence.getAll();
                 assert.equal(treeNodes.length, 2);
@@ -616,6 +628,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
                 assert.equal(treeSequence.length(), 2);
             });
@@ -633,6 +646,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
                 cursor.free();
                 treeSequence.pop();
@@ -642,6 +656,7 @@ describe("SharedTree", () => {
                 const remainingNode = new SharedTreeNodeHelper(
                     provider.trees[0],
                     treeSequence.getAnchor(0),
+                    [],
                 );
                 assert.equal(
                     remainingNode.getFieldValue(testFieldKey),
@@ -662,6 +677,7 @@ describe("SharedTree", () => {
                     provider.trees[0],
                     cursor.buildAnchor(),
                     brand("testSequence"),
+                    [],
                 );
 
                 cursor.free();
@@ -766,6 +782,7 @@ describe("SharedTree", () => {
 
                 // 2. increase bubbles in local client of appState1
                 appState1.increaseBubblesT({ x: 99, y: 99, vx: 99, vy: 99, r: 99 });
+                appState1.applyEdits();
                 await provider.ensureSynchronized();
                 assert.equal(appState1.localClient.bubbles.length, initialBubblesNum + 1);
                 assert.equal(
@@ -783,6 +800,7 @@ describe("SharedTree", () => {
 
                 // 4. decrease bubbles in local client of appState1
                 appState1.decreaseBubbles();
+                appState1.applyEdits();
                 await provider.ensureSynchronized();
                 assert.equal(appState1.localClient.bubbles.length, initialBubblesNum);
                 assert.equal(
@@ -796,9 +814,12 @@ describe("SharedTree", () => {
                     client1FromAppState2.bubbles[client1FromAppState2.bubbles.length - 1].x,
                     10,
                 );
+
+                // -------------- Load Test from AppState1 -------------
+                await simulateBubbleBenchClientLogic(appState1, 100, provider);
             });
 
-            it("localClient bubbleSequenceHelper", async () => {
+            it("AppState stashes edits from children and can apply them", async () => {
                 const provider = await TestTreeProvider.create(1);
                 provider.trees[0].storedSchema.update(AppStateSchemaData);
                 new Bubblebench().initializeTree(provider.trees[0]);
@@ -811,18 +832,142 @@ describe("SharedTree", () => {
                 const client1Id = appState1.clients[0].clientId;
                 assert.equal(client1.bubbles.length, initialBubblesNum);
                 assert.equal(client1Id, appState1.localClient.clientId);
-                appState1.increaseBubbles();
 
-                const bubbleNodeHelpers = appState1.localClient.bubbleSeqeunceHelper.getAll();
-                const bubblesFromHelpers = bubbleNodeHelpers.map(
-                    (node) => new Bubble(node.tree, node.anchor),
-                );
-                const bubbleXVals = bubblesFromHelpers.map((bub) => bub.x);
-                console.log("breakpoint");
+                client1.bubbles[0].x = 55;
+                client1.bubbles[0].y = 56;
+                client1.bubbles[0].vx = 57;
+                client1.bubbles[0].vy = 58;
+                client1.bubbles[0].r = 59;
+
+                appState1.applyEdits();
+                await provider.ensureSynchronized();
+
+                assert.equal(client1.bubbles[0].x, 55);
+                assert.equal(client1.bubbles[0].y, 56);
+                assert.equal(client1.bubbles[0].vx, 57);
+                assert.equal(client1.bubbles[0].vy, 58);
+                assert.equal(client1.bubbles[0].r, 59);
             });
         });
     });
 });
+
+// Simulates the client logic of the bubble bench react application
+// (see experimental/examples/bubblebench/common/src/view/app.tsx)
+async function simulateBubbleBenchClientLogic(
+    appState: AppState,
+    iterations: number,
+    provider: ITestTreeProvider,
+) {
+    for (let frame = 0; frame < iterations; frame++) {
+        const startTime = Date.now();
+
+        // 1. Move each bubble
+        const localBubbles = appState.localClient.bubbles;
+        for (const bubble of localBubbles) {
+            move(bubble, appState.width, appState.height);
+        }
+
+        // 2. Handle collisions between each pair of local bubbles
+        for (let i = 0; i < localBubbles.length; i++) {
+            const left = localBubbles[i];
+            for (let j = i + 1; j < localBubbles.length; j++) {
+                const right = localBubbles[j];
+                collide(left, right);
+            }
+        }
+
+        // 3. Handle collisions between local bubbles and remote bubbles (but not between pairs
+        // of remote bubbles.)
+        for (const client of appState.clients) {
+            if (client.clientId === appState.localClient.clientId) {
+                continue;
+            }
+            for (const right of client.bubbles) {
+                for (const left of localBubbles) {
+                    collide(left, right);
+                }
+            }
+        }
+
+        const executionTimeMs = startTime - Date.now();
+        const twentyTwoFPSRemainder = 45.45 - executionTimeMs;
+        if (twentyTwoFPSRemainder > 0) {
+            // The iteration "frame" completed faster than required to reach 22FPS
+            appState.increaseBubblesT({
+                x: getRandomInt(0, 99),
+                y: getRandomInt(0, 99),
+                vx: getRandomInt(0, 99),
+                vy: getRandomInt(0, 99),
+                r: getRandomInt(0, 99),
+            });
+        } else {
+            // The iteration "frame" completed slower than required to reach 22FPS
+            appState.decreaseBubbles();
+        }
+
+        appState.applyEdits();
+        await provider.ensureSynchronized();
+    }
+}
+
+function move(bubble: Bubble, width: number, height: number) {
+    let { x, y } = bubble;
+    const { vx, vy, r } = bubble;
+
+    bubble.x = x += vx;
+    bubble.y = y += vy;
+
+    // Reflect Bubbles off walls.
+    if (vx < 0 && x < r) {
+        bubble.vx = -vx;
+    } else if (vx > 0 && x > width - r) {
+        bubble.vx = -vx;
+    }
+
+    if (vy < 0 && y < r) {
+        bubble.vy = -vy;
+    } else if (vy > 0 && y > height - r) {
+        bubble.vy = -vy;
+    }
+}
+
+function collide(left: Bubble, right: Bubble): void {
+    const dx = left.x - right.x;
+    const dy = left.y - right.y;
+    const distance2 = dx * dx + dy * dy;
+
+    const threshold = left.r + right.r;
+    const threshold2 = threshold * threshold;
+
+    // Reject bubbles whose centers are too far away to be touching.
+    if (distance2 > threshold2) {
+        return;
+    }
+
+    const { vx: lvx, vy: lvy } = left;
+    const { vx: rvx, vy: rvy } = right;
+
+    const dvx = lvx - rvx;
+    const dvy = lvy - rvy;
+    let impulse = dvx * dx + dvy * dy;
+
+    // Reject bubbles that are traveling in the same direction.
+    if (impulse > 0) {
+        return;
+    }
+
+    impulse /= distance2;
+
+    left.vx = lvx - dx * impulse;
+    left.vy = lvy - dy * impulse;
+    right.vx = rvx + dx * impulse;
+    right.vy = rvy + dy * impulse;
+}
+
+function getRandomInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+}
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
