@@ -122,7 +122,7 @@ FLAGS
   -g, --releaseGroup=<option>       Run on all packages within this release group.
                                     <options: client|server|azure|build-tools>
   -s, --versionConstraint=<option>  The type of version constraint to use for previous versions. Only applies to the
-                                    prepare phase.
+                                    prepare phase. This overrides the branch-specific configuration in package.json.
                                     <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
                                     previousMinor|previousPatch|baseMinor|baseMajor|~baseMinor>
   -v, --verbose                     Verbose logging.
