@@ -234,7 +234,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.onVolunteerAck(taskId, clientId);
+            this.addClientToQueue(taskId, clientId);
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -249,7 +249,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.onAbandonAck(taskId, clientId);
+            this.removeClientFromQueue(taskId, clientId);
         });
 
         this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -273,7 +273,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
             if (!local) {
-                this.onCompleteAck(taskId);
+                this.taskQueues.delete(taskId);
+                this.completedWatcher.emit("completed", taskId);
+                this.emit("completed", taskId);
             }
         });
 
@@ -308,7 +310,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
             // .assigned() are also connection-state-aware to be consistent.
             for (const [taskId, clientQueue] of this.taskQueues.entries()) {
-                if (clientQueue[0] === this.clientId) {
+                if (this.isAttached() && clientQueue[0] === this.clientId) {
                     this.emit("lost", taskId);
                 }
             }
@@ -376,25 +378,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
-    private onVolunteerAck(taskId: string, clientId: string) {
-        const pendingIds = this.pendingCompletedTasks.get(taskId);
-        if (pendingIds !== undefined && pendingIds.length > 0) {
-            // Ignore the volunteer op if we know this task is about to be completed
-            return;
-        }
-        this.addClientToQueue(taskId, clientId);
-    }
-
-    private onAbandonAck(taskId: string, clientId: string) {
-        this.removeClientFromQueue(taskId, clientId);
-    }
-
-    private onCompleteAck(taskId: string) {
-        this.taskQueues.delete(taskId);
-        this.completedWatcher.emit("completed", taskId);
-        this.emit("completed", taskId);
-    }
-
     /**
      * {@inheritDoc ITaskManager.volunteerForTask}
      */
@@ -407,7 +390,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenari
             assert(this.clientId !== undefined, "clientId is undefined");
-            this.onVolunteerAck(taskId, this.clientId);
+            this.addClientToQueue(taskId, this.clientId);
             return true;
         }
 
@@ -560,7 +543,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.clientId !== undefined, "clientId is undefined");
-            this.onAbandonAck(taskId, this.clientId);
+            this.removeClientFromQueue(taskId, this.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
         }
@@ -721,6 +704,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
+        const pendingIds = this.pendingCompletedTasks.get(taskId);
+        if (pendingIds !== undefined && pendingIds.length > 0) {
+            // Ignore the volunteer op if we know this task is about to be completed
+            return;
+        }
+
         // Ensure that the clientId exists in the quorum, or it is placeholderClientId (detached scenario)
         if (this.runtime.getQuorum().getMembers().has(clientId) || this.clientId === placeholderClientId) {
             // Create the queue if it doesn't exist, and push the client on the back.
