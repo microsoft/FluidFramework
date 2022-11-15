@@ -285,9 +285,7 @@ function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: bool
 type ObjectField = MapTree[];
 
 /**
- * TODO: track observations.
- * When doing observation tracking, it might make more sense to have this wrap a RootedTextCursor
- * (which can be undefined when cleared), instead of sub-classing it.
+ * Cursor implementation for ObjectForest.
  */
 class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState;
