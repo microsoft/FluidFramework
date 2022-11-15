@@ -58,6 +58,12 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum CompressionAlgorithms {
+    // (undocumented)
+    lz4 = "lz4"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -74,6 +80,8 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
+// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
+//
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -230,6 +238,9 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 export const gcBlobPrefix = "__gc";
 
 // @public (undocumented)
+export const gcTombstoneBlobKey = "__tombstones";
+
+// @public (undocumented)
 export const gcTreeKey = "gc";
 
 // @public
@@ -300,7 +311,8 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
-    readonly minimumSize?: number;
+    readonly compressionAlgorithm: CompressionAlgorithms;
+    readonly minimumBatchSizeInBytes: number;
 }
 
 // @public (undocumented)
@@ -334,17 +346,6 @@ export interface IContainerRuntimeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
-}
-
-// @public
-export interface IGarbageCollectionRuntime {
-    closeFn: (error?: ICriticalContainerError) => void;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
-    getCurrentReferenceTimestampMs(): number | undefined;
-    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    getNodeType(nodePath: string): GCNodeType;
-    updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)

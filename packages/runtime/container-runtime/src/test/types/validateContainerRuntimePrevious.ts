@@ -431,6 +431,7 @@ declare function get_old_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<current.ICompressionRuntimeOptions>);
 use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -443,6 +444,7 @@ declare function get_current_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<old.ICompressionRuntimeOptions>);
 use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -479,6 +481,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>);
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -491,6 +494,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>);
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -520,26 +524,14 @@ use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGarbageCollectionRuntime": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IGarbageCollectionRuntime():
-    TypeOnly<old.IGarbageCollectionRuntime>;
-declare function use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
-    use: TypeOnly<current.IGarbageCollectionRuntime>);
-use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
-    get_old_InterfaceDeclaration_IGarbageCollectionRuntime());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGarbageCollectionRuntime": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IGarbageCollectionRuntime():
-    TypeOnly<current.IGarbageCollectionRuntime>;
-declare function use_old_InterfaceDeclaration_IGarbageCollectionRuntime(
-    use: TypeOnly<old.IGarbageCollectionRuntime>);
-use_old_InterfaceDeclaration_IGarbageCollectionRuntime(
-    get_current_InterfaceDeclaration_IGarbageCollectionRuntime());
 
 /*
 * Validate forward compat by using old type in place of current type
