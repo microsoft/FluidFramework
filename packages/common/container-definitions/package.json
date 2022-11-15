@@ -60,7 +60,9 @@
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
     "broken": {
-      "InterfaceDeclaration_IBatchMessage": {"backCompat": false}
+      "InterfaceDeclaration_IBatchMessage": {
+        "backCompat": false
+      }
     }
   }
 }
