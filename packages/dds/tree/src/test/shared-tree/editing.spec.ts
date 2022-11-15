@@ -7,6 +7,7 @@ import { singleTextCursor } from "../../feature-libraries";
 import { jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol } from "../../tree";
 import { TransactionResult } from "../../checkout";
+import { JsonCompatible } from "../../util";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
@@ -17,6 +18,7 @@ describe("Editing", () => {
             const tree2 = tree1.fork();
 
             const x = insert(tree1, 0, "x");
+
             const ac = insert(tree2, 1, "a", "c");
             const b = insert(tree2, 2, "b");
 
@@ -24,9 +26,7 @@ describe("Editing", () => {
             tree1.receive(sequenced);
             tree2.receive(sequenced);
 
-            const expected = ["x", "y", "a", "b", "c"];
-            assert.deepEqual(tree1.jsonRoots(), expected);
-            assert.deepEqual(tree2.jsonRoots(), expected);
+            expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
         });
     });
 });
@@ -45,4 +45,12 @@ function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdi
         field.insert(index, nodes);
         return TransactionResult.Apply;
     });
+}
+
+function expectJsonTree(actual: TestTree | TestTree[], expected: JsonCompatible[]): void {
+    const trees = Array.isArray(actual) ? actual : [actual];
+    for (const tree of trees) {
+        const roots = tree.jsonRoots();
+        assert.deepEqual(roots, expected);
+    }
 }
