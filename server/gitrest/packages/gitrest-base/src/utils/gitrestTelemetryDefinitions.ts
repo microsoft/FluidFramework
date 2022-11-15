@@ -11,6 +11,23 @@ export enum GitRestLumberEventName {
     RetrieveLatestFullSummaryFromStorage = "RetrieveLatestFullSummaryFromStorage",
     WholeSummaryManagerReadSummary = "ReadSummary",
     WholeSummaryManagerWriteSummary = "WriteSummary",
+
+    // RepoManager
+    CreateBlob = "CreateBlob",
+    CreateCommit = "CreateCommit",
+    CreateRef = "CreateRef",
+    CreateTag = "CreateTag",
+    CreateTree = "CreateTree",
+    DeleteRef = "DeleteRef",
+    GetBlob = "GetBlob",
+    GetCommit = "GetCommit",
+    GetCommits = "GetCommits",
+    GetContent = "GetContent",
+    GetRef = "GetRef",
+    GetRefs = "GetRefs",
+    GetTag = "GetTag",
+    GetTree = "GetTree",
+    PatchRef = "PatchRef",
 }
 
 // List of properties used in telemetry throughout GitRest
@@ -26,5 +43,5 @@ export enum BaseGitRestTelemetryProperties {
     softDelete = "softDelete",
     storageName = "storageName",
     summaryType = "summaryType",
-
+    tag = "tag",
 }

@@ -45,13 +45,15 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repo: TRepo,
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
-        lumberjackBaseProperties: Record<string, any>): IRepositoryManager;
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean): IRepositoryManager;
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
+        private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {
         this.internalHandler = repoPerDocEnabled
             ? this.repoPerDocInternalHandler.bind(this)
@@ -206,7 +208,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                 repository,
                 directoryPath,
                 this.externalStorageManager,
-                lumberjackBaseProperties);
+                lumberjackBaseProperties,
+                this.enableRepositoryManagerMetrics);
         };
 
         // RepoManagerFactories support 2 types of operations: "create repo" and "open repo". "Open repo"
