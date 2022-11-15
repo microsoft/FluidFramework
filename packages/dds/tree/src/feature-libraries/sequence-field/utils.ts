@@ -21,7 +21,6 @@ import {
     SizedMark,
     SizedObjectMark,
     Skip,
-    Tomb,
 } from "./format";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -49,10 +48,6 @@ export function isReattach<TNodeChange>(
             mark.type === "Return" ||
             mark.type === "MReturn")
     );
-}
-
-export function isTomb(mark: Mark<unknown>): mark is Tomb {
-    return isObjMark(mark) && mark.type === "Tomb";
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -114,7 +109,6 @@ export function getOutputLength(mark: Mark<unknown>): number {
     }
     const type = mark.type;
     switch (type) {
-        case "Tomb":
         case "Revive":
         case "Return":
         case "MoveIn":
@@ -150,7 +144,6 @@ export function getInputLength(mark: Mark<unknown>): number {
     }
     const type = mark.type;
     switch (type) {
-        case "Tomb":
         case "Delete":
         case "MoveOut":
             return mark.count;
@@ -197,7 +190,6 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
             fail(`Unable to split ${type} mark of length 1`);
         case "Delete":
         case "MoveOut":
-        case "Tomb":
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder },
@@ -248,7 +240,6 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, content: markObj.content.slice(length) },
             ] as [TMark, TMark];
         case "MoveIn":
-        case "Tomb":
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder },
@@ -326,14 +317,6 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {
                 lhsReattach.count += rhs.count;
-                return true;
-            }
-            break;
-        }
-        case "Tomb": {
-            const lhsTomb = lhs as Tomb;
-            if (rhs.change === lhsTomb.change) {
-                lhsTomb.count += rhs.count;
                 return true;
             }
             break;
