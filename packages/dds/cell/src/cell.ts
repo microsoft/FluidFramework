@@ -297,7 +297,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
-    private createLocalOpMetadata(op: ICellOperation, previousValue?: any): ICellLocalOpMetadata {
+    private createLocalOpMetadata(op: ICellOperation, previousValue?: Serializable<T>): ICellLocalOpMetadata {
         const pendingMessageId = ++this.messageId;
         this.pendingMessageIds.push(pendingMessageId);
         const localMetadata: ICellLocalOpMetadata = {
