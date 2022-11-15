@@ -90,8 +90,11 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    // TODO: Consider implementing a data object state while import is occurring (e.g. to disable input, etc.)?
-    // TODO: Consider a 2-phase (fetch/pull) to have some nice conflict UI
+    // TODO: Consider implementing a state to put the data object in while import is occurring
+    // (e.g. to disable input, etc.)?
+    // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
+    // TODO: Guard against reentrancy
+    // TODO: Use leader election to reduce noise from competing clients
     public async importExternalData() {
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
@@ -128,11 +131,13 @@ export class TaskList extends DataObject implements ITaskList {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
-        // TODO: Handle failure, retry, etc.
+        // TODO: Do something reasonable to handle failure, retry, etc.
         return externalDataSource.writeData(stringDataToWrite);
     };
 
     protected async initializingFirstTime(): Promise<void> {
+        // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
+        // at some point in the future.
         await this.importExternalData();
     }
 
@@ -156,6 +161,8 @@ export class TaskList extends DataObject implements ITaskList {
                 console.error("Unexpected modification to task list");
             }
         });
+
+        // TODO: Add listeners for the broadcast signal to kick off the inbound sync
 
         for (const [id, taskData] of this.root) {
             const [nameSharedString, prioritySharedCell] = await Promise.all([

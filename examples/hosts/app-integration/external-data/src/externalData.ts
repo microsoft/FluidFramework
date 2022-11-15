@@ -38,6 +38,9 @@ export interface IExternalDataSourceEvents extends IEvent {
  * It's an event emitter just so we can render a reasonable debug view on it for demo purposes - in more-realistic
  * cases we would expect to learn about data updates through webhooks or similar.
  * TODO: Implement a debug control to simulate data changing remotely, webhook, etc.
+ * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
+ * TODO: This will probably want to move to a standalone Express server or something eventually, esp. when working
+ * on the server-side bot approach.  But using localStorage is probably good enough for the broadcast signal portion.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
     public constructor() {

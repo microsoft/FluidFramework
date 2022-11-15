@@ -77,12 +77,15 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 interface ISyncStatusViewProps {
 }
 
+// TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
     return (
         <div>
             <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
-                Status eventually
+                Fluid has [no] unsync'd changes (not implemented)<br />
+                External data source has [no] unsync'd changes (not implemented)<br />
+                Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
             </div>
         </div>
     );
@@ -92,11 +95,17 @@ const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewPr
 interface IControlsViewProps {
 }
 
+// TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
+// themselves (as if they were editing it outside of Fluid).
+// TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     return (
-        <div style={{ margin: "10px 0" }}>
-            <button onClick={ externalDataSource.debugResetData }>Reset external data</button>
-            More controls eventually
+        <div>
+            <h3>Debug controls</h3>
+            <div style={{ margin: "10px 0" }}>
+                <button onClick={ externalDataSource.debugResetData }>Reset external data</button><br />
+                <button>Simulate external data change (not implemented)</button><br />
+            </div>
         </div>
     );
 };
