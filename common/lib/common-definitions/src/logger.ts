@@ -141,7 +141,7 @@ export interface ITelemetryGenErrorEvent extends ITelemetryGenEventBase {
 }
 
 /**
- * General-use Service event. Represents a call from app to an external service or storage.
+ * General-use Service event. Represents a call from FF to an external service or storage.
  */
 export interface ITelemetryGenServiceEvent extends ITelemetryGenEventBase {
     type: "service";
@@ -180,7 +180,7 @@ export interface ITelemetryGenClassEvent extends ITelemetryGenEventBase {
 }
 
 export type ITelemetryGenEvent =
-    | ITelemetryGenClassEvent
+    | ITelemetryGenApiEvent
     | ITelemetryGenServiceEvent
     | ITelemetryGenErrorEvent
     | ITelemetryGenClassEvent;
