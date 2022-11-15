@@ -70,6 +70,20 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         recordDependency(this.dependent, this.schema);
     }
 
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
+        const forest = new ObjectForest(schema, anchors);
+        // Deep copy the trees.
+        for (const [key, value] of this.roots.fields) {
+            // TODO: this references the existing TreeValues instead of copying them:
+            // they are assumed to be copy on write. See TODO on NodeData.
+            forest.roots.fields.set(
+                key,
+                value.map((v) => mapTreeFromCursor(singleMapTreeCursor(v))),
+            );
+        }
+        return forest;
+    }
+
     public forgetAnchor(anchor: Anchor): void {
         this.anchors.forget(anchor);
     }
@@ -324,7 +338,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         return { parent: anchor, fieldKey: path.field };
     }
     getFieldPath(): FieldUpPath {
-        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        assert(this.innerCursor !== undefined, 0x45f /* Cursor must be current to be used */);
         return this.innerCursor.getFieldPath();
     }
     get mode(): CursorLocationType {
@@ -449,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
-        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
+        assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
         return new Cursor(this.forest, this.innerCursor.fork());
     }
 

@@ -86,5 +86,9 @@
     "rimraf": "^3.0.2",
     "run-script-os": "^1.1.5",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
   }
 }

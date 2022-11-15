@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "console";
+import { assert } from "@fluidframework/common-utils";
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
     Anchor,
+    AnchorSet,
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
@@ -31,10 +32,12 @@ import {
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
 export interface IForestSubscription extends Dependee {
-    // We could provide access to this
-    // but then accessing it would reduce the ability to mutate in place as an optimization.
-    // Maybe add an explicit getter with a perf disclaimer? For now just expose subset of functionality:
-    // current(): IForestSnapshot;
+    /**
+     * Create an independent copy of this forest, that uses the provided schema and anchors.
+     *
+     * The new copy will not invalidate observers (dependents) of the old one.
+     */
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IForestSubscription;
 
     /**
      * Schema used within this forest.
