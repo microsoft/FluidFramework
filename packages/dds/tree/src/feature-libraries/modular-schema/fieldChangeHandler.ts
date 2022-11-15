@@ -90,6 +90,10 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
+/**
+ * The `index` represents the index of the child node in the input context.
+ * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ */
 export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
 export type NodeReviver = (

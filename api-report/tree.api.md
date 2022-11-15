@@ -1005,7 +1005,7 @@ enum RangeType {
 // @public
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
     // (undocumented)
-    getNodes(revision: RevisionTag, path: UpPath | undefined, field: FieldKey, index: number, count: number): TTree[];
+    getNodes(revision: RevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
     // (undocumented)
     getValue(revision: RevisionTag, path: UpPath): Value;
 }
@@ -1024,10 +1024,9 @@ function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
-// @public (undocumented)
+// @public
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
-    // (undocumented)
-    capture(destruction: TreeDestruction): void;
+    capture(change: Delta.Root, revision: RevisionTag): void;
 }
 
 // @public
@@ -1229,7 +1228,7 @@ enum Tiebreak {
     Right = 1
 }
 
-// @public (undocumented)
+// @public
 export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
 // @public (undocumented)
@@ -1259,13 +1258,6 @@ export enum TransactionResult {
     Abort = 0,
     // (undocumented)
     Apply = 1
-}
-
-// @public
-export interface TreeDestruction {
-    changes: Delta.Root;
-    // (undocumented)
-    revision: RevisionTag;
 }
 
 // @public (undocumented)

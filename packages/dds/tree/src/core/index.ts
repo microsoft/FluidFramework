@@ -151,4 +151,4 @@ export {
     SessionId,
 } from "../edit-manager";
 
-export { RepairDataStore, ReadonlyRepairDataStore, TreeDestruction } from "../repair";
+export { RepairDataStore, ReadonlyRepairDataStore } from "../repair";

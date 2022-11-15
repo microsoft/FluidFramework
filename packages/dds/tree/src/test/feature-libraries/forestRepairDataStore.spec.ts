@@ -60,9 +60,8 @@ describe("ForestRepairDataStore", () => {
             },
         };
         initializeForest(forest, [singleTextCursor(data)]);
-        store.capture({
-            revision,
-            changes: new Map([
+        store.capture(
+            new Map([
                 [
                     rootFieldKeySymbol,
                     [
@@ -84,7 +83,8 @@ describe("ForestRepairDataStore", () => {
                     ],
                 ],
             ]),
-        });
+            revision,
+        );
         const nodes = store.getNodes(revision, root, fooKey, 1, 2);
         const actual = nodes.map(jsonableTreeFromCursor);
         assert.deepEqual(actual, nodesToCapture);
@@ -109,9 +109,8 @@ describe("ForestRepairDataStore", () => {
             },
         };
         initializeForest(forest, [singleTextCursor(data)]);
-        store.capture({
-            revision,
-            changes: new Map([
+        store.capture(
+            new Map([
                 [
                     rootFieldKeySymbol,
                     [
@@ -141,7 +140,8 @@ describe("ForestRepairDataStore", () => {
                     ],
                 ],
             ]),
-        });
+            revision,
+        );
         const value0 = store.getValue(revision, {
             parent: root,
             parentField: fooKey,

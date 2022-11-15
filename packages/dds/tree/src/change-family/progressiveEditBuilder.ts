@@ -42,10 +42,7 @@ export abstract class ProgressiveEditBuilderBase<TChange>
         });
         this.changeFamily.rebaser.rebaseAnchors(this.anchorSet, change);
         const delta = this.changeFamily.intoDelta(change, this.repairStore);
-        this.repairStore.capture({
-            revision,
-            changes: delta,
-        });
+        this.repairStore.capture(delta, revision);
         this.deltaReceiver(delta);
     }
 

@@ -73,7 +73,6 @@ export {
     TaggedChange,
     RepairDataStore,
     ReadonlyRepairDataStore,
-    TreeDestruction,
 } from "./core";
 
 export {

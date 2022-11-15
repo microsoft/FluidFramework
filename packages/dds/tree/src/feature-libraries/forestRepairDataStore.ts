@@ -17,7 +17,6 @@ import {
     RepairDataStore,
     RevisionTag,
     SparseNode,
-    TreeDestruction,
     UpPath,
     Value,
 } from "../core";
@@ -42,8 +41,7 @@ export class ForestRepairDataStore implements RepairDataStore {
         this.root = new SparseNode<RepairData | undefined>(EmptyKey, 0, undefined, undefined);
     }
 
-    public capture(destruction: TreeDestruction): void {
-        const revision = destruction.revision;
+    public capture(change: Delta.Root, revision: RevisionTag): void {
         const forest = this.forestProvider(revision);
         const cursor = forest.allocateCursor();
 
@@ -147,7 +145,7 @@ export class ForestRepairDataStore implements RepairDataStore {
             }
         }
 
-        visitFieldMarks(destruction.changes, this.root);
+        visitFieldMarks(change, this.root);
         cursor.free();
     }
 

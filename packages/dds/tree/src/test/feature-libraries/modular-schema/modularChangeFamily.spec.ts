@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RepairDataStore, TreeDestruction } from "../../../core";
+import { RepairDataStore } from "../../../core";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -77,7 +77,7 @@ const singleNodeField = new FieldKind(
 );
 
 const noRepair: RepairDataStore = {
-    capture: (destruction: TreeDestruction) => {},
+    capture: () => {},
     getNodes: () => assert.fail(),
     getValue: () => assert.fail(),
 };
@@ -475,7 +475,7 @@ describe("ModularChangeFamily", () => {
             ];
             const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
             const repair: RepairDataStore = {
-                capture: (destruction: TreeDestruction) => assert.fail(),
+                capture: (TreeDestruction) => assert.fail(),
                 getNodes: () => assert.fail(),
                 getValue: (revision, path) => {
                     assert.equal(revision, detachedBy);

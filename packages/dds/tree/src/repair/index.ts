@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { RepairDataStore, ReadonlyRepairDataStore, TreeDestruction } from "./repairDataStore";
+export { RepairDataStore, ReadonlyRepairDataStore } from "./repairDataStore";
