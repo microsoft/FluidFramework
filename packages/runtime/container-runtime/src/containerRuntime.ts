@@ -3043,19 +3043,53 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
+    private validatePendingMessages(pendingMessages: IPendingLocalState | undefined): void {
+        if (pendingMessages === undefined) {
+            return;
+        }
+
+        // batchingState values:
+        // 1 = it is in the middle of a batch
+        // 0 = it is not in a batch
+        // any other value (-1, 2) would mean incomplete or corrupt batch in pendingMessages.
+        let batchingState = 0;
+        let incompleteBatch = false;
+        const pendingStates = pendingMessages.pendingStates;
+        for (const initialState of pendingStates) {
+            // Skip over "flush" messages
+            if (initialState.type === "message") {
+                if (initialState.opMetadata?.batch) {
+                    batchingState++;
+                } else if (initialState.opMetadata?.batch === false) {
+                    batchingState--;
+                }
+                if ( batchingState < 0 || batchingState > 1) {
+                    incompleteBatch = true;
+                    break;
+                }
+            }
+        }
+        if (incompleteBatch || batchingState !== 0) {
+            const error = new Error("Incomplete batch in pending states");
+            this.logger.sendErrorEvent({ eventName: "incompleteBatchWhileGetPendingLocalState" }, error);
+             throw error;
+        }
+    }
+
     public getPendingLocalState(): unknown {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
 
+        const pendingMessages = this.pendingStateManager.getLocalState();
+        this.validatePendingMessages(pendingMessages);
+        if (this._orderSequentiallyCalls !== 0) {
+            throw new UsageError("can't get state during orderSequentially");
+        }
         // Flush pending batch.
         // getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
         // to close current batch.
         this.flush();
-
-        if (this._orderSequentiallyCalls !== 0) {
-            throw new UsageError("can't get state during orderSequentially");
-        }
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
