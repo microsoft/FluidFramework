@@ -25,6 +25,7 @@ import {
     ObjectForest,
     singleTextCursor,
 } from "../../feature-libraries";
+import { Root } from "../../tree/delta";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
 
@@ -59,7 +60,14 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
     }
 }
 
-function setup(data?: JsonableTree) {
+/**
+ * @param data - The data to initialize the forest with.
+ */
+function initializeEditableForest(data?: JsonableTree): {
+    forest: ObjectForest;
+    builder: DefaultEditBuilder;
+    deltas: Delta.Root[];
+} {
     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
     const forest = new ObjectForest(schema);
     if (data !== undefined) {
@@ -85,6 +93,7 @@ function setup(data?: JsonableTree) {
         new AnchorSet(),
     );
     return {
+        forest,
         builder,
         deltas,
     };
@@ -92,12 +101,12 @@ function setup(data?: JsonableTree) {
 
 describe("DefaultEditBuilder", () => {
     it("Does not produces deltas if no editing calls are made to it", () => {
-        const { builder, deltas } = setup();
+        const { builder, deltas } = initializeEditableForest();
         assertDeltasEqual(deltas, []);
     });
 
     it("Produces one delta for each editing call made to it", () => {
-        const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
+        const { builder, deltas } = initializeEditableForest({ type: jsonNumber.name, value: 41 });
         const expected: Delta.Root[] = [];
 
         builder.setValue(root, 42);
@@ -150,7 +159,7 @@ describe("DefaultEditBuilder", () => {
     });
 
     it("Allows repair data to flow in and out of the repair store", () => {
-        const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
+        const { builder, deltas } = initializeEditableForest({ type: jsonNumber.name, value: 41 });
         const expected: Delta.Root[] = [];
 
         builder.setValue(root, 42);
@@ -177,7 +186,10 @@ describe("DefaultEditBuilder", () => {
 
     describe("Node Edits", () => {
         it("Can set the root node value", () => {
-            const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
+            const { builder, deltas } = initializeEditableForest({
+                type: jsonNumber.name,
+                value: 41,
+            });
             builder.setValue(root, 42);
             const expected: Delta.Root = new Map([
                 [
@@ -194,7 +206,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can set a child node value", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [
@@ -256,7 +268,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Value Field Edits", () => {
         it("Can overwrite a populated root field", () => {
-            const { builder, deltas } = setup({ type: jsonObject.name });
+            const { builder, deltas } = initializeEditableForest({ type: jsonObject.name });
             builder.valueField(undefined, rootKey).set(singleTextCursor(nodeX));
             const expected: Delta.Root = new Map([
                 [
@@ -277,7 +289,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can overwrite a populated child field", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [
@@ -335,7 +347,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Optional Field Edits", () => {
         it("Can overwrite a populated root field", () => {
-            const { builder, deltas } = setup({ type: jsonObject.name });
+            const { builder, deltas } = initializeEditableForest({ type: jsonObject.name });
             builder.optionalField(undefined, rootKey).set(singleTextCursor(nodeX), false);
             const expected: Delta.Root = new Map([
                 [
@@ -356,7 +368,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can overwrite a populated child field", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [
@@ -412,7 +424,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can set an empty root field", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = initializeEditableForest();
             builder.optionalField(undefined, rootKey).set(singleTextCursor(nodeX), true);
             const expected: Delta.Root = new Map([
                 [
@@ -429,7 +441,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can set an empty child field", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [
@@ -478,7 +490,7 @@ describe("DefaultEditBuilder", () => {
 
     describe("Sequence Field Edits", () => {
         it("Can insert a root node", () => {
-            const { builder, deltas } = setup();
+            const { builder, deltas } = initializeEditableForest();
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -495,7 +507,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can insert a child node", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [
@@ -554,7 +566,10 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can delete a root node", () => {
-            const { builder, deltas } = setup({ type: jsonNumber.name, value: 41 });
+            const { builder, deltas } = initializeEditableForest({
+                type: jsonNumber.name,
+                value: 41,
+            });
             const expected: Delta.Root = new Map([
                 [
                     rootKey,
@@ -571,7 +586,7 @@ describe("DefaultEditBuilder", () => {
         });
 
         it("Can delete child nodes", () => {
-            const { builder, deltas } = setup({
+            const { builder, deltas } = initializeEditableForest({
                 type: jsonObject.name,
                 fields: {
                     foo: [

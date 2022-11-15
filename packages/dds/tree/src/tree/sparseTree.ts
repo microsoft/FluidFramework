@@ -29,11 +29,6 @@ export class SparseNode<TData> implements UpPath {
      */
     public readonly children: Map<FieldKey, SparseNode<TData>[]> = new Map();
 
-    /**
-     * Construct a SparseNode with refcount 1.
-     * @param anchorSet - used to determine if this SparseNode is already part of a specific anchorSet
-     * to early out UpPath walking.
-     */
     public constructor(
         public parentField: FieldKey,
         public parentIndex: number,
@@ -41,12 +36,10 @@ export class SparseNode<TData> implements UpPath {
          * The parent of this `SparseNode` (an up pointer in the `SparseNode` tree).
          * If the status of this node is `Alive`, then there must be a corresponding down pointer from the
          * `parentPath` node to this node.
-         * When undefined, this node is the {@link AnchorSet.root} for `this.anchorSet` and thus has no parent.
+         * When undefined, this node is the root and thus has no parent.
          *
-         * When updating the tree, `AnchorSet` may transiently leave the up and down pointers inconsistent
-         * (updating down pointers first), but must ensure they are consistent before the editing operation returns
-         * to non-`AnchorSet` code.
-         * This consistency guarantee only applies to nodes that are `Alive`.
+         * When updating the tree, it is valid to transiently leave the up and down pointers inconsistent
+         * (updating down pointers first), but they must be consistent when the update is completed.
          */
         public parentPath: SparseNode<TData> | undefined,
         public data: TData,
@@ -149,12 +142,12 @@ export class SparseNode<TData> implements UpPath {
     }
 }
 
-export function getRelativeNode<TData>(
-    from: SparseNode<TData>,
+export function getDescendant<TData>(
+    ancestor: SparseNode<TData>,
     path: UpPath | undefined,
 ): SparseNode<TData> {
     const topDown = topDownPath(path);
-    let curr = from;
+    let curr = ancestor;
     for (const hop of topDown) {
         const field = curr.children.get(hop.parentField);
         assert(field !== undefined, "Field not present in sparse node");
