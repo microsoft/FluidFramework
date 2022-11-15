@@ -105,7 +105,7 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+            updateUnusedRoutes: (unusedRoutes: string[], tombstone: boolean) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
@@ -991,8 +991,8 @@ describe("Garbage Collection Tests", () => {
                     false /* isSummarizerClient */,
                 );
 
-                // Trigger loading GC data from base snapshot - but don't call GC since that's not what happens in real flow
-                await (garbageCollector as any).initializeBaseStateP;
+                // Trigger loading GC state from base snapshot - but don't call GC since that's not what happens in real flow
+                await (garbageCollector as any).initializeStateFromBaseSnapshotP;
 
                 // Update nodes and validate that all events for node 3 are logged.
                 updateAllNodes(garbageCollector);
