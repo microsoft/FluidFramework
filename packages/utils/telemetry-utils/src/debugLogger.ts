@@ -96,7 +96,6 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        return;
         const newEvent: ITelemetryProperties = this.prepareEvent(event);
         const isError = newEvent.category === "error";
         let logger = isError ? this.debugErr : this.debug;
@@ -148,48 +147,7 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public sendGenTelemetry(event: ITelemetryGenEvent): void {
-        const newEvent: ITelemetryProperties = this.prepareEvent(event);
-        const isError = newEvent.category === "error";
-        let logger = isError ? this.debugErr : this.debug;
-
-        // Use debug's coloring schema for base of the event
-        const index = event.eventName.lastIndexOf(
-            TelemetryLogger.eventNamespaceSeparator
-        );
-        const name = event.eventName.substring(index + 1);
-        if (index > 0) {
-            logger = logger.extend(event.eventName.substring(0, index));
-        }
-        newEvent.eventName = undefined;
-
-        let tick = "";
-        tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
-
-        // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
-        const stack = newEvent.stack ? newEvent.stack : "";
-        newEvent.stack = undefined;
-
-        // Watch out for circular references - they can come from two sources
-        // 1) error object - we do not control it and should remove it and retry
-        // 2) properties supplied by telemetry caller - that's a bug that should be addressed!
-        let payload: string;
-        try {
-            payload = JSON.stringify(newEvent);
-        } catch (error) {
-            newEvent.error = undefined;
-            payload = JSON.stringify(newEvent);
-        }
-
-        if (payload === "{}") {
-            payload = "";
-        }
-
-        // Force errors out, to help with diagnostics
-        if (isError) {
-            logger.enabled = true;
-        }
-
-        // Print multi-line.
-        logger(`${name} ${payload} ${tick} ${stack}`);
+        // TODO: filtering before sending
+        this.send(event);
     }
 }

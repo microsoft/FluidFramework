@@ -320,9 +320,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
      public async disconnect(): Promise<void> {
         return this.genLogger.logApiCall(
-            "connect",
+            "disconnect",
             {
-                apiName: "connect",
+                apiName: "disconnect",
             },
             async (_event) => {
                 this.container.disconnect?.();
