@@ -88,6 +88,10 @@ export function clonePath(path: UpPath | undefined): UpPath | undefined {
     };
 }
 
+/**
+ * @returns The elements of the given `path`, ordered from root-most to child-most.
+ * These elements are unchanged and therefore still point "up".
+ */
 export function topDownPath(path: UpPath | undefined): UpPath[] {
     const out: UpPath[] = [];
     let curr = path;

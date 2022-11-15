@@ -13,6 +13,7 @@ import { brand } from "../../util";
 import {
     FieldKey,
     JsonableTree,
+    mapCursorField,
     rootFieldKey,
     rootFieldKeySymbol,
     symbolFromKey,
@@ -125,7 +126,7 @@ describe("SharedTree", () => {
 
         // Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
         await provider.opProcessingController.processIncoming(container1);
-        validateTree(tree1, ["A", "C"]);
+        validateRootField(tree1, ["A", "C"]);
 
         // Have tree1 make a summary
         // Summarized state: A C
@@ -152,16 +153,16 @@ describe("SharedTree", () => {
         // Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
         // in summaries or not.
         const expectedValues = ["A", "B", "C"];
-        validateTree(tree1, expectedValues);
-        validateTree(tree2, expectedValues);
-        validateTree(tree3, expectedValues);
+        validateRootField(tree1, expectedValues);
+        validateRootField(tree2, expectedValues);
+        validateRootField(tree3, expectedValues);
         // tree4 should only get the correct end state if it was able to get the adequate
         // EditManager state from the summary. Specifically, in order to correctly rebase the insert
         // of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
         // rebase the insertion of  B over that edit.
         // Without that, it will interpret the insertion of B based on the current state, yielding
         // the order ACB.
-        validateTree(tree4, expectedValues);
+        validateRootField(tree4, expectedValues);
     });
 
     it("can summarize local edits in the attach summary", async () => {
@@ -176,7 +177,7 @@ describe("SharedTree", () => {
             tree.storedSchema.update(schema);
             insert(tree, 0, "A");
             insert(tree, 1, "C");
-            validateTree(tree, ["A", "C"]);
+            validateRootField(tree, ["A", "C"]);
         };
         const provider = await TestTreeProvider.create(
             1,
@@ -184,16 +185,16 @@ describe("SharedTree", () => {
             new SharedTreeTestFactory(onCreate),
         );
         const [tree1] = provider.trees;
-        validateTree(tree1, ["A", "C"]);
+        validateRootField(tree1, ["A", "C"]);
         const tree2 = await provider.createTree();
         // Check that the joining tree was initialized with data from the attach summary
-        validateTree(tree2, ["A", "C"]);
+        validateRootField(tree2, ["A", "C"]);
 
         // Check that further edits are interpreted properly
         insert(tree1, 1, "B");
         await provider.ensureSynchronized();
-        validateTree(tree1, ["A", "B", "C"]);
-        validateTree(tree2, ["A", "B", "C"]);
+        validateRootField(tree1, ["A", "B", "C"]);
+        validateRootField(tree2, ["A", "B", "C"]);
     });
 
     describe("Editing", () => {
@@ -380,12 +381,7 @@ describe("SharedTree", () => {
                 return TransactionResult.Abort;
             });
 
-            const readCursor = tree1.forest.allocateCursor();
-            moveToDetachedField(tree1.forest, readCursor);
-            assert(readCursor.firstNode());
-            const actual = jsonableTreeFromCursor(readCursor);
-            assert.deepEqual(actual, initialState);
-            readCursor.free();
+            validateTree(tree1, [initialState]);
         });
 
         it("can insert multiple nodes", async () => {
@@ -435,8 +431,8 @@ describe("SharedTree", () => {
             await provider.ensureSynchronized();
 
             const expected = ["x", "y", "a", "b", "c"];
-            validateTree(tree1, expected);
-            validateTree(tree2, expected);
+            validateRootField(tree1, expected);
+            validateRootField(tree2, expected);
         });
     });
 });
@@ -531,7 +527,7 @@ function insert(tree: ISharedTree, index: number, ...values: string[]): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateTree(tree: ISharedTree, expected: Value[]): void {
+function validateRootField(tree: ISharedTree, expected: Value[]): void {
     const readCursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, readCursor);
     let hasNode = readCursor.firstNode();
@@ -542,4 +538,12 @@ function validateTree(tree: ISharedTree, expected: Value[]): void {
     }
     assert.equal(hasNode, false);
     readCursor.free();
+}
+
+function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+    const readCursor = tree.forest.allocateCursor();
+    moveToDetachedField(tree.forest, readCursor);
+    const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+    readCursor.free();
+    assert.deepEqual(actual, expected);
 }
