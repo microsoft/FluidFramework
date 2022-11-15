@@ -21,9 +21,6 @@ import {
 
 import { Context } from "../bumpVersion/context";
 import { IFluidRepoPackage } from "../common/fluidRepo";
-import { getPackageManifest } from "../common/fluidUtils";
-import { MonoRepoKind } from "../common/monoRepo";
-import { Package } from "../common/npmPackage";
 
 export type PackageDetails = {
     readonly packageDir: string;
