@@ -1,10 +1,10 @@
-# Shared Tree Storage
+# Shared Tree Virtualization
 
-> Note: Items in a `code block` are elaborated upon in the Glossary at the end of this document. Items in a blockquote (such as the text you are reading right now) provide helpful context but are not strictly necessary to understand the current topic.
+> Note: Items in a `code block` are elaborated upon in the Glossary at the end of this document. Items in a blockquote (such as the text you are reading right now) provide helpful context but are not strictly necessary to understand a topic.
 
 ## Overview
 
-This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents much larger than memory are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible.
+This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents much larger than memory are a requirement). There is therefore significant complexity introduced to many of the storage approaches as well as the API for retrieving the tree from storage in order to make this kind of scalability possible.
 
 The data that needs to be stored in order to fully capture the state of the tree is as follows:
 
@@ -22,19 +22,25 @@ Finally,
 
 7. Any indexes or accelerations structures that, despite being derived from the state listed above, are cheaper to persist and incrementally update than to fully recompute on a client
 
-> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, 5, 7).
+> Note: The remainder of this document will focus primarily on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, 5, 7).
 
 ## Virtualization and Incrementality
 
-Existing Fluid DDSs generally assume that their documents will fit entirely on each client's machine. SharedTree does not make this assumption and therefore requires additional architecture, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. The region of the tree that the client is holding in its memory is called its `partial checkout`.
+Existing Fluid DDSs generally assume that their documents will fit entirely on each client's machine. SharedTree does not make this assumption and therefore requires additional architecture, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading only the part of the document that it has in memory to storage.
 
-> As presented above, the maximum size of a partial checkout is limited by a client machine's random access memory, but an optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ disk, either because the document is impressively huge or [the disk is already pretty full](https://www.digitaltrends.com/gaming/why-are-video-games-so-big/).
+> As presented above, the amount of the document that a client can view at once is limited by a client machine's random access memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
 
-Allowing for partial checkouts of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it knows and cares about. Likewise, it must be able to update parts of the tree incrementally to minimize writes.
+Allowing for partial downloads of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only part of the tree, it needs that data locally available.
+
+> The downloaded region of the tree is always strictly within a client's `partial checkout`. A partial checkout is a client's "working space" restricted to some particular region of the tree. It is sanctioned by the server; the server knows that the client is restricted to activity in that area. The server can therefore enforce that the client downloads content in that area exclusively, and the server can filter the ops that it delivers to that client to be only the ones relevant to that area. This can provide the server a way to enforce permission boundaries for different parts of the tree as well as provide improved efficiency for clients since they will receive fewer ops. The implementation of partial checkouts itself is outside the scope of this document, but this document will provide the fundamental building blocks for such an implementation.
 
 ## Blobs and Chunks
 
-In order to allow partial checkouts, clients split the tree into contiguous regions of nodes called `chunks` according to a chunking algorithm. For example:
+In order to allow virtualization and incremental writes, clients split the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service.
+
+> The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob, for example. But in practice, having the chunk size mimic the blob size and storing each chunk in its own blob simplifies the architecture.
+
+The responsibility of dividing the tree into chunks is given to a `chunking algorithm`. A chunking algorithm might split a tree into something like the following:
 
 ```mermaid
 graph TD;
@@ -62,19 +68,15 @@ graph TD;
     B-->D
 ```
 
-> In practice, chunks will likely contain many more nodes than in the illustration above
+> For most practical applications, chunks will contain many more nodes than in the illustration above
 
-The implementation details of a chunking algorithm is outside the scope of this document. Many implementations are possible, and different applications might wish to choose one or another. All chunking algorithms have the constraints that:
+The implementation details of a chunking algorithm are outside the scope of this document. Many implementations are possible, and different applications might wish to choose one or another. All chunking algorithms have the constraints that:
 
  * All nodes in a chunk are contiguous
  * No two chunks intersect/overlap
  * Every node in the tree belongs to a chunk
 
-> Chunking algorithms might be deterministic, meaning that they always chunk the same tree in the same way for all clients, or they might be tunable depending on a specific client's judgment. Which approach makes the most sense depends on whether clients store chunks in memory or only long-term storage, and whether or not the chunking is performed by a single client or split up across multiple clients.
-
-The chunks produced by a chunking algorithm are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service.
-
-> The chunk size is not _necessarily_ related to the blob size; multiple chunks could go into a blob, for example. But in practice, having the chunk size target the blob size and storing each chunk in its own blob simplifies things greatly.
+> Chunking algorithms might be deterministic, meaning that they always chunk the same tree in the same way for all clients, or they might be tunable by a specific client's parameters. Which approach makes the most sense depends on whether clients store chunks in memory or only long-term storage, and whether or not the chunking is performed by a single client or split up across multiple clients.
 
 ## The Chunk Data Structure
 
@@ -96,24 +98,26 @@ graph TD;
     d-->f
 ```
 
-Node _b_ has two children, _c_ and _d_, but _c_ is inlined and part of the same chunk as _b_ (Chunk A) whereas _d_ is in a different chunk (Chunk B) and is stored by reference. Walking from _b_ to _c_ is a synchronous operation because _c_ is already in memory; walking from _b_ to _d_ is an asynchronous operation that may require downloading Chunk B first. This is the pattern of virtualization for walking down the tree; chunks are loaded lazily on demand. The chunks themselves implicitly form a sort of data structure. In fact, it's another tree:
+Node _b_ has two children, _c_ and _d_, but _c_ is inlined and part of the same chunk as _b_ (Chunk A) whereas _d_ is in a different chunk (Chunk B) and is stored by reference. Walking from _b_ to _c_ is a synchronous operation because _c_ is already in memory; walking from _b_ to _d_ is an asynchronous operation that may require downloading Chunk B first. This is the pattern of virtualization for walking down the tree; chunks are loaded lazily on demand.
+
+The chunks themselves implicitly form a sort of data structure. In fact, it's another tree:
 
 ```mermaid
 graph TD;
     A(Chunk A)-->B(Chunk B)-->C(Chunk C)
 ```
 
-The next sections will examine some of the general properties of this "chunk tree".
+The folowing sections will examine some of the general properties of this "chunk tree".
 
 ### Immutable Blobs
 
-This document assumes that blobs are immmutable and `content-addressable`. This means that once a blob has been created, it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
+Except where stated otherwise, this document assumes that blobs are immmutable and `content-addressable`. This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
 
-Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction at Blob A because Blob A is at the top of the tree (the "root blob"). Even though only Chunk C changed, all three chunks had to be reuploaded. In general, the whole `spine` of the tree above any edited node must be replaced for each edit.
+Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire `spine` of the tree above any edited node must be replaced for each edit.
 
 ### Copy-On-Write History
 
-This necessity of this ["spine replacement"](https://en.wikipedia.org/wiki/Intervertebral_disc_arthroplasty) has a useful side effect: it makes it very simple to keep track of `revisions` of the tree over time, i.e. the tree's `history`. Consider a tree made up of five chunks:
+This necessity of this spine replacement has a useful side effect: it makes it very simple to keep track of `revisions` of the tree over time, i.e. the tree's `history`. Consider a tree made up of five chunks:
 
 ```mermaid
 graph TD;
@@ -149,7 +153,7 @@ graph TD;
     end
 ```
 
-Next, the client edits Chunk D, resulting in the replacement of A', C, and D to form revision 2:
+Next, the client `edits` Chunk D, resulting in the replacement of A', C, and D to form revision 2:
 
 ```mermaid
 graph TD;
@@ -170,7 +174,7 @@ graph TD;
     end
 ```
 
-Consider Chunk A and Chunk A', the predecessors to A''. They still exist in storage even though they are outdated and have been superceded by A'' in the latest revision of the tree (Revision 2). They are immutable and still retain the same contents that they did in prior revisions (their children are Chunk B/C/E and Chunk B'/C/E, respectively). Likewise, Chunk B still exists, the predecessor to B', and in the same way so do chunks C and D. In fact, _all_ chunks from all revisions remain accessible and untouched from their original state. This means that one can walk down from the root chunk of any revision and retrieve the entire contents of the tree as it had been at that revision. And conveniently, every revision produces exactly one new root chunk because a spine was cloned for each and the root chunk always belongs to any possible spine. This means that every revision is "captured" by a unique root chunk, and preserving the history of the tree is as simple as keeping references those root chunks. Storing the entire history of the tree is as simple as keeping a log of keys to those root chunks:
+Consider Chunk A and Chunk A', the predecessors to A''. They still exist in storage even though they are outdated and have been superceded by A'' in the latest revision of the tree (Revision 2). They are immutable and still retain the same contents that they did in prior revisions (their children are Chunk B/C/E and Chunk B'/C/E, respectively). Likewise, Chunk B, the predecessor to B', still exists (and the same for chunks C and D). In fact, _all_ chunks from all revisions remain accessible and untouched from their original state. This means that one can walk down from the root chunk of any revision and retrieve the entire contents of the tree as it had been at that revision. And conveniently, every revision produces exactly one new root chunk because a spine was cloned for each and the root chunk always belongs to any possible spine. This means that every revision is "captured" by a unique root chunk, and preserving the history of the tree can be accomplished by keeping references those root chunks. Storing the entire history of the tree is as simple as keeping a log of keys to those root chunks:
 
 Revision | Root Chunk Key
 ---------|---------------
@@ -179,124 +183,120 @@ Revision | Root Chunk Key
 2        | A''
 ...      | ...
 
-This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for creating a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing `snapshot isolation` because the tree reader does not have to worry about changes from other clients affecting its view.
+This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for creating a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing `snapshot isolation` because the tree reader does not have to worry about edits from other clients or its own concurrent edits affecting its view.
 
 ### Write Amplification
 
-The drawback to replacing the spine for every edit is the intense [write amplification](https://en.wikipedia.org/wiki/Write_amplification). For every write to the tree, every chunk of the spine of the tree above the edited node is replaced, incurring multiple blob uploads for what began as a single update to a single value. To make matters even worse, each of these uploads must wait to begin until it knows the key of the blob below. Assuming that a blob's key is determined by the server and is not known until the upload completes, all uploads in the spine must occur one-by-one and are completely unparallelizable.
+The drawback to replacing the spine for every edit is the intense [write amplification](https://en.wikipedia.org/wiki/Write_amplification). For every write to the tree, every chunk of the spine above the edited node is replaced, incurring multiple blob uploads for what began as a single update to a single value. To make matters even worse, each of these uploads must wait to begin until it knows the key of the blob below. Assuming that a blob's key is determined by the server and is not known until the upload completes, all uploads in the spine must occur one-by-one and are completely unparallelizable.
 
 > The uploads could happen in parallel if a client were able to predict the keys for each new blob ahead of time by running the same hashing algorithm as the server does on the contents of the blob. If the client then sent the key to the server as well as the contents, the key could be used a checksum to verify the integrity of the upload as well as ensure that the correct hashing algorithm was used.
 
 Paying this cost for every edit is a burden for a client desiring high write throughput. The next section will explore how to spread this cost out over multiple edits.
 
-> Later, we'll look at how the length of the spine can be minimized, reducing the size of the upload. Some different approaches are explored in the "TODO" section of this document.
+> Later, we'll look at how the length of the spine can be minimized, reducing the cumulative size of the uploads. Some different approaches are explored in the "Chunk Data Structure Implementations" section of this document.
 
 ## Amortizing Writes
 
-Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a chunk upload for every single write_. This is unnacceptable for SharedTree, which requires high write throughput. There are multiple ways to mitigate this cost.
+Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a blob upload for every single write_. This is unnacceptable for a DDS which requires high write throughput. There are multiple ways to mitigate this cost.
 
-### Write-Ahead Log
+### Write-Ahead Log and Intermittent Flushing
 
-One solution is to only upload modified chunks every so often, keeping any uncommitted edits in an in-memory log in the meantime. This amortizes the cost of upload across many writes. The uploads can be done in the background so a client is not blocked on an upload as it continues to receive local or incoming edits. As long as the log of edits doesn't grow too large, it's still cheap for a client to compute the current state by applying all the edits in the log to the last known uploaded state. For example:
+One solution is to only upload modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "`flush`" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
 
-Revision     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
--------------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|----|----|----|----
-Edits        |   | A | B | C | D | E | F | G | H | I | J  | K  | L  | M  | N  | O  | P  | Q  | R  | S  | T
-Chunk Upload |   |   |   |   |   | * |   |   |   |   | *  |    |    |    |    | *  |    |    |    |    | *
+```mermaid
+graph TD;
+    subgraph Union of Changed Spines from Revisions 0-2:
+        AU(Chunk A'')
+        BU(Chunk B')
+        CU(Chunk C)
+        DU(Chunk D')
+        AU-->BU
+        AU-->CU
+        AU-->DU
+    end
 
-In the table above, a client only uploads chunks every five edits. A client that joins a session between after edit 7 has been applied would first download the chunks that were uploaded at revision 5, which include the state resulting from edits A - E. It would then apply edits F and G to that state to catch up to the current state of the document.
+    subgraph Revision 2:
+        A2(Chunk A'')
+        B2(Chunk B')
+        C2(Chunk C)
+        D2(Chunk D')
+        A2-->B2
+        A2-->C2
+        A2-->D2
+    end
 
-> In practice, uploads can happen much less frequently than every five edits. For better performance a SharedTree will likely want them to occur at most every few hundred or thousand edits, depending on the scenario.
+    subgraph Revision 1:
+        A1(Chunk A')
+        B1(Chunk B')
+        C1(Chunk C)
+        D1(Chunk D)
+        A1-->B1
+        A1-->C1
+        A1-->D1
+    end
+
+    subgraph Revision 0:
+        A0(Chunk A)
+        B0(Chunk B)
+        C0(Chunk C)
+        D0(Chunk D)
+        A0-->B0
+        A0-->C0
+        A0-->D0
+    end
+
+    style A1 fill:#844
+    style B1 fill:#844
+    style A2 fill:#448
+    style B2 fill:#844
+    style D2 fill:#448
+    style AU fill:#848
+    style BU fill:#848
+    style DU fill:#848
+```
+
+To keep track of the state of revisions between flushes, a client keeps edits in a log in memory. As long as the log of edits doesn't grow too large, it's inexpensive for a client to compute the current state by applying all the edits in the log to the last flushed state. For example:
+
+Revision | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+---------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|----|----|----|----
+Edits    |   | A | B | C | D | E | F | G | H | I | J  | K  | L  | M  | N  | O  | P  | Q  | R  | S  | T
+Flush    |   |   |   |   |   | * |   |   |   |   | *  |    |    |    |    | *  |    |    |    |    | *
+
+In the table above, a client only flushes chunks every five edits. A client that joins a session after edit 7 has been applied would first download the chunks that were flushed at revision 5 which include the state resulting from edits A - E. It would then apply edits F and G to that state to catch up to the current state of the document.
+
+> In practice, flushes can happen much less frequently than every five edits. A client can choose a frequency that gives ideal performance for its usage patterns. The flushes can be done in the background so a client is not blocked on a flush as it continues to receive local or incoming edits.
 
 > This is quite similar to the existing summarization model in the Fluid framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the SharedTree would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being an option:
 > * Summary trees do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a SharedTree to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
-> * Summary trees do not support incrementality. A client cannot upload parts of the summary without uploading the whole thing. Uploading the whole summary of a large document might take too much time, and clients with partial checkouts couldn't do that anyway because they don't have the entire contents of the tree in the first place.
-> * The frequency of summaries cannot be controlled by a DDS. Ideally, a SharedTree has control over how often it uploads its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow DDS to provide hints for summary frequency, a SharedTree would still risk fighting over policy with other DDS in the container.
-> * There is only every one summary client at a time that is responsible for uploading summaries. However, with a document that is too large to fit in a single client's memory all at once, the upload process might take too long as that client pages parts of the tree in and out in order to generate the summary.
+> * Summary trees do not support incrementality. A client cannot upload parts of the summary without uploading the whole thing. Uploading the whole summary of a large document might exceed size or bandwidth limits. There is an ongoing development effort to automatically divide summaries into blobs and upload them in pieces, however, this currently doesn't give the DDS fine-grained control over how/where the summary is divided into chunks.
+> * The frequency of summaries cannot be controlled by a DDS. Ideally, a SharedTree has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a SharedTree would still risk fighting over policy with other DDS in the container.
+> * There is only ever one summary client at a time that is responsible for uploading summaries. However, with a document that is too large to fit in a single client's memory all at once, the flush might exceed the summarization timeout as that client pages parts of the tree in and out in order to generate the summary.
 
-There are many different options for how the log might be stored. Here are three:
+There are many different options for how the log might be stored. Here are two:
 
-1. The log can be stored in memory in a data structure that supports efficient appending of new values and efficient eviction of old values. New incoming edits are appended to the log. When an upload occurs, all edits that are fully described by that upload are removed*. Each client retains the edits for all clients, even the edits which are not a part of its partial checkout. The log can therefore serialized to and loaded from the Fluid summary by a normal summary client.
-    > There is some nuance here regarding edits that affect multiple parts of the tree at once. Consider a "move" edit (created by some Client C) which moves a node from Client A's checkout to Client B's checkout. When Client A uploads the chunk state for its checkout, it will reflect the absence of the moved node, but it isn't sufficient to fully describe the edit. Only after Client B also finishes its upload and has recorded the rest of the edit (the new location of the node) can that move operation be removed from the log for all clients.
-2. The log can be split up according to the part of the tree that each edit applies to, and then stored directly in the chunks themselves. Each chunk is then self-describing; it contains both its last uploaded state and also all the edits needed to catch it up to its current state. This is only feasible if the immutability constraint of blobs is relaxed. Blobs need not be fully mutable, but they must be at least "append-only" so that the edits can be progressively tacked on to them.
-3. A hybrid of option #1 and #2 is possible, which stores some edits in the chunks while allowing the chunks to remain immutable. Initially, edits are enqueued in an in-memory log as described in option 1. When a spine is updated by a client, all edits
+1. The log can be stored in memory in a data structure that supports efficient appending of new values and efficient eviction of old values. New incoming edits are appended to the log. When a flush occurs, all edits from before the flush are evicted from the log. The log can be serialized to and loaded from the Fluid summary by a normal summary client.
+2. The log can be split up according to the part of the tree that each edit applies to, and then stored directly in the chunks themselves. Each chunk is then self-describing; it contains both its last flushed state and also all the edits needed to catch it up to its current state. This is only feasible if the immutability constraint of blobs is relaxed. Blobs need not be fully mutable, but they must be at least "append-only" so that the edits can be progressively tacked on to them with minimal network/storage cost. When a chunk becomes full of edits and cannot append any more, a flush of those edits occurs, incurring a spine update.
 
-### Partial Check-in
+After a flush completes, all clients are notified of the flush and the new chunk root resulting from that flush. They can then update their in-memory copies of the tree, update caches, etc. The flushing itself can be performed by an elected client (e.g. the oldest client, or the result of some other heuristic decided via the Fluid quorum APIs, etc.) which performs a flush periodically, notifying all clients when each flush completes via a special "flush op" that contains the new chunk root. Because flushes happen in the background and take time to complete, care must be taken to ensure that flushes are synchronized correctly in the case where the elected client changes during an ongoing flush. It's possible for two flushes to start concurrently, in which case the second one to finish will be conflicted; if it were to complete, it would incorrectly overwrite data in the first flush. By tagging each flush op with some metadata about when the flush began, clients can know whether it is correct to adopt the state in the flush op (which is the case when _no other flush ops were sequenced in the interim_).
 
-One of the main challenges of the upload process is that no single client necessarily has the whole document to upload. Clients have partial checkouts of the document, therefore, the best they can do is a "partial check-in". Conceptually, it makes sense that each client would be responsible for uploading at most the parts of the document that it has downloaded, and at least the parts of the document that it has changed. The complexity arises when two clients have checked out overlapping regions of the tree. Consider a tree with a very simple chunk structure:
-
-```mermaid
-graph TD;
-    R(Chunk Root)-->A(Chunk A)
-    R-->B(Chunk B)
-```
-
-Suppose that Client A checks out some nodes in Chunk A, and Client does the same in Chunk B:
-
-```mermaid
-graph TD;
-    CA[Client A]
-    R(Chunk Root)-->A(Chunk A)
-    R-->B(Chunk B)
-    CB[Client B]
-    style A fill:#844
-    style CA fill:#844
-    style B fill:#448
-    style CB fill:#448
-    style R fill:#848
-```
-
-Note that Chunk Root is implicitly checked out by _both_ clients, because it is shared in both of their chunk spines. In fact, every client that checks out any part of a tree must at least check out the root chunk since it is common to all possible chunk spines. Because Client A and Client B are both going to be writing the same part of the tree (Chunk Root, in this case), they must take care to synchronize their updates properly. When Client A updates and uploads Chunk A and Chunk Root, it is possible that client B is also uploading Chunk B and Chunk Root at the same time. Both of them began their uploads assuming the state of Chunk Root to be the same, but after one client's upload succeeds, Chunk Root will have been replaced with Chunk Root'. The other client is now attempting to complete an upload which is (to use git terminology) conflicted; it is based off Chunk Root (not Chunk Root') which is out of date. That later client therefore needs to forget about its upload and try again, based off of the new Chunk Root'. Clients can accomplish this by sending a special "upload op" when their upload completes. All clients (including the sending client) will only adopt the uploaded state when they receive that upload op _if no other upload ops were received in the interim_.
-
-> More precisely, an upload op is valid only if there are no other upload ops sequenced between the `reference sequence number` as it was at the start of the upload, and the `sequence number` of the upload op itself. For example, a conflicted scenario might resolve like this:
-> 1. Client A begins an upload. At that time, the latest sequence number delivered to Client A is 10.
-> 2. Client B begins an upload. At that time, the latest sequence number delivered to Client B is 10.
-> 3. Both Client A and Client B receive the next five ops, their reference sequence numbers are now **15**.
-> 4. Client B's upload finishes, so Client B submits an upload op that contains a handle to the uploaded chunk root and the reference sequence number **10** (_not_ **15**).
-> 5. The server sequences Client B's upload op with sequence number **16**.
-> 6. Client A's upload finishes, so Client A submits an upload op that contains a handle to the uploaded chunk root and the reference sequence number **10**.
-> 7. The server sequences Client A's upload op with sequence number **17**.
-> 8. Client B receives the op with sequence number **16** which is its upload op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
-> 9. Client A receives the op with sequence number **16** which is Client B's upload op. Like Client B, it acknowledges the new chunk state. However, Client A also now knows that the upload it attempted earlier is conflicted, because the upload op from Client B was sequenced before it. It therefore begins a new upload based off of the new state.
-> 10. Both Client A and Client B receive the op with sequence number **17**, which is Client A's upload op. They both recognize that the upload is conflicted, because the reference sequence number it included is **10**, but there has been another upload op (Client B's, at **16**) sequenced between **10** and the current sequence number **17**. This makes it evident that Client A's upload started before it knew about the most recent upload op from Client B and so both Client A and Client B ignore the op.
-
-As mentioned above, all client's checkouts will have at least the root chunk in common, and therefore every client will cause a conflict with any other client for any concurrent uploads. Thus, this approach scales poorly as the number of simultaneously active clients increases because the chances of concurrent uploads increases. Every conflict incurs wasted upload bandwidth, wasted time, and risks allowing a client to fall "too far behind" in which case it will have a very large in-memory log of edits that it wants to commit to the chunks, but can't. The chance of conflicts can perhaps be reduced by giving more intelligent heuristics to clients about when to attempt an upload, but it's difficult to accomodate for all different levels of client activity and network conditions. Nonetheless, this approach should perform well for many multi-user scenarios involving even very large documents. It assigns each client the reasonable burden of uploading at most the same amount of data as it is already downloading (i.e. the size of a partial check-in is at most the size of the client's partial checkout). This means that clients are automatically load-balanced with respect to their capabilities. Clients with limited memory that can only page in small regions of the tree at a time will only be asked to upload those small regions of the tree. More powerful clients that can view more of the tree will also upload more of the tree. Read-only clients need not do any uploading at all.
-
-
-
-
-
-
-
-
-
- This cost can be reduced by updating the spine for only some edits, not all edits, and keeping a list of edits between those updates. For example, consider the following history of a tree. The tree has had 20 edits made to it, and therefore has 21 revisions (the 0th revision is the "empty tree" which precedes any edits).
-
-
-
-Now, a client most upload chunks only four times. To produce revision 1 from revision 0, a client does not update the spine but instead sends just edit A which is put in a log by all clients. Going from revision 1 to revision 2 sends edit B, revision 2 to 3 sends edit C, and so on until a client produces revision 5. At revision 5, the writing client uploads the current tree state, replacing all chunks which have changed since revision 0 (some union of spines). The client repeats this process only at every fifth edit, reducing the frequency of upload by a factor of five. However, this means that a client joining at a sequence number between two uploads must have access to all edits since the last upload. For example, a client who joins at sequence number 13 will download the state of the tree at revision 10 since that was the last uploaded state. It then applies edits K, L, and M to that state to be consistent at revision 13. This begs the question; where are these edits stored? One possibility is to store them in the summary. Specifically, every summary must contain all edits that have occurred since the last chunk upload before that summary. Any edits after that point will be delivered by the runtime.
-
-> This is the minimum requirement for storing edits for this scheme to work. A SharedTree that preserves its full history will need to store all of its edits anyway, and can query them for this scheme.
-
-> If the immutability constraint on blobs were relaxed, and blobs were instead mutable or even just _append-only_, then the edits could be stored in one of the uploaded tree chunks. This could reduce the number of edits retained between infrequent summaries.
-
-This scheme can be optimized by changing the frequency of chunk uploads. Rather than every five, it might be every 100 or 1000. An application or heuristic can choose this frequency based on the complexity of its edits and the performance characteristics that it desires.
-
-> This strategy feels analogous to the runtime's summarization process. Every so often a "checkpoint" is uploaded and catching up to a midpoint between checkpoints involves "playing back" intermediate edits. So, why not simply do the chunk uploads at summarization time? There are a few reasons:
-    1. Summarization frequency cannot be controlled or tuned by a DDS, so SharedTree cannot choose the upload frequency that is best for its document.
-    2. It might take too long to upload all the changed chunks, and the summary's timeout will be exceeded.
-    3. When the upload finishes, all other clients should be notified via an op that they can safely update their state to match the new uploaded state (e.g. update their chunks stored in memory, evict any caches that are now stale, etc.). Sending an op from the summarizing client is disallowed/discouraged.
-
+> More precisely, a flush op is valid only if and only if there are no other flush ops sequenced between the latest `sequence number` delivered to the client at the start of the flush, and the `sequence number` of the flush op itself. (Conceptually this is the `reference sequence number` of the flush, but it is not to be conufsed with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
+> 1. Client A, the elected flushing client, begins a flush. At that time, the latest sequence number delivered to Client A is 10.
+> 2. Client B is elected to be the new flushing client
+> 2. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
+> 3. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both **15**.
+> 4. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number **10** (_not_ **15**).
+> 5. The server sequences Client A's flush op with sequence number **16**.
+> 6. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number **10**.
+> 7. The server sequences Client B's flush op with sequence number **17**.
+> 8. Client A receives the op with sequence number **16** which is its flush op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
+> 9. Client B receives the op with sequence number **16** which is Client A's flush op. Like Client A, it acknowledges the new chunk state. However, Client B also now knows that the flush it attempted earlier is conflicted, because the flush op from Client A was sequenced before it. It decides to begin a new flush based off of the new state.
+> 10. Both Client A and Client B receive the op with sequence number **17**, which is Client B's flush op. They both recognize that the flush is conflicted, because the reference sequence number it included is **10**, but there has been another flush op (Client A's, at **16**) sequenced between **10** and the current sequence number **17**. This makes it evident that Client B's flush started before it knew about the most recent flush op from Client A, so both Client A and Client B ignore the op.
 
 ### Random Reads
 
 The performance of cold reads is analogous to that of writes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine). Just as with writes/uploads, the number of these downloads required for a read depends on the depth of the leaf and scales worse the deeper the tree is.
 
-However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. But such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. If a random read truly could be no better than walking down from the root through every node on the path, then a client could easily implement a "random" read function itself. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below.
-
-> Every node in a tree has a unique path.
-
-> For a practical use case for random reads, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, suppose a customer has a partial checkout of a subtree of a large document that does not include the root; it needs a way to reference and access the nodes in its checkout without walking down from the root. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components.
+However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical use case for random reads, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. Such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. If a random read truly could be no better than walking down from the root through every node on the path, then a client could easily implement a "random" read function itself. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below.
 
 ### Tree Shapes
 
@@ -1238,12 +1238,12 @@ This is a good place leverage decision encapsulation to minimize the impact if w
 - Content-addressable: data which can be referred to by a key derived from the data itself. For example, data in a store which hashes each value to produce its key.
 - [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
 - Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list
+- Edit: an atomic change or collection of changes applied to a tree. An edit always produces a new revision of the tree.
 - Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
 - History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
 - Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
 - Logical Tree: refers to the actual tree of nodes/data that make up the content of shared tree. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
-- Partial Checkout: a client loads only a portion of a tree, and can read/write only from/to that portion of the tree.
-  > Note: Partial checkout might be necessary for performance reasons (e.g. if the full tree is too large to fit into the client's memory), or for privacy/security reasons (e.g. multiple clients share a tree but each is only allowed access to some part of it)
+- Partial Checkout: a region of a tree that a client is restricted to by the server
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
 - Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
 - Reference sequence number: the sequence number of the latest known Fluid op when an op is first sent by a client
