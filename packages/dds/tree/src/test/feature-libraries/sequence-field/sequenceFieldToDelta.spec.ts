@@ -10,7 +10,7 @@ import {
     FieldChange,
     FieldKinds,
     NodeChangeset,
-    RepairData,
+    NodeReviver,
     SequenceField as SF,
     singleTextCursor,
 } from "../../../feature-libraries";
@@ -35,9 +35,9 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
     return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
-function toDelta(change: TestChangeset, repair: RepairData = fakeRepairData): Delta.MarkList {
+function toDelta(change: TestChangeset, reviver: NodeReviver = fakeRepairData): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta, repair);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, reviver);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
@@ -111,13 +111,13 @@ describe("SequenceField - toDelta", () => {
         const changeset: TestChangeset = [
             { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 1 },
         ];
-        function repair(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+        function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
             assert.equal(revision, tag);
             assert.equal(index, 0);
             assert.equal(count, 1);
             return contentCursor;
         }
-        const actual = toDelta(changeset, repair);
+        const actual = toDelta(changeset, reviver);
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Insert,
@@ -145,13 +145,13 @@ describe("SequenceField - toDelta", () => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: fieldChanges };
         };
-        function repair(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+        function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
             assert.equal(revision, tag);
             assert.equal(index, 0);
             assert.equal(count, 1);
             return contentCursor;
         }
-        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repair);
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, reviver);
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Insert,

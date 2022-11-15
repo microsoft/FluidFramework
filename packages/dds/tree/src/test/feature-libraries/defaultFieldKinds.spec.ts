@@ -8,7 +8,7 @@ import {
     FieldChangeHandler,
     FieldKinds,
     NodeChangeset,
-    RepairData,
+    NodeReviver,
     singleTextCursor,
 } from "../../feature-libraries";
 import { makeAnonChange, RevisionTag } from "../../rebase";
@@ -172,7 +172,7 @@ describe("Value field changesets", () => {
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
         ];
 
-        const repair: RepairData = (revision: RevisionTag, index: number, count: number) => {
+        const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
             assert.equal(revision, detachedBy);
             assert.equal(index, 0);
             assert.equal(count, 1);
@@ -314,7 +314,7 @@ describe("Optional field changesets", () => {
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
         ];
 
-        const repair: RepairData = (revision: RevisionTag, index: number, count: number) => {
+        const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
             assert.equal(revision, detachedBy);
             assert.equal(index, 0);
             assert.equal(count, 1);

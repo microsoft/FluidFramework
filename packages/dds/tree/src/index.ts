@@ -124,7 +124,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
-    RepairData,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,

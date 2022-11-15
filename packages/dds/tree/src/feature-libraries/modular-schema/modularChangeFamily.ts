@@ -22,7 +22,7 @@ import {
     RevisionTag,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
-import { fakeRepairDataStore } from "../fakeRepairDataStore";
+import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
     FieldChangeMap,
@@ -233,7 +233,7 @@ export class ModularChangeFamily
     }
 
     intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
-        return this.intoDeltaImpl(change, repairStore ?? fakeRepairDataStore, undefined);
+        return this.intoDeltaImpl(change, repairStore ?? dummyRepairDataStore, undefined);
     }
 
     /**

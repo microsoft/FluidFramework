@@ -9,7 +9,7 @@ import { Delta } from "../../core";
 import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
-import { RepairData } from "../modular-schema";
+import { NodeReviver } from "../modular-schema";
 import { MarkList, ModifyInsert } from "./format";
 import { getInputLength, isSkipMark } from "./utils";
 
@@ -21,7 +21,7 @@ const ERR_NO_REVISION_ON_REVIVE =
 export function sequenceFieldToDelta<TNodeChange>(
     marks: MarkList<TNodeChange>,
     deltaFromChild: ToDelta<TNodeChange>,
-    repair: RepairData,
+    reviver: NodeReviver,
 ): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
     let inputIndex = 0;
@@ -113,7 +113,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Revive": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        content: repair(
+                        content: reviver(
                             mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
                             mark.detachIndex,
                             mark.count,
@@ -124,7 +124,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                 }
                 case "MRevive": {
                     const modify = deltaFromChild(mark.changes, inputIndex);
-                    const revived = repair(
+                    const revived = reviver(
                         mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
                         mark.detachIndex,
                         1,

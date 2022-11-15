@@ -32,7 +32,7 @@ import {
     NodeChangeEncoder,
     FieldEditor,
     referenceFreeFieldChangeRebaser,
-    RepairData,
+    NodeReviver,
 } from "./modular-schema";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
@@ -351,14 +351,14 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
     encoder: valueFieldEncoder,
     editor: valueFieldEditor,
 
-    intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
+    intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
             let newValue: ITreeCursorSynchronous;
             if ("revert" in change.value) {
                 const revision = change.value.revert;
                 assert(revision !== undefined, "Unable to revert to undefined revision");
-                newValue = repair(revision, 0, 1)[0];
+                newValue = reviver(revision, 0, 1)[0];
             } else {
                 newValue = singleTextCursor(change.value.set);
             }
@@ -640,7 +640,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         encoder: optionalFieldEncoder,
         editor: optionalFieldEditor,
 
-        intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, repair: RepairData) => {
+        intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
             const update = change.fieldChange?.newContent;
             let content: JsonableTree | ITreeCursorSynchronous | undefined;
             if (update === undefined || "set" in update) {
@@ -648,7 +648,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
             } else {
                 const revision = update.revert;
                 assert(revision !== undefined, "Unable to revert to undefined revision");
-                content = repair(revision, 0, 1)[0];
+                content = reviver(revision, 0, 1)[0];
             }
             const insertDelta = deltaFromInsertAndChange(
                 content,

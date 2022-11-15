@@ -26,7 +26,7 @@ export {
     NodeChangeInverter,
     NodeChangeRebaser,
     NodeChangeset,
-    RepairData,
+    NodeReviver,
     referenceFreeFieldChangeRebaser,
     ToDelta,
     ValueChange,

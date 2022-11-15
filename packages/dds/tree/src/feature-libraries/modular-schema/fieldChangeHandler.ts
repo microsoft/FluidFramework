@@ -18,7 +18,7 @@ export interface FieldChangeHandler<
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repair: RepairData): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 
     // TODO
     // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
@@ -92,7 +92,11 @@ export interface FieldEditor<TChangeset> {
 
 export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
 
-export type RepairData = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
+export type NodeReviver = (
+    revision: RevisionTag,
+    index: number,
+    count: number,
+) => Delta.ProtoNode[];
 
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
