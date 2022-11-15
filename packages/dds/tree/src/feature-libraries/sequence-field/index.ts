@@ -35,7 +35,6 @@ export {
     SizedMark,
     SizedObjectMark,
     Tiebreak,
-    Tomb,
     Tombstones,
     TreeForestPath,
     TreeRootPath,
