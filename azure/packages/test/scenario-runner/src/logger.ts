@@ -114,19 +114,17 @@ export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
     }
 });
 
-
 function getRegionFromEndpointUrl(endpointUrl: string): string | undefined {
-    const definedRegions = ['westus2', 'westus3', 'eastus', 'europe']
+    const definedRegions = ["westus2", "westus3", "eastus", "europe"];
 
-    definedRegions.forEach((region: string) => {
+    for (const region of definedRegions) {
         if (endpointUrl.includes(region)) {
-            return region
+            return region;
         }
-    })
+    }
 
-    return undefined
+    return undefined;
 }
-
 
 export async function getLogger(
     config: LoggerConfig,
@@ -144,7 +142,7 @@ export async function getLogger(
         all: {
             runId: config.runId,
             scenarioName: config.scenarioName,
-            endpoint: config.endpoint && getRegionFromEndpointUrl(config.endpoint) // parse URL to only contain the region
+            endpoint: config.endpoint && getRegionFromEndpointUrl(config.endpoint), // parse URL to only contain the region
         },
     });
 }
