@@ -13,6 +13,8 @@
 
 export { MemberChangeKind } from "./Audience";
 
+export { ClientDebuggerSummary } from "./ClientDebuggerSummary";
+
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 
 export {

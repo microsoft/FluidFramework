@@ -15,6 +15,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 import { MemberChangeKind } from "./Audience";
+import { ClientDebuggerSummary } from "./ClientDebuggerSummary";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
@@ -270,6 +271,25 @@ export class FluidClientDebugger
 	// #endregion
 
 	/**
+	 * {@inheritDoc IFluidClientDebugger.summarizeCurrentState}
+	 */
+	public summarizeCurrentState(): ClientDebuggerSummary {
+		return {
+			containerId: this.containerId,
+			// TODO: containerData
+			clientId: this.getClientId(),
+			isContainerAttached: this.isContainerAttached(),
+			isContainerConnected: this.isContainerConnected(),
+			isContainerDirty: this.isContainerDirty(),
+			isContainerClosed: this.isContainerClosed(),
+			containerConnectionLog: this.getContainerConnectionLog(),
+			containerResolvedUrl: this.getContainerResolvedUrl(),
+			audienceMembers: [...this.getAudienceMembers().entries()],
+			audienceHistory: this.getAudienceHistory(),
+		};
+	}
+
+	/**
 	 * {@inheritDoc IFluidClientDebugger.dispose}
 	 */
 	public dispose(): void {
@@ -285,6 +305,8 @@ export class FluidClientDebugger
 		this.audience.off("addMember", this.audienceMemberAddedHandler);
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 
+		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
+
 		this._disposed = true;
 	}
 
@@ -292,7 +314,6 @@ export class FluidClientDebugger
 	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
-		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 		return this._disposed;
 	}
 }

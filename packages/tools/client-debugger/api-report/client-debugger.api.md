@@ -22,6 +22,30 @@ export interface AudienceChangeLogEntry extends LogEntry {
 }
 
 // @public
+export interface ClientDebuggerSummary {
+    // (undocumented)
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    // (undocumented)
+    audienceMembers: readonly [string, IClient][];
+    // (undocumented)
+    clientId: string | undefined;
+    // (undocumented)
+    containerConnectionLog: readonly ConnectionStateChangeLogEntry[];
+    // (undocumented)
+    containerId: string;
+    // (undocumented)
+    containerResolvedUrl: IResolvedUrl | undefined;
+    // (undocumented)
+    isContainerAttached: boolean;
+    // (undocumented)
+    isContainerClosed: boolean;
+    // (undocumented)
+    isContainerConnected: boolean;
+    // (undocumented)
+    isContainerDirty: boolean;
+}
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
 
 // @public
@@ -58,6 +82,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     isContainerClosed(): boolean;
     isContainerConnected(): boolean;
     isContainerDirty(): boolean;
+    summarizeCurrentState(): ClientDebuggerSummary;
     tryConnectContainer(): void;
 }
 
