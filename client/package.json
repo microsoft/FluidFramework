@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@fluid-internal/client",
   "version": "0.14.0",
   "private": true,
   "homepage": "https://fluidframework.com",
