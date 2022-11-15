@@ -21,6 +21,7 @@ describe("Outbox", () => {
         individualOpsSubmitted: any[];
         pendingOpContents: any[];
         opsSubmitted: number;
+        pendingFlushCount: number;
     };
     const state: State = {
         deltaManagerFlushCalls: 0,
@@ -30,138 +31,8 @@ describe("Outbox", () => {
         individualOpsSubmitted: [],
         pendingOpContents: [],
         opsSubmitted: 0,
+        pendingFlushCount: 0,
     };
-
-    beforeEach(() => {
-        state.deltaManagerFlushCalls = 0;
-        state.canSendOps = true;
-        state.batchesSubmitted.splice(0);
-        state.batchesCompressed = [];
-        state.individualOpsSubmitted.splice(0);
-        state.pendingOpContents.splice(0);
-        state.opsSubmitted = 0;
-    });
-
-    it("Sending batches", () => {
-        const outbox = getOutbox(getMockContext() as IContainerContext);
-        const messages = [
-            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-            createMessage(ContainerMessageType.Attach, "2"),
-            createMessage(ContainerMessageType.Attach, "3"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
-        ];
-
-        outbox.submit(messages[0]);
-        outbox.submit(messages[1]);
-        outbox.submitAttach(messages[2]);
-        outbox.submitAttach(messages[3]);
-
-        outbox.flush();
-
-        outbox.submit(messages[4]);
-        outbox.flush();
-
-        outbox.submit(messages[5]);
-
-        assert.equal(state.opsSubmitted, messages.length - 1);
-        assert.equal(state.individualOpsSubmitted.length, 0);
-        assert.deepEqual(state.batchesSubmitted, [
-            [
-                batchedMessage(messages[2], true),
-                batchedMessage(messages[3], false),
-            ],
-            [
-                batchedMessage(messages[0], true),
-                batchedMessage(messages[1], false),
-            ],
-            [
-                batchedMessage(messages[4]),
-            ], // The last message was not batched
-        ]);
-        assert.equal(state.deltaManagerFlushCalls, 0);
-        const messagesInFlushOrder = [
-            messages[2], messages[3], messages[0], messages[1], messages[4],
-        ];
-        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
-            type: message.deserializedContent.type,
-            content: message.deserializedContent.contents,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            opMetadata: message.metadata,
-        })));
-    });
-
-    it("Will send messages only when allowed, but will store them in the pending state", () => {
-        const outbox = getOutbox(getMockContext() as IContainerContext);
-        const messages = [
-            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-        ];
-        outbox.submit(messages[0]);
-        outbox.flush();
-
-        outbox.submit(messages[1]);
-        state.canSendOps = false;
-        outbox.flush();
-
-        assert.equal(state.opsSubmitted, 1);
-        assert.deepEqual(state.batchesSubmitted, [
-            [
-                batchedMessage(messages[0]),
-            ],
-        ]);
-        assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
-            type: message.deserializedContent.type,
-            content: message.deserializedContent.contents,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            opMetadata: message.metadata,
-        })));
-    });
-
-    it("Uses legacy path for legacy contexts", () => {
-        const outbox = getOutbox(getMockLegacyContext() as IContainerContext);
-        const messages = [
-            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-            createMessage(ContainerMessageType.Attach, "2"),
-            createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
-        ];
-
-        outbox.submit(messages[0]);
-        outbox.submit(messages[1]);
-        outbox.submitAttach(messages[2]);
-        outbox.submit(messages[3]);
-
-        outbox.flush();
-
-        assert.equal(state.opsSubmitted, messages.length);
-        assert.equal(state.batchesSubmitted.length, 0);
-        assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
-        assert.equal(state.deltaManagerFlushCalls, 2);
-        const messagesInFlushOrder = [
-            messages[2], messages[0], messages[1], messages[3],
-        ];
-        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
-            type: message.deserializedContent.type,
-            content: message.deserializedContent.contents,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            opMetadata: message.metadata,
-        })));
-    });
-
-    it("No limits set on batch managers if compression is enabled", () => {
-
-    });
-
-    it("Compress only if compression is enabled", () => {
-
-    });
-
-    it("Compress only if the batch is larger than the configured limit", () => {
-
-    });
-
 
     const getMockDeltaManager = (): Partial<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>> => ({
         flush() {
@@ -214,7 +85,10 @@ describe("Outbox", () => {
             opMetadata: Record<string, unknown> | undefined,
         ): void => {
             state.pendingOpContents.push({ type, content, referenceSequenceNumber, opMetadata });
-        }
+        },
+        onFlush: (): void => {
+            state.pendingFlushCount++;
+        },
     });
 
     const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
@@ -246,4 +120,137 @@ describe("Outbox", () => {
             compressor: getMockCompressor(),
         },
     );
+
+    beforeEach(() => {
+        state.deltaManagerFlushCalls = 0;
+        state.canSendOps = true;
+        state.batchesSubmitted.splice(0);
+        state.batchesCompressed = [];
+        state.individualOpsSubmitted.splice(0);
+        state.pendingOpContents.splice(0);
+        state.opsSubmitted = 0;
+        state.pendingFlushCount = 0;
+    });
+
+    it("Sending batches", () => {
+        const outbox = getOutbox(getMockContext() as IContainerContext);
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.Attach, "3"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submitAttach(messages[3]);
+
+        outbox.flush();
+
+        outbox.submit(messages[4]);
+        outbox.flush();
+
+        outbox.submit(messages[5]);
+
+        assert.equal(state.opsSubmitted, messages.length - 1);
+        assert.equal(state.individualOpsSubmitted.length, 0);
+        assert.deepEqual(state.batchesSubmitted, [
+            [
+                batchedMessage(messages[2], true),
+                batchedMessage(messages[3], false),
+            ],
+            [
+                batchedMessage(messages[0], true),
+                batchedMessage(messages[1], false),
+            ],
+            [
+                batchedMessage(messages[4]),
+            ], // The last message was not batched
+        ]);
+        assert.equal(state.deltaManagerFlushCalls, 0);
+        const messagesInFlushOrder = [
+            messages[2], messages[3], messages[0], messages[1], messages[4],
+        ];
+        assert.equal(state.pendingFlushCount, 3);
+        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
+    });
+
+    it("Will send messages only when allowed, but will store them in the pending state", () => {
+        const outbox = getOutbox(getMockContext() as IContainerContext);
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+        ];
+        outbox.submit(messages[0]);
+        outbox.flush();
+
+        outbox.submit(messages[1]);
+        state.canSendOps = false;
+        outbox.flush();
+
+        assert.equal(state.opsSubmitted, 1);
+        assert.deepEqual(state.batchesSubmitted, [
+            [
+                batchedMessage(messages[0]),
+            ],
+        ]);
+        assert.equal(state.pendingFlushCount, 2);
+        assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
+    });
+
+    it("Uses legacy path for legacy contexts", () => {
+        const outbox = getOutbox(getMockLegacyContext() as IContainerContext);
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submit(messages[3]);
+
+        outbox.flush();
+
+        assert.equal(state.opsSubmitted, messages.length);
+        assert.equal(state.batchesSubmitted.length, 0);
+        assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
+        assert.equal(state.deltaManagerFlushCalls, 2);
+        const messagesInFlushOrder = [
+            messages[2], messages[0], messages[1], messages[3],
+        ];
+        assert.deepEqual(state.pendingOpContents, messagesInFlushOrder.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
+    });
+
+    it("No limits set on batch managers if compression is enabled", () => {
+
+    });
+
+    it("Compress only if compression is enabled", () => {
+
+    });
+
+    it("Compress only if the batch is larger than the configured limit", () => {
+
+    });
 });
