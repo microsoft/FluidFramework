@@ -20,8 +20,11 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "start": "node dist/www.js",
     "test": "nyc --all -x dist/test/**/* mocha dist/test",
     "tsc": "tsc"
@@ -47,6 +50,7 @@
     "json-stringify-safe": "^5.0.1",
     "nconf": "^0.11.4",
     "nodegit": "^0.27.0",
+    "prettier": "~2.6.2",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
     "winston": "^3.6.0"
