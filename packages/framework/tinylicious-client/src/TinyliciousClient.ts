@@ -28,6 +28,7 @@ import {
     IRootDataObject,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     TinyliciousClientProps,
     TinyliciousContainerServices,
@@ -100,7 +101,7 @@ export class TinyliciousClient {
             return resolved.id;
         };
 
-        const fluidContainer = new FluidContainer(container, rootDataObject);
+        const fluidContainer = new FluidContainer(container, rootDataObject, loader.services.subLogger);
         fluidContainer.attach = attach;
 
         const services = this.getContainerServices(container);
@@ -126,7 +127,17 @@ export class TinyliciousClient {
             container,
             "/"
         );
-        const fluidContainer = new FluidContainer(container, rootDataObject);
+
+        const logger = ChildLogger.create(
+            loader.services.subLogger,
+            undefined,
+            {
+                all: {
+                    docId: id,
+                },
+            });
+
+        const fluidContainer = new FluidContainer(container, rootDataObject, logger);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }

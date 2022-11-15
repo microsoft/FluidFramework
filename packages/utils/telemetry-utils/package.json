@@ -95,6 +95,12 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false},
+      "ClassDeclaration_ChildLogger": {"forwardCompat": false},
+      "ClassDeclaration_DebugLogger": {"forwardCompat": false},
+      "ClassDeclaration_MultiSinkLogger": {"forwardCompat": false},
+      "ClassDeclaration_TelemetryUTLogger": {"forwardCompat": false}
+    }
   }
 }

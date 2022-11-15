@@ -11,6 +11,7 @@ import {
     ICriticalContainerError,
     ConnectionState,
 } from "@fluidframework/container-definitions";
+import { ITelemetryLogger, ChildLogger, GeneralUseLogger } from "@fluidframework/telemetry-utils";
 import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
@@ -198,15 +199,12 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    private readonly connectedHandler = () => this.emit("connected");
-    private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
-    private readonly savedHandler = () => this.emit("saved");
-    private readonly dirtyHandler = () => this.emit("dirty");
+    private readonly genLogger: GeneralUseLogger;
 
     public constructor(
         private readonly container: IContainer,
         private readonly rootDataObject: IRootDataObject,
+        logger: ITelemetryLogger
     ) {
         super();
         container.on("connected", this.connectedHandler);
@@ -214,7 +212,39 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("disconnected", this.disconnectedHandler);
         container.on("saved", this.savedHandler);
         container.on("dirty", this.dirtyHandler);
+        this.genLogger = new GeneralUseLogger(
+            "@fluidframework/fluid-static",
+            "FluidContainer",
+            ChildLogger.create(logger, "FluidContainer")
+        );
     }
+
+    private readonly connectedHandler = (): void => {
+        this.genLogger.logEvent("connected");
+        this.emit("connected");
+    };
+
+    private readonly disposedHandler = (
+        error?: ICriticalContainerError
+    ): void => {
+        this.genLogger.logEvent("disposed", { details: error });
+        this.emit("disposed", error);
+    };
+
+    private readonly disconnectedHandler = (): void => {
+        this.genLogger.logEvent("disconnected");
+        this.emit("disconnected");
+    };
+
+    private readonly savedHandler = (): void => {
+        this.genLogger.logEvent("saved");
+        this.emit("saved");
+    };
+
+    private readonly dirtyHandler = (): void => {
+        this.genLogger.logEvent("dirty");
+        this.emit("dirty");
+    };
 
     /**
      * {@inheritDoc IFluidContainer.isDirty}

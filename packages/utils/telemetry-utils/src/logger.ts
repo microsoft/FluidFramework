@@ -3,18 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-    ITelemetryErrorEvent,
-    ITelemetryGenericEvent,
-    ITelemetryLogger,
-    ITelemetryPerformanceEvent,
-    ITelemetryProperties,
-    TelemetryEventPropertyType,
-    ITaggedTelemetryPropertyType,
-    TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
     CachedConfigProvider,
@@ -26,6 +14,19 @@ import {
     extractLogSafeErrorProperties,
     generateStack,
 } from "./errorLogging";
+import {
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+    ITelemetryErrorEvent,
+    ITelemetryGenEvent,
+    ITelemetryGenericEvent,
+    ITelemetryLogger,
+    ITelemetryPerformanceEvent,
+    ITelemetryProperties,
+    TelemetryEventPropertyType,
+    ITaggedTelemetryPropertyType,
+    TelemetryEventCategory,
+} from "./fakeDefs";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -217,6 +218,18 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
         return newEvent;
     }
+
+    protected prepareGenUseEvent(event: ITelemetryGenEvent): ITelemetryGenEvent {
+        const newEvent: ITelemetryGenEvent = {
+            ...event,
+        };
+        if (this.namespace !== undefined) {
+            newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
+        }
+
+        // TODO: we could consing picking (optional) specific properties that may be missing on the original evenet.
+        return newEvent;
+    }
 }
 
 /**
@@ -340,12 +353,21 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     /**
-     * Send an event with the logger
+     * Send a dev event to the loggers
      *
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
         this.baseLogger.send(this.prepareEvent(event));
+    }
+
+    /**
+     * Send a general-use event to the loggers
+     *
+     * @param event - the event to send to all the registered logger
+     */
+     public sendGenTelemetry(event: ITelemetryGenEvent): void {
+        this.baseLogger.sendGenTelemetry?.(this.prepareGenUseEvent(event));
     }
 }
 
@@ -380,7 +402,7 @@ export class MultiSinkLogger extends TelemetryLogger {
     }
 
     /**
-     * Send an event to the loggers
+     * Send a dev event to the loggers
      *
      * @param event - the event to send to all the registered logger
      */
@@ -388,6 +410,18 @@ export class MultiSinkLogger extends TelemetryLogger {
         const newEvent = this.prepareEvent(event);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
             logger.send(newEvent);
+        });
+    }
+
+    /**
+     * Send a general-use event to the loggers
+     *
+     * @param event - the event to send to all the registered logger
+     */
+    public sendGenTelemetry(event: ITelemetryGenEvent): void {
+        const newEvent = this.prepareGenUseEvent(event);
+        this.loggers.forEach((logger: ITelemetryBaseLogger) => {
+            logger.sendGenTelemetry?.(newEvent);
         });
     }
 }
@@ -531,6 +565,9 @@ export class PerformanceEvent {
 export class TelemetryUTLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
     }
+    public sendGenTelemetry(event: ITelemetryGenEvent): void {
+        return;
+    }
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
     }
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
@@ -568,11 +605,20 @@ export class TelemetryUTLogger implements ITelemetryLogger {
  */
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     /**
-     * Send an event with the logger
+     * Send a dev event with the logger
      *
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
+        return;
+    }
+
+    /**
+     * Send general-use event with the logger
+     *
+     * @param event - the event to send
+     */
+    public sendGenTelemetry(event: ITelemetryGenEvent): void {
         return;
     }
 }
@@ -583,6 +629,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  */
 export class TelemetryNullLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {}
+    public sendGenTelemetry?(event: ITelemetryGenEvent): void {}
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
