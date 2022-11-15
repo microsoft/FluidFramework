@@ -1505,11 +1505,15 @@ export class GarbageCollector implements IGarbageCollector {
         // For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
         // For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
         // but it's a good signal nonetheless and we can consume it with a grain of salt.
+        // Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
+        // SweepReady errors are usages of Objects that will be deleted by GC Sweep!
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
             // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
             // summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
+            // Events generated:
+            // InactiveObject_Loaded, SweepReadyObject_Loaded
             if (usageType === "Loaded") {
                 this.mc.logger.sendErrorEvent({
                     ...propsToLog,
@@ -1529,6 +1533,11 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     private async logUnreferencedEvents(logger: ITelemetryLogger) {
+        // Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
+        // summary time they are then logged.
+        // Events generated:
+        // InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
+        // SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
         for (const eventProps of this.pendingEventsQueue) {
             const { usageType, state, ...propsToLog } = eventProps;
             /**
