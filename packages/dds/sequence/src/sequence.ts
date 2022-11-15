@@ -192,36 +192,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         super.on("newListener", (event) => {
             switch (event) {
                 case "sequenceDelta":
-                    if (!this.client.mergeTreeDeltaCallback) {
-                        this.client.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
-                            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
-                        };
-                    }
+                    this.client.on("delta", (opArgs, deltaArgs) => {
+                        this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
+                    });
                     break;
                 case "maintenance":
-                    if (!this.client.mergeTreeMaintenanceCallback) {
-                        this.client.mergeTreeMaintenanceCallback = (args, opArgs) => {
-                            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
-                        };
-                    }
+                    this.client.on("maintenance", (args, opArgs) => {
+                        this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
+                    });
                     break;
                 default:
-            }
-        });
-        super.on("removeListener", (event: string | symbol) => {
-            switch (event) {
-                case "sequenceDelta":
-                    if (super.listenerCount(event) === 0) {
-                        this.client.mergeTreeDeltaCallback = undefined;
-                    }
-                    break;
-                case "maintenance":
-                    if (super.listenerCount(event) === 0) {
-                        this.client.mergeTreeMaintenanceCallback = undefined;
-                    }
-                    break;
-                default:
-                    break;
             }
         });
 

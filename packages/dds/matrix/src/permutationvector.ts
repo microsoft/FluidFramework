@@ -36,6 +36,9 @@ const enum SnapshotPath {
 type PermutationSegmentSpec = [number, number];
 
 export class PermutationSegment extends BaseSegment {
+    append(segment: ISegment): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly typeString: string = "PermutationSegment";
     private _start = Handle.unallocated;
 
@@ -153,8 +156,8 @@ export class PermutationVector extends Client {
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
-        this.mergeTreeDeltaCallback = this.onDelta;
-        this.mergeTreeMaintenanceCallback = this.onMaintenance;
+        this.on("delta", (opArgs, deltaArgs) => this.onDelta);
+        this.on("maintance", (opArgs, deltaArgs) => this.onMaintenance);
     }
 
     public insert(start: number, length: number) {
