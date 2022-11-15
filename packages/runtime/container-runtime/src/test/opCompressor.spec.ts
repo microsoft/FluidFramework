@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "..";
-import { BatchMessage } from "../batchManager";
+import { BatchMessage, IBatch } from "../batchManager";
 import { OpCompressor } from "../opCompressor";
 
 describe("OpCompressor", () => {
@@ -15,25 +15,30 @@ describe("OpCompressor", () => {
         compressor = new OpCompressor(new TelemetryUTLogger());
     });
 
-    it("Compresses single op batch", () => {
-        const batch: BatchMessage[] = [{
-            metadata: undefined,
-            localOpMetadata: undefined,
-            deserializedContent: {
-                contents: "content",
-                type: ContainerMessageType.FluidDataStoreOp
-            },
-            referenceSequenceNumber: 0
-        }];
+    const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
+        content: messages,
+        contentSizeInBytes: messages.map((message) => JSON.stringify(message).length).reduce((a, b) => a + b),
+    });
 
-        const compressedBatch = compressor.compressBatch(batch, JSON.stringify(batch).length);
-        assert.strictEqual(compressedBatch.length, 1);
-        assert.strictEqual(compressedBatch[0].compression, "lz4");
-        assert.strictEqual(compressedBatch[0].metadata?.compressed, true);
+    it("Compresses single op batch", () => {
+        const compressedBatch = compressor.processOutgoing(messagesToBatch([
+            {
+                metadata: undefined,
+                localOpMetadata: undefined,
+                deserializedContent: {
+                    contents: "content",
+                    type: ContainerMessageType.FluidDataStoreOp
+                },
+                referenceSequenceNumber: 0
+            }
+        ]));
+        assert.strictEqual(compressedBatch.content.length, 1);
+        assert.strictEqual(compressedBatch.content[0].compression, "lz4");
+        assert.strictEqual(compressedBatch.content[0].metadata?.compressed, true);
     });
 
     it("Compresses batch of multiple ops", () => {
-        const batch: BatchMessage[] = [{
+        const compressedBatch = compressor.processOutgoing(messagesToBatch([{
             metadata: undefined,
             localOpMetadata: undefined,
             deserializedContent: {
@@ -50,13 +55,11 @@ describe("OpCompressor", () => {
                 type: ContainerMessageType.FluidDataStoreOp
             },
             referenceSequenceNumber: 1
-        }];
-
-        const compressedBatch = compressor.compressBatch(batch, JSON.stringify(batch).length);
-        assert.strictEqual(compressedBatch.length, 2);
-        assert.strictEqual(compressedBatch[0].compression, "lz4");
-        assert.strictEqual(compressedBatch[0].metadata?.compressed, true);
-        assert.strictEqual(compressedBatch[1].contents, undefined);
-        assert.strictEqual(compressedBatch[1].compression, undefined);
+        }]));
+        assert.strictEqual(compressedBatch.content.length, 2);
+        assert.strictEqual(compressedBatch.content[0].compression, "lz4");
+        assert.strictEqual(compressedBatch.content[0].metadata?.compressed, true);
+        assert.strictEqual(compressedBatch.content[1].contents, undefined);
+        assert.strictEqual(compressedBatch.content[1].compression, undefined);
     });
 });

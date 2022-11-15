@@ -77,7 +77,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
         for (let i = 0; i < count; i++) {
-            const value = dataObject2map.get(`key${i}`);
+            const value = map.get(`key${i}`);
             assert.strictEqual(value, expected, `Wrong value for key${i}`);
         }
     };
@@ -121,7 +121,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Large ops passes when smaller than the max op size", async () => {
+    it("Single large op passes when smaller than the max op size", async () => {
         await setupContainers(testContainerConfig, {});
         // Max op size is 768000, round down to account for some overhead
         const largeString = generateStringOfSize(750000);
