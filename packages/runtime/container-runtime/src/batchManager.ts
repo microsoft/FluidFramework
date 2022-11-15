@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
 import { OpCompressor } from "./opCompressor";
 
@@ -18,6 +19,7 @@ export type BatchMessage = IBatchMessage & {
 };
 
 export interface IBatchManagerOptions {
+    readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -31,6 +33,7 @@ export class BatchManager {
     private pendingBatch: BatchMessage [] = [];
     private batchContentSize = 0;
 
+    public get empty() { return this.pendingBatch.length === 0; }
     public get length() { return this.pendingBatch.length; }
 
     constructor(public readonly logger: ITelemetryLogger, public readonly options: IBatchManagerOptions) {
@@ -38,6 +41,8 @@ export class BatchManager {
     }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
+
         const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
@@ -69,8 +74,6 @@ export class BatchManager {
         this.pendingBatch.push(message);
         return true;
     }
-
-    public get empty() { return this.pendingBatch.length === 0; }
 
     public popBatch() {
         const batch = this.pendingBatch;
@@ -104,5 +107,19 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.options.enableOpReentryCheck === true
+            && this.pendingBatch.length > 0
+            && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
+            throw new GenericError(
+                "Submission of an out of order message",
+                /* error */ undefined,
+                {
+                    referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+                });
+        }
     }
 }

@@ -9,9 +9,6 @@ import { BatchManager, BatchMessage } from "../batchManager";
 import { CompressionAlgorithms } from "..";
 
 describe("BatchManager", () => {
-    beforeEach(() => {
-    });
-
     const softLimit = 1024;
     const hardLimit = 950 * 1024;
 
@@ -177,6 +174,13 @@ describe("BatchManager", () => {
         assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 1 }), true);
+    });
+
+    it("Verify op ordering if requested", () => {
+        const batchManager = new BatchManager(new TelemetryUTLogger(), { enableOpReentryCheck: true, hardLimit });
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
+        assert.throws(() => batchManager.push({ ...smallMessage, referenceSequenceNumber: 1 }));
     });
 
     it("BatchManager: 'infinity' hard limit allows everything", () => {

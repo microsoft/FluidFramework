@@ -73,7 +73,6 @@ api-report/experimental-tree.api.md                                       @micro
 api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
 api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework
 api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
-api-report/iframe-driver.api.md                                           @microsoft/fluid-cr-drivers
 api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
 api-report/location-redirection-utils.api.md                              @microsoft/fluid-cr-loader
 api-report/map.api.md                                                     @microsoft/fluid-cr-dds
