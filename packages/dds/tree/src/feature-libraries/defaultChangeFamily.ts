@@ -12,10 +12,10 @@ import {
     AnchorSet,
     Delta,
     FieldKey,
-    ITreeCursorSynchronous,
     UpPath,
     Value,
     ITreeCursor,
+    ReadonlyRepairDataStore,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -53,15 +53,15 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
         return this.modularFamily.encoder;
     }
 
-    intoDelta(change: DefaultChangeset): Delta.Root<ITreeCursorSynchronous> {
-        return this.modularFamily.intoDelta(change);
+    intoDelta(change: DefaultChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.modularFamily.intoDelta(change, repairStore);
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root<ITreeCursorSynchronous>) => void,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchorSet: AnchorSet,
     ): DefaultEditBuilder {
-        return new DefaultEditBuilder(this, deltaReceiver, anchorSet);
+        return new DefaultEditBuilder(this, changeReceiver, anchorSet);
     }
 }
 
@@ -112,10 +112,14 @@ export class DefaultEditBuilder
 
     constructor(
         family: ChangeFamily<unknown, DefaultChangeset>,
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchors: AnchorSet,
     ) {
-        this.modularBuilder = new ModularEditBuilder(family, deltaReceiver, anchors);
+        this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+    }
+
+    public apply(change: DefaultChangeset): void {
+        this.modularBuilder.apply(change);
     }
 
     public setValue(path: UpPath, value: Value): void {

@@ -44,6 +44,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
         const storageDirectoryConfig: IStorageDirectoryConfig = config.get("storageDir") as IStorageDirectoryConfig;
         const gitLibrary: string | undefined = config.get("git:lib:name");
         const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
+        const enableRepositoryManagerMetrics: boolean = config.get("git:enableRepositoryManagerMetrics") ?? false;
         const getRepositoryManagerFactory = () => {
             if (!gitLibrary || gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
@@ -51,6 +52,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
                     fileSystemManagerFactory,
                     externalStorageManager,
                     repoPerDocEnabled,
+                    enableRepositoryManagerMetrics,
                 );
             } else if (gitLibrary === "isomorphic-git") {
                 return new IsomorphicGitManagerFactory(
@@ -58,6 +60,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
                     fileSystemManagerFactory,
                     externalStorageManager,
                     repoPerDocEnabled,
+                    enableRepositoryManagerMetrics,
                 );
             }
             throw new Error("Invalid git library name.");

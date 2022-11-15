@@ -4,7 +4,14 @@
  */
 
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidHandle,
+    IFluidRouter,
+    FluidObject,
+    IProvideFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
@@ -13,6 +20,7 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
@@ -20,7 +28,7 @@ import { ITestFluidObject } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
-export class TestFluidObject implements ITestFluidObject {
+export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     public static async load(
         runtime: IFluidDataStoreRuntime,
         channel: IFluidDataStoreChannel,
@@ -39,6 +47,10 @@ export class TestFluidObject implements ITestFluidObject {
     }
 
     public get IFluidLoadable() {
+        return this;
+    }
+
+    public get IFluidRouter() {
         return this;
     }
 
@@ -167,20 +179,25 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
         }
 
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await routerP;
-                return router.request(request);
+            async (request: IRequest, rt: FluidDataStoreRuntime) => {
+                const maybeRouter: FluidObject<IProvideFluidRouter> | undefined
+                    = await rt.entryPoint?.get();
+                assert(maybeRouter?.IFluidRouter !== undefined, "entryPoint should have been initialized by now");
+                return maybeRouter.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes, existing);
-        const routerP = TestFluidObject.load(
-            runtime,
-            runtime,
+        return new runtimeClass(
             context,
-            factoryEntriesMapForObject,
+            dataTypes,
             existing,
-        );
-
-        return runtime;
+            async (dataStoreRuntime: IFluidDataStoreRuntime) => TestFluidObject.load(
+                dataStoreRuntime,
+                // This works because 'runtime' is an instance of runtimeClass (which is a FluidDataStoreRuntime and
+                // thus implements IFluidDataStoreChannel) which passes itself as the parameter to this function.
+                dataStoreRuntime as FluidDataStoreRuntime,
+                context,
+                factoryEntriesMapForObject,
+                existing,
+            ));
     }
 }

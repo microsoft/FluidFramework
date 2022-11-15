@@ -21,7 +21,6 @@ import {
     isDetachMark,
     isReattach,
     isSkipMark,
-    isTomb,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
@@ -94,9 +93,6 @@ function composeMarkLists<TNodeChange>(
             // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
-        } else if (isTomb(baseMark) || isTomb(newMark)) {
-            // We don't currently support Tomb marks (and don't offer ways to generate them).
-            fail("TODO: support Tomb marks");
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -209,7 +205,8 @@ function composeMarks<TNodeChange>(
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         id: baseMark.id,
-                        tomb: baseMark.tomb,
+                        detachedBy: baseMark.detachedBy,
+                        detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
                     return modRevive;

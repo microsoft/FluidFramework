@@ -49,16 +49,16 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
 }
 
 export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
-    assert(isPrimitiveValue(nodeValue), "The value is not primitive");
+    assert(isPrimitiveValue(nodeValue), 0x45b /* The value is not primitive */);
     switch (schema.value) {
         case ValueSchema.String:
-            assert(typeof nodeValue === "string", "Expected string");
+            assert(typeof nodeValue === "string", 0x45c /* Expected string */);
             break;
         case ValueSchema.Number:
-            assert(typeof nodeValue === "number", "Expected number");
+            assert(typeof nodeValue === "number", 0x45d /* Expected number */);
             break;
         case ValueSchema.Boolean:
-            assert(typeof nodeValue === "boolean", "Expected boolean");
+            assert(typeof nodeValue === "boolean", 0x45e /* Expected boolean */);
             break;
         default:
             fail("wrong value schema");
