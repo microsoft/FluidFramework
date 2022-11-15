@@ -3094,7 +3094,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
             return {
-                pending: this.pendingStateManager.getLocalState(),
+                pending: pendingMessages,
                 pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
                 snapshotBlobs: previousPendingState.snapshotBlobs,
                 baseSnapshot: previousPendingState.baseSnapshot,
@@ -3104,7 +3104,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
         assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
-            pending: this.pendingStateManager.getLocalState(),
+            pending: pendingMessages,
             pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
             snapshotBlobs: this.baseSnapshotBlobs,
             baseSnapshot: this.context.baseSnapshot,
