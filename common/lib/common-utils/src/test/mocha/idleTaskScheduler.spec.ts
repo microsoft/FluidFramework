@@ -23,15 +23,16 @@ describe("Idle task scheduler", () => {
     });
 
     function someTask(x: number): boolean {
-        return (x > 3) ? true : false;
+        return x > 3 ? true : false;
     }
 
     it("Should schedule and run a synchronous task during idle time", async () => {
-        const promise = idleTask.scheduleIdleTask(() => { return someTask(5) }, 1000);
+        const promise = idleTask.scheduleIdleTask(() => {
+            return someTask(5);
+        }, 1000);
 
         clock.tick(1100);
-        return promise.then((result) => assert(result))
-
+        return promise.then((result) => assert(result));
     });
 
     it("Should fall back to setTimeout when idle Task API is not available", async () => {
@@ -39,7 +40,9 @@ describe("Idle task scheduler", () => {
         await new Promise((resolve, reject) => {
             try {
                 resolve(async () => {
-                    await idleTask.scheduleIdleTask(() => { someTask(5) }, 1000);
+                    await idleTask.scheduleIdleTask(() => {
+                        someTask(5);
+                    }, 1000);
                     clock.tick(1100);
                 });
             } catch (e) {
