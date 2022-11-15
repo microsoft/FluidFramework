@@ -17,7 +17,6 @@ import {
     UpPath,
     Value,
     TaggedChange,
-    RepairDataStore,
     ReadonlyRepairDataStore,
     RevisionTag,
 } from "../../core";
@@ -299,11 +298,10 @@ export class ModularChangeFamily
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        repairStore: RepairDataStore,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, repairStore, anchors);
+        return new ModularEditBuilder(this, changeReceiver, anchors);
     }
 }
 
@@ -349,11 +347,10 @@ export class ModularEditBuilder
 {
     constructor(
         family: ChangeFamily<unknown, FieldChangeMap>,
-        deltaReceiver: (delta: Delta.Root) => void,
-        repairStore: RepairDataStore,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ) {
-        super(family, deltaReceiver, repairStore, anchors);
+        super(family, changeReceiver, anchors);
     }
 
     public apply(change: FieldChangeMap): void {

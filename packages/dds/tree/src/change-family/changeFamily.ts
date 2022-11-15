@@ -4,16 +4,12 @@
  */
 
 import { ChangeRebaser } from "../rebase";
-import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
+import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet, Delta } from "../tree";
 import { ChangeEncoder } from "./changeEncoder";
 
 export interface ChangeFamily<TEditor, TChange> {
-    buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        repairStore: RepairDataStore,
-        anchorSet: AnchorSet,
-    ): TEditor;
+    buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
 
     /**
      * @param change - The change to convert into a delta.

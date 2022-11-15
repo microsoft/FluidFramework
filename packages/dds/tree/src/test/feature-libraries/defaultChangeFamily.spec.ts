@@ -14,18 +14,20 @@ import {
     JsonableTree,
     RevisionTag,
     rootFieldKeySymbol,
+    TaggedChange,
     UpPath,
 } from "../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
+    defaultChangeFamily,
     defaultChangeFamily as family,
+    DefaultChangeset,
     DefaultEditBuilder,
     defaultSchemaPolicy,
     ForestRepairDataStore,
     ObjectForest,
     singleTextCursor,
 } from "../../feature-libraries";
-import { Root } from "../../tree/delta";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
 
@@ -66,6 +68,7 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 function initializeEditableForest(data?: JsonableTree): {
     forest: ObjectForest;
     builder: DefaultEditBuilder;
+    changes: TaggedChange<DefaultChangeset>[];
     deltas: Delta.Root[];
 } {
     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
@@ -81,20 +84,25 @@ function initializeEditableForest(data?: JsonableTree): {
         );
         return forest;
     });
+    const changes: TaggedChange<DefaultChangeset>[] = [];
     const deltas: Delta.Root[] = [];
     const builder = new DefaultEditBuilder(
         family,
-        (delta) => {
+        (change) => {
+            const revision: RevisionTag = brand(currentRevision);
+            changes.push({ revision, change });
+            const delta = defaultChangeFamily.intoDelta(change, repairStore);
+            repairStore.capture(delta, revision);
             deltas.push(delta);
             forest.applyDelta(delta);
             currentRevision += 1;
         },
-        repairStore,
         new AnchorSet(),
     );
     return {
         forest,
         builder,
+        changes,
         deltas,
     };
 }
@@ -159,29 +167,28 @@ describe("DefaultEditBuilder", () => {
     });
 
     it("Allows repair data to flow in and out of the repair store", () => {
-        const { builder, deltas } = initializeEditableForest({ type: jsonNumber.name, value: 41 });
-        const expected: Delta.Root[] = [];
+        const { builder, deltas, changes } = initializeEditableForest({
+            type: jsonNumber.name,
+            value: 41,
+        });
 
         builder.setValue(root, 42);
-        deltas.length = 0;
-        const change = builder.getChanges()[0];
+        const change = changes[0];
         const inverse = family.rebaser.invert(change);
         builder.apply(inverse);
 
-        expected.push(
-            new Map([
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
                 [
-                    rootKey,
-                    [
-                        {
-                            type: Delta.MarkType.Modify,
-                            setValue: 41,
-                        },
-                    ],
+                    {
+                        type: Delta.MarkType.Modify,
+                        setValue: 41,
+                    },
                 ],
-            ]),
-        );
-        assertDeltasEqual(deltas, expected);
+            ],
+        ]);
+        assertDeltaEqual(deltas[1], expected);
     });
 
     describe("Node Edits", () => {

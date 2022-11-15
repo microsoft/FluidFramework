@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily, AnchorSet, Delta, RepairDataStore } from "../../core";
+import { ChangeFamily, AnchorSet } from "../../core";
 import { toDelta } from "./changeset";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
 import { sequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";
 
 function buildEditor(
-    deltaReceiver: (delta: Delta.Root) => void,
-    repairStore: RepairDataStore,
+    changeReceiver: (change: SequenceChangeset) => void,
     anchorSet: AnchorSet,
 ): SequenceEditBuilder {
-    return new SequenceEditBuilder(deltaReceiver, anchorSet);
+    return new SequenceEditBuilder(changeReceiver, anchorSet);
 }
 
 export type SequenceChangeFamily = ChangeFamily<SequenceEditBuilder, SequenceChangeset>;

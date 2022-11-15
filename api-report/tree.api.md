@@ -66,7 +66,7 @@ export abstract class ChangeEncoder<TChange> {
 // @public (undocumented)
 export interface ChangeFamily<TEditor, TChange> {
     // (undocumented)
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchorSet: AnchorSet): TEditor;
+    buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
     // (undocumented)
     readonly encoder: ChangeEncoder<TChange>;
     // (undocumented)
@@ -780,7 +780,7 @@ interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields
 export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap> {
     constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
     // (undocumented)
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchors: AnchorSet): ModularEditBuilder;
+    buildEditor(changeReceiver: (change: FieldChangeMap) => void, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
     compose(changes: FieldChangeMap[]): FieldChangeMap;
     // (undocumented)
@@ -801,7 +801,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 
 // @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<FieldChangeMap> implements ProgressiveEditBuilder<FieldChangeMap> {
-    constructor(family: ChangeFamily<unknown, FieldChangeMap>, deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchors: AnchorSet);
+    constructor(family: ChangeFamily<unknown, FieldChangeMap>, changeReceiver: (change: FieldChangeMap) => void, anchors: AnchorSet);
     // (undocumented)
     apply(change: FieldChangeMap): void;
     // (undocumented)
@@ -969,20 +969,16 @@ interface PriorOp {
 // @public (undocumented)
 export interface ProgressiveEditBuilder<TChange> {
     // (undocumented)
-    getChanges(): TaggedChange<TChange>[];
-    // (undocumented)
-    readonly repairStore: ReadonlyRepairDataStore;
+    getChanges(): TChange[];
 }
 
 // @public (undocumented)
 export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange> {
-    constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, repairStore: RepairDataStore, anchorSet: AnchorSet);
+    constructor(changeFamily: ChangeFamily<unknown, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
     // @sealed (undocumented)
-    getChanges(): TaggedChange<TChange>[];
-    // (undocumented)
-    readonly repairStore: RepairDataStore;
+    getChanges(): TChange[];
 }
 
 // @public

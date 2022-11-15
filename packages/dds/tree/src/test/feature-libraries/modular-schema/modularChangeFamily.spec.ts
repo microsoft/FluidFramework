@@ -500,7 +500,7 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build child change", () => {
-        const editor = family.buildEditor((delta) => {}, noRepair, new AnchorSet());
+        const editor = family.buildEditor((edit) => {}, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
@@ -508,7 +508,7 @@ describe("ModularChangeFamily", () => {
         };
 
         editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
-        const changes = editor.getChanges().map((c) => c.change);
+        const changes = editor.getChanges();
         const nodeChange: NodeChangeset = {
             fieldChanges: new Map([
                 [fieldB, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
@@ -524,7 +524,7 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build value change", () => {
-        const editor = family.buildEditor((delta) => {}, noRepair, new AnchorSet());
+        const editor = family.buildEditor((edit) => {}, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
@@ -532,7 +532,7 @@ describe("ModularChangeFamily", () => {
         };
 
         editor.setValue(path, testValue);
-        const changes = editor.getChanges().map((c) => c.change);
+        const changes = editor.getChanges();
         assert.deepEqual(changes, [nodeValueOverwrite]);
     });
 });

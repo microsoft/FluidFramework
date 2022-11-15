@@ -120,6 +120,7 @@ export {
     RevisionTag,
     TaggedChange,
     ChangesetFromChangeRebaser,
+    tagChange,
 } from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";

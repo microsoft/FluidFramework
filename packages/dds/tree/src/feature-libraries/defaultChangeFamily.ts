@@ -15,9 +15,7 @@ import {
     UpPath,
     Value,
     ITreeCursor,
-    TaggedChange,
     ReadonlyRepairDataStore,
-    RepairDataStore,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -60,11 +58,10 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        repairStore: RepairDataStore,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchorSet: AnchorSet,
     ): DefaultEditBuilder {
-        return new DefaultEditBuilder(this, deltaReceiver, repairStore, anchorSet);
+        return new DefaultEditBuilder(this, changeReceiver, anchorSet);
     }
 }
 
@@ -113,17 +110,12 @@ export class DefaultEditBuilder
 {
     private readonly modularBuilder: ModularEditBuilder;
 
-    public get repairStore(): ReadonlyRepairDataStore {
-        return this.modularBuilder.repairStore;
-    }
-
     constructor(
         family: ChangeFamily<unknown, DefaultChangeset>,
-        deltaReceiver: (delta: Delta.Root) => void,
-        repairStore: RepairDataStore,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchors: AnchorSet,
     ) {
-        this.modularBuilder = new ModularEditBuilder(family, deltaReceiver, repairStore, anchors);
+        this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
     }
 
     public apply(change: DefaultChangeset): void {
@@ -176,7 +168,7 @@ export class DefaultEditBuilder
     /**
      * {@inheritDoc (ProgressiveEditBuilder:interface).getChanges}
      */
-    public getChanges(): TaggedChange<DefaultChangeset>[] {
+    public getChanges(): DefaultChangeset[] {
         return this.modularBuilder.getChanges();
     }
 }

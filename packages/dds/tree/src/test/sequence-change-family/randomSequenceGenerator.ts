@@ -91,5 +91,5 @@ export function generateRandomChange(
             unreachableCase(operation);
     }
 
-    return builder.getChanges()[0].change;
+    return builder.getChanges()[0];
 }

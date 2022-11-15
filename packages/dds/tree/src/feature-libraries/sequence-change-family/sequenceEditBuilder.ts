@@ -9,7 +9,6 @@ import {
     AnchorSet,
     UpPath,
     Value,
-    Delta,
     getDepth,
 } from "../../core";
 import { fail } from "../../util";
@@ -21,17 +20,8 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
     private opId: number = 0;
 
-    constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
-        super(
-            sequenceChangeFamily,
-            deltaReceiver,
-            {
-                capture: () => {},
-                getNodes: () => fail("Not supported"),
-                getValue: () => fail("Not supported"),
-            },
-            anchorSet,
-        );
+    constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
+        super(sequenceChangeFamily, changeReceiver, anchorSet);
     }
 
     public setValue(node: NodePath, value: Value) {
