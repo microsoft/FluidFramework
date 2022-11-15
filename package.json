@@ -142,7 +142,7 @@
       "build-tools": "build-tools",
       "server": "server/routerlicious",
       "client": {
-        "directory": "",
+        "directory": "client",
         "ignoredDirs": []
       },
       "tools": [
