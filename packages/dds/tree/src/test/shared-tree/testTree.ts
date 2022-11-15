@@ -87,7 +87,8 @@ export class TestTree {
         }
         this.builder = new DefaultEditBuilder(
             defaultChangeFamily,
-            (delta) => {
+            (change) => {
+                const delta = defaultChangeFamily.intoDelta(change);
                 this.forest.applyDelta(delta);
             },
             new AnchorSet(),
