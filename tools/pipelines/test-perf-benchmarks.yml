@@ -307,7 +307,7 @@ stages:
               runVersion: latestFromBranch
               runBranch: $(Build.SourceBranch)
               artifact: pack
-              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz"
+              patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
 
           # Install test package
@@ -318,7 +318,7 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}
               script: |
                 echo "Install ${{ testPackage }}"
-                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-*.tgz
+                TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
                 TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
                 echo $TEST_PACKAGE_FILE_PATTERN
