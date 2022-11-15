@@ -85,7 +85,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: .
+    buildDirectory: client
     tagName: client
     poolBuild: Large
     cgSubDirectory: packages
