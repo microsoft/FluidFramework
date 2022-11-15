@@ -220,6 +220,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return newEvent;
     }
 
+    /**
+     * In the case of general-use events we would be only transforming the namespace.
+     * Optionally, we should consider loading specific properties that we have here and that
+     * may be missing on the original evenet.
+     *
+     * @param event - Event to send
+     */
     protected prepareGenUseEvent(event: ITelemetryGenEvent): ITelemetryGenEvent {
         const newEvent: ITelemetryGenEvent = {
             ...event,
@@ -228,7 +235,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
 
-        // TODO: we could consing picking (optional) specific properties that may be missing on the original evenet.
         return newEvent;
     }
 }

@@ -11,12 +11,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
-import {
-    TelemetryLogger,
-    MultiSinkLogger,
-    ChildLogger,
-    ITelemetryLoggerPropertyBags,
-} from "./logger";
+import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
  * Implementation of debug logger
@@ -30,7 +25,7 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static create(
         namespace: string,
-        properties?: ITelemetryLoggerPropertyBags
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -53,7 +48,7 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
-        properties?: ITelemetryLoggerPropertyBags
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties);
@@ -73,11 +68,7 @@ export class DebugLogger extends TelemetryLogger {
 
     private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
         if (baseLogger instanceof TelemetryLogger) {
-            return (
-                baseLogger as any as {
-                    properties: ITelemetryLoggerPropertyBags;
-                }
-            ).properties;
+            return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags; }).properties;
         }
         return undefined;
     }
@@ -85,7 +76,7 @@ export class DebugLogger extends TelemetryLogger {
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: ITelemetryLoggerPropertyBags
+        properties?: ITelemetryLoggerPropertyBags,
     ) {
         super(undefined, properties);
     }
@@ -101,9 +92,7 @@ export class DebugLogger extends TelemetryLogger {
         let logger = isError ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
-        const index = event.eventName.lastIndexOf(
-            TelemetryLogger.eventNamespaceSeparator
-        );
+        const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
         const name = event.eventName.substring(index + 1);
         if (index > 0) {
             logger = logger.extend(event.eventName.substring(0, index));
