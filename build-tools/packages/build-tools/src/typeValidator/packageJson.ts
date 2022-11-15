@@ -289,6 +289,10 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
                 : `~${previousMinorVersion}`;
             break;
         }
+
+        default: {
+            throw new Error(`Unexpected previousVersionStyle: ${style}`);
+        }
     }
 
     return prevVersion;
@@ -301,10 +305,12 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
  * The version used for the previous version can be adjusted by passing different "style" values in via the
  * previousVersionStyle parameter.
  *
+ * @param context - The repo {@link Context}.
  * @param packageDir - The path to the package.
  * @param writeUpdates - If true, will update the package.json with new previous versions.
- * @param previousVersionStyle - The version style to use when determining the previous version. Can be the exact
- * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions.
+ * @param style - The version style to use when determining the previous version. Can be the exact
+ * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions. If this
+ * is undefined, then the style will be set according to the branchReleaseTypes defined in package.json.
  * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
  * @param resetBroken - If true, clears the "broken" section of the type validation, effectively clearing all known
  * breaking changes.
@@ -323,7 +329,7 @@ export async function getAndUpdatePackageDetails(
     const packageDetails = await getPackageDetails(packageDir);
     const pkg = context.fullPackageMap.get(packageDetails.pkg.name);
     if (pkg === undefined) {
-        return { skipReason: "Skipping package: not found in context" };
+        return { skipReason: "Skipping package: not found in repo" };
     } else if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
         // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
         // compatibility promises for them, so they're excluded from type tests.

@@ -34,8 +34,21 @@ export interface PolicyConfig {
 }
 
 export interface IFluidRepoPackage {
+    /**
+     * The path to the package.
+     */
     directory: string;
+
+    /**
+     * An array of paths under `directory` that should be ignored.
+     */
     ignoredDirs?: string[];
+
+    /**
+     * A mapping of branch names to previous version baseline styles. The type test generator takes this information
+     * into account when calculating the baseline version to use when it's run on a particular branch. If this is not
+     * defined for a branch or package, then that package will be skipped during type test generation.
+     */
     branchReleaseTypes?: {
         [name: string]: VersionBumpType | PreviousVersionStyle;
     };

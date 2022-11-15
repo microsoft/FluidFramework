@@ -56,7 +56,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         versionConstraint: Flags.string({
             char: "s",
             description:
-                "The type of version constraint to use for previous versions. Only applies to the prepare phase.",
+                "The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the branch-specific configuration in package.json.",
             options: [
                 "^previousMajor",
                 "^previousMinor",

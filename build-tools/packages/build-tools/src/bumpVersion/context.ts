@@ -21,9 +21,9 @@ import { ReferenceVersionBag, VersionBag } from "./versionBag";
 export class Context {
     public readonly repo: FluidRepo;
     public readonly fullPackageMap: Map<string, Package>;
+    public readonly packageManifest: IPackageManifest;
 
     private readonly timer: Timer;
-    public readonly packageManifest: IPackageManifest;
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
