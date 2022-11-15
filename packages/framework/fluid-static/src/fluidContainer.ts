@@ -303,22 +303,46 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.connect}
      */
-    public async connect(): Promise<void> {
-        this.container.connect?.();
+     public async connect(): Promise<void> {
+        return this.genLogger.logApiCall(
+            "connect",
+            {
+                apiName: "connect",
+            },
+            async (_event) => {
+                this.container.connect?.();
+            }
+        );
     }
 
     /**
      * {@inheritDoc IFluidContainer.connect}
      */
-    public async disconnect(): Promise<void> {
-        this.container.disconnect?.();
+     public async disconnect(): Promise<void> {
+        return this.genLogger.logApiCall(
+            "connect",
+            {
+                apiName: "connect",
+            },
+            async (_event) => {
+                this.container.disconnect?.();
+            }
+        );
     }
 
     /**
      * {@inheritDoc IFluidContainer.create}
      */
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-        return this.rootDataObject.create(objectClass);
+        return this.genLogger.logApiCall(
+            "create",
+            {
+                apiName: "create",
+            },
+            async (_event) => {
+                return this.rootDataObject.create(objectClass);
+            }
+        );
     }
 
     /**

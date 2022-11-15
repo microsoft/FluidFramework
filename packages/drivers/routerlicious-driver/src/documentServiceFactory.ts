@@ -18,7 +18,7 @@ import {
     getQuorumValuesFromProtocolSummary,
     RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, GeneralUseLogger, ITelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -108,10 +108,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
 
-        const res = await PerformanceEvent.timedExecAsync(
-            logger2,
+        const genLogger = this.createGenLogger(logger2);
+        const res = await genLogger.logServiceCall(
+            "CreateNew",
             {
-                eventName: "CreateNew",
+                target: "/documents/{tenantId}",
                 details: JSON.stringify({
                     enableDiscovery: this.driverPolicies.enableDiscovery,
                     sequenceNumber: documentAttributes.sequenceNumber,
@@ -131,9 +132,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                         undefined,
                 });
 
-                event.end({
-                    docId: typeof postRes === "string" ? postRes : postRes.id,
-                });
+                event.docId = typeof postRes === "string" ? postRes : postRes.id;
                 return postRes;
             }
         );
@@ -273,6 +272,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.blobCache,
             this.snapshotTreeCache,
             discoverFluidResolvedUrl);
+    }
+
+    private createGenLogger(logger: ITelemetryLogger): GeneralUseLogger {
+        return new GeneralUseLogger(
+            "@fluidframework/routerlicious-driver",
+            "RouterliciousDocumentServiceFactory",
+            logger
+        );
     }
 }
 

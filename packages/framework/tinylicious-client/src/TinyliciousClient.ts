@@ -28,7 +28,7 @@ import {
     IRootDataObject,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, GeneralUseLogger, ITelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     TinyliciousClientProps,
     TinyliciousContainerServices,
@@ -71,41 +71,57 @@ export class TinyliciousClient {
         services: TinyliciousContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
+        const genLogger = this.createLogger(loader.services.subLogger);
 
-        // We're not actually using the code proposal (our code loader always loads the same module
-        // regardless of the proposal), but the Container will only give us a NullRuntime if there's
-        // no proposal.  So we'll use a fake proposal.
-        const container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
+        return genLogger.logApiCall(
+            "createContainer",
+            {
+                apiName: "createContainer",
+            },
+            async (_event) => {
+                 // We're not actually using the code proposal (our code loader always loads the same module
+                // regardless of the proposal), but the Container will only give us a NullRuntime if there's
+                // no proposal.  So we'll use a fake proposal.
+                const container = await loader.createDetachedContainer({
+                    package: "no-dynamic-package",
+                    config: {},
+                });
 
-        const rootDataObject = await requestFluidObject<IRootDataObject>(
-            container,
-            "/"
-        );
-
-        /**
-         * See {@link FluidContainer.attach}
-         */
-        const attach = async (): Promise<string> => {
-            if (container.attachState !== AttachState.Detached) {
-                throw new Error(
-                    "Cannot attach container. Container is not in detached state."
+                const rootDataObject = await requestFluidObject<IRootDataObject>(
+                    container,
+                    "/"
                 );
+
+                /**
+                 * See {@link FluidContainer.attach}
+                 */
+                const attach = async (): Promise<string> => {
+                    return genLogger.logApiCall(
+                        "attach",
+                        {
+                            apiName: "attach",
+                        },
+                        async (_event1) => {
+                            if (container.attachState !== AttachState.Detached) {
+                                throw new Error(
+                                    "Cannot attach container. Container is not in detached state."
+                                );
+                            }
+                            const request = createTinyliciousCreateNewRequest();
+                            await container.attach(request);
+                            const resolved = container.resolvedUrl;
+                            ensureFluidResolvedUrl(resolved);
+                            return resolved.id;
+                        });
+                };
+
+                const fluidContainer = new FluidContainer(container, rootDataObject, loader.services.subLogger);
+                fluidContainer.attach = attach;
+
+                const services = this.getContainerServices(container);
+                return { container: fluidContainer, services };
             }
-            const request = createTinyliciousCreateNewRequest();
-            await container.attach(request);
-            const resolved = container.resolvedUrl;
-            ensureFluidResolvedUrl(resolved);
-            return resolved.id;
-        };
-
-        const fluidContainer = new FluidContainer(container, rootDataObject, loader.services.subLogger);
-        fluidContainer.attach = attach;
-
-        const services = this.getContainerServices(container);
-        return { container: fluidContainer, services };
+        );
     }
 
     /**
@@ -122,24 +138,34 @@ export class TinyliciousClient {
         services: TinyliciousContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
-        const container = await loader.resolve({ url: id });
-        const rootDataObject = await requestFluidObject<IRootDataObject>(
-            container,
-            "/"
-        );
+        const genLogger = this.createLogger(loader.services.subLogger);
 
-        const logger = ChildLogger.create(
-            loader.services.subLogger,
-            undefined,
+        return genLogger.logApiCall(
+            "getContainer",
             {
-                all: {
-                    docId: id,
-                },
-            });
+                apiName: "getContainer",
+                docId: id,
+            },
+            async (_event) => {
+                const container = await loader.resolve({ url: id });
+                const rootDataObject = await requestFluidObject<IRootDataObject>(
+                    container,
+                    "/"
+                );
 
-        const fluidContainer = new FluidContainer(container, rootDataObject, logger);
-        const services = this.getContainerServices(container);
-        return { container: fluidContainer, services };
+                const logger = ChildLogger.create(
+                    loader.services.subLogger,
+                    undefined,
+                    {
+                        all: {
+                            docId: id,
+                        },
+                    });
+
+                const fluidContainer = new FluidContainer(container, rootDataObject, logger);
+                const services = this.getContainerServices(container);
+                return { container: fluidContainer, services };
+            });
     }
 
     // #region private
@@ -182,6 +208,14 @@ export class TinyliciousClient {
         });
 
         return loader;
+    }
+
+    private createLogger(logger: ITelemetryLogger): GeneralUseLogger {
+        return new GeneralUseLogger(
+            "@fluidframework/tinylicious-client",
+            "TinyliciousClient",
+            ChildLogger.create(logger, "TinyliciousClient")
+        );
     }
     // #endregion
 }

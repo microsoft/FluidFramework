@@ -3,17 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluidframework/common-utils";
-import {
-    CachedConfigProvider,
-    loggerIsMonitoringContext,
-    mixinMonitoringContext,
-} from "./config";
-import {
-    isILoggingError,
-    extractLogSafeErrorProperties,
-    generateStack,
-} from "./errorLogging";
 import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
@@ -26,7 +15,19 @@ import {
     TelemetryEventPropertyType,
     ITaggedTelemetryPropertyType,
     TelemetryEventCategory,
-} from "./fakeDefs";
+} from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
+import {
+    CachedConfigProvider,
+    loggerIsMonitoringContext,
+    mixinMonitoringContext,
+} from "./config";
+import {
+    isILoggingError,
+    extractLogSafeErrorProperties,
+    generateStack,
+} from "./errorLogging";
+
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.

@@ -50,24 +50,6 @@ export { ThresholdCounter } from "./thresholdCounter";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
 export { logIfFalse } from "./utils";
 export {
-    ILoggingError,
-    ITaggedTelemetryPropertyType,
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-    ITelemetryErrorEvent,
-    ITelemetryGenericEvent,
-    ITelemetryGenEvent,
-    ITelemetryGenApiEvent,
-    ITelemetryGenServiceEvent,
-    ITelemetryGenErrorEvent,
-    ITelemetryGenClassEvent,
-    ITelemetryLogger,
-    ITelemetryPerformanceEvent,
-    ITelemetryProperties,
-    TelemetryEventCategory,
-    TelemetryEventPropertyType,
-} from "./fakeDefs";
-export {
     IClassEventConfig,
     IApiEventConfig,
     IErrorEventConfig,

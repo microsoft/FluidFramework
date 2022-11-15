@@ -12,7 +12,7 @@ import {
     ITelemetryGenEvent,
     ITelemetryLogger,
     TelemetryErrorCategory,
-} from "./fakeDefs";
+} from "@fluidframework/common-definitions";
 
 
 export interface IClassEventConfig {

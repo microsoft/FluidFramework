@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluidframework/common-utils";
-import { debug as registerDebug, IDebugger } from "debug";
 import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryGenEvent,
     ITelemetryProperties,
-} from "./fakeDefs";
+} from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
+import { debug as registerDebug, IDebugger } from "debug";
 import {
     TelemetryLogger,
     MultiSinkLogger,
@@ -148,7 +148,6 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public sendGenTelemetry(event: ITelemetryGenEvent): void {
-        console.log("send");
         const newEvent: ITelemetryProperties = this.prepareEvent(event);
         const isError = newEvent.category === "error";
         let logger = isError ? this.debugErr : this.debug;
