@@ -32,6 +32,7 @@ import {
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
+    BaseTelemetryProperties,
     getLumberBaseProperties,
     Lumber,
     LumberEventName,
@@ -145,7 +146,6 @@ export class ScribeLambda implements IPartitionLambda {
                         const lastSummary = await this.summaryReader.readLastSummary();
                         if (!lastSummary.fromSummary) {
                             const errorMsg = `Required summary can't be fetched`;
-                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                             throw Error(errorMsg);
                         }
                         this.term = lastSummary.term;
@@ -192,7 +192,6 @@ export class ScribeLambda implements IPartitionLambda {
                         const errorMsg = `Invalid message sequence number.`
                             + `Current message @${value.operation.sequenceNumber}.`
                             + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
-                        Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                         throw new Error(errorMsg);
                     }
                 }
@@ -252,6 +251,15 @@ export class ScribeLambda implements IPartitionLambda {
                                     this.updateProtocolHead(this.protocolHandler.sequenceNumber);
                                     this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
                                     const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
+                                    this.context.log?.info(
+                                        summaryResult,
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
+                                    );
                                     Lumberjack.info(summaryResult,
                                         getLumberBaseProperties(this.documentId, this.tenantId));
                                 } else {
@@ -391,14 +399,20 @@ export class ScribeLambda implements IPartitionLambda {
         this.updateCheckpointMessages(message);
 
         // write the checkpoint with the current up-to-date state
-            this.checkpoint(checkpointReason);
-            this.checkpointCore(
-                checkpoint,
-                message,
-                this.clearCache);
-            this.lastOffset = message.offset;
-            const checkpointResult = `Writing checkpoint. Reason: ${ScribeCheckpointReason[checkpointReason]}`;
-            Lumberjack.info(checkpointResult, getLumberBaseProperties(this.documentId, this.tenantId));
+        this.checkpoint(checkpointReason);
+        this.checkpointCore(
+            checkpoint,
+            message,
+            this.clearCache);
+        this.lastOffset = message.offset;
+        const reason = ScribeCheckpointReason[checkpointReason];
+        const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+            checkpointReason: reason,
+            };
+        Lumberjack.info(checkpointResult, lumberjackProperties);
     }
 
     public close(closeType: LambdaCloseType) {
