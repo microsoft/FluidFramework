@@ -117,6 +117,10 @@
       "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
