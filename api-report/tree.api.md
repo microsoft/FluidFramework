@@ -90,9 +90,6 @@ export interface ChangeRebaser<TChangeset> {
 // @public (undocumented)
 type Changeset<TNodeChange = NodeChangeType> = MarkList_2<TNodeChange>;
 
-// @public (undocumented)
-type ChangesetTag = number | string;
-
 // @public
 export type ChildCollection = FieldKey | RootField;
 
@@ -198,7 +195,7 @@ interface Detach extends HasOpId {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "Delete" | "MoveOut";
 }
@@ -206,9 +203,6 @@ interface Detach extends HasOpId {
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
-
-// @public
-const DUMMY_INVERT_TAG: ChangesetTag;
 
 // @public
 export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
@@ -479,6 +473,12 @@ interface HasPlaceFields {
 }
 
 // @public (undocumented)
+interface HasReattachFields extends HasOpId, HasPlaceFields {
+    detachedBy: RevisionTag | undefined;
+    detachIndex: number;
+}
+
+// @public (undocumented)
 interface HasTiebreakPolicy extends HasPlaceFields {
     tiebreak?: Tiebreak;
 }
@@ -510,6 +510,7 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IForestSubscription;
     forgetAnchor(anchor: Anchor): void;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
@@ -764,7 +765,7 @@ interface Modify_2<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "Modify";
 }
@@ -793,7 +794,7 @@ interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     // (undocumented)
     type: "MDelete" | "MMoveOut";
 }
@@ -817,11 +818,9 @@ interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFi
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields {
     // (undocumented)
     changes: TNodeChange;
-    // (undocumented)
-    tomb: ChangesetTag;
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -1035,7 +1034,7 @@ export type PrimitiveValue = string | boolean | number;
 // @public (undocumented)
 interface PriorOp {
     // (undocumented)
-    change: ChangesetTag;
+    change: RevisionTag;
     // (undocumented)
     id: OpId;
 }
@@ -1073,11 +1072,9 @@ enum RangeType {
 }
 
 // @public (undocumented)
-interface Reattach extends HasOpId, HasPlaceFields {
+interface Reattach extends HasReattachFields {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb: ChangesetTag;
     // (undocumented)
     type: "Revive" | "Return";
 }
@@ -1152,7 +1149,6 @@ declare namespace SequenceField {
     export {
         Attach,
         Changeset,
-        ChangesetTag,
         ClientId,
         Detach,
         Effects,
@@ -1182,12 +1178,12 @@ declare namespace SequenceField {
         SizedMark,
         SizedObjectMark,
         Tiebreak,
-        Tomb,
         Tombstones,
         TreeForestPath,
         TreeRootPath,
         Skip_2 as Skip,
         LineageEvent,
+        HasReattachFields,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
@@ -1204,7 +1200,6 @@ declare namespace SequenceField {
         MarkListFactory,
         NodeChangeRebaser_2 as NodeChangeRebaser,
         rebase,
-        DUMMY_INVERT_TAG,
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
@@ -1281,7 +1276,7 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
 
 // @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Tomb | Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
+type SizedObjectMark<TNodeChange = NodeChangeType> = Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
 
 // @public
 type Skip = number;
@@ -1301,6 +1296,7 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
+    readonly isInverse?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;
 }
@@ -1319,20 +1315,10 @@ export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 // @public (undocumented)
 type ToDelta_2<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
-// @public (undocumented)
-interface Tomb {
-    // (undocumented)
-    change: ChangesetTag;
-    // (undocumented)
-    count: number;
-    // (undocumented)
-    type: "Tomb";
-}
-
 // @public
 interface Tombstones {
     // (undocumented)
-    change: ChangesetTag;
+    change: RevisionTag;
     // (undocumented)
     count: NodeCount;
 }

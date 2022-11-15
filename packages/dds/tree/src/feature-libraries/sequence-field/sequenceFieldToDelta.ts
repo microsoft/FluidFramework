@@ -134,11 +134,6 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Return":
                 case "MReturn":
                     fail(ERR_NOT_IMPLEMENTED);
-                case "Tomb": {
-                    // These tombs are only used to precisely describe the location of other attaches.
-                    // They have no impact on the current state.
-                    break;
-                }
                 default:
                     unreachableCase(type);
             }
