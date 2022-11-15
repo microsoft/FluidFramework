@@ -8,7 +8,7 @@ import {
     Delta,
     EmptyKey,
     FieldKey,
-    getRelativeNode,
+    getDescendant,
     IForestSubscription,
     ITreeCursorSynchronous,
     keyAsDetachedField,
@@ -156,7 +156,7 @@ export class ForestRepairDataStore implements RepairDataStore {
         index: number,
         count: number,
     ): ITreeCursorSynchronous[] {
-        const parent = getRelativeNode(this.root, path);
+        const parent = getDescendant(this.root, path);
         const sparseField = parent.children.get(field);
         assert(sparseField !== undefined, ERR_MISSING_DATA);
         // TODO: should do more optimized search (ex: binary search).
@@ -174,7 +174,7 @@ export class ForestRepairDataStore implements RepairDataStore {
     }
 
     public getValue(revision: RevisionTag, path: UpPath): Value {
-        const data = getRelativeNode(this.root, path).data;
+        const data = getDescendant(this.root, path).data;
         const valueMap = data?.value;
         assert(valueMap?.has(revision) === true, ERR_MISSING_DATA);
         return valueMap.get(revision);

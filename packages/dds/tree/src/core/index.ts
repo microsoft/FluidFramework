@@ -63,7 +63,7 @@ export {
     rootFieldKeySymbol,
     DeltaVisitor,
     SparseNode,
-    getRelativeNode,
+    getDescendant,
 } from "../tree";
 
 export {
