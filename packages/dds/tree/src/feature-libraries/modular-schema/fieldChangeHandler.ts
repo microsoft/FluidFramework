@@ -156,7 +156,6 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChange {
     fieldKind: FieldKindIdentifier;
     revision?: RevisionTag;
-    isInverse?: boolean;
     change: FieldChangeset;
 }
 

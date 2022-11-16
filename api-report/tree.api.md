@@ -280,8 +280,6 @@ export interface FieldChange {
     // (undocumented)
     fieldKind: FieldKindIdentifier;
     // (undocumented)
-    isInverse?: boolean;
-    // (undocumented)
     revision?: RevisionTag;
 }
 
