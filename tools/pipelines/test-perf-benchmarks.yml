@@ -86,10 +86,7 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
           artifactPipeline: Build - client packages
-          ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-            feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-          ${{ else }}:
-            feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+          feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
 
         steps:
         # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
