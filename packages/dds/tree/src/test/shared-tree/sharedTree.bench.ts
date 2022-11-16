@@ -5,18 +5,18 @@
 import { strict as assert } from "assert";
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { emptyField, FieldKinds, singleTextCursor } from "../../feature-libraries";
+import { buildForest, defaultSchemaPolicy, emptyField, FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { brand, unreachableCase } from "../../util";
 import { JsonableTree, rootFieldKey, rootFieldKeySymbol } from "../../tree";
-import { moveToDetachedField } from "../../forest";
+import { IEditableForest, initializeForest, moveToDetachedField } from "../../forest";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, namedTreeSchema, SchemaData, ValueSchema } from "../../schema-stored";
+import { fieldSchema, InMemoryStoredSchemaRepository, namedTreeSchema, SchemaData, ValueSchema } from "../../schema-stored";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 // eslint-disable-next-line import/no-internal-modules
-import { addressSchema, float32Schema, int32Schema, mapStringSchema, schemaMap, stringSchema } from "../feature-libraries/editable-tree/mockData";
+import { float32Schema, int32Schema, mapStringSchema, schemaMap, stringSchema } from "../feature-libraries/editable-tree/mockData";
 
 enum TreeShape {
     Wide = 0,
@@ -25,121 +25,217 @@ enum TreeShape {
 
 enum TestPrimitives {
     Number = 0,
-    String = 1,
-    Boolean = 2,
-    Map = 3,
+    Float = 1,
+    String = 2,
+    Boolean = 3,
+    Map = 4,
 }
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
-    describe.skip("Direct JS Object", () => {
-        for (let dataType=0 as TestPrimitives; dataType <= 3; dataType++) {
-            for (let i = 1; i < 100; i += 10) {
+    describe("Direct JS Object", () => {
+        for (let dataType=0 as TestPrimitives; dataType <= 4; dataType++) {
+            for (let i = 10; i < 100; i += 10) {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
                     before: async () => {
-                        tree = await getTestTreeAsJSObject(i, TreeShape.Deep, TestPrimitives.String);
+                        tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType);
                     },
                     benchmarkFn: () => {
                         readTreeAsJSObject(tree);
                     },
                 });
             }
-            for (let i = 1; i < 1600; i += 100) {
+            for (let i = 100; i < 1500; i += 100) {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
                     before: async () => {
-                        tree = await getTestTreeAsJSObject(i, TreeShape.Wide, TestPrimitives.String);
+                        tree = getTestTreeAsJSObject(i, TreeShape.Wide, TestPrimitives.String);
                     },
                     benchmarkFn: () => {
                         readTreeAsJSObject(tree);
                     },
                 });
             }
+            for (let i = 10; i < 100; i += 10) {
+                let tree: ISharedTree;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
+                    before: async () => {},
+                    benchmarkFn: () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Deep, TestPrimitives.String);
+                    },
+                });
+            }
+            for (let i = 100; i < 1500; i += 100) {
+                let tree: ISharedTree;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): writes with ${i} nodes`,
+                    before: async () => {},
+                    benchmarkFn: () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Wide, TestPrimitives.String);
+                    },
+                });
+            }
         }
     });
-    describe.skip("Cursors", () => {
-        for (let dataType=0 as TestPrimitives; dataType <= 3; dataType++) {
-            for (let i = 1; i < 100; i += 10) {
+    describe("Cursors", () => {
+        for (let dataType=0 as TestPrimitives; dataType <= 4; dataType++) {
+            for (let i = 10; i < 100; i += 10) {
                 let tree: ISharedTree;
+                const random = makeRandom(0)
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
                     before: async () => {
-                        tree = await generateTestTree(i, TreeShape.Deep, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Deep, dataType, random);
                     },
                     benchmarkFn: () => {
-                        readTree(tree, i, TreeShape.Deep);
+                        readTree(tree.forest, i, TreeShape.Deep);
                     },
                 });
             }
-            for (let i = 1; i < 1600; i += 100) {
+            for (let i = 100; i < 1500; i += 100) {
                 let tree: ISharedTree;
+                const random = makeRandom(0)
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
                     before: async () => {
-                        tree = await generateTestTree(i, TreeShape.Wide, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Wide, dataType, random);
                     },
                     benchmarkFn: () => {
-                        readTree(tree, i, TreeShape.Wide);
+                        readTree(tree.forest, i, TreeShape.Wide);
                     },
                 });
             }
-            for (let i = 1; i < 100; i += 10) {
+            for (let i = 10; i < 100; i += 10) {
                 let tree: ISharedTree;
+                const random = makeRandom(0)
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
                     before: () => {},
                     benchmarkFn: async () => {
-                        tree = await generateTestTree(i, TreeShape.Deep, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Deep, dataType, random);
                     },
                 });
             }
-            for (let i = 1; i < 1600; i += 100) {
+            for (let i = 100; i < 1500; i += 100) {
                 let tree: ISharedTree;
+                const random = makeRandom(0)
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
                     before: () => {},
                     benchmarkFn: async () => {
-                        tree = await generateTestTree(i, TreeShape.Wide, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Wide, dataType, random);
                     },
                 });
             }
         }
     });
     describe("Editable Tree", () => {
-        it("consistent given the same seed", () => {
-            const random = makeRandom(0);
-            const a = getJSTestTreeDeep(3, TestPrimitives.Map, random)
-            const jsonData = JSON.stringify([a]);
-            // eslint-disable-next-line import/no-nodejs-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-            const fs = require('fs');
-            fs.writeFile("deepTreeJS.json", jsonData, (err: any) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
-            const q = 1;
-            const t = 1;
-            assert(q === t);
-        });
+        for (let dataType=0 as TestPrimitives; dataType <= 4; dataType++) {
+            for (let i = 10; i < 100; i += 10) {
+                let tree;
+                let forest: IEditableForest;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: reads with ${i} nodes`,
+                    before: async () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType)
+                        forest = setupForest(fullSchemaData, tree);
+                    },
+                    benchmarkFn: () => {
+                        readTree(forest, i, TreeShape.Deep);
+                    },
+                });
+            }
+            for (let i = 100; i < 1500; i += 100) {
+                let tree;
+                let forest: IEditableForest;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Wide Tree (${TestPrimitives[dataType]}) with Editable Tree: reads with ${i} nodes`,
+                    before: async () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Wide, dataType)
+                        forest = setupForest(fullSchemaData, tree);
+                    },
+                    benchmarkFn: () => {
+                        readTree(forest, i, TreeShape.Wide);
+                    },
+                });
+            }
+            for (let i = 10; i < 100; i += 10) {
+                let tree;
+                let forest: IEditableForest;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
+                    before: () => {},
+                    benchmarkFn: async () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType)
+                        forest = setupForest(fullSchemaData, tree);
+                    },
+                });
+            }
+            for (let i = 100; i < 1500; i += 100) {
+                let tree;
+                let forest: IEditableForest;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Deep Tree (${TestPrimitives[dataType]}) with Editable Tree: writes ${i} nodes`,
+                    before: () => {},
+                    benchmarkFn: async () => {
+                        tree = getTestTreeAsJSObject(i, TreeShape.Deep, dataType)
+                        forest = setupForest(fullSchemaData, tree);
+                    },
+                });
+            }
+        }
     });
 });
+
+const booleanSchema = namedTreeSchema({
+    name: brand("Boolean"),
+    extraLocalFields: emptyField,
+    value: ValueSchema.Boolean,
+});
+
+const personSchema = namedTreeSchema({
+    name: brand("Test:Person-1.0.0"),
+    localFields: {
+        name: fieldSchema(FieldKinds.value, [stringSchema.name]),
+        age: fieldSchema(FieldKinds.value, [int32Schema.name]),
+        salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
+        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
+        isMarried: fieldSchema(FieldKinds.value, [booleanSchema.name])
+    },
+    extraLocalFields: emptyField,
+});
+
+const rootPersonSchema = fieldSchema(FieldKinds.value, [personSchema.name]);
+
+const fullSchemaData: SchemaData = {
+    treeSchema: schemaMap,
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootPersonSchema],
+    ]),
+};
 
 async function generateTestTree(
     numberOfNodes:number,
     shape:TreeShape,
-    dataType:TestPrimitives
+    dataType:TestPrimitives,
+    random: IRandom,
 ): Promise<ISharedTree> {
-    const seed = 0;
-    const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(1);
     const [tree] = provider.trees;
     const personData: JsonableTree = generateTreeData(dataType, random)
@@ -147,10 +243,10 @@ async function generateTestTree(
     initializeTestTree(tree, personData, fullSchemaData);
     switch (shape) {
         case TreeShape.Deep:
-            await setNodesNarrow(tree, numberOfNodes, dataType, provider, random);
+            await setNodesNarrow(tree, numberOfNodes-1, dataType, provider, random);
             break;
         case TreeShape.Wide:
-            await setNodesWide(tree, numberOfNodes, dataType, provider, random);
+            await setNodesWide(tree, numberOfNodes-1, dataType, provider, random);
             break;
         default:
             unreachableCase(shape);
@@ -214,8 +310,11 @@ function generateTreeData(dataType:TestPrimitives, random: IRandom): JsonableTre
         case TestPrimitives.Number:
             field = {age: [{ value: insertValue, type: int32Schema.name }]}
             break;
+        case TestPrimitives.Float:
+            field = {age: [{ value: insertValue, type: float32Schema.name }]}
+            break;
         case TestPrimitives.String:
-            field = {name: [{ value: insertValue.toString(), type: stringSchema.name }]}
+            field = {name: [{ value: random.real(0,Number.MAX_SAFE_INTEGER).toString(), type: stringSchema.name }]}
             break;
         case TestPrimitives.Boolean:
             booleanValue = insertValue % 2 === 0 ? true : false;
@@ -243,34 +342,6 @@ function generateTreeData(dataType:TestPrimitives, random: IRandom): JsonableTre
     return personData
 }
 
-const booleanSchema = namedTreeSchema({
-    name: brand("Boolean"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Boolean,
-});
-
-const personSchema = namedTreeSchema({
-    name: brand("Test:Person"),
-    localFields: {
-        name: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        age: fieldSchema(FieldKinds.value, [int32Schema.name]),
-        salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
-        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
-        address: fieldSchema(FieldKinds.value, [addressSchema.name]),
-        isMarried: fieldSchema(FieldKinds.value, [booleanSchema.name])
-    },
-    extraLocalFields: emptyField,
-});
-
-const rootPersonSchema = fieldSchema(FieldKinds.value, [personSchema.name]);
-
-const fullSchemaData: SchemaData = {
-    treeSchema: schemaMap,
-    globalFieldSchema: new Map([
-        [rootFieldKey, rootPersonSchema],
-    ]),
-};
-
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
@@ -280,7 +351,6 @@ function initializeTestTree(
     schema: SchemaData = fullSchemaData,
 ): void {
     tree.storedSchema.update(schema);
-
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor(state);
@@ -290,21 +360,19 @@ function initializeTestTree(
     });
 }
 
-
-function readTree(tree: any, numberOfNodes: number, shape: TreeShape) {
-    const { forest } = tree;
+function readTree(forest: any, numberOfNodes: number, shape: TreeShape) {
     const readCursor = forest.allocateCursor();
     moveToDetachedField(forest, readCursor);
     assert(readCursor.firstNode());
     switch (shape) {
         case TreeShape.Deep:
-            for (let i = 0; i < numberOfNodes; i++) {
+            for (let i = 0; i < numberOfNodes-1; i++) {
                 readCursor.enterField(rootFieldKeySymbol);
                 assert(readCursor.firstNode());
             }
             break;
         case TreeShape.Wide:
-            for (let j = 0; j < numberOfNodes; j++) {
+            for (let j = 0; j < numberOfNodes-1; j++) {
                 readCursor.nextNode();
             }
             break;
@@ -371,4 +439,11 @@ function readTreeAsJSObject(tree: any) {
             assert(tree[key] !== undefined);
         }
     }
+}
+
+function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
+    const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+    const forest = buildForest(schemaRepo);
+    initializeForest(forest, data.map(singleTextCursor));
+    return forest;
 }
