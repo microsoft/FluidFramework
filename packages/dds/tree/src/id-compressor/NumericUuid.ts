@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, fail } from "../Common";
-import { SessionId, StableId } from "../Identifiers";
-import { generateStableId } from "../UuidUtilities";
+import { assert, fail } from "./Common";
+import { SessionId, StableId } from "./Identifiers";
+import { generateStableId } from "./UuidUtilities";
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.

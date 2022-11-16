@@ -11,8 +11,8 @@ import {
     compareFiniteNumbersReversed,
     fail,
     Mutable,
-} from "../Common";
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "../Identifiers";
+} from "./Common";
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "./Identifiers";
 import { AppendOnlyDoublySortedMap } from "./AppendOnlySortedMap";
 import { SerializedSessionIdNormalizer } from "./persisted-types";
 

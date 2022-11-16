@@ -19,7 +19,7 @@ import {
     getOrCreate,
     Mutable,
     setPropertyIfDefined,
-} from "../Common";
+} from "./Common";
 import {
     LocalCompressedId,
     FinalCompressedId,
@@ -30,8 +30,8 @@ import {
     CompressedId,
     UuidString,
     AttributionId,
-} from "../Identifiers";
-import { assertIsStableId, assertIsUuidString, isStableId } from "../UuidUtilities";
+} from "./Identifiers";
+import { assertIsStableId, assertIsUuidString, isStableId } from "./UuidUtilities";
 import { AppendOnlySortedMap } from "./AppendOnlySortedMap";
 import { getIds } from "./IdRange";
 import {
@@ -1510,7 +1510,7 @@ export class IdCompressor {
             return { break: true };
         };
 
-        const compareCompressionMappings = (a, b) => {
+        const compareCompressionMappings = (a: CompressionMapping, b: CompressionMapping) => {
             const unfinalizedA = IdCompressor.isUnfinalizedOverride(a);
             const unfinalizedB = IdCompressor.isUnfinalizedOverride(b);
             if (unfinalizedA) {

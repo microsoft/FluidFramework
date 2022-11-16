@@ -9,7 +9,7 @@ import type {
     LocalCompressedId,
     OpSpaceCompressedId,
     SessionId,
-} from "../../Identifiers";
+} from ".././Identifiers";
 
 /**
  * A serialized ID allocation session for an `IdCompressor`.
