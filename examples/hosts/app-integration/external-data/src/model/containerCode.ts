@@ -16,6 +16,9 @@ import { TaskListInstantiationFactory } from "./taskList";
 
 const taskListId = "task-list";
 
+/**
+ * {@inheritDoc ModelContainerRuntimeFactory}
+ */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
     public constructor() {
         super(
