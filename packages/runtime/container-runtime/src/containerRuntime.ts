@@ -211,13 +211,6 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
 
     /**
-     * @deprecated
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * This defaults to false (disabled) and must be explicitly set to true to enable.
-     */
-    summarizerClientElection: boolean;
-
-    /**
      * Defines the maximum allowed time to wait for a pending summary ack.
      * The maximum amount of time client will wait for a summarize is the minimum of
      * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
@@ -310,8 +303,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxOpsSinceLastSummary: 7000,
 
     initialSummarizerDelayMs: 5 * 1000, // 5 secs.
-
-    summarizerClientElection: false,
 
     nonRuntimeOpWeight: 0.1,
 
