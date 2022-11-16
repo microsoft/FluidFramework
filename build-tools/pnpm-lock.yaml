@@ -185,6 +185,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/bundle-size-tools': ^0.6.0
       '@fluidframework/eslint-config-fluid': ^1.1.0
+      '@rushstack/node-core-library': ^3.51.1
       '@trivago/prettier-plugin-sort-imports': ^3.3.0
       '@types/async': ^3.2.6
       '@types/fs-extra': ^8.1.0
@@ -235,6 +236,7 @@ importers:
     dependencies:
       '@fluid-tools/version-tools': link:../version-tools
       '@fluidframework/bundle-size-tools': link:../bundle-size-tools
+      '@rushstack/node-core-library': 3.53.0
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
