@@ -27,47 +27,50 @@ enum TestPrimitives {
     Number = 0,
     String = 1,
     Boolean = 2,
+    Map = 3,
 }
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
-    describe("Direct JS Object", () => {
-        for (let i = 1; i < 100; i += 10) {
-            let tree: ISharedTree;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Deep Tree as JS Object: reads with ${i} nodes`,
-                before: async () => {
-                    tree = await getTestTreeAsJSObject(i, TreeShape.Deep, TestPrimitives.String);
-                },
-                benchmarkFn: () => {
-                    readTreeAsJSObject(tree);
-                },
-            });
-        }
-        for (let i = 1; i < 1600; i += 100) {
-            let tree: ISharedTree;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Wide Tree as JS Object: reads with ${i} nodes`,
-                before: async () => {
-                    tree = await getTestTreeAsJSObject2(i, TreeShape.Wide, TestPrimitives.String);
-                },
-                benchmarkFn: () => {
-                    readTreeAsJSObject(tree);
-                },
-            });
-        }
-    });
-    describe("Cursors", () => {
-        for (let dataType=0 as TestPrimitives; dataType <= 2; dataType++) {
+    describe.skip("Direct JS Object", () => {
+        for (let dataType=0 as TestPrimitives; dataType <= 3; dataType++) {
             for (let i = 1; i < 100; i += 10) {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
-                    title: `Deep Tree (${TestPrimitives[dataType]} values) with cursor: reads with ${i} nodes`,
+                    title: `Deep Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
                     before: async () => {
-                        tree = await generatePersonTestTree(i, TreeShape.Deep, TestPrimitives.String);
+                        tree = await getTestTreeAsJSObject(i, TreeShape.Deep, TestPrimitives.String);
+                    },
+                    benchmarkFn: () => {
+                        readTreeAsJSObject(tree);
+                    },
+                });
+            }
+            for (let i = 1; i < 1600; i += 100) {
+                let tree: ISharedTree;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Wide Tree as JS Object (${TestPrimitives[dataType]}): reads with ${i} nodes`,
+                    before: async () => {
+                        tree = await getTestTreeAsJSObject(i, TreeShape.Wide, TestPrimitives.String);
+                    },
+                    benchmarkFn: () => {
+                        readTreeAsJSObject(tree);
+                    },
+                });
+            }
+        }
+    });
+    describe.skip("Cursors", () => {
+        for (let dataType=0 as TestPrimitives; dataType <= 3; dataType++) {
+            for (let i = 1; i < 100; i += 10) {
+                let tree: ISharedTree;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
+                    before: async () => {
+                        tree = await generateTestTree(i, TreeShape.Deep, TestPrimitives.String);
                     },
                     benchmarkFn: () => {
                         readTree(tree, i, TreeShape.Deep);
@@ -78,9 +81,9 @@ describe("SharedTree benchmarks", () => {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
-                    title: `Wide Tree (${TestPrimitives[dataType]} values) with cursor: reads with ${i} nodes`,
+                    title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: reads with ${i} nodes`,
                     before: async () => {
-                        tree = await generatePersonTestTree(i, TreeShape.Wide, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Wide, TestPrimitives.String);
                     },
                     benchmarkFn: () => {
                         readTree(tree, i, TreeShape.Wide);
@@ -91,10 +94,10 @@ describe("SharedTree benchmarks", () => {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
-                    title: `Deep Tree (${TestPrimitives[dataType]} values) with cursor: writes ${i} nodes`,
+                    title: `Deep Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
                     before: () => {},
                     benchmarkFn: async () => {
-                        tree = await generatePersonTestTree(i, TreeShape.Deep, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Deep, TestPrimitives.String);
                     },
                 });
             }
@@ -102,18 +105,35 @@ describe("SharedTree benchmarks", () => {
                 let tree: ISharedTree;
                 benchmark({
                     type: BenchmarkType.Measurement,
-                    title: `Wide Tree (${TestPrimitives[dataType]} values) with cursor: writes ${i} nodes`,
+                    title: `Wide Tree (${TestPrimitives[dataType]}) with cursor: writes ${i} nodes`,
                     before: () => {},
                     benchmarkFn: async () => {
-                        tree = await generatePersonTestTree(i, TreeShape.Wide, TestPrimitives.String);
+                        tree = await generateTestTree(i, TreeShape.Wide, TestPrimitives.String);
                     },
                 });
             }
         }
     });
+    describe("Editable Tree", () => {
+        it("consistent given the same seed", () => {
+            const random = makeRandom(0);
+            const a = getJSTestTreeDeep(3, TestPrimitives.Map, random)
+            const jsonData = JSON.stringify([a]);
+            // eslint-disable-next-line import/no-nodejs-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+            const fs = require('fs');
+            fs.writeFile("deepTreeJS.json", jsonData, (err: any) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+            const q = 1;
+            const t = 1;
+            assert(q === t);
+        });
+    });
 });
 
-async function generatePersonTestTree(
+async function generateTestTree(
     numberOfNodes:number,
     shape:TreeShape,
     dataType:TestPrimitives
@@ -122,7 +142,7 @@ async function generatePersonTestTree(
     const random = makeRandom(seed);
     const provider = await TestTreeProvider.create(1);
     const [tree] = provider.trees;
-    const personData: JsonableTree = generatePersonData(dataType, random)
+    const personData: JsonableTree = generateTreeData(dataType, random)
     // Insert root node
     initializeTestTree(tree, personData, fullSchemaData);
     switch (shape) {
@@ -151,7 +171,7 @@ async function setNodesNarrow(
         parentIndex: 0,
     };
     for (let i = 0; i<numberOfNodes; i++) {
-        const personData = generatePersonData(dataType, random);
+        const personData = generateTreeData(dataType, random);
         tree.runTransaction((forest, editor) => {
             const writeCursor = singleTextCursor(personData);
             const field = editor.sequenceField(path, rootFieldKeySymbol);
@@ -175,7 +195,7 @@ async function setNodesWide(
     random: IRandom,
 ): Promise<void> {
     for (let j = 0; j < numberOfNodes; j++) {
-        const personData = generatePersonData(dataType, random);
+        const personData = generateTreeData(dataType, random);
         tree.runTransaction((forest, editor) => {
             const writeCursor = singleTextCursor(personData);
             const field = editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -186,7 +206,7 @@ async function setNodesWide(
     await provider.ensureSynchronized();
 }
 
-function generatePersonData(dataType:TestPrimitives, random: IRandom): JsonableTree{
+function generateTreeData(dataType:TestPrimitives, random: IRandom): JsonableTree{
     let field;
     let booleanValue;
     const insertValue = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
@@ -200,6 +220,18 @@ function generatePersonData(dataType:TestPrimitives, random: IRandom): JsonableT
         case TestPrimitives.Boolean:
             booleanValue = insertValue % 2 === 0 ? true : false;
             field = {isMarried: [{ value: booleanValue, type: booleanSchema.name }]}
+            break;
+        case TestPrimitives.Map:
+            field = {
+                friends: [
+                    {
+                        fields: {
+                            Mat: [{ type: stringSchema.name, value: insertValue.toString() }],
+                        },
+                        type: mapStringSchema.name,
+                    },
+                ],
+            }
             break;
         default:
             unreachableCase(dataType);
@@ -218,7 +250,7 @@ const booleanSchema = namedTreeSchema({
 });
 
 const personSchema = namedTreeSchema({
-    name: brand("Test:Person-1.0.0"),
+    name: brand("Test:Person"),
     localFields: {
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.value, [int32Schema.name]),
@@ -282,38 +314,61 @@ function readTree(tree: any, numberOfNodes: number, shape: TreeShape) {
     readCursor.free();
 }
 
-async function getTestTreeAsJSObject(
-    numberOfNodes: number,
-    shape: TreeShape,
-    dataType: TestPrimitives,
-): Promise<ISharedTree> {
-    const tree = await generatePersonTestTree(numberOfNodes, shape, dataType);
-    const { summary } = tree.getAttachSummary();
-    const summaryString = JSON.stringify(summary);
-    const summaryJS = JSON.parse(summaryString);
-    const treeContent = summaryJS.tree.indexes.tree.Forest.tree.ForestTree.content;
-    const parsedContent: ISharedTree = JSON.parse(JSON.parse(treeContent));
-    return parsedContent;
+function getTestTreeAsJSObject(numberOfNodes:number, shape:TreeShape, dataType:TestPrimitives): any {
+    const seed = 0;
+    const random = makeRandom(seed);
+    let tree;
+    switch (shape) {
+        case TreeShape.Deep:
+            tree = [getJSTestTreeDeep(numberOfNodes, dataType, random)]
+            break;
+        case TreeShape.Wide:
+            tree = getJSTestTreeWide(numberOfNodes, dataType, random)
+            break;
+        default:
+            unreachableCase(shape);
+    }
+    const testTreeJS = JSON.parse(JSON.stringify(tree))
+    return testTreeJS
+}
+
+function getJSTestTreeWide(numberOfNodes:number, dataType:TestPrimitives, random:IRandom):any {
+    const tree = [];
+    for(let i = 0; i<numberOfNodes; i++) {
+        const node = generateTreeData(dataType, random);
+        tree.push(node)
+    }
+    return tree
+}
+
+interface DeepTree {
+    type:any;
+    fields: any;
+    globalFields: {
+        rootFieldKey: any
+    }
+}
+
+function getJSTestTreeDeep(numberOfNodes:number, dataType:TestPrimitives, random:IRandom): any {
+    if (numberOfNodes === 1) {
+        return generateTreeData(dataType, random);
+    }
+    const node = generateTreeData(dataType, random);
+    const tree: DeepTree = {
+        type: node.type,
+        fields: node.fields,
+        globalFields: {
+            rootFieldKey:[getJSTestTreeDeep(numberOfNodes-1, dataType, random)]
+        }
+    }
+    return tree;
 }
 
 function readTreeAsJSObject(tree: any) {
     for (const key of Object.keys(tree)) {
         if (typeof tree[key] === "object" && tree[key] !== null) readTreeAsJSObject(tree[key]);
         else if (key === "value") {
-            assert(tree[key] !== null);
+            assert(tree[key] !== undefined);
         }
     }
-}
-
-function getTestTreeAsJSObject2(numberOfNodes:number, shape:TreeShape, dataType:TestPrimitives): any {
-    const seed = 0;
-    const random = makeRandom(seed);
-    const tree = [];
-    for(let i = 0; i<numberOfNodes; i++) {
-        const node = generatePersonData(dataType, random);
-        tree.push(node)
-    }
-    const treeString = JSON.stringify(tree);
-    const treeObject = JSON.parse(treeString);
-    return treeObject
 }
