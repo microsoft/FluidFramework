@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
+/* eslint-disable @typescript-eslint/no-shadow */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import BTree from "sorted-btree";

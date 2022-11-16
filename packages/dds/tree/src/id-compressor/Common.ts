@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-shadow */
+
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import BTree from "sorted-btree";
 
@@ -625,5 +627,6 @@ export type RestOrArray<T> = readonly T[] | [readonly T[]];
 export function unwrapRestOrArray<T>(
     value: [any[]] extends [T] ? never : RestOrArray<T>,
 ): readonly T[] {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
 }

@@ -221,6 +221,7 @@ export class SessionIdNormalizer<TRangeObject> {
             } else {
                 const [firstLocal, [_, finalRanges]] = lastLocalRange;
                 let finalDelta = 0;
+                // eslint-disable-next-line @typescript-eslint/no-shadow
                 for (const [_, [firstFinal, lastFinal]] of entries(firstLocal, finalRanges)) {
                     finalDelta += lastFinal - firstFinal + 1;
                 }
