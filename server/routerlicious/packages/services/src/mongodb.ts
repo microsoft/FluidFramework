@@ -129,6 +129,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
+    // Create indexes with unique restriction were always failing due to :
+    // 1. We have existing data
+    // 2. The unique restriction not on partition key for some collections.
+    // The error will continue without a DB rebuild, which is a hard and long work.
+    // Also create index mostly happened at service bootstrap time. If we bubble up at that time,
+    // service will failed to start. So instead we need catch the exception and log it without bubbling up.
     public async createIndex(index: any, unique: boolean): Promise<void> {
         const req = async () => this.collection.createIndex(index, { unique });
         try {
@@ -142,6 +148,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         }
     }
 
+    // Create index mostly happened at service bootstrap time. If we bubble up at that time, 
+    // service will failed to start. So instead we need catch the exception and log it without bubbling up.
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
         const req = async () => this.collection.createIndex(index, { expireAfterSeconds });
         try {
@@ -149,9 +157,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
                 req, // request
                 "MongoCollection.createTTLIndex", // callerName
             );
-            Lumberjack.info(`Created index ${indexName}`);
+            Lumberjack.info(`Created TTL index ${indexName}`);
         } catch (error) {
-            Lumberjack.error(`Index creation failed`, undefined, error);
+            Lumberjack.error(`TTL Index creation failed`, undefined, error);
         }
     }
 
