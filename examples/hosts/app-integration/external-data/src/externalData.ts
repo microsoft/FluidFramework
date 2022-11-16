@@ -7,10 +7,11 @@ import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
- * Parse string data into an array of simple objects that are easily imported into an
- * task list.
+ * Parse string data into an array of simple objects that are easily imported into a task list.  Each task is
+ * represented in the string in the format [id]:[name]:[priority], separated by newlines.
  * @param stringData - formatted string data
  * @returns An array of objects, each representing a single task
+ * TODO: See notes below about moving away from plain string to something more realistic.
  */
 export function parseStringData(stringData: string) {
     const taskStrings = stringData.split("\n");
@@ -29,7 +30,12 @@ const startingExternalData =
 const localStorageKey = "fake-external-data";
 
 export interface IExternalDataSourceEvents extends IEvent {
-    (event: "dataWritten", listener: () => void);
+    /**
+     * Emitted when the external data changes.
+     * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
+     * webhook path.
+     */
+    (event: "debugDataWritten", listener: () => void);
 }
 
 /**
@@ -48,8 +54,17 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
         if (window.localStorage.getItem(localStorageKey) === null) {
             this.debugResetData();
         }
+        // TODO: Should probably register here for the "storage" event to detect other tabs manipulating the external
+        // data.
     }
 
+    /**
+     * Fetch the external data.
+     * @returns A promise that resolves with the raw string data stored in the external source.
+     * @remarks This is async to simulate the more-realistic scenario of a network request.
+     * TODO: This is not a particularly realistic response for typical external data.  Should this instead return
+     * more structured data?  Maybe something that looks like a Response that we can .json()?
+     */
     public async fetchData(): Promise<string> {
         const currentExternalData = window.localStorage.getItem(localStorageKey);
         if (currentExternalData === null) {
@@ -58,21 +73,29 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
         return currentExternalData;
     }
 
+    /**
+     * Write the specified data to the external source.
+     * @param data - The string data to write.
+     * @returns A promise that resolves when the write completes.
+     * TODO: Similar to fetchData, this could be made more realistic.
+     */
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
         window.localStorage.setItem(localStorageKey, data);
         // Emit for debug views to update
-        this.emit("dataWritten");
+        this.emit("debugDataWritten");
     }
 
     /**
-     * Debug API for demo purposes, not really something we'd expect to find on a real external data source.
+     * Reset the external data to a good demo state.
+     * @remarks Debug API for demo purposes, not really something we'd expect to find on a real external data source.
      */
     public readonly debugResetData = (): void => {
         window.localStorage.setItem(localStorageKey, startingExternalData);
         // Emit for debug views to update
-        this.emit("dataWritten");
+        this.emit("debugDataWritten");
     };
 }
+
 
 export const externalDataSource = new ExternalDataSource();

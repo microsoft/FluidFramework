@@ -33,10 +33,10 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                 .then(setExternalData)
                 .catch(console.error);
         };
-        externalDataSource.on("dataWritten", fetchExternalData);
+        externalDataSource.on("debugDataWritten", fetchExternalData);
         fetchExternalData();
         return () => {
-            externalDataSource.off("dataWritten", fetchExternalData);
+            externalDataSource.off("debugDataWritten", fetchExternalData);
         };
     }, []);
 
