@@ -6,26 +6,50 @@
 // TODOs:
 // - Search for registered debuggers and display warning if none are found? (Still launch debug view?)
 
+/**
+ * State we store on a per-tab basis.
+ *
+ * Tracks whether or not the debugger panel is currently visible.
+ *
+ * @remarks
+ *
+ * All properties are optional, as Chromium will create default instances (rather than returning `undefined`, for
+ * example) when calling `get` with an unregistered key.
+ */
 interface TabState {
 	tabId?: number;
 	isDebuggerVisible?: boolean;
 }
 
+/**
+ * Gets the local storage state key for the specified `tabId`.
+ *
+ * @remarks This key is used to access storage state.
+ */
 function getStateKey(tabId: number): string {
 	return `fluid-client-debugger-tab-${tabId}-state`;
 }
 
-async function getTabState(tabId: number): Promise<TabState> {
+/**
+ * Get stored tab state, if any exists.
+ */
+async function getTabState(tabId: number): Promise<TabState | undefined> {
 	const stateKey = getStateKey(tabId);
 	const storageData = await chrome.storage.local.get(stateKey);
 	return storageData[stateKey] as TabState;
 }
 
+/**
+ * Updates the tab state in the local storage.
+ */
 async function updateTabState(tabId: number, newState: TabState): Promise<void> {
 	const stateKey = getStateKey(tabId);
 	await chrome.storage.local.set({ [stateKey]: newState });
 }
 
+/**
+ * Toggles the debug view (and updates corresponding local storage tab state).
+ */
 async function toggleDebuggerView(tabId: number): Promise<void> {
 	const tabState = await getTabState(tabId);
 	const visible: boolean = tabState?.isDebuggerVisible ?? false;
@@ -52,6 +76,11 @@ chrome.action.onClicked.addListener((tab) => {
 	});
 });
 
+/**
+ * Invoked when local storage state has changed.
+ *
+ * @remarks Used to update the extension icon, etc. based on current tab state.
+ */
 async function onStorageChange(changes: {
 	[key: string]: chrome.storage.StorageChange;
 }): Promise<void> {
@@ -73,13 +102,16 @@ async function onStorageChange(changes: {
 						tabId,
 						title: "Fluid Client debugger.\nClick to open.",
 					});
-					await chrome.action.setBadgeText({ tabId, text: "" });
+					await chrome.action.setBadgeText({ tabId, text: "" }); // Remove badge altogether
 				}
 			}
 		}
 	}
 }
 
+/**
+ * When local storage is updated, update any properties derived from local tab state used by the extension.
+ */
 chrome.storage.local.onChanged.addListener((changes) => {
 	onStorageChange(changes).catch((error) => {
 		console.error(error);
