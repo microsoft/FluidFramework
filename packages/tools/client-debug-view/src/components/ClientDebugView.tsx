@@ -38,7 +38,7 @@ export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId 
 	 *
 	 * @defaultValue Strictly use default visualization policies.
 	 */
-	renderOptions?: RenderOptions;
+	renderOptions?: RenderOptions; // TODO: get render options from debugger object
 }
 
 /**

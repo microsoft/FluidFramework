@@ -6,7 +6,7 @@ import { Spinner, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { DynamicDataView } from "./DynamicDataView";
@@ -48,16 +48,17 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 	}
 
 	// TODO: is this the right type check for this?
-	if (resolvedData instanceof SharedObjectCore) {
-		return renderOptions[resolvedData.attributes.type] === undefined ? (
+	const sharedObject = resolvedData as ISharedObject;
+	if (sharedObject?.attributes?.type !== undefined) {
+		const dataObjectType = (resolvedData as ISharedObject).attributes.type;
+		return renderOptions[dataObjectType] === undefined ? (
 			<Stack>
 				<StackItem>
-					No renderer provided for shared object type "{resolvedData.attributes.type}"
+					No renderer provided for shared object type "{dataObjectType}"
 				</StackItem>
 			</Stack>
 		) : (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			renderOptions[resolvedData.attributes.type](resolvedData, (data) => (
+			renderOptions[dataObjectType](sharedObject, (data) => (
 				<DynamicDataView data={data} renderOptions={renderOptions} />
 			))
 		);

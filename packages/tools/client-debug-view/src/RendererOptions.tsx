@@ -7,7 +7,7 @@ import React from "react";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import {
 	AudienceMemberView,
@@ -35,7 +35,7 @@ export type RenderChild = (childObject: unknown) => React.ReactElement;
  * Signature for data object view renderer callbacks.
  */
 export type RenderSharedObject = (
-	sharedObject: SharedObjectCore, // TODO: is this the right type?
+	sharedObject: ISharedObject, // TODO: is this the right type?
 	renderChild: RenderChild,
 ) => React.ReactElement;
 
