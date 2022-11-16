@@ -1670,12 +1670,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
-        const runtimeMessage = messageArg.type === MessageType.Operation;
-        const message = this.inbox.process(messageArg);
-
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
         }
+
+        const runtimeMessage = messageArg.type === MessageType.Operation;
+        const message = this.inbox.process(messageArg);
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
