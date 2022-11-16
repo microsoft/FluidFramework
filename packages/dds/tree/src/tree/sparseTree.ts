@@ -112,7 +112,7 @@ export class SparseNode<TData> implements UpPath {
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child) ?? -1;
-        assert(childIndex !== -1, 0x35c /* child must be parented to be removed */);
+        assert(childIndex !== -1, "child must be parented to be removed");
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.afterEmptyField(key);
