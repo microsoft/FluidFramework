@@ -431,8 +431,8 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private pendingSummaryData: IGCSummaryTrackingData | undefined;
 
-    // Promise when resolved initializes the tombstone state from data in the base snapshot.
-    private readonly initializeTombstoneStateFromBaseSnapshotP: Promise<void>;
+    // Promise when resolved returns the GC data data in the base snapshot.
+    private readonly baseSnapshotDataP: Promise<IGCSnapshotData | undefined>;
     // Promise when resolved initializes the GC state from the data in the base snapshot.
     private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
@@ -644,7 +644,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
         // it involves fetching blobs from storage which is expensive.
-        const baseSnapshotDataP = new LazyPromise<IGCSnapshotData | undefined>(async () => {
+        this.baseSnapshotDataP = new LazyPromise<IGCSnapshotData | undefined>(async () => {
             if (baseSnapshot === undefined) {
                 return undefined;
             }
@@ -712,27 +712,6 @@ export class GarbageCollector implements IGarbageCollector {
         });
 
         /**
-         * Set up the initializer which initializes the tombstone state from the data in base snapshot.
-         * This is done during container runtime load so that the tombstone state is updated before any objects
-         * are loaded or used.
-         */
-        this.initializeTombstoneStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
-            const baseSnapshotData = await baseSnapshotDataP;
-            /**
-             * The base snapshot data or tombstone state will not be present if the container is loaded from:
-             * 1. The first summary created by the detached container.
-             * 2. A summary that was generated with GC disabled.
-             * 3. A summary that was generated before GC even existed.
-             * 4. A summary that was generated with tombstone feature disabled.
-             */
-            if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
-                return;
-            }
-            this.tombstones = baseSnapshotData.tombstones;
-            this.runtime.updateUnusedRoutes(this.tombstones, true /* tombstone */);
-        });
-
-        /**
          * Set up the initializer which initializes the GC state from the data in base snapshot. This is done when
          * connected in write mode or when GC runs the first time. It sets up all unreferenced nodes from the base
          * GC state and updates their inactive or sweep ready state.
@@ -756,7 +735,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
-            const baseSnapshotData = await baseSnapshotDataP;
+            const baseSnapshotData = await this.baseSnapshotDataP;
             /**
              * The base snapshot data will not be present if the container is loaded from:
              * 1. The first summary created by the detached container.
@@ -796,7 +775,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Get the GC details for each node from the GC state in the base summary. This is returned in getBaseGCDetails
         // which the caller uses to initialize each node's GC state.
         this.baseGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
-            const baseSnapshotData = await baseSnapshotDataP;
+            const baseSnapshotData = await this.baseSnapshotDataP;
             if (baseSnapshotData === undefined) {
                 return new Map();
             }
@@ -840,7 +819,19 @@ export class GarbageCollector implements IGarbageCollector {
      * in use or not.
      */
     public async initializeBaseState(): Promise<void> {
-        await this.initializeTombstoneStateFromBaseSnapshotP;
+        const baseSnapshotData = await this.baseSnapshotDataP;
+        /**
+         * The base snapshot data or tombstone state will not be present if the container is loaded from:
+         * 1. The first summary created by the detached container.
+         * 2. A summary that was generated with GC disabled.
+         * 3. A summary that was generated before GC even existed.
+         * 4. A summary that was generated with tombstone feature disabled.
+         */
+        if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
+            return;
+        }
+        this.tombstones = baseSnapshotData.tombstones;
+        this.runtime.updateUnusedRoutes(this.tombstones, true /* tombstone */);
     }
 
     /**
