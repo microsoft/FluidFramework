@@ -165,13 +165,4 @@ describe("SequenceField - MarkListFactory", () => {
         };
         assert.deepStrictEqual(factory.list, [expected]);
     });
-
-    it("Can merge consecutive tombs", () => {
-        const factory = new SF.MarkListFactory();
-        const tomb1: SF.Tomb = { type: "Tomb", change: detachedBy, count: 1 };
-        const tomb2: SF.Tomb = { type: "Tomb", change: detachedBy, count: 1 };
-        factory.pushContent(tomb1);
-        factory.pushContent(tomb2);
-        assert.deepStrictEqual(factory.list, [{ type: "Tomb", change: detachedBy, count: 2 }]);
-    });
 });
