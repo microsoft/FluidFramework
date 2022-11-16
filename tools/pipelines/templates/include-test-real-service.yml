@@ -287,9 +287,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-          # --use-openssl-ca flag required so node uses the build agent's cert store, where we installed
-          # the self-signed cert for the r11s deployment
-          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }} --use-openssl-ca'
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
       # Upload results
       - task: PublishTestResults@2
