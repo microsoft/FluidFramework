@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { PackageName } from "@rushstack/node-core-library";
+import { strict as assert } from "assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
@@ -24,7 +25,7 @@ import { indentString } from "./text";
  * @internal
  */
 export interface PackageVersionMap {
-    [packageName: ReleasePackage]: ReleaseVersion;
+    [packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
 }
 
 /**
@@ -496,4 +497,58 @@ export function filterVersionsOlderThan(
         const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
         return diff <= numBusinessDays;
     });
+}
+
+/**
+ * Gets the direct Fluid dependencies for a given package or release group. A Fluid dependency is a dependency on
+ * other packages or release groups in the repo.
+ *
+ * @param context - The {@link Context}.
+ * @param releaseGroupOrPackage - The release group or package to check.
+ * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
+ * depends, and the other contains independent packages on which the package depends.
+ *
+ * @internal
+ */
+export function getFluidDependencies(
+    context: Context,
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+): [releaseGroups: PackageVersionMap, packages: PackageVersionMap] {
+    const releaseGroups: PackageVersionMap = {};
+    const packages: PackageVersionMap = {};
+    let packagesToCheck: Package[];
+
+    if (isReleaseGroup(releaseGroupOrPackage)) {
+        packagesToCheck = context.packagesInReleaseGroup(releaseGroupOrPackage);
+    } else {
+        const independentPackage = context.fullPackageMap.get(releaseGroupOrPackage);
+        assert(
+            independentPackage !== undefined,
+            `Package not found in context: ${releaseGroupOrPackage}`,
+        );
+        packagesToCheck = [independentPackage];
+    }
+
+    for (const p of packagesToCheck) {
+        for (const dep of p.combinedDependencies) {
+            const pkg = context.fullPackageMap.get(dep.name);
+            if (pkg === undefined) {
+                continue;
+            }
+
+            const minVer = semver.minVersion(dep.version);
+            if (minVer === null) {
+                throw new Error(`Failed to parse depVersion: ${dep.version}`);
+            }
+
+            if (pkg.monoRepo !== undefined) {
+                releaseGroups[pkg.monoRepo.kind] = minVer.version;
+                continue;
+            }
+
+            packages[pkg.name] = minVer.version;
+        }
+    }
+
+    return [releaseGroups, packages];
 }
