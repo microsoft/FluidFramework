@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS.
+This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). The SharedTree DDS (currently in development) is an example of a DDS that has this requirement. This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS.
 
 ## Virtualization and Incrementality
 
@@ -763,15 +763,19 @@ Drawbacks:
 
 ## Generalization
 
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a library would provide:
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
 
-* A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store behind the scenes as the client modifies the tree.
-* A way to configure the chunking strategy for the stored tree. Different DDS might want regions of data to be downloaded together, or separately, depending on their data's schema.
-* A canonical (but optional) way to store the history of a DDS as a series of ops. This would also be virtualized for efficient access.
+* A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store as the client modifies the tree.
+* A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described in the "Chunk Data Structure Implementations" section) in order to give the necessary flexibility for custom chunking.
+* A canonical (but optional) way to store and query the history of a DDS as a series of revisions. This would be virtualized for efficient access.
 
-This would improve the storage options available to DDSs and would likely inform the summarization API as well. It's possible that with such a design, summarization as it exists today would not need to be exposed to the DDS. For example, any client could produce a summary TODO
-option 1: in memory copy of storage is FAST, and can mutate whenever you want, flush behind the scene
-option 2: flush implemented directly
+If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
+
+* All DDSs would scale with large data sets, and therefore the entire container would scale with large data sets
+* All DDSs could share a single stored tree, which is composed of a subtree for each DDS
+* The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSs in the container.
+
+Such a service would reshape the summarization API as well. Rather than producing a summary tree every so often, a DDS would be asked to flush any sequenced data that has not yet been committed to storage every so often. Or, perhaps the DDS could use the storage writing APIs at any point in time; each mutation would contribute to a buffer of storage instructions that would be flushed intermittently behind the scenes.
 
 ## Glossary
 
