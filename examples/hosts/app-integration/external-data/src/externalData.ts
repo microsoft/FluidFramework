@@ -17,10 +17,15 @@ export function parseStringData(stringData: string) {
     const taskStrings = stringData.split("\n");
     return taskStrings.map((taskString) => {
         const [taskIdString, taskNameString, taskPriorityString] = taskString.split(":");
-        return { id: taskIdString, name: taskNameString, priority: parseInt(taskPriorityString, 10) };
+        return {
+            id: taskIdString,
+            name: taskNameString,
+            priority: parseInt(taskPriorityString, 10),
+        };
     });
 }
 
+// prettier-ignore
 const startingExternalData =
 `12:Alpha:1
 34:Beta:2
@@ -96,6 +101,5 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
         this.emit("debugDataWritten");
     };
 }
-
 
 export const externalDataSource = new ExternalDataSource();

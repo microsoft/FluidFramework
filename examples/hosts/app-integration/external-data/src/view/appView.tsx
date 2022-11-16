@@ -18,11 +18,8 @@ export interface IAppViewProps {
  * of appropriately disabling the view during migration.  It would also be what triggers any other migration UI we
  * might want, progress wheels, etc.
  */
-export const AppView: React.FC<IAppViewProps> =
-    (props: IAppViewProps) => {
+export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const { model } = props;
 
-    return (
-        <TaskListView taskList={ model.taskList } />
-    );
+    return <TaskListView taskList={ model.taskList } />;
 };

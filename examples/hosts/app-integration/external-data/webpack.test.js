@@ -7,7 +7,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
-module.exports = env => {
+module.exports = (env) => {
     return {
         entry: {
             app: "./tests/index.tsx",
@@ -43,7 +43,7 @@ module.exports = env => {
         },
         plugins: [
             new webpack.ProvidePlugin({
-                process: 'process/browser'
+                process: "process/browser",
             }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",

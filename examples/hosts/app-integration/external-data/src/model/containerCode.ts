@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ModelContainerRuntimeFactory,
-} from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -22,9 +20,7 @@ const taskListId = "task-list";
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
     public constructor() {
         super(
-            new Map([
-                TaskListInstantiationFactory.registryEntry,
-            ]), // registryEntries
+            new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );
     }
 

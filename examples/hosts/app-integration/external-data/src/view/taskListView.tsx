@@ -59,7 +59,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                 <button
                     onClick={ deleteTask }
                     style={{ background: "none", border: "none" }}
-                >❌</button>
+                >
+                    ❌
+                </button>
             </td>
         </tr>
     );
