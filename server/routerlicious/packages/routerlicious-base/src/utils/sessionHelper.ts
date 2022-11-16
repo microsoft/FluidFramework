@@ -158,12 +158,12 @@ async function updateExistingSession(
         // another call, and there is a race condition with different clients writing truth into the cosmosdb
         // from different clusters. Thus, let it call getSession for maximum three times.
         if (!result.existing && count === 3) {
-            Lumberjack.error(`The documentId: ${documentId} reaches three times for calling getSession`,
+            Lumberjack.error(`Error running getSession: retryCount ${count}`,
                 lumberjackProperties);
-            throw new Error(`The documentId: ${documentId} reaches three times for calling getSession`);
+            throw new Error(`Error running getSession: retryCount ${count}`);
         } else if (!result.existing && count < 3) {
             Lumberjack.info(
-                `The documentId: ${documentId} with isSessionAlive as false was not found in documents collection`,
+                `The document with isSessionAlive as false does not exist`,
                 lumberjackProperties,
             );
             return getSession(ordererUrl,
