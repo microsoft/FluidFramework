@@ -109,7 +109,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -198,6 +197,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
+    updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -557,6 +557,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+    // @deprecated (undocumented)
     summarizerClientElection: boolean;
 }
 

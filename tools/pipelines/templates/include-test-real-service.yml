@@ -202,6 +202,7 @@ jobs:
             else
               ls -1 ${{ variables.testPackagePathPattern }}
               echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
+              exit -1
             fi
 
       # Auth to internal feed
@@ -253,7 +254,7 @@ jobs:
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         - task: Bash@3
           displayName: Copy devDependencies
@@ -287,9 +288,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-          # --use-openssl-ca flag required so node uses the build agent's cert store, where we installed
-          # the self-signed cert for the r11s deployment
-          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }} --use-openssl-ca'
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
       # Upload results
       - task: PublishTestResults@2

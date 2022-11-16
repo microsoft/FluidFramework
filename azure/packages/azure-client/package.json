@@ -31,7 +31,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "postpack": "cd dist && tar -cvf ../azure-client.test-files.tar ./test",
+    "postpack": "tar -cf ./azure-client.test-files.tar ./dist/test",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",

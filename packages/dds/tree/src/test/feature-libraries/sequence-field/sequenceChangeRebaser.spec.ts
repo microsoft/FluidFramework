@@ -9,7 +9,7 @@ import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../reb
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, fakeRepair } from "../../utils";
 import { checkDeltaEquality, createInsertChangeset, rebaseTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -119,7 +119,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                     const change = [mark];
                     const inv = SF.invert(makeAnonChange(change), TestChange.invert);
                     const actual = SF.compose([change, inv], TestChange.compose);
-                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta);
+                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                     assert.deepEqual(delta, []);
                 });
             }
