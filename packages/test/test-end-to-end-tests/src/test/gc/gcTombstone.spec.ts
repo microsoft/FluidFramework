@@ -391,7 +391,6 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Requesting tombstoned datastores fails in summarizing container loaded after sweep timeout",
         [
             {
-                error: "Datastore removed by gc: ",
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
@@ -423,7 +422,6 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Requesting tombstoned datastores fails in summarizing container loaded before sweep timeout",
         [
             {
-                error: "Datastore removed by gc: ",
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
@@ -803,7 +801,6 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("can mark data store from tombstone information in summary in non-summarizer container",
         [
             {
-                error: "Datastore removed by gc: ",
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
             },
         ],
