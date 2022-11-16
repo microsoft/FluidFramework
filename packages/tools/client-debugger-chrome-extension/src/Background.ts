@@ -17,8 +17,20 @@
  * example) when calling `get` with an unregistered key.
  */
 interface TabState {
-	tabId?: number;
-	isDebuggerVisible?: boolean;
+	tabId: number;
+	isDebuggerVisible: boolean;
+}
+
+/**
+ * Gets the default {@link TabState}.
+ *
+ * @remarks Used when initializing tab state for the first time.
+ */
+function getDefaultTabState(tabId: number): TabState {
+	return {
+		tabId,
+		isDebuggerVisible: false,
+	};
 }
 
 /**
@@ -33,10 +45,10 @@ function getStateKey(tabId: number): string {
 /**
  * Get stored tab state, if any exists.
  */
-async function getTabState(tabId: number): Promise<TabState | undefined> {
+async function getTabState(tabId: number): Promise<TabState> {
 	const stateKey = getStateKey(tabId);
 	const storageData = await chrome.storage.local.get(stateKey);
-	return storageData[stateKey] as TabState;
+	return (storageData[stateKey] as TabState) ?? getDefaultTabState(tabId);
 }
 
 /**
@@ -52,7 +64,7 @@ async function updateTabState(tabId: number, newState: TabState): Promise<void> 
  */
 async function toggleDebuggerView(tabId: number): Promise<void> {
 	const tabState = await getTabState(tabId);
-	const visible: boolean = tabState?.isDebuggerVisible ?? false;
+	const visible: boolean = tabState.isDebuggerVisible;
 
 	const scriptToInvoke = visible ? "CloseDebuggerView.js" : "OpenDebuggerView.js";
 
