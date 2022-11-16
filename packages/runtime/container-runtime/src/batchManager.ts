@@ -4,7 +4,7 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
-import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
+import { CompressionAlgorithms, ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
 
 /**
  * Batch message type used internally by the runtime
@@ -13,6 +13,7 @@ export type BatchMessage = IBatchMessage & {
     localOpMetadata: unknown;
     deserializedContent: ContainerRuntimeMessage;
     referenceSequenceNumber: number;
+    compression?: CompressionAlgorithms;
 };
 
 export interface IBatchManagerOptions {

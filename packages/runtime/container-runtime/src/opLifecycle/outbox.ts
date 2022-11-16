@@ -97,13 +97,19 @@ export class Outbox {
         this.flushBatch(this.prepareBatch(batch));
     }
 
-    private markBatchMessage(message: BatchMessage, batch: boolean) {
-        message.metadata = { ...message.metadata, batch };
-    }
+    private addBatchMetadataToBatch(batch: IBatch): IBatch {
+        if (batch.content.length > 1) {
+            batch.content[0].metadata = {
+                ...batch.content[0].metadata,
+                batch: true
+            };
+            batch.content[batch.content.length - 1].metadata = {
+                ...batch.content[batch.content.length - 1].metadata,
+                batch: false
+            };
+        }
 
-    private addBatchMetadataToBatch(batch: IBatch) {
-        this.markBatchMessage(batch.content[0], true);
-        this.markBatchMessage(batch.content[batch.content.length - 1], false);
+        return batch;
     }
 
     private prepareBatch(batch: IBatch): IBatch {
@@ -111,16 +117,13 @@ export class Outbox {
             return batch;
         }
 
-        if (batch.content.length > 1) {
-            this.addBatchMetadataToBatch(batch);
-        }
-
+        let processedBatch = batch;
         if (this.options.compressionOptions !== undefined
             && this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
-            return this.batchProcessors.compressor.processOutgoing(batch);
+            processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
         }
 
-        return batch;
+        return this.addBatchMetadataToBatch(processedBatch);
     }
 
     private flushBatch(batch: IBatch): void {
