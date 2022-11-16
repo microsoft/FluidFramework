@@ -500,7 +500,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 
     describe("Batch validation when using getPendingLocalState()", () => {
         beforeEach(async () => {
-            await setupContainers({ flushMode: FlushMode.TurnBased, enableOfflineLoad: true });
+            await setupContainers({ enableOfflineLoad: true });
         });
         it("cannot capture the pending local state during ordersequentially", async () => {
             dataObject1.context.containerRuntime.orderSequentially(() => {
