@@ -25,11 +25,8 @@ export { Repository } from "./git";
 export {
     filterVersionsOlderThan,
     generateReleaseGitTagName,
-    getAllVersions,
     getFluidDependencies,
     getPreReleaseDependencies,
-    getTagsForReleaseGroup,
-    getVersionFromTag,
     isReleased,
     npmCheckUpdates,
     PackageVersionMap,

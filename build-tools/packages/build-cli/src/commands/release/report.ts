@@ -28,7 +28,6 @@ import {
     PackageVersionMap,
     ReleaseReport,
     ReportKind,
-    VersionDetails,
     filterVersionsOlderThan,
     getDisplayDate,
     getDisplayDateRelative,
@@ -204,7 +203,7 @@ export abstract class ReleaseReportBaseCommand<
         repoVersion: string,
         latestReleaseChooseMode?: ReleaseSelectionMode,
     ): Promise<RawReleaseData | undefined> {
-        const versions = await getAllVersions(context, releaseGroupOrPackage);
+        const versions = await context.getAllVersions(releaseGroupOrPackage);
 
         if (versions === undefined) {
             return undefined;
