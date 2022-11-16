@@ -168,6 +168,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
+import { Inbox, OpSplitter } from "./opLifecycle";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -187,16 +188,6 @@ export enum ContainerMessageType {
 
     // Sets the alias of a root data store
     Alias = "alias",
-}
-
-export interface IChunkedOp {
-    chunkId: number;
-
-    totalChunks: number;
-
-    contents: string;
-
-    originalType: MessageType | ContainerMessageType;
 }
 
 export interface ContainerRuntimeMessage {
@@ -674,8 +665,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-                                   compressionAlgorithm: CompressionAlgorithms.lz4 },
+            compressionOptions = {
+                minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+            },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
         } = runtimeOptions;
 
@@ -832,8 +825,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
 
-    private readonly opDecompressor: OpDecompressor = new OpDecompressor();
-
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -903,10 +894,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly garbageCollector: IGarbageCollector;
 
-    // Local copy of incomplete received chunks.
-    private readonly chunkMap: Map<string, string[]>;
-
     private readonly dataStores: DataStores;
+    private readonly inbox: Inbox;
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
@@ -1010,7 +999,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.chunkMap = new Map<string, string[]>(chunks);
+        this.inbox = new Inbox(new OpSplitter(chunks), new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1164,7 +1153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
-            this.clearPartialChunks(clientId);
+            this.inbox.clearPartialMessagesFor(clientId);
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
@@ -1485,8 +1474,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.chunkMap.size > 0) {
-            const content = JSON.stringify([...this.chunkMap]);
+        if (this.inbox.hasPartialMessages) {
+            const content = JSON.stringify([...this.inbox.partialMessages]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
@@ -1681,24 +1670,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
-        // Do shallow copy of message, as methods below will modify it.
-        // There might be multiple container instances receiving same message
-        // We do not need to make deep copy, as each layer will just replace message.content itself,
-        // but would not modify contents details
-        let message = { ...messageArg };
-
-        // back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
-        // System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-        // Old ops may contain empty string (I assume noops).
-        if (typeof message.contents === "string" && message.contents !== "") {
-            message.contents = JSON.parse(message.contents);
-        }
-
-        message = this.opDecompressor.processMessage(message);
-
-        // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
-        // This format was not shipped to production workflows.
-        const runtimeMessage = unpackRuntimeMessage(message);
+        const runtimeMessage = messageArg.type === MessageType.Operation;
+        const message = this.inbox.process(messageArg);
 
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
@@ -1710,10 +1683,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            // Chunk processing must come first given that we will transform the message to the unchunked version
-            // once all pieces are available
-            message = this.processRemoteChunkedMessage(message);
-
             let localOpMetadata: unknown;
             if (local && runtimeMessage) {
                 localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
@@ -2583,43 +2552,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
-        if (message.type !== ContainerMessageType.ChunkedOp) {
-            return message;
-        }
-
-        const clientId = message.clientId;
-        const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent);
-        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const newMessage = { ...message };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const serializedContent = this.chunkMap.get(clientId)!.join("");
-            newMessage.contents = JSON.parse(serializedContent);
-            newMessage.type = chunkedContent.originalType;
-            this.clearPartialChunks(clientId);
-            return newMessage;
-        }
-        return message;
-    }
-
-    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
-        let map = this.chunkMap.get(clientId);
-        if (map === undefined) {
-            map = [];
-            this.chunkMap.set(clientId, map);
-        }
-        assert(chunkedContent.chunkId === map.length + 1,
-            0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
-        map.push(chunkedContent.contents);
-    }
-
-    private clearPartialChunks(clientId: string) {
-        if (this.chunkMap.has(clientId)) {
-            this.chunkMap.delete(clientId);
-        }
-    }
-
     private hasPendingMessages() {
         return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
     }
@@ -2884,12 +2816,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
             summaryLogger.sendTelemetryEvent(
-            {
-                eventName: "LatestSummaryRetrieved",
-                ackHandle,
-                lastSequenceNumber: latestSnapshotRefSeq,
-                targetSequenceNumber: summaryRefSeq,
-            });
+                {
+                    eventName: "LatestSummaryRetrieved",
+                    ackHandle,
+                    lastSequenceNumber: latestSnapshotRefSeq,
+                    targetSequenceNumber: summaryRefSeq,
+                });
 
             // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
             // wait for the delta manager to catch up before refreshing the latest Summary.

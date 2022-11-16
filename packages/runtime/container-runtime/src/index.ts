@@ -5,7 +5,6 @@
 
 export {
     ContainerMessageType,
-    IChunkedOp,
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -82,3 +81,4 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
+export { IChunkedOp } from "./opLifecycle";
