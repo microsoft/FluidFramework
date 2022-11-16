@@ -372,14 +372,14 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
         return this.valueComparator(search, this.extractSearchValue(value));
     };
 
-    /**
-     * @param value - the value to lookup.
-     * @returns the key associated with `value` if such an entry exists, and undefined otherwise.
-     */
-    public getByValue(value: S): K | undefined {
-        const index = AppendOnlySortedMap.keyIndexOf(this.elements, value, this.compareValues);
-        return this.elements[index]?.[0];
-    }
+    // /**
+    //  * @param value - the value to lookup.
+    //  * @returns the key associated with `value` if such an entry exists, and undefined otherwise.
+    //  */
+    // public getByValue(value: S): K | undefined {
+    //     const index = AppendOnlySortedMap.keyIndexOf(this.elements, value, this.compareValues);
+    //     return this.elements[index]?.[0];
+    // }
 
     /**
      * @param searchValue - the search value to lookup.
