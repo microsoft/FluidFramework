@@ -1,34 +1,16 @@
-# Shared Tree Virtualization
+# Fluid DDS Storage: Virtualization and Incrementality
 
 > Note: Items in a `code block` are elaborated upon in the Glossary at the end of this document. Items in a blockquote (such as the text you are reading right now) provide helpful context but are not strictly necessary to understand a topic.
 
 ## Overview
 
-This document discusses options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents much larger than memory are a requirement). There is therefore significant complexity introduced to many of the storage approaches as well as the API for retrieving the tree from storage in order to make this kind of scalability possible.
-
-The data that needs to be stored in order to fully capture the state of the tree is as follows:
-
-1. The nodes in the tree. This includes any metadata or attributes associated with each node (e.g. schema type, identity label) as well as the data payload of the node (i.e. its "value", if it has one).
-2. The hierarchical relationships between the nodes in the tree
-3. The schema of the tree
-
-Optionally, some trees may store the following information depending on the needs of the clients and the strategy used for maintaining the tree's `history`:
-
-4. References to old views of the tree
-5. A log of operations
-6. History information that is localized to a particular part of the tree. The simplest way to store this information might be by including it on the nodes themselves.
-
-Finally,
-
-7. Any indexes or accelerations structures that, despite being derived from the state listed above, are cheaper to persist and incrementally update than to fully recompute on a client
-
-> Note: The remainder of this document will focus primarily on how to store data that resides in the tree structure itself (1, 2, and 6 above), as opposed to data stored in separate tables (3, 4, 5, 7).
+This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS.
 
 ## Virtualization and Incrementality
 
-Existing Fluid DDSs generally assume that their documents will fit entirely on each client's machine. SharedTree does not make this assumption and therefore requires additional architecture, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading only the part of the document that it has in memory to storage.
+Existing Fluid DDSs generally assume that their documents will fit entirely in a client's memory. This document does not make this assumption and introduces additional techniques for reading and writing data to storage, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading to storage only the part of the document that it has in memory.
 
-> As presented above, the amount of the document that a client can view at once is limited by a client machine's random access memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
+> As presented above, the amount of the document that a client can view at once is limited by a client machine's memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
 
 Allowing for partial downloads of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only part of the tree, it needs that data locally available.
 
@@ -36,7 +18,7 @@ Allowing for partial downloads of the tree has implications on the layout of the
 
 ## Blobs and Chunks
 
-In order to allow virtualization and incremental writes, clients split the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded at any time on demand.
+In order to allow virtualization and incremental writes, the DDS splits the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded lazily and on demand.
 
 > The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob, for example. But in practice, having the chunk size mimic the blob size and storing each chunk in its own blob simplifies the architecture.
 
@@ -109,7 +91,7 @@ graph TD;
 
 The folowing sections will examine some of the general properties of this "chunk tree".
 
-### Immutable Blobs
+### Immutability
 
 Except where stated otherwise, this document assumes that blobs are immmutable and `content-addressable`. This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
 
@@ -185,6 +167,16 @@ Revision | Root Chunk Key
 
 This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for creating a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing `snapshot isolation` because the tree reader does not have to worry about edits from other clients or its own concurrent edits affecting its view.
 
+### Server-side Blob Retention
+
+It is a requirement that blobs be sufficiently long-lived on the server so that a client can download them when required. If a document is retaining its history then all blobs containing all chunks for all revisions must be available indefinitely. For documents that do not retain their history, blobs should live at least long enough for a client to be able to fully reconstruct the current state of the revision it is viewing; i.e. all blobs containing all chunks for oldest revision known by a participating client.
+
+> A client that goes offline for an extended period of time is a good example of when it's useful to keep old blobs available even when they are from revisions that are well-behind the most up-to-date revision. If, for example, blobs are retained for 30 days, then a client that disconnects from the server can keep working while offline, so long as it reconnects within 30 days. This is because at the time it reconnects, it (or other clients) may need access to the revision from before the client's disconnection in order to rebase the ops that were created while offline.
+
+Both summary blobs and attachment blobs have lifetimes determined by their presence in the summary tree. If a summary ceases to include either a (summary) "blob" or an "attachment" then the blob will eventually be forgotten. This API may be at odds with the storage techniques described in this document. For documents retaining history, the list of blobs to retain grows unboundedly, increasing the summary size indefinitely. And even for documents that don't retain history, it may be awkward to maintain a list of all "live" blobs; for large documents the number of blobs could scale so large that even the list of references to those blobs needs to be incrementally updated and submitted.
+
+One possible alternative would be to provide a mode in which the server assumes each blob should be retained indefinitely until the DDS explicitly requests that it be deleted. This gives the DDS complete control over the lifetime of blobs; the DDS tells the server to create blobs and it tells the server when to delete blobs. This degree of freedom allows a DDS to manage its blobs in the most efficient way possible, providing clear lifetime guarantees for blobs that the DDS needs to retain and reducing the amount of storage space that might be otherwise wasted on blobs that the DDS no longer needs.
+
 ### Write Amplification
 
 The drawback to replacing the spine for every edit is the intense [write amplification](https://en.wikipedia.org/wiki/Write_amplification). For every write to the tree, every chunk of the spine above the edited node is replaced, incurring multiple blob uploads for what began as a single update to a single value. To make matters even worse, each of these uploads must wait to begin until it knows the key of the blob below. Assuming that a blob's key is determined by the server and is not known until the upload completes, all uploads in the spine must occur one-by-one and are completely unparallelizable.
@@ -193,15 +185,7 @@ The drawback to replacing the spine for every edit is the intense [write amplifi
 
 Paying this cost for every edit is a burden for a client desiring high write throughput. The next section will explore how to spread this cost out over multiple edits.
 
-> Later, we'll look at how the length of the spine can be minimized, reducing the cumulative size of the uploads. Some different approaches are explored in the "Chunk Data Structure Implementations" section of this document.
-
-### Server-side Blob Retention
-
-It is a requirement that blobs be sufficiently long-lived on the server so that a client can download them when required. If a document is retaining its history then all blobs containing all chunks for all revisions must be available indefinitely. For documents that do not retain their history, blobs must live at least long enough for a client to be able to fully reconstruct the current state of the revision it is viewing; i.e. all blobs containing all chunks for the oldest revision on any client in the collaboration window.
-
-Both summary blobs and attachment blobs have lifetimes determined by their presence in the summary tree. If a summary ceases to include either a (summary) "blob" or an "attachment" then the blob will eventually be forgotten. This API may be at odds with the storage techniques described in this document. For documents retaining history, the list of blobs to retain grows unboundedly, increasing the summary size indefinitely. And even for documents that don't retain history, it may be awkward to maintain a list of all "live" blobs; for large documents the number of blobs could scale so large that even the list of references to those blobs needs to be incrementally updated and submitted.
-
-One possible alternative would be to provide a mode in which the server assumes each blob should be retained indefinitely until the DDS explicitly requests that it be deleted.
+> Later, we'll look at how the length of the spine can be minimized, bounding the cumulative size of the uploads. Some different approaches are explored in the "Chunk Data Structure Implementations" section of this document.
 
 ## Amortizing Writes
 
@@ -263,21 +247,21 @@ graph TD;
     style DU fill:#848
 ```
 
-To keep track of the state of revisions between flushes, a client keeps edits in a log in memory. As long as the log of edits doesn't grow too large, it's inexpensive for a client to compute the current state by applying all the edits in the log to the last flushed state. For example:
+To keep track of the state of revisions between flushes, a client keeps edits in a log in memory. As long as the log of edits doesn't grow too large, it's inexpensive for a client to compute the current state by applying all the edits in the log that were sequenced after the last flushed state. For example:
 
 Revision | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
 ---------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|----|----|----|----
 Edits    |   | A | B | C | D | E | F | G | H | I | J  | K  | L  | M  | N  | O  | P  | Q  | R  | S  | T
 Flush    |   |   |   |   |   | * |   |   |   |   | *  |    |    |    |    | *  |    |    |    |    | *
 
-In the table above, a client only flushes chunks every five edits. A client that joins a session after edit 7 has been applied would first download the chunks that were flushed at revision 5 which include the state resulting from edits A - E. It would then apply edits F and G to that state to catch up to the current state of the document.
+In the table above, a flush happens every five edits. A client that joins a session after edit 7 has been sequenced would first download the chunks that were flushed at revision 5, which include the state resulting from edits A - E. Then it would apply edits F and G to catch up to the current state of the document.
 
 > In practice, flushes can happen much less frequently than every five edits. A client can choose a frequency that gives ideal performance for its usage patterns. The flushes can be done in the background so a client is not blocked on a flush as it continues to receive local or incoming edits.
 
-> This is quite similar to the existing summarization model in the Fluid framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the SharedTree would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being an option:
-> * Summary trees do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a SharedTree to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
-> * Summary trees do not support incrementality. A client cannot upload parts of the summary without uploading the whole thing. Uploading the whole summary of a large document might exceed size or bandwidth limits. There is an ongoing development effort to automatically divide summaries into blobs and upload them in pieces, however, this currently doesn't give the DDS fine-grained control over how/where the summary is divided into chunks.
-> * The frequency of summaries cannot be controlled by a DDS. Ideally, a SharedTree has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a SharedTree would still risk fighting over policy with other DDS in the container.
+> This is quite similar to the existing summarization model in the Fluid framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the DDS would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being possible:
+> * Summary trees do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a DDS to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
+> * Summary trees allow incrementality, but the API to do so is not yet exposed. Summary trees can contain references to blobs in a previous summary, called blob handles. This allows handles to represent data that has not been changed and does not need to be reuploaded. However, handles cannot currently be constructed by a DDS without sniffing implementation details of the runtime. There is also an ongoing development effort to automatically divide summaries into blobs and upload them in pieces, however, this doesn't give the DDS fine-grained control over how/where the summary is divided into chunks.
+> * The frequency of summaries cannot be controlled by a DDS. Ideally, a DDS has control over how often it flushes its chunks in order to optimize for best performance. Summaries currently happen across an entire Fluid container all at once, so even if an API were exposed to allow a DDS to provide hints for summary frequency, a DDS would still risk fighting over policy with other DDSs in the container.
 > * There is only ever one summary client at a time that is responsible for uploading summaries. However, with a document that is too large to fit in a single client's memory all at once, the flush might exceed the summarization timeout as that client pages parts of the tree in and out in order to generate the summary.
 
 There are many different options for how the log might be stored. Here are two:
@@ -287,7 +271,7 @@ There are many different options for how the log might be stored. Here are two:
 
 After a flush completes, all clients are notified of the flush and the new chunk root resulting from that flush. They can then update their in-memory copies of the tree, update caches, etc. The flushing itself can be performed by an elected client (e.g. the oldest client, or the result of some other heuristic decided via the Fluid quorum APIs, etc.) which performs a flush periodically, notifying all clients when each flush completes via a special "flush op" that contains the new chunk root. Because flushes happen in the background and take time to complete, care must be taken to ensure that flushes are synchronized correctly in the case where the elected client changes during an ongoing flush. It's possible for two flushes to start concurrently, in which case the second one to finish will be conflicted; if it were to complete, it would incorrectly overwrite data in the first flush. By tagging each flush op with some metadata about when the flush began, clients can know whether it is correct to adopt the state in the flush op (which is the case when _no other flush ops were sequenced in the interim_).
 
-> More precisely, a flush op is valid only if and only if there are no other flush ops sequenced between the latest `sequence number` delivered to the client at the start of the flush, and the `sequence number` of the flush op itself. (Conceptually this is the `reference sequence number` of the flush, but it is not to be conufsed with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
+> More precisely, a flush op is valid if and only if there are no other flush ops sequenced between the latest `sequence number` delivered to the client at the start of the flush, and the `sequence number` of the flush op itself. (Conceptually this is the `reference sequence number` of the flush, but it is not to be confused with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
 > 1. Client A, the elected flushing client, begins a flush. At that time, the latest sequence number delivered to Client A is 10.
 > 2. Client B is elected to be the new flushing client
 > 3. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
@@ -304,7 +288,7 @@ After a flush completes, all clients are notified of the flush and the new chunk
 
 The performance of cold reads is analogous to that of flushes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
 
-However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout is a random read. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below which reduce the cost of a random read, especially in deep trees.
+However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout can be a random read if it doesn't care about its ancestry. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below which reduce the cost of a random read, especially in deep trees.
 
 ## Tree Shapes
 
@@ -388,20 +372,9 @@ graph TD;
     end
 ```
 
-Although the layout of these chunks is theoretically valid, there are now 10,000 chunks underneath Chunk P. It may be the case that Chunk P doesn't have enough space to hold all the keys of those 10,000 children. A chunking algorithm isn't able to satisfy the requirements for the chunk size without doing something special for this case. There are different ways to solve this. A first attempt might be to reduce the number of references in the parent by linking the children together into segments:
+Although the layout of these chunks is theoretically valid, there are now 10,000 chunks underneath Chunk P. It may be the case that Chunk P doesn't have enough space to hold all the keys of those 10,000 children. A chunking algorithm isn't able to satisfy the requirements for the chunk size without doing something special for this case. There are many different ways to solve this. One is to arrange the child chunks underneath the parent chunk in a data structure (which is also divided into chunks) that provides efficient access to a child chunk given the index of a child node. The next section, "Optimizing Tree Shapes" will explore such a structure, the "Sequence Tree".
 
-```mermaid
-graph TD;
-    P(Chunk P)
-    P-->C0(Chunk 0)-->C1(Chunk 1)-->CX0(...)-->C99(Chunk 9)
-    P-->C100(Chunk 10)-->C101(Chunk 11)-->CX1(...)-->C199(Chunk 19)
-    P-->CXX(...)
-    P-->C999999000(Chunk 9,990)-->C999999001(Chunk 9,991)-->CX9(...)-->C999999999(Chunk 9,999)
-```
-
-Now, the chunks are linked together in chains of 10, so Chunk P only needs to store 1000 child chunk pointers rather than 10,000. But now the effective spine length of Chunk 9, Chunk 19, etc. has grown by 10, and the average spine length of each child chunk has grown by 5. This is not an optimal strategy (it works well for sequential reads, but not for writes and random reads), but it demonstrates that it's at least possible to break large swaths of children into chunks in a straightforward way. The next section, "Optimizing Tree Shapes" will explore a more optimal approach, the "Sequence Tree".
-
-So demonstrably, the tree's shape alone can have a significant effect on both read and flush performance. The maximum length of the spine of chunks for a node is the depth of the node divided by the smallest height of a chunk (which is a constant). In the worst case (leaf nodes), this means a spine of length **D** where **D** is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, **N**, it's also **N**, because nothing can be assumed about the shape of the tree (in the worst case it is the "`deepest tree`" where the depth equals the number of nodes). So flushing even just a single spine is an **O(N)** operation in terms of uploads per nodes in the tree.
+Clearly, the tree's shape alone can have a significant effect on both read and write performance. The maximum length of the spine of chunks for a node is the depth of the node divided by the smallest height of a chunk (which is a constant). In the worst case (leaf nodes), this means a spine of length **D** where **D** is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, **N**, it's also **N**, because nothing can be assumed about the shape of the tree (in the worst case it is the "`deepest tree`" where the depth equals the number of nodes). So flushing even just a single spine requires **O(N)** uploads for **N** nodes in the tree.
 
 ### Optimizing Tree Shapes
 
@@ -478,7 +451,7 @@ Drawbacks:
 
 ### Sequence Tree
 
-The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is essentially a [B-tree](https://en.wikipedia.org/wiki/B-tree) that organizes the child chunks efficiently to guarantee each chunk in the sequence is at most **log(C)** chunks away from the parent chunk, where **C** is the number of children. It scales arbitrarily large and can accomodate any number of children, which plain parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. There is a detailed presentation of [Sequence Tree available here](https://microsoft-my.sharepoint-df.com/:v:/r/personal/paulkw_microsoft_com/Documents/Recordings/SequenceTree%20walkthrough-20221005_140401-Meeting%20Recording.mp4?csf=1&web=1&e=dSmb5M).
+The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most **log(C)** chunks away from the parent chunk, where **C** is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accomodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
 
 A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
 
@@ -558,7 +531,7 @@ B          | [a, b, c]
 C          | [d, e, f]
 D          | [g, h, i]
 
-With this approach, the unbalanced logical tree has been organized into a tree of chunks that guarantee at most **O(log(N))** uploads/downloads per write/read, because B-trees by definition remain balanced. Even in this small example, the advantage over the "Simple Chunk Tree" in the previous section is clear: traversing from the root chunk to a leaf chunk walks only two chunks, whereas in the simple chunk tree it walks three. These differences become more dramatic as the tree gets deeper.
+With this approach, the unbalanced logical tree has been organized into a tree of chunks that guarantee at most **O(log(N))** uploads/downloads per write/read, because B-trees by definition remain balanced. Even in this small example, the advantage over the "Simple Chunk Tree" in the previous section is clear; the spine to a leaf chunk in the Path-Based B-Tree is only two chunks long, whereas in the Simple Chunk Tree it is three. These differences become more dramatic as the tree gets deeper.
 
 > The path-based B-tree in this example has more total chunks than the simple chunk tree (four vs. three) and therefore requires more storage. However, that overhead also scales logarithmically and becomes fairly negligible for trees with large branching factors.
 
@@ -574,7 +547,7 @@ Advantages:
 Drawbacks:
 
 * The chunking process is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
-* The implementation is more complicated than the Simple Chunk Tree.
+* The implementation is significantly more complicated than the Simple Chunk Tree.
 
 Potential Optimizations:
 
@@ -782,21 +755,23 @@ A lookup of any node requires traversing through the "layers of chunks" in this 
 Advantages:
 
 * Has the performance of the path based B-tree (**O(log(N))** uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking alogrithm and hinted at by schema).
-* Automatically handles the "many-children-under-one-node" scenario. There is no need for a Sequence Tree, because long sequences of nodes will be progressively chunked into a B-Tree like structure by the same algorithm that SPICE tree uses for the rest of the tree.
+* Automatically handles the "many-children-under-one-node" scenario. There is no need for a Sequence Tree explicitly, because long sequences of nodes will be progressively chunked into a B-Tree like structure by the same algorithm that SPICE tree uses for the rest of the tree.
 
 Drawbacks:
 
-* The implementation is far more complicated than the simple chunk tree and at least as complicated as the path-based B-tree.
+* The implementation is significantly more complicated than the Simple Chunk Tree.
 
 ## Generalization
 
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this paper. Such a library would provide:
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a library would provide:
 
 * A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store behind the scenes as the client modifies the tree.
 * A way to configure the chunking strategy for the stored tree. Different DDS might want regions of data to be downloaded together, or separately, depending on their data's schema.
 * A canonical (but optional) way to store the history of a DDS as a series of ops. This would also be virtualized for efficient access.
 
-This would improve the storage options available to DDSs and would likely inform the summarization API as well. It's possible that with such a design, summarization as it exists today would not even be exposed to the DDS. Instead of being asked periodically to summarize its current state, a DDS would simply update its stored tree via the storage interface at whatever cadence it wants, and the periodic uploading (flushing) would happen behind the scenes.
+This would improve the storage options available to DDSs and would likely inform the summarization API as well. It's possible that with such a design, summarization as it exists today would not need to be exposed to the DDS. For example, any client could produce a summary TODO
+option 1: in memory copy of storage is FAST, and can mutate whenever you want, flush behind the scene
+option 2: flush implemented directly
 
 ## Glossary
 
@@ -810,7 +785,7 @@ This would improve the storage options available to DDSs and would likely inform
 - Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
 - History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
 - Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
-- Logical Tree: refers to the actual tree of nodes/data that make up the content of shared tree. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
+- Logical Tree: refers to the actual tree of nodes/data that make up the stored content of a DDS. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
 - Partial Checkout: a region of a tree that a client is restricted to by the server
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
 - Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
@@ -820,521 +795,3 @@ This would improve the storage options available to DDSs and would likely inform
 - Snapshot Isolation: [A guarantee](https://en.wikipedia.org/wiki/Snapshot_isolation) that the view of some data won't change until the client is finished with its current edit.
 - Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
 - Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Logical Node Tree
-
-The actual tree itself can be stored directly, with each node being a blob, and referring to each other node with a handle.
-This would perform very poorly when used with Fluid's blobs being pulled over the network due to:
-
--   poor per node storage efficiency (pay full blob cost (including storing a handle in the parent) for every node)
--   lots of dependent reads when traversing down (depth of logical tree)
--   large sequences can produce large blobs (since a single node won't be split ever)
--   updates have to create O(depth) blobs, which depend on each-other (and this with Fluid have to be uploaded in sequence)
-
-This does have some nice properties:
-
--   Accessing a child from its parent is always exactly 1 handle dereference.
--   When walking a sequence, siblings can be prefetched.
--   It's very simple and easy to implement correctly.
-
-Some useful performance trade-offs that could be made to improve this:
-
--   Inline some nodes instead of storing them in separate blobs.
-    Choice of which nodes to do this with impacts performance a lot and depends on usage.
-    Could include choice with schema and/or usage information (both hard coded heuristics and dynamically).
--   Could indirect some (or all) blob references through an indirection table (effectively a page table like B-Tree mapping short arbitrary "indirection ids" to handle, where which blobs it points to changes over time) to avoid having to update the blobs containing the ancestors up to the root.
-    This instead requires updating the indirection table blobs (which means updating blobs through the indirection table's B-Tree to the root).
-    -   Choice of when to do this could be heuristic tuned to balance read costs, indirection table memory use, and write costs.
-    -   Can be used where depth (by number of blobs) since last indirection is high, and/or right above blobs that keep getting updated (ex: add an indirection when updating multiple parent blobs for the sole purpose of updating a specific child tht keeps changing).
-    -   indirection ids can be allocated such that nearby blobs tend to sort near each other improving efficiency of caching nodes in indirection B tree.
-    -   Can rewrite parts of the tree removing or changing indirection (and possibly re-chunking). Doing this occasionally for parts of the tree that were loaded but not modified can ensure read-heavy parts of the tree have a chance to get optimally re-encoded for reading.
--   Chunk sequences: when listing the children in a sequence, allow referring to a "Chunk" which can contain multiple nodes (potentially via sub-chunks) instead of just directly to nodes.
-    This allows splitting up large sequences for more efficient editing and avoiding bloated blobs due to large sequences.
-    It also allows clustering similar siblings together for improved compression, which works particularly well when combined with inlining of their children.
-    This also makes it easier for the root to be a sequence instead of a node, which may benefit the editing APIs.
--   Chunked sets of traits:
-    When there are very many traits so the fields list, even with one chunk per trait, is too big for the blob, of there are several traits with small subtrees that should be inlined, but they can't all fit,
-    it can be useful to split up the list of traits into chunks (or even a tree).
-    This can easily be done by organizing them into a sorted tree (ex: B-Tree) by field key.
-
-These optimizations interact: for example if inlining to optimize breadth first traversal,
-the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
-
-For N nodes, if 1 in 20 blobs' handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB blobs, 20 byte handle) we get:
-
--   N / 100 blobs
--   N / 2000 indirect blob references
--   log(200, N / 2000) deep indirection table. (First blob gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
--   on average traversing an edge between nodes does 1 / 100 + log(200, N / 2000) / 2000 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.01)
--   40 bytes per node in main tree
--   ~0.01 bytes of indirection table per node
--   average blobs updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates.
-    Also optimizing where indirection is used (instead of random) would also help a lot here).
-
-Same stats with every handle indirect:
-
--   N / 100 blobs
--   N / 100 indirect blob references
--   log(200, N / 100) deep indirection table. (First blob gets us to 20k nodes, 4 deep covers 160 million nodes)
--   on average traversing an edge between nodes does 1 / 100 + log(200, N / 100) / 100 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.027)
--   40 bytes per node in main tree
--   ~0.2 bytes of indirection table per node
--   average blobs updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
-
-Another interesting approach to tuning indirection is to set the probability indirection to O(1 / log(N)).
-This makes the amortized read overhead cost O(1) without changing the asymptotic update cost (which was already O(log(N))).
-
-#### key value store vs. immutable blob store
-
-If using a mutable key value store (ex: IndexedDB), instead of an immutable blob store, it becomes possible to update blobs instead of just creating new ones.
-This ability can be used for all blobs instead of having to manually implement it with the indirection table.
-This removes the extra log(N) network round trips indirection adds to blobs (and replaces it with log(N) disk accesses on the server).
-There is however a downside: if the ability to reference old versions of the tree is desired, the key value store must provide this itself.
-There are some also ways to benefit from key value store that supports updating values that don't have this downside
-(ex: appending deltas to blobs when they fit instead of making new versions, and determining if such deltas should be applied when reading the tree).
-
-#### Indirection "Balancing"
-
-Naively is seems like randomly inserting indirections would get a good distribution.
-This is for initial tree construction, but it does not hold up after editing.
-When editing, its trivial to add more indirections, but difficult to remove them.
-
-Other heuristics in practice might result in good spacing of indirections, but if hard asymptotic bounds are desired, this approach can be used.
-
-We enforce two properties:
-
-1. To ensure that update costs are bounded by O(log(n)):
-    - there are no chains of chunks deeper than log(n) chunks without an indirection.
-    - The cost of maintaining these invariants during update also has to be kept O(log(n)).
-2. Amortized blob dereference is bounded by O(1) overhead from indirections: there is on average O(n/log(n)) indirections total which are somewhat uniformly distributed.
-
-To reason about this, we will think of the tree of data blobs (blobs containing tree content, not the ones forming the indirection table) as a set of islands,
-where each indirection is the root of an island, and every data-blob reachable from it without going through an indirection is part of that island.
-
-Each data blob can record the number of blobs below it in its island, as well as its maximum depth.
-
-When creating a new island (updating an entry in the indirection table to point to a different blob), we can ensure that:
-
-1. The depth of the island does not exceed our current maximum depth threshold
-2. The number of blobs is not lower than our minimum size threshold
-
-If we set the minimum size threshold to be half of the maximum depth threshold (or lower) this should be practical to maintain.
-
-For the newly created island if its too deep, we can split it. Both haves will have at least half the maximum depth threshold of blobs, and thus exceed the minimum size threshold.
-This assumes that replacing a direct references with an indirect one can be done without wrecking the blob boundaries: the format could ensure this is possible.
-
-If it's too small, there are a couple of options:
-
-1. If it has islands below it, pick one and merge with it. This either results with an island that is fine, or on that is too deep. If it is too deep, it must be possible to split it and get two acceptable islands, so do that.
-2. If it has a parent, merge with that. Handle this the same as above, though it requires having a parentage information to find the parent.
-   Typically an edit is specified with a path, so the parent can be recovered from that.
-
-If neither of those can be used, the document fits in one island, so leave it as is.
-
-All these operations should be O(log(n)).
-
-There is one extra detail: if picking an island size bounds that are not constant (ex: O(log(n))), there might be some islands of unexpected sizes around.
-The above approach should work fine, though it might occasionally produce slightly illegal sizes.
-Rather than iterating it until all the sizes are valid, just making a best effort with one iteration should converge toward the data having valid islands.
-Iterating would work, but possibly drive the cost of the balancing above O(log(n)).
-
-Also note that when picking a child (or parent) to merge with, some extra heuristics could be used to pick a good one (maybe pick the smallest, or one that has been detected to have inefficient chunking, or one that has been read a lot compared to how often its written).
-
-### Path B-Tree
-
-All data in the tree can be stored in a key value store under its full path through the logical tree.
-Doing this with a [Radix tree](https://en.wikipedia.org/wiki/Radix_tree) roughly amounts to storing the logical tree.
-Rather than directly doing a Radix tree, a B-Tree can be used, which can be optimized by omitting any common prefixes shared by every key within that node.
-This optimization not only saves a lot of space in the nodes, but also makes moves more efficient, allowing moves to reuse B-Tree nodes when the only change was the part og the path/kay that was optimized out of the node.
-This means a move only has to update three paths through the B-Tree: before and after the source, and the destination, allowing for subtree moves in O(log(N)) blob updates (where N is the number of total nodes).
-
-Some possible optimizations:
-
--   Omit the common parts of the paths in the node (as described above).
--   Deduplicate repeated prefixes withing the nodes.
-    This is distinct from the above because its about compressing prefixes shared by some but not all entries in the b-tree node.
-    This can be done with a prefix tree.
--   Store large keys/paths out of line.
-    Very deep trees can result portions of keys being store in a node that are larger than the target blob size.
-    These can be chunked and stored out of line by replacing any segments in the prefix tree longer than a constant threshold with a length, hash of the segment, and reference to a separate blob containing the full segment's data.
-    The allows fetching of nodes at any path with O(log(N)) download, even paths that are O(N) in length.
-    The out of line chunks are only needed when enumerating tree content.
--   When searching the prefix tree, for nodes requiring hashes, check the hashes in increasing length order to avoid hashing large portions of the path many times if short parts keep matching. This allows node lookup with O(path length) compute.
--   Out of line path segments can be chunked. Using [a stable chunking scheme](https://www.tarsnap.com/deduplication-explanation) to split them into a tree, and hashing them [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) style could minimize update costs (reduce hashing time, and get better blob reuse).
--   Model sequence indexes such that inserts usually don't have to change the indexes of other nodes in the sequence (ex: allow inserting at 2.5, instead of moving everything above 3 over one and inserting at 3).
-    As long as the keys still sort in the right order, it should work fine, but can result in keys getting longer.
-    May involve occasionally normalizing the indexes in a sequence to shorten indexes where inserts keep happening.
--   Heuristically inline logical trees into B-Tree nodes.
-    This allows many of the optimizations from the logical tree nodes section to be applied to leaf subtrees.
-    This could be done only at the leaves of the B-Tree,
-    but allowing it anywhere benefits cases like breadth first traversal when the inlined trees have lower depth (in the logical tree) than large subtrees between them.
--   Compression of field keys.
-    Field keys (and sequence indexes) occur a lot in the tree.
-    Unlike in the logical tree, these are scattered in a way thats hard to do shape/schema based compression, but there are two approaches that can still work:
-    -   Have a global (or type specific) table assigning short aliases for field keys (likely part of the stored schema).
-        This works well for keys from schema, but map style usage might not work well with it.
-        Fortunately we can pick a strategy is local to the specific type/schema, and handle nodes with map style usage differently (maybe with an escape?).
-        Storing short integers in the stores schema, or using hashes of the file names (full names can be looked dup in the schema) are valid options.
-        This could share code with path compression for edit representations.
-    -   Do compression on the blob level, for example deflate. Note that this might not need to be explicitly done if the network and storage layers already do compression.
-
-Limitations:
-
--   Field keys and indexes take up space in the tree, occurring in the paths within the B-Tree. Not only are these not deduplicate based on shape/schema (like in the logical node tree's chunk encodings), but can actually be duplicated (worst case O(log(n)) times) when a subtree is split across multiple branches in the B-Tree.
--   Traversal of sequences high in the tree reading small amounts of data for each item (ex: listing the file names in a directory near the root of a large file system) produces worst case access patterns,
-    resulting in performance which is as bad as the Node Identifier B-Tree: O(log(N)) dependent blob fetches per property accessed.
-    Inlining can help with this, but is more limited in what can be done heuristically than in the logical node tree, and does not change the worst case asymptotic complexity.
--   Logical tree encoding/compression tricks (ex: shape based chunk compression), can't be applied to nodes which have a large subtree under them since they can't be inlined.
-    Once case hurt by is nodes with bunch of fixed size fields, and one large field. For example a directory entry with lots of metadata (modification time, size, access time, owner, permissions etc, then the actual content field). The B-Tree will sort these fields, likely putting the content in the middle forcing the two haves to the meta-data to compressed independently. If inlining happens at the node/field level, each meta-data file would be compresses separately, and the their field key would explicitly occur in the tree as keys.
-    A separate compression pass could help, but here, but is more limited than the logical node tree's specialized approaches (which can maintain random access while compressed).
-
-Just like with the logical node tree, if using a key value store instead of an immutable blob store, some edits can avoid paying the O(log(N)) update costs by updating nodes in place (either appending delta information or directly editing blobs) as well as not having to update a blob just because its child got updated (same benefit as indirection in the Logical Node Tree).
-
-### Node Identifier B-Tree
-
-Give all nodes a unique identifier, and refer to them using this identifier.
-This is the approach used by experimental shared-tree.
-Can be optimized using id-compression and the chunking scheme prototyped in https://github.com/CraigMacomber/sequence.
-
-This approach does poorly for sequences that have been reordered since that forces the B-Tree to have more entries due to not having chunks which cover contiguous ID space.
-
-This chunking approach can avoid a lot of the indirection costs, and sequential id allocation can help keep access in the B tree using nearby keys a lot of the time,
-but in general it can end up pulling down lots of B-nodes when trees fail to have well clustered IDs, which can happen due to editing.
-Due to this overhead, this design isn't considered in the scenarios below, and is mainly included for comparison.
-This design works decently for in memory storage, but doesn't page in/out data very well since a lot of the data in the blobs will be data thats not needed for the part of the tree thats being used.
-
-### Hybrid
-
-The various optimizations to the Path B-Tree make it more like the Logical Node Tree.
-If the inlining optimization is permitted to inline subtrees that are split up over multiple blobs,
-a hybrid is produced where Path B-Tree is used at the root, and at some point in each subtree, switch over to the Logical Node Tree approach.
-
-This seems a lot like using the Path B-Tree as a replacement for the indirection table from the Logical Node Tree, but this doesn't really work out.
-For deep trees, which is the only case where the indirection table is really critical, the Path B-Tree struggles (due to large keys).
-
-If the Path B-Tree also used out of line/chunked storage for large keys combined with an indirection table,
-then it would handle deep trees ok, but thats using the same approach that the logical node tree does, so the hybrid approach is not offering a major improvement.
-
-It's possible to have a logical node tree where some of its leaves are actually Path B-Trees,
-as well as Path B-Trees there is leaves are Logical Node Trees.
-These could be arbitrarily mixed, switching between these approaches (and possibly others as well) heuristically on the subtree level.
-This can be thought of as a reference to a Path B-Tree being a kind of chunk supported in the logical node tree.
-
-It's unclear what benefits these hybrid approaches would have a heavily optimized version of either,
-but it does seem like there is a clear path to evolve either optimized approach into a hybrid if desired.
-
-## Summarization
-
-Summarization is complicated by the fact that a very large tree might not fit in the memory of any one machine; therefore, the entire tree cannot be summarized by a single machine in one pass. There are at least two other options:
-
-1. A single machine (a smart server or a dedicated summarizer client) summarizes portions of the tree over time as they change.
-2. Each client is responsible for summarizing the part of the tree that it has checked out.
-
-Both options require changes to the current (as of Aug 2022) summarization APIs. The changes, and the precise scheme for how the summarization would work and be consistent across clients, is outside the scope of this document and is expected to undergo significant design effort.
-
-
-
-## Example Scenarios
-
-### Deep Tree
-
-Consider a tree with N nodes where its depth is O(N).
-
-This makes the path to the leaves, and thus the size of the key in the Path B-Tree O(N).
-Using prefix tree within nodes with out of line large chunks optimizations, the Path B-Tree can maintain its proper blob size and access time, though its space due to duplication across B-Tree nodes will result in at worst O(N log(N)) space.
-Stable chunking of out of like path storage could further optimize this if using content addressable blob storage (like FLuid's), deduplicating identical out of line chunks,
-bringing the space back to O(N), though with significant constant factor overheads (ex: storing all the field keys)
-
-In the logical tree case, its O(N) space, and assuming use of indirection of at most O(1/log(N)) blobs, O(N) time to visit the whole tree.
-Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
-Update time and space costs are O(log(N)) due to needing to update the indirection table and nodes between indirections.
-
-Example Deep Tree. In this example all children are under a "child" field for simplicity,
-but in the general case they could all be different field (making paths incompressable).
-
-```mermaid
-graph TD;
-    1-.child.->2-.child.->3-.child.-> d["..."] -.child.->N;
-    1-.data.->data1;
-    2-.data.->data2;
-    3-.data.->data3;
-    d-.data.->dataX["data..."];
-    N-.data.->dataN;
-```
-
-B-Tree with branching factor of 4 using the common prefix elision optimization.
-Note how all interior nodes in the upper part of this tree has to store O(N) sized keys for all but the right most child.
-This is the worst at the root, but still O(N) for the nodes O(1) levels below it.
-This gets slightly worse at the root as branching factor increases, but the lower nodes are impacted less.
-The prefix tree without out of line chunk storage allows looking up paths under long keys O(log(N)) blob downloads,
-though actually walking the whole tree will be O(N \* log(N)).
-
-```mermaid
-graph TD;
-    root["B-Tree Root"]
-    root-.child/.../child: 3N / 4 copies of child.->B1
-    B1-.child/.../child: 3N / 16 copies of child.->B11
-    B1-.child/.../child: 2N / 16 copies of child.->B12...
-    B1-.child/.../child: N / 16 copies of child.->B13...
-    B1-.empty string.->B14...
-    B11-."log(4,N) levels".->B1N["B11...1"]
-    B1N-.child/child/child/data.->DataN
-    B1N-.child/child/data.->DataN-1
-    B1N-.child/data.->DataN-2
-    B1N-.data.->DataN-3
-    root-.child/.../child: 2N / 4 copies of child.->B2...
-    root-.child/.../child: N / 4 copies of child.->B3...
-    root-.empty string.->B4
-    B4-."log(4,N) levels".->B4N["B4...4"]
-    B4N-.child/child/child/data.->Data4
-    B4N-.child/child/data.->Data3
-    B4N-.child/data.->Data2
-    B4N-.data.->Data1
-```
-
-Logical Node Tree, with inlining ~8 nodes into a blob without indirection:
-
-```mermaid
-graph TD;
-    1["1: Stores 1-4 and data1 - data4"]-.child.->dots
-    dots["...: N/4 levels"]-.child.->N/4-1;
-    N/4-1["N-7: Stores N-7 through N-4 (and their data)"]-.child.->N/4;
-    N/4["N-3: Stores N-3 through N (and their data)"];
-```
-
-Logical Node Tree, with inlining ~8 nodes into a blob with indirection every level (B-Tree branching factor of 4):
-
-```mermaid
-graph TD;
-    B["Indirection Table: B-Tree depth log(4, N / 4)"]
-    B-.id0.->1["1: Stores 1-4 and data1 - data4"]-.id1.->B
-    B-.ids.->dots["..."]-.ids.->B;
-    B-.idN/4-1.->N/4-1["N-7: Stores N-7 through N-4 (and their data)"]-.idN/4.->B;
-    B-.idN/4.->N/4["N-3: Stores N-3 through N (and their data)"];
-```
-
-Logical Node Tree, with inlining ~8 nodes into a blob with indirection every log(4, N) levels (B-Tree branching factor of 4).
-Note that indirection table has depth log(4, (N / 4) / log(4, N / 4)).
-For simplicity ids are omitted.
-In this case amortized access cost is O(1), since the cost of an indirection is less than O(log(N)), and its paid ever O(log(N)) chunks.
-If older data (from when N ands thus log(N) was smaller) is not rewritten, it will have more indirections, but that will make little difference since it will be a small amount of data compared to N.
-
-```mermaid
-graph TD;
-    B["Indirection Table"]
-    B-->1["1: Stores 1-4 and data1 - data4"]-->l1["~ log(4,n) more data blobs chained together"]-->B
-    B-->dots["..."]-->l2["~ log(4,n) more data blobs chained together"]-->B;
-    B-->l4["~ log(4,n) data blobs chained together"]-->N/4["N-3: Stores N-3 through N (and their data)"];
-```
-
-### Walking a long sequence high up in a large tree
-
-Read a small amount of data out of many large subtrees.
-There are many scenarios that would do this:
-
--   reading the the type of items in a whiteboard to find ones which contain text for search indexing.
--   listing or file names (and optionally other metadata) for all items in a directory.
--   finding subtrees which were recently modified
--   etc.
-
-This could hit most of the interior nodes in a Path B-Tree because it would be reading data thats spread out pretty uniformly though the key-space.
-This seems like a worst case access pattern for Path B-Tree, but at least its in order so the occasional dependent reads when traversing down multiple levels in the B-Tree can be efficiently amortized, and older blobs can be freed from memory without getting re-downloaded later in the traversal.
-
-The Logical Tree approach could theoretically chunk the data to handle this case nearly optimally.
-The question is how close to that would be expect it to get in practice since it needs to optimize for many usage patterns, not just this one.
-Simple heuristics, like always inlining the type, and tending to inline small subtrees that always have the same shape (like the position) could work well here, though there is a balance between inlining small subtrees causing the size of nodes in the chunk to be larger, resulting in the top level sequence having more chunks.
-There are thus two extremes where this could go badly:
-
-1. Too much inlining, causing each node in the sequence to be in its own chunk. At least these chunks could be prefetched for the upcoming children.
-2. Too little inlining: the information we need from the node is not available in the chunks that make up the sequence, thus for each node we have to fetch its chunk. When reading the content of that chunk, we could even have to fetch another chunk for the position if it also wasn't inlined (ex: lots of other data got inlined filling up the chunk)
-
-The Path B-Tree has very simple chunking logic for internal nodes and can easily produce nicely sized blobs for data, but for deep trees the key/path part can become bloated or need special handling.
-
-The Logical Node Tree approach, when applying good chunking heuristics, has much more complex chunking logic (has to handle large numbers of fields, long sequences, inlining etc),
-the management of the underling tree of blobs it uses is very simple.
-
-Both should have a good algorithm compressing leaf subtrees (subtrees which single piece), for the Logical Node Tree this is really just one case of its more general algorithm while for The Path B-Tree its an additional requirement.
-
-The logical tree approach is well suited to applying contextual optimizations, for example it can easily be made extensible with a sequence chunk abstraction, allowing for specialized encoding and compressions schemes to be used where appropriate.
-Such specialized approaches and tuning of heuristics can optionally consume schema data, as well as usage patterns to have blob boundaries converge where edits happen, reducing redundant storage and updates over time.
-It would be relatively easy to produce a minimal version of the logical tree approach and add optimizations incrementally in the future, even maintaining document compatibility.
-
-### Fetching a Subtree
-
-In this scenario, a path to a node is provided, and all nodes within that subtree are visited in an arbitrary order (for example to copy or search the subtree).
-
-Note that if you perform this, but have a rule for skipping visiting subtrees, it can end up containing the "Walking a long sequence high up in a large tree" scenario from above: for this section we are assuming no such skipping option.
-
-To keep things simple, we are assuming no really large nodes.
-To include larger nodes in this model, split them up into multiple nodes in a tree, and count them as that many nodes.
-
-We define:
-
--   P: the length of the path
--   N: total nodes in the document (current revision)
--   B: size of a blob in nodes or handles (assuming nodes, handles average the same size)
--   S: number of nodes in the "fetched" subtree
--   I: when doing indirections, the portion of blobs indirected (between 0 and 1).
--   R: Average branching factor of logical tree (assumed R << B so nodes have roughly constant side and fit in blobs)
-
-All logs (unless otherwise noted) in this section are base B.
-
-#### Logical Node Tree
-
-With optimal inlining (for this exact scenario) and no indirection is performed, the logical node tree can achieve will need (P+S)/B blobs to be fetched.
-With worst case inlining decisions (but still filling the blobs) the logical node tree would instead need P+S/B blob fetches, since it may need one for each point along the path. Even without usage heuristics average of P/log_base_R(B)+S/B blob fetches should be achievable.
-
-If adding indirection, the depth of the indirection table's B-Tree will the log(number of indirections).
-The number of indirections is given by the number of blobs, times I, so (I \* N / B) giving a depth of log(I)+log(N)-1.
-Since I is at most 1, se can define a conservative overestimate of this depth, ID, to be log(N).
-
-If we then make one out of every K \* log(N) blob references indirect (for arbitrary tuning parameter K), using the depth estimate ID, we get an amortized data blob read cost of 1 + log(N) / K \* log(N), or 1 + 1 / k.
-This allows the overhead from indirection to be a constant factor while keeping O(log(N)) update costs for edits.
-
-#### Path B-Tree
-
-TODO: How do we compute the branching factor high up in the B-Tree? Assuming its B results in oversized blobs due to key/path size?
-
-It's going to to have to be at least (P+S)/B blobs to be fetched since the path and nodes fetch both must be somewhere in the blobs read.
-This is the same as with the logical node tree.
-Additionally we know it will be at least log(N / B) (which is log(N)-1) interior nodes deep, so we can raise that to at least max(log(N)-1, P / B) + S / B.
-
-## Finding parents and identifier indexes
-
-In both cases, you use a path to a node to find it so its parents are found on the way.
-
-However if we add an index that allows finding nodes by some other query path (ex: an index by node identifiers for nodes which have an identifier), there are a few ways that can work.
-If the index maps identifier to path, then the index is expensive to update for large subtree moves.
-If the index maps identifier to handle (or indirection id), this can avoids large update costs for moves, but needs another index (handle to parent) to be able to discover parentage of nodes looked up this way.
-
-## Conclusions
-
-It seems like the logical tree provides modular way to add tuning/optimization allowing incremental delivery of target optimizations,
-though that comes at the cost of possibly needing more optimizations to reach a good baseline performance.
-
-The Path B-Tree provides a elegant and simple approach, but it complicates moves somewhat,
-and is more limited in how it can be optimized for specific access patterns, like breadth first traversals of sequences of large subtrees.
-
-Both approaches could permit optimized formats for the leaf subtrees, but this work generalizes to non leaf subtrees the logical node tree.
-
-The Logical Node Tree is optimized for child access and can be tuned for which children can be accesses quickly (via inlining and indirection heuristics).
-The Path B-Tree excels in order at depth first traversals offering almost optimal possible performance for this case.
-High up in large trees breadth first traversal and depth first where the order of recursion is not the same as the path sort order, the Path B-Tree's accesses degrade (though bounded by log(n)) with poor caching/locality.
-In these same cases the Logical Node Tree should deliver significantly better constant factors, though if using indirection does still have a worst case of log(n) as well.
-
-The Logical Node Tree also more naturally handles partial checkouts that don't include all the leaves (ex: load all the directories in a folder, but not their contents), getting better locality in these cases,
-and is more compatible with subtree based permissions systems (since all nodes in a chunk always share a an ancestor that in the chunk).
-
-Both approaches are similar as far as being able to be specialized to take advantage of a key value store instead of an immutable blob store.
-
-For total storage size, the logical tree probably wins due to being able to leverage shape based compression in chunks in more cases,
-resulting in less occurrences of field keys in the encoded data.
-The logical B-Tree also never has to explicitly encode indexes withing fields, while these do occur in the Path B-Tree.
-The Path B-Tree also sometimes duplicates edges in the tree, up to log(N) times, resulting in even more copies of field keys in the tree.
-These difference can be mitigated somewhat with extra compression approaches in the Path B-Tree, but it has more data to compress,
-and it harder due to lacking the context the logical tree can leverage for its compression.
-However, in typical cases, we expect the vast majority of the data size to be in leaf subtrees, with both compress the same, making this difference less important.
-
-The logical node tree can order its fields as a performance optimization (ex: placing frequently use and/or fixed size fields first).
-Similar to the above storage size case, this works for both approaches, except for non-leaf subtrees.
-
-Maintaining proper "balance" when updating is more flexible in the logical tree case, so it can use heuristics to better optimize the tree,
-however it significantly complicated to actually ensure its indirection don't become too frequent over time.
-
-Overall it seems like a well tuned logical node tree should exceed the performance of the Path B-Tree for total storage size,
-and common access patterns (for which it has been tuned: either manually or by it tracking access patterns).
-Editing performance differences is unclear: both approaches cause significant but different editing pattern dependent write amplification.
-
-The Path B-Tree's storage of keys and paths adds some complexity: it needs sortable path representations, and optimizations related to handling these.
-This same logic is needed for edit/changeset representation though, so it shouldn't be counted for much against the Path B-Tree.
-
-## Decision
-
-The Path B-Tree has better understood performance characteristics around update costs for maintaining its balance, and its optimizations mostly consist of optimizations we will need for edits anyway (compact leaf tree encoding and path encoding and manipulation).
-Basic support for deep trees (out of line prefix tree segments) can easily be added,
-and the later optimizations we might do for that (stable Merkle tree chunking) are easy to separate from the rest of the code and don't interact with the performance of most operations (only impact update of deep trees, not read)
-
-The logical node tree's indirection support is more involved, and harder to add later (it impacts how chunks refer to each-other, and complicates the update code-path quite a lot, and changes performance of reads and updates significantly, even in trees which aren't exceptionally deep).
-
-These factors, in my (Craig's) subjective opinion, seem to lean toward the Path B-Tree, with an initial version supporting inlining (rather than special casing leaves and adding inlining later) and the prefix tree with out of line large segments (this allows for known bounds on blob size), but not the optimized chunked out of line segments (thats easy to add later, and only impacts deep trees).
-
-This still needs consensus.
-
-A conclusion on this front is not needed for M1 (partial checkouts and incremental summaries are not technically necessary for that),
-but this area would be a good one to develop in parallel with other aspects of SharedTree.
-This is a good place leverage decision encapsulation to minimize the impact if we change our approach later
-(ex: we come up with better ideas, find an issue with this analysis, or change our evaluation criteria, or decide to support both as configurable options).
-
-----
-## Extra stuff
-## Spacial Indexes
-
-Note that this document (other than this section) assumes the data being logically stored is a tree (which may or may not contain local/distributed history information). There is an alternative: the storage could be a clustered 2-d index over location and revision. For example the data storage could reside in an R-Tree or some other kind of spacial index.
-
-This document assumes that trees will be persisted into a copy-on-write storage in the form of blobs, which can be fetched using their "handle" which can in turn be serialized into blobs.
-This is the API of Fluid's blobs, but note that Fluid requires you to upload the blob to be able to serialize a handle to it;
-relaxing this constraint (which would further constrain the storage service) would offer some performance benefits, reducing round trips when uploading but does not fundamentally change the designs.
-If using a system where blobs could be assigned names and updated (e.g. a classic key/value store instead of Fluid's content-addressable blob storage)
-these approaches still work, but there are some easy design tweaks to improve performance, which are noted, but are not the focus of this document.
-
-It is assumed that each client has access to some stored version of the tree, and that each keeps the "dirty" part in memory.
-It is not required that all the clients agree on what stored tree they are using or how it is chunked; all that's required to be kept consistent is their understanding of its content.
-For example, clients may make nondeterministic chunking decisions for the data, and/or keep a local copy of the chunked tree on disk (ex: via index db) which could have differing tuning parameters across clients.
