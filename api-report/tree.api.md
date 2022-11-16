@@ -914,6 +914,7 @@ type NodeChangeRebaser_2<TNodeChange> = (change: TNodeChange, baseChange: TNodeC
 export interface NodeChangeset {
     // (undocumented)
     fieldChanges?: FieldChangeMap;
+    revision?: RevisionTag;
     // (undocumented)
     valueChange?: ValueChange;
 }

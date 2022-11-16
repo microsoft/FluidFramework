@@ -156,9 +156,11 @@ export class ModularChangeFamily
     private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
         const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
+        let valueChangeRevision: RevisionTag | undefined;
         for (const change of changes) {
             if (change.change.valueChange !== undefined) {
                 valueChange = change.change.valueChange;
+                valueChangeRevision = change.revision;
             }
             if (change.change.fieldChanges !== undefined) {
                 fieldChanges.push(
@@ -171,6 +173,7 @@ export class ModularChangeFamily
         const composedNodeChange: NodeChangeset = {};
         if (valueChange !== undefined) {
             composedNodeChange.valueChange = valueChange;
+            composedNodeChange.revision = valueChangeRevision;
         }
 
         if (composedFieldChanges.size > 0) {
