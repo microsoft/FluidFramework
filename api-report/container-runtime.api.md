@@ -557,6 +557,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+    // @deprecated (undocumented)
     summarizerClientElection: boolean;
 }
 
