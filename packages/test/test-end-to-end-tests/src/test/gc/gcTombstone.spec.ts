@@ -801,8 +801,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("can mark data store from tombstone information in summary in non-summarizer container",
         [
             {
-                error: "TombstonedDataStoreRequested",
-                eventName: "fluid:telemetry:ContainerRuntime:TombstonedDataStoreRequested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
             },
         ],
         async () => {
