@@ -70,50 +70,30 @@ export class Client implements IClient {
         vx: number;
         vy: number;
     }) {
-        if (this.bubbleSeqeunceHelper.length() < 10) {
-            const newBubbleJsonableTree = {
-                type: iBubbleSchema.name,
-                fields: {
-                    x: [{ type: int32Schema.name, value: bubble.x }],
-                    y: [{ type: int32Schema.name, value: bubble.y }],
-                    r: [{ type: int32Schema.name, value: bubble.r }],
-                    vx: [{ type: int32Schema.name, value: bubble.vx }],
-                    vy: [{ type: int32Schema.name, value: bubble.vy }],
-                },
-            };
-            if (this.shouldStashTransactions) {
-                this.bubbleSeqeunceHelper.stashPush(newBubbleJsonableTree);
-            } else {
-                this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
-            }
-            // this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
+        const newBubbleJsonableTree = {
+            type: iBubbleSchema.name,
+            fields: {
+                x: [{ type: int32Schema.name, value: bubble.x }],
+                y: [{ type: int32Schema.name, value: bubble.y }],
+                r: [{ type: int32Schema.name, value: bubble.r }],
+                vx: [{ type: int32Schema.name, value: bubble.vx }],
+                vy: [{ type: int32Schema.name, value: bubble.vy }],
+            },
+        };
+        if (this.shouldStashTransactions) {
+            this.bubbleSeqeunceHelper.stashPush(newBubbleJsonableTree);
+        } else {
+            this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
         }
-        // const newBubbleJsonableTree = {
-        //     type: iBubbleSchema.name,
-        //     fields: {
-        //         x: [{ type: int32Schema.name, value: bubble.x }],
-        //         y: [{ type: int32Schema.name, value: bubble.y }],
-        //         r: [{ type: int32Schema.name, value: bubble.r }],
-        //         vx: [{ type: int32Schema.name, value: bubble.vx }],
-        //         vy: [{ type: int32Schema.name, value: bubble.vy }],
-        //     },
-        // };
-        // if (this.shouldStashTransactions) {
-        //     this.bubbleSeqeunceHelper.stashPush(newBubbleJsonableTree);
-        // } else {
-        //     this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
-        // }
-        // // this.bubbleSeqeunceHelper.push(newBubbleJsonableTree);
     }
 
     public decreaseBubbles() {
-        // if (this.bubbleSeqeunceHelper.length() > 1) {
-        //     if (this.shouldStashTransactions) {
-        //         this.bubbleSeqeunceHelper.stashPop();
-        //     } else {
-        //         this.bubbleSeqeunceHelper.pop();
-        //     }
-        //     // this.bubbleSeqeunceHelper.pop();
-        // }
+        if (this.bubbleSeqeunceHelper.length() > 1) {
+            if (this.shouldStashTransactions) {
+                this.bubbleSeqeunceHelper.stashPop();
+            } else {
+                this.bubbleSeqeunceHelper.pop();
+            }
+        }
     }
 }

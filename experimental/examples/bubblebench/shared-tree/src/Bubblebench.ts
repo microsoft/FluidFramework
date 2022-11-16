@@ -12,7 +12,7 @@ import {
     TransactionResult,
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-// import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./AppState";
 // eslint-disable-next-line import/no-internal-modules
 import { AppStateSchema, AppStateSchemaData } from "./tree-utils/schema";
@@ -33,25 +33,15 @@ export class Bubblebench extends DataObject {
         ) as ISharedTree;
 
         this.initializeTree(this.maybeTree);
-
-        // This line will fail with the error 0x17b /* "Channel to be binded should be in not bounded set" */);
         this.root.set("unqiue-bubblebench-key-1337", this.maybeTree.handle);
     }
 
-    // What is the replacement for this method?
     protected async initializingFromExisting() {
         // console.log("existing initialization");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        // this.maybeTree = await this.root
-        //     .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
-        //     .get();
-
-        // const cursor = this.maybeTree.forest.allocateCursor();
-        // moveToDetachedField(this.maybeTree.forest, cursor);
-        // cursor.enterNode(0);
-        // cursor.enterField(brand('clients'));
-        // console.log(`existing tree can see clients length of ${cursor.getFieldLength()}`);
-        // cursor.free();
+        this.maybeTree = await this.root
+            .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!
+            .get();
     }
 
     protected async hasInitialized() {

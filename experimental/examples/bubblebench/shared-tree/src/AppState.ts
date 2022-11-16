@@ -18,7 +18,6 @@ import { SharedTreeNodeHelper } from "./tree-utils/SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./tree-utils/SharedTreeSequenceHelper";
 
 export class AppState implements IAppState {
-    // readonly localClient: Client; // Note I am not using the interface IClient unlike other bubblebench examples
     readonly clientsSequenceHelper: SharedTreeSequenceHelper;
     readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[] = [];
     readonly localClientNode: SharedTreeNodeHelper;
@@ -49,11 +48,6 @@ export class AppState implements IAppState {
         // Keep a reference to the local client inserted into the shared tree
         const newClientIndex = this.clientsSequenceHelper.length() - 1;
         console.log(`new client Index: ${newClientIndex}`);
-        // this.localClient = new Client(
-        //     tree,
-        //     this.clientsSequenceHelper.getAnchor(newClientIndex),
-        //     this.editBuilderCallbacks,
-        // );
         this.localClientNode = new SharedTreeNodeHelper(
             tree,
             this.clientsSequenceHelper.getAnchor(newClientIndex),
@@ -89,7 +83,7 @@ export class AppState implements IAppState {
         };
 
         // create and add initial bubbles to initial client json tree
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < numBubbles; i++) {
             const bubble = makeBubble(this._width, this._height);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientInitialJsonTree.fields!.bubbles.push({

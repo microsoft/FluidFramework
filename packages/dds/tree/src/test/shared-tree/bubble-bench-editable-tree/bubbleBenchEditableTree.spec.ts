@@ -57,7 +57,7 @@ describe("BubbleBenchEditableTree", () => {
             assert(appState1.localClient.bubbles.length === initialBubblesNum);
 
             const appState2 = new AppState(rootAppStateProxy, 640, 320, initialBubblesNum);
-            assert.equal(appState1.clients.length, 2);
+            assert.equal(appState2.clients.length, 2);
             const expectedLocalClient2 = new Client(
                 rootAppStateProxy.clients[rootAppStateProxy.clients.length - 1],
             );
