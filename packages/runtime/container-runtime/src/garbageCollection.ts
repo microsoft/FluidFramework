@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
+    packagePathToTelemetryProperty,
     ReadAndParseBlob,
     RefreshSummaryResult,
     SummaryTreeBuilder,
@@ -38,7 +39,6 @@ import {
     generateStack,
     loggerToMonitoringContext,
     MonitoringContext,
-    packagePathToTelemetryProperty,
     PerformanceEvent,
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";

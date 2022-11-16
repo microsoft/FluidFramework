@@ -17,7 +17,6 @@ import {
     isFluidError,
     isValidLegacyError,
 } from "./fluidErrorBase";
-import { TelemetryDataTag } from "./logger";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -174,12 +173,6 @@ export function generateErrorWithStack(): Error {
 
 export function generateStack(): string | undefined {
     return generateErrorWithStack().stack;
-}
-
-export function packagePathToTelemetryProperty(
-    packagePath: readonly string[] | undefined,
-): ITaggedTelemetryPropertyType | undefined {
-    return packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined;
 }
 
 /**

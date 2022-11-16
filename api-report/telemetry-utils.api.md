@@ -218,9 +218,6 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
-// @public (undocumented)
-export function packagePathToTelemetryProperty(packagePath: readonly string[] | undefined): ITaggedTelemetryPropertyType | undefined;
-
 // @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers);

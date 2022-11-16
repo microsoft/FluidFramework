@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -15,7 +16,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -59,6 +60,12 @@ export function responseToException(response: IResponse, request: IRequest): Err
     };
 
     return responseErr;
+}
+
+export function packagePathToTelemetryProperty(
+    packagePath: readonly string[] | undefined,
+): ITaggedTelemetryPropertyType | undefined {
+    return packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined;
 }
 
 export async function requestFluidObject<T = FluidObject>(

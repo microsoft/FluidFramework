@@ -147,7 +147,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Send ops fails for tombstoned datastores in summarizing container loaded after sweep timeout",
         [
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
         ],
         async () => {
             const {
@@ -178,7 +178,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Send ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
             { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
         ],
         async () => {
             const {
@@ -214,7 +214,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded after sweep timeout",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [process]",
@@ -260,7 +260,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [process]",
@@ -309,7 +309,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Send signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
         [
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
         ],
         async () => {
             const {
@@ -340,7 +340,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Receive signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone:DataStore_Changed" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:Tombstone_DataStore_Changed" },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [processSignal]",
@@ -384,8 +384,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Requesting tombstoned datastores fails in summarizing container loaded after sweep timeout",
         [
             {
-                error: "Tombstone:DataStore_Requested",
-                eventName: "fluid:telemetry:ContainerRuntime:Tombstone:DataStore_Requested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
         ],
@@ -416,8 +415,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Requesting tombstoned datastores fails in summarizing container loaded before sweep timeout",
         [
             {
-                error: "Tombstone:DataStore_Requested",
-                eventName: "fluid:telemetry:ContainerRuntime:Tombstone:DataStore_Requested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
         ],
@@ -451,8 +449,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         [
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
             {
-                error: "Tombstone:DataStore_Requested",
-                eventName: "fluid:telemetry:ContainerRuntime:Tombstone:DataStore_Requested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
                 viaHandle: true,
             },
         ],
@@ -483,8 +480,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         [
             { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             {
-                error: "Tombstone:DataStore_Requested",
-                eventName: "fluid:telemetry:ContainerRuntime:Tombstone:DataStore_Requested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
                 viaHandle: true,
             },
         ],
@@ -518,8 +514,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         [
             { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             {
-                error: "Tombstone:DataStore_Requested",
-                eventName: "fluid:telemetry:ContainerRuntime:Tombstone:DataStore_Requested",
+                eventName: "fluid:telemetry:ContainerRuntime:Tombstone_DataStore_Requested",
                 viaHandle: true,
             },
         ],
