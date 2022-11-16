@@ -146,6 +146,8 @@ export interface IGarbageCollector {
     /** Tells whether the GC state in summary needs to be reset in the next summary. */
     readonly summaryStateNeedsReset: boolean;
     readonly trackGCState: boolean;
+    /** Initialize the state from the base snapshot after its creation. */
+    initializeBaseState(): Promise<void>;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; },
@@ -429,8 +431,10 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private pendingSummaryData: IGCSummaryTrackingData | undefined;
 
-    // Promise when resolved initializes the garbage collector from the GC data in the base snapshot.
-    private readonly initializeStateFromBaseSnapshotP: Promise<void>;
+    // Promise when resolved initializes the tombstone state from data in the base snapshot.
+    private readonly initializeTombstoneStateFromBaseSnapshotP: Promise<void>;
+    // Promise when resolved initializes the GC state from the data in the base snapshot.
+    private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // Map of node ids to their unreferenced state tracker.
@@ -708,9 +712,32 @@ export class GarbageCollector implements IGarbageCollector {
         });
 
         /**
-         * Set up the initializer which initializes the state from the GC data in base snapshot.
+         * Set up the initializer which initializes the tombstone state from the data in base snapshot.
+         * This is done during container runtime load so that the tombstone state is updated before any objects
+         * are loaded or used.
          */
-        this.initializeStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
+        this.initializeTombstoneStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
+            const baseSnapshotData = await baseSnapshotDataP;
+            /**
+             * The base snapshot data or tombstone state will not be present if the container is loaded from:
+             * 1. The first summary created by the detached container.
+             * 2. A summary that was generated with GC disabled.
+             * 3. A summary that was generated before GC even existed.
+             * 4. A summary that was generated with tombstone feature disabled.
+             */
+            if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
+                return;
+            }
+            this.tombstones = baseSnapshotData.tombstones;
+            this.runtime.updateUnusedRoutes(this.tombstones, true /* tombstone */);
+        });
+
+        /**
+         * Set up the initializer which initializes the GC state from the data in base snapshot. This is done when
+         * connected in write mode or when GC runs the first time. It sets up all unreferenced nodes from the base
+         * GC state and updates their inactive or sweep ready state.
+         */
+        this.initializeGCStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
             const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
             /**
              * If there is no current reference timestamp, skip initialization. We need the current timestamp to track
@@ -731,7 +758,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             const baseSnapshotData = await baseSnapshotDataP;
             /**
-             * The base state will not be present if the container is loaded from:
+             * The base snapshot data will not be present if the container is loaded from:
              * 1. The first summary created by the detached container.
              * 2. A summary that was generated with GC disabled.
              * 3. A summary that was generated before GC even existed.
@@ -756,12 +783,6 @@ export class GarbageCollector implements IGarbageCollector {
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
             this.previousGCDataFromLastRun = { gcNodes };
-
-            // Update the tombstone state if tombstone mode is enabled.
-            if (this.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
-                this.tombstones = baseSnapshotData.tombstones;
-                this.runtime.updateUnusedRoutes(this.tombstones, true /* tombstone */);
-            }
 
             // If tracking state across summaries, update latest summary data from the base snapshot's GC data.
             if (this.trackGCState) {
@@ -814,6 +835,15 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
+     * Called during container initialization. Initialize the tombstone state so that object are marked as tombstones
+     * before they are loaded or used. This is important to get accurate information of whether tombstoned object are
+     * in use or not.
+     */
+    public async initializeBaseState(): Promise<void> {
+        await this.initializeTombstoneStateFromBaseSnapshotP;
+    }
+
+    /**
      * Called when the connection state of the runtime changes, i.e., it connects or disconnects. GC subscribes to this
      * to initialize the base state for non-summarizer clients so that they can track inactive / sweep ready nodes.
      * @param connected - Whether the runtime connected / disconnected.
@@ -834,7 +864,7 @@ export class GarbageCollector implements IGarbageCollector {
          * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
          */
         if (this.activeConnection() && this.shouldRunGC) {
-            this.initializeStateFromBaseSnapshotP.catch((error) => {});
+            this.initializeGCStateFromBaseSnapshotP.catch((error) => {});
         }
     }
 
@@ -891,7 +921,7 @@ export class GarbageCollector implements IGarbageCollector {
 
     private async runPreGCSteps() {
         // Ensure that state has been initialized from the base snapshot data.
-        await this.initializeStateFromBaseSnapshotP;
+        await this.initializeGCStateFromBaseSnapshotP;
         // Let the runtime update its pending state before GC runs.
         await this.runtime.updateStateBeforeGC();
     }
