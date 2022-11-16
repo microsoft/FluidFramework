@@ -388,7 +388,7 @@ export function sortVersions(
 }
 
 /**
- * Filters an array of {@link ReleaseDetails}, removing versions older than a specified number of business days.
+ * Filters an array of {@link VersionDetails}, removing versions older than a specified number of business days.
  *
  * @param versions - The array of versions to filter.
  * @param numBusinessDays - The number of business days to consider recent.
