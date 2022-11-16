@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
-import BTree from 'sorted-btree';
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import BTree from "sorted-btree";
 
-const defaultFailMessage = 'Assertion failed';
+const defaultFailMessage = "Assertion failed";
 
 /**
  * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The Fluid runtime propagates this field
@@ -17,34 +17,34 @@ const defaultFailMessage = 'Assertion failed';
  *
  * @public
  */
-export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
+export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 /**
  * Telemetry properties decorated on all SharedTree events.
  */
 export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
-	readonly isSharedTreeEvent: true;
+    readonly isSharedTreeEvent: true;
 }
 
 /**
  * Returns if the supplied event is a SharedTree telemetry event.
  */
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean {
-	return (event as unknown as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
+    return (event as unknown as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
 }
 
 /**
  * Error object thrown by assertion failures in `SharedTree`.
  */
 class SharedTreeAssertionError extends Error {
-	public readonly errorType = sharedTreeAssertionErrorType;
+    public readonly errorType = sharedTreeAssertionErrorType;
 
-	public constructor(message: string) {
-		super(message);
-		this.name = 'Assertion error';
-		// Note: conditional as `captureStackTrace` isn't defined in all browsers (e.g. Safari).
-		Error.captureStackTrace?.(this);
-	}
+    public constructor(message: string) {
+        super(message);
+        this.name = "Assertion error";
+        // Note: conditional as `captureStackTrace` isn't defined in all browsers (e.g. Safari).
+        Error.captureStackTrace?.(this);
+    }
 }
 
 /**
@@ -53,7 +53,7 @@ class SharedTreeAssertionError extends Error {
  * Handles +/-0 like Map: -0 is equal to +0.
  */
 export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
-	return a - b;
+    return a - b;
 }
 
 /**
@@ -62,14 +62,14 @@ export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
  * Handles +/-0 like Map: -0 is equal to +0.
  */
 export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
-	return b - a;
+    return b - a;
 }
 
 /**
  * Compares strings lexically to form a strict partial ordering.
  */
 export function compareStrings<T extends string>(a: T, b: T): number {
-	return a > b ? 1 : a === b ? 0 : -1;
+    return a > b ? 1 : a === b ? 0 : -1;
 }
 
 /**
@@ -79,11 +79,15 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  * @param message - Message to be printed if assertion fails. Will print "Assertion failed" by default
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
-export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (!condition) {
-		fail(message, containsPII);
-	}
+export function assert(
+    condition: unknown,
+    message?: string,
+    containsPII = false,
+): asserts condition {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    if (!condition) {
+        fail(message, containsPII);
+    }
 }
 
 /**
@@ -93,12 +97,12 @@ export function assert(condition: unknown, message?: string, containsPII = false
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
-	if (process.env.NODE_ENV !== 'production') {
-		debugger;
-		console.error(message);
-	}
+    if (process.env.NODE_ENV !== "production") {
+        debugger;
+        console.error(message);
+    }
 
-	throw new SharedTreeAssertionError(containsPII ? 'Assertion failed' : message);
+    throw new SharedTreeAssertionError(containsPII ? "Assertion failed" : message);
 }
 
 /**
@@ -124,9 +128,12 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
  * @param value - Value to assert against is non undefined.
  * @param message - Message to be printed if assertion fails.
  */
-export function assertNotUndefined<T>(value: T | undefined, message = 'value must not be undefined'): T {
-	assert(value !== undefined, message);
-	return value;
+export function assertNotUndefined<T>(
+    value: T | undefined,
+    message = "value must not be undefined",
+): T {
+    assert(value !== undefined, message);
+    return value;
 }
 
 /**
@@ -134,9 +141,12 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
  * @param array - Array to assert contains a single value.
  * @param message - Message to be printed if assertion fails.
  */
-export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
-	assert(array.length === 1, message);
-	return array[0];
+export function assertArrayOfOne<T>(
+    array: readonly T[],
+    message = "array value must contain exactly one item",
+): T {
+    assert(array.length === 1, message);
+    return array[0];
 }
 
 /**
@@ -146,8 +156,12 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
  * @param value - The value of the property
  * @returns `object` after assigning `value` to the property `property`.
  */
-export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
-	return Object.assign(object, { [property]: value }) as With<T, K, V>;
+export function assign<T, K extends keyof never, V>(
+    object: T,
+    property: K,
+    value: V,
+): With<T, K, V> {
+    return Object.assign(object, { [property]: value }) as With<T, K, V>;
 }
 
 /**
@@ -168,69 +182,69 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
  * @param value - The value of the property
  */
 export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
-	Object.defineProperty(object, propName, {
-		value,
-		enumerable: true,
-		configurable: true,
-	});
+    Object.defineProperty(object, propName, {
+        value,
+        enumerable: true,
+        configurable: true,
+    });
 
-	return value;
+    return value;
 }
 
 /**
  * Map an iterable to another iterable
  */
 export function* map<T, R>(sequence: Iterable<T>, mapper: (t: T) => R): Iterable<R> {
-	for (const t of sequence) {
-		yield mapper(t);
-	}
+    for (const t of sequence) {
+        yield mapper(t);
+    }
 }
 
 /**
  * Filter an iterable into another iterable
  */
 export function* filter<T>(sequence: Iterable<T>, filter: (t: T) => boolean): Iterable<T> {
-	for (const t of sequence) {
-		if (filter(t)) {
-			yield t;
-		}
-	}
+    for (const t of sequence) {
+        if (filter(t)) {
+            yield t;
+        }
+    }
 }
 
 /**
  * Reduce an iterable into a single value, or undefined if the iterable has too few elements to reduce
  */
 export function reduce<T>(
-	sequence: Iterable<T>,
-	reduce: (previous: T, current: T) => T,
-	initialValue?: T
+    sequence: Iterable<T>,
+    reduce: (previous: T, current: T) => T,
+    initialValue?: T,
 ): T | undefined {
-	let previous: T | undefined;
-	let current: T | undefined;
-	for (const t of sequence) {
-		current = t;
-		if (previous === undefined) {
-			if (initialValue !== undefined) {
-				current = reduce(initialValue, current);
-			}
-		} else {
-			current = reduce(previous, current);
-		}
-		previous = current;
-	}
-	return current;
+    let previous: T | undefined;
+    let current: T | undefined;
+    for (const t of sequence) {
+        current = t;
+        if (previous === undefined) {
+            if (initialValue !== undefined) {
+                current = reduce(initialValue, current);
+            }
+        } else {
+            current = reduce(previous, current);
+        }
+        previous = current;
+    }
+    return current;
 }
 
 /**
  * Returns the first element of the given sequence that satisfies the given predicate, or undefined if no such element exists
  */
 export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | undefined {
-	for (const t of sequence) {
-		if (find(t)) {
-			return t;
-		}
-	}
-	return undefined;
+    for (const t of sequence) {
+        if (find(t)) {
+            return t;
+        }
+    }
+    return undefined;
 }
 
 /**
@@ -241,11 +255,15 @@ export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | und
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareIterables<T>(
-	iterableA: Iterable<T>,
-	iterableB: Iterable<T>,
-	elementComparator: (a: T, b: T) => boolean = Object.is
+    iterableA: Iterable<T>,
+    iterableB: Iterable<T>,
+    elementComparator: (a: T, b: T) => boolean = Object.is,
 ): boolean {
-	return compareIterators<T>(iterableA[Symbol.iterator](), iterableB[Symbol.iterator](), elementComparator);
+    return compareIterators<T>(
+        iterableA[Symbol.iterator](),
+        iterableB[Symbol.iterator](),
+        elementComparator,
+    );
 }
 
 /**
@@ -256,25 +274,25 @@ export function compareIterables<T>(
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 function compareIterators<T, TReturn extends T = T>(
-	iteratorA: Iterator<T, TReturn>,
-	iteratorB: Iterator<T, TReturn>,
-	elementComparator: (a: T, b: T) => boolean = Object.is
+    iteratorA: Iterator<T, TReturn>,
+    iteratorB: Iterator<T, TReturn>,
+    elementComparator: (a: T, b: T) => boolean = Object.is,
 ): boolean {
-	let a: IteratorResult<T, TReturn>;
-	let b: IteratorResult<T, TReturn>;
-	for (
-		a = iteratorA.next(), b = iteratorB.next(); // Given two iterators...
-		a.done !== true && b.done !== true; // ...while both have elements remaining...
-		a = iteratorA.next(), b = iteratorB.next() // ...take one element at a time from each...
-	) {
-		// ...and ensure that their elements are equivalent
-		if (!elementComparator(a.value, b.value)) {
-			return false;
-		}
-	}
+    let a: IteratorResult<T, TReturn>;
+    let b: IteratorResult<T, TReturn>;
+    for (
+        a = iteratorA.next(), b = iteratorB.next(); // Given two iterators...
+        a.done !== true && b.done !== true; // ...while both have elements remaining...
+        a = iteratorA.next(), b = iteratorB.next() // ...take one element at a time from each...
+    ) {
+        // ...and ensure that their elements are equivalent
+        if (!elementComparator(a.value, b.value)) {
+            return false;
+        }
+    }
 
-	// If one iterator is done, but not the other, then they are not equivalent
-	return a.done === b.done;
+    // If one iterator is done, but not the other, then they are not equivalent
+    return a.done === b.done;
 }
 
 /**
@@ -285,21 +303,21 @@ function compareIterators<T, TReturn extends T = T>(
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareArrays<T>(
-	arrayA: readonly T[],
-	arrayB: readonly T[],
-	elementComparator: (a: T, b: T) => boolean = Object.is
+    arrayA: readonly T[],
+    arrayB: readonly T[],
+    elementComparator: (a: T, b: T) => boolean = Object.is,
 ): boolean {
-	if (arrayA.length !== arrayB.length) {
-		return false;
-	}
+    if (arrayA.length !== arrayB.length) {
+        return false;
+    }
 
-	for (let i = 0; i < arrayA.length; i++) {
-		if (!elementComparator(arrayA[i], arrayB[i])) {
-			return false;
-		}
-	}
+    for (let i = 0; i < arrayA.length; i++) {
+        if (!elementComparator(arrayA[i], arrayB[i])) {
+            return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -310,22 +328,22 @@ export function compareArrays<T>(
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareMaps<K, V>(
-	mapA: ReadonlyMap<K, V>,
-	mapB: ReadonlyMap<K, V>,
-	elementComparator: (a: V, b: V) => boolean = Object.is
+    mapA: ReadonlyMap<K, V>,
+    mapB: ReadonlyMap<K, V>,
+    elementComparator: (a: V, b: V) => boolean = Object.is,
 ): boolean {
-	if (mapA.size !== mapB.size) {
-		return false;
-	}
+    if (mapA.size !== mapB.size) {
+        return false;
+    }
 
-	for (const [keyA, valueA] of mapA) {
-		const valueB = mapB.get(keyA);
-		if (valueB === undefined || !elementComparator(valueA, valueB)) {
-			return false;
-		}
-	}
+    for (const [keyA, valueA] of mapA) {
+        const valueB = mapB.get(keyA);
+        if (valueB === undefined || !elementComparator(valueA, valueB)) {
+            return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -336,37 +354,41 @@ export function compareMaps<K, V>(
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
 export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
-	let value = map.get(key);
-	if (value === undefined) {
-		value = defaultValue(key);
-		map.set(key, value);
-	}
-	return value;
+    let value = map.get(key);
+    if (value === undefined) {
+        value = defaultValue(key);
+        map.set(key, value);
+    }
+    return value;
 }
 
 /**
  * Function which does nothing (no-ops).
  */
 export function noop(): void {
-	// noop
+    // noop
 }
 
 /**
  * Function which returns its input
  */
 export function identity<T>(t: T): T {
-	return t;
+    return t;
 }
 
 /**
  * Copies a property in such a way that it is only set on `destination` if it is present on `source`.
  * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
  */
-export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDst, property: keyof TSrc): void {
-	const value = source[property];
-	if (value !== undefined) {
-		(destination as any)[property] = value;
-	}
+export function copyPropertyIfDefined<TSrc, TDst>(
+    source: TSrc,
+    destination: TDst,
+    property: keyof TSrc,
+): void {
+    const value = source[property];
+    if (value !== undefined) {
+        (destination as any)[property] = value;
+    }
 }
 
 /**
@@ -374,13 +396,13 @@ export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDs
  * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
  */
 export function setPropertyIfDefined<TDst, P extends keyof TDst>(
-	value: TDst[P] | undefined,
-	destination: TDst,
-	property: P
+    value: TDst[P] | undefined,
+    destination: TDst,
+    property: P,
 ): void {
-	if (value !== undefined) {
-		destination[property] = value;
-	}
+    if (value !== undefined) {
+        destination[property] = value;
+    }
 }
 
 /**
@@ -398,26 +420,30 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  */
 
 function breakOnDifference(): { break: boolean } {
-	return { break: true };
+    return { break: true };
 }
 
 /**
  * Helper that returns whether two b-trees are equal.
  * Accelerated when large portions of the tree are shared between the two.
  */
-export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, compare: (valA: V, valB: V) => boolean) {
-	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
-		if (!compare(valA, valB)) {
-			return { break: true };
-		}
-		return undefined;
-	});
+export function compareBtrees<K, V>(
+    treeA: BTree<K, V>,
+    treeB: BTree<K, V>,
+    compare: (valA: V, valB: V) => boolean,
+) {
+    const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
+        if (!compare(valA, valB)) {
+            return { break: true };
+        }
+        return undefined;
+    });
 
-	return diff === undefined;
+    return diff === undefined;
 }
 
 export function backmap<K, V>(forwardmap: Map<V, K>): Map<K, V> {
-	return new Map(map(forwardmap, ([key, value]) => [value, key]));
+    return new Map(map(forwardmap, ([key, value]) => [value, key]));
 }
 
 /**
@@ -433,81 +459,81 @@ export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Result {
-	/**
-	 * Factory function for making a successful Result.
-	 * @param result - The result to wrap in the Result.
-	 */
-	export function ok<TOk>(result: TOk): Ok<TOk> {
-		return { type: ResultType.Ok, result };
-	}
-	/**
-	 * Factory function for making a unsuccessful Result.
-	 * @param error - The error to wrap in the Result.
-	 */
-	export function error<TError>(error: TError): Error<TError> {
-		return { type: ResultType.Error, error };
-	}
-	/**
-	 * Type guard for successful Result.
-	 * @returns True if `result` is successful.
-	 */
-	export function isOk<TOk, TError>(result: Result<TOk, TError>): result is Ok<TOk> {
-		return result.type === ResultType.Ok;
-	}
-	/**
-	 * Type guard for unsuccessful Result.
-	 * @returns True if `result` is unsuccessful.
-	 */
-	export function isError<TOk, TError>(result: Result<TOk, TError>): result is Error<TError> {
-		return result.type === ResultType.Error;
-	}
-	/**
-	 * Maps the given result with the given function when the result is ok.
-	 * @param result - The result to map.
-	 * @param map - The function to apply to derive the new result.
-	 * @returns The given result if it is not ok, the mapped result otherwise.
-	 */
-	export function mapOk<TOkIn, TOkOut, TError>(
-		result: Result<TOkIn, TError>,
-		map: (ok: TOkIn) => TOkOut
-	): Result<TOkOut, TError> {
-		return isOk(result) ? ok(map(result.result)) : result;
-	}
-	/**
-	 * Maps the given result with the given function when the result is an error.
-	 * @param result - The result to map.
-	 * @param map - The function to apply to derive the new error.
-	 * @returns The given result if it is ok, the mapped result otherwise.
-	 */
-	export function mapError<TOk, TErrorIn, TErrorOut>(
-		result: Result<TOk, TErrorIn>,
-		map: (error: TErrorIn) => TErrorOut
-	): Result<TOk, TErrorOut> {
-		return isError(result) ? error(map(result.error)) : result;
-	}
-	/**
-	 * Tag value use to differentiate the members of the `Result` discriminated union.
-	 */
-	export enum ResultType {
-		/** Signals a successful result. */
-		Ok,
-		/** Signals an unsuccessful result. */
-		Error,
-	}
-	/**
-	 * Wraps a result of type `TOk`.
-	 */
-	export interface Ok<TOk> {
-		readonly type: ResultType.Ok;
-		readonly result: TOk;
-	}
-	/**
-	 * Wraps an error of type `TError`.
-	 */
-	export interface Error<TError> {
-		readonly type: ResultType.Error;
-		readonly error: TError;
-	}
+    /**
+     * Factory function for making a successful Result.
+     * @param result - The result to wrap in the Result.
+     */
+    export function ok<TOk>(result: TOk): Ok<TOk> {
+        return { type: ResultType.Ok, result };
+    }
+    /**
+     * Factory function for making a unsuccessful Result.
+     * @param error - The error to wrap in the Result.
+     */
+    export function error<TError>(error: TError): Error<TError> {
+        return { type: ResultType.Error, error };
+    }
+    /**
+     * Type guard for successful Result.
+     * @returns True if `result` is successful.
+     */
+    export function isOk<TOk, TError>(result: Result<TOk, TError>): result is Ok<TOk> {
+        return result.type === ResultType.Ok;
+    }
+    /**
+     * Type guard for unsuccessful Result.
+     * @returns True if `result` is unsuccessful.
+     */
+    export function isError<TOk, TError>(result: Result<TOk, TError>): result is Error<TError> {
+        return result.type === ResultType.Error;
+    }
+    /**
+     * Maps the given result with the given function when the result is ok.
+     * @param result - The result to map.
+     * @param map - The function to apply to derive the new result.
+     * @returns The given result if it is not ok, the mapped result otherwise.
+     */
+    export function mapOk<TOkIn, TOkOut, TError>(
+        result: Result<TOkIn, TError>,
+        map: (ok: TOkIn) => TOkOut,
+    ): Result<TOkOut, TError> {
+        return isOk(result) ? ok(map(result.result)) : result;
+    }
+    /**
+     * Maps the given result with the given function when the result is an error.
+     * @param result - The result to map.
+     * @param map - The function to apply to derive the new error.
+     * @returns The given result if it is ok, the mapped result otherwise.
+     */
+    export function mapError<TOk, TErrorIn, TErrorOut>(
+        result: Result<TOk, TErrorIn>,
+        map: (error: TErrorIn) => TErrorOut,
+    ): Result<TOk, TErrorOut> {
+        return isError(result) ? error(map(result.error)) : result;
+    }
+    /**
+     * Tag value use to differentiate the members of the `Result` discriminated union.
+     */
+    export enum ResultType {
+        /** Signals a successful result. */
+        Ok,
+        /** Signals an unsuccessful result. */
+        Error,
+    }
+    /**
+     * Wraps a result of type `TOk`.
+     */
+    export interface Ok<TOk> {
+        readonly type: ResultType.Ok;
+        readonly result: TOk;
+    }
+    /**
+     * Wraps an error of type `TError`.
+     */
+    export interface Error<TError> {
+        readonly type: ResultType.Error;
+        readonly error: TError;
+    }
 }
 
 /** Type that removes `readonly` from fields. */
@@ -515,13 +541,16 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /** Type that recursively removes `readonly` from fields. */
 export type RecursiveMutable<T> = {
-	-readonly [K in keyof T]: RecursiveMutable<T[K]>;
+    -readonly [K in keyof T]: RecursiveMutable<T[K]>;
 };
 
 /** Type that produces a writeable map from a readonly map. */
-export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<infer K, infer V>
-	? Map<K, V>
-	: never;
+export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<
+    infer K,
+    infer V
+>
+    ? Map<K, V>
+    : never;
 
 /** Type that includes the property K: V on T */
 export type With<T, K extends keyof never, V> = T & { [key in K]: V };
@@ -529,14 +558,15 @@ export type With<T, K extends keyof never, V> = T & { [key in K]: V };
 /**
  * A readonly `Map` which is known to contain a value for every possible key
  */
-export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
-	get(key: K): V;
+export interface ClosedMap<K, V> extends Omit<Map<K, V>, "delete" | "clear"> {
+    get(key: K): V;
 }
 
 /**
  * Change the given property Prop of type T to have a type of TPropNew
  */
-export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & { [_ in Prop]: TPropNew };
+export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> &
+    { [_ in Prop]: TPropNew };
 
 // eslint-disable-next-line @rushstack/no-new-null
 type Primitive = string | number | bigint | boolean | null | symbol | undefined;
@@ -545,38 +575,38 @@ type Primitive = string | number | bigint | boolean | null | symbol | undefined;
  * Recursively replace all properties with type assignable to type TReplace in T with properties of type TWith.
  */
 export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
-	? TWith
-	: T extends Primitive
-	? T
-	: {
-			[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
-	  };
+    ? TWith
+    : T extends Primitive
+    ? T
+    : {
+          [P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
+      };
 
 /** A union type of the first `N` positive integers */
-export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']
-	? never
-	: A['length'] | TakeWholeNumbers<N, [never, ...A]>;
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A["length"]
+    ? never
+    : A["length"] | TakeWholeNumbers<N, [never, ...A]>;
 /** Returns a tuple type with exactly `Length` elements of type `T` */
-export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length']
-	? A
-	: ArrayOfLength<T, Length, [T, ...A]>;
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A["length"]
+    ? A
+    : ArrayOfLength<T, Length, [T, ...A]>;
 /**
  * Fails if `array` does not have exactly `length` elements
  */
 export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
-	array: readonly T[],
-	length: Len
+    array: readonly T[],
+    length: Len,
 ): array is ArrayOfLength<T, Len> {
-	return array.length === length;
+    return array.length === length;
 }
 /**
  * Fails if `array` does not have at least `length` elements
  */
 export function hasLength<T, Len extends TakeWholeNumbers<16>>(
-	array: readonly T[],
-	length: Len
+    array: readonly T[],
+    length: Len,
 ): array is [...ArrayOfLength<T, Len>, ...T[]] {
-	return array.length >= length;
+    return array.length >= length;
 }
 
 /**
@@ -592,6 +622,8 @@ export type RestOrArray<T> = readonly T[] | [readonly T[]];
  * Useful for implementing functions with a `RestOrArray` parameter.
  * T must not be implemented with an array (`Array.isArray(t)` must return false)
  */
-export function unwrapRestOrArray<T>(value: [any[]] extends [T] ? never : RestOrArray<T>): readonly T[] {
-	return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
+export function unwrapRestOrArray<T>(
+    value: [any[]] extends [T] ? never : RestOrArray<T>,
+): readonly T[] {
+    return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
 }
