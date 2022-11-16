@@ -790,10 +790,36 @@ Drawbacks:
 
 ## Generalization
 
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Idealy, any DDS would be able to leverage the virtualized and incremental scalability described in this paper. Such a libr
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this paper. Such a library would provide:
 
+* A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store behind the scenes as the client modifies the tree.
+* A way to configure the chunking strategy for the stored tree. Different DDS might want regions of data to be downloaded together, or separately, depending on their data's schema.
+* A canonical (but optional) way to store the history of a DDS as a series of ops. This would also be virtualized for efficient access.
 
+This would improve the storage options available to DDSs and would likely inform the summarization API as well. It's possible that with such a design, summarization as it exists today would not even be exposed to the DDS. Instead of being asked periodically to summarize its current state, a DDS would simply update its stored tree via the storage interface at whatever cadence it wants, and the periodic uploading (flushing) would happen behind the scenes.
 
+## Glossary
+
+- Blob: binary data that is uploaded to and downloaded from a storage service. Blobs are content-addressable and therefore immutable.
+- Chunk: a contiguous region of the tree. Every node in the tree belongs to a chunk.
+- Chunking Algorithm: an algorithm which divides a tree into chunks
+- Content-addressable: data which can be referred to by a key derived from the data itself. For example, data in a store which hashes each value to produce its key.
+- [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
+- Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list
+- Edit: an atomic change or collection of changes applied to a tree. An edit always produces a new revision of the tree.
+- Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
+- History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
+- Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
+- Logical Tree: refers to the actual tree of nodes/data that make up the content of shared tree. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
+- Partial Checkout: a region of a tree that a client is restricted to by the server
+- Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
+- Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
+- Reference sequence number: the sequence number of the latest known Fluid op when an op is first sent by a client
+- Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
+- Sequence number: the position of a Fluid op in the total ordering of all ops
+- Snapshot Isolation: [A guarantee](https://en.wikipedia.org/wiki/Snapshot_isolation) that the view of some data won't change until the client is finished with its current edit.
+- Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
+- Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
 
 
 
@@ -1296,29 +1322,6 @@ A conclusion on this front is not needed for M1 (partial checkouts and increment
 but this area would be a good one to develop in parallel with other aspects of SharedTree.
 This is a good place leverage decision encapsulation to minimize the impact if we change our approach later
 (ex: we come up with better ideas, find an issue with this analysis, or change our evaluation criteria, or decide to support both as configurable options).
-
-## Glossary
-
-- Blob: binary data that is uploaded to and downloaded from a storage service. Blobs are content-addressable and therefore immutable.
-- Chunk: a contiguous region of the tree. Every node in the tree belongs to a chunk.
-- Chunking Algorithm: an algorithm which divides a tree into chunks
-- Content-addressable: data which can be referred to by a key derived from the data itself. For example, data in a store which hashes each value to produce its key.
-- [Copy-on-write](https://en.wikipedia.org/wiki/Copy-on-write): a data structure which is immutable and therefore must be copied to produce modifications, but which does so efficiently by sharing unmodified state with previous versions.
-- Deepest Tree: a tree with N nodes and depth O(N), i.e. a tree with a branching factor of 1, essentially a linked list
-- Edit: an atomic change or collection of changes applied to a tree. An edit always produces a new revision of the tree.
-- Handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
-- History: the sequence of changes that have been made to a tree over time. A given document may or may not care about its tree's history. If it does desire the history, then the history must be recorded as part of its summary, since the Fluid service will only deliver ops that occur after the most recent summary.
-- Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
-- Logical Tree: refers to the actual tree of nodes/data that make up the content of shared tree. This term is used to disambiguate when multiple kinds of trees are being discussed in the same context.
-- Partial Checkout: a region of a tree that a client is restricted to by the server
-- Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
-- Random Read: a query which retrieves a node from the tree without necessarily having read the nodes (e.g. parents/siblings) around it
-- Reference sequence number: the sequence number of the latest known Fluid op when an op is first sent by a client
-- Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
-- Sequence number: the position of a Fluid op in the total ordering of all ops
-- Snapshot Isolation: [A guarantee](https://en.wikipedia.org/wiki/Snapshot_isolation) that the view of some data won't change until the client is finished with its current edit.
-- Spine: a set of nodes in a tree that make up the shortest path from some node in the tree to the root node of the tree
-- Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
 
 ----
 ## Extra stuff
