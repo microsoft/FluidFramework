@@ -37,8 +37,8 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1"
@@ -67,6 +67,8 @@
   },
   "typeValidation": {
     "version": "1.2.0",
+    "baselineRange": "^1.1.0",
+    "baselineVersion": "1.1.0",
     "broken": {}
   }
 }

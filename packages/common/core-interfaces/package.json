@@ -32,7 +32,9 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir ."
+
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0-109418",
