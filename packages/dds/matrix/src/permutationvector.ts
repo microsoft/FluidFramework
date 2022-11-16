@@ -36,9 +36,6 @@ const enum SnapshotPath {
 type PermutationSegmentSpec = [number, number];
 
 export class PermutationSegment extends BaseSegment {
-    append(segment: ISegment): void {
-        throw new Error("Method not implemented.");
-    }
     public static readonly typeString: string = "PermutationSegment";
     private _start = Handle.unallocated;
 

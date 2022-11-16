@@ -189,20 +189,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
             dataStoreRuntime.options);
 
-        super.on("newListener", (event) => {
-            switch (event) {
-                case "sequenceDelta":
-                    this.client.on("delta", (opArgs, deltaArgs) => {
-                        this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
-                    });
-                    break;
-                case "maintenance":
-                    this.client.on("maintenance", (args, opArgs) => {
-                        this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
-                    });
-                    break;
-                default:
-            }
+        this.client.on("delta", (opArgs, deltaArgs) => {
+            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
+        });
+
+        this.client.on("maintenance", (args, opArgs) => {
+            this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
         });
 
         this.intervalCollections = new DefaultMap(
