@@ -11,11 +11,12 @@ import type { ITask, ITaskList } from "../modelInterfaces";
 
 interface ITaskRowProps {
     task: ITask;
+    deleteTask: () => void;
     disabled?: boolean;
 }
 
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-    const { task, disabled } = props;
+    const { task, deleteTask, disabled } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemotePriority = () => {
@@ -54,6 +55,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                     disabled={ disabled }
                 ></input>
             </td>
+            <td>
+                <button
+                    onClick={ deleteTask }
+                    style={{ background: "none", border: "none" }}
+                >❌</button>
+            </td>
         </tr>
     );
 };
@@ -81,7 +88,12 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     }, [taskList]);
 
     const taskRows = tasks.map((task) => (
-        <TaskRow key={ task.id } task={ task } disabled={ disabled } />
+        <TaskRow
+            key={ task.id }
+            task={ task }
+            deleteTask={ () => taskList.deleteTask(task.id) }
+            disabled={ disabled }
+        />
     ));
 
     return (

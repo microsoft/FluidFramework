@@ -41,6 +41,7 @@ export interface ITaskListEvents extends IEvent {
  */
 export interface ITaskList extends IEventProvider<ITaskListEvents> {
     readonly addTask: (id: string, name: string, priority: number) => void;
+    readonly deleteTask: (id: string) => void;
 
     readonly getTasks: () => ITask[];
     readonly getTask: (id: string) => ITask | undefined;

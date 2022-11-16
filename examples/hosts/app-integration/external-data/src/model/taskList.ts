@@ -71,6 +71,10 @@ export class TaskList extends DataObject implements ITaskList {
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
     };
 
+    public readonly deleteTask = (id: string) => {
+        this.root.delete(id);
+    }
+
     public readonly getTasks = () => {
         return [...this.tasks.values()];
     };
@@ -97,6 +101,8 @@ export class TaskList extends DataObject implements ITaskList {
     private readonly handleTaskDeleted = (id: string) => {
         const deletedTask = this.tasks.get(id);
         this.tasks.delete(id);
+        // Here we might want to consider raising an event on the Task object so that anyone holding it can know
+        // that it has been removed from its collection.  Not needed for this example though.
         this.emit("taskDeleted", deletedTask);
     };
 
