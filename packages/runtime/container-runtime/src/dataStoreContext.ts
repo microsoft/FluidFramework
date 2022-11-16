@@ -85,6 +85,7 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
+import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
     pkg: readonly string[],
@@ -762,7 +763,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             throw new Error(`Context is closed! Call site [${callSite}]`);
         }
 
-        if (checkTombstone && this.tombstoned) {
+        if (checkTombstone && this.tombstoned && this.clientDetails.type !== summarizerClientType) {
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
             const error = new DataCorruptionError(messageString, {
                 errorMessage: messageString,

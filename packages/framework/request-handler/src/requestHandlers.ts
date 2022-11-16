@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
     IResponse,
     IRequest,
@@ -63,7 +62,8 @@ class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<
     }
 
     public attachGraph() {
-        assert(false, 0x0ca /* "Trying to use legacy graph attach!" */);
+        // This handle should only be created and stored to prevent unreferenced GC content from being deleted.
+        return;
     }
 
     public async get(): Promise<any> {

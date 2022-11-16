@@ -55,6 +55,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
+import { summarizerClientType } from "./summarizerClientElection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -438,8 +439,11 @@ export class DataStores implements IDisposable {
                 pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
             }, error);
-            // The requested data store is removed by gc. Throw a 404 gc response exception.
-            throw error;
+            // Throw for all clients except summarizer clients
+            if (this.runtime.clientDetails.type !== summarizerClientType) {
+                // The requested data store is removed by gc. Throw a 404 gc response exception.
+                throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+            }
         }
 
         return context;
