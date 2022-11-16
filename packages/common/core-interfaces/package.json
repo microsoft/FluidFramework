@@ -35,9 +35,9 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluid-tools/build-cli": "^0.6.0-109418",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.5.0",
+    "@fluidframework/build-tools": "^0.6.0-109418",
     "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.2.0.0",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
