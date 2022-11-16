@@ -44,37 +44,19 @@ export function compose<TNodeChange>(
     changes: TaggedChange<Changeset<TNodeChange>>[],
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Changeset<TNodeChange> {
-    if (changes.length === 0) {
-        return [];
-    }
-
-    if (changes.length === 1) {
-        return changes[0].change;
-    }
-    let composed: Changeset<TNodeChange> = clone(changes[0].change);
-    let baseRevision: RevisionTag | undefined = changes[0].revision;
-    for (let i = 1; i < changes.length; i++) {
-        const change = changes[i];
-        composed = composeMarkLists(
-            baseRevision,
-            composed,
-            change.revision,
-            change.change,
-            composeChild,
-        );
-        baseRevision = undefined;
+    let composed: Changeset<TNodeChange> = [];
+    for (const change of changes) {
+        composed = composeMarkLists(composed, change.revision, change.change, composeChild);
     }
     return composed;
 }
 
 function composeMarkLists<TNodeChange>(
-    baseRev: RevisionTag | undefined,
     baseMarkList: MarkList<TNodeChange>,
     newRev: RevisionTag | undefined,
     newMarkList: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): MarkList<TNodeChange> {
-    console.debug("A");
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const newIter = new StackyIterator(newMarkList);
@@ -130,8 +112,7 @@ function composeMarkLists<TNodeChange>(
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
-            console.debug("C");
-            const composedMark = composeMarks(baseRev, baseMark, newRev, newMark, composeChild);
+            const composedMark = composeMarks(baseMark, newRev, newMark, composeChild);
             factory.push(composedMark);
         }
     }
@@ -144,14 +125,14 @@ function composeMarkLists<TNodeChange>(
 
 /**
  * Composes two marks where `newMark` is based on the state produced by `baseMark`.
- * @param newMark - The mark to compose with `baseMark`.
- * Its input range should be the same as `baseMark`'s output range.
  * @param baseMark - The mark to compose with `newMark`.
  * Its output range should be the same as `newMark`'s input range.
+ * @param newRev - The revision the new mark is part of.
+ * @param newMark - The mark to compose with `baseMark`.
+ * Its input range should be the same as `baseMark`'s output range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
 function composeMarks<TNodeChange>(
-    baseRev: RevisionTag | undefined,
     baseMark: Mark<TNodeChange>,
     newRev: RevisionTag | undefined,
     newMark: SizedMark<TNodeChange>,
@@ -192,7 +173,7 @@ function composeMarks<TNodeChange>(
         case "MInsert": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newRev, newMark, baseRev, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -207,7 +188,7 @@ function composeMarks<TNodeChange>(
         case "Modify": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newRev, newMark, baseRev, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -247,12 +228,11 @@ function composeMarks<TNodeChange>(
 function updateModifyLike<TNodeChange>(
     currRev: RevisionTag | undefined,
     curr: Modify<TNodeChange>,
-    baseRev: RevisionTag | undefined,
     base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ) {
     base.changes = composeChild([
-        tagChange(base.changes, baseRev),
+        tagChange(base.changes, undefined),
         tagChange(curr.changes, currRev),
     ]);
 }

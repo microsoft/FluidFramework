@@ -94,10 +94,6 @@ export class ModularChangeFamily
     }
 
     compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap {
-        if (changes.length === 1) {
-            return changes[0].change;
-        }
-
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
             for (const [key, fieldChange] of change.change) {
@@ -156,11 +152,10 @@ export class ModularChangeFamily
     private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
         const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
-        let valueChangeRevision: RevisionTag | undefined;
         for (const change of changes) {
             if (change.change.valueChange !== undefined) {
                 valueChange = change.change.valueChange;
-                valueChangeRevision = change.revision;
+                valueChange.revision ??= change.revision;
             }
             if (change.change.fieldChanges !== undefined) {
                 fieldChanges.push(
@@ -173,7 +168,6 @@ export class ModularChangeFamily
         const composedNodeChange: NodeChangeset = {};
         if (valueChange !== undefined) {
             composedNodeChange.valueChange = valueChange;
-            composedNodeChange.revision = valueChangeRevision;
         }
 
         if (composedFieldChanges.size > 0) {

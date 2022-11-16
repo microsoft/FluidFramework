@@ -118,11 +118,6 @@ export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangese
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset {
-    /**
-     * The revision associated with `valueChange`, if any.
-     * This revision is not necessarily related to `fieldChanges`.
-     */
-    revision?: RevisionTag;
     fieldChanges?: FieldChangeMap;
     valueChange?: ValueChange;
 }
@@ -130,11 +125,23 @@ export interface NodeChangeset {
 export type ValueChange =
     | {
           /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
+          /**
            * Can be left unset to represent the value being cleared.
            */
           value?: Value;
       }
     | {
+          /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
           /**
            * The tag of the change that overwrote the value being restored.
            *
