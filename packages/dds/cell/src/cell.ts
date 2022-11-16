@@ -254,19 +254,19 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const _localOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+        const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
-                const messageIdReceived = _localOpMetadata.pendingMessageId;
+                const messageIdReceived = cellOpMetadata.pendingMessageId;
                 assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
                     0x00c /* "messageId is incorrect from from the local client's ACK" */);
                 assert(this.pendingMessageIds !== undefined &&
-                    this.pendingMessageIds[0] === _localOpMetadata.pendingMessageId,
+                    this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
                         0x424 /* Unexpected pending message received */);
                 this.pendingMessageIds.shift();
                 // We got an ACK. Update messageIdObserved.
-                this.messageIdObserved = _localOpMetadata.pendingMessageId;
+                this.messageIdObserved = cellOpMetadata.pendingMessageId;
             }
             return;
         }
@@ -318,20 +318,20 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
     /**
      * Rollback a local op
-     * @param op - The operation to rollback
+     * @param content - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    protected rollback(op: any, localOpMetadata: unknown) {
-        const _localOpMetadata = localOpMetadata as ICellLocalOpMetadata;
-        if (op.type === "setCell" || op.type === "deleteCell") {
-            if (_localOpMetadata.previousValue === undefined) {
+    protected rollback(content: any, localOpMetadata: unknown) {
+        const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+        if (content.type === "setCell" || content.type === "deleteCell") {
+            if (cellOpMetadata.previousValue === undefined) {
                 this.deleteCore();
             } else {
-                this.setCore(_localOpMetadata.previousValue);
+                this.setCore(cellOpMetadata.previousValue);
             }
 
             const lastPendingMessageId = this.pendingMessageIds.pop();
-            if (lastPendingMessageId !== _localOpMetadata.pendingMessageId) {
+            if (lastPendingMessageId !== cellOpMetadata.pendingMessageId) {
                 throw new Error("Rollback op does not match last pending");
             }
         } else {
