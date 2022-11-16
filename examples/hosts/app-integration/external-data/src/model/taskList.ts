@@ -48,6 +48,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
  * The TaskList is our data object that implements the ITaskList interface.
  */
 export class TaskList extends DataObject implements ITaskList {
+    /**
+     * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
+     * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
+     * after performing the async operations to retrieve the constituent data (.get() the handles) which allows
+     * the ITask interface to be synchronous, and therefore easier to use in a view.  This is an example of the
+     * collection pattern -- see the contact-collection example for more details on this pattern.
+     */
     private readonly tasks = new Map<string, Task>();
 
     public readonly addTask = (id: string, name: string, priority: number) => {
@@ -58,6 +65,9 @@ export class TaskList extends DataObject implements ITaskList {
         nameString.insertText(0, name);
         const priorityCell: SharedCell<number> = SharedCell.create(this.runtime);
         priorityCell.set(priority);
+        // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
+        // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
+        // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
     };
 
