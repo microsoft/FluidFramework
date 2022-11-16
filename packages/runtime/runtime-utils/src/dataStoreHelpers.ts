@@ -62,6 +62,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
     return responseErr;
 }
 
+// Takes a set of packages and joins them pkg1/pkg2... etc. Tags the field as a code artifact
 export function packagePathToTelemetryProperty(
     packagePath: readonly string[] | undefined,
 ): ITaggedTelemetryPropertyType | undefined {
