@@ -385,6 +385,7 @@ export class ScribeLambda implements IPartitionLambda {
             message,
             this.clearCache);
         this.lastOffset = message.offset;
+        Lumberjack.info(`Last offset: ${this.lastOffset}`, getLumberBaseProperties(this.documentId, this.tenantId));
         const reason = CheckpointReason[checkpointReason];
         const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
         const lumberjackProperties = {
