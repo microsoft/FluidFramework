@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { ObjectForest } from "../../feature-libraries/object-forest";
+import { buildForest } from "../../feature-libraries/object-forest";
 
 import {
     fieldSchema,
@@ -91,6 +91,46 @@ function testForest(
                     assert.deepEqual(copy, [data]);
                 });
             }
+        });
+
+        it("cursor use", () => {
+            const content: JsonableTree = {
+                type: jsonObject.name,
+                fields: {
+                    data: [
+                        { type: jsonNumber.name, value: 1 },
+                        { type: jsonNumber.name, value: 2 },
+                    ],
+                },
+            };
+            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+            initializeForest(forest, [singleTextCursor(content)]);
+
+            const reader = forest.allocateCursor();
+            moveToDetachedField(forest, reader);
+            const reader2 = reader.fork();
+            // Make sure fork is initialized properly
+            assert.deepEqual(reader.getFieldPath(), reader2.getFieldPath());
+            assert(reader.firstNode());
+            // Make sure forks can move independently
+            assert.deepEqual(reader.getPath()?.parent, reader2.getFieldPath().parent);
+            assert(reader2.firstNode());
+            assert.deepEqual(reader.getPath(), reader2.getPath());
+            reader.enterField(brand("data"));
+            reader.enterNode(1);
+            assert.equal(reader.value, 2);
+            // Move reader two down to the same place, but by a different route.
+            reader2.enterField(brand("data"));
+            reader2.enterNode(0);
+            assert.equal(reader2.value, 1);
+            assert.equal(reader.value, 2);
+            assert(reader2.nextNode());
+            assert.equal(reader2.value, 2);
+            // Test a fork with a longer path and at a node not a field.
+            const reader3 = reader2.fork();
+            assert.deepEqual(reader.getPath(), reader3.getPath());
+            reader.free();
+            reader2.free();
         });
 
         it("setValue", () => {
@@ -281,7 +321,6 @@ function testForest(
     // TODO: implement and test fine grained invalidation.
 }
 
-testForest(
-    "object-forest",
-    () => new ObjectForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+testForest("object-forest", () =>
+    buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
 );

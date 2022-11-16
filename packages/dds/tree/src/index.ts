@@ -71,6 +71,8 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
 } from "./core";
 
 export {
@@ -121,6 +123,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -140,10 +143,13 @@ export {
     EditableField,
     isPrimitiveValue,
     isPrimitive,
-    getTypeSymbol,
+    typeSymbol,
+    typeNameSymbol,
     valueSymbol,
+    indexSymbol,
     proxyTargetSymbol,
-    getWithoutUnwrappingSymbol,
+    getField,
+    createField,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,

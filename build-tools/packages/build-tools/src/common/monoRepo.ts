@@ -11,6 +11,8 @@ import { Logger, defaultLogger } from "./logging";
 import { Package, Packages } from "./npmPackage";
 import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
 
+export type PackageManager = "npm" | "pnpm" | "yarn";
+
 /**
  * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
  * in the fluid-build section of the root package.json.
@@ -68,6 +70,7 @@ export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
     public readonly workspaceGlobs: string[];
+    public readonly packageManager: PackageManager;
 
     /**
      * Creates a new monorepo.
@@ -86,9 +89,15 @@ export class MonoRepo {
         this.version = "";
         const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
         const lernaPath = path.join(repoPath, "lerna.json");
+        const yarnLockPath = path.join(repoPath, "yarn.lock");
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
 
+        this.packageManager = existsSync(pnpmWorkspace)
+            ? "pnpm"
+            : existsSync(yarnLockPath)
+            ? "yarn"
+            : "npm";
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
@@ -99,7 +108,7 @@ export class MonoRepo {
 
             let pkgs: string[] = [];
 
-            if (existsSync(pnpmWorkspace)) {
+            if (this.packageManager === "pnpm") {
                 logger.verbose(`${kind}: Loading packages from ${pnpmWorkspace}`);
                 const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
                 pkgs = YAML.parse(workspaceString).packages;
@@ -144,14 +153,21 @@ export class MonoRepo {
         return a !== undefined && a === b;
     }
 
+    public get installCommand(): string {
+        return this.packageManager === "pnpm"
+            ? "pnpm i"
+            : this.packageManager === "yarn"
+            ? "npm run install-strict"
+            : "npm i --no-package-lock --no-shrinkwrap";
+    }
+
     public getNodeModulePath() {
         return path.join(this.repoPath, "node_modules");
     }
 
     public async install() {
-        this.logger.info(`${this.kind}: Installing - npm i`);
-        const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
+        this.logger.info(`${this.kind}: Installing - ${this.installCommand}`);
+        return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);

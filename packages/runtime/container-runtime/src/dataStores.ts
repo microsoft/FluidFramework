@@ -32,6 +32,7 @@ import {
     convertSnapshotTreeToSummaryTree,
     convertToSummaryTree,
     create404Response,
+    createResponseError,
     responseToException,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
@@ -419,12 +420,23 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
+    public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
+        const request = { url: id };
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
-            const request = { url: id };
             throw responseToException(create404Response(request), request);
+        }
+
+        if (context.tombstoned) {
+            // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
+            this.logger.sendErrorEvent({
+                eventName: "TombstonedDataStoreRequested",
+                url: request.url,
+                viaHandle,
+            });
+            // The requested data store is removed by gc. Throw a 404 gc response exception.
+            throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
         }
 
         return context;
@@ -597,6 +609,11 @@ export class DataStores implements IDisposable {
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
+
+            // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
+            const dataStore = this.contexts.get(id);
+            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
+            dataStore.setTombstone(false /* tombstone */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -606,12 +623,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
-     * scenarios with accessing deleted content.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - set the objects corresponding to routes as tombstones.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -630,8 +648,7 @@ export class DataStores implements IDisposable {
             if (tombstone) {
                 const dataStore = this.contexts.get(dataStoreId);
                 assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-                // Delete the contexts of unused data stores.
-                dataStore.tombstone();
+                dataStore.setTombstone(true /* tombstone */);
                 continue;
             }
 

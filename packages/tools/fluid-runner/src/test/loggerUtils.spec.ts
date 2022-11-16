@@ -106,6 +106,15 @@ describe("logger utils", () => {
                 assert.deepStrictEqual(result.telemetryOptions.defaultProps,
                     { "    prop1": "value1  " });
             });
+
+            it("special characters", () => {
+                const result = validateAndParseTelemetryOptions(undefined, ["prop1=aaa", "aaa\"bbb"]);
+                if (!result.success) {
+                    assert.fail(`unexpected error [${result.error}]`);
+                }
+                assert.deepStrictEqual(result.telemetryOptions.defaultProps,
+                    { "prop1=aaa": "aaa\"bbb" });
+            });
         });
     });
 });

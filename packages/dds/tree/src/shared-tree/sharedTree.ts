@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannel,
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
@@ -22,7 +21,6 @@ import {
     Index,
     SharedTreeCore,
     Checkout as TransactionCheckout,
-    runSynchronousTransaction,
     Anchor,
     AnchorLocator,
     AnchorSet,
@@ -33,7 +31,6 @@ import {
     defaultSchemaPolicy,
     EditableTreeContext,
     ForestIndex,
-    ObjectForest,
     SchemaIndex,
     DefaultChangeFamily,
     defaultChangeFamily,
@@ -45,6 +42,8 @@ import {
     SchemaEditor,
     DefaultChangeset,
     EditManagerIndex,
+    runSynchronousTransaction,
+    buildForest,
 } from "../feature-libraries";
 
 /**
@@ -121,7 +120,7 @@ class SharedTree
     ) {
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema, anchors);
+        const forest = buildForest(schema, anchors);
         const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
             defaultChangeFamily,
             anchors,
@@ -150,7 +149,7 @@ class SharedTree
             submitEdit: (edit) => this.submitEdit(edit),
         };
 
-        this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest, this.transactionCheckout);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
@@ -205,7 +204,7 @@ export class SharedTreeFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
+    ): Promise<ISharedTree> {
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
