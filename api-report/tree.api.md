@@ -77,7 +77,7 @@ export interface ChangeFamily<TEditor, TChange> {
 
 // @public
 export interface ChangeRebaser<TChangeset> {
-    compose(changes: TChangeset[]): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[]): TChangeset;
     // (undocumented)
     invert(changes: TaggedChange<TChangeset>): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
@@ -105,7 +105,7 @@ export interface ChildLocation {
 type ClientId = number;
 
 // @public
-function compose<TNodeChange>(changes: Changeset<TNodeChange>[], composeChild: NodeChangeComposer_2<TNodeChange>): Changeset<TNodeChange>;
+function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
 export interface Contravariant<T> {
@@ -279,6 +279,10 @@ export interface FieldChange {
     change: FieldChangeset;
     // (undocumented)
     fieldKind: FieldKindIdentifier;
+    // (undocumented)
+    isInverse?: boolean;
+    // (undocumented)
+    revision?: RevisionTag;
 }
 
 // @public (undocumented)
@@ -306,7 +310,7 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser): TChangeset;
@@ -783,7 +787,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     buildEditor(changeReceiver: (change: FieldChangeMap) => void, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
-    compose(changes: FieldChangeMap[]): FieldChangeMap;
+    compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap;
     // (undocumented)
     readonly encoder: ChangeEncoder<FieldChangeMap>;
     // (undocumented)
@@ -877,10 +881,10 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export const neverTree: TreeSchema;
 
 // @public (undocumented)
-export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 // @public (undocumented)
-type NodeChangeComposer_2<TNodeChange> = (changes: TNodeChange[]) => TNodeChange;
+type NodeChangeComposer_2<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 
 // @public (undocumented)
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;

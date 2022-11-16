@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     Changeset,
@@ -25,7 +26,7 @@ import {
     splitMarkOnOutput,
 } from "./utils";
 
-export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeChange;
+export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -40,24 +41,40 @@ export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeC
  * - Support for slices is not implemented.
  */
 export function compose<TNodeChange>(
-    changes: Changeset<TNodeChange>[],
+    changes: TaggedChange<Changeset<TNodeChange>>[],
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Changeset<TNodeChange> {
-    if (changes.length === 1) {
-        return changes[0];
+    if (changes.length === 0) {
+        return [];
     }
-    let composed: Changeset<TNodeChange> = [];
-    for (const change of changes) {
-        composed = composeMarkLists(composed, change, composeChild);
+
+    if (changes.length === 1) {
+        return changes[0].change;
+    }
+    let composed: Changeset<TNodeChange> = clone(changes[0].change);
+    let baseRevision: RevisionTag | undefined = changes[0].revision;
+    for (let i = 1; i < changes.length; i++) {
+        const change = changes[i];
+        composed = composeMarkLists(
+            baseRevision,
+            composed,
+            change.revision,
+            change.change,
+            composeChild,
+        );
+        baseRevision = undefined;
     }
     return composed;
 }
 
 function composeMarkLists<TNodeChange>(
+    baseRev: RevisionTag | undefined,
     baseMarkList: MarkList<TNodeChange>,
+    newRev: RevisionTag | undefined,
     newMarkList: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): MarkList<TNodeChange> {
+    console.debug("A");
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const newIter = new StackyIterator(newMarkList);
@@ -113,7 +130,8 @@ function composeMarkLists<TNodeChange>(
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
-            const composedMark = composeMarks(baseMark, newMark, composeChild);
+            console.debug("C");
+            const composedMark = composeMarks(baseRev, baseMark, newRev, newMark, composeChild);
             factory.push(composedMark);
         }
     }
@@ -133,7 +151,9 @@ function composeMarkLists<TNodeChange>(
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
 function composeMarks<TNodeChange>(
+    baseRev: RevisionTag | undefined,
     baseMark: Mark<TNodeChange>,
+    newRev: RevisionTag | undefined,
     newMark: SizedMark<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Mark<TNodeChange> {
@@ -172,7 +192,7 @@ function composeMarks<TNodeChange>(
         case "MInsert": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseRev, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -187,7 +207,7 @@ function composeMarks<TNodeChange>(
         case "Modify": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseRev, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -225,9 +245,14 @@ function composeMarks<TNodeChange>(
 }
 
 function updateModifyLike<TNodeChange>(
+    currRev: RevisionTag | undefined,
     curr: Modify<TNodeChange>,
+    baseRev: RevisionTag | undefined,
     base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ) {
-    base.changes = composeChild([base.changes, curr.changes]);
+    base.changes = composeChild([
+        tagChange(base.changes, baseRev),
+        tagChange(curr.changes, currRev),
+    ]);
 }

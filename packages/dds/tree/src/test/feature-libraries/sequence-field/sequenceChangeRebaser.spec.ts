@@ -118,7 +118,10 @@ describe("SequenceField - Rebaser Axioms", () => {
                 it(`${name} ○ ${name}⁻¹ === ε`, () => {
                     const change = [mark];
                     const inv = SF.invert(makeAnonChange(change), TestChange.invert);
-                    const actual = SF.compose([change, inv], TestChange.compose);
+                    const actual = SF.compose(
+                        [makeAnonChange(change), makeAnonChange(inv)],
+                        TestChange.compose,
+                    );
                     const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                     assert.deepEqual(delta, []);
                 });

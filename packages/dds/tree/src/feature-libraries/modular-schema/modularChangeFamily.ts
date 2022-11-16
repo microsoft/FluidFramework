@@ -19,6 +19,7 @@ import {
     TaggedChange,
     ReadonlyRepairDataStore,
     RevisionTag,
+    tagChange,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -44,7 +45,7 @@ export class ModularChangeFamily
     implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
 {
     readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: NodeChangeset[]) =>
+    private readonly childComposer = (childChanges: TaggedChange<NodeChangeset>[]) =>
         this.composeNodeChanges(childChanges);
 
     constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
@@ -92,44 +93,77 @@ export class ModularChangeFamily
         return { fieldKind, changesets: normalizedChanges };
     }
 
-    compose(changes: FieldChangeMap[]): FieldChangeMap {
+    compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap {
         if (changes.length === 1) {
-            return changes[0];
+            return changes[0].change;
         }
 
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            for (const [key, fieldChange] of change) {
-                getOrAddEmptyToMap(fieldChanges, key).push(fieldChange);
+            for (const [key, fieldChange] of change.change) {
+                const fieldChangeToCompose =
+                    fieldChange.revision !== undefined || change.revision === undefined
+                        ? fieldChange
+                        : {
+                              ...fieldChange,
+                              revision: change.revision,
+                              isInverse: change.isInverse,
+                          };
+
+                getOrAddEmptyToMap(fieldChanges, key).push(fieldChangeToCompose);
             }
         }
 
         const composedFields: FieldChangeMap = new Map();
         for (const [field, changesForField] of fieldChanges) {
-            const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
-            const composedField = fieldKind.changeHandler.rebaser.compose(
-                changesets,
-                this.childComposer,
-            );
+            let composedField: FieldChange;
+            if (changesForField.length === 1) {
+                composedField = changesForField[0];
+            } else {
+                const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
+                assert(
+                    changesets.length === changesForField.length,
+                    "Number of changes should be constant when normalizing",
+                );
+                const taggedChangesets: TaggedChange<FieldChangeset>[] = [];
+                for (let i = 0; i < changesets.length; i++) {
+                    const taggedChange: TaggedChange<FieldChangeset> = {
+                        revision: changesForField[i].revision,
+                        isInverse: changesForField[i].isInverse,
+                        change: changesets[i],
+                    };
+
+                    taggedChangesets.push(taggedChange);
+                }
+
+                const composedChange = fieldKind.changeHandler.rebaser.compose(
+                    taggedChangesets,
+                    this.childComposer,
+                );
+
+                composedField = {
+                    fieldKind: fieldKind.identifier,
+                    change: brand(composedChange),
+                };
+            }
 
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields.set(field, {
-                fieldKind: fieldKind.identifier,
-                change: brand(composedField),
-            });
+            composedFields.set(field, composedField);
         }
         return composedFields;
     }
 
-    private composeNodeChanges(changes: NodeChangeset[]): NodeChangeset {
-        const fieldChanges = [];
+    private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
+        const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
         for (const change of changes) {
-            if (change.valueChange !== undefined) {
-                valueChange = change.valueChange;
+            if (change.change.valueChange !== undefined) {
+                valueChange = change.change.valueChange;
             }
-            if (change.fieldChanges !== undefined) {
-                fieldChanges.push(change.fieldChanges);
+            if (change.change.fieldChanges !== undefined) {
+                fieldChanges.push(
+                    tagChange(change.change.fieldChanges, change.revision, change.isInverse),
+                );
             }
         }
 

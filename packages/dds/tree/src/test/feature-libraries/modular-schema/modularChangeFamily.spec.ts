@@ -283,7 +283,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
+                expectedCompose,
+            );
         });
 
         it("compose specific ○ generic", () => {
@@ -303,7 +306,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1a, rootChange2Generic]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
+                expectedCompose,
+            );
         });
 
         it("compose generic ○ specific", () => {
@@ -323,7 +329,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
+                expectedCompose,
+            );
         });
 
         it("compose generic ○ generic", () => {
@@ -349,7 +358,10 @@ describe("ModularChangeFamily", () => {
                 ],
             ]);
             assert.deepEqual(
-                family.compose([rootChange1aGeneric, rootChange2Generic]),
+                family.compose([
+                    makeAnonChange(rootChange1aGeneric),
+                    makeAnonChange(rootChange2Generic),
+                ]),
                 expectedCompose,
             );
         });

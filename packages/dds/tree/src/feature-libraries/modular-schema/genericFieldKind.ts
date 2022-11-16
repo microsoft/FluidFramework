@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../../core";
+import { Delta, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,
@@ -14,7 +14,6 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
-    referenceFreeFieldChangeRebaser,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -30,6 +29,11 @@ export interface GenericChange {
      * Change to the node.
      */
     nodeChange: NodeChangeset;
+
+    /**
+     * The revision this change is part of. Undefined when it is implied from context.
+     */
+    revision?: RevisionTag;
 }
 
 /**
@@ -55,9 +59,9 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-    rebaser: referenceFreeFieldChangeRebaser({
+    rebaser: {
         compose: (
-            changes: GenericChangeset[],
+            changes: TaggedChange<GenericChangeset>[],
             composeChildren: NodeChangeComposer,
         ): GenericChangeset => {
             if (changes.length === 0) {
@@ -66,7 +70,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             const composed: GenericChangeset = [];
             for (const change of changes) {
                 let listIndex = 0;
-                for (const { index, nodeChange } of change) {
+                for (const { index, nodeChange } of change.change) {
                     while (listIndex < composed.length && composed[listIndex].index < index) {
                         listIndex += 1;
                     }
@@ -78,14 +82,20 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                     } else {
                         composed.splice(listIndex, 1, {
                             index,
-                            nodeChange: composeChildren([match.nodeChange, nodeChange]),
+                            nodeChange: composeChildren([
+                                tagChange(match.nodeChange, match.revision),
+                                tagChange(nodeChange, change.revision),
+                            ]),
                         });
                     }
                 }
             }
             return composed;
         },
-        invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
+        invert: (
+            { change }: TaggedChange<GenericChangeset>,
+            invertChild: NodeChangeInverter,
+        ): GenericChangeset => {
             return change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
                     index,
@@ -95,7 +105,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
         },
         rebase: (
             change: GenericChangeset,
-            over: GenericChangeset,
+            { change: over }: TaggedChange<GenericChangeset>,
             rebaseChild: NodeChangeRebaser,
         ): GenericChangeset => {
             const rebased: GenericChangeset = [];
@@ -121,7 +131,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             rebased.push(...change.slice(iChange));
             return rebased;
         },
-    }),
+    },
     encoder: {
         encodeForJson(
             formatVersion: number,
@@ -191,8 +201,8 @@ export function convertGenericChange<TChange>(
     target: FieldChangeHandler<TChange>,
     composeChild: NodeChangeComposer,
 ): TChange {
-    const perIndex: TChange[] = changeset.map(({ index, nodeChange }) =>
-        target.editor.buildChildChange(index, nodeChange),
+    const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
+        makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
     );
     return target.rebaser.compose(perIndex, composeChild);
 }
