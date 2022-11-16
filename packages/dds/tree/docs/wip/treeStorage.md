@@ -282,25 +282,25 @@ After a flush completes, all clients are notified of the flush and the new chunk
 > More precisely, a flush op is valid only if and only if there are no other flush ops sequenced between the latest `sequence number` delivered to the client at the start of the flush, and the `sequence number` of the flush op itself. (Conceptually this is the `reference sequence number` of the flush, but it is not to be conufsed with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
 > 1. Client A, the elected flushing client, begins a flush. At that time, the latest sequence number delivered to Client A is 10.
 > 2. Client B is elected to be the new flushing client
-> 2. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
-> 3. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both **15**.
-> 4. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number **10** (_not_ **15**).
-> 5. The server sequences Client A's flush op with sequence number **16**.
-> 6. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number **10**.
-> 7. The server sequences Client B's flush op with sequence number **17**.
-> 8. Client A receives the op with sequence number **16** which is its flush op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
-> 9. Client B receives the op with sequence number **16** which is Client A's flush op. Like Client A, it acknowledges the new chunk state. However, Client B also now knows that the flush it attempted earlier is conflicted, because the flush op from Client A was sequenced before it. It decides to begin a new flush based off of the new state.
-> 10. Both Client A and Client B receive the op with sequence number **17**, which is Client B's flush op. They both recognize that the flush is conflicted, because the reference sequence number it included is **10**, but there has been another flush op (Client A's, at **16**) sequenced between **10** and the current sequence number **17**. This makes it evident that Client B's flush started before it knew about the most recent flush op from Client A, so both Client A and Client B ignore the op.
+> 3. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
+> 4. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both **15**.
+> 5. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number **10** (_not_ **15**).
+> 6. The server sequences Client A's flush op with sequence number **16**.
+> 7. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number **10**.
+> 8. The server sequences Client B's flush op with sequence number **17**.
+> 9. Client A receives the op with sequence number **16** which is its flush op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
+> 10. Client B receives the op with sequence number **16** which is Client A's flush op. Like Client A, it acknowledges the new chunk state. However, Client B also now knows that the flush it attempted earlier is conflicted, because the flush op from Client A was sequenced before it. It decides to begin a new flush based off of the new state.
+> 11. Both Client A and Client B receive the op with sequence number **17**, which is Client B's flush op. They both recognize that the flush is conflicted, because the reference sequence number it included is **10**, but there has been another flush op (Client A's, at **16**) sequenced between **10** and the current sequence number **17**. This makes it evident that Client B's flush started before it knew about the most recent flush op from Client A, so both Client A and Client B ignore the op.
 
-### Random Reads
+## Random Reads
 
-The performance of cold reads is analogous to that of writes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine). Just as with writes/uploads, the number of these downloads required for a read depends on the depth of the leaf and scales worse the deeper the tree is.
+The performance of cold reads is analogous to that of flushes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
 
-However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical use case for random reads, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. Such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. If a random read truly could be no better than walking down from the root through every node on the path, then a client could easily implement a "random" read function itself. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below.
+However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout is a random read. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below which reduce the cost of a random read, especially in deep trees.
 
-### Tree Shapes
+## Tree Shapes
 
-The length of the spine to be reuploaded is dependent upon the shape of the tree. A tree that is wide and shallow doesn't need to upload very many chunks when a leaf node is edited:
+As shown so far, the performance of both reads and flushes depends on the length of the spine of each node being read or edited. Even for trees of the same size, that length of those spines varies for differently shaped trees. For example, a tree that is wide and shallow doesn't need to flush very many chunks when a leaf node is edited:
 
 ```mermaid
 graph TD;
@@ -321,7 +321,7 @@ A write in E will reupload only two chunks: Chunk A and Chunk E.
 
 > Leaf nodes in the tree are both the farthest nodes from the root as well as the location where applications typically store most of their data. They are the nodes most commonly edited.
 
-Deeper, narrower trees are more problematic:
+But deeper, narrower trees are more problematic:
 
 ```mermaid
 graph TD;
@@ -338,11 +338,66 @@ graph TD;
     style E fill:#844
 ```
 
-This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a the leaf simply because the tree is of a different shape. So demonstrably, the tree's shape alone can have a significant effect on write performance. Specifically, the maximum number of uploads for a write to a node is the depth of that node divided by the smallest height of a chunk (which is a constant). In the worst case (reading a leaf), this means **O(D)** uploads where **D** is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, **N**, it's **O(N)** uploads, because nothing can be assumed about the shape of the tree (in the worst case it is the "`deepest tree`" where the depth equals the number of nodes).
+This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a the leaf simply because the logical tree has a deeper shape.
 
-### Optimizing Deep Trees
+There's also the problem in the other direction; trees which have extremely long sequences of children under the same parent (and are therefore very wide). Consider this logical tree with one million nodes under a single parent:
 
-So far, it appears that both random writes and random reads require the upload or download of every chunk along the spine to the target node. The maximum amount of uploads and downloads for writes and reads respectively amounts to **O(N)** for a tree with **N** nodes. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. The next section will explore some ways of organizing the chunks such that both reads and writes can be bounded to **O(log(D))**/**O(log(N))** for any shape of tree.
+```mermaid
+graph TD;
+    p-->c0
+    p-->c1
+    p-->cx[...]
+    p-->c999,999
+```
+
+In order to divide this tree into chunks, ranges of children are grouped together (in this case there are 100 nodes in each chunk):
+
+```mermaid
+graph TD;
+    subgraph Chunk P
+        p
+    end
+    subgraph Chunk 9,999
+        p-->c999,900
+        p-->c999,901
+        p-->cx9[...]
+        p-->c999,999
+    end
+    subgraph ...
+        p-->cxx[...]
+    end
+    subgraph Chunk 1
+        p-->c100
+        p-->c101
+        p-->cx1[...]
+        p-->c199
+    end
+    subgraph Chunk 0
+        p-->c0
+        p-->c1
+        p-->cx0[...]
+        p-->c99
+    end
+```
+
+Although the layout of these chunks is theoretically valid, there are now 10,000 chunks underneath Chunk P. It may be the case that Chunk P doesn't have enough space to hold all the keys of those 10,000 children. A chunking algorithm isn't able to satisfy the requirements for the chunk size without doing something special for this case. There are different ways to solve this. A first attempt might be to reduce the number of references in the parent by linking the children together into segments:
+
+```mermaid
+graph TD;
+    P(Chunk P)
+    P-->C0(Chunk 0)-->C1(Chunk 1)-->CX0(...)-->C99(Chunk 9)
+    P-->C100(Chunk 10)-->C101(Chunk 11)-->CX1(...)-->C199(Chunk 19)
+    P-->CXX(...)
+    P-->C999999000(Chunk 9,990)-->C999999001(Chunk 9,991)-->CX9(...)-->C999999999(Chunk 9,999)
+```
+
+Now, the chunks are linked together in chains of 10, so Chunk P only needs to store 1000 child chunk pointers rather than 10,000. But now the effective spine length of Chunk 9, Chunk 19, etc. has grown by 10, and the average spine length of each child chunk has grown by 5. This is not an optimal strategy (it works well for sequential reads, but not much else), but it demonstrates that it's at least possible to break large swaths of children into chunks in a straightforward way. The next section, "Optimizing Tree Shapes" will explore a more optimal approach, the "Sequence Tree".
+
+So demonstrably, the tree's shape alone can have a significant effect on both read and flush performance. The maximum length of the spine of chunks for a node is the depth of the node divided by the smallest height of a chunk (which is a constant). In the worst case (leaf nodes), this means a spine of length **D** where **D** is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, **N**, it's also **N**, because nothing can be assumed about the shape of the tree (in the worst case it is the "`deepest tree`" where the depth equals the number of nodes). So flushing even just a single spine is an **O(N)** operation in terms of uploads per nodes in the tree.
+
+### Optimizing Tree Shapes
+
+So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is **O(N)**. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. The next section will explore some ways of organizing the chunks such that both reads and writes can be bounded to **O(log(D))**/**O(log(N))** for any shape of tree.
 
 ## Chunk Data Structure Implementations
 
@@ -350,7 +405,7 @@ Below are detailed a couple of examples of "chunk data structures": data structu
 
 ### Simple Chunk Tree
 
-The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. To demonstrate, consider the logical tree below. It has been annotated with the edges from parent to child nodes so that the path to each node is visible:
+The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. This is the data structure we've been implicitly analyzing so far. It has the poor **O(N)** performance for both reads and writes, but it is simple. To demonstrate, consider the logical tree below. It has been annotated with the edges from parent to child nodes so that the path to each node is visible:
 
 ```mermaid
 graph TD;
@@ -404,17 +459,24 @@ Note how the edges in the logical tree concatenate to form the edges in the chun
 
 Advantages:
 
-* The tree structure is simple to implement and reason about since it is straightforwardly derived from the logical tree.
+* The tree structure is simple to implement and reason about since it is directly derived from the logical tree.
 * Chunks boundaries can be chosen arbitrarily with few restrictions. This means the tree can be optimized such that contents which belong together semantically can be guaranteed to be downloaded and uploaded together, minimizing network traffic as a client walks around the tree.
 * The schema of the logical tree can be used to give hints for chunk boundaries. When a schema is knowledgeable about where the virtualization boundaries of the tree are, it can provide a better read API. Descending into child nodes within the same chunk is a synchronous operation, and only when crossing over a chunk boundary is it an asynchronous operation.
 
 Drawbacks:
 
 * Poor performance for deep trees
+* Poor performance for large sequences of nodes under a single parent without using a specialized data structure (see "Sequence Tree" below)
+
+### Sequence Tree
+
+The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is essentially a [B-tree](https://en.wikipedia.org/wiki/B-tree) that organizes the child chunks efficiently to guarantee each chunk in the sequence is at most **log(C)** chunks away from the parent chunk, where **C** is the number of children. It scales arbitrarily large and can accomodate any number of children, which plain parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. There is a detailed presentation of [Sequence Tree available here](https://microsoft-my.sharepoint-df.com/:v:/r/personal/paulkw_microsoft_com/Documents/Recordings/SequenceTree%20walkthrough-20221005_140401-Meeting%20Recording.mp4?csf=1&web=1&e=dSmb5M).
+
+A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
 
 ### Path-Based B-Tree
 
-This approach puts all the nodes in a key-value data structure optimized for sorted keys, like a [B-tree](https://en.wikipedia.org/wiki/B-tree) or similar, using the path of each node as its key. Consider the same logical tree as above:
+The Path-Based B-Tree is an alternative way to store the entire tree, i.e. it replaces the Simple Chunk Tree (and removes the need for the Sequence Tree as well). It puts all the nodes in a key-value data structure optimized for sorted keys, like a B-tree or similar, using the path of each node as its key. Consider the same logical tree as above:
 
 ```mermaid
 graph TD;
@@ -503,7 +565,7 @@ Advantages:
 
 Drawbacks:
 
-* The chunking algorithm is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
+* The chunking process is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
 * The implementation is more complicated than the simple chunk tree.
 
 Potential Optimizations:
@@ -712,14 +774,11 @@ A lookup of any node requires traversing through the "layers of chunks" in this 
 Advantages:
 
 * Has the performance of the path based B-tree (**O(log(N))** uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking alogrithm and hinted at by schema).
+* Automatically handles the "many-children-under-one-node" scenario. There is no need for a Sequence Tree, because long sequences of nodes will be progressively chunked into a B-Tree like structure by the same algorithm that SPICE tree uses for the rest of the tree.
 
 Drawbacks:
 
 * The implementation is far more complicated than the simple chunk tree and at least as complicated as the path-based B-tree.
-
-## Checkpoints and Summarization
-
-// moved
 
 ## Generalization
 
