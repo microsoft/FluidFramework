@@ -423,14 +423,13 @@ export class DataStores implements IDisposable {
 
     public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
         const context = await this.contexts.getBoundOrRemoted(id, wait);
+        const request = { url: id };
         if (context === undefined) {
-            const request = { url: id };
             // The requested data store does not exits. Throw a 404 response exception.
             throw responseToException(create404Response(request), request);
         }
 
         if (context.tombstoned) {
-            const request = { url: "" };
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
@@ -439,7 +438,6 @@ export class DataStores implements IDisposable {
                 pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
             }, error);
-            error.message = `Datastore removed by gc: ${id}`;
             // The requested data store is removed by gc. Throw a 404 gc response exception.
             throw error;
         }
