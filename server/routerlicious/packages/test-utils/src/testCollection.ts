@@ -80,8 +80,9 @@ export class TestCollection implements ICollection<any> {
         if (!existingValue) {
             return { value: existingValue, existing: false };
         }
-        _.extend(existingValue, value);
-        return { value: existingValue.value, existing: existingValue };
+        this.removeOneInternal(existingValue);
+        this.insertOneInternal(value)
+        return { value: existingValue, existing: true };
     }
 
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
