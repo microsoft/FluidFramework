@@ -10,8 +10,8 @@ import React, { useEffect, useRef, useState } from "react";
 import type { ITask, ITaskList } from "../modelInterfaces";
 
 interface ITaskRowProps {
-    task: ITask;
-    deleteTask: () => void;
+    readonly task: ITask;
+    readonly deleteTask: () => void;
 }
 
 /**
@@ -66,7 +66,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 };
 
 export interface ITaskListViewProps {
-    taskList: ITaskList;
+    readonly taskList: ITaskList;
 }
 
 /**
