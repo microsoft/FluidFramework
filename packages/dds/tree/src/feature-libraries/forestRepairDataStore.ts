@@ -158,17 +158,17 @@ export class ForestRepairDataStore implements RepairDataStore {
     ): ITreeCursorSynchronous[] {
         const parent = getDescendant(this.root, path);
         const sparseField = parent.children.get(field);
-        assert(sparseField !== undefined, "No repair data found");
+        assert(sparseField !== undefined, ERR_MISSING_DATA);
         // TODO: should do more optimized search (ex: binary search).
         const sparseIndex = sparseField.findIndex((child) => child.parentIndex === index);
-        assert(sparseIndex !== -1, "No repair data found");
+        assert(sparseIndex !== -1, ERR_MISSING_DATA);
         assert(
             sparseField[sparseIndex + count - 1]?.parentIndex === index + count - 1,
-            "No repair data found",
+            ERR_MISSING_DATA,
         );
         return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
             const repair = node.data?.node?.get(revision);
-            assert(repair !== undefined, "No repair data found");
+            assert(repair !== undefined, ERR_MISSING_DATA);
             return singleMapTreeCursor(repair);
         });
     }
@@ -176,10 +176,12 @@ export class ForestRepairDataStore implements RepairDataStore {
     public getValue(revision: RevisionTag, path: UpPath): Value {
         const data = getDescendant(this.root, path).data;
         const valueMap = data?.value;
-        assert(valueMap?.has(revision) === true, "No repair data found");
+        assert(valueMap?.has(revision) === true, ERR_MISSING_DATA);
         return valueMap.get(revision);
     }
 }
+
+const ERR_MISSING_DATA = "No repair data found";
 
 interface ModifyLike {
     setValue?: Value;
