@@ -12,11 +12,13 @@ import type { ITask, ITaskList } from "../modelInterfaces";
 interface ITaskRowProps {
     task: ITask;
     deleteTask: () => void;
-    disabled?: boolean;
 }
 
+/**
+ * The view for a single task in the TaskListView, as a table row.
+ */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-    const { task, deleteTask, disabled } = props;
+    const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemotePriority = () => {
@@ -43,7 +45,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                 <CollaborativeInput
                     sharedString={ task.name }
                     style={{ width: "200px" }}
-                    disabled={ disabled }
                 ></CollaborativeInput>
             </td>
             <td>
@@ -52,7 +53,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                     onInput={ inputHandler }
                     type="number"
                     style={{ width: "50px" }}
-                    disabled={ disabled }
                 ></input>
             </td>
             <td>
@@ -67,11 +67,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 export interface ITaskListViewProps {
     taskList: ITaskList;
-    disabled?: boolean;
 }
 
+/**
+ * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
+ */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-    const { taskList, disabled } = props;
+    const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
     useEffect(() => {
@@ -92,7 +94,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
             key={ task.id }
             task={ task }
             deleteTask={ () => taskList.deleteTask(task.id) }
-            disabled={ disabled }
         />
     ));
 
