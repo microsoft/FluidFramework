@@ -15,7 +15,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack, LoggingError } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -24,9 +24,12 @@ interface IResponseException extends Error {
     stack?: string;
 }
 
+function isIResponseException(x: any): x is IResponseException {
+    return (x as IResponseException | undefined)?.errorFromRequestFluidObject === true;
+}
+
 export function exceptionToResponse(err: any): IResponse {
-    const status = 500;
-    if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
+    if (isIResponseException(err)) {
         const responseErr: IResponseException = err;
         return {
             mimeType: "text/plain",
@@ -36,14 +39,12 @@ export function exceptionToResponse(err: any): IResponse {
         };
     }
 
-    // Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
-    const errWithStack = generateErrorWithStack();
-
+    const normalizedError = normalizeError(err);
     return {
         mimeType: "text/plain",
-        status,
-        value: `${err}`,
-        get stack() { return ((err?.stack) as (string | undefined)) ?? errWithStack.stack; },
+        status: 500,
+        value: normalizedError.message,
+        get stack() { return normalizedError.stack; },
     };
 }
 
