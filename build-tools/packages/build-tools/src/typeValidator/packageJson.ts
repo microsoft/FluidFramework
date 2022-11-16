@@ -8,6 +8,7 @@ import * as semver from "semver";
 import * as util from "util";
 
 import {
+    ReleaseVersion,
     fromInternalScheme,
     getPreviousVersions,
     getVersionRange,
