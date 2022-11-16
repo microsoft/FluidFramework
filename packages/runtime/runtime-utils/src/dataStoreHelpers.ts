@@ -15,7 +15,7 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack, LoggingError } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -47,18 +47,26 @@ export function exceptionToResponse(err: any): IResponse {
     };
 }
 
-export function responseToException(response: IResponse, request: IRequest): Error {
-    const message = response.value;
-    const errWithStack = generateErrorWithStack();
-    const responseErr: Error & IResponseException = {
-        errorFromRequestFluidObject: true,
-        message,
-        name: "Error",
-        code: response.status,
-        get stack() { return response.stack ?? errWithStack.stack; },
-    };
+/**
+ * Error class for error instances generated from an error IResponse
+ */
+class ResponseException extends LoggingError implements IResponseException {
+    readonly errorFromRequestFluidObject: true = true;
+    readonly code: number;
+    constructor(response: IResponse) {
+        const responseValue = response.value;
+        const message = typeof responseValue === "string" ? responseValue : String(responseValue);
+        super(message);
 
-    return responseErr;
+        this.code = response.status;
+        if (response.stack !== undefined) {
+            this.overwriteStack(response.stack);
+        }
+    }
+}
+
+export function responseToException(response: IResponse, request: IRequest): Error {
+    return new ResponseException(response);
 }
 
 export async function requestFluidObject<T = FluidObject>(

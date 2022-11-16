@@ -194,7 +194,7 @@ export function wrapError<T extends LoggingError>(
     const newError = newErrorFn(message);
 
     if (stack !== undefined) {
-        overwriteStack(newError, stack);
+        newError.overwriteStack(stack);
     }
 
     // Mark external errors with untrustedOrigin flag
@@ -240,15 +240,6 @@ export function wrapErrorAndLog<T extends LoggingError>(
     }, innerError);
 
     return newError;
-}
-
-function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
-    // supposedly setting stack on an Error can throw.
-    try {
-        Object.assign(error, { stack });
-    } catch (errorSettingStack) {
-        error.addTelemetryProperties({ stack2: stack });
-    }
 }
 
 /**
@@ -422,6 +413,15 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
             errorInstanceId: this._errorInstanceId,
         };
     }
+
+    public overwriteStack(stack: string) {
+        // supposedly setting stack on an Error can throw.
+        try {
+            Object.assign(this, { stack });
+        } catch (errorSettingStack) {
+            this.addTelemetryProperties({ stack2: stack });
+        }
+    }
 }
 
 /** The Error class used when normalizing an external error */
@@ -440,7 +440,7 @@ class NormalizedLoggingError extends LoggingError {
         super(errorProps.message);
 
         if (errorProps.stack !== undefined) {
-            overwriteStack(this, errorProps.stack);
+            this.overwriteStack(errorProps.stack);
         }
     }
 }
