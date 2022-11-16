@@ -56,23 +56,17 @@ but this can be suppressed with the `--no-generateInName` flag.
 
 Type tests can be configured to use different baseline versions on a given branch depending on the type of release that
 the branch is designated for. For example, for the client release group, the _next_ branch is the _major version series
-branch_ and _main_ is the _minor version series branch_. This can be declared in the root package.json, in the
-`fluidBuild.repoPackages` section. For example, the following configuration designates the _main_ and _lts_ branches as
-minor version series branches, while the _next_ branch is designated for major releases.
+branch_ and _main_ is the _minor version series branch_. This can be declared in the root package.json for the release
+group, in the `fluidBuild.repoPackages` section. For example, the following configuration designates the _main_ and
+_lts_ branches as minor version series branches, while the _next_ branch is designated for major releases.
 
 ```json
 "fluidBuild": {
-  "repoPackages": {
-    "client": {
-      "directory": "",
-      "ignoredDirs": [],
-      "branchReleaseTypes": {
-        "main": "minor",
-        "lts": "minor",
-        "release/**": "patch",
-        "next": "major"
-      }
-    }
+  "branchReleaseTypes": {
+    "main": "minor",
+    "lts": "minor",
+    "release/**": "patch",
+    "next": "major"
   }
 }
 ```
@@ -104,10 +98,10 @@ designation. To do this, you can use any of the following strings instead of maj
 -   `~previousMajor`
 -   `~previousMinor`
 
-The "base" versions are calculated by zeroing out all version segments lower than the base. That is, for a version v,
+The "base" versions are calculated by zeroing out all version segments lower than the base. That is, for a version _v_,
 the baseMajor version is `${v.major}.0.0` and the baseMinor version is `${v.major}.${v.minor}.0`.
 
-The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version v,
+The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version _v_,
 the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor version is
 `${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}.0`.
 
