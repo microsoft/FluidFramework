@@ -20,16 +20,9 @@ export type ObjectMark<TNodeChange = NodeChangeType> =
 export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
-    | Tomb
     | Modify<TNodeChange>
     | Detach
     | ModifyDetach<TNodeChange>;
-
-export interface Tomb {
-    type: "Tomb";
-    change: RevisionTag;
-    count: number;
-}
 
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";

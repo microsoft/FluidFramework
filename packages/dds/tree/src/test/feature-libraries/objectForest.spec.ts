@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { ObjectForest } from "../../feature-libraries/object-forest";
+import { buildForest } from "../../feature-libraries/object-forest";
 
 import {
     fieldSchema,
@@ -321,7 +321,6 @@ function testForest(
     // TODO: implement and test fine grained invalidation.
 }
 
-testForest(
-    "object-forest",
-    () => new ObjectForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+testForest("object-forest", () =>
+    buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
 );

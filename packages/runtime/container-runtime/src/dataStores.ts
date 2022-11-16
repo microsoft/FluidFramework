@@ -623,12 +623,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
-     * scenarios with accessing deleted content.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - set the objects corresponding to routes as tombstones.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data

@@ -17,8 +17,11 @@ import {
     UpPath,
     Value,
     TaggedChange,
+    ReadonlyRepairDataStore,
+    RevisionTag,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
     FieldChangeMap,
@@ -164,12 +167,17 @@ export class ModularChangeFamily
     }
 
     private invertNodeChange(change: TaggedChange<NodeChangeset>): NodeChangeset {
-        // TODO: Correctly invert `change.valueChange`
-        if (change.change.fieldChanges === undefined) {
-            return {};
+        const inverse: NodeChangeset = {};
+
+        if (change.change.valueChange !== undefined) {
+            inverse.valueChange = { revert: change.revision };
         }
 
-        return { fieldChanges: this.invert({ ...change, change: change.change.fieldChanges }) };
+        if (change.change.fieldChanges !== undefined) {
+            inverse.fieldChanges = this.invert({ ...change, change: change.change.fieldChanges });
+        }
+
+        return inverse;
     }
 
     rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap {
@@ -223,39 +231,77 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: FieldChangeMap): Delta.Root {
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.intoDeltaImpl(change, repairStore ?? dummyRepairDataStore, undefined);
+    }
+
+    /**
+     * @param change - The change to convert into a delta.
+     * @param repairStore - The store to query for repair data.
+     * @param path - The path of the node being altered by the change as defined by the input context.
+     * Undefined for the root and for nodes that do not exist in the input context.
+     */
+    private intoDeltaImpl(
+        change: FieldChangeMap,
+        repairStore: ReadonlyRepairDataStore,
+        path: UpPath | undefined,
+    ): Delta.Root {
         const delta: Delta.Root = new Map();
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
-                (childChange) => this.deltaFromNodeChange(childChange),
+                (childChange, index): Delta.Modify =>
+                    this.deltaFromNodeChange(
+                        childChange,
+                        repairStore,
+                        index === undefined
+                            ? undefined
+                            : {
+                                  parent: path,
+                                  parentField: field,
+                                  parentIndex: index,
+                              },
+                    ),
+                (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+                    repairStore.getNodes(revision, path, field, index, count),
             );
             delta.set(field, deltaField);
         }
         return delta;
     }
 
-    private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+    private deltaFromNodeChange(
+        change: NodeChangeset,
+        repairStore: ReadonlyRepairDataStore,
+        path?: UpPath,
+    ): Delta.Modify {
         const modify: Delta.Modify = {
             type: Delta.MarkType.Modify,
         };
 
-        if (change.valueChange !== undefined) {
-            modify.setValue = change.valueChange.value;
+        const valueChange = change.valueChange;
+        if (valueChange !== undefined) {
+            if ("revert" in valueChange) {
+                assert(path !== undefined, "Only existing nodes can have their value restored");
+                assert(valueChange.revert !== undefined, "Unable to revert to undefined revision");
+                modify.setValue = repairStore.getValue(valueChange.revert, path);
+            } else {
+                modify.setValue = valueChange.value;
+            }
         }
 
         if (change.fieldChanges !== undefined) {
-            modify.fields = this.intoDelta(change.fieldChanges);
+            modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
         }
 
         return modify;
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, anchors);
+        return new ModularEditBuilder(this, changeReceiver, anchors);
     }
 }
 
@@ -301,10 +347,14 @@ export class ModularEditBuilder
 {
     constructor(
         family: ChangeFamily<unknown, FieldChangeMap>,
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ) {
-        super(family, deltaReceiver, anchors);
+        super(family, changeReceiver, anchors);
+    }
+
+    public apply(change: FieldChangeMap): void {
+        this.applyChange(change);
     }
 
     /**
