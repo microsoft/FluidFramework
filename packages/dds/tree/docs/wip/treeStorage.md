@@ -36,7 +36,7 @@ Allowing for partial downloads of the tree has implications on the layout of the
 
 ## Blobs and Chunks
 
-In order to allow virtualization and incremental writes, clients split the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service.
+In order to allow virtualization and incremental writes, clients split the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded at any time on demand.
 
 > The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob, for example. But in practice, having the chunk size mimic the blob size and storing each chunk in its own blob simplifies the architecture.
 
@@ -195,13 +195,21 @@ Paying this cost for every edit is a burden for a client desiring high write thr
 
 > Later, we'll look at how the length of the spine can be minimized, reducing the cumulative size of the uploads. Some different approaches are explored in the "Chunk Data Structure Implementations" section of this document.
 
+### Server-side Blob Retention
+
+It is a requirement that blobs be sufficiently long-lived on the server so that a client can download them when required. If a document is retaining its history then all blobs containing all chunks for all revisions must be available indefinitely. For documents that do not retain their history, blobs must live at least long enough for a client to be able to fully reconstruct the current state of the revision it is viewing; i.e. all blobs containing all chunks for the oldest revision on any client in the collaboration window.
+
+Both summary blobs and attachment blobs have lifetimes determined by their presence in the summary tree. If a summary ceases to include either a (summary) "blob" or an "attachment" then the blob will eventually be forgotten. This API may be at odds with the storage techniques described in this document. For documents retaining history, the list of blobs to retain grows unboundedly, increasing the summary size indefinitely. And even for documents that don't retain history, it may be awkward to maintain a list of all "live" blobs; for large documents the number of blobs could scale so large that even the list of references to those blobs needs to be incrementally updated and submitted.
+
+One possible alternative would be to provide a mode in which the server assumes each blob should be retained indefinitely until the DDS explicitly requests that it be deleted.
+
 ## Amortizing Writes
 
-Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a blob upload for every single write_. This is unnacceptable for a DDS which requires high write throughput. There are multiple ways to mitigate this cost.
+Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a blob upload for every single write_. This is unnacceptable for a DDS which requires high write throughput. There are different ways to mitigate this cost; one is proposed below.
 
 ### Write-Ahead Log and Intermittent Flushing
 
-One solution is to only upload modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "`flush`" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
+Write frequency can be reduced by only uploading modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "`flush`" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
 
 ```mermaid
 graph TD;
@@ -566,12 +574,12 @@ Advantages:
 Drawbacks:
 
 * The chunking process is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
-* The implementation is more complicated than the simple chunk tree.
+* The implementation is more complicated than the Simple Chunk Tree.
 
 Potential Optimizations:
 
-* Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Note how in the diagrams above, Eliminate this redundant shared prefix from all paths to greatly reduce the storage needed for the keys, especially for very deep trees (which will have very long paths).
-* Deduplicate/intern sections of paths within a B-Tree node that are repeated to save additional storage. This can be done with a prefix tree on each B-Tree node.
+* Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Eliminating this redundant shared prefix from all paths greatly reduces the storage needed for the keys, especially for very deep trees (which will have very long paths for leaf nodes). It also makes move operations more efficient since B-tree nodes that do not contain the part of the path that got updated by the move don't need to change.
+* Deduplicate/intern sections of paths within a B-Tree node that are repeated to save additional storage. This can be done with a prefix tree on each B-tree node.
 
 ### SPICE Tree
 
@@ -782,7 +790,7 @@ Drawbacks:
 
 ## Generalization
 
-// TODO
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level library available to all DDSs. Idealy, any DDS would be able to leverage the virtualized and incremental scalability described in this paper. Such a libr
 
 
 
