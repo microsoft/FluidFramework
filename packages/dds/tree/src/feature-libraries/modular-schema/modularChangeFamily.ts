@@ -184,11 +184,14 @@ export class ModularChangeFamily
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change) {
+            const { revision, isInverse } =
+                fieldChange.revision !== undefined ? fieldChange : changes;
+
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert({ ...changes, change: fieldChange.change }, (childChanges) =>
-                this.invertNodeChange({ ...changes, change: childChanges }),
+            ).rebaser.invert({ revision, isInverse, change: fieldChange.change }, (childChanges) =>
+                this.invertNodeChange({ revision, isInverse, change: childChanges }),
             );
 
             invertedFields.set(field, {
@@ -226,11 +229,14 @@ export class ModularChangeFamily
                     fieldKind,
                     changesets: [fieldChangeset, baseChangeset],
                 } = this.normalizeFieldChanges([fieldChange, baseChanges]);
+                const { revision, isInverse } =
+                    fieldChange.revision !== undefined ? fieldChange : over;
+
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
-                    { ...over, change: baseChangeset },
+                    { revision, isInverse, change: baseChangeset },
                     (child, baseChild) =>
-                        this.rebaseNodeChange(child, { ...over, change: baseChild }),
+                        this.rebaseNodeChange(child, { revision, isInverse, change: baseChild }),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty

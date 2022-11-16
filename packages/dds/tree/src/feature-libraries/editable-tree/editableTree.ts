@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { fail } from "assert";
 import { assert } from "@fluidframework/common-utils";
 import {
