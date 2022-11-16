@@ -26,8 +26,12 @@ import {
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
-// eslint-disable-next-line max-len
-import { Lumber, LumberEventName, Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+    getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
@@ -90,7 +94,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
-            Lumberjack.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
+            Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId), error);
             this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
             throw error;
         }
@@ -104,7 +108,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 errorMessage,
                 { messageMetaData },
             );
-            Lumberjack.error(errorMessage, { messageMetaData });
+            Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
             return new NoOpLambda(context);
         }
         if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
@@ -112,7 +116,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             const errMsg =
                 `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
             context.log?.error(errMsg, { messageMetaData });
-            Lumberjack.error(errMsg, { messageMetaData });
+            Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
             if (this.serviceConfiguration.enforceDiscoveryFlow) {
                 // This can/will prevent any users from creating a valid session in this location
                 // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
@@ -129,20 +133,20 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         if (document.deli === undefined || document.deli === null) {
             const message = "New document. Setting empty deli checkpoint";
             context.log?.info(message, { messageMetaData });
-            Lumberjack.error(message, { messageMetaData });
+            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (document.deli === "") {
                 const docExistsMessge = "Existing document. Fetching checkpoint from summary";
                 context.log?.info(docExistsMessge, { messageMetaData });
-                Lumberjack.error(docExistsMessge, { messageMetaData });
+                Lumberjack.info(docExistsMessge, getLumberBaseProperties(documentId, tenantId));
 
                 const lastCheckpointFromSummary =
                     await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
                 if (lastCheckpointFromSummary === undefined) {
                     const errMsg = "Could not load state from summary";
                     context.log?.error(errMsg, { messageMetaData });
-                    Lumberjack.error(errMsg, { messageMetaData });
+                    Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
                     this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
 
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
@@ -156,7 +160,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint.epoch = leaderEpoch;
                     const message = `Deli checkpoint from summary: ${JSON.stringify(lastCheckpoint)}`;
                     context.log?.info(message, { messageMetaData });
-                    Lumberjack.info(message, { messageMetaData });
+                    Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
                 }
             } else {
                 lastCheckpoint = JSON.parse(document.deli);
@@ -212,7 +216,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
                     context.log?.info(message, { messageMetaData });
-                    Lumberjack.info(message, { messageMetaData });
+                    Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
                 }
             };
             handler().catch((e) => {
@@ -221,7 +225,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     message,
                     { messageMetaData },
                 );
-                Lumberjack.error(message, { messageMetaData });
+                Lumberjack.error(message, getLumberBaseProperties(documentId, tenantId), e);
             });
         });
 
@@ -235,8 +239,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             null,
         ).catch((error) => {
             const errMsg = "Deli Lambda failed to mark session as active.";
-            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
-            Lumberjack.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
+            context.log?.error(`${errMsg} Exception: ${inspect(error)}`, { messageMetaData });
+            Lumberjack.error(`${errMsg}`, getLumberBaseProperties(documentId, tenantId), error);
         });
 
         return deliLambda;
@@ -278,7 +282,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 const errorMessage = `Error fetching deli state from summary`;
                 logger?.error(errorMessage, { messageMetaData });
                 logger?.error(JSON.stringify(exception), { messageMetaData });
-                Lumberjack.error(`Error fetching deli state from summary. Exception: ${JSON.stringify(exception)}`);
+                Lumberjack.error(
+                    errorMessage,
+                    getLumberBaseProperties(documentId, tenantId),
+                    exception);
                 return undefined;
             }
         }

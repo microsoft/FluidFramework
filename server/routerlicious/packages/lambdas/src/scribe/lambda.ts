@@ -32,7 +32,6 @@ import {
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
-    BaseTelemetryProperties,
     getLumberBaseProperties,
     Lumber,
     LumberEventName,
@@ -40,28 +39,9 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { createSessionMetric, logCommonSessionEndMetrics } from "../utils";
+import { createSessionMetric, logCommonSessionEndMetrics, CheckpointReason, ICheckpoint } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
-import { ScribeCheckpointReason } from "./checkpointManager";
-
-// Used to control checkpoint logic
-interface ICheckpoint {
-    currentScribeCheckpointMessage?: IQueuedMessage;
-    currentKafkaCheckpointMessage?: IQueuedMessage;
-
-    // used for ensuring the lambda remains open while clients are connected
-    nextKafkaCheckpointMessage?: IQueuedMessage;
-
-    // time fired due that should kick off a checkpoint when scribe is idle
-    idleTimer?: any;
-
-    // raw messages since the last checkpoint
-    rawMessagesSinceCheckpoint: number;
-
-    // time in milliseconds since the last checkpoint
-    lastCheckpointTime: number;
-}
 
 export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
@@ -380,7 +360,7 @@ export class ScribeLambda implements IPartitionLambda {
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
 
         if (this.noActiveClients) {
-            this.prepareCheckpoint(message, ScribeCheckpointReason.NoClients);
+            this.prepareCheckpoint(message, CheckpointReason.NoClients);
             this.noActiveClients = false;
         } else {
             const checkpointReason = this.getCheckpointReason();
@@ -393,7 +373,7 @@ export class ScribeLambda implements IPartitionLambda {
         }
     }
 
-    public prepareCheckpoint(message: IQueuedMessage, checkpointReason: ScribeCheckpointReason) {
+    public prepareCheckpoint(message: IQueuedMessage, checkpointReason: CheckpointReason) {
         // Get checkpoint context
         const checkpoint = this.generateScribeCheckpoint(message.offset);
         this.updateCheckpointMessages(message);
@@ -405,13 +385,12 @@ export class ScribeLambda implements IPartitionLambda {
             message,
             this.clearCache);
         this.lastOffset = message.offset;
-        const reason = ScribeCheckpointReason[checkpointReason];
+        const reason = CheckpointReason[checkpointReason];
         const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
         const lumberjackProperties = {
-            [BaseTelemetryProperties.tenantId]: this.tenantId,
-            [BaseTelemetryProperties.documentId]: this.documentId,
+            ...getLumberBaseProperties(this.documentId, this.tenantId),
             checkpointReason: reason,
-            };
+        };
         Lumberjack.info(checkpointResult, lumberjackProperties);
     }
 
@@ -624,7 +603,7 @@ export class ScribeLambda implements IPartitionLambda {
 
     private updateCheckpointMessages(message: IQueuedMessage) {
         // updates scribe checkpoint message
-        this.checkpointInfo.currentScribeCheckpointMessage = message;
+        this.checkpointInfo.currentCheckpointMessage = message;
 
         if (this.noActiveClients) {
             this.checkpointInfo.nextKafkaCheckpointMessage = undefined;
@@ -639,22 +618,22 @@ export class ScribeLambda implements IPartitionLambda {
 
     // Determines checkpoint reason based on some Heuristics
 
-    private getCheckpointReason(): ScribeCheckpointReason | undefined {
+    private getCheckpointReason(): CheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.scribe.scribeCheckpointHeuristics;
 
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
-            return ScribeCheckpointReason.EveryMessage;
+            return CheckpointReason.EveryMessage;
         }
 
         if (this.checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
             // exceeded max messages since last checkpoint
-            return ScribeCheckpointReason.MaxMessages;
+            return CheckpointReason.MaxMessages;
         }
 
         if ((Date.now() - this.checkpointInfo.lastCheckpointTime) >= checkpointHeuristics.maxTime) {
             // exceeded max time since last checkpoint
-            return ScribeCheckpointReason.MaxTime;
+            return CheckpointReason.MaxTime;
         }
 
         return undefined;
@@ -667,7 +646,7 @@ export class ScribeLambda implements IPartitionLambda {
         }
     }
 
-    private checkpoint(reason: ScribeCheckpointReason) {
+    private checkpoint(reason: CheckpointReason) {
         this.clearCheckpointIdleTimer();
         this.checkpointInfo.lastCheckpointTime = Date.now();
         this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
@@ -676,22 +655,26 @@ export class ScribeLambda implements IPartitionLambda {
     private updateCheckpointIdleTimer() {
         this.clearCheckpointIdleTimer();
 
-        const initialScribeCheckpointMessage = this.checkpointInfo.currentScribeCheckpointMessage;
+        const initialScribeCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
 
         this.checkpointInfo.idleTimer = setTimeout(() => {
             this.checkpointInfo.idleTimer = undefined;
 
             // verify that the current scribe message matches the message that started this timer
             // same implementation as in Deli
-            if (initialScribeCheckpointMessage === this.checkpointInfo.currentScribeCheckpointMessage) {
-                this.checkpoint(ScribeCheckpointReason.IdleTime);
+            if (initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
+                this.checkpoint(CheckpointReason.IdleTime);
                 if (initialScribeCheckpointMessage) {
                     this.checkpointCore(
                         this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset),
                         initialScribeCheckpointMessage,
                         this.clearCache);
                     const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
-                    Lumberjack.info(checkpointResult, getLumberBaseProperties(this.documentId, this.tenantId));
+                    const lumberjackProperties = {
+                        ...getLumberBaseProperties(this.documentId, this.tenantId),
+                        checkpointReason: "IdleTime",
+                    };
+                    Lumberjack.info(checkpointResult, lumberjackProperties);
                 }
             }
         }, this.serviceConfiguration.scribe.scribeCheckpointHeuristics.idleTime);

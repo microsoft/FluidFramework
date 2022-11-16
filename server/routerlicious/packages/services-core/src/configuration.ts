@@ -62,17 +62,17 @@ export interface IDeliCheckpointHeuristicsServerConfiguration {
 }
 
 export interface IScribeCheckpointHeuristicsServerConfiguration {
-        // Enables checkpointing based on the heuristics
-        enable: boolean;
+    // Enables checkpointing based on the heuristics
+    enable: boolean;
 
-        // Checkpoint after not processing any messages after this amount of time
-        idleTime: number;
+    // Checkpoint after not processing any messages after this amount of time
+    idleTime: number;
 
-        // Checkpoint if there hasn't been a checkpoint for this amount of time
-        maxTime: number;
+    // Checkpoint if there hasn't been a checkpoint for this amount of time
+    maxTime: number;
 
-        // Checkpoint after processing this amount of messages since the last checkpoint
-        maxMessages: number;
+    // Checkpoint after processing this amount of messages since the last checkpoint
+    maxMessages: number;
 }
 
 export interface IDeliOpEventServerConfiguration {

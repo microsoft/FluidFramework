@@ -14,15 +14,6 @@ import {
 import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
 
-export enum ScribeCheckpointReason {
-    EveryMessage,
-    IdleTime,
-    MaxTime,
-    MaxMessages,
-    ClearCache,
-    NoClients,
-}
-
 /**
  * MongoDB specific implementation of ICheckpointManager
  */
