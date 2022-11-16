@@ -210,6 +210,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
 
     /**
+     * @deprecated
      * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
      * This defaults to false (disabled) and must be explicitly set to true to enable.
      */

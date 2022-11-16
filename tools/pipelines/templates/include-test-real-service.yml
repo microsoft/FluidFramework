@@ -202,6 +202,7 @@ jobs:
             else
               ls -1 ${{ variables.testPackagePathPattern }}
               echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
+              exit -1
             fi
 
       # Auth to internal feed
