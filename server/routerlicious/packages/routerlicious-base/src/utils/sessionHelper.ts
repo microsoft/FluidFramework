@@ -136,7 +136,7 @@ async function updateExistingSession(
         isSessionActive: false,
     };
     try {
-        const result = await documentsCollection.findOrCreate(
+        const result = await documentsCollection.findAndUpdate(
             {
                 documentId,
                 "session.isSessionAlive": false,
@@ -150,6 +150,10 @@ async function updateExistingSession(
                 tenantId: document.tenantId,
                 version: document.version,
             });
+        Lumberjack.info(
+            `The existing document: ${result} in the documents collection in updateExistingSession`,
+            lumberjackProperties,
+        );
         // There is no document with isSessionAlive as false. It means this session has been discovered by
         // another call, and there is a race condition with different clients writing truth into the cosmosdb
         // from different clusters. Thus, let it call getSession for maximum three times.
@@ -157,8 +161,7 @@ async function updateExistingSession(
             Lumberjack.error(`The documentId: ${documentId} reaches three times for calling getSession`,
                 lumberjackProperties);
             throw new Error(`The documentId: ${documentId} reaches three times for calling getSession`);
-        }
-        if (!result.existing && count < 3) {
+        } else if (!result.existing && count < 3) {
             Lumberjack.info(
                 `The documentId: ${documentId} with isSessionAlive as false was not found in documents collection`,
                 lumberjackProperties,
@@ -171,11 +174,12 @@ async function updateExistingSession(
                 documentsCollection,
                 sessionStickinessDurationMs,
                 count + 1);
+        } else {
+            Lumberjack.info(
+                `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
+                lumberjackProperties,
+            );
         }
-        Lumberjack.info(
-            `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
-            lumberjackProperties,
-        );
     } catch (error) {
         Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
         throw new NetworkError(500, "Failed to persist update to document session");
