@@ -36,7 +36,8 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             exclusive: ["packages", "releaseGroup"],
         }),
         packages: Flags.boolean({
-            description: "Run on all independent packages in the repo.",
+            description:
+                "Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent packages.",
             default: false,
             exclusive: ["dir", "releaseGroup"],
         }),
@@ -55,8 +56,9 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         }),
         versionConstraint: Flags.string({
             char: "s",
-            description:
-                "The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the branch-specific configuration in package.json.",
+            description: `The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the branch-specific configuration in package.json, which is used by default.
+
+                For more information about the options, see <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline>`,
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -69,6 +71,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "baseMajor",
                 "~baseMinor",
             ],
+        }),
+        pin: Flags.boolean({
+            description:
+                "Searches the release git tags in the repo and pins the baseline version range to the maximum matching release.",
+            default: false,
         }),
         exact: Flags.string({
             description:
@@ -146,15 +153,21 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             this.info(`Finding package in directory: ${dir}`);
             packageDirs.push(dir);
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-shadow
-            const context = await this.getContext();
+            const ctx = await this.getContext();
+            if (flags.pin === true) {
+                // preload the release data if we're pinning to a version matching the range. This speeds release
+                // lookups later, which are done async so without the precaching there's a big when all the async tasks
+                // execute.
+                this.info(`Loading release data from git tags`);
+                await ctx.loadReleases();
+            }
             if (independentPackages) {
                 this.info(`Finding independent packages`);
-                packageDirs.push(...context.independentPackages.map((p) => p.directory));
+                packageDirs.push(...ctx.independentPackages.map((p) => p.directory));
             } else if (releaseGroup !== undefined) {
                 this.info(`Finding packages for release group: ${releaseGroup}`);
                 packageDirs.push(
-                    ...context.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+                    ...ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
                 );
             }
         }
@@ -199,6 +212,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                             flags.versionConstraint as PreviousVersionStyle | undefined,
                             flags.exact,
                             flags.reset,
+                            flags.pin,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {

@@ -93,16 +93,26 @@ on a particular branch. Baseline versions are set as follows based on the branch
 It may be useful to configure a branch for a specific baseline instead of the default based on the branch release
 designation. To do this, you can use any of the following strings instead of major/minor/patch.
 
-- `baseMajor`
-- `baseMinor`
-- `~baseMinor`
-- `previousPatch`
-- `previousMinor`
-- `previousMajor`
-- `^previousMajor`
-- `^previousMinor`
-- `~previousMajor`
-- `~previousMinor`
+-   `baseMajor`
+-   `baseMinor`
+-   `~baseMinor`
+-   `previousPatch`
+-   `previousMinor`
+-   `previousMajor`
+-   `^previousMajor`
+-   `^previousMinor`
+-   `~previousMajor`
+-   `~previousMinor`
+
+The "base" versions are calculated by zeroing out all version segments lower than the base. That is, for a version v,
+the baseMajor version is `${v.major}.0.0` and the baseMinor version is `${v.major}.${v.minor}.0`.
+
+The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version v,
+the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor version is
+`${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}.0`.
+
+The "previous" versions never roll back below 1 for the major version and 0 for minor and patch. That is, the
+previousMajor, previousMinor, and previousPatch versions for `1.0.0` are all `1.0.0`.
 
 #### Examples
 
@@ -120,7 +130,6 @@ Given the version 3.4.5:
 | `^previousMinor`       | ^3.3.0                         |
 | `~previousMajor`       | ~2.0.0                         |
 | `~previousMinor`       | ~3.3.0                         |
-
 
 Given the version 2.0.0-internal.2.3.5:
 

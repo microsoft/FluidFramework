@@ -12,7 +12,7 @@ import path from "path";
 import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context } from "@fluidframework/build-tools";
+import { Context, VersionDetails } from "@fluidframework/build-tools";
 
 import {
     ReleaseVersion,
@@ -26,7 +26,7 @@ import {
 
 import { BaseCommand } from "../../base";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
-import { VersionDetails, filterVersionsOlderThan, getAllVersions, sortVersions } from "../../lib";
+import { filterVersionsOlderThan, sortVersions } from "../../lib";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
@@ -248,7 +248,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         mode: "interactive" | "date" | "version" = "interactive",
     ): Promise<RawReleaseData | undefined> {
         // const tags = await getTagsForReleaseGroup(context, releaseGroup);
-        const versions = await getAllVersions(context, releaseGroupOrPackage);
+        const versions = await context.getAllVersions(releaseGroupOrPackage);
 
         if (versions === undefined) {
             return undefined;
@@ -333,7 +333,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const vIndex = sortedByVersion.findIndex(
             (v) =>
                 v.version === latestReleasedVersion?.version &&
-                v.date === latestReleasedVersion.date,
+                v.date === latestReleasedVersion?.date,
         );
         const previousReleasedVersion =
             vIndex + 1 <= versionCount

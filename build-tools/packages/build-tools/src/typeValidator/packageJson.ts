@@ -20,50 +20,14 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { Context } from "../bumpVersion/context";
-import { IFluidRepoPackage } from "../common/fluidRepo";
+import { BrokenCompatTypes, PackageJson } from "../common/npmPackage";
 
 export type PackageDetails = {
     readonly packageDir: string;
     readonly oldVersions: readonly string[];
     readonly broken: BrokenCompatTypes;
-    readonly pkg: PackageJson;
+    readonly json: PackageJson;
 };
-
-export interface BrokenCompatSettings {
-    backCompat?: false;
-    forwardCompat?: false;
-}
-
-export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
-
-interface PackageJson {
-    name: string;
-    version: string;
-    main: string | undefined;
-    private: boolean | undefined;
-    devDependencies: Record<string, string>;
-    typeValidation?: {
-        /**
-         * The version of the package. Should match the version field in package.json.
-         */
-        version: string;
-
-        /**
-         * An object containing types that are known to be broken.
-         */
-        broken: BrokenCompatTypes;
-
-        /**
-         * If true, disables type test preparation and generation for the package.
-         */
-        disabled?: boolean;
-
-        /**
-         * The version used as the "previous" version to compare against when generating type tests.
-         */
-        baselineVersion?: string;
-    };
-}
 
 function createSortedObject<T>(obj: Record<string, T>): Record<string, T> {
     const sortedKeys = Object.keys(obj).sort();
@@ -96,7 +60,7 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
     );
 
     return {
-        pkg: pkgJson,
+        json: pkgJson,
         packageDir,
         oldVersions,
         broken: pkgJson.typeValidation?.broken ?? {},
@@ -107,6 +71,31 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  * A type representing the different version constraint styles we use when determining the previous version for type
  * test generation.
  *
+ * The "base" versions are calculated by zeroing out all version segments lower than the base. That is, for a version v,
+ * the baseMajor version is `${v.major}.0.0` and the baseMinor version is `${v.major}.${v.minor}.0`.
+ *
+ * The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version v,
+ * the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor version is
+ * `${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}.0`.
+ *
+ * The "previous" versions never roll back below 1 for the major version and 0 for minor and patch. That is, the
+ * previousMajor, previousMinor, and previousPatch versions for `1.0.0` are all `1.0.0`.
+ *
+ * @example
+ *
+ * Given the version 2.3.5:
+ *
+ * baseMajor: 2.0.0
+ * baseMinor: 2.3.0
+ * ~baseMinor: ~2.3.0
+ * previousPatch: 2.3.4
+ * previousMinor: 2.2.0
+ * previousMajor: 1.0.0
+ * ^previousMajor: ^1.0.0
+ * ^previousMinor: ^2.2.0
+ * ~previousMajor: ~1.0.0
+ * ~previousMinor: ~2.2.0
+ *
  * @example
  *
  * Given the version 2.0.0-internal.2.3.5:
@@ -115,8 +104,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  * baseMinor: 2.0.0-internal.2.3.0
  * ~baseMinor: >=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0
  * previousPatch: 2.0.0-internal.2.3.4
- * previousMajor: 2.0.0-internal.1.0.0
  * previousMinor: 2.0.0-internal.2.2.0
+ * previousMajor: 2.0.0-internal.1.0.0
  * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
  * ^previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0
  * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
@@ -130,8 +119,8 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  * baseMinor: 2.0.0-internal.2.0.0
  * ~baseMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
  * previousPatch: 2.0.0-internal.2.0.0
- * previousMajor: 2.0.0-internal.1.0.0
  * previousMinor: 2.0.0-internal.2.0.0
+ * previousMajor: 2.0.0-internal.1.0.0
  * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
  * ^previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0
  * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
@@ -140,12 +129,15 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  * @internal
  */
 export type PreviousVersionStyle =
+    | PreviousVersionStyleRange
     | "baseMajor"
     | "baseMinor"
-    | "~baseMinor"
     | "previousPatch"
     | "previousMinor"
-    | "previousMajor"
+    | "previousMajor";
+
+export type PreviousVersionStyleRange =
+    | "~baseMinor"
     | "^previousMajor"
     | "^previousMinor"
     | "~previousMajor"
@@ -311,6 +303,10 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
  * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
  * @param resetBroken - If true, clears the "broken" section of the type validation, effectively clearing all known
  * breaking changes.
+ * @param pinRange - If true, the version used will be the maximum released version that matches the range. This
+ * effectively pins the version to a specific version while allowing it to be updated manually as needed. This is
+ * functionally similar to what a lockfile does, but this provides us with an extra level of control so we don't rely on
+ * lockfiles (in which we have found bugs).
  * @returns package metadata or a reason the package was skipped.
  *
  * @internal
@@ -322,40 +318,51 @@ export async function getAndUpdatePackageDetails(
     style?: PreviousVersionStyle,
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
+    pinRange = false,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
-    const pkg = context.fullPackageMap.get(packageDetails.pkg.name);
+    const pkg = context.fullPackageMap.get(packageDetails.json.name);
     if (pkg === undefined) {
         return { skipReason: "Skipping package: not found in repo" };
-    } else if (packageDetails.pkg.name.startsWith("@fluid-internal")) {
+    } else if (packageDetails.json.name.startsWith("@fluid-internal")) {
         // @fluid-internal packages are intended for internal use only and are not typically published. We don't make
         // compatibility promises for them, so they're excluded from type tests.
         return { skipReason: "Skipping package: @fluid-internal" };
-    } else if (packageDetails.pkg.main?.endsWith("index.js") !== true) {
+    } else if (packageDetails.json.main?.endsWith("index.js") !== true) {
         // An index.js main entrypoint is required for type tests to be enabled.
         return { skipReason: "Skipping package: no index.js in main property" };
-    } else if (packageDetails.pkg.private === true) {
+    } else if (packageDetails.json.private === true) {
         // Private packages aren't published, so no need to do type testing for them.
         return { skipReason: "Skipping package: private package" };
-    } else if (packageDetails.pkg.typeValidation?.disabled === true) {
+    } else if (packageDetails.json.typeValidation?.disabled === true) {
         // Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
         return { skipReason: "Skipping package: type validation disabled" };
     }
 
     const releaseGroup = pkg.monoRepo?.kind;
-    if (releaseGroup === undefined || pkg.monoRepo === undefined) {
-        return { skipReason: `Package has no release group: ${pkg.name}` };
+    if (
+        (releaseGroup === undefined || pkg.monoRepo === undefined) &&
+        pkg.fluidBuildConfig?.branchReleaseTypes === undefined
+    ) {
+        return {
+            skipReason: `Skipping package: has no release group and no branch release type config in package.json: ${pkg.name}`,
+        };
     }
 
-    const releaseGroupConfig = context.packageManifest.repoPackages[pkg.monoRepo.kind];
+    const version = packageDetails.json.version;
+    const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
     let releaseType: VersionBumpType | undefined;
     let previousVersionStyle: PreviousVersionStyle | undefined;
 
-    if (typeof releaseGroupConfig === "object") {
-        const rpg = releaseGroupConfig as IFluidRepoPackage;
-        const releaseTypes = rpg.branchReleaseTypes;
+    // the semver library uses null instead of undefined
+    let pinnedVersion: string | null = null;
+
+    if (fluidConfig !== undefined) {
+        const releaseTypes = fluidConfig.branchReleaseTypes;
         if (releaseTypes === undefined) {
-            return { skipReason: `Package has no branchReleaseTypes defined: ${pkg.name}` };
+            return {
+                skipReason: `Release group has no branchReleaseTypes defined: ${pkg.monoRepo?.kind}`,
+            };
         }
 
         for (const [branchPattern, branchReleaseType] of Object.entries(releaseTypes)) {
@@ -384,22 +391,38 @@ export async function getAndUpdatePackageDetails(
 
     if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
-        return { skipReason: "Skipping package: previousVersionStyle is undefined" };
+        return { skipReason: "Skipping package: no previousVersionStyle is defined for the branch" };
     }
 
-    const version = packageDetails.pkg.version;
-    let prevVersion: string;
-
-    if (exactPreviousVersionString === undefined) {
-        prevVersion = getPreviousVersionBaseline(version, previousVersionStyle);
-    } else {
-        prevVersion = exactPreviousVersionString;
+    const baseline = getPreviousVersionBaseline(version, previousVersionStyle);
+    if (
+        pinRange &&
+        (previousVersionStyle?.startsWith("~") || previousVersionStyle?.startsWith("^"))
+    ) {
+        const name = pkg.monoRepo?.kind ?? pkg.name;
+        const releases = await context.getAllVersions(name);
+        if (releases === undefined) {
+            // Skip if there's no versions found in the repo
+            return { skipReason: "Skipping package: no releases found" };
+        }
+        const versions = releases.map((v) => v.version);
+        pinnedVersion = semver.maxSatisfying(versions, baseline);
+        if (pinnedVersion === null) {
+            return {
+                skipReason: `Skipping package: couldn't calculate a pinned version for '${name}'`,
+            };
+        }
     }
+
+    const prevVersion =
+        exactPreviousVersionString === undefined
+            ? pinnedVersion ?? baseline
+            : exactPreviousVersionString;
 
     // check that the version exists on npm before trying to add the
     // dev dep and bumping the typeValidation version
     // if the version does not exist, we will defer updating the package
-    const packageDef = `${packageDetails.pkg.name}@${prevVersion}`;
+    const packageDef = `${packageDetails.json.name}@${prevVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
     const result = child_process.execSync(`npm ${args.join(" ")}`, { cwd: packageDir }).toString();
     const maybeVersions = result?.length > 0 ? safeParse(result, args.join(" ")) : undefined;
@@ -414,33 +437,36 @@ export async function getAndUpdatePackageDetails(
     if (versionsArray.length === 0) {
         return { skipReason: `Skipping package: ${packageDef} not found on npm` };
     } else {
-        packageDetails.pkg.devDependencies[
-            `${packageDetails.pkg.name}-previous`
+        packageDetails.json.devDependencies[
+            `${packageDetails.json.name}-previous`
         ] = `npm:${packageDef}`;
 
-        packageDetails.pkg.devDependencies = createSortedObject(packageDetails.pkg.devDependencies);
-        const disabled = packageDetails.pkg.typeValidation?.disabled;
+        packageDetails.json.devDependencies = createSortedObject(
+            packageDetails.json.devDependencies,
+        );
+        const disabled = packageDetails.json.typeValidation?.disabled;
 
-        packageDetails.pkg.typeValidation = {
+        packageDetails.json.typeValidation = {
             version,
-            baselineVersion: prevVersion,
-            broken: resetBroken === true ? {} : packageDetails.pkg.typeValidation?.broken ?? {},
+            baselineRange: baseline,
+            baselineVersion: baseline === prevVersion ? undefined : prevVersion,
+            broken: resetBroken === true ? {} : packageDetails.json.typeValidation?.broken ?? {},
         };
 
         if (disabled !== undefined) {
-            packageDetails.pkg.typeValidation.disabled = disabled;
+            packageDetails.json.typeValidation.disabled = disabled;
         }
 
         if ((writeUpdates ?? false) === true) {
             await util.promisify(fs.writeFile)(
                 `${packageDir}/package.json`,
-                JSON.stringify(packageDetails.pkg, undefined, 2).concat("\n"),
+                JSON.stringify(packageDetails.json, undefined, 2).concat("\n"),
             );
         }
     }
 
-    const oldVersions = Object.keys(packageDetails.pkg.devDependencies ?? {}).filter((k) =>
-        k.startsWith(packageDetails.pkg.name),
+    const oldVersions = Object.keys(packageDetails.json.devDependencies ?? {}).filter((k) =>
+        k.startsWith(packageDetails.json.name),
     );
     return {
         ...packageDetails,

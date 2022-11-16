@@ -16,7 +16,7 @@ export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
 export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
-export { FluidRepo } from "./common/fluidRepo";
+export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
 export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";

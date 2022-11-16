@@ -195,7 +195,7 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  * internal and virtualPatch version schemes.
  *
  * @param version - The version to calculate previous versions for.
- * @returns A tuple of previous major version and previous minor version.
+ * @returns A 3-tuple of previous major, minor, and patch versions.
  *
  * @remarks
  *
@@ -260,7 +260,7 @@ export function getPreviousVersions(
             throw new Error(`Couldn't parse version string: ${version}`);
         }
 
-        previousMajorVersion = ver.major <= 1 ? undefined : `${ver.major - 1}.0.0`;
+        previousMajorVersion = ver.major <= 1 ? "1.0.0" : `${ver.major - 1}.0.0`;
         previousMinorVersion =
             ver.minor === 0 && ver.major === 0
                 ? undefined

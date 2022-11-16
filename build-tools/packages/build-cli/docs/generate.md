@@ -114,27 +114,51 @@ Generates type tests based on the individual package settings in package.json.
 ```
 USAGE
   $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--exact <value> |  | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|pre
-    viousPatch|baseMinor|baseMajor|~baseMinor] [--reset | ] [--generateInName] [-v]
+    [--pin] [--exact <value> |  | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousM
+    inor|previousPatch|baseMinor|baseMajor|~baseMinor] [--reset | ] [--generateInName] [-v]
 
 FLAGS
-  -d, --dir=<value>                 Run on the package in this directory.
-  -g, --releaseGroup=<option>       Run on all packages within this release group.
-                                    <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  The type of version constraint to use for previous versions. Only applies to the
-                                    prepare phase. This overrides the branch-specific configuration in package.json.
-                                    <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
-                                    previousMinor|previousPatch|baseMinor|baseMajor|~baseMinor>
-  -v, --verbose                     Verbose logging.
-  --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
-                                    as-is. Only applies to the prepare phase.
-  --generate                        Generates tests only. Doesn't prepare the package.json.
-  --[no-]generateInName             Includes .generated in the generated type test filenames.
-  --packages                        Run on all independent packages in the repo.
-  --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
-                                    need to be run after preparation.
-  --reset                           Resets the broken type test settings in package.json. Only applies to the prepare
-                                    phase.
+  -d, --dir=<value>
+      Run on the package in this directory.
+
+  -g, --releaseGroup=<option>
+      Run on all packages within this release group.
+      <options: client|server|azure|build-tools>
+
+  -s, --versionConstraint=<option>
+      The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the
+      branch-specific configuration in package.json, which is used by default.
+
+      For more information about the options, see <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packa
+      ges/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline>
+      <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|previousPatch|base
+      Minor|baseMajor|~baseMinor>
+
+  -v, --verbose
+      Verbose logging.
+
+  --exact=<value>
+      An exact string to use as the previous version constraint. The string will be used as-is. Only applies to the
+      prepare phase.
+
+  --generate
+      Generates tests only. Doesn't prepare the package.json.
+
+  --[no-]generateInName
+      Includes .generated in the generated type test filenames.
+
+  --packages
+      Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent
+      packages.
+
+  --pin
+      Searches the release git tags in the repo and pins the baseline version range to the maximum matching release.
+
+  --prepare
+      Prepares the package.json only. Doesn't generate tests. Note that npm install may need to be run after preparation.
+
+  --reset
+      Resets the broken type test settings in package.json. Only applies to the prepare phase.
 
 DESCRIPTION
   Generates type tests based on the individual package settings in package.json.
