@@ -1993,14 +1993,14 @@ export class MergeTree {
                 return undefined;
             } else {
                 // Don't update ordinals because higher block will do it
-                return this.split(block);
+                return this.split(block, refSeq);
             }
         } else {
             return undefined;
         }
     }
 
-    private split(node: IMergeBlock) {
+    private split(node: IMergeBlock, obliterateRefSeq?: number) {
         const halfCount = MaxNodesInBlock / 2;
         const newNode = this.makeBlock(halfCount);
         node.childCount = halfCount;
@@ -2010,8 +2010,8 @@ export class MergeTree {
             newNode.assignChild(node.children[halfCount + i], i, false);
             node.children[halfCount + i] = undefined!;
         }
-        this.nodeUpdateLengthNewStructure(node);
-        this.nodeUpdateLengthNewStructure(newNode);
+        this.nodeUpdateLengthNewStructure(node, undefined, false, obliterateRefSeq);
+        this.nodeUpdateLengthNewStructure(newNode, undefined, false, obliterateRefSeq);
         return newNode;
     }
 
@@ -2149,9 +2149,9 @@ export class MergeTree {
 
         const afterMarkMoved = (node: IMergeBlock, pos: number, _start: number, _end: number) => {
             if (_overwrite) {
-                this.nodeUpdateLengthNewStructure(node);
+                this.nodeUpdateLengthNewStructure(node, undefined, false, refSeq);
             } else {
-                this.blockUpdateLength(node, seq, clientId);
+                this.blockUpdateLength(node, seq, clientId, refSeq);
             }
             return true;
         };
@@ -2393,11 +2393,12 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false) {
+    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false, obliterateRefSeq?: number) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
-            this.localPartialsComputed = computeLocalPartials;
-            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur, computeLocalPartials);
+            this.localPartialsComputed = false;
+            node.partialLengths = PartialSequenceLengths.combine(
+                node, this.collabWindow, recur, computeLocalPartials, obliterateRefSeq);
         }
     }
 
@@ -2613,19 +2614,20 @@ export class MergeTree {
         seq: number,
         clientId: number,
         newStructure = false,
+        obliterateRefSeq?: number,
     ) {
         let block: IMergeBlock | undefined = startBlock;
         while (block !== undefined) {
             if (newStructure) {
-                this.nodeUpdateLengthNewStructure(block);
+                this.nodeUpdateLengthNewStructure(block, undefined, false, obliterateRefSeq);
             } else {
-                this.blockUpdateLength(block, seq, clientId);
+                this.blockUpdateLength(block, seq, clientId, obliterateRefSeq);
             }
             block = block.parent;
         }
     }
 
-    private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
+    private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number, obliterateRefSeq?: number) {
         this.blockUpdate(node);
         this.localPartialsComputed = false;
         if (
@@ -2638,9 +2640,10 @@ export class MergeTree {
                 && MergeTree.options.incrementalUpdate
                 && clientId !== NonCollabClient
             ) {
-                node.partialLengths.update(node, seq, clientId, this.collabWindow);
+                node.partialLengths.update(node, seq, clientId, this.collabWindow, obliterateRefSeq);
             } else {
-                node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
+                node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow,
+                    undefined, undefined, obliterateRefSeq);
             }
         }
     }

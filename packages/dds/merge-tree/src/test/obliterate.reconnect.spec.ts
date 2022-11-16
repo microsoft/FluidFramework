@@ -364,11 +364,11 @@ describe("obliterate", () => {
             helper.insertText("B", 0, "ABC");
             helper.insertText("C", 0, "GGG");
             helper.obliterateRange("C", 2, 6);
-            helper.insertText("C", 1, "C");
+            helper.insertText("C", 1, "D");
             helper.processAllOps();
 
-            assert.equal(helper.clients.A.getText(), "GCGX21");
-            assert.equal(helper.clients.C.getText(), "GCGX21");
+            assert.equal(helper.clients.A.getText(), "GDGX21");
+            assert.equal(helper.clients.C.getText(), "GDGX21");
 
             helper.logger.validate();
         });
@@ -388,6 +388,26 @@ describe("obliterate", () => {
 
             assert.equal(helper.clients.A.getText(), "GCGX21");
             assert.equal(helper.clients.B.getText(), "GCGX21");
+
+            helper.logger.validate();
+        });
+
+        it("counts remotely but not concurrently inserted segments for length when tree is split", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("B", 0, "123");
+            helper.insertText("C", 0, "e");
+            helper.insertText("C", 0, "d");
+            helper.insertText("C", 0, "c");
+            helper.insertText("C", 0, "b");
+            helper.insertText("C", 0, "a");
+            helper.processAllOps();
+            helper.obliterateRange("B", 0, 2);
+            helper.removeRange("B", 4, 5);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "cde13");
+            assert.equal(helper.clients.C.getText(), "cde13");
 
             helper.logger.validate();
         });

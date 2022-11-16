@@ -261,8 +261,14 @@ export class PartialSequenceLengths {
         collabWindow: CollaborationWindow,
         recur = false,
         computeLocalPartials = false,
+        obliterateRefSeq?: number,
     ): PartialSequenceLengths {
-        const leafPartialLengths = PartialSequenceLengths.fromLeaves(block, collabWindow, computeLocalPartials);
+        const leafPartialLengths = PartialSequenceLengths.fromLeaves(
+            block,
+            collabWindow,
+            computeLocalPartials,
+            obliterateRefSeq,
+        );
 
         let hasInternalChild = false;
         const childPartials: PartialSequenceLengths[] = [];
@@ -271,8 +277,13 @@ export class PartialSequenceLengths {
             if (!child.isLeaf()) {
                 hasInternalChild = true;
                 if (recur) {
-                    child.partialLengths =
-                        PartialSequenceLengths.combine(child, collabWindow, true, computeLocalPartials);
+                    child.partialLengths = PartialSequenceLengths.combine(
+                        child,
+                        collabWindow,
+                        true,
+                        computeLocalPartials,
+                        obliterateRefSeq,
+                    );
                 }
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 childPartials.push(child.partialLengths!);
@@ -340,6 +351,7 @@ export class PartialSequenceLengths {
         block: IMergeBlock,
         collabWindow: CollaborationWindow,
         computeLocalPartials: boolean,
+        obliterateRefSeq?: number,
     ): PartialSequenceLengths {
         const combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq, computeLocalPartials);
         combinedPartialLengths.segmentCount = block.childCount;
@@ -369,6 +381,7 @@ export class PartialSequenceLengths {
                         segment,
                         removalInfo,
                         moveInfo,
+                        obliterateRefSeq,
                     );
                 }
             }
@@ -439,7 +452,8 @@ export class PartialSequenceLengths {
         combinedPartialLengths: PartialSequenceLengths,
         segment: ISegment,
         removalInfo?: IRemovalInfo,
-        moveInfo?: IMoveInfo) {
+        moveInfo?: IMoveInfo,
+        obliterateRefSeq?: number) {
         const isLocal =
             (removalInfo === undefined && moveInfo === undefined && segment.seq === UnassignedSequenceNumber)
             || (removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber)
@@ -462,7 +476,12 @@ export class PartialSequenceLengths {
                 // in the first position of removalInfo.
                 clientId = moveInfo.movedClientIds[0];
 
-                if (clientId !== segment.clientId) {
+                if (
+                    clientId !== segment.clientId
+                    && obliterateRefSeq !== undefined
+                    && segment.seq !== undefined
+                    && obliterateRefSeq < segment.seq
+                ) {
                     remoteObliteratedLen = segmentLen;
                 }
 
@@ -491,7 +510,12 @@ export class PartialSequenceLengths {
             // in the first position of removalInfo.
             clientId = moveInfo.movedClientIds[0];
 
-            if (clientId !== segment.clientId) {
+            if (
+                clientId !== segment.clientId
+                && obliterateRefSeq !== undefined
+                && segment.seq !== undefined
+                && obliterateRefSeq < segment.seq
+                ) {
                 remoteObliteratedLen = segmentLen;
             }
 
@@ -668,7 +692,9 @@ export class PartialSequenceLengths {
         node: IMergeBlock,
         seq: number,
         clientId: number,
-        collabWindow: CollaborationWindow) {
+        collabWindow: CollaborationWindow,
+        obliterateRefSeq?: number,
+    ) {
         let seqSeglen = 0;
         let remoteObliteratedLen = 0;
         let segCount = 0;
@@ -703,9 +729,14 @@ export class PartialSequenceLengths {
                 } else if (moveInfo?.movedSeq === seq) {
                     seqSeglen -= segment.cachedLength;
 
-                    if (segment.clientId !== clientId) {
-                        remoteObliteratedLen += segment.cachedLength;
-                    }
+                    if (
+                        segment.clientId !== clientId
+                        && obliterateRefSeq !== undefined
+                        && segment.seq !== undefined
+                        && obliterateRefSeq < segment.seq
+                        ) {
+                            remoteObliteratedLen += segment.cachedLength;
+                      }
                 }
                 segCount++;
             }
