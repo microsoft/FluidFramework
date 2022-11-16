@@ -19,12 +19,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
-- [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
-### Remove-ISummaryBaseConfigurationsummarizerClientElection
-`ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is not being removed.
-There will be no replacement for this property.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
@@ -32,7 +29,7 @@ There will be no replacement for this property.
 - [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
-
+- [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
 and required in the `IRuntimeFactory.instantiateRuntime` function. This flag is used to determine whether the runtime should
@@ -74,6 +71,10 @@ Other clients will not be affected.
 ### Remove ISummarizerRuntime batchEnd listener
 The `"batchEnd"` listener in `ISummarizerRuntime` has been removed. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
+### Remove-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
+There will be no replacement for this property.'
 
 # 2.0.0-internal.2.1.0
 
