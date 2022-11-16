@@ -13,6 +13,7 @@ export {
     getReleaseSourceForReleaseGroup,
     generateReleaseBranchName,
 } from "./branches";
+export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export {
     bumpPackageDependencies,
     bumpReleaseGroup,
@@ -23,8 +24,12 @@ export {
 export { Repository } from "./git";
 export {
     filterVersionsOlderThan,
-    getPreReleaseDependencies,
     generateReleaseGitTagName,
+    getAllVersions,
+    getFluidDependencies,
+    getPreReleaseDependencies,
+    getTagsForReleaseGroup,
+    getVersionFromTag,
     isReleased,
     npmCheckUpdates,
     PackageVersionMap,
@@ -34,3 +39,11 @@ export {
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
 export { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "./github";
+export {
+    getRanges,
+    PackageVersionList,
+    ReleaseRanges,
+    ReleaseReport,
+    ReportKind,
+    toReportKind,
+} from "./release";
