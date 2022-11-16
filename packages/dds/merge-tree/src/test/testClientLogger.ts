@@ -115,12 +115,12 @@ export class TestClientLogger {
                         this.localLine[clientLogIndex + 1].length,
                         this.paddings[clientLogIndex + 1]);
             };
-            c.mergeTreeDeltaCallback = callback;
-            c.mergeTreeMaintenanceCallback = (main, op) => {
+            c.on("delta", callback);
+            c.on("maintenance", (main, op) => {
                 if (main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
                     callback(op);
                 }
-            };
+            });
         });
         this.roundLogLines.push(logHeaders);
         this.roundLogLines[0].forEach((v) => this.paddings.push(v.length));
