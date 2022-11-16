@@ -51,6 +51,7 @@ describe("MergeTree.Revertibles", () => {
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
         clients.B.on("delta", (op, delta) => {
             appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
         });
@@ -77,6 +78,7 @@ describe("MergeTree.Revertibles", () => {
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
         clients.B.on("delta", (op, delta) => {
             appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
         });
@@ -103,10 +105,11 @@ describe("MergeTree.Revertibles", () => {
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
         // the test logger uses these callbacks, so preserve it
         const clientBDriver = createRevertDriver(clients.B);
-        const deltaCallback = (delta) => {
+        const deltaCallback = (op, delta) => {
             appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
         };
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
         clients.B.on("delta", deltaCallback);
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BB"), ++seq));
@@ -134,11 +137,12 @@ describe("MergeTree.Revertibles", () => {
         const ops: ISequencedDocumentMessage[] = [];
 
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
-        const deltaCallback = (delta) => {
+        const deltaCallback = (op, delta) => {
             appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
         };
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
         clients.B.on("delta", deltaCallback);
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(2, 3), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
@@ -166,7 +170,7 @@ describe("MergeTree.Revertibles", () => {
         const ops: ISequencedDocumentMessage[] = [];
 
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
-        const deltaCallback = (delta) => {
+        const deltaCallback = (op, delta) => {
             appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
         };
         const clientBDriver = createRevertDriver(clients.B);
@@ -178,7 +182,7 @@ describe("MergeTree.Revertibles", () => {
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
 
         // revert to the original callback
-        clients.B.removeListener("delta", (op, delta) => deltaCallback);
+        clients.B.off("delta", deltaCallback);
 
         ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
 
@@ -202,6 +206,7 @@ describe("MergeTree.Revertibles", () => {
 
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
         clients.B.on("delta", (op, delta) => {
             if (op.sequencedMessage === undefined) {
                 appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
@@ -209,6 +214,8 @@ describe("MergeTree.Revertibles", () => {
         });
         ops.push(clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 4, { test: "B" }, undefined), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq));
+
+        // revert to the original callback
         clients.B.off("delta", (op, delta) => {
             if (op.sequencedMessage === undefined) {
                 appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
