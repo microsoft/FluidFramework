@@ -15,6 +15,7 @@
     "build:compile": "lerna run build:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "format": "lerna run format --no-sort --stream -- -- -- --color",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",

@@ -161,7 +161,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 delta.push(offset);
                 nodeIndex = index;
             }
-            delta.push(deltaFromChild(nodeChange));
+            delta.push(deltaFromChild(nodeChange, index));
             nodeIndex += 1;
         }
         return delta;

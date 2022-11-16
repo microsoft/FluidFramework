@@ -8,13 +8,14 @@ import {
     FieldChangeHandler,
     FieldKinds,
     NodeChangeset,
+    NodeReviver,
     singleTextCursor,
 } from "../../feature-libraries";
-import { makeAnonChange } from "../../rebase";
+import { makeAnonChange, RevisionTag } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual } from "../utils";
+import { assertMarkListEqual, noRepair } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const tree1 = { type: nodeType, value: "value1" };
@@ -57,7 +58,7 @@ describe("Value field changesets", () => {
         FieldKinds.value.changeHandler;
 
     const change1WithChildChange: FieldKinds.ValueChangeset = {
-        value: tree1,
+        value: { set: tree1 },
         changes: nodeChange1,
     };
     const childChange1: FieldKinds.ValueChangeset = { changes: nodeChange1 };
@@ -67,13 +68,18 @@ describe("Value field changesets", () => {
     const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
     const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
+    const detachedBy: RevisionTag = brand(42);
+    const revertChange2: FieldKinds.ValueChangeset = {
+        value: { revert: detachedBy },
+    };
+
     const simpleChildComposer = (changes: NodeChangeset[]) => {
         assert.equal(changes.length, 1);
         return changes[0];
     };
 
     it("can be created", () => {
-        const expected: FieldKinds.ValueChangeset = { value: tree1 };
+        const expected: FieldKinds.ValueChangeset = { value: { set: tree1 } };
         assert.deepEqual(change1, expected);
     });
 
@@ -90,7 +96,7 @@ describe("Value field changesets", () => {
         );
 
         const expected: FieldKinds.ValueChangeset = {
-            value: tree1,
+            value: { set: tree1 },
             changes: nodeChange1,
         };
 
@@ -150,14 +156,30 @@ describe("Value field changesets", () => {
         );
     });
 
-    it("can be represented as a delta", () => {
+    it("can be converted to a delta when overwriting content", () => {
         const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree3)] },
         ];
 
-        const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
+        const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1, noRepair);
         assertMarkListEqual(delta, expected);
+    });
+
+    it("can be converted to a delta when restoring content", () => {
+        const expected: Delta.MarkList = [
+            { type: Delta.MarkType.Delete, count: 1 },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+        ];
+
+        const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
+            assert.equal(revision, detachedBy);
+            assert.equal(index, 0);
+            assert.equal(count, 1);
+            return [singleTextCursor(tree1)];
+        };
+        const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
+        assertMarkListEqual(actual, expected);
     });
 
     it("can be encoded in JSON", () => {
@@ -183,8 +205,13 @@ describe("Optional field changesets", () => {
         fieldHandler.editor as FieldKinds.OptionalFieldEditor;
 
     const change1: FieldKinds.OptionalChangeset = {
-        fieldChange: { newContent: tree1, wasEmpty: true },
+        fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
         childChange: nodeChange1,
+    };
+
+    const detachedBy: RevisionTag = brand(42);
+    const revertChange2: FieldKinds.OptionalChangeset = {
+        fieldChange: { newContent: { revert: detachedBy }, wasEmpty: false },
     };
 
     const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
@@ -194,7 +221,7 @@ describe("Optional field changesets", () => {
     it("can be created", () => {
         const actual: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree1), true);
         const expected: FieldKinds.OptionalChangeset = {
-            fieldChange: { newContent: tree1, wasEmpty: true },
+            fieldChange: { newContent: { set: tree1 }, wasEmpty: true },
         };
         assert.deepEqual(actual, expected);
     });
@@ -269,7 +296,7 @@ describe("Optional field changesets", () => {
             },
         ];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change1, deltaFromChild1, noRepair), expected);
     });
 
     it("can be converted to a delta when replacing content", () => {
@@ -278,13 +305,29 @@ describe("Optional field changesets", () => {
             { type: Delta.MarkType.Insert, content: [singleTextCursor(tree2)] },
         ];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change2, deltaFromChild1, noRepair), expected);
+    });
+
+    it("can be converted to a delta when restoring content", () => {
+        const expected: Delta.MarkList = [
+            { type: Delta.MarkType.Delete, count: 1 },
+            { type: Delta.MarkType.Insert, content: [singleTextCursor(tree1)] },
+        ];
+
+        const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
+            assert.equal(revision, detachedBy);
+            assert.equal(index, 0);
+            assert.equal(count, 1);
+            return [singleTextCursor(tree1)];
+        };
+        const actual = fieldHandler.intoDelta(revertChange2, deltaFromChild1, repair);
+        assertMarkListEqual(actual, expected);
     });
 
     it("can be converted to a delta with only child changes", () => {
         const expected: Delta.MarkList = [{ type: Delta.MarkType.Modify, setValue: "value4" }];
 
-        assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
+        assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2, noRepair), expected);
     });
 
     it("can be encoded in JSON", () => {
