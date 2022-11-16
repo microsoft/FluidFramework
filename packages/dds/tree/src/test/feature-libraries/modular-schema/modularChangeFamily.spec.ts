@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { RepairDataStore } from "../../../core";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -17,10 +18,11 @@ import {
     NodeChangeset,
     genericFieldKind,
 } from "../../../feature-libraries";
-import { makeAnonChange } from "../../../rebase";
+import { makeAnonChange, RevisionTag } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { assertDeltaEqual } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -63,8 +65,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
     rebaser: singleNodeRebaser,
     encoder: singleNodeEncoder,
     editor: singleNodeEditor,
-
-    intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
+    intoDelta: (change, deltaFromChild) => [deltaFromChild(change, 0)],
 };
 
 const singleNodeField = new FieldKind(
@@ -74,6 +75,12 @@ const singleNodeField = new FieldKind(
     (a, b) => false,
     new Set(),
 );
+
+const noRepair: RepairDataStore = {
+    capture: () => {},
+    getNodes: () => assert.fail(),
+    getValue: () => assert.fail(),
+};
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
     [singleNodeField, valueField].map((field) => [field.identifier, field]),
@@ -202,6 +209,36 @@ const rootChange2Generic: FieldChangeMap = new Map([
         {
             fieldKind: genericFieldKind.identifier,
             change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2)),
+        },
+    ],
+]);
+
+const testValue = "Test Value";
+const nodeValueOverwrite: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(
+                genericFieldKind.changeHandler.editor.buildChildChange(0, {
+                    valueChange: { value: testValue },
+                }),
+            ),
+        },
+    ],
+]);
+
+const detachedBy: RevisionTag = brand(42);
+const nodeValueRevert: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: genericFieldKind.identifier,
+            change: brand(
+                genericFieldKind.changeHandler.editor.buildChildChange(0, {
+                    valueChange: { revert: detachedBy },
+                }),
+            ),
         },
     ],
 ]);
@@ -387,34 +424,72 @@ describe("ModularChangeFamily", () => {
         });
     });
 
-    it("intoDelta", () => {
-        const valueDelta1: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                setValue: 1,
-            },
-        ];
+    describe("intoDelta", () => {
+        it("fieldChanges", () => {
+            const valueDelta1: Delta.MarkList = [
+                {
+                    type: Delta.MarkType.Modify,
+                    setValue: 1,
+                },
+            ];
 
-        const valueDelta2: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                setValue: 2,
-            },
-        ];
+            const valueDelta2: Delta.MarkList = [
+                {
+                    type: Delta.MarkType.Modify,
+                    setValue: 2,
+                },
+            ];
 
-        const nodeDelta: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fieldA, valueDelta1]]),
-            },
-        ];
+            const nodeDelta: Delta.MarkList = [
+                {
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([[fieldA, valueDelta1]]),
+                },
+            ];
 
-        const expectedDelta: Delta.Root = new Map([
-            [fieldA, nodeDelta],
-            [fieldB, valueDelta2],
-        ]);
+            const expectedDelta: Delta.Root = new Map([
+                [fieldA, nodeDelta],
+                [fieldB, valueDelta2],
+            ]);
 
-        assert.deepEqual(family.intoDelta(rootChange1a), expectedDelta);
+            assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+        });
+
+        it("value overwrite", () => {
+            const nodeDelta: Delta.MarkList = [
+                {
+                    type: Delta.MarkType.Modify,
+                    setValue: testValue,
+                },
+            ];
+            const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
+            assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
+        });
+
+        it("value revert", () => {
+            const nodeDelta: Delta.MarkList = [
+                {
+                    type: Delta.MarkType.Modify,
+                    setValue: testValue,
+                },
+            ];
+            const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
+            const repair: RepairDataStore = {
+                capture: (TreeDestruction) => assert.fail(),
+                getNodes: () => assert.fail(),
+                getValue: (revision, path) => {
+                    assert.equal(revision, detachedBy);
+                    assert.deepEqual(path, {
+                        parent: undefined,
+                        parentField: fieldA,
+                        parentIndex: 0,
+                    });
+                    return testValue;
+                },
+            };
+            const actual = family.intoDelta(nodeValueRevert, repair);
+            assertDeltaEqual(actual, expectedDelta);
+        });
     });
 
     it("Json encoding", () => {
@@ -425,7 +500,7 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build child change", () => {
-        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const editor = family.buildEditor((edit) => {}, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
@@ -449,21 +524,15 @@ describe("ModularChangeFamily", () => {
     });
 
     it("build value change", () => {
-        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const editor = family.buildEditor((edit) => {}, new AnchorSet());
         const path: UpPath = {
             parent: undefined,
             parentField: fieldA,
             parentIndex: 0,
         };
 
-        const value = "Test Value";
-        const nodeChange: NodeChangeset = { valueChange: { value } };
-        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
-        const expectedChange: FieldChangeMap = new Map([
-            [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
-        ]);
-
-        editor.setValue(path, value);
-        assert.deepEqual(editor.getChanges(), [expectedChange]);
+        editor.setValue(path, testValue);
+        const changes = editor.getChanges();
+        assert.deepEqual(changes, [nodeValueOverwrite]);
     });
 });

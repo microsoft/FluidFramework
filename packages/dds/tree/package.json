@@ -1,7 +1,6 @@
 {
   "name": "@fluid-internal/tree",
   "version": "2.0.0-internal.2.2.0",
-  "private": true,
   "description": "Tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,6 +33,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
@@ -85,7 +85,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/container-loader": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-drivers": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",

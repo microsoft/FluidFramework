@@ -10,13 +10,14 @@ import {
     FieldChange,
     FieldKinds,
     NodeChangeset,
+    NodeReviver,
     SequenceField as SF,
     singleTextCursor,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { brand, brandOpaque } from "../../../util";
+import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
 import { TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -28,14 +29,24 @@ const tag: RevisionTag = brand(42);
 const moveId = brandOpaque<Delta.MoveId>(opId);
 const fooField = brand<FieldKey>("foo");
 
-function toDelta(change: TestChangeset): Delta.MarkList {
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+
+function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
+    return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
+}
+
+function toDelta(change: TestChangeset, reviver: NodeReviver = fakeRepairData): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, reviver);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
+    return SF.sequenceFieldToDelta(
+        change,
+        () => fail("Unexpected call to child ToDelta"),
+        fakeRepairData,
+    );
 }
 
 describe("SequenceField - toDelta", () => {
@@ -67,18 +78,6 @@ describe("SequenceField - toDelta", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("tomb", () => {
-        const actual = toDelta([
-            {
-                type: "Tomb",
-                change: tag,
-                count: 3,
-            },
-        ]);
-        const expected: Delta.MarkList = [];
-        assert.deepEqual(actual, expected);
-    });
-
     it("empty child change", () => {
         const actual = toDelta([{ type: "Modify", changes: TestChange.emptyChange }]);
         const expected: Delta.MarkList = [];
@@ -96,21 +95,27 @@ describe("SequenceField - toDelta", () => {
         assert.deepStrictEqual(actual, expected);
     });
 
-    it("revive", () => {
+    it("revive => insert", () => {
         const changeset: TestChangeset = [
-            { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 2 },
+            { type: "Revive", id: opId, detachedBy: tag, detachIndex: 0, count: 1 },
         ];
-        const actual = toDelta(changeset);
-        assert.equal(actual.length, 1);
-        const mark = actual[0];
-        assert.equal(typeof mark, "object");
-        assert(typeof mark === "object");
-        assert.equal(mark.type, Delta.MarkType.Insert);
-        assert(mark.type === Delta.MarkType.Insert);
-        assert.equal(mark.content.length, 2);
+        function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+            assert.equal(revision, tag);
+            assert.equal(index, 0);
+            assert.equal(count, 1);
+            return contentCursor;
+        }
+        const actual = toDelta(changeset, reviver);
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Insert,
+                content: contentCursor,
+            },
+        ];
+        assertMarkListEqual(actual, expected);
     });
 
-    it("revive and modify", () => {
+    it("revive and modify => insert", () => {
         const nestedChange: FieldChange = {
             fieldKind: FieldKinds.sequence.identifier,
             change: brand("Dummy Child Change"),
@@ -128,15 +133,20 @@ describe("SequenceField - toDelta", () => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: fieldChanges };
         };
-        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
-        assert.equal(actual.length, 1);
-        const mark = actual[0];
-        assert.equal(typeof mark, "object");
-        assert(typeof mark === "object");
-        assert.equal(mark.type, Delta.MarkType.InsertAndModify);
-        assert(mark.type === Delta.MarkType.InsertAndModify);
-        assert.notEqual(mark.content, undefined);
-        assert.deepEqual(mark.fields, fieldChanges);
+        function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
+            assert.equal(revision, tag);
+            assert.equal(index, 0);
+            assert.equal(count, 1);
+            return contentCursor;
+        }
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, reviver);
+        const expected: Delta.MarkList = [
+            {
+                type: Delta.MarkType.Insert,
+                content: contentCursor,
+            },
+        ];
+        assertMarkListEqual(actual, expected);
     });
 
     it("delete", () => {
@@ -202,12 +212,6 @@ describe("SequenceField - toDelta", () => {
             {
                 type: "Modify",
                 changes: TestChange.mint([0], 1),
-            },
-            2,
-            {
-                type: "Tomb",
-                change: tag,
-                count: 3,
             },
         ];
         const del: Delta.Delete = {
@@ -299,7 +303,7 @@ describe("SequenceField - toDelta", () => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
         };
-        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, noRepair);
         assertMarkListEqual(actual, expected);
     });
 });

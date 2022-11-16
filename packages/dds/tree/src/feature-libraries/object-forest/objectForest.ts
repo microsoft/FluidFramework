@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    DisposingDependee,
-    ObservingDependent,
     recordDependency,
     SimpleDependee,
     SimpleObservingDependent,
@@ -51,12 +49,10 @@ function makeRoot(): MapTree {
  * This implementation focuses on correctness and simplicity, not performance.
  * It does not use compressed chunks: instead nodes are implemented using objects.
  */
-export class ObjectForest extends SimpleDependee implements IEditableForest {
+class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly roots: MapTree = makeRoot();
-
-    private readonly dependees: Map<ObjectField | MapTree, DisposingDependee> = new Map();
 
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
@@ -68,6 +64,20 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         super("object-forest.ObjectForest");
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
+    }
+
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
+        const forest = new ObjectForest(schema, anchors);
+        // Deep copy the trees.
+        for (const [key, value] of this.roots.fields) {
+            // TODO: this references the existing TreeValues instead of copying them:
+            // they are assumed to be copy on write. See TODO on NodeData.
+            forest.roots.fields.set(
+                key,
+                value.map((v) => mapTreeFromCursor(singleMapTreeCursor(v))),
+            );
+        }
+        return forest;
     }
 
     public forgetAnchor(anchor: Anchor): void {
@@ -143,21 +153,6 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         cursor.free();
     }
 
-    public observeItem(
-        item: ObjectField | MapTree,
-        observer: ObservingDependent | undefined,
-    ): void {
-        let result = this.dependees.get(item);
-        if (result === undefined) {
-            result = new DisposingDependee("ObjectForest item");
-            this.dependees.set(item, result);
-            recordDependency(observer, result);
-            result.endInitialization(() => this.dependees.delete(item));
-        } else {
-            recordDependency(observer, result);
-        }
-    }
-
     private nextRange = 0;
     public newDetachedField(): DetachedField {
         const range: DetachedField = brand(String(this.nextRange));
@@ -216,13 +211,12 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent,
     ): TreeNavigationResult {
         const path = this.anchors.locate(destination);
         if (path === undefined) {
             return TreeNavigationResult.NotFound;
         }
-        this.moveCursorToPath(path, cursorToMove, observer);
+        this.moveCursorToPath(path, cursorToMove);
         return TreeNavigationResult.Ok;
     }
 
@@ -247,11 +241,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
      * This is NOT a relative move: current position is discarded.
      * Path must point to existing node.
      */
-    moveCursorToPath(
-        destination: UpPath | undefined,
-        cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent,
-    ): void {
+    moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void {
         assert(
             cursorToMove instanceof Cursor,
             0x337 /* ObjectForest must only be given its own Cursor type */,
@@ -295,9 +285,7 @@ function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: bool
 type ObjectField = MapTree[];
 
 /**
- * TODO: track observations.
- * When doing observation tracking, it might make more sense to have this wrap a RootedTextCursor
- * (which can be undefined when cleared), instead of sub-classing it.
+ * Cursor implementation for ObjectForest.
  */
 class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState;
@@ -405,8 +393,6 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         return this.innerCursor.value;
     }
 
-    observer?: ObservingDependent | undefined;
-
     // TODO: tests for clear when not at root.
     public clear(): void {
         assert(
@@ -448,7 +434,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         return [node, key];
     }
 
-    fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
+    fork(): ITreeSubscriptionCursor {
         assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
         return new Cursor(this.forest, this.innerCursor.fork());
     }
@@ -477,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(schema: StoredSchemaRepository): IEditableForest {
+export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
     return new ObjectForest(schema);
 }
 
