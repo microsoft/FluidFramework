@@ -434,11 +434,12 @@ export class DataStores implements IDisposable {
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
-                eventName: "Tombstone_DataStore_Requested",
+                eventName: "GC_Tombstone_DataStore_Requested",
                 url: request.url,
                 pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
             }, error);
+            error.message = `Datastore removed by gc: ${id}`;
             // The requested data store is removed by gc. Throw a 404 gc response exception.
             throw error;
         }

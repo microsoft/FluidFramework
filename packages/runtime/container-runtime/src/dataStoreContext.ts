@@ -770,7 +770,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             });
 
             this.subLogger.sendErrorEvent({
-                eventName: "Tombstone_DataStore_Changed",
+                eventName: "GC_Tombstone_DataStore_Changed",
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
