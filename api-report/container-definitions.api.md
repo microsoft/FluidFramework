@@ -85,7 +85,9 @@ export interface IAudienceOwner extends IAudience {
 // @public
 export interface IBatchMessage {
     // (undocumented)
-    contents: string;
+    compression?: string;
+    // (undocumented)
+    contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
 }

@@ -104,5 +104,9 @@
       "lts": "minor",
       "release/azure/*": "patch"
     }
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
   }
 }

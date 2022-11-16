@@ -206,7 +206,7 @@ export class ProxyContext implements EditableTreeContext {
     private runTransaction(transaction: (editor: DefaultEditBuilder) => void): boolean {
         assert(
             this.transactionCheckout !== undefined,
-            "`transactionCheckout` is required to edit the EditableTree",
+            0x45a /* `transactionCheckout` is required to edit the EditableTree */,
         );
         this.prepareForEdit();
         const result = runSynchronousTransaction(

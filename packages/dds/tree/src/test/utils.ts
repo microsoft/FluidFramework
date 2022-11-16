@@ -27,7 +27,14 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import { Delta } from "../tree";
-import { mapFieldMarks, mapMarkList, mapTreeFromCursor } from "../feature-libraries";
+import {
+    mapFieldMarks,
+    mapMarkList,
+    mapTreeFromCursor,
+    singleTextCursor,
+} from "../feature-libraries";
+import { RevisionTag } from "../core";
+import { brand, makeArray } from "../util";
 
 // Testing utilities
 
@@ -279,4 +286,16 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
         this.onCreate(tree);
         return tree;
     }
+}
+
+export function noRepair(): Delta.ProtoNode[] {
+    assert.fail("Unexpected request for repair data");
+}
+
+export function fakeRepair(
+    _revision: RevisionTag,
+    _index: number,
+    count: number,
+): Delta.ProtoNode[] {
+    return makeArray(count, () => singleTextCursor({ type: brand("FakeRepairedNode") }));
 }

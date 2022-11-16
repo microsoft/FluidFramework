@@ -25,7 +25,7 @@ export const sequenceFieldEditor: SequenceFieldEditor = {
                 : [jsonableTreeFromCursor(cursors)],
         }),
     delete: (index: number, count: number): Changeset =>
-        markAtIndex(index, { type: "Delete", id: 0, count }),
+        count === 0 ? [] : markAtIndex(index, { type: "Delete", id: 0, count }),
 };
 
 function markAtIndex(index: number, mark: Mark): Changeset {
