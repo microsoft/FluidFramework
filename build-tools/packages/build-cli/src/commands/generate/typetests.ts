@@ -58,7 +58,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             char: "s",
             description: `The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the branch-specific configuration in package.json, which is used by default.
 
-                For more information about the options, see <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline>`,
+                For more information about the options, see https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline\n`,
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -73,8 +73,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             ],
         }),
         pin: Flags.boolean({
-            description:
-                "Searches the release git tags in the repo and pins the baseline version range to the maximum matching release.",
+            description: `Searches the release git tags in the repo and selects the baseline version as the maximum
+            eleased version that matches the range.
+
+            This effectively pins the version to a specific version while allowing it to be updated manually as
+            needed by running type test preparation again.`,
             default: false,
         }),
         exact: Flags.string({

@@ -154,3 +154,17 @@ Given the version 2.0.0-internal.2.0.0:
 | `^previousMinor`       | >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0  |
 | `~previousMajor`       | >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0  |
 | `~previousMinor`       | >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0  |
+
+## Pinning to a specific version
+
+This is useful when you want to regularly update the baseline version when releases happen, but only when explicitly
+updated, such as part of a release process. You can do this with a combination of a baseline range such as
+`^previousMajor` and the `--pin` flag.
+
+The `--pin` flag searches the release git tags in the repo and selects the baseline version as the maximum released
+version that matches the range. This effectively pins the version to a specific version while allowing it to be updated
+manually as needed by running type test preparation again.
+
+This is functionally similar to what a lockfile does, but this provides us with an extra level of control so we don't
+rely on lockfiles for type test package versions, because we have found bugs in lockfile handling related to npm
+aliases, which the type test infrastructure relies on.

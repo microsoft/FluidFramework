@@ -129,14 +129,11 @@ export async function getPackageDetails(packageDir: string): Promise<PackageDeta
  * @internal
  */
 export type PreviousVersionStyle =
-    | PreviousVersionStyleRange
     | "baseMajor"
     | "baseMinor"
     | "previousPatch"
     | "previousMinor"
-    | "previousMajor";
-
-export type PreviousVersionStyleRange =
+    | "previousMajor"
     | "~baseMinor"
     | "^previousMajor"
     | "^previousMinor"
@@ -391,7 +388,9 @@ export async function getAndUpdatePackageDetails(
 
     if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
-        return { skipReason: "Skipping package: no previousVersionStyle is defined for the branch" };
+        return {
+            skipReason: "Skipping package: no previousVersionStyle is defined for the branch",
+        };
     }
 
     const baseline = getPreviousVersionBaseline(version, previousVersionStyle);
