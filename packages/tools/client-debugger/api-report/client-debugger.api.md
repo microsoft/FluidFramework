@@ -99,7 +99,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 // @public
-export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger;
+export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @public
 export interface LogEntry {

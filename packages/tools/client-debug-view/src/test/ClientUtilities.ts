@@ -10,10 +10,7 @@ import {
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
-import {
-	IFluidClientDebugger,
-	initializeFluidClientDebugger as initializeFluidClientDebuggerBase,
-} from "@fluid-tools/client-debugger";
+import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } from "@fluid-tools/client-debugger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -134,9 +131,9 @@ export async function loadExistingFluidContainer(
  * @privateRemarks TODO: this should live in a fluid-static / azure-client debugger adapter library,
  * not here.
  */
-export function initializeFluidClientDebugger(containerInfo: ContainerInfo): IFluidClientDebugger {
+export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
 	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-	return initializeFluidClientDebuggerBase({
+	initializeFluidClientDebuggerBase({
 		containerId: containerInfo.containerId,
 		container: containerInfo.container._getInternalContainer!(),
 		containerData: containerInfo.container.initialObjects,

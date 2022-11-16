@@ -22,8 +22,8 @@ import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylic
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
-import { HasClientDebugger } from "../../CommonProps";
-import { ClientDebugView, CounterWidget } from "../../components";
+// import { FluidClientDebugger } from "../../Debugger";
+import { CounterWidget } from "../../components";
 import {
 	ContainerInfo,
 	createFluidContainer,
@@ -88,13 +88,11 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	});
 }
 
-interface ContainerInfoWithDebugger extends ContainerInfo, HasClientDebugger {}
-
 /**
  * React hook for asynchronously creating / loading the Fluid Container.
  */
-function useContainerInfo(): ContainerInfoWithDebugger | undefined {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfoWithDebugger>();
+function useContainerInfo(): ContainerInfo | undefined {
+	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -127,11 +125,8 @@ function useContainerInfo(): ContainerInfoWithDebugger | undefined {
 					window.location.hash = data.containerId;
 				}
 
-				const clientDebugger = initializeFluidClientDebugger(data);
-				setContainerInfo({
-					...data,
-					clientDebugger,
-				});
+				initializeFluidClientDebugger(data);
+				setContainerInfo(data);
 			},
 			(error) => {
 				throw error;
@@ -187,10 +182,10 @@ const appViewPaneStackStyles = mergeStyles({
 	flex: 1,
 });
 
-const debuggerViewPaneStackStyles = mergeStyles({
-	padding: "5px",
-	height: "100%",
-});
+// const debuggerViewPaneStackStyles = mergeStyles({
+// 	padding: "5px",
+// 	height: "100%",
+// });
 
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
@@ -213,7 +208,7 @@ export function App(): React.ReactElement {
  * {@link AppView} input props.
  */
 interface AppViewProps {
-	containerInfo: ContainerInfoWithDebugger;
+	containerInfo: ContainerInfo;
 }
 
 /**
@@ -223,7 +218,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container, containerId, clientDebugger } = containerInfo;
+	const { container } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -252,9 +247,9 @@ function AppView(props: AppViewProps): React.ReactElement {
 					</StackItem>
 				</Stack>
 			</StackItem>
-			<StackItem className={debuggerViewPaneStackStyles}>
-				<ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />
-			</StackItem>
+			{/* <StackItem className={debuggerViewPaneStackStyles}>
+				<FluidClientDebugger containerId={containerId} />
+			</StackItem> */}
 		</Stack>
 	);
 }

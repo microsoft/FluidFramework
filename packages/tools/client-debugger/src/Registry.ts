@@ -36,27 +36,44 @@ export interface FluidClientDebuggerProps {
  * @remarks
  *
  * If there is an existing debugger session associated with the provided {@link FluidClientDebuggerProps.containerId},
- * the existing debugger session object will be returned, rather than creating a new one.
+ * the existing debugger session will be closed, and a new one will be generated from the provided props.
  */
-export function initializeFluidClientDebugger(
-	props: FluidClientDebuggerProps,
-): IFluidClientDebugger {
+export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
 	const { containerId, container, containerData } = props;
 
 	const debuggerRegistry = getDebuggerRegistry();
 
-	let clientDebugger = debuggerRegistry.get(containerId);
-	if (clientDebugger !== undefined) {
+	const existingDebugger = debuggerRegistry.get(containerId);
+	if (existingDebugger !== undefined) {
 		console.warn(
-			`Active debugger registry already contains an entry for container ID "${containerId}". Returning existing entry.`,
+			`Active debugger registry already contains an entry for container ID "${containerId}". Overriding use existing entry.`,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return debuggerRegistry.get(containerId)!;
-	} else {
-		clientDebugger = new FluidClientDebugger(containerId, container, containerData);
-		debuggerRegistry.set(containerId, clientDebugger);
-		return clientDebugger;
+		existingDebugger.dispose();
 	}
+	debuggerRegistry.set(
+		containerId,
+		new FluidClientDebugger(containerId, container, containerData),
+	);
+}
+
+/**
+ * Adds an externally-created debugger instance to the registry, keyed off of its {@link IFluidClientDebugger.containerId}.
+ *
+ * @internal
+ */
+export function setFluidClientDebugger(clientDebugger: IFluidClientDebugger): void {
+	const debuggerRegistry = getDebuggerRegistry();
+
+	const containerId = clientDebugger.containerId;
+
+	const existingDebugger = debuggerRegistry.get(containerId);
+	if (existingDebugger !== undefined) {
+		console.warn(
+			`Active debugger registry already contains an entry for container ID "${containerId}". Overriding use existing entry.`,
+		);
+		existingDebugger.dispose();
+	}
+	debuggerRegistry.set(containerId, clientDebugger);
 }
 
 /**
