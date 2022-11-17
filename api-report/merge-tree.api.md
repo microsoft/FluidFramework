@@ -182,12 +182,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     maxWindowTime: number;
     // (undocumented)
     measureOps: boolean;
-    // (undocumented)
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
-    // (undocumented)
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
