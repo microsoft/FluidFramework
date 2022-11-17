@@ -9,7 +9,19 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
-		// Disabled because they conflict with Prettier.
+		// Disabled because it conflicts with Prettier.
 		"unicorn/no-nested-ternary": "off",
 	},
+	overrides: [
+		{
+			// Overrides for test files
+			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+			plugins: ["jest"],
+			extends: ["plugin:jest/recommended"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };

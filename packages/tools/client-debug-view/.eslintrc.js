@@ -16,4 +16,16 @@ module.exports = {
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
 	},
+	overrides: [
+		{
+			// Overrides for test files
+			files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+			plugins: ["jest"],
+			extends: ["plugin:jest/recommended"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };
