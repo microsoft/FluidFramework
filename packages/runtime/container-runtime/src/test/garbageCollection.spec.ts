@@ -46,6 +46,7 @@ import {
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
+import { pkgVersion } from "../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */
 const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
@@ -119,6 +120,10 @@ describe("Garbage Collection Tests", () => {
             baseLogger: mockLogger,
             existing: createParams.metadata !== undefined /* existing */,
             metadata: createParams.metadata,
+            createContainerMetadata: {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            },
             isSummarizerClient,
             readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
             getNodePackagePath: async (nodeId: string) => testPkgPath,
