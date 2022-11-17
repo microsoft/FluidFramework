@@ -53,6 +53,7 @@ export class OpSplitter {
                 type: chunkedContent.originalType,
             };
         }
+
         return message;
     }
 

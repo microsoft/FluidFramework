@@ -32,11 +32,7 @@ export class Inbox {
     }
 
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        let message = this.prepare(remoteMessage);
-        if (remoteMessage.type === ContainerMessageType.ChunkedOp) {
-            message = this.opSplitter.processIncoming(remoteMessage);
-        }
-
+        const message = this.opSplitter.processIncoming(this.prepare(remoteMessage));
         if (remoteMessage.type === ContainerMessageType.ChunkedOp) {
             return message;
         }
