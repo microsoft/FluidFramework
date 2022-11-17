@@ -20,8 +20,6 @@ export function getExecutableFromCommand(command: string) {
     } else {
         toReturn = commands[0];
     }
-
-    console.log(`"${command}" => "${toReturn}"`);
     return toReturn;
 }
 
