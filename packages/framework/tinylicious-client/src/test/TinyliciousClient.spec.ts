@@ -366,26 +366,18 @@ describe("TinyliciousClient", () => {
      * Expected behavior: TinyliciousClient should disconnects with a reason.
      */
      it.only("disconnects with a reason", async () => {
-        const client = new TinyliciousClient();
-
-        const { container } = await client.createContainer(schema);
-        // const containerId = await container.attach();
+        const { container } = await tinyliciousClient.createContainer(schema);
         container.on("disconnected", (reason: string) => console.log(`disconnected from TinyliciousClientTest: ${reason}`));
         await container.attach();
         console.log("container attached");
-        await timeoutPromise(
-            (resolve) => container.once("connected", resolve),
-            {
-                durationMs: 1000,
-                errorMsg: "container connect() timeout",
-            },
-        );
+        await timeoutPromise((resolve) => container.once("connected", resolve));
         console.log("container connected");
-        // const { container: containerGet } = await client.getContainer(
-        //     containerId,
-        //     schema,
-        // );
+        await timeoutPromise((resolve) => setTimeout(resolve, 1000),
+        {
+            durationMs: 2000,
+            errorMsg: "container connect() timeout",
+        });
         container.disconnect();
-        console.log("container disconnected");
+        console.log("timeout");
     });
 });

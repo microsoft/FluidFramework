@@ -356,6 +356,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     public receivedDisconnectEvent(reason: string) {
+        console.log(`disconnected from ConnectionStateHandler: ${reason}`);
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
