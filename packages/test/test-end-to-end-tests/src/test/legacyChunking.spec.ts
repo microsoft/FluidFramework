@@ -93,11 +93,13 @@ installVersionsDescribe(
         it("If an old container sends a large chunked op, a new container is able to process it successfully", async () => {
             await setupContainers();
             // Ops larger than 16k will end up chunked in older versions of fluid
-            const messageSizeInBytes = 100 * 1024;
+            const messageSizeInBytes = 300 * 1024;
             const value = generateStringOfSize(messageSizeInBytes);
-            oldMap.set("key", value);
+            oldMap.set("key1", value);
+            oldMap.set("key2", value);
 
             await provider.ensureSynchronized();
-            assert.strictEqual(newMap.get("key"), value, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key1"), value, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key2"), value, "Wrong value found in the new map");
         });
     });
