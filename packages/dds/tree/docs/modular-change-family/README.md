@@ -63,6 +63,8 @@ Similarly #4 is special in that B) never applies to it (since it only ever repre
 
 We now consider how revision info flows through the recursive invocations of `rebase`, `invert`, and `compose`.
 
+#### Invert and Rebase
+
 In the `invert` case, `ModularChangeFamily` provides revision information to the `FieldKind`'s `invert` implementation.
 This is accomplished by considering the following sources of revision information:
 
@@ -92,6 +94,8 @@ In the `rebase` case, we do not anticipate the `FieldKind`'s `rebase` implementa
 We do however know that some `FieldKind`'s `rebase` implementation needs to know the revision info for the base change (i.e., the change that is being rebased over) so `ModularChangeFamily` does plumb that information through.
 This is accomplished in the same way as it is for the `invert` implementation.
 
+#### Compose
+
 In the `compose` case, `ModularChangeFamily` does plumb revision info through for all changes.
 This creates a complication when the `FieldKind`'s `compose` implementation calls `NodeChangeComposer`, and `ModularChangeFamily` needs to look up the revision info for the field changes that contain a given `NodeChangeset` passed to `NodeChangeComposer`.
 The complication stems from the fact that `ModularChangeFamily` has no way of determining how of the `NodeChangeset`s passed to `NodeChangeComposer` correspond to the field changesets it had passed to the `FieldKind`'s `rebase` implementation.
@@ -101,3 +105,17 @@ then there's no way for the `ModularChangeFamily` to know whether these two `Nod
 
 There are different ways this complication can be overcome.
 The current implementation requires the caller of the `NodeChangeComposer` to explicitly tag the `NodeChangeset`s it passes.
+
+Note that the ability of `NodeChangeComposer` to recover revision info for each of the `NodeChangeset`s it is given is not only necessary for the sake of passing the adequate revision info to nested field's `compose` implementations,
+it is also necessary for the sake of maintaining the information described in the previous section.
+
+For example, if a pair of `NodeChangeset`s from revisions foo and bar are passed to `NodeChangeComposer`,
+it possible that the given `NodeChangeset`s do not explicitly contain revision data because they relied on a higher field (or the root changeset structure) to indicate their associated revision.
+After these `NodeChangeset`s are composed, the higher fields (and root) will not contain such revision information because those higher fields and root will be composites of multiple changes.
+This means `NodeChangeComposer` must ensure that the `NodeChangeset` it returns is self-sufficient when it comes to describing which of its parts are associated with a given revision.
+
+If the `NodeChangeset` associated with revision foo only carries change information for field "foo" and the `NodeChangeset` associated with revision bar carries change information for the value of the node,
+then the resulting `NodeChangeset` must have:
+
+-   A `FieldChange` for field "foo" carrying the revision foo
+-   A `NodeChangeset.valueChange` carrying the revision bar
