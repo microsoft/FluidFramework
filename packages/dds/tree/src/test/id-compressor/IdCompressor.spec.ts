@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-
 import { strict as assert } from "assert";
 import { v4, v5 } from "uuid";
 import { take } from "@fluid-internal/stochastic-test-utils";
