@@ -857,12 +857,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             const summary2 = await summarizeNow(summarizer);
             validateTombstoneState(summary2.summaryTree, [newDataStoreUrl], [mainDataStoreUrl]);
 
-            // Load a container from the above summary. The tombstoned data store should be marked in this container.
+            // Load a container from the above summary. The tombstoned data store should be correctly marked.
             const container2 = await loadContainer(summary2.summaryVersion);
-            const mainDataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
-            // Send an op so that the container transitions to write mode.
-            mainDataStore2._root.set("writeMode", "true");
-            await waitForContainerConnection(container2);
 
             // Requesting the tombstoned data store should result in an error.
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container2, newDataStore._context.id),

@@ -101,5 +101,12 @@
   "engines": {
     "node": ">=14.13.0",
     "npm": "^6"
+  },
+  "fluidBuild": {
+    "branchReleaseTypes": {
+      "main": "major",
+      "lts": "minor",
+      "release/azure/*": "patch"
+    }
   }
 }
