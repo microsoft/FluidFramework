@@ -139,8 +139,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
-    getSnapshotBlobs(): Promise<void>;
-    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
