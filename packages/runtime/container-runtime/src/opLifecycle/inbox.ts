@@ -8,11 +8,6 @@ import { ContainerMessageType, ContainerRuntimeMessage } from "..";
 import { OpDecompressor } from "../opDecompressor";
 import { OpSplitter } from "./opSplitter";
 
-export interface IRemoteMessageResult {
-    readonly processedMessage: ISequencedDocumentMessage;
-    readonly wasUnpacked: boolean;
-}
-
 export class Inbox {
     constructor(
         private readonly opSplitter: OpSplitter,
@@ -34,6 +29,8 @@ export class Inbox {
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
         const message = this.opSplitter.processIncoming(this.prepare(remoteMessage));
         if (remoteMessage.type === ContainerMessageType.ChunkedOp) {
+            // If the op splitter didn't turn out the original message,
+            // there is no point in processing the op further
             return message;
         }
 
