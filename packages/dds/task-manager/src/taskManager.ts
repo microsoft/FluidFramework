@@ -318,13 +318,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // All of our outstanding ops will be for the old clientId even if they get ack'd
             this.latestPendingOps.clear();
         });
-
-        runtime.once("attaching", () => {
-            // Once we start attaching we need to release all tasks that were assigned to the placeholder (detached)
-            // client. We do this because we need to re-volunteer with our actual clientId, and there could be a race
-            // to regain the task assignment.
-            this.removeClientFromAllQueues(placeholderClientId);
-        });
     }
 
     // TODO Remove or hide from interface, this is just for debugging
@@ -624,6 +617,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @internal
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        if (this.runtime.clientId !== undefined) {
+            // If the runtime has been assigned an actual clientId by now, we can replace the placeholder clientIds
+            // and maintain the task assignment.
+            this.replacePlaceholderFromAllQueues();
+        } else {
+            // If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
+            // clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
+            // a new clientId.
+            this.removeClientFromAllQueues(placeholderClientId);
+        }
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
@@ -754,6 +757,24 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private removeClientFromAllQueues(clientId: string) {
         for (const taskId of this.taskQueues.keys()) {
             this.removeClientFromQueue(taskId, clientId);
+        }
+    }
+
+    /**
+     * Will replace all instances of the placeholderClientId with the current clientId. This should only be called when
+     * transitioning from detached to attached and this.runtime.clientId is defined.
+     */
+    private replacePlaceholderFromAllQueues() {
+        assert(this.clientId !== undefined, "this.runtime.clientId should be defined");
+        for (const taskId of this.taskQueues.keys()) {
+            const clientQueue = this.taskQueues.get(taskId);
+            if (clientQueue === undefined) {
+                continue;
+            }
+            const clientIdIndex = clientQueue.indexOf(placeholderClientId);
+            if (clientIdIndex !== -1) {
+                clientQueue[clientIdIndex] = this.clientId;
+            }
         }
     }
 

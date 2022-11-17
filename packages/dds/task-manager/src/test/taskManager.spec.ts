@@ -30,7 +30,7 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
 }
 
 function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory):
-    { taskManager: TaskManager; attach: () => void; } {
+    { taskManager: TaskManager; attach: () => Promise<void>; } {
     // Create a detached TaskManager.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -38,15 +38,20 @@ function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRunt
     const clientId = dataStoreRuntime.clientId;
 
     const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
-    const attach = () => {
+    const attach = async () => {
         const services = {
             deltaConnection: containerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(),
         };
         dataStoreRuntime.local = false;
         taskManager.connect(services);
+
+        // Manually trigger a summarize (should be done automatically when attaching normally)
+        await taskManager.summarize();
+
         // Ensure clientId is set after attach (might be forced undefined in some tests)
         dataStoreRuntime.clientId = clientId;
+
         dataStoreRuntime.emit("attaching");
         dataStoreRuntime.emit("attached");
     };
@@ -441,7 +446,7 @@ describe("TaskManager", () => {
 
     describe("Detached/Attach", () => {
         let taskManager1: TaskManager;
-        let attachTaskManager1: () => void;
+        let attachTaskManager1: () => Promise<void>;
         // let taskManager2: ITaskManager;
         // let attachTaskManager2: () => void;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -456,7 +461,7 @@ describe("TaskManager", () => {
 
         it("Can create a detached TaskManager and attach later", async () => {
             assert.ok(!taskManager1.isAttached(), "taskManager1 should be detached");
-            attachTaskManager1();
+            await attachTaskManager1();
             assert.ok(taskManager1.isAttached(), "taskManager1 should be attached");
         });
 
@@ -549,7 +554,7 @@ describe("TaskManager", () => {
                     const volunteerTaskP = taskManager1.volunteerForTask(taskId);
                     containerRuntimeFactory.processAllMessages();
                     await volunteerTaskP;
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     assert.ok(taskManager1.queued(taskId), "Should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Should be assigned");
                 });
@@ -571,7 +576,7 @@ describe("TaskManager", () => {
                         assert.ok(!taskManager1EventFired, "Should only fire lost event once on taskManager1");
                         taskManager1EventFired = true;
                     });
-                    attachTaskManager1();
+                    await attachTaskManager1();
 
                     assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                     assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
@@ -585,7 +590,7 @@ describe("TaskManager", () => {
                     const taskId = "taskId";
                     taskManager1.subscribeToTask(taskId);
                     containerRuntimeFactory.processAllMessages();
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     containerRuntimeFactory.processAllMessages();
                     assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
@@ -604,7 +609,7 @@ describe("TaskManager", () => {
                         taskManager1EventFired = true;
                     });
 
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
 
                     containerRuntimeFactory.processAllMessages();
@@ -622,7 +627,7 @@ describe("TaskManager", () => {
                     const taskId = "taskId";
                     taskManager1.subscribeToTask(taskId);
                     containerRuntimeFactory.processAllMessages();
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     taskManager1.abandon(taskId);
                     containerRuntimeFactory.processAllMessages();
                     assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
@@ -638,7 +643,7 @@ describe("TaskManager", () => {
                     containerRuntimeFactory.processAllMessages();
                     await volunteerTaskP;
                     assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     taskManager1.complete(taskId);
                     containerRuntimeFactory.processAllMessages();
                     assert.ok(!taskManager1.queued(taskId), "Should not be queued");
@@ -650,7 +655,7 @@ describe("TaskManager", () => {
                     const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
                     containerRuntimeFactory.processAllMessages();
                     await volunteerTaskP1;
-                    attachTaskManager1();
+                    await attachTaskManager1();
                     let taskManager1EventFired = false;
                     taskManager1.on("completed", (completedTaskId: string) => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
