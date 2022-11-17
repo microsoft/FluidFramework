@@ -449,6 +449,7 @@ export class GarbageCollector implements IGarbageCollector {
     private completedRuns = 0;
 
     private readonly runtime: IGarbageCollectionRuntime;
+    private readonly metadata: IContainerRuntimeMetadata | undefined;
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
@@ -490,12 +491,12 @@ export class GarbageCollector implements IGarbageCollector {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
+        this.metadata = createParams.metadata;
         this.getNodePackagePath = createParams.getNodePackagePath;
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
 
         const baseSnapshot = createParams.baseSnapshot;
-        const metadata = createParams.metadata;
         const readAndParseBlob = createParams.readAndParseBlob;
 
         this.mc = loggerToMonitoringContext(ChildLogger.create(
@@ -533,14 +534,14 @@ export class GarbageCollector implements IGarbageCollector {
          * For existing containers, we get this information from the metadata blob of its summary.
          */
         if (createParams.existing) {
-            prevSummaryGCVersion = getGCVersion(metadata);
-            // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
+            prevSummaryGCVersion = getGCVersion(this.metadata);
+            // Existing documents which did not have this.metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
-            this.sweepEnabled = metadata?.sweepEnabled ?? false;
-            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+            this.sweepEnabled = this.metadata?.sweepEnabled ?? false;
+            this.sessionExpiryTimeoutMs = this.metadata?.sessionExpiryTimeoutMs;
             this.sweepTimeoutMs =
-                metadata?.sweepTimeoutMs
+                this.metadata?.sweepTimeoutMs
                 ?? computeSweepTimeout(this.sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
@@ -660,7 +661,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // consolidate into IGarbageCollectionState format.
                 // Add a node for the root node that is not present in older snapshot format.
                 const gcState: IGarbageCollectionState = { gcNodes: { "/": { outboundRoutes: [] } } };
-                const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, metadata);
+                const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, this.metadata);
                 assert(dataStoreSnapshotTree !== undefined,
                     0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
                 for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnapshotTree.trees)) {
@@ -1496,6 +1497,8 @@ export class GarbageCollector implements IGarbageCollector {
                 : this.sweepTimeoutMs,
             completedGCRuns: this.completedRuns,
             lastSummaryTime: this.getLastSummaryTimestampMs(),
+            containerCreateTime: this.metadata?.createContainerTimestamp,
+            containerRuntimeVersion: this.metadata?.createContainerRuntimeVersion,
             externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
             viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             fromId: fromNodeId,
