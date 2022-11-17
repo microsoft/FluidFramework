@@ -72,6 +72,10 @@
       "TypeAliasDeclaration_ICriticalContainerError": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_Myself": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

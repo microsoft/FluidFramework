@@ -1602,24 +1602,12 @@ use_old_TypeAliasDeclaration_MemberChangedListener(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_Myself": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_Myself():
-    TypeOnly<old.Myself>;
-declare function use_current_RemovedTypeAliasDeclaration_Myself(
-    use: TypeOnly<current.Myself>);
-use_current_RemovedTypeAliasDeclaration_Myself(
-    get_old_TypeAliasDeclaration_Myself());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_Myself": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_Myself():
-    TypeOnly<current.Myself>;
-declare function use_old_TypeAliasDeclaration_Myself(
-    use: TypeOnly<old.Myself>);
-use_old_TypeAliasDeclaration_Myself(
-    get_current_RemovedTypeAliasDeclaration_Myself());
 
 /*
 * Validate forward compat by using old type in place of current type
