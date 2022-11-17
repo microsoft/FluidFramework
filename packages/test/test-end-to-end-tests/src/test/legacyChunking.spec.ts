@@ -52,9 +52,9 @@ installVersionsDescribe(
             registry,
         };
 
-        const createOldContainer = async (oldVersion: string): Promise<IContainer> => {
+        const createOldContainer = async (): Promise<IContainer> => {
             const oldContainerRuntimeFactoryWithDefaultDataStore =
-                getContainerRuntimeApi(oldVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+                getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
             const oldRuntimeFactory =
                 new oldContainerRuntimeFactoryWithDefaultDataStore(
                     factory,
@@ -65,7 +65,9 @@ installVersionsDescribe(
                     [innerRequestHandler],
                     {
                         // Chunking did not work with FlushMode.TurnBased,
-                        // as it was breaking batching semantics
+                        // as it was breaking batching semantics. So we need
+                        // to force the container to flush the ops as soon as
+                        // they are produced.
                         flushMode: FlushMode.Immediate,
                         gcOptions: {
                             gcAllowed: true,
@@ -77,7 +79,7 @@ installVersionsDescribe(
         };
 
         const setupContainers = async () => {
-            const oldContainer = await createOldContainer(versionWithChunking);
+            const oldContainer = await createOldContainer();
             const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
             oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
 
