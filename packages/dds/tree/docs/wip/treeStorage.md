@@ -769,11 +769,11 @@ One open question regarding this architecture is if it should be part of a speci
 * A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described in the "Chunk Data Structure Implementations" section) in order to give the necessary flexibility for custom chunking.
 * A canonical (but optional) way to store and query the history of a DDS as a series of revisions. This would be virtualized for efficient access.
 
-If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
+This could be implemented by sharing a single storage tree among all DDSs where each DDS owns a specific subtree. If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
 
 * All DDSs would scale with large data sets, and therefore the entire container would scale with large data sets
-* All DDSs could share a single stored tree, which is composed of a subtree for each DDS
 * The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSs in the container.
+* This would be a big step towards offering container-level history
 
 Such a service would reshape the summarization API as well. Rather than producing a summary tree every so often, a DDS would be asked to flush any sequenced data that has not yet been committed to storage every so often. Or, perhaps the DDS could use the storage writing APIs at any point in time; each mutation would contribute to a buffer of storage instructions that would be flushed intermittently behind the scenes.
 
