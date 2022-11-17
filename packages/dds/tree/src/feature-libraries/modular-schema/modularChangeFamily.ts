@@ -180,7 +180,7 @@ export class ModularChangeFamily
             );
 
             invertedFields.set(field, {
-                fieldKind: fieldChange.fieldKind,
+                ...fieldChange,
                 change: brand(invertedChange),
             });
         }
