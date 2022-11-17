@@ -297,7 +297,6 @@ function runTaskManagerFuzz(
                 taskManager.abandon(taskId);
             }),
             subscribe: statefully(({ clients }, { taskManagerName, taskId }) => {
-                console.log("ClientID: ", taskManagerName);
                 const taskManager = findTaskManager(clients, taskManagerName);
                 assert(taskManager);
                 taskManager.subscribeToTask(taskId);
