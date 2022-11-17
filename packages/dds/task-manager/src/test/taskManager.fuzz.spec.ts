@@ -7,7 +7,6 @@ import * as path from "path";
 import { existsSync, mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
-    AcceptanceCondition,
     BaseFuzzTestState,
     createFuzzDescribe,
     createWeightedGenerator,
@@ -166,14 +165,12 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     const isConnected = ({ taskManager }: ClientOpState): boolean => taskManager.connected;
+    const isQueued = ({ taskManager, taskId }: ClientOpState): boolean => taskManager.queued(taskId);
     const isAssigned = ({ taskManager, taskId }: ClientOpState): boolean => taskManager.assigned(taskId);
-
-    const all = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
-        (t: T) => clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [volunteer, 1, isConnected],
-        [abandon, 1, all(isConnected, isAssigned)],
+        [abandon, 1, isQueued],
         [subscribe, 1],
         [complete, 1, isAssigned],
         [changeConnectionState, 1],
@@ -286,7 +283,11 @@ function runTaskManagerFuzz(
                 assert(taskManager);
                 taskManager.volunteerForTask(taskId).catch((e: Error) => {
                     // We expect an error to be thrown if we are disconnected while volunteering
-                    if (e.message !== `Disconnected before acquiring task assignment: ${taskId}`) {
+                    const expectedErrors = [
+                        `Disconnected before acquiring task assignment: ${taskId}`,
+                        `Abandoned before acquiring task assignment: ${taskId}`,
+                    ];
+                    if (!expectedErrors.includes(e.message)) {
                         throw e;
                     }
                 });
