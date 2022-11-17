@@ -20,7 +20,7 @@ import {
     RootDataObject,
 } from "@fluidframework/fluid-static";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 
 import {
     AzureClientProps,
@@ -211,11 +211,22 @@ export class AzureClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
+
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props.logger,
+            options: { client },
         });
     }
 
