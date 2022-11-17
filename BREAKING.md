@@ -76,11 +76,15 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
 - [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
+
 
 ### Deprecated ISummarizerRuntime batchEnd listener
 The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
-
+### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
 ## 2.0.0-internal.2.1.0 Breaking changes
 
 # 2.0.0-internal.2.0.0
@@ -91,6 +95,7 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+- [Static `FluidDataStoreRuntime.load` method is now deprecated](#static-FluidDataStoreRuntime.load-method-is-now-deprecated)
 
 ### Deprecate existing flag in runtime
 The `existing` flag in IContainerContext has been deprecated and will be removed in a future breaking change. Furthermore,
@@ -118,6 +123,11 @@ It's not a breaking change, but worth noting: we are now also exposing optional 
 ### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined
 Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
 So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
+
+### Static `FluidDataStoreRuntime.load` method is now deprecated
+
+Use `FluidDataStoreRuntime`'s constructor instead, and start providing the new `initializeEntrypoint` parameter
+to create the entrypoint / root object for the data store.
 
 ## 2.0.0-internal.2.0.0 Breaking changes
 - [Update to React 17](#Update-to-React-17)

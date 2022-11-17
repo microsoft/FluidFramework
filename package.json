@@ -77,8 +77,6 @@
     "test:stress": "lerna run test:stress --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root . -s tsc",
-    "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "typetests:gen": "fluid-type-validator -m packages -v",
     "typetests:prepare": "npm run typetests:gen -- -p",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
@@ -134,6 +132,10 @@
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
   },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
+  },
   "fluidBuild": {
     "repoPackages": {
       "build": "common/build",
@@ -186,6 +188,12 @@
         "server/historian",
         "tools/telemetry-generator"
       ]
+    },
+    "branchReleaseTypes": {
+      "main": "minor",
+      "lts": "minor",
+      "release/**": "patch",
+      "next": "major"
     }
   }
 }

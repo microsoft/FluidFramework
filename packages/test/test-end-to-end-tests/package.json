@@ -32,7 +32,7 @@
     "test:realsvc:local:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:local --",
     "test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
     "test:realsvc:odsp:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:odsp --",
-    "test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=5s",
+    "test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=5s --use-openssl-ca",
     "test:realsvc:routerlicious": "npm run test:realsvc:r11s",
     "test:realsvc:routerlicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:r11s --",
     "test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
@@ -40,9 +40,7 @@
     "test:realsvc:tinylicious": "npm run test:realsvc:t9s",
     "test:realsvc:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:t9s",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
-    "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
   },
   "nyc": {
     "all": true,
@@ -117,8 +115,8 @@
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.5.0",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/nock": "^9.3.0",
@@ -129,7 +127,6 @@
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }
