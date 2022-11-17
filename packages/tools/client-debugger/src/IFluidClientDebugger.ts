@@ -9,7 +9,6 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 import { MemberChangeKind } from "./Audience";
-import { ClientDebuggerSummary } from "./ClientDebuggerSummary";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
@@ -284,13 +283,6 @@ export interface IFluidClientDebugger
 	closeContainer(): void;
 
 	// #endregion
-
-	/**
-	 * Generates a serializable summary of the current debugger state.
-	 *
-	 * @remarks Used for passing debug data across worker boundaries.
-	 */
-	summarizeCurrentState(): ClientDebuggerSummary;
 
 	/**
 	 * Disposes the debugger session.

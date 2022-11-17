@@ -13,8 +13,6 @@
 
 export { MemberChangeKind } from "./Audience";
 
-export { ClientDebuggerSummary } from "./ClientDebuggerSummary";
-
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 
 export {
@@ -25,6 +23,7 @@ export {
 } from "./Logs";
 
 export {
+	clearDebuggerRegistry,
 	closeFluidClientDebugger,
 	FluidClientDebuggerProps,
 	getFluidClientDebuggers,
