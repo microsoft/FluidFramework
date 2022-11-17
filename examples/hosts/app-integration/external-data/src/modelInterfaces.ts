@@ -56,8 +56,6 @@ export interface ITaskListEvents extends IEvent {
  * ITaskList represents a "drafting surface" for changes to a task list stored in some external source.  Changes to
  * the ITaskList and its constituent ITasks are persisted in Fluid and shared amongst collaborators, but none of the
  * changes are persisted back to the external source until the user explicitly chooses to do so.
- *
- * TODO: Should importing changes from the external source also be an explicit action?
  * TODO: We'll want to eventually show variations of this behavior (e.g. more automatic or less automatic sync'ing).
  */
 export interface ITaskList extends IEventProvider<ITaskListEvents> {
@@ -86,4 +84,13 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
      * Persist the current state of the Fluid data back to the external data source.
      */
     readonly saveChanges: () => Promise<void>;
+
+    // TODO: Should there be an imperative API to trigger importing changes from the external source?
+    // Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button
+    // in the UI.
+    // readonly fetchNewChanges: () => Promise<void>;
+
+    // TODO: For the signal we might prefer routing it in as an unknown message payload, delegating interpretation
+    // Alternate: inject an EventEmitter that raises the events from external.
+    // readonly handleExternalMessage: (message) => void;
 }

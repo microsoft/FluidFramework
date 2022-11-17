@@ -69,6 +69,35 @@ export class TaskList extends DataObject implements ITaskList {
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
+        // TODO: Ultimately we want to retain the data we retrieved from the external source separate from the draft
+        // Fluid data.  Maybe we do this by just adding it to the objects we're already storing in the root?
+        // this.root.set(
+        //     id,
+        //     {
+        //         id,
+        //         draftName: nameString.handle,
+        //         savedName: name,
+        //         draftPriority: priorityCell.handle,
+        //         savedPriority: priority,
+        //     },
+        // );
+        // Or maybe we create a separate map for it.  I probably prefer this direction.
+        // this.savedData.set(
+        //     id,
+        //     {
+        //         id,
+        //         name,
+        //         priority,
+        //     },
+        // );
+        // this.draftData.set(
+        //     id,
+        //     {
+        //         id,
+        //         name: nameString.handle,
+        //         priority: priorityCell.handle,
+        //     },
+        // );
     };
 
     public readonly deleteTask = (id: string) => {
@@ -106,8 +135,8 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    // TODO: Consider implementing a state to put the data object in while import is occurring
-    // (e.g. to disable input, etc.)?
+    // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
+    // put the data object in while import is occurring (e.g. to disable input, etc.).
     // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
     // TODO: Guard against reentrancy
     // TODO: Use leader election to reduce noise from competing clients
@@ -124,9 +153,13 @@ export class TaskList extends DataObject implements ITaskList {
             }
             if (currentTask.name.getText() !== name) {
                 // TODO: Name has changed from external source, update the Fluid data
+                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+                // we'd want conflict resolution UX.
             }
             if (currentTask.priority !== priority) {
                 // TODO: Priority has changed from external source, update the Fluid data
+                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+                // we'd want conflict resolution UX.
             }
         });
         await Promise.all(updateTaskPs);
@@ -139,9 +172,10 @@ export class TaskList extends DataObject implements ITaskList {
      * @returns A promise that resolves when the write completes
      */
     public readonly saveChanges = async () => {
-        // TODO: this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In the "save"
-        // button case this might be fine, but in more-automatic sync'ing this should maybe only include ack'd
-        // changes.
+        // TODO: Consider this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In
+        // the "save" button case this might be fine (the user saves what they see), but in more-automatic
+        // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
+        // as what we do for summarization).
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
@@ -177,8 +211,6 @@ export class TaskList extends DataObject implements ITaskList {
                 console.error("Unexpected modification to task list");
             }
         });
-
-        // TODO: Add listeners for the broadcast signal to kick off the inbound sync
 
         for (const [id, taskData] of this.root) {
             const [nameSharedString, prioritySharedCell] = await Promise.all([
