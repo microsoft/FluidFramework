@@ -157,7 +157,6 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-    testTombstoneKey,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -2251,24 +2250,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
-     * scenarios with accessing deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores and blobs in this Container.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
+     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]) {
-        /**
-         * When running GC in tombstone mode, this is called to tombstone datastore routes that are unused. This
-         * enables testing scenarios without actually deleting content. The content acts as if it's deleted to the
-         * external user, but the internal runtime does not delete it in summarizes, etc.
-         */
-        const tombstone = this.mc.config.getBoolean(testTombstoneKey) ?? false;
-        // TODO: add blobs
-        if (tombstone) {
-            // If blob routes are passed in here, tombstone will fail and hit an assert
-            this.dataStores.deleteUnusedRoutes(unusedRoutes, tombstone);
-            return;
-        }
-
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2279,8 +2267,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
-        this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes);
+        // Todo: Add tombstone for attachment blobs. For now, we ignore attachment blobs that should be tombstoned.
+        if (!tombstone) {
+            this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
+        }
+        this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
     }
 
     /**
@@ -3029,14 +3020,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new UsageError("can't get state when offline load disabled");
         }
 
+        if (this._orderSequentiallyCalls !== 0) {
+            throw new UsageError("can't get state during orderSequentially");
+        }
         // Flush pending batch.
         // getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
         // to close current batch.
         this.flush();
-
-        if (this._orderSequentiallyCalls !== 0) {
-            throw new UsageError("can't get state during orderSequentially");
-        }
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {

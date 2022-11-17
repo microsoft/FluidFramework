@@ -7,7 +7,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -102,5 +102,5 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 function toDelta(change: TestChangeset): Delta.MarkList {
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }

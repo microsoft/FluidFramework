@@ -21,8 +21,11 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc"
@@ -73,6 +76,7 @@
     "eslint": "~8.27.0",
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
+    "prettier": "~2.6.2",
     "rimraf": "^3.0.2",
     "sinon": "^9.2.1",
     "typescript": "~4.5.5"

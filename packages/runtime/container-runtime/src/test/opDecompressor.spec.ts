@@ -31,7 +31,7 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
         type: "type",
         timestamp: 1,
         compression: "lz4",
-    } as any;
+    };
 
     let opMetadata;
     if (metadata) {
