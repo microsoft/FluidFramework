@@ -24,9 +24,8 @@ const versionWithChunking = "0.56.0";
 
 installVersionsDescribe(
     {
-        absolute: [versionWithChunking]
-    },
-     /* timeoutMs */ 30000,
+        absolute: [versionWithChunking],
+    }
 )(
     "Legacy chunking",
     (getTestObjectProvider) => {
@@ -101,7 +100,7 @@ installVersionsDescribe(
 
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-        it("Old container sends a large chunked op", async () => {
+        it("An old container sends a large chunked op, a new container is able to process it successfully", async () => {
             await setupContainers(testContainerConfig);
             // Ops larger than 16k will end up chunked
             const messageSizeInBytes = 100 * 1024;

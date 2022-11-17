@@ -9,6 +9,7 @@ export {
     ITestDataObject,
     TestDataObjectType,
 } from "./compatUtils";
+export { installVersionsDescribe } from "./describeWithVersions";
 export {
     DescribeCompat,
     DescribeCompatSuite,
@@ -25,6 +26,3 @@ export {
     getDriverApi,
     getLoaderApi,
 } from "./testApi";
-export {
-    installVersionsDescribe,
-} from "./describeWithVersions";
