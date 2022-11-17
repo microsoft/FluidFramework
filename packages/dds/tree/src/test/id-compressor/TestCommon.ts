@@ -9,6 +9,7 @@ import { expect } from "chai";
  * Check if the given value is defined using mocha's `expect`. Return the defined value;
  */
 export function expectDefined<T>(value: T | undefined): T {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(value).to.be.not.undefined;
     return value as T;
 }

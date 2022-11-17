@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-shadow */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { take } from "@fluid-internal/stochastic-test-utils";

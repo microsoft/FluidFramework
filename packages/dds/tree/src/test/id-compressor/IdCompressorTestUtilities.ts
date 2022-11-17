@@ -4,6 +4,9 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { expect } from "chai";
 import {
@@ -204,13 +207,17 @@ export class IdCompressorTestNetwork {
     public getCompressor(client: Client): ReadonlyIdCompressor {
         const compressors = this.compressors;
         const handler = {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             get(_, property) {
                 const compressor = compressors.get(client);
-                return compressor[property];
+                return (compressor as any)[property];
             },
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             set(_, property, value): boolean {
                 const compressor = compressors.get(client);
-                compressor[property] = value;
+                (compressor as any)[property] = value;
                 return true;
             },
         };
@@ -539,6 +546,7 @@ export class IdCompressorTestNetwork {
             assert(originatingClient !== undefined);
             idIndicesAggregator.set(
                 originatingClient,
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 assertNotUndefined(idIndicesAggregator.get(originatingClient)) + 1,
             );
         }

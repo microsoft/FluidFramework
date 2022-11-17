@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { expect } from "chai";
 import { v4, v5 } from "uuid";
 import { take } from "@fluid-internal/stochastic-test-utils";
@@ -437,6 +440,8 @@ describe("IdCompressor", () => {
                 expect(overrides[0][0]).to.equal(idsActual.first);
                 expect(overrides[overrides.length - 1][0]).to.equal(idsActual.last);
                 for (const [id, uuid] of Object.entries(overrideIndices)) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
                     expect(overrides[id][1]).to.equal(uuid);
                 }
                 newLastTakenId = idsActual.last;
@@ -1636,7 +1641,11 @@ describe("IdCompressor", () => {
                 network.deliverOperations(Client.Client1);
                 const serialized = network.getCompressor(Client.Client1).serialize(false);
                 expect(serialized.clusters.length).to.equal(2);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 expect(serialized.clusters[0][2]?.[0][0]).to.equal(0);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 expect(serialized.clusters[1][2]?.[0][0]).to.equal(0);
             });
         });

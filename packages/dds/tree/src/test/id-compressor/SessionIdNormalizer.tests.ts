@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { expect } from "chai";
 import {
