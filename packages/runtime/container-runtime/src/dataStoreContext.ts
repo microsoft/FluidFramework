@@ -58,7 +58,11 @@ import {
     SummarizeInternalFn,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import {
+    addBlobToSummary,
+    convertSummaryTreeToITree,
+    packagePathToTelemetryProperty,
+} from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
     LoggingError,
@@ -766,10 +770,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         if (checkTombstone && this.tombstoned) {
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
-            throw new DataCorruptionError(messageString, {
+            const error = new DataCorruptionError(messageString, {
                 errorMessage: messageString,
                 ...safeTelemetryProps,
             });
+
+            this.subLogger.sendErrorEvent({
+                eventName: "GC_Tombstone_DataStore_Changed",
+                callSite,
+                pkg: packagePathToTelemetryProperty(this.pkg),
+            }, error);
+
+            throw error;
         }
     }
 

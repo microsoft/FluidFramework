@@ -188,6 +188,12 @@
         "server/historian",
         "tools/telemetry-generator"
       ]
+    },
+    "branchReleaseTypes": {
+      "main": "minor",
+      "lts": "minor",
+      "release/**": "patch",
+      "next": "major"
     }
   }
 }
