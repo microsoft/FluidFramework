@@ -30,4 +30,39 @@ export {
     UnackedLocalId,
     VersionedSerializedIdCompressor,
 } from "./persisted-types";
-export { createSessionId } from "./NumericUuid";
+export {
+    NumericUuid,
+    numericUuidEquals,
+    getPositiveDelta,
+    createSessionId,
+    numericUuidFromStableId,
+    stableIdFromNumericUuid,
+    incrementUuid,
+    ensureSessionUuid,
+} from "./NumericUuid";
+export {
+    assert,
+    assertNotUndefined,
+    fail,
+    Mutable,
+    ClosedMap,
+    getOrCreate,
+    compareStrings,
+} from "./Common";
+export {
+    AttributionId,
+    StableId,
+    CompressedId,
+    FinalCompressedId,
+    LocalCompressedId,
+    OpSpaceCompressedId,
+    SessionId,
+    SessionSpaceCompressedId,
+} from "./Identifiers";
+export {
+    generateStableId,
+    assertIsStableId,
+    isStableId,
+    assertIsUuidString,
+} from "./UuidUtilities";
+export { SessionIdNormalizer } from "./SessionIdNormalizer";

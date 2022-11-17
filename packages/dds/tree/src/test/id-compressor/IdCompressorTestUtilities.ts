@@ -17,30 +17,34 @@ import {
     take,
     BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
-import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from "../../Common";
-import { IdCompressor, isLocalId } from "../../id-compressor/IdCompressor";
 import {
+    assert,
+    assertNotUndefined,
+    ClosedMap,
+    fail,
+    getOrCreate,
+    IdCompressor,
+    isLocalId,
     createSessionId,
     ensureSessionUuid,
     NumericUuid,
     numericUuidFromStableId,
     stableIdFromNumericUuid,
-} from "../../id-compressor/NumericUuid";
-import {
     FinalCompressedId,
     SessionId,
     StableId,
     SessionSpaceCompressedId,
     AttributionId,
     OpSpaceCompressedId,
-} from "../../Identifiers";
-import { getIds } from "../../id-compressor/IdRange";
+    getIds,
+    assertIsStableId,
+    assertIsUuidString,
+} from "../../id-compressor";
 import type {
     IdCreationRange,
     SerializedIdCompressorWithOngoingSession,
     SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
-import { assertIsStableId, assertIsUuidString } from "../../UuidUtilities";
 import { expectDefined } from "./TestCommon";
 
 /** Identifies a compressor in a network */

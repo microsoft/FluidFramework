@@ -7,30 +7,25 @@
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { take } from "@fluid-internal/stochastic-test-utils";
-import { fail, Mutable } from "../Common";
 import {
+    fail,
+    Mutable,
     defaultClusterCapacity,
     IdCompressor,
     isFinalId,
     isLocalId,
-} from "../id-compressor/IdCompressor";
-import {
     IdCreationRange,
     UnackedLocalId,
     SerializedIdCompressorWithNoSession,
-} from "../id-compressor";
-import {
     createSessionId,
     numericUuidFromStableId,
     stableIdFromNumericUuid,
-} from "../id-compressor/NumericUuid";
-import {
     CompressedId,
     FinalCompressedId,
     LocalCompressedId,
     OpSpaceCompressedId,
     SessionId,
-} from "../Identifiers";
+} from "../../id-compressor";
 import {
     Client,
     IdCompressorTestNetwork,
@@ -38,7 +33,7 @@ import {
     performFuzzActions,
     sessionIds,
     TestIdData,
-} from "./utilities/IdCompressorTestUtilities";
+} from "./IdCompressorTestUtilities";
 
 describe("IdCompressor Perf", () => {
     const type = BenchmarkType.Measurement;

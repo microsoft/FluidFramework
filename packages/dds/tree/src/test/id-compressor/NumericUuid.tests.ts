@@ -7,8 +7,8 @@
 
 import { expect } from "chai";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { compareStrings } from "../Common";
 import {
+    compareStrings,
     numericUuidEquals,
     createSessionId,
     getPositiveDelta,
@@ -16,10 +16,11 @@ import {
     numericUuidFromStableId,
     stableIdFromNumericUuid,
     ensureSessionUuid,
-} from "../id-compressor/NumericUuid";
-import { StableId } from "../Identifiers";
-import { assertIsStableId, isStableId } from "../UuidUtilities";
-import { integerToStableId } from "./utilities/IdCompressorTestUtilities";
+    StableId,
+    assertIsStableId,
+    isStableId,
+} from "../../id-compressor";
+import { integerToStableId } from "./IdCompressorTestUtilities";
 
 describe("NumericUuid", () => {
     it("can detect non-v4 variant 2 UUIDs", () => {

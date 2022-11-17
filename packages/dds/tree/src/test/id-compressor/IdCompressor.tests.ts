@@ -12,24 +12,24 @@ import {
     isLocalId,
     hasOngoingSession,
     legacySharedTreeInitialTreeId,
-} from "../id-compressor/IdCompressor";
-import {
     LocalCompressedId,
     FinalCompressedId,
     SessionSpaceCompressedId,
     OpSpaceCompressedId,
     SessionId,
-} from "../Identifiers";
-import { assert, assertNotUndefined, fail } from "../Common";
-import {
+    assert,
+    assertNotUndefined,
+    fail,
     createSessionId,
     incrementUuid,
     numericUuidFromStableId,
     stableIdFromNumericUuid,
-} from "../id-compressor/NumericUuid";
-import { getIds } from "../id-compressor/IdRange";
-import type { IdCreationRange, UnackedLocalId } from "../id-compressor";
-import { assertIsStableId, generateStableId, isStableId } from "../UuidUtilities";
+    getIds,
+    assertIsStableId,
+    generateStableId,
+    isStableId,
+} from "../../id-compressor";
+import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
 import {
     createCompressor,
     performFuzzActions,
@@ -44,8 +44,8 @@ import {
     makeOpGenerator,
     attributionIds,
     generateCompressedIds,
-} from "./utilities/IdCompressorTestUtilities";
-import { expectDefined, expectAssert } from "./utilities/TestCommon";
+} from "./IdCompressorTestUtilities";
+import { expectDefined, expectAssert } from "./TestCommon";
 
 describe("IdCompressor", () => {
     it("detects invalid cluster sizes", () => {

@@ -16,10 +16,16 @@ import {
     take,
     makeRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import { assert, fail } from "../Common";
-import { isFinalId, isLocalId } from "../id-compressor";
-import { SessionIdNormalizer } from "../id-compressor/SessionIdNormalizer";
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "../Identifiers";
+import {
+    assert,
+    fail,
+    isFinalId,
+    isLocalId,
+    SessionIdNormalizer,
+    FinalCompressedId,
+    LocalCompressedId,
+    SessionSpaceCompressedId,
+} from "../../id-compressor";
 
 describe("SessionIdNormalizer", () => {
     it("fails when adding finals with no corresponding locals", () => {
