@@ -14,6 +14,7 @@ import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { measure } from "./odspUtils";
 
 // eslint-disable-next-line max-len
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
@@ -388,6 +389,16 @@ export class NodeCore {
      * @param buffer - buffer to read from.
      */
     protected load(buffer: ReadBuffer, logger: ITelemetryLogger) {
+        const [stringsToResolve, durationStructure] = measure(() => this.loadStructure(buffer, logger));
+        const [, durationStrings] = measure(() => this.loadStrings(buffer, stringsToResolve, logger));
+        return { durationStructure, durationStrings };
+     }
+
+    /**
+     * Load and parse the buffer into a tree.
+     * @param buffer - buffer to read from.
+     */
+    protected loadStructure(buffer: ReadBuffer, logger: ITelemetryLogger) {
         const stack: NodeTypes[][] = [];
         const stringsToResolve: IStringElementInternal[] = [];
         const dictionary: IStringElement[] = [];
@@ -486,6 +497,10 @@ export class NodeCore {
         // This also ensures that stack.length === 0.
         assert(children === this.children, 0x3e7 /* Unpaired start/end list/set markers! */);
 
+        return stringsToResolve;
+    }
+
+    private loadStrings(buffer: ReadBuffer, stringsToResolve: IStringElementInternal[], logger: ITelemetryLogger) {
         /**
          * Process all the strings at once!
          */
@@ -532,11 +547,11 @@ export class NodeCore {
   * Provides loading and serialization capabilities.
   */
 export class TreeBuilder extends NodeCore {
-    static load(buffer: ReadBuffer, logger: ITelemetryLogger): TreeBuilder {
+    static load(buffer: ReadBuffer, logger: ITelemetryLogger) {
         const builder = new TreeBuilder();
-        builder.load(buffer, logger);
+        const telemetryProps = builder.load(buffer, logger);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
-        return builder;
+        return { builder, telemetryProps };
     }
 }
 
