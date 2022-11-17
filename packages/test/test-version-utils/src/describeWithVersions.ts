@@ -15,7 +15,7 @@ import { ensurePackageInstalled, InstalledPackage } from "./testApi";
  * prior to running the test suite. The properties are cumulative, as all
  * versions deduced from all properties will be installed.
  */
-export interface IRequestedVersions {
+export interface IRequestedFluidVersions {
     /**
      * Delta of versions to be installed with the current
      * package version as the baseline.
@@ -27,7 +27,7 @@ export interface IRequestedVersions {
     requestAbsoluteVersions?: string[];
 }
 
-const installRequiredVersions = async (config: IRequestedVersions) => {
+const installRequiredVersions = async (config: IRequestedFluidVersions) => {
     const installPromises: Promise<InstalledPackage | undefined>[] = [];
     if (config.requestAbsoluteVersions !== undefined) {
         installPromises.push(
@@ -55,11 +55,11 @@ const installRequiredVersions = async (config: IRequestedVersions) => {
 };
 
 const defaultTimeoutMs = 20000;
-const defaultRequestedVersions: IRequestedVersions = { requestRelativeVersions: -2 };
+const defaultRequestedVersions: IRequestedFluidVersions = { requestRelativeVersions: -2 };
 
 function createTestSuiteWithInstalledVersion(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
-    requiredVersions: IRequestedVersions = defaultRequestedVersions,
+    requiredVersions: IRequestedFluidVersions = defaultRequestedVersions,
     timeoutMs: number = defaultTimeoutMs,
 ) {
     return function(this: Mocha.Suite) {
@@ -128,13 +128,14 @@ type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", 
  * If package installation fails for any of the requested versions, the test suite will not be created and
  * the test run will fail.
  *
- * @param requestedVersions - See {@link IRequestedVersions}. If unspecified, the test will install the last 2 versions.
+ * @param requestedVersions - See {@link IRequestedFluidVersions}.
+ * If unspecified, the test will install the last 2 versions.
  * @param timeoutMs - the timeout for the tests in milliseconds, as package installation is time consuming.
  * If unspecified, the timeout is 20000 ms.
  * @returns A mocha test suite
  */
 export function installVersionsDescribe(
-    requestedVersions?: IRequestedVersions,
+    requestedVersions?: IRequestedFluidVersions,
     timeoutMs?: number,
 ): DescribeWithVersions {
     const d: DescribeWithVersions =

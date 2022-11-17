@@ -29,8 +29,6 @@ installVersionsDescribe(
     "Legacy chunking",
     (getTestObjectProvider) => {
         let provider: ITestObjectProvider;
-        let oldDataObject: ITestFluidObject;
-        let newDataObject: ITestFluidObject;
         let oldMap: SharedMap;
         let newMap: SharedMap;
         beforeEach(() => {
@@ -79,13 +77,12 @@ installVersionsDescribe(
         };
 
         const setupContainers = async () => {
-            // Create a Container for the first client.
             const oldContainer = await createOldContainer(versionWithChunking);
-            oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
+            const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
             oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
 
-            const container2 = await provider.loadTestContainer(testContainerConfig);
-            newDataObject = await requestFluidObject<ITestFluidObject>(container2, "default");
+            const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
+            const newDataObject = await requestFluidObject<ITestFluidObject>(containerOnLatest, "default");
             newMap = await newDataObject.getSharedObject<SharedMap>(mapId);
 
             await provider.ensureSynchronized();
@@ -93,9 +90,9 @@ installVersionsDescribe(
 
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-        it("An old container sends a large chunked op, a new container is able to process it successfully", async () => {
+        it("If an old container sends a large chunked op, a new container is able to process it successfully", async () => {
             await setupContainers();
-            // Ops larger than 16k will end up chunked
+            // Ops larger than 16k will end up chunked in older versions of fluid
             const messageSizeInBytes = 100 * 1024;
             const value = generateStringOfSize(messageSizeInBytes);
             oldMap.set("key", value);
