@@ -265,7 +265,11 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
  * Sequence multiplicities are handled with {@link EditableField}.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
+export type UnwrappedEditableField =
+    | UnwrappedEditableTree
+    | undefined
+    | EditableField
+    | UnwrappedEditableTree[];
 
 function isSubscriptionCursor(
     cursor: CursorWithNode<MapTree> | ITreeSubscriptionCursor,
@@ -549,25 +553,25 @@ export const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTre
                     const field = target.proxifyField(fieldKey, false);
                     field.getNode(0)[valueSymbol] = value;
                     return true;
-                } else {
-                    target.deleteField(fieldKey);
                 }
             }
             const fieldSchema = target.getFieldSchema(fieldKey);
+            let content: ITreeCursor | ITreeCursor[];
             if (fieldKind.multiplicity === Multiplicity.Sequence) {
                 assert(Array.isArray(value), "Expected array");
-                target.createField(
-                    fieldKey,
-                    value.map((v) => cursorFromData(target.context, fieldSchema, v)),
-                );
+                content = value.map((v) => cursorFromData(target.context, fieldSchema, v));
             } else {
-                const cursor = cursorFromData(
+                content = cursorFromData(
                     target.context,
                     fieldSchema,
                     value as UnwrappedEditableField,
                 );
-                target.createField(fieldKey, cursor);
             }
+            if (target.has(fieldKey)) {
+                target.context.postponeAfterChange = true;
+                target.deleteField(fieldKey);
+            }
+            target.createField(fieldKey, content);
             return true;
         }
         if (key === valueSymbol) {
@@ -853,13 +857,16 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 node[valueSymbol] = value;
                 return true;
             }
-            target.deleteNodes(Number(key), 1);
         }
         const cursor = cursorFromData(
             target.context,
             target.fieldSchema,
             value as UnwrappedEditableField,
         );
+        if (keyIsValidIndex(key, target.length)) {
+            target.context.postponeAfterChange = true;
+            target.deleteNodes(Number(key), 1);
+        }
         target.insertNodes(Number(key), cursor);
         return true;
     },
@@ -1034,6 +1041,7 @@ export function proxifyField(
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
     return (
         typeof field === "object" &&
+        !Array.isArray(field) &&
         isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
     );
 }
@@ -1044,6 +1052,7 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
     return (
         typeof field === "object" &&
+        !Array.isArray(field) &&
         isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
     );
 }

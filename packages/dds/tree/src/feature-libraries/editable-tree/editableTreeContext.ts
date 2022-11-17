@@ -28,6 +28,7 @@ import {
 import { Brand } from "../../util";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
+import { Multiplicity } from "../modular-schema";
 import {
     ProxyTarget,
     EditableField,
@@ -37,7 +38,7 @@ import {
     NodeProxyTarget,
     nodeProxyHandler,
 } from "./editableTree";
-import { adaptWithProxy, cursorFromData, cursorFromSchemaAndData } from "./utilities";
+import { adaptWithProxy, cursorFromData, cursorFromSchemaAndData, getFieldKind } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -63,7 +64,7 @@ export interface EditableTreeContext {
      * Same as `root`, but with unwrapped fields.
      * See ${@link UnwrappedEditableField} for what is unwrapped.
      */
-    readonly unwrappedRoot: UnwrappedEditableField;
+    unwrappedRoot: UnwrappedEditableField;
 
     /**
      * Call before editing.
@@ -103,6 +104,7 @@ export class ProxyContext implements EditableTreeContext {
     public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     private readonly observer: Dependent;
     private readonly afterChangeHandlers: Set<(context: EditableTreeContext) => void> = new Set();
+    public postponeAfterChange: boolean = false;
 
     /**
      * @param forest - the Forest
@@ -118,7 +120,11 @@ export class ProxyContext implements EditableTreeContext {
         this.observer = new SimpleObservingDependent(
             (token?: InvalidationToken, delta?: Delta.Root): void => {
                 if (token === afterChangeToken) {
-                    this.handleAfterChange();
+                    if (this.postponeAfterChange) {
+                        this.postponeAfterChange = false;
+                    } else {
+                        this.handleAfterChange();
+                    }
                 } else {
                     this.prepareForEdit();
                 }
@@ -147,6 +153,21 @@ export class ProxyContext implements EditableTreeContext {
 
     public get unwrappedRoot(): UnwrappedEditableField {
         return this.getRoot(true);
+    }
+
+    public set unwrappedRoot(value: UnwrappedEditableField) {
+        const rootField = this.getRoot(false);
+        if (getFieldKind(rootField.fieldSchema).multiplicity === Multiplicity.Sequence) {
+            assert(Array.isArray(value), "expected array");
+            value.forEach((v, i) =>
+                rootField.insertNodes(i, cursorFromData(this, rootField.fieldSchema, v)),
+            );
+        } else {
+            if (rootField.length > 0) {
+                rootField.deleteNodes(0);
+            }
+            rootField.insertNodes(0, cursorFromData(this, rootField.fieldSchema, value));
+        }
     }
 
     public get root(): EditableField {

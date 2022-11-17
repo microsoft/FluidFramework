@@ -17,7 +17,10 @@ export default {
     },
     phones: {
         typeid: "Test:Phones-1.0.0",
-        properties: [{ id: "phone", typeid: "String", context: "array" }],
+        properties: [
+            { id: "phone", typeid: "String", context: "array" },
+            { id: "phone", typeid: "Int32", context: "array" },
+        ],
     },
     address: {
         typeid: "Test:Address-1.0.0",
@@ -28,6 +31,7 @@ export default {
         ],
         properties: [
             { id: "zip", typeid: "String" },
+            { id: "zip", typeid: "Int32" },
             { id: "street", typeid: "String", optional: true },
             { id: "city", typeid: "String", optional: true },
             { id: "country", typeid: "String", optional: true },
@@ -42,6 +46,7 @@ export default {
             { id: "age", typeid: "Int32", optional: true },
             { id: "adult", typeid: "Bool", optional: true },
             { id: "salary", typeid: "Float64", optional: true },
+            { id: "salary", typeid: "Int32", optional: true },
             { id: "address", typeid: "Test:Address-1.0.0", optional: true },
             { id: "friends", typeid: "String", context: "map", optional: true },
         ],

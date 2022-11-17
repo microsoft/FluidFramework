@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { fail } from "assert";
 import {
     brand,
@@ -56,6 +57,7 @@ const primitiveTypes = new Set([
 type Context = {
     typeid: TreeSchemaIdentifier;
     context: string;
+    types?: Set<TreeSchemaIdentifier>;
 };
 
 export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
@@ -69,18 +71,18 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
     while (unprocessedTypeIds.length !== 0) {
         const unprocessedTypeID = unprocessedTypeIds.pop() ?? fail("fail");
 
-        const context: Context = { typeid: brand(unprocessedTypeID), context: "single" };
-        referencedTypeIDs.set(
-            brand(unprocessedTypeID),
-            context,
-        );
+        const context: Context = {
+            typeid: brand(unprocessedTypeID),
+            context: "single",
+        };
+        referencedTypeIDs.set(brand(unprocessedTypeID), context);
 
         const schemaTemplate = PropertyFactory.getTemplate(unprocessedTypeID);
         if (schemaTemplate === undefined) {
             throw new Error(`Unknown typeid: ${unprocessedTypeID}`);
         }
         const dependencies = PropertyTemplate.extractDependencies(
-            schemaTemplate,
+            schemaTemplate
         ) as TreeSchemaIdentifier[];
         for (const dependencyTypeId of dependencies) {
             if (!referencedTypeIDs.has(dependencyTypeId)) {
@@ -96,16 +98,25 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                     // TODO: We have to create a corresponding nested type
                     extractContexts(property.properties);
                 }
-                if (property.context !== undefined && property.context !== "single") {
+                if (
+                    property.context !== undefined &&
+                    property.context !== "single"
+                ) {
                     if (property.context !== "array") {
-                        referencedTypeIDs.set(brand(`${property.context}<${property.typeid}>`), {
-                            typeid: property.typeid,
-                            context: property.context,
-                        });
+                        referencedTypeIDs.set(
+                            brand(`${property.context}<${property.typeid}>`),
+                            {
+                                typeid: property.typeid,
+                                context: property.context,
+                            }
+                        );
                         return;
                     }
                     context.context = property.context;
-                    context.typeid = property.typeid;
+                    if (context.types === undefined) {
+                        context.types = new Set();
+                    }
+                    context.types.add(property.typeid);
                 }
                 if (TypeIdHelper.isPrimitiveType(property.typeid)) {
                     referencedTypeIDs.set(property.typeid, {
@@ -121,7 +132,10 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
     for (const type of primitiveTypes) {
         const typeid: TreeSchemaIdentifier = brand(type);
         if (!referencedTypeIDs.has(typeid)) {
-            referencedTypeIDs.set(typeid, { typeid, context: "single" });
+            referencedTypeIDs.set(typeid, {
+                typeid,
+                context: "single",
+            });
         }
     }
 
@@ -167,7 +181,7 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                     valueType = ValueSchema.String;
                 } else {
                     throw new Error(
-                        `Unknown primitive typeid: ${context.typeid}`,
+                        `Unknown primitive typeid: ${context.typeid}`
                     );
                 }
 
@@ -194,7 +208,7 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                     const localFields = new Map<LocalFieldKey, FieldSchema>();
                     const inheritanceChain =
                         PropertyFactory.getAllParentsForTemplate(
-                            context.typeid,
+                            context.typeid
                         );
                     inheritanceChain.push(context.typeid);
 
@@ -204,11 +218,11 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                         }
 
                         const schema = PropertyFactory.getTemplate(
-                            typeIdInInheritanceChain,
+                            typeIdInInheritanceChain
                         );
                         if (schema === undefined) {
                             throw new Error(
-                                `Unknown typeid referenced: ${typeIdInInheritanceChain}`,
+                                `Unknown typeid referenced: ${typeIdInInheritanceChain}`
                             );
                         }
                         for (const property of schema.properties) {
@@ -224,13 +238,23 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                                         property.typeid || ""
                                     }>`;
                                 }
-
-                                localFields.set(property.id as LocalFieldKey, {
-                                    kind: property.optional
-                                        ? fieldKinds.optional
-                                        : fieldKinds.value,
-                                    types: new Set([currentTypeid]),
-                                });
+                                const fieldKey: LocalFieldKey = brand(property.id);
+                                if (!localFields.has(fieldKey)) {
+                                    localFields.set(fieldKey, {
+                                        kind: property.optional
+                                            ? fieldKinds.optional
+                                            : fieldKinds.value,
+                                        types: new Set([currentTypeid]),
+                                    });
+                                } else {
+                                    const types = localFields.get(fieldKey)?.types ?? fail("never");
+                                    localFields.set(fieldKey, {
+                                        kind: property.optional
+                                            ? fieldKinds.optional
+                                            : fieldKinds.value,
+                                        types: new Set([...types, currentTypeid]),
+                                    });
+                                }
                             }
                         }
                     }
@@ -240,8 +264,10 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                         globalFields: new Set(),
                         extraLocalFields: PropertyFactory.inheritsFrom(
                             context.typeid,
-                            "NodeProperty",
-                        ) ? { kind: fieldKinds.optional } : emptyField,
+                            "NodeProperty"
+                        )
+                            ? { kind: fieldKinds.optional }
+                            : emptyField,
                         extraGlobalFields: false,
                         value: ValueSchema.Nothing,
                     };
@@ -253,18 +279,10 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                     ? fieldKinds.sequence
                     : fieldKinds.optional;
 
-            const fieldType =
-                context.typeid !== "" && context.typeid !== "BaseProperty"
-                    ? {
-                          kind,
-                          types: new Set([
-                              // TODO: How do we handle inheritance here?
-                              context.typeid,
-                          ]),
-                      }
-                    : {
-                          kind,
-                      };
+            const fieldType = {
+                kind,
+                types: context.types,
+            };
             switch (context.context) {
                 case "map":
                 case "set":
@@ -290,7 +308,7 @@ export function convertPSetSchema(rootFieldSchema: FieldSchema): SchemaData {
                     break;
                 default:
                     throw new Error(
-                        `Unknown context in typeid: ${context.context}`,
+                        `Unknown context in typeid: ${context.context}`
                     );
             }
         }

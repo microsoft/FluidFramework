@@ -252,5 +252,11 @@ export function cursorFromData(
         ? data
         : context.newDetachedNode(data, tryGetNodeType(fieldSchema));
     const nodeTarget = node[proxyTargetSymbol] as NodeProxyTarget;
+    if (fieldSchema.types !== undefined) {
+        assert(
+            fieldSchema.types.has(nodeTarget.typeName),
+            "The type does not match the field schema",
+        );
+    }
     return nodeTarget.cursor;
 }

@@ -6,12 +6,12 @@
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { convertPSetSchema, registerSchemas } from "@fluid-experimental/schemas";
 import { AzureClient } from "@fluidframework/azure-client";
-import { ISharedTree, SharedTreeFactory, fieldKinds, singleTextCursor } from "@fluid-internal/tree";
+import { ISharedTree, SharedTreeFactory, fieldKinds } from "@fluid-internal/tree";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 
 import { renderApp } from "./newInspector";
-import { personData, getRootFieldSchema } from "./demoPersonData";
+import { getRootFieldSchema, getPerson } from "./demoPersonData";
 
 class MySharedTree {
     public static getFactory(): IChannelFactory {
@@ -81,12 +81,10 @@ async function start(): Promise<void> {
     document.title = containerId;
 
     const sharedTree = container.initialObjects.sharedTree as ISharedTree;
-    const schema = convertPSetSchema(getRootFieldSchema(fieldKinds.sequence));
+    const schema = convertPSetSchema(getRootFieldSchema(fieldKinds.optional));
     sharedTree.storedSchema.update(schema);
     if (!documentId) {
-        sharedTree.context.root.insertNodes(0, singleTextCursor(personData));
-        // sharedTree.context.root[0] = sharedTree.context.newDetachedNode(personData, personSchemaName);
-        // sharedTree.context.root.insertNodes(0, singleTextCursor({ type: brand("String"), value: "oops" }));
+        sharedTree.root = getPerson(sharedTree.context);
     }
 
     renderApp(sharedTree, document.getElementById("root")!);
