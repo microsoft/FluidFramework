@@ -535,7 +535,7 @@ export class GarbageCollector implements IGarbageCollector {
          */
         if (createParams.existing) {
             prevSummaryGCVersion = getGCVersion(this.metadata);
-            // Existing documents which did not have this.metadata blob or had GC disabled have version as 0. For all
+            // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sweepEnabled = this.metadata?.sweepEnabled ?? false;
