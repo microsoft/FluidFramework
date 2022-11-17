@@ -381,8 +381,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         if (!this.isAttached()) {
-            // Simulate auto-ack in detached scenari
-            assert(this.clientId !== undefined, "clientId is undefined");
+            // Simulate auto-ack in detached scenario
+            assert(this.clientId !== undefined, "clientId should not be undefined");
             this.addClientToQueue(taskId, this.clientId);
             return true;
         }
@@ -503,7 +503,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId is undefined");
+            assert(this.clientId !== undefined, "clientId should not be undefined");
             this.addClientToQueue(taskId, this.clientId);
             // If we volunteered using placeHolderClientId, then we need to watch for when we connect and are assigned a
             // clientId post-attach. At that point we should re-enter the queue with a real volunteer op.
