@@ -2,29 +2,36 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as assert from "assert";
+import { AsyncPriorityQueue } from "async";
+import chalk from "chalk";
 import crypto from "crypto";
 import registerDebug from "debug";
-import { AsyncPriorityQueue } from "async";
-import * as assert from "assert";
 import * as path from "path";
-import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGraph";
+
 import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
+import {
+    ExecAsyncResult,
+    execAsync,
+    existsSync,
+    getExecutableFromCommand,
+    readFileAsync,
+    unlinkAsync,
+    writeFileAsync,
+} from "../../../common/utils";
+import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
-import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
-import chalk from "chalk";
 
-const {info, verbose} = defaultLogger;
+const { info, verbose } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
-    worker?: boolean
+    worker?: boolean;
 }
 
 export abstract class LeafTask extends Task {
-
     private dependentTasks?: LeafTask[];
     private parentCount: number = 0;
 
@@ -35,12 +42,13 @@ export abstract class LeafTask extends Task {
         }
     }
 
-    public get isLeaf(): boolean { return true; }
+    public get isLeaf(): boolean {
+        return true;
+    }
 
     public get isDisabled() {
         const isLintTask = this.executable === "eslint" || this.executable === "tsfmt";
-        return (options.nolint && isLintTask)
-            || (options.lintonly && !isLintTask);
+        return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
     }
 
     public get executable() {
@@ -54,7 +62,13 @@ export abstract class LeafTask extends Task {
                 const depScripts = this.scriptDeps[depPackage.pkg.name];
                 if (depScripts) {
                     for (const depScript of depScripts) {
-                        if (this.addChildTask(this.dependentTasks, depPackage, `npm run ${depScript}`)) {
+                        if (
+                            this.addChildTask(
+                                this.dependentTasks,
+                                depPackage,
+                                `npm run ${depScript}`,
+                            )
+                        ) {
                             this.logVerboseDependency(depPackage, depScript);
                         }
                     }
@@ -65,7 +79,7 @@ export abstract class LeafTask extends Task {
     }
 
     public matchTask(command: string, options?: any): LeafTask | undefined {
-        return (this.command === command) ? this : undefined;
+        return this.command === command ? this : undefined;
     }
 
     public collectLeafTasks(leafTasks: LeafTask[]) {
@@ -77,22 +91,28 @@ export abstract class LeafTask extends Task {
         return false;
     }
     public async exec(): Promise<BuildResult> {
-        if (this.isDisabled) { return BuildResult.UpToDate; }
+        if (this.isDisabled) {
+            return BuildResult.UpToDate;
+        }
         if (options.showExec) {
             this.node.buildContext.taskStats.leafBuiltCount++;
-            const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
-            const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
+            const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+                .toString()
+                .padStart(3, " ");
+            const totalTask =
+                this.node.buildContext.taskStats.leafTotalCount -
+                this.node.buildContext.taskStats.leafUpToDateCount;
             info(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
         }
         const startTime = Date.now();
-        if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
+        if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
             return this.execDone(startTime, BuildResult.UpToDate);
         }
         const ret = await this.execCore();
 
         if (ret.error) {
             const codeStr = ret.error.code !== undefined ? ` (exit code ${ret.error.code})` : "";
-            console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`)
+            console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`);
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
         }
@@ -109,19 +129,33 @@ export abstract class LeafTask extends Task {
     private async execCore(): Promise<TaskExecResult> {
         const workerPool = this.node.buildContext.workerPool;
         if (workerPool && this.useWorker) {
-            const workerResult = await workerPool.runOnWorker(this.executable, this.command, this.node.pkg.directory);
+            const workerResult = await workerPool.runOnWorker(
+                this.executable,
+                this.command,
+                this.node.pkg.directory,
+            );
             if (workerResult.code === 0 || !workerResult.error) {
                 return {
-                    error: workerResult.code === 0 ? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
+                    error:
+                        workerResult.code === 0
+                            ? null
+                            : {
+                                  name: "Worker error",
+                                  message: "Worker error",
+                                  cmd: this.command,
+                                  code: workerResult.code,
+                              },
                     stdout: workerResult.stdout ?? "",
                     stderr: workerResult.stderr ?? "",
                     worker: true,
-                }
+                };
             }
             // rerun on the main thread in case the work has an unknown exception
             const result = await this.execCommand();
             if (!result.error) {
-                console.warn(`${this.node.pkg.nameColored}: warning: worker failed with code ${workerResult.code} but succeeded directly '${this.command}'`);
+                console.warn(
+                    `${this.node.pkg.nameColored}: warning: worker failed with code ${workerResult.code} but succeeded directly '${this.command}'`,
+                );
                 if (workerResult.error) {
                     if (workerResult.error.stack) {
                         console.warn(workerResult.error.stack);
@@ -138,8 +172,12 @@ export abstract class LeafTask extends Task {
     private async execCommand(): Promise<ExecAsyncResult> {
         return execAsync(this.command, {
             cwd: this.node.pkg.directory,
-            env: { PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${process.env["PATH"]}` }
-        })
+            env: {
+                PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${
+                    path.delimiter
+                }${process.env["PATH"]}`,
+            },
+        });
     }
 
     private getExecErrors(ret: ExecAsyncResult) {
@@ -173,11 +211,17 @@ export abstract class LeafTask extends Task {
             }
 
             this.node.buildContext.taskStats.leafBuiltCount++;
-            const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
-            const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
+            const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+                .toString()
+                .padStart(3, " ");
+            const totalTask =
+                this.node.buildContext.taskStats.leafTotalCount -
+                this.node.buildContext.taskStats.leafUpToDateCount;
             const elapsedTime = (Date.now() - startTime) / 1000;
             const workerMsg = worker ? "[worker] " : "";
-            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
+            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
+                this.node.pkg.nameColored
+            }: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
             info(statusString);
             if (status === BuildResult.Failed) {
                 this.node.buildContext.failedTaskLines.push(statusString);
@@ -201,10 +245,15 @@ export abstract class LeafTask extends Task {
     }
 
     protected async checkIsUpToDate(): Promise<boolean> {
-        if (this.isDisabled) { return true; }
-        if (options.lintonly) { return false; }
+        if (this.isDisabled) {
+            return true;
+        }
+        if (options.lintonly) {
+            return false;
+        }
 
-        const leafIsUpToDate = await this.checkDependentTasksIsUpToDate() && await this.checkLeafIsUpToDate();
+        const leafIsUpToDate =
+            (await this.checkDependentTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
         if (leafIsUpToDate) {
             this.node.buildContext.taskStats.leafUpToDateCount++;
             this.logVerboseTask(`Skipping Leaf Task`);
@@ -213,7 +262,12 @@ export abstract class LeafTask extends Task {
         return leafIsUpToDate;
     }
 
-    protected addChildTask(dependentTasks: LeafTask[], node: BuildPackage, command: string, options?: any) {
+    protected addChildTask(
+        dependentTasks: LeafTask[],
+        node: BuildPackage,
+        command: string,
+        options?: any,
+    ) {
         const task = node.findTask(command, options);
         if (task) {
             task.collectLeafTasks(dependentTasks);
@@ -225,7 +279,7 @@ export abstract class LeafTask extends Task {
     private async checkDependentTasksIsUpToDate(): Promise<boolean> {
         const dependentTasks = this.getDependentTasks();
         for (const dependentTask of dependentTasks) {
-            if (!await dependentTask.isUpToDate()) {
+            if (!(await dependentTask.isUpToDate())) {
                 this.logVerboseTrigger(`dependent task ${dependentTask.toString()} not up to date`);
                 return false;
             }
@@ -281,13 +335,17 @@ export abstract class LeafTask extends Task {
     protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
     // do this task support recheck when it time to execute (even when the dependent task is out of date)
-    protected get recheckLeafIsUpToDate(): boolean { return false; }
+    protected get recheckLeafIsUpToDate(): boolean {
+        return false;
+    }
 
     // For called when the task has successfully executed
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    protected async markExecDone(): Promise<void> { }
+    protected async markExecDone(): Promise<void> {}
 
-    protected getVsCodeErrorMessages(errorMessages: string) { return errorMessages; }
+    protected getVsCodeErrorMessages(errorMessages: string) {
+        return errorMessages;
+    }
 
     protected logVerboseNotUpToDate() {
         this.logVerboseTrigger("not up to date");
@@ -338,7 +396,9 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
                     await unlinkAsync(doneFileFullPath);
                 }
             } catch {
-                console.warn(`${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`);
+                console.warn(
+                    `${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`,
+                );
             }
         }
         return leafIsUpToDate;
@@ -351,10 +411,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
             if (content !== undefined) {
                 await writeFileAsync(doneFileFullPath, content);
             } else {
-                console.warn(`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`);
+                console.warn(
+                    `${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
+                );
             }
         } catch {
-            console.warn(`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`);
+            console.warn(
+                `${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`,
+            );
         }
     }
 
@@ -379,7 +443,6 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
         return false;
     }
 
-
     /**
      * Subclass could override this to provide an alternative done file name
      */
@@ -397,7 +460,6 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
     // The content to be written in the done file.
     protected abstract getDoneFileContent(): Promise<string | undefined>;
 }
-
 
 export class UnknownLeafTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {

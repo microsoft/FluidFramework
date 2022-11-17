@@ -2,12 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { readFileSync } from "fs-extra";
 import * as path from "path";
+import YAML from "yaml";
+
 import { fatal } from "../bumpVersion/utils";
-import { defaultLogger, Logger } from "./logging";
+import { Logger, defaultLogger } from "./logging";
 import { Package, Packages } from "./npmPackage";
 import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
+
+export type PackageManager = "npm" | "pnpm" | "yarn";
 
 /**
  * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
@@ -24,7 +28,9 @@ export enum MonoRepoKind {
  * A type guard used to determine if a string is a MonoRepoKind.
  */
 export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
-    if(str === undefined) { return false; }
+    if (str === undefined) {
+        return false;
+    }
 
     const list = Object.values<string>(MonoRepoKind);
     const isMonoRepoValue = list.includes(str);
@@ -64,6 +70,7 @@ export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
     public readonly workspaceGlobs: string[];
+    public readonly packageManager: PackageManager;
 
     /**
      * Creates a new monorepo.
@@ -77,31 +84,47 @@ export class MonoRepo {
         public readonly kind: MonoRepoKind,
         public readonly repoPath: string,
         ignoredDirs?: string[],
-        private readonly logger: Logger = defaultLogger,) {
+        private readonly logger: Logger = defaultLogger,
+    ) {
         this.version = "";
+        const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
         const lernaPath = path.join(repoPath, "lerna.json");
+        const yarnLockPath = path.join(repoPath, "yarn.lock");
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
 
+        this.packageManager = existsSync(pnpmWorkspace)
+            ? "pnpm"
+            : existsSync(yarnLockPath)
+            ? "yarn"
+            : "npm";
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
-                    logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+                logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
                 this.version = lerna.version;
                 versionFromLerna = true;
             }
 
-            if (lerna.packages !== undefined) {
-                    logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
+            let pkgs: string[] = [];
 
-                for (const dir of lerna.packages as string[]) {
-                    // TODO: other glob pattern?
-                    const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this));
-                }
-                this.workspaceGlobs = lerna.packages;
-                return;
+            if (this.packageManager === "pnpm") {
+                logger.verbose(`${kind}: Loading packages from ${pnpmWorkspace}`);
+                const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
+                pkgs = YAML.parse(workspaceString).packages;
+            } else if (lerna.packages !== undefined) {
+                logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
+                pkgs = lerna.packages;
             }
+            for (const dir of pkgs as string[]) {
+                // TODO: other glob pattern?
+                const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
+                this.packages.push(
+                    ...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this),
+                );
+            }
+            this.workspaceGlobs = lerna.packages;
+            return;
         }
 
         if (!existsSync(packagePath)) {
@@ -121,11 +144,21 @@ export class MonoRepo {
             this.workspaceGlobs = pkgJson.workspaces;
             return;
         }
-        fatal(`Couldn't find lerna.json or package.json, or they were missing expected properties.`);
+        fatal(
+            `Couldn't find lerna.json or package.json, or they were missing expected properties.`,
+        );
     }
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
         return a !== undefined && a === b;
+    }
+
+    public get installCommand(): string {
+        return this.packageManager === "pnpm"
+            ? "pnpm i"
+            : this.packageManager === "yarn"
+            ? "npm run install-strict"
+            : "npm i --no-package-lock --no-shrinkwrap";
     }
 
     public getNodeModulePath() {
@@ -133,9 +166,8 @@ export class MonoRepo {
     }
 
     public async install() {
-        this.logger.info(`${this.kind}: Installing - npm i`);
-        const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
+        this.logger.info(`${this.kind}: Installing - ${this.installCommand}`);
+        return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);

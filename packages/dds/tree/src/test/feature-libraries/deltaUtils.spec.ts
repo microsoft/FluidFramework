@@ -23,10 +23,7 @@ const nodeXCursor = singleMapTreeCursor(nodeX);
 const fooField = brand<FieldKey>("foo");
 const moveId = brandOpaque<Delta.MoveId>(42);
 
-function applyModifyToTree(
-    node: MapTree,
-    modify: Delta.Modify,
-): Map<FieldKey, Delta.MarkList> {
+function applyModifyToTree(node: MapTree, modify: Delta.Modify): Map<FieldKey, Delta.MarkList> {
     deepFreeze(modify);
     return applyModifyToTreeImpl(node, modify);
 }
@@ -34,117 +31,139 @@ function applyModifyToTree(
 describe("DeltaUtils", () => {
     describe("mapFieldMarks", () => {
         it("maps delta content", () => {
-            const nestedCursorInsert = new Map([[fooField, [42, {
-                type: Delta.MarkType.Insert,
-                content: [nodeXCursor],
-            }]]]);
+            const nestedCursorInsert = new Map([
+                [
+                    fooField,
+                    [
+                        42,
+                        {
+                            type: Delta.MarkType.Insert,
+                            content: [nodeXCursor],
+                        },
+                    ],
+                ],
+            ]);
             const input: Delta.Root = new Map([
-                [fooField, [
-                    {
-                        type: Delta.MarkType.Modify,
-                        setValue: 1,
-                    },
-                    {
-                        type: Delta.MarkType.Modify,
-                        setValue: 1,
-                        fields: nestedCursorInsert,
-                    },
-                    {
-                        type: Delta.MarkType.ModifyAndMoveOut,
-                        moveId,
-                        setValue: 1,
-                        fields: nestedCursorInsert,
-                    },
-                    {
-                        type: Delta.MarkType.MoveInAndModify,
-                        moveId,
-                        fields: nestedCursorInsert,
-                    },
-                    {
-                        type: Delta.MarkType.ModifyAndDelete,
-                        moveId,
-                        fields: nestedCursorInsert,
-                    },
-                    {
-                        type: Delta.MarkType.Insert,
-                        content: [nodeXCursor],
-                    },
-                    {
-                        type: Delta.MarkType.InsertAndModify,
-                        content: nodeXCursor,
-                        fields: nestedCursorInsert,
-                    },
-                    {
-                        type: Delta.MarkType.Delete,
-                        count: 1,
-                    },
-                    {
-                        type: Delta.MarkType.MoveIn,
-                        moveId,
-                    },
-                    {
-                        type: Delta.MarkType.MoveOut,
-                        moveId,
-                        count: 1,
-                    },
-                ]],
+                [
+                    fooField,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 1,
+                        },
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 1,
+                            fields: nestedCursorInsert,
+                        },
+                        {
+                            type: Delta.MarkType.ModifyAndMoveOut,
+                            moveId,
+                            setValue: 1,
+                            fields: nestedCursorInsert,
+                        },
+                        {
+                            type: Delta.MarkType.MoveInAndModify,
+                            moveId,
+                            fields: nestedCursorInsert,
+                        },
+                        {
+                            type: Delta.MarkType.ModifyAndDelete,
+                            moveId,
+                            fields: nestedCursorInsert,
+                        },
+                        {
+                            type: Delta.MarkType.Insert,
+                            content: [nodeXCursor],
+                        },
+                        {
+                            type: Delta.MarkType.InsertAndModify,
+                            content: nodeXCursor,
+                            fields: nestedCursorInsert,
+                        },
+                        {
+                            type: Delta.MarkType.Delete,
+                            count: 1,
+                        },
+                        {
+                            type: Delta.MarkType.MoveIn,
+                            moveId,
+                        },
+                        {
+                            type: Delta.MarkType.MoveOut,
+                            moveId,
+                            count: 1,
+                        },
+                    ],
+                ],
             ]);
             deepFreeze(input);
             const actual = mapFieldMarks(input, mapTreeFromCursor);
-            const nestedMapTreeInsert = new Map([[fooField, [42, {
-                type: Delta.MarkType.Insert,
-                content: [nodeX],
-            }]]]);
+            const nestedMapTreeInsert = new Map([
+                [
+                    fooField,
+                    [
+                        42,
+                        {
+                            type: Delta.MarkType.Insert,
+                            content: [nodeX],
+                        },
+                    ],
+                ],
+            ]);
             const expected: Delta.Root<MapTree> = new Map([
-                [fooField, [
-                    {
-                        type: Delta.MarkType.Modify,
-                        setValue: 1,
-                    },
-                    {
-                        type: Delta.MarkType.Modify,
-                        setValue: 1,
-                        fields: nestedMapTreeInsert,
-                    },
-                    {
-                        type: Delta.MarkType.ModifyAndMoveOut,
-                        moveId,
-                        setValue: 1,
-                        fields: nestedMapTreeInsert,
-                    },
-                    {
-                        type: Delta.MarkType.MoveInAndModify,
-                        moveId,
-                        fields: nestedMapTreeInsert,
-                    },
-                    {
-                        type: Delta.MarkType.ModifyAndDelete,
-                        moveId,
-                        fields: nestedMapTreeInsert,
-                    },
-                    {
-                        type: Delta.MarkType.Insert,
-                        content: [nodeX],
-                    },
-                    {
-                        type: Delta.MarkType.InsertAndModify,
-                        content: nodeX,
-                        fields: nestedMapTreeInsert,
-                    },
-                    {
-                        type: Delta.MarkType.Delete,
-                        count: 1,
-                    },
-                    {
-                        type: Delta.MarkType.MoveIn,
-                        moveId,
-                    },
-                    {
-                        type: Delta.MarkType.MoveOut,
-                        moveId,
-                        count: 1,
-                    },
-                ]],
+                [
+                    fooField,
+                    [
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 1,
+                        },
+                        {
+                            type: Delta.MarkType.Modify,
+                            setValue: 1,
+                            fields: nestedMapTreeInsert,
+                        },
+                        {
+                            type: Delta.MarkType.ModifyAndMoveOut,
+                            moveId,
+                            setValue: 1,
+                            fields: nestedMapTreeInsert,
+                        },
+                        {
+                            type: Delta.MarkType.MoveInAndModify,
+                            moveId,
+                            fields: nestedMapTreeInsert,
+                        },
+                        {
+                            type: Delta.MarkType.ModifyAndDelete,
+                            moveId,
+                            fields: nestedMapTreeInsert,
+                        },
+                        {
+                            type: Delta.MarkType.Insert,
+                            content: [nodeX],
+                        },
+                        {
+                            type: Delta.MarkType.InsertAndModify,
+                            content: nodeX,
+                            fields: nestedMapTreeInsert,
+                        },
+                        {
+                            type: Delta.MarkType.Delete,
+                            count: 1,
+                        },
+                        {
+                            type: Delta.MarkType.MoveIn,
+                            moveId,
+                        },
+                        {
+                            type: Delta.MarkType.MoveOut,
+                            moveId,
+                            count: 1,
+                        },
+                    ],
+                ],
             ]);
             assert.deepEqual(actual, expected);
         });
@@ -175,32 +194,45 @@ describe("DeltaUtils", () => {
                 type,
                 value: "X",
                 fields: new Map([
-                    [fooField, [{
-                        type,
-                        value: "Y",
-                        fields: new Map([
-                            [fooField, [{ type, value: "Z", fields: emptyMap }]],
-                        ]),
-                    }]],
+                    [
+                        fooField,
+                        [
+                            {
+                                type,
+                                value: "Y",
+                                fields: new Map([
+                                    [fooField, [{ type, value: "Z", fields: emptyMap }]],
+                                ]),
+                            },
+                        ],
+                    ],
                 ]),
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
                 setValue: 42,
                 fields: new Map([
-                    [fooField, [{
-                        type: Delta.MarkType.Modify,
-                        setValue: 43,
-                        fields: new Map([
-                            [fooField, [{
+                    [
+                        fooField,
+                        [
+                            {
                                 type: Delta.MarkType.Modify,
-                                setValue: 44,
+                                setValue: 43,
                                 fields: new Map([
-                                    [fooField, []],
+                                    [
+                                        fooField,
+                                        [
+                                            {
+                                                type: Delta.MarkType.Modify,
+                                                setValue: 44,
+                                                fields: new Map([[fooField, []]]),
+                                            },
+                                        ],
+                                    ],
                                 ]),
-                            }]],
-                        ]),
-                    }]],
+                            },
+                        ],
+                    ],
                 ]),
             };
             const actual = applyModifyToTree(mutable, modify);
@@ -209,13 +241,18 @@ describe("DeltaUtils", () => {
                 type,
                 value: 42,
                 fields: new Map([
-                    [fooField, [{
-                        type,
-                        value: 43,
-                        fields: new Map([
-                            [fooField, [{ type, value: 44, fields: emptyMap }]],
-                        ]),
-                    }]],
+                    [
+                        fooField,
+                        [
+                            {
+                                type,
+                                value: 43,
+                                fields: new Map([
+                                    [fooField, [{ type, value: 44, fields: emptyMap }]],
+                                ]),
+                            },
+                        ],
+                    ],
                 ]),
             };
             assert.deepEqual(mutable, expected);
@@ -229,16 +266,12 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [insert]],
-                ]),
+                fields: new Map([[fooField, [insert]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX]],
-                ]),
+                fields: new Map([[fooField, [nodeX]]]),
                 value: "X",
             };
             assert.deepEqual(actual, emptyMap);
@@ -248,9 +281,7 @@ describe("DeltaUtils", () => {
         it("Insert at index 0 in non-empty field", () => {
             const mutable: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeY]]]),
             };
             const insert: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -258,16 +289,12 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [insert]],
-                ]),
+                fields: new Map([[fooField, [insert]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeX, nodeY]]]),
             };
             assert.deepEqual(actual, emptyMap);
             assert.deepEqual(mutable, expected);
@@ -276,9 +303,7 @@ describe("DeltaUtils", () => {
         it("Insert at index > 0", () => {
             const mutable: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeY, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeY, nodeY]]]),
             };
             const insert: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -286,16 +311,12 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [1, insert]],
-                ]),
+                fields: new Map([[fooField, [1, insert]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeY, nodeX, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeY, nodeX, nodeY]]]),
             };
             assert.deepEqual(actual, emptyMap);
             assert.deepEqual(mutable, expected);
@@ -304,9 +325,7 @@ describe("DeltaUtils", () => {
         it("Delete at index 0", () => {
             const mutable: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeX, nodeY]]]),
             };
             const deletion: Delta.Delete = {
                 type: Delta.MarkType.Delete,
@@ -314,16 +333,12 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [deletion]],
-                ]),
+                fields: new Map([[fooField, [deletion]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeY]]]),
             };
             assert.deepEqual(actual, emptyMap);
             assert.deepEqual(mutable, expected);
@@ -332,9 +347,7 @@ describe("DeltaUtils", () => {
         it("Delete at index > 0", () => {
             const mutable: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeX, nodeY]]]),
             };
             const deletion: Delta.Delete = {
                 type: Delta.MarkType.Delete,
@@ -342,16 +355,12 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [1, deletion]],
-                ]),
+                fields: new Map([[fooField, [1, deletion]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX]],
-                ]),
+                fields: new Map([[fooField, [nodeX]]]),
             };
             assert.deepEqual(actual, emptyMap);
             assert.deepEqual(mutable, expected);
@@ -360,9 +369,7 @@ describe("DeltaUtils", () => {
         it("Delete at whole field", () => {
             const mutable: MapTree = {
                 type,
-                fields: new Map([
-                    [fooField, [nodeX, nodeY]],
-                ]),
+                fields: new Map([[fooField, [nodeX, nodeY]]]),
             };
             const deletion: Delta.Delete = {
                 type: Delta.MarkType.Delete,
@@ -370,9 +377,7 @@ describe("DeltaUtils", () => {
             };
             const modify: Delta.Modify = {
                 type: Delta.MarkType.Modify,
-                fields: new Map([
-                    [fooField, [deletion]],
-                ]),
+                fields: new Map([[fooField, [deletion]]]),
             };
             const actual = applyModifyToTree(mutable, modify);
             const expected: MapTree = {

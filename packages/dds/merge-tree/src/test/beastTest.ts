@@ -19,11 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    ProxString,
     RedBlackTree,
     SortedDictionary,
     Stack,
-    TST,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
@@ -48,9 +46,10 @@ import {
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { specToSegment, TestClient } from "./testClient";
+import { getStats, specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { ProxString, TST } from "./tst";
 
 function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
     const props: Property<TKey, TData>[] = [];
@@ -344,7 +343,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -352,7 +351,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
     log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
@@ -632,7 +631,7 @@ export function TestPack(verbose = true) {
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        const stats = client.mergeTree.getStats();
+        const stats = getStats(client.mergeTree);
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -898,7 +897,7 @@ export function TestPack(verbose = true) {
             */
             // log(server.getText());
             // log(server.mergeTree.toString());
-            // log(server.mergeTree.getStats());
+            // log(getStats(server.mergeTree));
             if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
@@ -910,7 +909,7 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const stats = server.mergeTree.getStats();
+                const stats = getStats(server.mergeTree);
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 const posLeaves = stats.leafCount - stats.removedLeafCount;
                 let aveExtractSnapTime = "off";

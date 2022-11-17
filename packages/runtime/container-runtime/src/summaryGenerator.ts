@@ -231,13 +231,14 @@ export class SummaryGenerator {
             const category = cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError ?
                 "generic" : "error";
 
+            const message = getFailMessage(errorCode);
             summarizeEvent.cancel({
                  ...properties,
                  reason: errorCode,
                  category,
                  retryAfterSeconds,
-            }, error);
-            resultsBuilder.fail(getFailMessage(errorCode), error, nackSummaryResult, retryAfterSeconds);
+            }, error ?? message); // disconnect & summaryAckTimeout do not have proper error.
+            resultsBuilder.fail(message, error, nackSummaryResult, retryAfterSeconds);
         };
 
         // Wait to generate and send summary

@@ -2,40 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { strict as assert } from "assert";
-import { VersionScheme, VersionBumpType, ReleaseVersion } from "@fluid-tools/version-tools";
-import { Context } from "@fluidframework/build-tools";
 import { Command } from "@oclif/core";
+import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
+
+import { Context } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+
 import { InstructionalPromptWriter } from "../instructionalPromptWriter";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { askForReleaseType } from "./askFunctions";
 import {
-    checkShouldRunOptionalChecks,
-    checkValidReleaseGroup,
-    checkPolicy,
-    checkHasRemote,
-    checkNoPrereleaseDependencies,
-    checkBranchUpToDate,
     checkBranchName,
+    checkBranchUpToDate,
+    checkDoesReleaseFromReleaseBranch,
+    checkHasRemote,
     checkInstallBuildTools,
     checkMainNextIntegrated,
-    checkReleaseIsDone,
+    checkNoPrereleaseDependencies,
+    checkOnReleaseBranch,
+    checkPolicy,
+    checkReleaseBranchExists,
     checkReleaseGroupIsBumped,
+    checkReleaseIsDone,
     checkShouldCommit,
     checkShouldCommitReleasedDepsBump,
+    checkShouldRunOptionalChecks,
     checkTypeTestGenerate,
     checkTypeTestPrepare,
-    checkOnReleaseBranch,
-    checkDoesReleaseFromReleaseBranch,
-    checkReleaseBranchExists,
+    checkValidReleaseGroup,
 } from "./checkFunctions";
-import { askForReleaseType } from "./askFunctions";
+import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions";
 import { InitFailedStateHandler } from "./initFailedStateHandler";
-import { BaseStateHandler } from "./stateHandlers";
 import {
     promptToCommitChanges,
     promptToCreateReleaseBranch,
@@ -47,7 +49,7 @@ import {
     promptToRunMinorReleaseCommand,
     promptToRunTypeTests,
 } from "./promptFunctions";
-import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions";
+import { BaseStateHandler } from "./stateHandlers";
 
 /**
  * Data that is passed to all the handling functions for the {@link FluidReleaseMachine}. This data is intended to be

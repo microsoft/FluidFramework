@@ -10,7 +10,10 @@ import {
     DUMMY_INVERT_TAG,
     sequenceChangeRebaser,
     SequenceChangeset,
-} from "../../feature-libraries";
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
+import { makeAnonChange } from "../../rebase";
+
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -19,7 +22,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: SequenceChangeset): SequenceChangeset {
     deepFreeze(change);
-    return sequenceChangeRebaser.invert(change);
+    return sequenceChangeRebaser.invert(makeAnonChange(change));
 }
 
 describe("SequenceChangeFamily - Invert", () => {
@@ -27,7 +30,9 @@ describe("SequenceChangeFamily - Invert", () => {
         describe(nest ? "Nested" : "Root", () => {
             function asForest(markList: T.MarkList): SequenceChangeset {
                 return {
-                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
+                    marks: {
+                        root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList,
+                    },
                 };
             }
 
@@ -39,9 +44,7 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("set value => set value", () => {
-                const input = asForest([
-                    { type: "Modify", value: { id: 1, value: 42 } },
-                ]);
+                const input = asForest([{ type: "Modify", value: { id: 1, value: 42 } }]);
                 const expected = asForest([
                     { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
@@ -54,7 +57,10 @@ describe("SequenceChangeFamily - Invert", () => {
                     {
                         type: "Insert",
                         id: 1,
-                        content: [{ type, value: 42 }, { type, value: 43 }],
+                        content: [
+                            { type, value: 42 },
+                            { type, value: 43 },
+                        ],
                     },
                 ]);
                 const expected = asForest([

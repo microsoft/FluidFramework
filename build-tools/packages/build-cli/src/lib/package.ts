@@ -2,17 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import path from "path";
-import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
+import { strict as assert } from "assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import path from "path";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+
+import { Context, Logger, MonoRepo, Package, readJsonAsync } from "@fluidframework/build-tools";
+
+import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
+
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 import { indentString } from "./text";
 
@@ -22,7 +25,7 @@ import { indentString } from "./text";
  * @internal
  */
 export interface PackageVersionMap {
-    [packageName: ReleasePackage]: ReleaseVersion;
+    [packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
 }
 
 /**
@@ -68,65 +71,68 @@ export async function npmCheckUpdates(
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
     const upgradeLogLines = new Set<string>();
     const searchGlobs: string[] = [];
-    let repoPath: string;
+    const repoPath = context.repo.resolvedRoot;
 
-    log?.info(`Checking npm for package updates...`);
-    if (releaseGroup === undefined) {
-        // Apply to all packages in repo
-        repoPath = context.repo.resolvedRoot;
+    const releaseGroupsToCheck =
+        releaseGroup === undefined // run on the whole repo
+            ? [...context.repo.releaseGroups.keys()]
+            : isReleaseGroup(releaseGroup) // run on just this release group
+            ? [releaseGroup]
+            : undefined;
 
-        for (const releaseGroupRoot of context.repo.releaseGroups.values()) {
-            if (releaseGroupRoot.kind === releaseGroupFilter) {
+    const packagesToCheck =
+        releaseGroup === undefined // run on the whole repo
+            ? [...context.independentPackages] // include all independent packages
+            : isReleaseGroup(releaseGroup)
+            ? [] // run on a release group so no independent packages should be included
+            : [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
+
+    if (releaseGroupsToCheck !== undefined) {
+        for (const group of releaseGroupsToCheck) {
+            if (group === releaseGroupFilter) {
                 log?.verbose(
                     `Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
                 );
                 continue;
             }
 
+            const releaseGroupRoot = context.repo.releaseGroups.get(group);
+            if (releaseGroupRoot === undefined) {
+                throw new Error(`Cannot find release group: ${group}`);
+            }
+
             log?.verbose(
                 `Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.kind}.`,
             );
+
             searchGlobs.push(
                 ...releaseGroupRoot.workspaceGlobs.map((g) =>
-                    path.join(
-                        path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
-                        g,
-                    ),
+                    path.join(path.relative(repoPath, releaseGroupRoot.repoPath), g),
                 ),
                 // Includes the root package.json, in case there are deps there that also need upgrade.
-                ".",
+                path.relative(repoPath, releaseGroupRoot.repoPath),
             );
         }
-
-        for (const pkg of context.independentPackages) {
-            searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
-        }
-    } else if (isReleaseGroup(releaseGroup)) {
-        const monorepo = context.repo.releaseGroups.get(releaseGroup);
-        if (monorepo === undefined) {
-            throw new Error(`Can't find release group: ${releaseGroup}`);
-        }
-
-        repoPath = monorepo.repoPath;
-        searchGlobs.push(...monorepo.workspaceGlobs, ".");
-    } else {
-        const pkg = context.fullPackageMap.get(releaseGroup);
-        if (pkg === undefined) {
-            throw new Error(`Package not found in context: ${releaseGroup}`);
-        }
-
-        repoPath = pkg.directory;
-        searchGlobs.push(pkg.directory);
     }
 
+    if (packagesToCheck !== undefined) {
+        for (const pkg of packagesToCheck) {
+            if (pkg !== undefined) {
+                searchGlobs.push(path.relative(repoPath, pkg.directory));
+            }
+        }
+    }
+
+    log?.info(`Checking npm for package updates...`);
+
     for (const glob of searchGlobs) {
-        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}...`);
+        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
             filter: depsToUpdate,
             cwd: repoPath,
-            packageFile: `${glob}/package.json`,
+            packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
             target: depUpdateType,
             pre: prerelease,
             upgrade: writeChanges,
@@ -491,4 +497,58 @@ export function filterVersionsOlderThan(
         const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
         return diff <= numBusinessDays;
     });
+}
+
+/**
+ * Gets the direct Fluid dependencies for a given package or release group. A Fluid dependency is a dependency on
+ * other packages or release groups in the repo.
+ *
+ * @param context - The {@link Context}.
+ * @param releaseGroupOrPackage - The release group or package to check.
+ * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
+ * depends, and the other contains independent packages on which the package depends.
+ *
+ * @internal
+ */
+export function getFluidDependencies(
+    context: Context,
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+): [releaseGroups: PackageVersionMap, packages: PackageVersionMap] {
+    const releaseGroups: PackageVersionMap = {};
+    const packages: PackageVersionMap = {};
+    let packagesToCheck: Package[];
+
+    if (isReleaseGroup(releaseGroupOrPackage)) {
+        packagesToCheck = context.packagesInReleaseGroup(releaseGroupOrPackage);
+    } else {
+        const independentPackage = context.fullPackageMap.get(releaseGroupOrPackage);
+        assert(
+            independentPackage !== undefined,
+            `Package not found in context: ${releaseGroupOrPackage}`,
+        );
+        packagesToCheck = [independentPackage];
+    }
+
+    for (const p of packagesToCheck) {
+        for (const dep of p.combinedDependencies) {
+            const pkg = context.fullPackageMap.get(dep.name);
+            if (pkg === undefined) {
+                continue;
+            }
+
+            const minVer = semver.minVersion(dep.version);
+            if (minVer === null) {
+                throw new Error(`Failed to parse depVersion: ${dep.version}`);
+            }
+
+            if (pkg.monoRepo !== undefined) {
+                releaseGroups[pkg.monoRepo.kind] = minVer.version;
+                continue;
+            }
+
+            packages[pkg.name] = minVer.version;
+        }
+    }
+
+    return [releaseGroups, packages];
 }

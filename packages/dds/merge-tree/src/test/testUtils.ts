@@ -15,6 +15,7 @@ import { TextSegment } from "../textSegment";
 import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
@@ -200,7 +201,7 @@ function getPartialLengths(
             && segment.localRemovedSeq <= localSeq)
         || (segment.removedSeq !== -1 && segment.removedSeq <= seq));
 
-    mergeTree.walkAllSegments(mergeBlock, (segment) => {
+    walkAllChildSegments(mergeBlock, (segment) => {
         if (isInserted(segment) && !isRemoved(segment)) {
             actualLen += segment.cachedLength;
         }

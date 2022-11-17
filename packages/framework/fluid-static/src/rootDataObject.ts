@@ -11,10 +11,10 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DataObjectClass,
+    IRootDataObject,
     LoadableObjectClass,
     LoadableObjectClassRecord,
     LoadableObjectRecord,
@@ -38,7 +38,7 @@ export interface RootDataObjectProps {
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
+export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> implements IRootDataObject {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -93,9 +93,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * Provides a record of the initial objects defined on creation.
-     *
-     * @see {@link RootDataObject.initializingFirstTime}
+     * {@inheritDoc IRootDataObject.initialObjects}
      */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
@@ -105,11 +103,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * Dynamically creates a new detached collaborative object (DDS/DataObject).
-     *
-     * @param objectClass - Type of the collaborative object to be created.
-     *
-     * @typeParam T - The class of the `DataObject` or `SharedObject`.
+     * {@inheritDoc IRootDataObject.create}
      */
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
@@ -125,8 +119,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
+        const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
+        const entryPoint = await dataStore.entryPoint?.get();
+        return entryPoint as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(

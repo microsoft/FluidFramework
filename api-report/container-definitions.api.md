@@ -85,7 +85,9 @@ export interface IAudienceOwner extends IAudience {
 // @public
 export interface IBatchMessage {
     // (undocumented)
-    contents: string;
+    compression?: string;
+    // (undocumented)
+    contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
 }
@@ -165,7 +167,7 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -486,7 +488,7 @@ export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-    process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
+    process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;

@@ -39,6 +39,13 @@ export interface IContextErrorData {
      */
     restart: boolean;
 
+    /**
+     * Indicates if the document should be marked as corrupt.
+     * Further messages will be dead-lettered.
+     * It should be set to the message that caused the corruption.
+     */
+    markAsCorrupt?: IQueuedMessage;
+
     tenantId?: string;
     documentId?: string;
 }

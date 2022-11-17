@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { Machine } from "jssm";
 import chalk from "chalk";
+import { Machine } from "jssm";
+
 import type { InstructionalPrompt } from "../instructionalPromptWriter";
 import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";

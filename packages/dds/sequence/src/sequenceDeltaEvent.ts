@@ -44,7 +44,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
                     const newRange: ISequenceDeltaRange<TOperation> = {
                         operation: this.deltaArgs.operation,
                         position: this.mergeTreeClient.getPosition(delta.segment),
-                        propertyDeltas: delta.propertyDeltas,
+                        propertyDeltas: delta.propertyDeltas ?? {},
                         segment: delta.segment,
                     };
                     set.addOrUpdate(newRange);
@@ -72,7 +72,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     /**
      * The client id of the client that made the change which caused the delta event
      */
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.mergeTreeClient.longClientId;
     }
 
@@ -139,6 +139,11 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
  * A range that has changed corresponding to a segment modification.
  */
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    /**
+     * The type of operation that changed this range.
+     * @remarks - Consuming code should typically compare this to the enum values defined in
+     * `MergeTreeDeltaOperationTypes`.
+     */
     operation: TOperation;
     /**
      * The index of the start of the range.
@@ -148,11 +153,20 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
      * The segment that corresponds to the range.
      */
     segment: ISegment;
+    /**
+     * Deltas object which contains all modified properties with their previous values.
+     * Since `undefined` doesn't survive a round-trip through JSON serialization, the old value being absent
+     * is instead encoded with `null`.
+     * @remarks - This object is motivated by undo/redo scenarios, and provides a convenient "inverse op" to apply to
+     * undo a property change.
+     * @example - If a segment initially had properties `{ foo: "1", bar: 2 }` and it was annotated with
+     * `{ foo: 3, baz: 5 }`, the corresponding event would have a `propertyDeltas` of `{ foo: "1", baz: null }`.
+     */
     propertyDeltas: PropertySet;
 }
 
 class Lazy<T> {
-    private pValue: T;
+    private pValue: T | undefined;
     private pEvaluated: boolean;
     constructor(private readonly valueGenerator: () => T) {
         this.pEvaluated = false;
@@ -167,6 +181,6 @@ class Lazy<T> {
             this.pEvaluated = true;
             this.pValue = this.valueGenerator();
         }
-        return this.pValue;
+        return this.pValue as T;
     }
 }

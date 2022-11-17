@@ -2,14 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { AsyncPriorityQueue, priorityQueue } from "async";
 
-import { priorityQueue, AsyncPriorityQueue } from "async";
-
-import { BuildResult, BuildPackage } from "../buildGraph";
-
-import { LeafTask } from "./leaf/leafTask";
-
+import { BuildPackage, BuildResult } from "../buildGraph";
 import { options } from "../options";
+import { LeafTask } from "./leaf/leafTask";
 
 export interface TaskExec {
     task: LeafTask;
@@ -26,8 +23,7 @@ export abstract class Task {
     private runP?: Promise<BuildResult>;
     private isUpToDateP?: Promise<boolean>;
 
-    protected constructor(protected readonly node: BuildPackage, public readonly command: string) {
-    }
+    protected constructor(protected readonly node: BuildPackage, public readonly command: string) {}
 
     public get package() {
         return this.node.pkg;
@@ -45,7 +41,9 @@ export abstract class Task {
 
     public async isUpToDate(): Promise<boolean> {
         // Always not up to date if forced
-        if (this.forced) { return false; }
+        if (this.forced) {
+            return false;
+        }
 
         if (this.isUpToDateP === undefined) {
             this.isUpToDateP = this.checkIsUpToDate();

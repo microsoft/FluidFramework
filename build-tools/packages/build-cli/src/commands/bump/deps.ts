@@ -2,22 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo } from "@fluidframework/build-tools";
+
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
-import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
+import {
+    checkFlags,
+    dependencyUpdateTypeFlag,
+    packageSelectorFlag,
+    releaseGroupFlag,
+    skipCheckFlag,
+} from "../../flags";
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     indentString,
     isDependencyUpdateType,
     npmCheckUpdates,
 } from "../../lib";
-import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
+import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -30,7 +38,7 @@ import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
  */
 export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     static description =
-        "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.";
+        "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
     static args: ArgInput = [packageOrReleaseGroupArg];
 
@@ -38,9 +46,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         updateType: dependencyUpdateTypeFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
+            default: "minor",
         }),
         prerelease: Flags.boolean({
-            char: "p",
             dependsOn: ["updateType"],
             description: "Treat prerelease versions as valid versions to update to.",
         }),
@@ -49,6 +57,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         }),
         releaseGroup: releaseGroupFlag({
             description: "Only bump dependencies within this release group.",
+            exclusive: ["package"],
+        }),
+        package: packageSelectorFlag({
+            description: "Only bump dependencies of this package.",
+            exclusive: ["releaseGroup"],
         }),
         commit: checkFlags.commit,
         install: checkFlags.install,
@@ -101,11 +114,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         }
 
         /**
-         * The version range or bump type (depending on the CLI arguments) to set.
-         */
-        const versionToSet = flags.updateType ?? "current";
-
-        /**
          * A list of package names on which to update dependencies.
          */
         const depsToUpdate: string[] = [];
@@ -135,9 +143,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
         this.logHr();
         this.log(`Dependencies: ${chalk.blue(args.package_or_release_group)}`);
-        this.log(`Packages: ${chalk.blueBright(flags.releaseGroup ?? "all packages")}`);
+        this.log(
+            `Packages: ${chalk.blueBright(flags.releaseGroup ?? flags.package ?? "all packages")}`,
+        );
         this.log(`Prerelease: ${flags.prerelease ? chalk.green("yes") : "no"}`);
-        this.log(`Bump type: ${chalk.bold(versionToSet)}`);
+        this.log(`Bump type: ${chalk.bold(flags.updateType ?? "unknown")}`);
         this.logHr();
         this.log("");
 
@@ -147,7 +157,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
         const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
-            flags.releaseGroup, // if undefined the whole repo will be checked
+            flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
             depsToUpdate,
             args.package_or_release_group,
             flags.updateType,
@@ -198,7 +208,13 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
-                const commitMessage = stripAnsi(`Bump dependencies\n\n${changedVersionMessage}`);
+                const commitMessage = stripAnsi(
+                    `${generateBumpDepsCommitMessage(
+                        args.package_or_release_group,
+                        flags.updateType,
+                        flags.releaseGroup,
+                    )}\n\n${changedVersionMessage}`,
+                );
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,

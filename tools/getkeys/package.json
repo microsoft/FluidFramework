@@ -11,8 +11,13 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "eslint": "eslint ./index.js",
+    "eslint:fix": "eslint ./index.js --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "start": "node ./index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,5 +25,10 @@
     "@fluidframework/tool-utils": "^0.35.0",
     "azure-keyvault": "^3.0.4",
     "ms-rest-azure": "^2.6.0"
+  },
+  "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "eslint": "~8.6.0",
+    "typescript": "~4.5.5"
   }
 }

@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import * as semver from "semver";
+
 import { VersionBumpType } from "./bumpTypes";
 
 /** The virtualPatch format uses this value to encode and decode versions in that scheme. */
