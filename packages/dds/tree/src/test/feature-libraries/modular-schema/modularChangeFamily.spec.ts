@@ -23,7 +23,7 @@ import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../r
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { assertDeltaEqual } from "../../utils";
+import { assertDeltaEqual, deepFreeze } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -383,6 +383,9 @@ describe("ModularChangeFamily", () => {
                 change: brand(nodeChange1),
             };
 
+            // 2582: deepFreeze does not recursively apply through Map, so we apply it to the map values.
+            deepFreeze(change1A);
+            deepFreeze(change1B);
             const change1: TaggedChange<FieldChangeMap> = tagChange(
                 new Map([
                     [fieldA, change1A],
@@ -408,11 +411,14 @@ describe("ModularChangeFamily", () => {
                 change: brand(nodeChange2),
             };
 
+            deepFreeze(change2B);
             const change2: TaggedChange<FieldChangeMap> = tagChange(
                 new Map([[fieldB, change2B]]),
                 brand(2),
             );
 
+            deepFreeze(change1);
+            deepFreeze(change2);
             const composed = family.compose([change1, change2]);
 
             const expectedNodeChange: NodeChangeset = {

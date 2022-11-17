@@ -21,7 +21,7 @@ import {
     RevisionTag,
     tagChange,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
@@ -152,7 +152,7 @@ export class ModularChangeFamily
         let valueChange: ValueChange | undefined;
         for (const change of changes) {
             if (change.change.valueChange !== undefined) {
-                valueChange = change.change.valueChange;
+                valueChange = clone(change.change.valueChange);
                 valueChange.revision ??= change.revision;
             }
             if (change.change.fieldChanges !== undefined) {
