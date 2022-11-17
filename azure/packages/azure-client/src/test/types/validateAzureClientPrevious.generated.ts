@@ -304,6 +304,30 @@ use_old_InterfaceDeclaration_AzureRemoteConnectionConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureUser": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureUser():
+    TypeOnly<old.AzureUser>;
+declare function use_current_InterfaceDeclaration_AzureUser(
+    use: TypeOnly<current.AzureUser>);
+use_current_InterfaceDeclaration_AzureUser(
+    get_old_InterfaceDeclaration_AzureUser());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureUser": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureUser():
+    TypeOnly<current.AzureUser>;
+declare function use_old_InterfaceDeclaration_AzureUser(
+    use: TypeOnly<old.AzureUser>);
+use_old_InterfaceDeclaration_AzureUser(
+    get_current_InterfaceDeclaration_AzureUser());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IAzureAudience": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IAzureAudience():
