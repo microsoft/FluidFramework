@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-
+import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/common-utils";
-import { expect } from "chai";
 import {
     BaseFuzzTestState,
     chain,
@@ -32,7 +29,8 @@ import { fail } from "../../util";
 describe("SessionIdNormalizer", () => {
     it("fails when adding finals with no corresponding locals", () => {
         const normalizer = makeTestNormalizer();
-        expect(() => normalizer.addFinalIds(final(0), final(1), undefined)).to.throw(
+        assert.throws(
+            () => normalizer.addFinalIds(final(0), final(1), undefined),
             "Final IDs must be added to an existing local range.",
         );
     });
@@ -40,7 +38,8 @@ describe("SessionIdNormalizer", () => {
     it("fails when adding finals out of order", () => {
         const normalizer = makeTestNormalizer();
         normalizer.addLocalId();
-        expect(() => normalizer.addFinalIds(final(1), final(0), undefined)).to.throw(
+        assert.throws(
+            () => normalizer.addFinalIds(final(1), final(0), undefined),
             "Malformed normalization range.",
         );
     });
@@ -61,23 +60,27 @@ describe("SessionIdNormalizer", () => {
         normalizer.addFinalIds(final(0), final(2), undefined);
         normalizer.addLocalId(); // -4
         normalizer.addFinalIds(final(5), final(5), undefined);
-        expect(() => normalizer.addFinalIds(final(9), final(9), undefined)).to.throw(
+        assert.throws(
+            () => normalizer.addFinalIds(final(9), final(9), undefined),
             "Gaps in final space must align to a local.",
         );
     });
 
     it("fails when attempting to normalize a local ID that was never registered", () => {
         const normalizer = makeTestNormalizer();
-        expect(() => normalizer.getFinalId(-1 as LocalCompressedId)).to.throw(
+        assert.throws(
+            () => normalizer.getFinalId(-1 as LocalCompressedId),
             "Local ID was never recorded with this normalizer.",
         );
         const local = normalizer.addLocalId();
         const secondLocal = (local - 1) as LocalCompressedId;
-        expect(() => normalizer.getFinalId(secondLocal)).to.throw(
+        assert.throws(
+            () => normalizer.getFinalId(secondLocal),
             "Local ID was never recorded with this normalizer.",
         );
         normalizer.addFinalIds(final(0), final(5), undefined);
-        expect(() => normalizer.getFinalId(secondLocal)).to.throw(
+        assert.throws(
+            () => normalizer.getFinalId(secondLocal),
             "Local ID was never recorded with this normalizer.",
         );
     });
@@ -87,10 +90,10 @@ describe("SessionIdNormalizer", () => {
         const local2 = normalizer.addLocalId();
         const local3 = normalizer.addLocalId();
         const local4 = normalizer.addLocalId();
-        expect(local1).to.equal(-1);
-        expect(local2).to.equal(-2);
-        expect(local3).to.equal(-3);
-        expect(local4).to.equal(-4);
+        assert.equal(local1, -1);
+        assert.equal(local2, -2);
+        assert.equal(local3, -3);
+        assert.equal(local4, -4);
     });
 
     itWithNormalizer("can normalize IDs with trailing finals", (normalizer) => {
@@ -139,13 +142,13 @@ describe("SessionIdNormalizer", () => {
         normalizer.addLocalId(); // -2
         normalizer.addLocalId(); // -3
         normalizer.addLocalId(); // -4
-        expect(normalizer.getLastFinalId()).to.be.undefined;
+        assert.equal(normalizer.getLastFinalId(), undefined);
         normalizer.addFinalIds(final(0), final(1), undefined);
-        expect(normalizer.getLastFinalId()).to.equal(1);
+        assert.equal(normalizer.getLastFinalId(), 1);
         normalizer.addFinalIds(final(2), final(2), undefined);
-        expect(normalizer.getLastFinalId()).to.equal(2);
+        assert.equal(normalizer.getLastFinalId(), 2);
         normalizer.addFinalIds(final(10), final(15), undefined);
-        expect(normalizer.getLastFinalId()).to.equal(15);
+        assert.equal(normalizer.getLastFinalId(), 15);
     });
 
     itWithNormalizer("can normalize IDs after fuzzed inputs", (normalizer) => {
@@ -244,30 +247,30 @@ function itWithNormalizer(
 
             if (finalExpected !== undefined) {
                 const creationIndex = normalizer.getCreationIndex(finalExpected);
-                expect(creationIndex).to.equal(i);
+                assert.equal(creationIndex, i);
             }
 
             const idByIndex = normalizer.getIdByCreationIndex(i);
-            expect(idByIndex).to.equal(localExpected ?? finalExpected);
+            assert.equal(idByIndex, localExpected ?? finalExpected);
 
             if (localExpected !== undefined) {
                 const normalized = normalizer.getFinalId(localExpected);
                 if (normalized === undefined) {
-                    expect(finalExpected).to.be.undefined;
+                    assert.equal(finalExpected, undefined);
                 } else {
                     const [opIdActualNormalized] = normalized;
-                    expect(opIdActualNormalized).to.equal(finalExpected);
+                    assert.equal(opIdActualNormalized, finalExpected);
                 }
             }
-            expect(sessionIdExpected).to.equal(sessionIdActualAll);
-            expect(sessionIdActualAll).to.equal(sessionIdActualNormalized);
+            assert.equal(sessionIdExpected, sessionIdActualAll);
+            assert.equal(sessionIdActualAll, sessionIdActualNormalized);
         }
-        expect(normalizer.getLastFinalId()).to.equal(finals[finals.length - 1]);
+        assert.equal(normalizer.getLastFinalId(), finals[finals.length - 1]);
         const roundtripped = SessionIdNormalizer.deserialize(
             normalizer.serialize(),
             () => undefined,
         );
-        expect(roundtripped.equals(normalizer)).to.be.true;
+        assert(roundtripped.equals(normalizer));
     });
 }
 
