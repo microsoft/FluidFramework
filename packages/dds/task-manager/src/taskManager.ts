@@ -204,10 +204,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
      */
     private get clientId(): string | undefined {
-        if (!this.isAttached()) {
-            return this.runtime.clientId ?? placeholderClientId;
-        }
-        return this.runtime.clientId;
+        return this.isAttached() ? this.runtime.clientId : placeholderClientId;
     }
 
     /**
@@ -505,13 +502,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // Simulate auto-ack in detached scenario
             assert(this.clientId !== undefined, "clientId should not be undefined");
             this.addClientToQueue(taskId, this.clientId);
-            // If we volunteered using placeHolderClientId, then we need to watch for when we connect and are assigned a
-            // clientId post-attach. At that point we should re-enter the queue with a real volunteer op.
-            if (this.clientId === placeholderClientId) {
-                this.connectionWatcher.once("connect", () => {
+            // Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
+            // a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
+            // connected).
+            this.runtime.once("attached", () => {
+                if (this.queued(taskId)) {
+                    // If we are already queued, then we were able to replace the placeholderClientId with our real
+                    // clientId and no action is required.
+                    return;
+                } else if (this.connected) {
                     submitVolunteerOp();
-                });
-            }
+                } else {
+                    this.connectionWatcher.once("connect", () => {
+                        submitVolunteerOp();
+                    });
+                }
+            });
         } else if (!this.connected) {
             // If we are disconnected (and attached), wait to be connected and submit volunteer op
             disconnectHandler();
@@ -620,7 +626,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         if (this.runtime.clientId !== undefined) {
             // If the runtime has been assigned an actual clientId by now, we can replace the placeholder clientIds
             // and maintain the task assignment.
-            this.replacePlaceholderFromAllQueues();
+            this.replacePlaceholderInAllQueues();
         } else {
             // If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
             // clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
@@ -764,15 +770,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Will replace all instances of the placeholderClientId with the current clientId. This should only be called when
      * transitioning from detached to attached and this.runtime.clientId is defined.
      */
-    private replacePlaceholderFromAllQueues() {
-        assert(this.clientId !== undefined, "this.runtime.clientId should be defined");
+    private replacePlaceholderInAllQueues() {
+        assert(this.runtime.clientId !== undefined, "this.runtime.clientId should be defined");
         for (const clientQueue of this.taskQueues.values()) {
             if (clientQueue === undefined) {
                 continue;
             }
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
-                clientQueue[clientIdIndex] = this.clientId;
+                clientQueue.splice(clientIdIndex, 1, this.runtime.clientId);
             }
         }
     }
