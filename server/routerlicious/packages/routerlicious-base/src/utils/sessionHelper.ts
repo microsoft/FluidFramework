@@ -17,6 +17,7 @@ async function createNewSession(
     ordererUrl: string,
     historianUrl: string,
     deltaStreamUrl: string,
+    tenantId,
     documentId,
     documentsCollection: ICollection<IDocument>,
     lumberjackProperties: Record<string, any>,
@@ -31,6 +32,7 @@ async function createNewSession(
     try {
         await documentsCollection.upsert(
             {
+                tenantId,
                 documentId,
             },
             {
@@ -138,6 +140,7 @@ async function updateExistingSession(
     try {
         const result = await documentsCollection.findAndUpdate(
             {
+                tenantId,
                 documentId,
                 "session.isSessionAlive": false,
             },
@@ -239,6 +242,7 @@ export async function getSession(
             ordererUrl,
             historianUrl,
             deltaStreamUrl,
+            tenantId,
             documentId,
             documentsCollection,
             lumberjackProperties,
