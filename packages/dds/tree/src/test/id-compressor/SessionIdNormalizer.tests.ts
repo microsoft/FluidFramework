@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
@@ -278,12 +277,19 @@ function makeNormalizerProxy(
     finals: (FinalCompressedId | undefined)[],
 ): SessionIdNormalizer<DummyRange> {
     return new Proxy<SessionIdNormalizer<DummyRange>>(normalizer, {
-        get(target, property: keyof SessionIdNormalizer<DummyRange>) {
+        get<P extends keyof SessionIdNormalizer<DummyRange>>(
+            target: SessionIdNormalizer<DummyRange>,
+            property: P,
+        ): SessionIdNormalizer<DummyRange>[P] {
             if (typeof target[property] === "function") {
                 if (property === "addLocalId") {
                     return new Proxy(target[property], {
                         apply: (func, thisArg, argumentsList) => {
-                            const local = Reflect.apply(func, thisArg, argumentsList);
+                            const local = Reflect.apply(
+                                func,
+                                thisArg,
+                                argumentsList,
+                            ) as LocalCompressedId;
                             if (locals.length > 0) {
                                 for (
                                     let i =
@@ -307,12 +313,12 @@ function makeNormalizerProxy(
                             for (let i = firstFinal; i <= lastFinal; i++) {
                                 finals.push(i);
                             }
-                            return Reflect.apply(func, thisArg, argumentsList);
+                            Reflect.apply(func, thisArg, argumentsList);
                         },
                     });
                 }
             }
-            return Reflect.get(target, property);
+            return Reflect.get(target, property) as SessionIdNormalizer<DummyRange>[P];
         },
     });
 }

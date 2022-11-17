@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-shadow */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { take } from "@fluid-internal/stochastic-test-utils";
@@ -40,7 +39,7 @@ describe("IdCompressor Perf", () => {
     const localClient = Client.Client1;
     const remoteClient = Client.Client2;
     let perfCompressor: IdCompressor | undefined;
-    let network: IdCompressorTestNetwork;
+    let perfNetwork: IdCompressorTestNetwork;
     let compressor: IdCompressor;
 
     function setupCompressors(
@@ -48,10 +47,10 @@ describe("IdCompressor Perf", () => {
         allowLocal: boolean,
         includeOverrides: boolean,
     ): IdCompressorTestNetwork {
-        network = new IdCompressorTestNetwork(clusterSize);
-        [compressor] = createPerfCompressor(network, allowLocal, includeOverrides, localClient);
+        perfNetwork = new IdCompressorTestNetwork(clusterSize);
+        [compressor] = createPerfCompressor(perfNetwork, allowLocal, includeOverrides, localClient);
         perfCompressor = undefined;
-        return network;
+        return perfNetwork;
     }
 
     function createPerfCompressor(
@@ -127,7 +126,7 @@ describe("IdCompressor Perf", () => {
             title: `allocate local ID (${override ? "override" : "sequential"})`,
             before: () => {
                 setupCompressors(defaultClusterCapacity, true, false);
-                perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+                perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
             },
             benchmarkFn: () => {
                 perfCompressor!.generateCompressedId(
@@ -154,7 +153,7 @@ describe("IdCompressor Perf", () => {
                 })`,
                 before: () => {
                     setupCompressors(clusterSize, false, false);
-                    perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+                    perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
                 },
                 benchmarkFn: () => {
                     // Create a range with as minimal overhead as possible, as we'd like for this code to not exist
@@ -203,7 +202,7 @@ describe("IdCompressor Perf", () => {
         title: `takes a ID creation range'})`,
         before: () => {
             setupCompressors(defaultClusterCapacity, true, false);
-            perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+            perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
         },
         benchmarkFn: () => {
             perfCompressor!.generateCompressedId();
@@ -215,7 +214,7 @@ describe("IdCompressor Perf", () => {
         let idToDecompress!: CompressedId;
         const before = () => {
             idToDecompress = setupCompressorWithId(local, override, true);
-            perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+            perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
         };
         const benchmarkFn = () => {
             perfCompressor!.decompress(idToDecompress);
@@ -249,7 +248,7 @@ describe("IdCompressor Perf", () => {
                                 override,
                                 clusterHasOverride,
                             );
-                            perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+                            perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
                         },
                         benchmarkFn,
                     });
@@ -266,7 +265,7 @@ describe("IdCompressor Perf", () => {
             before: () => {
                 const idAdded = setupCompressorWithId(local, override, true);
                 stableToCompress = compressor.decompress(idAdded);
-                perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+                perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
             },
             benchmarkFn: () => {
                 perfCompressor!.recompress(stableToCompress);
@@ -344,7 +343,7 @@ describe("IdCompressor Perf", () => {
             title: `serialize an IdCompressor${titleSuffix}`,
             before: () => {
                 setupCompressors(defaultClusterCapacity, false, overrideInClusters);
-                perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+                perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);
             },
             benchmarkFn: () => {
                 perfCompressor!.serialize(false);
@@ -352,7 +351,7 @@ describe("IdCompressor Perf", () => {
         });
 
         let serialized!: SerializedIdCompressorWithNoSession;
-        const remoteSessionId = createSessionId();
+        const overrideRemoteSessionId = createSessionId();
         benchmark({
             type,
             title: `deserialize an IdCompressor${titleSuffix}`,
@@ -361,7 +360,7 @@ describe("IdCompressor Perf", () => {
                 serialized = compressor.serialize(false);
             },
             benchmarkFn: () => {
-                IdCompressor.deserialize(serialized, remoteSessionId);
+                IdCompressor.deserialize(serialized, overrideRemoteSessionId);
             },
         });
     }

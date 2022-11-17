@@ -4,9 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { expect } from "chai";
 import {
@@ -211,17 +209,15 @@ export class IdCompressorTestNetwork {
     public getCompressor(client: Client): ReadonlyIdCompressor {
         const compressors = this.compressors;
         const handler = {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            get(_, property) {
-                const compressor = compressors.get(client);
-                return (compressor as any)[property];
+            get<P extends keyof IdCompressor>(_: unknown, property: P): IdCompressor[P] {
+                return compressors.get(client)[property];
             },
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            set(_, property, value): boolean {
-                const compressor = compressors.get(client);
-                (compressor as any)[property] = value;
+            set<P extends keyof IdCompressor>(
+                _: unknown,
+                property: P,
+                value: IdCompressor[P],
+            ): boolean {
+                compressors.get(client)[property] = value;
                 return true;
             },
         };
@@ -325,7 +321,7 @@ export class IdCompressorTestNetwork {
         let nextIdIndex = 0;
         const opSpaceIds: OpSpaceCompressedId[] = [];
         for (const [overrideIndex, uuid] of Object.entries(overrides)
-            .map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, string])
+            .map(([id, u]) => [Number.parseInt(id, 10), u] as [number, string])
             .sort(([a], [b]) => a - b)) {
             while (nextIdIndex < overrideIndex) {
                 const newId = compressor.generateCompressedId();
@@ -541,10 +537,8 @@ export class IdCompressorTestNetwork {
             // override to unify.
             if (rowCount === this.sequencedIdLogs.size && localCount <= 1) {
                 expect(localCount).to.lessThanOrEqual(1);
-                for (const [[compressor, { id, originatingClient }]] of getLogIndices(i)) {
-                    expect(compressor.attributeId(id)).to.equal(
-                        attributionIds.get(originatingClient),
-                    );
+                for (const [[compressor, { id, originatingClient: o }]] of getLogIndices(i)) {
+                    expect(compressor.attributeId(id)).to.equal(attributionIds.get(o));
                 }
             }
 
@@ -599,7 +593,7 @@ export function roundtrip(
 export function expectSerializes(
     compressor: ReadonlyIdCompressor,
 ): [SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession] {
-    function expectSerializes(
+    function expectSerializesWithSession(
         withSession: boolean,
     ): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
         let serialized:
@@ -643,8 +637,8 @@ export function expectSerializes(
     }
 
     return [
-        expectSerializes(false) as SerializedIdCompressorWithNoSession,
-        expectSerializes(true) as SerializedIdCompressorWithOngoingSession,
+        expectSerializesWithSession(false) as SerializedIdCompressorWithNoSession,
+        expectSerializesWithSession(true) as SerializedIdCompressorWithOngoingSession,
     ];
 }
 

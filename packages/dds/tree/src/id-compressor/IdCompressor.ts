@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/no-shadow */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
@@ -656,13 +655,14 @@ export class IdCompressor {
                             session.lastFinalizedLocalId !== undefined,
                             "Cluster already exists for session but there is no finalized local ID",
                         );
-                        const newLastFinalizedLocal = session.lastFinalizedLocalId - finalizeCount;
+                        const newLastFinalizedLocalId =
+                            session.lastFinalizedLocalId - finalizeCount;
                         const lastLocal = -this.localIdCount;
                         // Calculate the last final in the cluster that aligns with an existing local. If there are more unfinalized locals
                         // than fit in the expanded cluster, this will be the last final in the cluster
                         const newLastFinal = (newLastFinalizedFinal +
                             Math.min(
-                                newLastFinalizedLocal - lastLocal,
+                                newLastFinalizedLocalId - lastLocal,
                                 this.newClusterCapacity,
                             )) as FinalCompressedId;
                         assert(
@@ -1620,24 +1620,28 @@ export class IdCompressor {
                 compareMaps(
                     a.overrides ?? fail("Overrides must be defined"),
                     b.overrides ?? fail("Overrides must be defined"),
-                    (a, b) => {
+                    (overrideA, overrideB) => {
                         if (compareLocalState) {
-                            if (typeof a === "string" || typeof b === "string") {
-                                return a === b;
+                            if (typeof overrideA === "string" || typeof overrideB === "string") {
+                                return overrideA === overrideB;
                             }
                             const overridesEqual =
-                                a.override === b.override &&
-                                a.originalOverridingFinal === b.originalOverridingFinal &&
-                                (!compareLocalState || a.associatedLocalId === b.associatedLocalId);
+                                overrideA.override === overrideB.override &&
+                                overrideA.originalOverridingFinal ===
+                                    overrideB.originalOverridingFinal &&
+                                (!compareLocalState ||
+                                    overrideA.associatedLocalId === overrideB.associatedLocalId);
                             return overridesEqual;
                         }
 
-                        const uuidA = typeof a === "string" ? a : a.override;
-                        const uuidB = typeof b === "string" ? b : b.override;
+                        const uuidA =
+                            typeof overrideA === "string" ? overrideA : overrideA.override;
+                        const uuidB =
+                            typeof overrideB === "string" ? overrideB : overrideB.override;
                         if (
-                            typeof a !== "string" &&
-                            typeof b !== "string" &&
-                            a.originalOverridingFinal !== b.originalOverridingFinal
+                            typeof overrideA !== "string" &&
+                            typeof overrideB !== "string" &&
+                            overrideA.originalOverridingFinal !== overrideB.originalOverridingFinal
                         ) {
                             return false;
                         }
@@ -1867,16 +1871,16 @@ export class IdCompressor {
                 assert(hasOngoingSession(serialized), "Cannot resume existing session.");
                 sessionInfos.push({ session: compressor.localSession, sessionId });
             } else {
-                let attributionId: AttributionId | undefined;
+                let sessionAttributionId: AttributionId | undefined;
                 if (attributionIndex !== undefined) {
                     assert(
                         serializedAttributionIds !== undefined &&
                             serializedAttributionIds.length > attributionIndex,
                         "AttributionId index out of bounds",
                     );
-                    attributionId = serializedAttributionIds[attributionIndex];
+                    sessionAttributionId = serializedAttributionIds[attributionIndex];
                 }
-                const session = compressor.createSession(sessionId, attributionId);
+                const session = compressor.createSession(sessionId, sessionAttributionId);
                 sessionInfos.push({ session, sessionId });
             }
         }

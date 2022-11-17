@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
@@ -438,11 +437,6 @@ describe("IdCompressor", () => {
                 idsActual = expectDefined(idsActual);
                 expect(overrides[0][0]).to.equal(idsActual.first);
                 expect(overrides[overrides.length - 1][0]).to.equal(idsActual.last);
-                for (const [id, uuid] of Object.entries(overrideIndices)) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    expect(overrides[id][1]).to.equal(uuid);
-                }
                 newLastTakenId = idsActual.last;
             }
 
@@ -1261,8 +1255,8 @@ describe("IdCompressor", () => {
 
         itNetwork("produces consistent IDs with large fuzz input", (network) => {
             const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
-            performFuzzActions(generator, network, 1984, undefined, true, (network) =>
-                network.assertNetworkState(),
+            performFuzzActions(generator, network, 1984, undefined, true, (n) =>
+                n.assertNetworkState(),
             );
             network.deliverOperations(DestinationClient.All);
         });
@@ -1619,10 +1613,10 @@ describe("IdCompressor", () => {
 
             itNetwork("can serialize after a large fuzz input", 3, (network) => {
                 const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
-                performFuzzActions(generator, network, Math.PI, undefined, true, (network) => {
+                performFuzzActions(generator, network, Math.PI, undefined, true, (n) => {
                     // Periodically check that everyone in the network has the same serialized state
-                    network.deliverOperations(DestinationClient.All);
-                    const compressors = network.getTargetCompressors(DestinationClient.All);
+                    n.deliverOperations(DestinationClient.All);
+                    const compressors = n.getTargetCompressors(DestinationClient.All);
                     let deserializedPrev = roundtrip(compressors[0][1], false)[1];
                     for (let i = 1; i < compressors.length; i++) {
                         const deserializedCur = roundtrip(compressors[i][1], false)[1];
@@ -1641,12 +1635,12 @@ describe("IdCompressor", () => {
                 network.deliverOperations(Client.Client1);
                 const serialized = network.getCompressor(Client.Client1).serialize(false);
                 expect(serialized.clusters.length).to.equal(2);
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                expect(serialized.clusters[0][2]?.[0][0]).to.equal(0);
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                expect(serialized.clusters[1][2]?.[0][0]).to.equal(0);
+                const cluster0 = serialized.clusters[0][2] ?? fail("Expected overrides cluster");
+                const cluster1 = serialized.clusters[1][2] ?? fail("Expected overrides cluster");
+                assert(typeof cluster0 !== "number", "Expected overrides cluster");
+                assert(typeof cluster1 !== "number", "Expected overrides cluster");
+                expect(cluster0[0][0]).to.equal(0);
+                expect(cluster1[0][0]).to.equal(0);
             });
         });
     });
