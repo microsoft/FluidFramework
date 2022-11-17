@@ -4,20 +4,19 @@
  */
 
 const path = require("path");
-const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
-const sourceDirectoryPath = path.resolve(__dirname, "src");
+const testAppSrcPath = path.resolve(__dirname, "src", "test", "app");
 const buildDirectoryPath = path.resolve(__dirname, "dist");
 
+/**
+ * Webpack config for the test app.
+ * @remarks **Not** used for building the extension itself.
+ */
 module.exports = {
 	mode: "production",
 	entry: {
-		background: path.join(sourceDirectoryPath, "Background.ts"),
-		openDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.tsx"),
-		closeDebuggerPanelScript: path.join(sourceDirectoryPath, "CloseDebuggerPanelScript.ts"),
-		openDebuggerView: path.join(sourceDirectoryPath, "OpenDebuggerView.ts"),
-		closeDebuggerView: path.join(sourceDirectoryPath, "CloseDebuggerView.ts"),
+		main: path.join(testAppSrcPath, "index.tsx"),
 	},
 	output: {
 		path: buildDirectoryPath,
@@ -39,9 +38,6 @@ module.exports = {
 	plugins: [
 		new webpack.ProvidePlugin({
 			process: "process/browser",
-		}),
-		new CopyPlugin({
-			patterns: [{ from: ".", to: ".", context: "public" }],
 		}),
 	],
 };
