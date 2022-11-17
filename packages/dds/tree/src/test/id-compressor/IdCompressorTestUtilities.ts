@@ -4,9 +4,8 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { strict as assert } from "assert";
 import {
     Generator,
     createWeightedGenerator,
@@ -18,7 +17,6 @@ import {
     take,
     BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
-import { assert } from "@fluidframework/common-utils";
 import {
     IdCompressor,
     isLocalId,
@@ -479,55 +477,59 @@ export class IdCompressorTestNetwork {
                 // Only one client should have this ID as local in its session space, as only one client could have created this ID
                 if (isLocalId(sessionSpaceIdA)) {
                     localCount++;
-                    expect(idDataA.sessionId).to.equal(
+                    assert.strictEqual(
+                        idDataA.sessionId,
                         this.compressors.get(originatingClient).localSessionId,
                     );
-                    expect(
+                    assert.strictEqual(
                         creator.length === 0 ||
                             creator[creator.length - 1][1] === idDataA.expectedOverride,
-                    ).to.be.true;
+                        true,
+                    );
                     creator.push([originatingClient, idDataA.expectedOverride]);
                 }
 
                 const uuidASessionSpace = compressorA.decompress(sessionSpaceIdA);
                 if (idDataA.expectedOverride !== undefined) {
-                    expect(uuidASessionSpace).to.equal(idDataA.expectedOverride);
+                    assert.strictEqual(uuidASessionSpace, idDataA.expectedOverride);
                 } else {
-                    expect(uuidASessionSpace).to.equal(
+                    assert.strictEqual(
+                        uuidASessionSpace,
                         stableIdFromNumericUuid(idDataA.sessionNumericUuid, idIndex),
                     );
                 }
-                expect(compressorA.recompress(uuidASessionSpace)).to.equal(sessionSpaceIdA);
+                assert.strictEqual(compressorA.recompress(uuidASessionSpace), sessionSpaceIdA);
                 uuids.add(uuidASessionSpace);
                 const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
                 if (isLocalId(opSpaceIdA)) {
-                    expect.fail("IDs should have been finalized.");
+                    fail("IDs should have been finalized.");
                 }
-                expect(
+                assert.strictEqual(
                     compressorA.normalizeToSessionSpace(opSpaceIdA, compressorA.localSessionId),
-                ).equals(sessionSpaceIdA);
+                    sessionSpaceIdA,
+                );
                 finalIds.add(opSpaceIdA);
                 const uuidAOpSpace = compressorA.decompress(opSpaceIdA);
 
-                expect(uuidASessionSpace).to.equal(uuidAOpSpace);
+                assert.strictEqual(uuidASessionSpace, uuidAOpSpace);
 
                 if (next !== undefined) {
                     const [compressorB, idDataB] = next;
                     const sessionSpaceIdB = idDataB.id;
 
                     const uuidBSessionSpace = compressorB.decompress(sessionSpaceIdB);
-                    expect(uuidASessionSpace).to.equal(uuidBSessionSpace);
+                    assert.strictEqual(uuidASessionSpace, uuidBSessionSpace);
                     const opSpaceIdB = compressorB.normalizeToOpSpace(sessionSpaceIdB);
                     if (opSpaceIdA !== opSpaceIdB) {
                         compressorB.normalizeToOpSpace(sessionSpaceIdB);
                         compressorA.normalizeToOpSpace(sessionSpaceIdA);
                     }
-                    expect(opSpaceIdA).to.equal(opSpaceIdB);
+                    assert.strictEqual(opSpaceIdA, opSpaceIdB);
                     if (isLocalId(opSpaceIdB)) {
                         fail("IDs should have been finalized.");
                     }
                     const uuidBOpSpace = compressorB.decompress(opSpaceIdB);
-                    expect(uuidAOpSpace).to.equal(uuidBOpSpace);
+                    assert.strictEqual(uuidAOpSpace, uuidBOpSpace);
                 }
 
                 rowCount += 1;
@@ -536,13 +538,13 @@ export class IdCompressorTestNetwork {
             // A local count === 0 indicates the ID was created as an eager final, and thus cannot have had an
             // override to unify.
             if (rowCount === this.sequencedIdLogs.size && localCount <= 1) {
-                expect(localCount).to.lessThanOrEqual(1);
+                assert.strictEqual(localCount <= 1, true);
                 for (const [[compressor, { id, originatingClient: o }]] of getLogIndices(i)) {
-                    expect(compressor.attributeId(id)).to.equal(attributionIds.get(o));
+                    assert.strictEqual(compressor.attributeId(id), attributionIds.get(o));
                 }
             }
 
-            expect(uuids.size).to.equal(finalIds.size);
+            assert.strictEqual(uuids.size, finalIds.size);
             assert(originatingClient !== undefined, "Expected originating client to be defined");
             idIndicesAggregator.set(
                 originatingClient,
@@ -613,7 +615,7 @@ export function expectSerializes(
 
         for (const cluster of serialized.clusters) {
             const [sessionIndex] = cluster;
-            expect(sessionIndex < serialized.sessions.length);
+            assert.strictEqual(sessionIndex < serialized.sessions.length, true);
             chainCount[sessionIndex]++;
         }
 
@@ -621,18 +623,20 @@ export function expectSerializes(
             const [sessionIndex, capacity, maybeSize] = cluster;
             const chainIndex = chainProcessed[sessionIndex];
             if (chainIndex < chainCount[sessionIndex] - 1) {
-                expect(maybeSize === undefined);
+                // TODO: Fix this assert, ADO#2586
+                // expect(maybeSize === undefined);
             } else {
-                expect(
+                assert.strictEqual(
                     maybeSize === undefined ||
                         typeof maybeSize !== "number" ||
                         maybeSize < capacity,
+                    true,
                 );
             }
             chainProcessed[sessionIndex]++;
         }
 
-        expect(compressor.equals(deserialized, withSession)).to.be.true;
+        assert.strictEqual(compressor.equals(deserialized, withSession), true);
         return serialized;
     }
 
