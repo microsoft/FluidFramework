@@ -766,8 +766,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     private replacePlaceholderFromAllQueues() {
         assert(this.clientId !== undefined, "this.runtime.clientId should be defined");
-        for (const taskId of this.taskQueues.keys()) {
-            const clientQueue = this.taskQueues.get(taskId);
+        for (const clientQueue of this.taskQueues.values()) {
             if (clientQueue === undefined) {
                 continue;
             }

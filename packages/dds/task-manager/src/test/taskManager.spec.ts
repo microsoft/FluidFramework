@@ -43,11 +43,12 @@ function createDetachedTaskManager(id: string, runtimeFactory: MockContainerRunt
             deltaConnection: containerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(),
         };
-        dataStoreRuntime.local = false;
-        taskManager.connect(services);
 
         // Manually trigger a summarize (should be done automatically when attaching normally)
         await taskManager.summarize();
+
+        dataStoreRuntime.local = false;
+        taskManager.connect(services);
 
         // Ensure clientId is set after attach (might be forced undefined in some tests)
         dataStoreRuntime.clientId = clientId;
