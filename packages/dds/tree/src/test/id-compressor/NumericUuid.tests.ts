@@ -9,7 +9,6 @@
 import { expect } from "chai";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
-    compareStrings,
     numericUuidEquals,
     createSessionId,
     getPositiveDelta,
@@ -21,6 +20,7 @@ import {
     assertIsStableId,
     isStableId,
 } from "../../id-compressor";
+import { compareStrings } from "../../util";
 import { integerToStableId } from "./IdCompressorTestUtilities";
 
 describe("NumericUuid", () => {

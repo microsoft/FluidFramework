@@ -20,12 +20,8 @@ import {
     take,
     BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
-    assert,
-    assertNotUndefined,
-    ClosedMap,
-    fail,
-    getOrCreate,
     IdCompressor,
     isLocalId,
     createSessionId,
@@ -48,7 +44,15 @@ import type {
     SerializedIdCompressorWithOngoingSession,
     SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
+import { fail, getOrCreate } from "../../util";
 import { expectDefined } from "./TestCommon";
+
+/**
+ * A readonly `Map` which is known to contain a value for every possible key
+ */
+export interface ClosedMap<K, V> extends Omit<Map<K, V>, "delete" | "clear"> {
+    get(key: K): V;
+}
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -380,7 +384,10 @@ export class IdCompressorTestNetwork {
                             );
                             this.addNewId(clientTo, sessionSpaceId, override, clientFrom, true);
                         }
-                        assert(overrideIndex === (overrides?.length ?? 0));
+                        assert(
+                            overrideIndex === (overrides?.length ?? 0),
+                            "Inconsistent override index",
+                        );
                     }
                 }
             }
@@ -499,7 +506,6 @@ export class IdCompressorTestNetwork {
                 const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
                 if (isLocalId(opSpaceIdA)) {
                     expect.fail("IDs should have been finalized.");
-                    fail();
                 }
                 expect(
                     compressorA.normalizeToSessionSpace(opSpaceIdA, compressorA.localSessionId),
@@ -543,11 +549,12 @@ export class IdCompressorTestNetwork {
             }
 
             expect(uuids.size).to.equal(finalIds.size);
-            assert(originatingClient !== undefined);
+            assert(originatingClient !== undefined, "Expected originating client to be defined");
             idIndicesAggregator.set(
                 originatingClient,
                 // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-                assertNotUndefined(idIndicesAggregator.get(originatingClient)) + 1,
+                (idIndicesAggregator.get(originatingClient) ??
+                    fail("Expected pre-existing index for originating client")) + 1,
             );
         }
 

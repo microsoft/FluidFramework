@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { v4, NIL } from "uuid";
-import { assert } from "./Common";
 import { StableId, UuidString } from "./Identifiers";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [

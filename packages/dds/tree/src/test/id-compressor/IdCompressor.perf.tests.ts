@@ -9,8 +9,6 @@
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
-    fail,
-    Mutable,
     defaultClusterCapacity,
     IdCompressor,
     isFinalId,
@@ -27,6 +25,7 @@ import {
     OpSpaceCompressedId,
     SessionId,
 } from "../../id-compressor";
+import { fail, Mutable } from "../../util";
 import {
     Client,
     IdCompressorTestNetwork,
@@ -331,7 +330,10 @@ describe("IdCompressor Perf", () => {
             perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
         },
         benchmarkFn: () => {
-            perfCompressor!.normalizeToSessionSpace(opSpaceId ?? fail(), remoteSessionId);
+            perfCompressor!.normalizeToSessionSpace(
+                opSpaceId ?? fail("OpSpaceId must be defined"),
+                remoteSessionId,
+            );
         },
     });
 

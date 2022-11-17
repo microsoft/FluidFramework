@@ -7,11 +7,10 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import BTree from "sorted-btree";
 import {
-    assert,
-    hasLength,
-    assertNotUndefined,
+    hasAtLeastLength,
     compareFiniteNumbers,
     compareFiniteNumbersReversed,
     compareMaps,
@@ -20,7 +19,7 @@ import {
     getOrCreate,
     Mutable,
     setPropertyIfDefined,
-} from "./Common";
+} from "../util";
 import {
     LocalCompressedId,
     FinalCompressedId,
@@ -430,7 +429,10 @@ export class IdCompressor {
      * @returns the session object for the supplied ID
      */
     private createSession(sessionId: SessionId, attributionId: AttributionId | undefined): Session {
-        assert(!this.clustersAndOverridesInversion.has(sessionId));
+        assert(
+            !this.clustersAndOverridesInversion.has(sessionId),
+            "Attempted to create duplicate session",
+        );
         const existingSession = this.sessions.get(sessionId);
         if (existingSession !== undefined) {
             fail("createSession must only be called once for each session ID.");
@@ -496,7 +498,7 @@ export class IdCompressor {
     public takeNextCreationRange(): IdCreationRange {
         const lastLocalInRange = -this.localIdCount as UnackedLocalId;
         const lastTakenNormalized = this.lastTakenLocalId ?? 0;
-        assert(lastLocalInRange <= lastTakenNormalized);
+        assert(lastLocalInRange <= lastTakenNormalized, "Inconsistent local ID state");
 
         // The attribution ID is sent with each range, but it can be elided after the first IDs are allocated.
         const sendAttributionId = this.lastTakenLocalId === undefined;
@@ -510,9 +512,12 @@ export class IdCompressor {
                     lastLocalInRange as LocalCompressedId,
                 ),
             ] as (readonly [UnackedLocalId, string])[];
-            if (hasLength(overrides, 1)) {
-                assert(overrides[0][0] <= firstLocalInRange);
-                assert(overrides[overrides.length - 1][0] >= lastLocalInRange);
+            if (hasAtLeastLength(overrides, 1)) {
+                assert(overrides[0][0] <= firstLocalInRange, "Inconsistent override state");
+                assert(
+                    overrides[overrides.length - 1][0] >= lastLocalInRange,
+                    "Inconsistent override state",
+                );
                 ids = {
                     overrides,
                 };
@@ -1101,14 +1106,22 @@ export class IdCompressor {
                 "Session ID Normalizer produced unexpected local ID",
             );
             if (eagerFinalId !== undefined) {
-                sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
+                sessionIdNormalizer.addFinalIds(
+                    eagerFinalId,
+                    eagerFinalId,
+                    cluster ?? fail("No cluster when generating compressed ID"),
+                );
             }
-            this.localOverrides.append(newLocalId, override ?? fail());
+            this.localOverrides.append(newLocalId, override ?? fail("Override must be defined"));
             // Since the local ID was just created, it is in both session and op space
             const compressionMapping = newLocalId as UnackedLocalId;
             this.clustersAndOverridesInversion.set(overrideInversionKey, compressionMapping);
         } else if (eagerFinalId !== undefined) {
-            sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
+            sessionIdNormalizer.addFinalIds(
+                eagerFinalId,
+                eagerFinalId,
+                cluster ?? fail("No cluster when generating compressed ID"),
+            );
             return eagerFinalId;
         } else {
             const registeredLocal = sessionIdNormalizer.addLocalId();
@@ -1605,8 +1618,8 @@ export class IdCompressor {
             (a.overrides === undefined) === (b.overrides === undefined) &&
             (a.overrides === undefined ||
                 compareMaps(
-                    assertNotUndefined(a.overrides),
-                    assertNotUndefined(b.overrides),
+                    a.overrides ?? fail("Overrides must be defined"),
+                    b.overrides ?? fail("Overrides must be defined"),
                     (a, b) => {
                         if (compareLocalState) {
                             if (typeof a === "string" || typeof b === "string") {
@@ -1814,6 +1827,7 @@ export class IdCompressor {
                 assert(
                     serializedAttributionIds !== undefined &&
                         serializedAttributionIds.length > attributionIndex,
+                    "Serialized attribution IDs must be populated if attribution index is defined",
                 );
                 attributionId = serializedAttributionIds[attributionIndex];
             }
@@ -1963,6 +1977,7 @@ export class IdCompressor {
         assert(
             compressor.localSession.lastFinalizedLocalId === undefined ||
                 compressor.localIdCount >= -compressor.localSession.lastFinalizedLocalId,
+            "Inconsistent last finalized state when deserializing",
         );
 
         return compressor;

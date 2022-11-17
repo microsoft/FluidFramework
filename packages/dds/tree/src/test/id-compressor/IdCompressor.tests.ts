@@ -8,6 +8,7 @@
 
 import { expect } from "chai";
 import { v4, v5 } from "uuid";
+import { assert } from "@fluidframework/common-utils";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
     IdCompressor,
@@ -20,9 +21,6 @@ import {
     SessionSpaceCompressedId,
     OpSpaceCompressedId,
     SessionId,
-    assert,
-    assertNotUndefined,
-    fail,
     createSessionId,
     incrementUuid,
     numericUuidFromStableId,
@@ -33,6 +31,7 @@ import {
     isStableId,
 } from "../../id-compressor";
 import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
+import { fail } from "../../util";
 import {
     createCompressor,
     performFuzzActions,
@@ -1000,7 +999,8 @@ describe("IdCompressor", () => {
                 network.deliverOperations(DestinationClient.All);
 
                 for (const [client, compressor] of network.getTargetCompressors(MetaClient.All)) {
-                    const preAckLocalIds = preAckLocals.get(client) ?? fail();
+                    const preAckLocalIds =
+                        preAckLocals.get(client) ?? fail("Expected preack locals for client");
                     let i = 0;
                     for (const idData of network.getIdLog(client)) {
                         if (idData.originatingClient === client) {
@@ -1173,7 +1173,7 @@ describe("IdCompressor", () => {
             numUnifications = 0,
         ): void {
             network.deliverOperations(DestinationClient.All);
-            assert(client1 !== client2);
+            assert(client1 !== client2, "Clients must not be the same");
             const log1 = network.getSequencedIdLog(client1);
             const log2 = network.getSequencedIdLog(client2);
             expect(log1.length).to.equal(log2.length);
@@ -1675,7 +1675,7 @@ function createNetworkTestFunction(
             const hasCapacity = typeof testOrCapacity === "number";
             const capacity = hasCapacity ? testOrCapacity : undefined;
             const network = new IdCompressorTestNetwork(capacity);
-            (hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
+            (hasCapacity ? test ?? fail("test must be defined") : testOrCapacity)(network);
             if (validateAfter) {
                 network.deliverOperations(DestinationClient.All);
                 network.assertNetworkState();

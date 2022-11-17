@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/common-utils";
 import { expect } from "chai";
 import {
     BaseFuzzTestState,
@@ -20,8 +21,6 @@ import {
     makeRandom,
 } from "@fluid-internal/stochastic-test-utils";
 import {
-    assert,
-    fail,
     isFinalId,
     isLocalId,
     SessionIdNormalizer,
@@ -29,6 +28,7 @@ import {
     LocalCompressedId,
     SessionSpaceCompressedId,
 } from "../../id-compressor";
+import { fail } from "../../util";
 
 describe("SessionIdNormalizer", () => {
     it("fails when adding finals with no corresponding locals", () => {
@@ -286,7 +286,9 @@ function makeNormalizerProxy(
                             const local = Reflect.apply(func, thisArg, argumentsList);
                             if (locals.length > 0) {
                                 for (
-                                    let i = (locals[locals.length - 1] ?? fail()) - 1;
+                                    let i =
+                                        (locals[locals.length - 1] ??
+                                            fail("Inconsistent locals map")) - 1;
                                     i > local;
                                     i--
                                 ) {
@@ -319,7 +321,7 @@ type DummyRange = undefined;
 const dummy: DummyRange = undefined;
 
 function final(num: number): FinalCompressedId {
-    assert(num >= 0);
+    assert(num >= 0, "FinalCompressedIds may not be negative");
     return num as FinalCompressedId;
 }
 

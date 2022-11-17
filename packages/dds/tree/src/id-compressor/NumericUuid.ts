@@ -5,7 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, fail } from "./Common";
+import { assert } from "@fluidframework/common-utils";
+import { fail } from "../util";
 import { SessionId, StableId } from "./Identifiers";
 import { generateStableId } from "./UuidUtilities";
 
@@ -180,7 +181,10 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
             // The variant chunk itself also overflowed. We'll need to carry the overflow further, into the upper string region of the UUID.
             const upperString = ChunkMath.Upper.parse(stringEntry);
             const upperNumber = Number.parseInt(upperString, 16);
-            assert(upperNumber <= maxUpperNumber);
+            assert(
+                upperNumber <= maxUpperNumber,
+                "Unexpectedly large upper number when incrementing UUID",
+            );
             const newUpperNumber = upperNumber + 1;
             if (newUpperNumber > maxUpperNumber) {
                 fail("Exceeded maximum numeric UUID");
@@ -208,7 +212,6 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
     return newUuid as readonly [string, number] as NumericUuid;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace ChunkMath {
     /*
      * Recall the UUID diagram from the top of this file which describes the layout of a Numeric UUID. To implement addition, we define
@@ -245,7 +248,6 @@ namespace ChunkMath {
     /**
      * The upper chunk, denoted by 'U's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
      */
-    // eslint-disable-next-line @typescript-eslint/no-namespace
     export namespace Upper {
         export function parse(stringEntry: string): string {
             return stringEntry.slice(0, 8) + stringEntry.slice(9, 13);
@@ -263,7 +265,6 @@ namespace ChunkMath {
     /**
      * The variant chunk, denoted by 'V's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
      */
-    // eslint-disable-next-line @typescript-eslint/no-namespace
     export namespace Variant {
         export function parse(stringEntry: string): string {
             return stringEntry.slice(15, 18) + stringEntry.slice(19, 22);
@@ -277,7 +278,6 @@ namespace ChunkMath {
     /**
      * The lower chunk, denoted by 'L's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
      */
-    // eslint-disable-next-line @typescript-eslint/no-namespace
     export namespace Lower {
         export function parse(stableId: StableId): string {
             return (
@@ -328,7 +328,10 @@ namespace ChunkMath {
         // 2. The numerically important bits (i.e. not the variant identifier bits vv which are constant) are extracted into a single number
         const variantChunk = Variant.parse(stringEntry);
         const variantNumber = getNumericValue(variantChunk);
-        assert(variantNumber <= maxVariantNumber);
+        assert(
+            variantNumber <= maxVariantNumber,
+            "Unexpectedly large variant number when incrementing UUID",
+        );
         // 3. Add one to the variant number to produce our new variant number.
         const newVariantNumber = variantNumber + 1;
         // 4. The variant identifier bits are added back into the number, which is then turned back into a hex string
