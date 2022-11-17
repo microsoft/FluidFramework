@@ -1313,7 +1313,10 @@ export class MergeTree {
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
                 if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.trackAttribution) {
-                    pendingSegment.attribution = new AttributionCollection(pendingSegment.seq, pendingSegment.cachedLength);
+                    pendingSegment.attribution = new AttributionCollection(
+                        pendingSegment.seq,
+                        pendingSegment.cachedLength,
+                    );
                 }
                 overwrite = overlappingRemove || overwrite;
 

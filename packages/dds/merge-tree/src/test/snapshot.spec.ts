@@ -11,9 +11,9 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
+import { IMergeTreeOptions } from "../mergeTree";
 import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
-import { IMergeTreeOptions } from "../mergeTree";
 
 // Reconstitutes a MergeTree client from a summary
 async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -225,15 +225,15 @@ describe("snapshot", () => {
         makeSnapshotSuite({ trackAttribution: false });
     });
 
-    it("presence of attribution overrides merge-tree initialization value", () => {
+    it("presence of attribution overrides merge-tree initialization value", async () => {
         const str = new TestString("id", { trackAttribution: true });
         str.append("hello world", /* increaseMsn: */ true);
-        str.checkSnapshot({ trackAttribution: false });
+        await str.checkSnapshot({ trackAttribution: false });
     });
 
-    it("lack of attribution overrides merge-tree initialization", () => {
+    it("lack of attribution overrides merge-tree initialization", async () => {
         const str = new TestString("id", { trackAttribution: false });
         str.append("hello world", /* increaseMsn: */ true);
-        str.checkSnapshot({ trackAttribution: true });
+        await str.checkSnapshot({ trackAttribution: true });
     });
 });

@@ -21,6 +21,7 @@ import {
     Reducer,
     take,
 } from "@fluid-internal/stochastic-test-utils";
+import { IAttributor } from "@fluidframework/runtime-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockStorage,
@@ -28,7 +29,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import {
 	chain as chainEncoders,
-	IAttributor,
 	OpStreamAttributor,
 	makeGzipEncoder,
 	AttributorSerializer,
@@ -226,7 +226,7 @@ function createSharedString(
 			const { deltaManager } = dataStoreRuntime;
 
 			if (index === 0 && makeSerializer !== undefined) {
-				attributor = new OpStreamAttributor(dataStoreRuntime);
+				attributor = new OpStreamAttributor(deltaManager, dataStoreRuntime.getAudience());
 				serializer = makeSerializer(dataStoreRuntime);
 			}
 			const sharedString = new SharedString(
@@ -474,7 +474,7 @@ describe("SharedString Attribution", () => {
 					generatorFromArray(operations),
 					(runtime) => chainEncoders(
 						new AttributorSerializer(
-							(entries) => new OpStreamAttributor(runtime, entries),
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
 							noopEncoder
 						),
 						noopEncoder
@@ -489,7 +489,7 @@ describe("SharedString Attribution", () => {
 					generatorFromArray(operations),
 					(runtime) => chainEncoders(
 						new AttributorSerializer(
-							(entries) => new OpStreamAttributor(runtime, entries),
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
 							noopEncoder
 						),
 						makeGzipEncoder(),
@@ -504,7 +504,7 @@ describe("SharedString Attribution", () => {
 					generatorFromArray(operations),
 					(runtime) => chainEncoders(
 						new AttributorSerializer(
-							(entries) => new OpStreamAttributor(runtime, entries),
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
 							deltaEncoder
 						),
 						makeGzipEncoder(),

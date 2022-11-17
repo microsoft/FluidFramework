@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import * as fs from "fs";
 import * as path from "path";
+import { assert } from "@fluidframework/common-utils";
 import { Mode, processContent } from "../../replayMultipleFiles";
 
 function getFileLocation(documentName: string): string {
-	return path.join(__dirname, `../../../content/snapshotTestContent/${documentName}`)
+	return path.join(__dirname, `../../../content/snapshotTestContent/${documentName}`);
 }
 
 describe("Create attributionless snapshots", function() {
@@ -30,10 +30,15 @@ describe("Create attributionless snapshots", function() {
 			await fs.promises.mkdir(attributionBaseSnapshotPath, { recursive: true });
 			for (const subNode of fs.readdirSync(docBaseSnapshotPath, { withFileTypes: true })) {
 				assert(!subNode.isDirectory(), "base snapshots should be files");
-				fs.copyFileSync(path.join(docBaseSnapshotPath, subNode.name), path.join(attributionBaseSnapshotPath, subNode.name));
+				fs.copyFileSync(
+					path.join(docBaseSnapshotPath, subNode.name),
+					path.join(attributionBaseSnapshotPath, subNode.name),
+				);
 			}
 		
+			// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-require-imports
 			const messages = require(path.join(docPath, "messages.json"));
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			const attributionlessMessages = messages.map((message) => stripAttributionInfo(message));
 			await fs.promises.writeFile(path.join(attributionlessPath, "messages.json"), JSON.stringify(attributionlessMessages, undefined, 2));
 		}
@@ -58,5 +63,6 @@ function stripAttributionInfo(originalMessage: any) {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return messageClone;
 }

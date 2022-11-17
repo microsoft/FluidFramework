@@ -36,7 +36,10 @@ export class AttributionCollection<T> {
     get length(): number;
     // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
     static populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
-    static serializeAttributionCollections(segments: Iterable<ISegment>): SerializedAttributionCollection;
+    static serializeAttributionCollections<T>(segments: Iterable<{
+        attribution?: AttributionCollection<T>;
+        cachedLength: number;
+    }>): SerializedAttributionCollection;
     splitAt(pos: number): AttributionCollection<T>;
 }
 

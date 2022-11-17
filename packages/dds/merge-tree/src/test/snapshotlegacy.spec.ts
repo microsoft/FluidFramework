@@ -7,11 +7,11 @@
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestSerializer } from "./testSerializer";
-import { TestClient } from ".";
 import { createClientsAtInitialState } from "./testClientLogger";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { TestClient } from ".";
 
 describe("snapshot", () => {
     it("header only", async () => {
@@ -133,10 +133,10 @@ describe("snapshot", () => {
 
         // "hello " has key 1 (i.e. seq 1), "new " has key 2 (i.e. seq 2), "world" has key 1.
         const expectedAttribution = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1];
-        assertAttributionKeysMatch(clients.A, expectedAttribution);
+        await assertAttributionKeysMatch(clients.A, expectedAttribution);
     });
 
-    it("doesn't include attribution information when trackAttribution is false on doc creation", () => {
+    it("doesn't include attribution information when trackAttribution is false on doc creation", async () => {
         const clients = createClientsAtInitialState({
             initialState: "",
             options: { trackAttribution: false }
@@ -155,6 +155,6 @@ describe("snapshot", () => {
 
         applyAllOps();
 
-        assertAttributionKeysMatch(clients.A, undefined);
+        await assertAttributionKeysMatch(clients.A, undefined);
     });
 });

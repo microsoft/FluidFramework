@@ -79,7 +79,7 @@ export class SnapshotV1 {
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkV1 {
         const segments: JsonSegmentSpecs[] = [];
-        const collections: { attribution: AttributionCollection<unknown>, cachedLength: number }[] = [];
+        const collections: { attribution: AttributionCollection<unknown>; cachedLength: number; }[] = [];
         let length = 0;
         let segmentCount = 0;
         let hasAttribution = false;
@@ -90,7 +90,10 @@ export class SnapshotV1 {
             // TODO: pretty ugly--maybe better to move this.segments to just use ISegment like done for legacy snapshot
             if (attributionCollections[startIndex + segmentCount]) {
                 hasAttribution = true;
-                collections.push({ attribution: attributionCollections[startIndex + segmentCount], cachedLength: allLengths[startIndex + segmentCount] });
+                collections.push({
+                    attribution: attributionCollections[startIndex + segmentCount],
+                    cachedLength: allLengths[startIndex + segmentCount],
+                });
             }
             segmentCount++;
         }
@@ -166,7 +169,11 @@ export class SnapshotV1 {
         const minSeq = this.header.minSequenceNumber;
 
         // Helper to add the given `MergeTreeChunkV0SegmentSpec` to the snapshot.
-        const pushSegRaw = (json: JsonSegmentSpecs, length: number, attribution: AttributionCollection<unknown> | undefined) => {
+        const pushSegRaw = (
+            json: JsonSegmentSpecs,
+            length: number,
+            attribution: AttributionCollection<unknown> | undefined,
+        ) => {
             this.segments.push(json);
             this.segmentLengths.push(length);
             if (attribution) {

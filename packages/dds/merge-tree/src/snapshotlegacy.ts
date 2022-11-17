@@ -18,6 +18,7 @@ import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
 import {
+    JsonSegmentSpecs,
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
@@ -90,7 +91,7 @@ export class SnapshotLegacy {
             totalLengthChars: this.header!.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header!.seq,
-            segmentTexts: segs.map((seg) => seg.toJSONObject()),
+            segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
             attribution: hasAttribution ? AttributionCollection.serializeAttributionCollections(segs) : undefined
         };
     }
