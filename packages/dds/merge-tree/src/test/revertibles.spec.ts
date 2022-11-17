@@ -175,8 +175,8 @@ describe("MergeTree.Revertibles", () => {
         };
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
-        clients.B.on("delta", deltaCallback);
 
+        clients.B.on("delta", deltaCallback);
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 2), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 1, { test: 1 }, undefined), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
@@ -203,24 +203,20 @@ describe("MergeTree.Revertibles", () => {
         const ops: ISequencedDocumentMessage[] = [];
 
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
-
-        const clientBDriver = createRevertDriver(clients.B);
-        clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
-
-        clients.B.on("delta", (op, delta) => {
+        const deltaCallback = (op, delta) => {
             if (op.sequencedMessage === undefined) {
                 appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
             }
-        });
+        };
+        const clientBDriver = createRevertDriver(clients.B);
+        clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
+        clients.B.on("delta", deltaCallback);
         ops.push(clients.B.makeOpMessage(clients.B.annotateRangeLocal(0, 4, { test: "B" }, undefined), ++seq));
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq));
 
         // revert to the original callback
-        clients.B.off("delta", (op, delta) => {
-            if (op.sequencedMessage === undefined) {
-                appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
-            }
-        });
+        clients.B.off("delta", deltaCallback);
 
         ops.push(clients.C.makeOpMessage(clients.C.annotateRangeLocal(3, 4, { test: "C" }, undefined), ++seq));
 
