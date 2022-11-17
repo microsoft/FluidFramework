@@ -34,7 +34,6 @@
     "tsc": "tsc",
     "typetests:gen": "flub generate typetests --generate --dir .",
     "typetests:prepare": "flub generate typetests --prepare --dir ."
-
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",

@@ -33,7 +33,6 @@
     "tsc": "tsc",
     "typetests:gen": "flub generate typetests --generate --dir .",
     "typetests:prepare": "flub generate typetests --prepare --dir ."
-
   },
   "dependencies": {
     "@fluidframework/driver-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0"

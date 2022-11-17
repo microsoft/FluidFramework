@@ -34,7 +34,6 @@
     "tsc:watch": "tsc --watch",
     "typetests:gen": "flub generate typetests --generate --dir .",
     "typetests:prepare": "flub generate typetests --prepare --dir ."
-
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0-109663",

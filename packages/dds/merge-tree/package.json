@@ -38,7 +38,6 @@
     "tsc": "tsc",
     "typetests:gen": "flub generate typetests --generate --dir .",
     "typetests:prepare": "flub generate typetests --prepare --dir ."
-
   },
   "nyc": {
     "all": true,
