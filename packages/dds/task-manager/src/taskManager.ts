@@ -312,8 +312,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            // All of our outstanding ops will be for the old clientId even if they get ack'd
-            this.latestPendingOps.clear();
+            // All of our outstanding volunteer ops will be for the old clientId even if they get ack'd, so we should
+            // delete them.
+            this.latestPendingOps.forEach((pendingOp, taskId) => {
+                if (pendingOp.type === "volunteer") {
+                    this.latestPendingOps.delete(taskId);
+                }
+            });
         });
     }
 
@@ -676,8 +681,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
      * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
      * @internal
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    protected reSubmitCore() { }
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        if (content.type === "volunteer") {
+            // Avoid resubmission on reconnect. Allow all other ops to be resubmitted.
+            return;
+        }
+        this.submitLocalMessage(content, localOpMetadata);
+    }
 
     /**
      * Process a task manager operation
