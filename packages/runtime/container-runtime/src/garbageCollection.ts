@@ -498,8 +498,8 @@ export class GarbageCollector implements IGarbageCollector {
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
 
-        const metadata = createParams.metadata;
         const baseSnapshot = createParams.baseSnapshot;
+        const metadata = createParams.metadata;
         const readAndParseBlob = createParams.readAndParseBlob;
 
         this.mc = loggerToMonitoringContext(ChildLogger.create(
@@ -537,7 +537,7 @@ export class GarbageCollector implements IGarbageCollector {
          * For existing containers, we get this information from the metadata blob of its summary.
          */
         if (createParams.existing) {
-            prevSummaryGCVersion = getGCVersion(this.metadata);
+            prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
