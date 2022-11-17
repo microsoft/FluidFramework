@@ -25,6 +25,7 @@ export enum SignalType {
     ClientJoin = "join", // same value as MessageType.ClientJoin,
     ClientLeave = "leave", // same value as MessageType.ClientLeave,
     Clear = "clear", // used only by client for synthetic signals
+    ExternalDataChange = "clear", // used only by client for synthetic signals
 }
 
 /**
@@ -114,6 +115,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
                 }
                 break;
             }
+            case SignalType.ExternalDataChange: {}
             default: break;
         }
     }

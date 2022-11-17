@@ -10,9 +10,11 @@ import {
     IConnected,
     IDocumentMessage,
     INack,
+    ISignalClient,
     ISignalMessage,
     NackErrorType,
     ScopeType,
+    SignalType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -40,6 +42,7 @@ import {
     generateClientId,
     getRandomInt,
 } from "../utils";
+import { timeout } from "async";
 
 const summarizerClientType = "summarizer";
 
@@ -491,6 +494,25 @@ export function configureWebSocketServices(
                         [CommonProperties.clientType]: message.details.details?.type,
                     });
                     connectMetric.success(`Connect document successful`);
+
+                    if (room) {
+                        setTimeout(() => {
+                            console.log("postpone sending signalMessageExternalDataChange for 1s");
+                        }, 1000);
+                        console.log("we should see signalMessageExternalDataChange")
+                        const content: ISignalClient = {
+                            clientId: message.connection.clientId,
+                            client: message.details
+                        }
+                        const signalMessageExternalDataChange: ISignalMessage = {
+                            clientId: null, // system signal
+                            content: JSON.stringify({
+                                type: SignalType.ExternalDataChange,
+                                content // [id]:[name]:[priority]
+                            })
+                        }
+                        socket.emitToRoom(getRoomId(room), "signal", signalMessageExternalDataChange);
+                    }
                 },
                 (error) => {
                     socket.emit("connect_document_error", error);

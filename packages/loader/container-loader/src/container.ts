@@ -1762,6 +1762,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
+        console.log("here I am in processSignal -- how can I find a way to differentiate between protocol signals and non-protocol ones?");
+        console.log(`message.clientId: ${ message.clientId}`);
+        console.log(`message.content: ${ JSON.stringify(message.content)}`);
         if (message.clientId === null) {
             this.protocolHandler.processSignal(message);
         } else {
