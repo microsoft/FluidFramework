@@ -4,8 +4,5 @@
  */
 
 module.exports = {
-    "extends": [
-        "@fluidframework/eslint-config-fluid",
-        "prettier"
-    ]
-}
+    ...require("@fluidframework/build-common/prettier.config.cjs"),
+};
