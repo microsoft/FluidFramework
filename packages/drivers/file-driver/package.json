@@ -41,9 +41,9 @@
     "@fluidframework/replay-driver": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.6.0-109418",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.6.0-109418",
+    "@fluidframework/build-tools": "^0.6.0-109663",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
