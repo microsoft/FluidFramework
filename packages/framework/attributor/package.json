@@ -35,8 +35,8 @@
     "test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir ."
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
   },
   "nyc": {
     "all": true,

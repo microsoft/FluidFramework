@@ -41,8 +41,8 @@
     "test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "testfarm": "node dist/test/testFarm.js",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir ."
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
   },
   "nyc": {
     "all": true,
