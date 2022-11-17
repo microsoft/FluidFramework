@@ -370,3 +370,17 @@ export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISha
     shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
     return shareLinkRequestParams;
 }
+
+export function measure<T>(callback: () => T): [T, number] {
+    const start = performance.now();
+    const result = callback();
+    const time = performance.now() - start;
+    return [result, time];
+}
+
+export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
+    const start = performance.now();
+    const result = await callback();
+    const time = performance.now() - start;
+    return [result, time];
+}
