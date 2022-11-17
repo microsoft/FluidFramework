@@ -2752,18 +2752,18 @@ export class MergeTree {
                 if (endPos <= pos) {
                     return NodeAction.Exit;
                 }
+
                 const len = this.nodeLength(node, lenSeq, clientId, localSeq);
+                const lenAtRefSeq = lenSeq === refSeq ? len : (this.nodeLength(node, refSeq, clientId, localSeq) ?? 0);
 
                 const isUnackedAndInObliterate =
                     node.isLeaf() && node.seq === UnassignedSequenceNumber && lenSeq !== refSeq;
 
-                if (len === undefined || (len === 0 && !isUnackedAndInObliterate)) {
+                if ((len === undefined && !lenAtRefSeq) || (len === 0 && !isUnackedAndInObliterate)) {
                     return NodeAction.Skip;
                 }
 
-                const lenAtRefSeq = lenSeq === refSeq ? len : (this.nodeLength(node, refSeq, clientId, localSeq) ?? 0);
-
-                const nextPos = pos + lenAtRefSeq;
+                const nextPos = pos + (lenAtRefSeq ?? 0);
                 // start is beyond the current node, so we can skip it
                 if (start >= nextPos) {
                     pos = nextPos;

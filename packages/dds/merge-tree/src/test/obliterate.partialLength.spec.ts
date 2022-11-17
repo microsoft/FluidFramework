@@ -252,7 +252,7 @@ describe("obliterate partial lengths", () => {
             });
             const localObliterateOp = client.obliterateRangeLocal(
                 0,
-                "hello ".length,
+                "hello".length,
             );
 
             validatePartialLengths(localClientId, client.mergeTree, [

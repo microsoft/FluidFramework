@@ -412,4 +412,97 @@ describe("obliterate", () => {
             helper.logger.validate();
         });
     });
+
+    it.skip("...", () => {
+        const helper = new ReconnectTestHelper();
+
+        // ABCXE
+        // ABX
+
+        helper.insertText("B", 0, "DE");
+        helper.obliterateRange("B", 0, 1);
+        helper.insertText("A", 0, "X");
+        helper.insertText("B", 0, "ABC");
+        helper.obliterateRange("B", 2, 4);
+        helper.processAllOps();
+
+        assert.equal(helper.clients.A.getText(), "ABX");
+        assert.equal(helper.clients.C.getText(), "ABX");
+
+        helper.logger.validate();
+    });
+
+    it.skip("...", () => {
+        const helper = new ReconnectTestHelper();
+
+        // 894w567123XY
+
+        // 823X
+
+        helper.insertText("A", 0, "X");
+        helper.insertText("C", 0, "123");
+        helper.insertText("C", 0, "4567");
+        helper.insertText("B", 0, "89");
+        helper.processAllOps();
+        helper.obliterateRange("C", 1, 7);
+        helper.insertText("A", 3, "w");
+        helper.insertText("C", 3, "Y");
+        helper.processAllOps();
+
+        helper.logger.validate();
+    });
+
+    describe("overlapping obliterate with other remove/obliterate", () => {
+        it("correctly accounts for overlapping obliterate", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("B", 0, "AB");
+            helper.processAllOps();
+            helper.obliterateRange("C", 0, 1);
+            helper.obliterateRange("B", 0, 1);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "B");
+            assert.equal(helper.clients.B.getText(), "B");
+            assert.equal(helper.clients.C.getText(), "B");
+
+            helper.logger.validate();
+        });
+
+        it("correctly accounts for overlapping obliterate and remove", () => {
+            const helper = new ReconnectTestHelper();
+
+            helper.insertText("B", 0, "AB");
+            helper.processAllOps();
+            helper.removeRange("C", 0, 1);
+            helper.obliterateRange("B", 0, 1);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "B");
+            assert.equal(helper.clients.B.getText(), "B");
+            assert.equal(helper.clients.C.getText(), "B");
+
+            helper.logger.validate();
+        });
+
+        it.skip("...", () => {
+            const helper = new ReconnectTestHelper();
+
+            // the X is skipped over by client `A` because it has already been
+            // deleted, so its length at refSeq is 0
+
+            helper.insertText("C", 0, "ABCD");
+            helper.processAllOps();
+            helper.insertText("B", 2, "X");
+            helper.obliterateRange("A", 1, 3);
+            helper.obliterateRange("B", 1, 4);
+            helper.processAllOps();
+
+            assert.equal(helper.clients.A.getText(), "AD");
+            assert.equal(helper.clients.B.getText(), "AD");
+            assert.equal(helper.clients.C.getText(), "AD");
+
+            helper.logger.validate();
+        });
+    });
 });
