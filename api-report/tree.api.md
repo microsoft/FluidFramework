@@ -279,7 +279,6 @@ export interface FieldChange {
     change: FieldChangeset;
     // (undocumented)
     fieldKind: FieldKindIdentifier;
-    // (undocumented)
     revision?: RevisionTag;
 }
 

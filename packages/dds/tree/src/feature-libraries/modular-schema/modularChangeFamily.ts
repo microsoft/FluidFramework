@@ -120,16 +120,9 @@ export class ModularChangeFamily
                     changesets.length === changesForField.length,
                     "Number of changes should be constant when normalizing",
                 );
-                const taggedChangesets: TaggedChange<FieldChangeset>[] = [];
-                for (let i = 0; i < changesets.length; i++) {
-                    const taggedChange: TaggedChange<FieldChangeset> = {
-                        revision: changesForField[i].revision,
-                        change: changesets[i],
-                    };
-
-                    taggedChangesets.push(taggedChange);
-                }
-
+                const taggedChangesets = changesets.map((change, i) =>
+                    tagChange(change, changesForField[i].revision),
+                );
                 const composedChange = fieldKind.changeHandler.rebaser.compose(
                     taggedChangesets,
                     this.childComposer,
