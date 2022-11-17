@@ -130,8 +130,7 @@
   },
   "typeValidation": {
     "version": "1.1.0",
-    "baselineRange": "~1.0.0",
-    "baselineVersion": "1.0.0",
+    "baselineRange": "1.0.0",
     "broken": {}
   }
 }
