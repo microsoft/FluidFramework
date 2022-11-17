@@ -4,9 +4,8 @@
  */
 
 /* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     numericUuidEquals,
@@ -25,29 +24,27 @@ import { integerToStableId } from "./IdCompressorTestUtilities";
 
 describe("NumericUuid", () => {
     it("can detect non-v4 variant 2 UUIDs", () => {
-        expect(isStableId("00000000-0000-0000-0000-000000000000")).to.be.false;
-        expect(isStableId("ffffffff-ffff-ffff-ffff-ffffffffffff")).to.be.false;
-        expect(isStableId("8e8fec9a10ea4d158308ed35bc7f1e66")).to.be.false;
-        expect(isStableId("8e8fec9a-10ea-4d15-8308-ed35bc7f1e66")).to.be.true;
+        assert.strictEqual(isStableId("00000000-0000-0000-0000-000000000000"), false);
+        assert.strictEqual(isStableId("ffffffff-ffff-ffff-ffff-ffffffffffff"), false);
+        assert.strictEqual(isStableId("8e8fec9a10ea4d158308ed35bc7f1e66"), false);
+        assert.strictEqual(isStableId("8e8fec9a-10ea-4d15-8308-ed35bc7f1e66"), true);
         [...new Array(16).keys()]
             .map((n) => [n, n.toString(16)])
             .forEach(([n, char]) => {
-                const expectUuidVersion = expect(
-                    isStableId(`00000000-0000-${char}000-b000-000000000000`),
-                );
+                const expectUuidVersion = isStableId(`00000000-0000-${char}000-b000-000000000000`);
+
                 if (char === "4") {
-                    expectUuidVersion.to.be.true;
+                    assert.strictEqual(expectUuidVersion, true);
                 } else {
-                    expectUuidVersion.to.be.false;
+                    assert.strictEqual(expectUuidVersion, false);
                 }
 
-                const expectUuidVariant = expect(
-                    isStableId(`00000000-0000-4000-${char}000-000000000000`),
-                );
+                const expectUuidVariant = isStableId(`00000000-0000-4000-${char}000-000000000000`);
+
                 if (n >= 8 && n <= 11) {
-                    expectUuidVariant.to.be.true;
+                    assert.strictEqual(expectUuidVariant, true);
                 } else {
-                    expectUuidVariant.to.be.false;
+                    assert.strictEqual(expectUuidVariant, false);
                 }
             });
     });
@@ -56,36 +53,47 @@ describe("NumericUuid", () => {
 
     it("detects increment overflow", () => {
         const uuid = numericUuidFromStableId(maxStableId);
-        expect(() => stableIdFromNumericUuid(uuid, 1)).to.throw("Exceeded maximum numeric UUID");
-        expect(() => stableIdFromNumericUuid(incrementUuid(uuid, 1))).to.throw(
-            "Exceeded maximum numeric UUID",
+        assert.throws(
+            () => stableIdFromNumericUuid(uuid, 1),
+            new Error("Exceeded maximum numeric UUID"),
         );
-        expect(() => stableIdFromNumericUuid(uuid, 256)).to.throw("Exceeded maximum numeric UUID");
-        expect(() => stableIdFromNumericUuid(incrementUuid(uuid, 256))).to.throw(
-            "Exceeded maximum numeric UUID",
+        assert.throws(
+            () => stableIdFromNumericUuid(incrementUuid(uuid, 1)),
+            new Error("Exceeded maximum numeric UUID"),
         );
-        expect(() => stableIdFromNumericUuid(uuid, Number.MAX_SAFE_INTEGER)).to.throw(
-            "Exceeded maximum numeric UUID",
+        assert.throws(
+            () => stableIdFromNumericUuid(uuid, 256),
+            new Error("Exceeded maximum numeric UUID"),
         );
-        expect(() =>
-            stableIdFromNumericUuid(incrementUuid(uuid, Number.MAX_SAFE_INTEGER)),
-        ).to.throw("Exceeded maximum numeric UUID");
+        assert.throws(
+            () => stableIdFromNumericUuid(incrementUuid(uuid, 256)),
+            new Error("Exceeded maximum numeric UUID"),
+        );
+        assert.throws(
+            () => stableIdFromNumericUuid(uuid, Number.MAX_SAFE_INTEGER),
+            new Error("Exceeded maximum numeric UUID"),
+        );
+        assert.throws(
+            () => stableIdFromNumericUuid(incrementUuid(uuid, Number.MAX_SAFE_INTEGER)),
+            new Error("Exceeded maximum numeric UUID"),
+        );
     });
 
     it("can rehydrate a valid session UUID", () => {
         const uuid = assertIsStableId("44f95a8b-c52b-4828-a000-0000f0000003");
         const sessionUuid = numericUuidFromStableId(uuid);
-        expect(stableIdFromNumericUuid(sessionUuid)).to.equal(uuid);
+        assert.strictEqual(stableIdFromNumericUuid(sessionUuid), uuid);
     });
 
     it("can create valid session UUIDs", () => {
         for (let i = 0; i < 100; i++) {
             const sessionId = createSessionId();
-            expect(sessionId.length).to.equal(36);
-            expect(() => {
+            assert.strictEqual(sessionId.length, 36);
+
+            assert.doesNotThrow(() => {
                 const sessionNumericUuid = numericUuidFromStableId(sessionId);
-                expect(stableIdFromNumericUuid(sessionNumericUuid)).to.equal(sessionId);
-            }).to.not.throw();
+                assert.strictEqual(stableIdFromNumericUuid(sessionNumericUuid), sessionId);
+            });
         }
     });
 
@@ -95,9 +103,9 @@ describe("NumericUuid", () => {
         const uuid = assertIsStableId("ffffffff-ffff-4fff-bfff-ffffffffffff");
         for (let i = 0; i < 128; i++) {
             const ensuredUuid = ensureSessionUuid(uuid);
-            expect(isStableId(ensuredUuid)).to.be.true;
+            assert.strictEqual(isStableId(ensuredUuid), true);
             const ensuredBigint = bigIntFromStableId(ensuredUuid);
-            expect(maxUuidBigint - ensuredBigint > Number.MAX_SAFE_INTEGER).to.be.true;
+            assert.strictEqual(maxUuidBigint - ensuredBigint > Number.MAX_SAFE_INTEGER, true);
         }
     });
 
@@ -114,8 +122,8 @@ describe("NumericUuid", () => {
             assertIsStableId("ffffffff-ffff-4fff-be00-000000000000"),
         ];
 
-        dangerous.forEach((stableId) => expect(ensureSessionUuid(stableId)).to.not.equal(stableId));
-        safe.forEach((stableId) => expect(ensureSessionUuid(stableId)).to.equal(stableId));
+        dangerous.forEach((stableId) => assert.notEqual(ensureSessionUuid(stableId), stableId));
+        safe.forEach((stableId) => assert.strictEqual(ensureSessionUuid(stableId), stableId));
     });
 
     const stableIds = [
@@ -157,7 +165,7 @@ describe("NumericUuid", () => {
                         bigIntFromStableId(stableId) + BigInt(incrementAmount);
                     const incremented = incrementUuid(uuid, incrementAmount);
                     const bigintStr = integerToStableId(bigintIncremented);
-                    expect(stableIdFromNumericUuid(incremented)).to.equal(bigintStr);
+                    assert.strictEqual(stableIdFromNumericUuid(incremented), bigintStr);
                 });
             });
         });
@@ -174,15 +182,15 @@ describe("NumericUuid", () => {
                 const realDelta = bigintA - bigintB;
                 const numericDelta = getPositiveDelta(uuidA, uuidB, Number.MAX_SAFE_INTEGER);
                 if (realDelta > Number.MAX_SAFE_INTEGER || realDelta < 0) {
-                    expect(numericDelta).to.equal(undefined);
+                    assert.strictEqual(numericDelta, undefined);
                 } else {
-                    expect(numericDelta).to.equal(Number(realDelta));
+                    assert.strictEqual(numericDelta, Number(realDelta));
                 }
                 const numericDeltaCapped = getPositiveDelta(uuidA, uuidB, arbitraryMaxDelta);
                 if (realDelta >= 0 && realDelta <= arbitraryMaxDelta) {
-                    expect(numericDeltaCapped).to.equal(Number(realDelta));
+                    assert.strictEqual(numericDeltaCapped, Number(realDelta));
                 } else {
-                    expect(numericDeltaCapped).to.equal(undefined);
+                    assert.strictEqual(numericDeltaCapped, undefined);
                 }
             });
         });
@@ -192,7 +200,7 @@ describe("NumericUuid", () => {
         stableIds.forEach((stableId) => {
             const uuid = numericUuidFromStableId(stableId);
             const roundTripped = stableIdFromNumericUuid(uuid);
-            expect(stableId).to.equal(roundTripped);
+            assert.strictEqual(stableId, roundTripped);
         });
     });
 
@@ -203,7 +211,7 @@ describe("NumericUuid", () => {
                 const numericB = numericUuidFromStableId(stableIdB);
                 const comparedNumeric = numericUuidEquals(numericA, numericB);
                 const comparedStrings = compareStrings(stableIdA, stableIdB);
-                expect(comparedNumeric).to.equal(comparedStrings === 0);
+                assert.strictEqual(comparedNumeric, comparedStrings === 0);
             });
         });
     });
