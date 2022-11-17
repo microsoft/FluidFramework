@@ -1007,6 +1007,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         },
     ) {
         super();
+
+        let loadSummaryNumber: number;
+        // Get the container creation metadata. For new container, we initialize these. For existing containers,
+        // get the values from the metadata blob.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
+            // the count is reset to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? 0;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            };
+            loadSummaryNumber = 0;
+        }
+        this.nextSummaryNumber = loadSummaryNumber + 1;
+
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
@@ -1065,6 +1086,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             baseLogger: this.mc.logger,
             existing,
             metadata,
+            createContainerMetadata: this.createContainerMetadata,
             isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
@@ -1279,26 +1301,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             eventName: "DeviceSpec",
             ...getDeviceSpec(),
         });
-
-        let loadSummaryNumber: number;
-        // Get the container creation metadata. For new container, we initialize these. For existing containers,
-        // get the values from the metadata blob.
-        if (existing) {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
-                createContainerTimestamp: metadata?.createContainerTimestamp,
-            };
-            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
-            // the count is reset to 0.
-            loadSummaryNumber = metadata?.summaryNumber ?? 0;
-        } else {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: Date.now(),
-            };
-            loadSummaryNumber = 0;
-        }
-        this.nextSummaryNumber = loadSummaryNumber + 1;
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",

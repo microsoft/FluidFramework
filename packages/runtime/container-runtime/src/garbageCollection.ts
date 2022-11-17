@@ -54,6 +54,7 @@ import {
     ReadFluidDataStoreAttributes,
     dataStoreAttributesBlobName,
     IGCMetadata,
+    ICreateContainerMetadata,
 } from "./summaryFormat";
 
 /** This is the current version of garbage collection. */
@@ -184,6 +185,7 @@ export interface IGarbageCollectorCreateParams {
     readonly baseLogger: ITelemetryLogger;
     readonly existing: boolean;
     readonly metadata: IContainerRuntimeMetadata | undefined;
+    readonly createContainerMetadata: ICreateContainerMetadata;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly isSummarizerClient: boolean;
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -450,6 +452,7 @@ export class GarbageCollector implements IGarbageCollector {
 
     private readonly runtime: IGarbageCollectionRuntime;
     private readonly metadata: IContainerRuntimeMetadata | undefined;
+    private readonly createContainerMetadata: ICreateContainerMetadata;
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
@@ -492,6 +495,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
         this.metadata = createParams.metadata;
+        this.createContainerMetadata = createParams.createContainerMetadata;
         this.getNodePackagePath = createParams.getNodePackagePath;
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
@@ -1497,8 +1501,7 @@ export class GarbageCollector implements IGarbageCollector {
                 : this.sweepTimeoutMs,
             completedGCRuns: this.completedRuns,
             lastSummaryTime: this.getLastSummaryTimestampMs(),
-            containerCreateTime: this.metadata?.createContainerTimestamp,
-            containerRuntimeVersion: this.metadata?.createContainerRuntimeVersion,
+            ...this.createContainerMetadata,
             externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
             viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             fromId: fromNodeId,
