@@ -71,20 +71,24 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             for (const change of changes) {
                 let listIndex = 0;
                 for (const { index, nodeChange } of change.change) {
+                    const taggedChange = tagChange(nodeChange, change.revision);
                     while (listIndex < composed.length && composed[listIndex].index < index) {
                         listIndex += 1;
                     }
                     const match: GenericChange | undefined = composed[listIndex];
                     if (match === undefined) {
-                        composed.push({ index, nodeChange });
+                        composed.push({ index, nodeChange: composeChildren([taggedChange]) });
                     } else if (match.index > index) {
-                        composed.splice(listIndex, 0, { index, nodeChange });
+                        composed.splice(listIndex, 0, {
+                            index,
+                            nodeChange: composeChildren([taggedChange]),
+                        });
                     } else {
                         composed.splice(listIndex, 1, {
                             index,
                             nodeChange: composeChildren([
                                 tagChange(match.nodeChange, match.revision),
-                                tagChange(nodeChange, change.revision),
+                                taggedChange,
                             ]),
                         });
                     }
