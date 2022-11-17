@@ -30,7 +30,7 @@ export class Inbox {
         const message = this.opSplitter.processIncoming(this.prepare(remoteMessage));
         if (remoteMessage.type === ContainerMessageType.ChunkedOp) {
             // If the op splitter didn't turn out the original message,
-            // there is no point in processing the op further
+            // there is no point in processing this further
             return message;
         }
 
@@ -38,7 +38,7 @@ export class Inbox {
     }
 
     private prepare(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        // Do shallow copy of message, as methods below will modify it.
+        // Do shallow copy of message, as the processing flow will modify it.
         // There might be multiple container instances receiving same message
         // We do not need to make deep copy, as each layer will just replace message.content itself,
         // but would not modify contents details
