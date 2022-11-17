@@ -94,7 +94,13 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
+    "broken": {
+      "ClassDeclaration_LoggingError": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }
