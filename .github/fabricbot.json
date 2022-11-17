@@ -707,7 +707,7 @@
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
-        "removeLabelOnPush": true,
+        "removeLabelOnPush": false,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
@@ -728,7 +728,24 @@
             }
           }
         ],
-        "mergeType": "squash"
+        "mergeType": "squash",
+        "requireSpecificCheckRuns": true,
+        "requireSpecificCheckRunsList": [
+          "Build - tinylicious",
+          "Build - build-tools",
+          "Build - build-common",
+          "build - common-definitions",
+          "Build - common-utils",
+          "Build - client packages",
+          "Build - eslint-config-fluid",
+          "Build - protocol-definitions",
+          "license/cla",
+          "server-gitrest",
+          "server-gitssh",
+          "server-routerlicious",
+          "repo-policy-check",
+          "Build - azure"
+        ]
       },
       "disabled": false
     },
