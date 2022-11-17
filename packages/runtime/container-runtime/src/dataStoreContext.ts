@@ -763,7 +763,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             throw new Error(`Context is closed! Call site [${callSite}]`);
         }
 
-        if (checkTombstone && this.tombstoned && this.clientDetails.type !== summarizerClientType) {
+        if (checkTombstone && this.tombstoned) {
             const messageString = `Context is tombstoned! Call site [${callSite}]`;
             const error = new DataCorruptionError(messageString, {
                 errorMessage: messageString,
@@ -775,8 +775,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
-
-            throw error;
+            // Throw for all clients except summarizer clients
+            if (this.clientDetails.type !== summarizerClientType) {
+                throw error;
+            }
         }
     }
 

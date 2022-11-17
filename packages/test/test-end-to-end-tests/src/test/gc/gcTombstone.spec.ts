@@ -237,7 +237,14 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded after sweep time",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [process]",
+            },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [process]",
+            },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [process]",
@@ -249,6 +256,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
                 unreferencedId,
                 summarizer,
                 summaryVersion,
+                summarizingContainer,
             } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
             // Load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
             const container = await loadContainer(summaryVersion);
@@ -267,19 +275,26 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
 
             setupContainerCloseErrorValidation(receivingContainer, "process");
 
-            // Receive an op - the summarizing container does not log a sweep ready changed error as it closes before
-            // the op is processed. The summarizing container does log a sweep ready loaded error and then it should
-            // process the op which causes the container to close.
+            // Receive an op - both the summarizer and the receiving client log a process error, only the receiving
+            // client closes
             senderObject._root.set("send an op to be received", "op");
             await provider.ensureSynchronized();
             assert(receivingContainer.closed === true, `Reading container should close.`);
+            assert(summarizingContainer.closed !== true, `Summarizing container should not close.`);
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [process]",
+            },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [process]",
+            },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [process]",
@@ -318,6 +333,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             dataObject._root.set("send an op to be received", "op");
             await provider.ensureSynchronized();
             assert(receivingContainer.closed === true, `Container receiving messages to a tombstoned datastore should close.`);
+            assert(summarizingContainer.closed !== true, `Summarizing container should not close.`);
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -350,7 +366,14 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         itExpects("Receive signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [processSignal]",
+            },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                error: "Context is tombstoned! Call site [processSignal]",
+            },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Context is tombstoned! Call site [processSignal]",

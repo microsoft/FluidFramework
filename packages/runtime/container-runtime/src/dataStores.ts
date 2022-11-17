@@ -431,6 +431,7 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
+            // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
@@ -441,8 +442,7 @@ export class DataStores implements IDisposable {
             }, error);
             // Throw for all clients except summarizer clients
             if (this.runtime.clientDetails.type !== summarizerClientType) {
-                // The requested data store is removed by gc. Throw a 404 gc response exception.
-                throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+                throw error;
             }
         }
 
