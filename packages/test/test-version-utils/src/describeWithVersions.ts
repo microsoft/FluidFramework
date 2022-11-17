@@ -15,27 +15,28 @@ import { ensurePackageInstalled, InstalledPackage } from "./testApi";
  * prior to running the test suite. The properties are cumulative, as all
  * versions deduced from all properties will be installed.
  */
-export interface RequestedVersions {
+export interface IRequestedVersions {
     /**
-     * Count of older versions to be installed with the current
+     * Delta of versions to be installed with the current
      * package version as the baseline.
      */
-    relative?: number;
+    requestRelativeVersions?: number;
     /**
      * Array of specific versions to be installed
      */
-    absolute?: string[];
+    requestAbsoluteVersions?: string[];
 }
 
-const installRequiredVersions = async (config: RequestedVersions) => {
+const installRequiredVersions = async (config: IRequestedVersions) => {
     const installPromises: Promise<InstalledPackage | undefined>[] = [];
-    if (config.absolute !== undefined) {
+    if (config.requestAbsoluteVersions !== undefined) {
         installPromises.push(
-            ...config.absolute.map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
+            ...config.requestAbsoluteVersions
+                .map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
     }
 
-    if (config.relative !== undefined) {
-        installPromises.push(ensurePackageInstalled(pkgVersion, config.relative, /* force */ false));
+    if (config.requestRelativeVersions !== undefined) {
+        installPromises.push(ensurePackageInstalled(pkgVersion, config.requestRelativeVersions, /* force */ false));
     }
 
     let hadErrors = false;
@@ -54,11 +55,11 @@ const installRequiredVersions = async (config: RequestedVersions) => {
 };
 
 const defaultTimeoutMs = 20000;
-const defaultRequestedVersions = { relative: -2 };
+const defaultRequestedVersions: IRequestedVersions = { requestRelativeVersions: -2 };
 
 function createTestSuiteWithInstalledVersion(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
-    requiredVersions: RequestedVersions = defaultRequestedVersions,
+    requiredVersions: IRequestedVersions = defaultRequestedVersions,
     timeoutMs: number = defaultTimeoutMs,
 ) {
     return function(this: Mocha.Suite) {
@@ -127,13 +128,13 @@ type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", 
  * If package installation fails for any of the requested versions, the test suite will not be created and
  * the test run will fail.
  *
- * @param requestedVersions - See {@link RequestedVersions}. If unspecified, the test will install the last 2 versions.
+ * @param requestedVersions - See {@link IRequestedVersions}. If unspecified, the test will install the last 2 versions.
  * @param timeoutMs - the timeout for the tests in milliseconds, as package installation is time consuming.
  * If unspecified, the timeout is 20000 ms.
  * @returns A mocha test suite
  */
 export function installVersionsDescribe(
-    requestedVersions?: RequestedVersions,
+    requestedVersions?: IRequestedVersions,
     timeoutMs?: number,
 ): DescribeWithVersions {
     const d: DescribeWithVersions =

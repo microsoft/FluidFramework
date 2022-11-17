@@ -24,7 +24,7 @@ const versionWithChunking = "0.56.0";
 
 installVersionsDescribe(
     {
-        absolute: [versionWithChunking],
+        requestAbsoluteVersions: [versionWithChunking],
     }
 )(
     "Legacy chunking",
