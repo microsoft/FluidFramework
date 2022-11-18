@@ -22,7 +22,7 @@ export interface ContainerTrafficSchema {
 
 export interface MapTrafficRunnerConfig {
     connectionConfig: AzureClientConfig;
-    docId: string;
+    docIds: string[];
     schema: ContainerTrafficSchema;
     numClients: number;
     clientStartDelayMs: number;
@@ -47,7 +47,8 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
     public async execRun(config: IRunConfig): Promise<void> {
         this.status = "running";
         const runnerArgs: string[][] = [];
-        for (let i = 0; i < this.c.numClients; i++) {
+        let i = 0;
+        for (const docId of this.c.docIds) {
             const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/mapTrafficRunnerClient.js",
@@ -56,9 +57,9 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
                 "--scenarioName",
                 config.scenarioName,
                 "--childId",
-                i.toString(),
+                (i++).toString(),
                 "--docId",
-                this.c.docId,
+                docId,
                 "--schema",
                 JSON.stringify(this.c.schema),
                 "--writeRatePerMin",
@@ -77,13 +78,19 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
         }
 
         const children: Promise<boolean>[] = [];
+        const numClients = this.c.numClients ?? 1;
+
+        // For each doc
         for (const runnerArg of runnerArgs) {
-            try {
-                children.push(this.createChild(runnerArg));
-            } catch {
-                throw new Error("Failed to spawn child");
+            // Run multiple clients
+            for (let j = 0; j < numClients; j++) {
+                try {
+                    children.push(this.createChild(runnerArg));
+                } catch {
+                    throw new Error("Failed to spawn child");
+                }
+                await delay(this.c.clientStartDelayMs);
             }
-            await delay(this.c.clientStartDelayMs);
         }
 
         try {

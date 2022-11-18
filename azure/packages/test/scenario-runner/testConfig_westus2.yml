@@ -25,18 +25,30 @@
     params:
       connectionConfig: ${connectionConfig}
       schema: ${schema}
-      numDocs: 10
+      numDocs: 1
       clientStartDelayMs: 500
     out: ${docIds}
+  - stage-3:
+    id: 3
+    name: Run map traffic
+    package: shared-map-traffic
+    params:
+      connectionConfig: ${connectionConfig}
+      numClients: 100
+      schema: ${schema}
+      docIds: ${docIds}
+      clientStartDelayMs: 10
+      writeRatePerMin: 60
+      sharedMapKey: key1
+      totalWriteCount: 120
   - stage-3:
     id: 3
     name: Load documents
     package: doc-loader
     params:
-      connectionConfig: ${connectionConfig}
-      numOfLoads: 20
-      schema: ${schema}
-      docIds: ${docIds}
-      clientStartDelayMs: 500
-
+        connectionConfig: ${connectionConfig}
+        numOfLoads: 10
+        schema: ${schema}
+        docIds: ${docIds}
+        clientStartDelayMs: 100
 

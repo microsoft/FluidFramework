@@ -5,6 +5,8 @@
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
+import { ConnectionState } from "fluid-framework";
+
 import { AzureClient } from "@fluidframework/azure-client";
 import { SharedMap } from "@fluidframework/map";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -25,6 +27,14 @@ export interface MapTrafficRunnerConfig {
     connType: string;
     connEndpoint: string;
 }
+
+const eventMap = new Map([
+    ["fluid:telemetry:OpPerf", "scenario:runner:MapTraffic:OpPerf"],
+    ["fluid:telemetry:OrderedClientElection", "scenario:runner:MapTraffic:OrderedClientElection"],
+    ["fluid:telemetry:Container:ContainerClose", "scenario:runner:MapTraffic:ContainerClose"],
+    ["fluid:telemetry:DeltaManager:GetDeltas_Exception", "scenario:runner:MapTraffic:GetDeltas_Exception"],
+    ["fluid:telemetry:DeltaManager:NoJoinOp", "scenario:runner:MapTraffic:NoJoinOp"]
+]);
 
 async function main() {
     const parseIntArg = (value: any): number => {
@@ -77,13 +87,14 @@ async function main() {
         process.exit(-1);
     }
 
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-    }, [
-        "scenario:runner",
-        // "fluid:telemetry:OpPerf"
-    ]);
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+        },
+        ["scenario:runner"],
+        eventMap,
+    );
 
     const ac = await createAzureClient({
         userId: "testUserId",
@@ -99,18 +110,36 @@ async function main() {
 
 async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise<void> {
     const msBetweenWrites = 60000 / config.writeRatePerMin;
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-        namespace: "scenario:runner:MapTraffic",
-    });
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+            namespace: "scenario:runner:MapTraffic",
+        },
+        ["scenario:runner"],
+        eventMap,
+    );
 
     const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
     const { container } = await PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "ContainerLoad", clientId: config.childId },
+        { eventName: "load", clientId: config.childId },
         async (_event) => {
             return ac.getContainer(config.docId, s);
+        },
+        { start: true, end: true, cancel: "generic" },
+    );
+
+    await PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "connected" },
+        async () => {
+            if (container.connectionState !== ConnectionState.Connected) {
+                return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                    durationMs: 60000,
+                    errorMsg: "container connect() timeout",
+                });
+            }
         },
         { start: true, end: true, cancel: "generic" },
     );
@@ -118,10 +147,14 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
     const initialObjectsCreate = container.initialObjects;
     const map = initialObjectsCreate[config.sharedMapKey] as SharedMap;
 
-    for (let i = 0; i < config.totalWriteCount; i++) {
-        await delay(msBetweenWrites);
-        // console.log(`Simulating write ${i} for client ${config.runId}`)
-        map.set(uuid(), "test-value");
+    try {
+        for (let i = 0; i < config.totalWriteCount; i++) {
+            await delay(msBetweenWrites);
+            // console.log(`Simulating write ${i} for client ${config.runId}`)
+            map.set(uuid(), "test-value");
+        }
+    } catch(e) {
+        console.log("error or write", e)
     }
 
     await PerformanceEvent.timedExecAsync(

@@ -77,9 +77,10 @@ export function createAzureTokenProvider(
               type: "remote",
           }
         : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
+              tenantId: "some-tenant-id",
+              tokenProvider: new InsecureTokenProvider("somekey", generateUser()),
               endpoint: config.connEndpoint,
-              type: "local",
+              type: "remote",
           };
 
     return new AzureClient({ connection: connectionProps, logger: config.logger });
