@@ -70,7 +70,7 @@
     "@fluidframework/shared-object-base": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.2.0.0",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
@@ -89,7 +89,8 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
     "broken": {}
   }
 }
