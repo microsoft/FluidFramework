@@ -7,8 +7,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { fail } from "../util";
-import { SessionId, StableId } from "./Identifiers";
-import { generateStableId } from "./UuidUtilities";
+import { SessionId, StableId } from "./identifiers";
+import { generateStableId } from "./uuidUtilities";
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.

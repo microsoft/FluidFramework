@@ -14,8 +14,8 @@ export {
     isFinalId,
     isLocalId,
     legacySharedTreeInitialTreeId,
-} from "./IdCompressor";
-export { getIds } from "./IdRange";
+} from "./idCompressor";
+export { getIds } from "./idRange";
 export {
     IdCreationRange,
     SerializedCluster,
@@ -39,7 +39,7 @@ export {
     stableIdFromNumericUuid,
     incrementUuid,
     ensureSessionUuid,
-} from "./NumericUuid";
+} from "./numericUuid";
 export {
     AttributionId,
     StableId,
@@ -49,11 +49,11 @@ export {
     OpSpaceCompressedId,
     SessionId,
     SessionSpaceCompressedId,
-} from "./Identifiers";
+} from "./identifiers";
 export {
     generateStableId,
     assertIsStableId,
     isStableId,
     assertIsUuidString,
-} from "./UuidUtilities";
-export { SessionIdNormalizer } from "./SessionIdNormalizer";
+} from "./uuidUtilities";
+export { SessionIdNormalizer } from "./sessionIdNormalizer";

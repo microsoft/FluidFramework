@@ -7,8 +7,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from "../util";
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "./Identifiers";
-import { AppendOnlyDoublySortedMap } from "./AppendOnlySortedMap";
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "./identifiers";
+import { AppendOnlyDoublySortedMap } from "./appendOnlySortedMap";
 import { SerializedSessionIdNormalizer } from "./persisted-types";
 
 /**

@@ -29,10 +29,10 @@ import {
     CompressedId,
     UuidString,
     AttributionId,
-} from "./Identifiers";
-import { assertIsStableId, assertIsUuidString, isStableId } from "./UuidUtilities";
-import { AppendOnlySortedMap } from "./AppendOnlySortedMap";
-import { getIds } from "./IdRange";
+} from "./identifiers";
+import { assertIsStableId, assertIsUuidString, isStableId } from "./uuidUtilities";
+import { AppendOnlySortedMap } from "./appendOnlySortedMap";
+import { getIds } from "./idRange";
 import {
     numericUuidEquals,
     getPositiveDelta,
@@ -41,7 +41,7 @@ import {
     NumericUuid,
     stableIdFromNumericUuid,
     ensureSessionUuid,
-} from "./NumericUuid";
+} from "./numericUuid";
 import type {
     IdCreationRange,
     SerializedCluster,
@@ -54,7 +54,7 @@ import type {
     UnackedLocalId,
     VersionedSerializedIdCompressor,
 } from "./persisted-types";
-import { SessionIdNormalizer } from "./SessionIdNormalizer";
+import { SessionIdNormalizer } from "./sessionIdNormalizer";
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.
