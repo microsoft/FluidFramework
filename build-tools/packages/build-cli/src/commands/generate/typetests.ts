@@ -95,7 +95,7 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
         }),
         pin: Flags.boolean({
             description: `Searches the release git tags in the repo and selects the baseline version as the maximum
-            eleased version that matches the range.
+            released version that matches the range.
 
             This effectively pins the version to a specific version while allowing it to be updated manually as
             needed by running type test preparation again.`,
