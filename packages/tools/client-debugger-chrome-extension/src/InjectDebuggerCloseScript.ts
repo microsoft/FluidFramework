@@ -5,11 +5,12 @@
 import { openDebuggerScriptId } from "./Constants";
 
 /**
- * Toggles the debugger UI. If not currently displayed, will open it. Otherwise, will close it.
+ * Injects `CloseDebuggerPanelScript` into the page to close the debugger panel on the page (if it
+ * exists).
  *
- * @returns Whether or not the extension is now displayed.
+ * @remarks This module is run as a {@link https://developer.chrome.com/docs/extensions/mv3/content_scripts | Content Script}.
  */
-async function appendCloseDebuggerScript(): Promise<void> {
+async function injectDebuggerCloseScript(): Promise<void> {
 	// Append script that closes the debugger panel
 	const enableDebugViewScript = document.createElement("script");
 	enableDebugViewScript.src = chrome.runtime.getURL("CloseDebuggerPanelScript.js");
@@ -20,7 +21,7 @@ async function appendCloseDebuggerScript(): Promise<void> {
 	enableDebugViewScript.remove();
 }
 
-appendCloseDebuggerScript().catch((error) => {
+injectDebuggerCloseScript().catch((error) => {
 	console.error(error);
 	throw error;
 });

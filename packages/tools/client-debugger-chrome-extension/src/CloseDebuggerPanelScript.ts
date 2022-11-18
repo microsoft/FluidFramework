@@ -5,7 +5,10 @@
 import { closeDebuggerPanel } from "./CloseDebuggerPanel";
 
 /**
- * {@inheritDoc closeDebuggerPanel}
+ * Invokes {@link closeDebuggerPanel}.
+ *
+ * @remarks This module assumes it is being run directly in the page context as an "Injected Script".
+ * It requires access to the same global context as the page contents so it can access the debugger registry.
  */
 closeDebuggerPanel().catch((error) => {
 	console.error(error);

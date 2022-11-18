@@ -13,11 +13,10 @@
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"CloseDebuggerPanelScript.js",
-				"CloseDebuggerView.js",
-				"DebuggerPanel.js",
 				"OpenDebuggerPanelScript.js",
-				"OpenDebuggerView.js"
+				"CloseDebuggerPanelScript.js",
+				"InjectDebuggerOpenScript.js",
+				"InjectDebuggerCloseScript.js"
 			],
 			"matches": ["<all_urls>"]
 		}

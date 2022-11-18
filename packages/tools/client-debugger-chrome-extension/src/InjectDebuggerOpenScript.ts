@@ -5,11 +5,12 @@
 import { openDebuggerScriptId } from "./Constants";
 
 /**
- * Toggles the debugger UI. If not currently displayed, will open it. Otherwise, will close it.
+ * Injects `OpenDebuggerPanelScript` into the page to launch the debugger panel on the page (if it
+ * does not exist).
  *
- * @returns Whether or not the extension is now displayed.
+ * @remarks This module is run as a {@link https://developer.chrome.com/docs/extensions/mv3/content_scripts | Content Script}.
  */
-async function appendOpenDebuggerScript(): Promise<void> {
+async function injectDebuggerOpenScript(): Promise<void> {
 	// Append panel opening script to the page.
 	const enableDebugViewScript = document.createElement("script");
 	enableDebugViewScript.src = chrome.runtime.getURL("OpenDebuggerPanelScript.js");
@@ -21,7 +22,7 @@ async function appendOpenDebuggerScript(): Promise<void> {
 	enableDebugViewScript.remove();
 }
 
-appendOpenDebuggerScript().catch((error) => {
+injectDebuggerOpenScript().catch((error) => {
 	console.error(error);
 	throw error;
 });
