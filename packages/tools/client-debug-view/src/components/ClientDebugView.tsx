@@ -30,6 +30,11 @@ import { DataObjectsView } from "./DataObjectsView";
 initializeIcons();
 
 /**
+ * `className` used by {@link ClientDebugView}.
+ */
+export const clientDebugViewClassName = `fluid-client-debug-view`;
+
+/**
  * {@link ClientDebugView} input props.
  */
 export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
@@ -122,6 +127,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					background: DefaultPalette.neutralLighterAlt,
 				},
 			}}
+			className={clientDebugViewClassName}
 		>
 			<ContainerSummaryView clientDebugger={clientDebugger} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>

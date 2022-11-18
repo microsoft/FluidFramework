@@ -26,6 +26,9 @@ export interface AudienceMemberViewProps {
 export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
 
 // @public
+export const clientDebugViewClassName = "fluid-client-debug-view";
+
+// @public
 export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
     renderOptions?: RenderOptions;
 }
