@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document contains a series of notes and analysis on various approaches to data structures that could be used as the backing store of a SharedTree. Some of this information is outdated, but may still be useful to refer to in the future. A more complete, but also less in-depth, analysis of SharedTree's potential storage options is available [here](./treeStorage.md).
+This document contains a series of notes on various approaches to data structures that could be used as the backing store of a SharedTree. This document is somewhat outdated, but is preserved here because it contains a lot of useful analysis and history of the storage designs that are not captured anywhere else. A more organized description of SharedTree's potential storage options is available [here](./treeStorage.md).
 
 ### Logical Node Tree
 

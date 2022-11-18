@@ -99,7 +99,7 @@ Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, 
 
 ### Copy-On-Write History
 
-The need for "spine replacement" has a useful side effect: it makes it very simple to keep track of [revisions](#glossary) of the tree over time, i.e. [history](#glossary)s [history](#glossary). Consider a tree made up of five chunks:
+The need for "spine replacement" has a useful side effect: it makes it very simple to keep track of [revisions](#glossary) of the tree over time, i.e. the tree's [history](#glossary). Consider a tree made up of five chunks:
 
 ```mermaid
 graph TD;
@@ -195,7 +195,7 @@ Writes to the chunk data structure are expensive. Even in the best case (a small
 
 Write frequency can be reduced by only uploading modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "[flush](#glossary)" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
 
-[`](#glossary)mermaid
+```mermaid
 graph TD;
     subgraph Union of Changed Spines from Revisions 0-2:
         AU(Chunk A'')
