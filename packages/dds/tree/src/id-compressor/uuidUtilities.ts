@@ -73,7 +73,7 @@ export function generateStableId(): StableId {
  * Asserts that the given string is a stable ID.
  */
 export function assertIsStableId(stableId: string): StableId {
-    assert(isStableId(stableId), `${stableId} is not a StableId.`);
+    assert(isStableId(stableId), "Expected a StableId");
     return stableId;
 }
 
