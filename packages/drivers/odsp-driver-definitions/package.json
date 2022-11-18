@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-driver-definitions",
-  "version": "2.0.0-internal.2.2.0",
+  "version": "2.0.0-internal.3.0.0",
   "description": "Socket storage implementation for SPO and ODC",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,7 +35,7 @@
     "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0"
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0"
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0-109663",
