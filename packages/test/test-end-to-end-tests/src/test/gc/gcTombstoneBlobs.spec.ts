@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+    IGCRuntimeOptions,
     ISummarizer, RuntimeHeaders,
 } from "@fluidframework/container-runtime";
 import {
@@ -22,7 +23,7 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle, FluidObject, IFluidHandleContext, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 
 class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidRouter() { return this; }
@@ -91,7 +92,7 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
         "Fluid.GarbageCollection.Test.Tombstone": "true",
         "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
     };
-
+    const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: {
@@ -122,12 +123,21 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
         return container;
     };
 
+    async function loadContainer(summaryVersion: string) {
+        return provider.loadTestContainer(
+            testContainerConfig,
+            { [LoaderHeader.version]: summaryVersion },
+        );
+    }
+
     const loadSummarizerAndContainer = async (summaryVersion?: string) => {
         return createSummarizerWithContainer(
             provider,
             documentAbsoluteUrl,
-            testContainerConfig,
-            summaryVersion);
+            summaryVersion,
+            gcOptions,
+            mockConfigProvider(settings),
+        );
     };
     const summarize = async (summarizer: ISummarizer) => {
         await provider.ensureSynchronized();
@@ -207,7 +217,17 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
             absolutePath,
             summarizingContainer,
             summarizer,
+            summaryVersion,
         } = await summarizationWithUnreferencedBlobAfterTime(sweepTimeoutMs);
+
+        const container = await loadContainer(summaryVersion);
+        const testDefaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+        const testHandle = new RemoteFluidObjectHandle(
+            absolutePath,
+            testDefaultDataObject._context.containerRuntime.IFluidHandleContext,
+        );
+        const test = await testHandle.get();
+        assert(test !== undefined);
 
         const defaultDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
         const blobHandle = new RemoteFluidObjectHandle(

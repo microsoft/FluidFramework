@@ -249,14 +249,16 @@ export class BlobManager {
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
         const request = { url: blobId };
-        if (this.tombstonedBlobs.has(blobId) && this.runtime.clientDetails.type !== summarizerClientType) {
+        if (this.tombstonedBlobs.has(blobId) ) {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
                 eventName: "TombstonedBlobRequested",
                 url: request.url,
                 viaHandle: true,
             });
-            throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
+            if (this.runtime.clientDetails.type !== summarizerClientType) {
+                throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
+            }
         }
 
         const pending = this.pendingBlobs.get(blobId);
