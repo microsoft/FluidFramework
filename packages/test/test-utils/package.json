@@ -109,9 +109,6 @@
     "broken": {
       "InterfaceDeclaration_ITestContainerConfig": {
         "backCompat": false
-      },
-      "ClassDeclaration_TestFluidObject": {
-        "forwardCompat": false
       }
     }
   }

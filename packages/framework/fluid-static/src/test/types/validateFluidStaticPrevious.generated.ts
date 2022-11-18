@@ -208,6 +208,30 @@ use_old_InterfaceDeclaration_IMember(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRootDataObject": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRootDataObject():
+    TypeOnly<old.IRootDataObject>;
+declare function use_current_InterfaceDeclaration_IRootDataObject(
+    use: TypeOnly<current.IRootDataObject>);
+use_current_InterfaceDeclaration_IRootDataObject(
+    get_old_InterfaceDeclaration_IRootDataObject());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRootDataObject": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRootDataObject():
+    TypeOnly<current.IRootDataObject>;
+declare function use_old_InterfaceDeclaration_IRootDataObject(
+    use: TypeOnly<old.IRootDataObject>);
+use_old_InterfaceDeclaration_IRootDataObject(
+    get_current_InterfaceDeclaration_IRootDataObject());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IServiceAudience": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IServiceAudience():
@@ -372,6 +396,30 @@ declare function use_old_TypeAliasDeclaration_MemberChangedListener(
     use: TypeOnly<old.MemberChangedListener<any>>);
 use_old_TypeAliasDeclaration_MemberChangedListener(
     get_current_TypeAliasDeclaration_MemberChangedListener());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_Myself": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_Myself():
+    TypeOnly<old.Myself>;
+declare function use_current_TypeAliasDeclaration_Myself(
+    use: TypeOnly<current.Myself>);
+use_current_TypeAliasDeclaration_Myself(
+    get_old_TypeAliasDeclaration_Myself());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_Myself": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_Myself():
+    TypeOnly<current.Myself>;
+declare function use_old_TypeAliasDeclaration_Myself(
+    use: TypeOnly<old.Myself>);
+use_old_TypeAliasDeclaration_Myself(
+    get_current_TypeAliasDeclaration_Myself());
 
 /*
 * Validate forward compat by using old type in place of current type
