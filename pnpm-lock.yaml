@@ -108,8 +108,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -291,7 +291,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      office-ui-fabric-react: 7.199.6_74b3ggvk3akyhuq4eydyx3fqim
+      office-ui-fabric-react: 7.199.6_xbt7dixnnqmiako7g4244bho6a
       prop-types: 15.8.1
       react: 17.0.2
       react-collapsible: 2.10.0_sfoxds7t5ydpegc3knd667wn6m
@@ -310,8 +310,8 @@ importers:
       '@types/node': 14.18.0
       '@types/prop-types': 15.7.5
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -402,8 +402,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       clean-webpack-plugin: 4.0.0_webpack@5.74.0
       concurrently: 6.3.0
       cross-env: 7.0.3
@@ -480,8 +480,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.74.0
@@ -561,8 +561,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -705,8 +705,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -774,7 +774,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       concurrently: 6.3.0
       css-loader: 1.0.1_webpack@5.74.0
       eslint: 8.6.0
@@ -911,8 +911,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -1004,8 +1004,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -1117,8 +1117,8 @@ importers:
       '@types/expect-puppeteer': 2.2.1
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       eslint: 8.6.0
       puppeteer: 1.20.0
@@ -1178,8 +1178,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -1247,8 +1247,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -1316,8 +1316,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -1593,8 +1593,8 @@ importers:
       '@types/node': 14.18.0
       '@types/prop-types': 15.7.5
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -1806,7 +1806,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/node': 14.18.0
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -1971,8 +1971,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.74.0
@@ -2072,8 +2072,8 @@ importers:
       '@types/debug': 4.1.7
       '@types/mocha': 9.1.1
       '@types/node': 14.18.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -2169,8 +2169,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       clean-webpack-plugin: 4.0.0_webpack@5.74.0
       concurrently: 6.3.0
       cross-env: 7.0.3
@@ -2184,6 +2184,139 @@ importers:
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
+      webpack: 5.74.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_ytu6snrkbfm7moq22wnocflvr4
+      webpack-dev-server: 4.6.0_5v66e2inugklgvlh4huuavolfq
+      webpack-merge: 5.8.0
+
+  examples/hosts/app-integration/external-data:
+    specifiers:
+      '@fluid-example/example-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluid-experimental/quorum': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluid-experimental/react-inputs': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluid-experimental/task-manager': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/aqueduct': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/cell': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/container-definitions': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/driver-definitions': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/driver-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/eslint-config-fluid': ^1.2.0
+      '@fluidframework/map': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/register-collection': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/request-handler': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/routerlicious-driver': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/runtime-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/sequence': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/tinylicious-driver': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^14.18.0
+      '@types/puppeteer': 1.3.0
+      '@types/react': ^17.0.1
+      '@types/react-dom': ^17.0.1
+      clean-webpack-plugin: ^4.0.0
+      concurrently: ^6.2.0
+      cross-env: ^7.0.2
+      css-loader: ^1.0.0
+      eslint: ~8.6.0
+      eslint-plugin-eslint-comments: ~3.2.0
+      eslint-plugin-import: ~2.25.4
+      eslint-plugin-jsdoc: ~39.3.0
+      eslint-plugin-prefer-arrow: ~1.2.2
+      eslint-plugin-react: ~7.28.0
+      eslint-plugin-unicorn: ~40.0.0
+      eslint-plugin-unused-imports: ~2.0.0
+      html-webpack-plugin: ^5.5.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
+      prettier: ~2.6.2
+      process: ^0.11.10
+      puppeteer: ^1.20.0
+      react: ^17.0.1
+      react-dom: ^17.0.1
+      rimraf: ^2.6.2
+      style-loader: ^1.0.0
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      typescript-formatter: 7.1.0
+      uuid: ^8.3.1
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/example-utils': link:../../../utils/example-utils
+      '@fluid-experimental/quorum': link:../../../../packages/dds/quorum
+      '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
+      '@fluid-experimental/task-manager': link:../../../../packages/dds/task-manager
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/cell': link:../../../../packages/dds/cell
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions': link:../../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils': link:../../../../packages/loader/driver-utils
+      '@fluidframework/map': link:../../../../packages/dds/map
+      '@fluidframework/register-collection': link:../../../../packages/dds/register-collection
+      '@fluidframework/request-handler': link:../../../../packages/framework/request-handler
+      '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
+      '@fluidframework/sequence': link:../../../../packages/dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
+      css-loader: 1.0.1_webpack@5.74.0
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      style-loader: 1.3.0_webpack@5.74.0
+      uuid: 8.3.2
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/test-tools': 0.2.3074
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 14.18.0
+      '@types/puppeteer': 1.3.0
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
+      clean-webpack-plugin: 4.0.0_webpack@5.74.0
+      concurrently: 6.3.0
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
+      eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
+      eslint-plugin-react: 7.28.0_eslint@8.6.0
+      eslint-plugin-unicorn: 40.0.0_eslint@8.6.0
+      eslint-plugin-unused-imports: 2.0.0_eslint@8.6.0
+      html-webpack-plugin: 5.5.0_webpack@5.74.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
+      prettier: 2.6.2
+      process: 0.11.10
+      puppeteer: 1.20.0
+      rimraf: 2.7.1
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
+      typescript: 4.5.5
+      typescript-formatter: 7.1.0_typescript@4.5.5
       webpack: 5.74.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_ytu6snrkbfm7moq22wnocflvr4
       webpack-dev-server: 4.6.0_5v66e2inugklgvlh4huuavolfq
@@ -2369,8 +2502,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       clean-webpack-plugin: 4.0.0_webpack@5.74.0
       concurrently: 6.3.0
       cross-env: 7.0.3
@@ -2446,7 +2579,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       '@types/semver': 7.3.13
       concurrently: 6.3.0
       eslint: 8.6.0
@@ -3202,9 +3335,9 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@hig/fonts': 1.1.0
-      '@material-ui/core': 4.12.4_i5bhdljnj3zeagsu76khhguhea
-      '@material-ui/lab': 4.0.0-alpha.61_ym357ilvru35rsmfhggcrgek5i
-      '@material-ui/styles': 4.11.5_i5bhdljnj3zeagsu76khhguhea
+      '@material-ui/core': 4.12.4_mmt4ux65v7x4l4loubppegb2yy
+      '@material-ui/lab': 4.0.0-alpha.61_qsaszz4dut45qwapztet4u5xqq
+      '@material-ui/styles': 4.11.5_mmt4ux65v7x4l4loubppegb2yy
       base64-js: 1.3.0
       classnames: 2.3.2
       lodash.debounce: 4.0.8
@@ -3231,7 +3364,7 @@ importers:
       '@types/cheerio': 0.22.31
       '@types/enzyme': 3.10.12
       '@types/jest': 22.2.3
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       '@types/underscore': 1.11.4
       '@wojtekmaj/enzyme-adapter-react-17': 0.6.7_hu22d5c2c5633jsa54rrxfcrzq
       async: 3.2.4
@@ -3906,8 +4039,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -3975,8 +4108,8 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -4048,8 +4181,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -4127,8 +4260,8 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.0
       '@types/puppeteer': 1.3.0
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -4324,7 +4457,7 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/node': 14.18.0
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -6962,7 +7095,7 @@ importers:
       '@fluidframework/view-adapters-previous': /@fluidframework/view-adapters/2.0.0-internal.2.0.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -6994,8 +7127,8 @@ importers:
       '@fluidframework/view-interfaces-previous': /@fluidframework/view-interfaces/2.0.0-internal.2.0.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -12013,7 +12146,7 @@ packages:
       tslib: 1.11.2
     dev: false
 
-  /@fluentui/react-focus/7.18.17_74b3ggvk3akyhuq4eydyx3fqim:
+  /@fluentui/react-focus/7.18.17_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-W+sLIhX7wLzMsJ0jhBrDAblkG3DNbRbF8UoSieRVdAAm7xVf5HpiwJ6tb6nGqcFOnpRh8y+fjyVM+dV3K6GNHA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -12022,18 +12155,18 @@ packages:
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
       '@fluentui/keyboard-key': 0.2.17
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
-      '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/styling': 7.25.1_xbt7dixnnqmiako7g4244bho6a
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.11.2
     dev: false
 
-  /@fluentui/react-window-provider/1.0.6_74b3ggvk3akyhuq4eydyx3fqim:
+  /@fluentui/react-window-provider/1.0.6_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-m2HoxhU2m/yWxUauf79y+XZvrrWNx+bMi7ZiL6DjiAKHjTSa8KOyvicbOXd/3dvuVzOaNTnLDdZAvhRFcelOIA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -12041,15 +12174,15 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/set-version': 7.0.24
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.11.2
     dev: false
 
-  /@fluentui/theme/1.7.13_74b3ggvk3akyhuq4eydyx3fqim:
+  /@fluentui/theme/1.7.13_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-/1ZDHZNzV7Wgohay47DL9TAH4uuib5+B2D6Rxoc3T6ULoWcFzwLeVb+VZB/WOCTUbG+NGTrmsWPBOz5+lbuOxA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -12057,11 +12190,11 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.11.2
@@ -16452,7 +16585,7 @@ packages:
       - supports-color
     dev: true
 
-  /@material-ui/core/4.12.4_i5bhdljnj3zeagsu76khhguhea:
+  /@material-ui/core/4.12.4_mmt4ux65v7x4l4loubppegb2yy:
     resolution: {integrity: sha512-tr7xekNlM9LjA6pagJmL8QCgZXaubWUwkJnoYcMKd4gw/t4XiyvnTkjdGrUVicyB2BsdaAv1tvow45bPM4sSwQ==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -16464,11 +16597,11 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.20.1
-      '@material-ui/styles': 4.11.5_i5bhdljnj3zeagsu76khhguhea
-      '@material-ui/system': 4.12.2_i5bhdljnj3zeagsu76khhguhea
-      '@material-ui/types': 5.1.0_@types+react@17.0.52
+      '@material-ui/styles': 4.11.5_mmt4ux65v7x4l4loubppegb2yy
+      '@material-ui/system': 4.12.2_mmt4ux65v7x4l4loubppegb2yy
+      '@material-ui/types': 5.1.0_@types+react@17.0.1
       '@material-ui/utils': 4.11.3_react-dom@17.0.2
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       '@types/react-transition-group': 4.4.5
       clsx: 1.2.1
       hoist-non-react-statics: 3.3.2
@@ -16528,7 +16661,7 @@ packages:
       react-is: 17.0.2
     dev: false
 
-  /@material-ui/lab/4.0.0-alpha.61_ym357ilvru35rsmfhggcrgek5i:
+  /@material-ui/lab/4.0.0-alpha.61_qsaszz4dut45qwapztet4u5xqq:
     resolution: {integrity: sha512-rSzm+XKiNUjKegj8bzt5+pygZeckNLOr+IjykH8sYdVk7dE9y2ZuUSofiMV2bJk3qU+JHwexmw+q0RyNZB9ugg==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -16541,16 +16674,16 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.20.1
-      '@material-ui/core': 4.12.4_i5bhdljnj3zeagsu76khhguhea
+      '@material-ui/core': 4.12.4_mmt4ux65v7x4l4loubppegb2yy
       '@material-ui/utils': 4.11.3_react-dom@17.0.2
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       clsx: 1.2.1
       prop-types: 15.8.1
       react-dom: 17.0.2
       react-is: 17.0.2
     dev: false
 
-  /@material-ui/styles/4.11.5_i5bhdljnj3zeagsu76khhguhea:
+  /@material-ui/styles/4.11.5_mmt4ux65v7x4l4loubppegb2yy:
     resolution: {integrity: sha512-o/41ot5JJiUsIETME9wVLAJrmIWL3j0R0Bj2kCOLbSfqEkKf0fmaPt+5vtblUh5eXr2S+J/8J3DaCb10+CzPGA==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -16563,9 +16696,9 @@ packages:
     dependencies:
       '@babel/runtime': 7.20.1
       '@emotion/hash': 0.8.0
-      '@material-ui/types': 5.1.0_@types+react@17.0.52
+      '@material-ui/types': 5.1.0_@types+react@17.0.1
       '@material-ui/utils': 4.11.3_react-dom@17.0.2
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       clsx: 1.2.1
       csstype: 2.6.21
       hoist-non-react-statics: 3.3.2
@@ -16612,7 +16745,7 @@ packages:
       react-dom: 17.0.2_react@17.0.2
     dev: false
 
-  /@material-ui/system/4.12.2_i5bhdljnj3zeagsu76khhguhea:
+  /@material-ui/system/4.12.2_mmt4ux65v7x4l4loubppegb2yy:
     resolution: {integrity: sha512-6CSKu2MtmiJgcCGf6nBQpM8fLkuB9F55EKfbdTC80NND5wpTmKzwdhLYLH3zL4cLlK0gVaaltW7/wMuyTnN0Lw==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -16625,7 +16758,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.20.1
       '@material-ui/utils': 4.11.3_react-dom@17.0.2
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
       csstype: 2.6.21
       prop-types: 15.8.1
       react-dom: 17.0.2
@@ -16659,7 +16792,7 @@ packages:
         optional: true
     dev: false
 
-  /@material-ui/types/5.1.0_@types+react@17.0.52:
+  /@material-ui/types/5.1.0_@types+react@17.0.1:
     resolution: {integrity: sha512-7cqRjrY50b8QzRSYyhSpx4WRw2YuO0KKIGQEVk5J8uoz2BanawykgZGoWEqKm7pVIbzFDN0SpPcVV4IhOFkl8A==}
     peerDependencies:
       '@types/react': '*'
@@ -16667,7 +16800,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
     dev: false
 
   /@material-ui/utils/4.11.3_react-dom@17.0.2:
@@ -19491,7 +19624,7 @@ packages:
     resolution: {integrity: sha512-xryQlOEIe1TduDWAOphR0ihfebKFSWOXpIsk+70JskCfRfW+xALdnJ0r1ZOTo85F9Qsjk6vtlU7edTYHbls9tA==}
     dependencies:
       '@types/cheerio': 0.22.31
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
     dev: true
 
   /@types/eslint-scope/3.7.4:
@@ -19830,22 +19963,21 @@ packages:
   /@types/range-parser/1.2.4:
     resolution: {integrity: sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==}
 
-  /@types/react-dom/17.0.18:
-    resolution: {integrity: sha512-rLVtIfbwyur2iFKykP2w0pl/1unw26b5td16d5xMgp7/yjTHomkyxPYChFoCr/FtEX1lN9wY6lFj1qvKdS5kDw==}
+  /@types/react-dom/17.0.1:
+    resolution: {integrity: sha512-yIVyopxQb8IDZ7SOHeTovurFq+fXiPICa+GV3gp0Xedsl+MwQlMLKmvrnEjFbQxjliH5YVAEWFh975eVNmKj7Q==}
     dependencies:
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
 
   /@types/react-transition-group/4.4.5:
     resolution: {integrity: sha512-juKD/eiSM3/xZYzjuzH6ZwpP+/lejltmiS3QEzV/vmb/Q8+HfDmxu+Baga8UEMGBqV88Nbg4l2hY/K2DkyaLLA==}
     dependencies:
-      '@types/react': 17.0.52
+      '@types/react': 17.0.1
     dev: false
 
-  /@types/react/17.0.52:
-    resolution: {integrity: sha512-vwk8QqVODi0VaZZpDXQCmEmiOuyjEFPY7Ttaw5vjM112LOq37yz1CDJGrRJwA1fYEq4Iitd5rnjd1yWAc/bT+A==}
+  /@types/react/17.0.1:
+    resolution: {integrity: sha512-w8t9f53B2ei4jeOqf/gxtc2Sswnc3LBK5s0DyJcg5xd10tMHXts2N31cKjWfH9IC/JvEPa/YF1U4YeP1t4R6HQ==}
     dependencies:
       '@types/prop-types': 15.7.5
-      '@types/scheduler': 0.16.2
       csstype: 3.1.1
 
   /@types/responselike/1.0.0:
@@ -19856,9 +19988,6 @@ packages:
 
   /@types/retry/0.12.0:
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
-
-  /@types/scheduler/0.16.2:
-    resolution: {integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==}
 
   /@types/semver/6.2.3:
     resolution: {integrity: sha512-KQf+QAMWKMrtBMsB8/24w53tEsxllMj6TuA80TT/5igJalLI/zm0L3oXRbIAl4Ohfc85gyHX/jhMwsVkmhLU4A==}
@@ -20587,7 +20716,7 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
-  /@uifabric/foundation/7.10.16_74b3ggvk3akyhuq4eydyx3fqim:
+  /@uifabric/foundation/7.10.16_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-x13xS9aKh6FEWsyQP2jrjyiXmUUdgyuAfWKMLhUTK4Rsc+vJANwwVk4fqGsU021WA6pghcIirvEVpWf5MlykDQ==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -20595,23 +20724,23 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
-      '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/styling': 7.25.1_xbt7dixnnqmiako7g4244bho6a
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.11.2
     dev: false
 
-  /@uifabric/icons/7.9.5_74b3ggvk3akyhuq4eydyx3fqim:
+  /@uifabric/icons/7.9.5_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-0e2fEURtR7sNqoGr9gU/pzcOp24B/Lkdc05s1BSnIgXlaL2QxRszfaEsl3/E9vsNmqA3tvRwDJWbtRolDbjCpQ==}
     dependencies:
       '@uifabric/set-version': 7.0.24
-      '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/styling': 7.25.1_xbt7dixnnqmiako7g4244bho6a
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       tslib: 1.11.2
     transitivePeerDependencies:
       - '@types/react'
@@ -20627,7 +20756,7 @@ packages:
       tslib: 1.11.2
     dev: false
 
-  /@uifabric/react-hooks/7.16.4_74b3ggvk3akyhuq4eydyx3fqim:
+  /@uifabric/react-hooks/7.16.4_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-k8RJYTMICWA6varT5Y+oCf2VDHHXN0tC2GuPD4I2XqYCTLaXtNCm4+dMcVA2x8mv1HIO7khvm/8aqKheU/tDfQ==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -20635,11 +20764,11 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
-      '@fluentui/react-window-provider': 1.0.6_74b3ggvk3akyhuq4eydyx3fqim
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@fluentui/react-window-provider': 1.0.6_xbt7dixnnqmiako7g4244bho6a
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/set-version': 7.0.24
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.11.2
@@ -20651,14 +20780,14 @@ packages:
       tslib: 1.11.2
     dev: false
 
-  /@uifabric/styling/7.25.1_74b3ggvk3akyhuq4eydyx3fqim:
+  /@uifabric/styling/7.25.1_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-bd4QDYyb0AS0+KmzrB8VsAfOkxZg0dpEpF1YN5Ben10COmT8L1DoE4bEF5NvybHEaoTd3SKxpJ42m+ceNzehSw==}
     dependencies:
-      '@fluentui/theme': 1.7.13_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/theme': 1.7.13_xbt7dixnnqmiako7g4244bho6a
       '@microsoft/load-themed-styles': 1.10.295
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       tslib: 1.11.2
     transitivePeerDependencies:
       - '@types/react'
@@ -20667,7 +20796,7 @@ packages:
       - react-dom
     dev: false
 
-  /@uifabric/utilities/7.38.2_74b3ggvk3akyhuq4eydyx3fqim:
+  /@uifabric/utilities/7.38.2_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-5yM4sm142VEBg3/Q5SFheBXqnrZi9CNF5rjHNoex0GgGtG3AHPuS7U8gjm+/Io1MvbuCrn6lyyIw0MDvh1Ebkw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -20676,8 +20805,8 @@ packages:
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
       '@fluentui/dom-utilities': 1.1.2
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
       prop-types: 15.8.1
@@ -23867,6 +23996,10 @@ packages:
   /commander/9.4.1:
     resolution: {integrity: sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==}
     engines: {node: ^12.20.0 || >=14}
+    dev: true
+
+  /commandpost/1.4.0:
+    resolution: {integrity: sha512-aE2Y4MTFJ870NuB/+2z1cXBhSBBzRydVVjzhFC4gtenEhpnj15yu0qptWGJsO9YGrcPZ3ezX8AWb1VA391MKpQ==}
     dev: true
 
   /comment-parser/1.3.1:
@@ -28202,7 +28335,7 @@ packages:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.10.3
+      uglify-js: 3.17.4
     dev: true
 
   /har-schema/2.0.0:
@@ -33828,7 +33961,7 @@ packages:
     resolution: {integrity: sha512-fZ4qZdQ2nxJvtcasX7Ghl+WlWS/d9IgnBIwFZXVNNZUmzpno91SX5bc5vuxiuKoCtK78XxGGNuSCrDC7xYB3OQ==}
     dev: true
 
-  /office-ui-fabric-react/7.199.6_74b3ggvk3akyhuq4eydyx3fqim:
+  /office-ui-fabric-react/7.199.6_xbt7dixnnqmiako7g4244bho6a:
     resolution: {integrity: sha512-Nxs3bmTpPeoUlDdk1pld26HornxhK9DCig74Y390fcprQc/9Y6zEDaCPqXxOCybqluNQLKoteF1Pc4kpsseofw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <18.0.0'
@@ -33837,18 +33970,18 @@ packages:
       react-dom: '>=16.8.0 <18.0.0'
     dependencies:
       '@fluentui/date-time-utilities': 7.9.1
-      '@fluentui/react-focus': 7.18.17_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-window-provider': 1.0.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-focus': 7.18.17_xbt7dixnnqmiako7g4244bho6a
+      '@fluentui/react-window-provider': 1.0.6_xbt7dixnnqmiako7g4244bho6a
       '@microsoft/load-themed-styles': 1.10.295
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
-      '@uifabric/foundation': 7.10.16_74b3ggvk3akyhuq4eydyx3fqim
-      '@uifabric/icons': 7.9.5_74b3ggvk3akyhuq4eydyx3fqim
+      '@types/react': 17.0.1
+      '@types/react-dom': 17.0.1
+      '@uifabric/foundation': 7.10.16_xbt7dixnnqmiako7g4244bho6a
+      '@uifabric/icons': 7.9.5_xbt7dixnnqmiako7g4244bho6a
       '@uifabric/merge-styles': 7.20.2
-      '@uifabric/react-hooks': 7.16.4_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/react-hooks': 7.16.4_xbt7dixnnqmiako7g4244bho6a
       '@uifabric/set-version': 7.0.24
-      '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
-      '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@uifabric/styling': 7.25.1_xbt7dixnnqmiako7g4244bho6a
+      '@uifabric/utilities': 7.38.2_xbt7dixnnqmiako7g4244bho6a
       prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -39206,6 +39339,18 @@ packages:
       typescript: 3.0.3
     dev: true
 
+  /typescript-formatter/7.1.0_typescript@4.5.5:
+    resolution: {integrity: sha512-XgPUSZ3beF7Xx2ZIEngIonWpDTS0XzWqV0vjtcm6nOPONug4WFXQYjbvulCzY2T0+knceZn5CFQjVUShNkIdLA==}
+    engines: {node: '>= 4.2.0'}
+    hasBin: true
+    peerDependencies:
+      typescript: ^2.1.6 || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev
+    dependencies:
+      commandpost: 1.4.0
+      editorconfig: 0.15.3
+      typescript: 4.5.5
+    dev: true
+
   /typescript/3.0.3:
     resolution: {integrity: sha512-kk80vLW9iGtjMnIv11qyxLqZm20UklzuR2tL0QAnDIygIUIemcZMxlMWudl9OOt76H3ntVzcTiddQ1/pAAJMYg==}
     engines: {node: '>=4.2.0'}
@@ -39264,8 +39409,8 @@ packages:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
     dev: true
 
-  /uglify-js/3.10.3:
-    resolution: {integrity: sha512-Lh00i69Uf6G74mvYpHCI9KVVXLcHW/xu79YTvH7Mkc9zyKUeSPz0owW0dguj0Scavns3ZOh3wY63J0Zb97Za2g==}
+  /uglify-js/3.17.4:
+    resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
     engines: {node: '>=0.8.0'}
     hasBin: true
     requiresBuild: true
