@@ -7,26 +7,13 @@ import ReactDOM from "react-dom";
 
 import { getFluidClientDebuggers } from "@fluid-tools/client-debugger";
 
-import { closeDebuggerScriptId, debuggerPanelId } from "./Constants";
+import { debuggerPanelId } from "./Constants";
 import { DebuggerPanel } from "./DebuggerPanel";
 
 async function openDebuggerPanel(): Promise<void> {
 	console.log("Opening debugger view...");
 
-	// Clean up debugger panel closing script, if it is on the page.
-
-	// eslint-disable-next-line unicorn/prefer-query-selector
-	const closeDebuggerPanelScript = document.getElementById(closeDebuggerScriptId);
-	if (closeDebuggerPanelScript === null) {
-		console.log("No debugger closing script found to remove.");
-	} else {
-		console.log("Removing debugger-closing script...");
-		closeDebuggerPanelScript.remove();
-		console.log("Script removed.");
-	}
-
 	// Open debugger view, if one does not already exist on the page.
-
 	// eslint-disable-next-line unicorn/prefer-query-selector
 	const debuggerPanelElement = document.getElementById(debuggerPanelId);
 	if (debuggerPanelElement === null) {
