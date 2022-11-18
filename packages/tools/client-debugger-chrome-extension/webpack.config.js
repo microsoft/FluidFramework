@@ -13,11 +13,11 @@ const buildDirectoryPath = path.resolve(__dirname, "dist");
 module.exports = {
 	mode: "production",
 	entry: {
-		backgroundScript: path.join(sourceDirectoryPath, "BackgroundScript.ts"),
-		openDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.tsx"),
-		closeDebuggerPanelScript: path.join(sourceDirectoryPath, "CloseDebuggerPanelScript.ts"),
-		openDebuggerView: path.join(sourceDirectoryPath, "OpenDebuggerView.ts"),
-		closeDebuggerView: path.join(sourceDirectoryPath, "CloseDebuggerView.ts"),
+		BackgroundScript: path.join(sourceDirectoryPath, "BackgroundScript.ts"),
+		OpenDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.tsx"),
+		CloseDebuggerPanelScript: path.join(sourceDirectoryPath, "CloseDebuggerPanelScript.ts"),
+		OpenDebuggerView: path.join(sourceDirectoryPath, "OpenDebuggerView.ts"),
+		CloseDebuggerView: path.join(sourceDirectoryPath, "CloseDebuggerView.ts"),
 	},
 	output: {
 		path: buildDirectoryPath,
