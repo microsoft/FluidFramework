@@ -128,6 +128,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    /** count number of noops sent by the client which may not be acked */
+    private noOpCount: number = 0;
+    /** Track clientSequenceNumber of the last op */
+    private lastClientSequenceNumber: number | undefined;
+
     /**
      * Track down the ops size.
     */
@@ -233,6 +238,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         this.messageBuffer.push(message);
+
+        if (message.type === "noop") {
+            this.noOpCount++;
+        }
 
         this.emit("submitOp", message);
 
@@ -822,6 +831,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         ) {
             message.contents = JSON.parse(message.contents);
         }
+
+        // validate client sequence number has no gap. If there is gap, check if there were noops
+        // if there were noops, decrement the gap by number of noops and continue
+        if (this.lastClientSequenceNumber !== undefined) {
+            const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
+            if (clientSeqNumGap > 0) {
+                if (this.noOpCount > 0) {
+                    this.noOpCount -= clientSeqNumGap;
+                } else {
+                    throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
+                }
+            }
+        }
+        this.lastClientSequenceNumber = message.clientSequenceNumber;
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 
