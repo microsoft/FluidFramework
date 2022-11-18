@@ -5,7 +5,8 @@
         "allowJs": true,
         "jsx": "react",
         "types": [
-            "jest"
+            "jest",
+            "node",
         ],
         "rootDir": "./",
         "outDir": "../../dist/test"
