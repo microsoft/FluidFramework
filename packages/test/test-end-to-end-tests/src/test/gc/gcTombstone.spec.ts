@@ -36,8 +36,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
     const sweepTimeoutMs = 200;
     assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");
     const settings = {
-        "Fluid.GarbageCollection.Test.Tombstone": "true",
         "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
+        "Fluid.GarbageCollection.ThrowOnTombstoneUsage": true,
     };
 
     const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
@@ -562,6 +562,36 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             const sendDataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
             sendDataObject._root.set("can receive", "an op");
             sendDataObject._runtime.submitSignal("can receive", "a signal");
+            await provider.ensureSynchronized();
+        });
+
+        itExpects("does not throw tombstone errors with ThrowOnTombstoneUsage setting not enabled",
+        [
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "submitMessage" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process" },
+        ],
+        async () => {
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
+            const {
+                unreferencedId,
+                summarizingContainer,
+                summarizer,
+            } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+
+            // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+            // production application - causes a sweep ready loaded error
+            const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+
+            // The datastore should be tombstoned now
+            await summarize(summarizer);
+
+            // Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled!
+            assert.doesNotThrow(() => dataObject._root.set("send", "op"),
+                `Should be able to send ops for a tombstoned datastore.`,
+            );
+
+            // Wait for the above op to be process. That will result in another error logged during process.
             await provider.ensureSynchronized();
         });
     });
