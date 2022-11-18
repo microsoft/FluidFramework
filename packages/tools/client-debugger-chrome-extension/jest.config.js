@@ -13,4 +13,5 @@ module.exports = {
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 	setupFiles: ["./testSetup.js"],
+	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 };
