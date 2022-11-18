@@ -8,8 +8,7 @@ import {
     IGCRuntimeOptions,
     ISummarizer, RuntimeHeaders,
 } from "@fluidframework/container-runtime";
-import {
-    requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
     createSummarizerWithContainer,
@@ -22,13 +21,31 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
+/**
+ * Potential GC Recovery handle
+ */
+class RecoveryHandle implements IFluidHandle {
+    public readonly isAttached = true;
+    public get IFluidHandle(): IFluidHandle { return this; }
+    constructor(public readonly absolutePath: string) {
+
+    }
+    public attachGraph(): void {
+        return;
+    }
+    async get(): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+    bind(handle: IFluidHandle): void {
+        throw new Error("Method not implemented.");
+    }
+}
 /**
  * These tests validate that SweepReady objects are correctly marked as tombstones. Tombstones should be added to the
  * summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
@@ -580,7 +597,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             );
 
             const mainDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");
-            const handle = handleFromLegacyUri(`/${unreferencedId}`, mainDataObject._context.containerRuntime);
+            const handle = new RecoveryHandle(`/${unreferencedId}`);
             mainDataObject._root.set("store", handle);
 
             // This container closes as we submit ops and signals in the untombstoned container

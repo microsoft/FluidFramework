@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     IResponse,
     IRequest,
@@ -62,12 +63,16 @@ class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<
     }
 
     public attachGraph() {
-        // This handle should only be created and stored to prevent unreferenced GC content from being deleted.
-        return;
+        assert(false, 0x0ca /* "Trying to use legacy graph attach!" */);
     }
 
     public async get(): Promise<any> {
-        throw new Error(`LegacyUriHandle should not be used to retrieve data, just recover data`);
+        const response = await this.runtime.IFluidHandleContext.resolveHandle({ url: this.absolutePath });
+        if (response.status === 200 && response.mimeType === "fluid/object") {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return response.value;
+        }
+        throw new Error(`Failed to resolve container path ${this.absolutePath}`);
     }
 
     public bind(handle: IFluidHandle) {
