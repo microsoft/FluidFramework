@@ -15,8 +15,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|prerelease|none] [--patch
-    <value>] [--base <value>] [--tag <value>] [-i <value>]
+  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|prerelease|none] [--patch <value>]
+    [--base <value>] [--tag <value>] [-i <value>] [-v]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
