@@ -617,10 +617,10 @@ describe("Garbage Collection Tests", () => {
                     assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
-                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
                 );
                 mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
