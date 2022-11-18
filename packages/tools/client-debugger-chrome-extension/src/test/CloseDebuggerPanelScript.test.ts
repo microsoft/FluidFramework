@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { debuggerPanelId } from "../Constants";
+import { isDebuggerPanelOpen } from "../Utilities";
 
 describe("CloseDebuggerPanelScript tests", () => {
 	beforeEach(() => {
@@ -15,15 +15,13 @@ describe("CloseDebuggerPanelScript tests", () => {
 
 	it("Verify that debugger panel is removed by script", () => {
 		// Verify that the panel is live
-		let debuggerPanel = document.querySelector(`#${debuggerPanelId}`);
-		expect(debuggerPanel).not.toBeNull();
+		expect(isDebuggerPanelOpen()).toBe(true);
 
 		// Execute script
 		// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports
 		require("../CloseDebuggerPanelScript");
 
 		// Verify that the panel has been removed
-		debuggerPanel = document.querySelector(`#${debuggerPanelId}`);
-		expect(debuggerPanel).toBeNull();
+		expect(isDebuggerPanelOpen()).toBe(false);
 	});
 });

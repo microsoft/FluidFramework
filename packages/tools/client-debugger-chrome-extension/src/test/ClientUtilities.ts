@@ -38,18 +38,14 @@ export interface ContainerInfo {
  *
  * @param client - The Tinylicious service client.
  * @param containerSchema - Schema with which to create the container.
- * @param setContentsPreAttach - Optional callback for setting initial content state on the
- * container *before* it is attached.
  *
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createFluidContainer(
 	client: TinyliciousClient,
 	containerSchema: ContainerSchema,
-	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 ): Promise<ContainerInfo> {
 	// Create the container
-	console.log("Creating new container...");
 	let createContainerResult: ContainerLoadResult;
 	try {
 		createContainerResult = await client.createContainer(containerSchema);
@@ -57,19 +53,10 @@ export async function createFluidContainer(
 		console.error(`Encountered error creating Fluid container: "${error}".`);
 		throw error;
 	}
-	console.log("Container created!");
 
 	const { container, services } = createContainerResult;
 
-	// Populate the container with initial app contents (*before* attaching)
-	if (setContentsPreAttach !== undefined) {
-		console.log("Populating initial app data...");
-		await setContentsPreAttach(container);
-		console.log("Initial data populated!");
-	}
-
 	// Attach container
-	console.log("Awaiting container attach...");
 	let containerId: string;
 	try {
 		containerId = await container.attach();
@@ -77,7 +64,6 @@ export async function createFluidContainer(
 		console.error(`Encountered error attaching Fluid container: "${error}".`);
 		throw error;
 	}
-	console.log("Fluid container attached!");
 
 	return {
 		container,
@@ -96,7 +82,6 @@ export async function loadExistingFluidContainer(
 	containerId: string,
 	containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
-	console.log("Loading existing container...");
 	let getContainerResult: ContainerLoadResult;
 	try {
 		getContainerResult = await client.getContainer(containerId, containerSchema);
@@ -104,18 +89,15 @@ export async function loadExistingFluidContainer(
 		console.error(`Encountered error loading Fluid container: "${error}".`);
 		throw error;
 	}
-	console.log("Container loaded!");
 
 	const { container, services } = getContainerResult;
 
 	if (container.connectionState !== ConnectionState.Connected) {
-		console.log("Connecting to container...");
 		await new Promise<void>((resolve) => {
 			container.once("connected", () => {
 				resolve();
 			});
 		});
-		console.log("Connected!");
 	}
 
 	return {

@@ -11,15 +11,9 @@ import { closeDebuggerScriptId, openDebuggerScriptId } from "./Constants";
  */
 async function appendOpenDebuggerScript(): Promise<void> {
 	// Clean up panel-closing script, if it is on the page.
-
-	// eslint-disable-next-line unicorn/prefer-query-selector
-	const closeDebuggerPanelScript = document.getElementById(closeDebuggerScriptId);
-	if (closeDebuggerPanelScript === null) {
-		console.log("No debugger closing script found to remove.");
-	} else {
-		console.log("Removing debugger-closing script...");
+	const closeDebuggerPanelScript = document.querySelector(`#${closeDebuggerScriptId}`);
+	if (closeDebuggerPanelScript !== null) {
 		closeDebuggerPanelScript.remove();
-		console.log("Script removed.");
 	}
 
 	// Append panel opening script to the page.

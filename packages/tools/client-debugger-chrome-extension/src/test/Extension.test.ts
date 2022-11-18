@@ -29,8 +29,10 @@ describe("Debugger Browser Extension tests", () => {
 		initializeFluidClientDebugger(containerInfo);
 	});
 
-	afterEach(async () => {
+	afterEach(() => {
 		closeFluidClientDebugger(containerInfo!.containerId);
+		containerInfo!.container.dispose();
+		containerInfo = undefined;
 	});
 
 	it("Debugger only appears after being activated, and has the correct container info upon activation", () => {
