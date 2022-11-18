@@ -2861,6 +2861,7 @@ importers:
       '@fluidframework/test-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/jest': 22.2.3
+      '@types/underscore': 1.11.4
       async: ^3.2.0
       babel-eslint: ^10.0.1
       babel-loader: ^8.0.5
@@ -2901,6 +2902,7 @@ importers:
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/jest': 22.2.3
+      '@types/underscore': 1.11.4
       async: 3.2.4
       babel-eslint: 10.1.0_eslint@8.6.0
       babel-loader: 8.3.0_@babel+core@7.20.2
@@ -3069,6 +3071,7 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       axios: ^0.26.0
       chai: ^4.2.0
       concurrently: ^6.2.0
@@ -3119,6 +3122,7 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       chai: 4.3.7
       concurrently: 6.3.0
       copyfiles: 2.4.1
@@ -3269,6 +3273,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       ajv: 7.1.1
       async: ^3.2.0
       chai: ^4.2.0
@@ -3300,6 +3305,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       chai: 4.3.7
       concurrently: 6.3.0
       cross-env: 7.0.3
@@ -3321,6 +3327,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^1.2.0
       '@rushstack/eslint-config': ^2.5.1
+      '@types/node': ^14.18.0
       babel-loader: ^8.0.5
       concurrently: ^6.2.0
       eslint: ~8.6.0
@@ -3343,6 +3350,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/node': 14.18.0
       babel-loader: 8.3.0_@babel+core@7.20.2
       concurrently: 6.3.0
       eslint: 8.6.0
@@ -3789,6 +3797,7 @@ importers:
   experimental/dds/tree-graphql:
     specifiers:
       '@fluid-experimental/tree': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
@@ -3819,6 +3828,7 @@ importers:
       graphql: 15.8.0
       graphql-tools: 7.0.5_graphql@15.8.0
     devDependencies:
+      '@fluidframework/build-common': 1.1.0
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@graphql-codegen/cli': 1.20.1_zb5anfqjd4osidq6scqzr4gy3i
@@ -4702,6 +4712,7 @@ importers:
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       best-random: ^1.0.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -4745,6 +4756,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       best-random: 1.0.3
       concurrently: 6.3.0
       copyfiles: 2.4.1
@@ -5378,6 +5390,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.0
       '@types/ungap__structured-clone': ^0.3.0
+      '@types/uuid': ^8.3.0
       '@ungap/structured-clone': ^0.3.4
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -5424,6 +5437,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.0
       '@types/ungap__structured-clone': 0.3.0
+      '@types/uuid': 8.3.4
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6013,6 +6027,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
+      '@types/node': ^14.18.0
       '@types/url-parse': 1.4.4
       '@types/uuid': ^8.3.0
       axios: ^0.26.0
@@ -6059,6 +6074,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
+      '@types/node': 14.18.0
       '@types/url-parse': 1.4.4
       '@types/uuid': 8.3.4
       axios: 0.26.1
@@ -6489,6 +6505,7 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@types/mocha': ^9.1.1
       '@types/node': ^14.18.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -6511,6 +6528,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/mocha': 9.1.1
       '@types/node': 14.18.0
       concurrently: 6.3.0
       copyfiles: 2.4.1
@@ -6756,6 +6774,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
+      '@types/uuid': ^8.3.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -6774,6 +6793,7 @@ importers:
       '@fluidframework/test-client-utils-previous': /@fluidframework/test-client-utils/2.0.0-internal.2.0.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/uuid': 8.3.4
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -6805,6 +6825,7 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -6840,6 +6861,7 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -7565,6 +7587,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
@@ -7588,6 +7611,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -9138,6 +9162,7 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       '@types/node-fetch': ^2.5.10
       concurrently: ^6.2.0
       cross-env: ^7.0.2
@@ -9164,6 +9189,7 @@ importers:
       '@fluidframework/odsp-doclib-utils-previous': /@fluidframework/odsp-doclib-utils/2.0.0-internal.2.0.0
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.0
       '@types/node-fetch': 2.6.2
       concurrently: 6.3.0
       cross-env: 7.0.3
