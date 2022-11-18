@@ -2,18 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as chrome from "sinon-chrome";
 
 /**
  * Tests end-to-end functionality of the extension.
  */
 
 describe("Debugger Browser Extension tests", () => {
-	beforeEach(async () => {});
-
-	afterEach(async () => {
-		chrome.flush();
+	beforeEach(async () => {
+		document.body.innerHTML = `<div id="test">test</div>`;
 	});
+
+	afterEach(async () => {});
 
 	it("Debugger only appears after being activated", () => {
 		// Verify the debugger is not visible

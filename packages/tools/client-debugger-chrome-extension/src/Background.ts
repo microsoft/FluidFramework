@@ -124,8 +124,10 @@ async function onStorageChange(changes: {
 /**
  * When local storage is updated, update any properties derived from local tab state used by the extension.
  */
-chrome.storage.local.onChanged.addListener((changes) => {
-	onStorageChange(changes).catch((error) => {
-		console.error(error);
-	});
+chrome.storage.onChanged.addListener((changes, areaName) => {
+	if (areaName === "local") {
+		onStorageChange(changes).catch((error) => {
+			console.error(error);
+		});
+	}
 });
