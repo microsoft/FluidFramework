@@ -5,6 +5,12 @@
 import { SharedCounter } from "@fluidframework/counter";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
+import { clientDebugViewClassName } from "@fluid-tools/client-debug-view";
+
+import { closeDebuggerPanel } from "../CloseDebuggerPanel";
+import { debuggerPanelId } from "../Constants";
+import { openDebuggerPanel } from "../OpenDebuggerPanel";
+import { isDebuggerPanelOpen } from "../Utilities";
 import {
 	ContainerInfo,
 	closeFluidClientDebugger,
@@ -35,13 +41,39 @@ describe("Debugger Browser Extension tests", () => {
 		containerInfo = undefined;
 	});
 
-	it("Debugger only appears after being activated, and has the correct container info upon activation", () => {
+	it("Debugger only appears after being activated, and has the correct container info upon activation", async () => {
 		// Verify the debugger is not visible
+		expect(isDebuggerPanelOpen()).toBe(false);
+
 		// Simulate click of extension button
+		await openDebuggerPanel();
+
 		// Verify debugger is visible
+		expect(isDebuggerPanelOpen()).toBe(true);
+
+		// Validate contents are as expected
+		let debuggerPanel = document.querySelector(`#${debuggerPanelId}`);
+		expect(debuggerPanel).not.toBeNull();
+		expect(debuggerPanel!.childElementCount).toEqual(1); // Should strictly contain debug view
+
+		// Verify that inner debug view is populated.
+		// The presence of this particular element also indicates that a debugger instance was found
+		// and is being displayed.
+		let innerDebugView = document.querySelector(`.${clientDebugViewClassName}`);
+		expect(innerDebugView).not.toBeNull();
+
 		// Simulate click of extension button
+		await closeDebuggerPanel();
+
 		// Verify debugger is not visible
-		expect(true).toBe(true); // TODO
+		expect(isDebuggerPanelOpen()).toBe(false);
+
+		// Verify elements no longer exist on page
+		debuggerPanel = document.querySelector(`#${debuggerPanelId}`);
+		expect(debuggerPanel).toBeNull();
+
+		innerDebugView = document.querySelector(`.${clientDebugViewClassName}`);
+		expect(innerDebugView).toBeNull();
 	});
 });
 
