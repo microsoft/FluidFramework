@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { buildForest, ObjectForest, afterChangeForest } from "./objectForest";
+export { buildForest, afterChangeForest } from "./objectForest";

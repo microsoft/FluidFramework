@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Dependee, ObservingDependent } from "../dependency-tracking";
+import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
     Anchor,
@@ -58,16 +58,12 @@ export interface IForestSubscription extends Dependee {
     forgetAnchor(anchor: Anchor): void;
 
     /**
-     * If observer is provided, it will be invalidated if the value returned from this changes
-     * (including from or to undefined).
-     *
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
     tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent,
     ): TreeNavigationResult;
 
     /**
@@ -125,25 +121,13 @@ export interface FieldAnchor {
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
-     * Where observations get recorded for invalidation.
-     * When modified, future observations will count toward the new one.
-     *
-     * Observations made when in an OutOfDate state will never cause invalidation.
+     * @returns an independent copy of this cursor at the same location in the tree.
      */
-    observer?: ObservingDependent;
-
-    /**
-     * @param observer - sets the starting value for the observer.
-     * If undefined there is no observer for the returned ITreeSubscriptionCursor.
-     *
-     * Doing this has no impact on this.observer.
-     */
-    fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
+    fork(): ITreeSubscriptionCursor;
 
     /**
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
 
@@ -151,7 +135,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` or passing to `tryGet`
      * or calling `free` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     clear(): void;
 

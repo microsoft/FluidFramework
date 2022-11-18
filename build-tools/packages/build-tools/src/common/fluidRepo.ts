@@ -4,25 +4,61 @@
  */
 import * as path from "path";
 
-import { getPackageManifest } from "./fluidUtils";
+import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+
+import { PreviousVersionStyle } from "../typeValidator/packageJson";
+import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
 import { Package, Packages, ScriptDependencies } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 
-export interface IPackageManifest {
+/**
+ * Fluid build configuration that is expected in the repo-root package.json.
+ */
+export interface IFluidBuildConfig {
+    /**
+     * A mapping of package or release group names to metadata about the package or release group. This can only be
+     * configured in the rrepo-wide Fluid build config (the repo-root package.json).
+     */
     repoPackages: {
         [name: string]: IFluidRepoPackageEntry;
     };
+
+    /**
+     * dependencies defined here will be incorporated into fluid-build's build graph. This can be used to manually
+     * fluid-build about dependencies it doesn't automatically detect.
+     */
     buildDependencies?: {
         merge?: {
             [key: string]: ScriptDependencies;
         };
     };
+
+    /**
+     * @deprecated
+     */
     generatorName?: string;
+
+    /**
+     * Policy configuration for the `check:policy` command. This can only be configured in the rrepo-wide Fluid build
+     * config (the repo-root package.json).
+     */
     policy?: PolicyConfig;
+
+    /**
+     * A mapping of branch names to previous version baseline styles. The type test generator takes this information
+     * into account when calculating the baseline version to use when it's run on a particular branch. If this is not
+     * defined for a branch or package, then that package will be skipped during type test generation.
+     */
+    branchReleaseTypes?: {
+        [name: string]: VersionBumpType | PreviousVersionStyle;
+    };
 }
 
+/**
+ * Policy configuration for the `check:policy` command.
+ */
 export interface PolicyConfig {
     additionalLockfilePaths?: string[];
     dependencies?: {
@@ -30,8 +66,18 @@ export interface PolicyConfig {
     };
 }
 
+/**
+ * Configures a package or release group
+ */
 export interface IFluidRepoPackage {
+    /**
+     * The path to the package. For release groups this should be the path to the root of the release group.
+     */
     directory: string;
+
+    /**
+     * An array of paths under `directory` that should be ignored.
+     */
     ignoredDirs?: string[];
 }
 
@@ -75,7 +121,7 @@ export class FluidRepo {
         services: boolean,
         private readonly logger: Logger = defaultLogger,
     ) {
-        const packageManifest = getPackageManifest(resolvedRoot);
+        const packageManifest = getFluidBuildConfig(resolvedRoot);
 
         // Expand to full IFluidRepoPackage and full path
         const normalizeEntry = (
@@ -155,4 +201,21 @@ export class FluidRepo {
         }
         return FluidRepo.ensureInstalled(this.packages.packages);
     }
+}
+
+/**
+ * Represents a release version and its release date, if applicable.
+ *
+ * @internal
+ */
+export interface VersionDetails {
+    /**
+     * The version of the release.
+     */
+    version: ReleaseVersion;
+
+    /**
+     * The date the version was released, if applicable.
+     */
+    date?: Date;
 }

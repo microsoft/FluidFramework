@@ -46,7 +46,6 @@ export interface ILoadTestConfig {
             max: number;
         };
     };
-
     /**
      * Number of "attachment" type blobs to upload over the course of the test run.
      */
@@ -65,6 +64,10 @@ export interface ILoadTestConfig {
      * Override loader options to force a specific value
      */
     optionOverrides?: Record<TestDriverTypes, OptionOverride | undefined>;
+    /**
+     * Specify Ops payload size for the test run.
+     */
+    opSizeinBytes?: number;
 }
 
 export interface OptionOverride{
