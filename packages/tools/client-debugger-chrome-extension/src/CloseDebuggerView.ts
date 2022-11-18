@@ -10,22 +10,14 @@ import { openDebuggerScriptId } from "./Constants";
  * @returns Whether or not the extension is now displayed.
  */
 async function appendCloseDebuggerScript(): Promise<void> {
-	// Clean up debugger panel opening script, if it is on the page.
-	const openDebuggerPanelScript = document.querySelector(`#${openDebuggerScriptId}`);
-	if (openDebuggerPanelScript !== null) {
-		openDebuggerPanelScript.remove();
-	}
-
 	// Append script that closes the debugger panel
-
 	const enableDebugViewScript = document.createElement("script");
 	enableDebugViewScript.src = chrome.runtime.getURL("CloseDebuggerPanelScript.js");
 	enableDebugViewScript.id = openDebuggerScriptId;
 	(document.head ?? document.documentElement).append(enableDebugViewScript);
 
-	// Remove script, as it only needs to perform cleanup once.
-	// TODO?
-	// enableDebugViewScript.remove();
+	// Remove script; it only needs to perform cleanup once.
+	enableDebugViewScript.remove();
 }
 
 appendCloseDebuggerScript().catch((error) => {
