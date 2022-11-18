@@ -157,19 +157,19 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
         throw new Error("Unable to attach container.");
     }
 
-    if (container.connectionState !== ConnectionState.Connected) {
-        await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "connected" },
-            async () => {
+    await PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "connected" },
+        async () => {
+            if (container.connectionState !== ConnectionState.Connected) {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
                     durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    }
+            }
+        },
+        { start: true, end: true, cancel: "generic" },
+    );
 
     process.send?.(id);
 

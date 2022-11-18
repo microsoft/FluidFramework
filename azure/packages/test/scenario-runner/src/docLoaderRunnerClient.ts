@@ -151,19 +151,19 @@ async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<
         throw new Error("Unable to load container.");
     }
 
-    if (container.connectionState !== ConnectionState.Connected) {
-        await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "connected" },
-            async () => {
+    await PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "connected" },
+        async () => {
+            if (container.connectionState !== ConnectionState.Connected) {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
                     durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    }
+            }
+        },
+        { start: true, end: true, cancel: "generic" },
+    );
 
     const scenarioLogger = await loggerP;
     await scenarioLogger.flush();
