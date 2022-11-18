@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODOs:
-// - Search for registered debuggers and display warning if none are found? (Still launch debug view?)
-
 /**
  * State we store on a per-tab basis.
  *
@@ -61,8 +58,10 @@ async function updateTabState(tabId: number, newState: TabState): Promise<void> 
 
 /**
  * Toggles the debug view (and updates corresponding local storage tab state).
+ *
+ * @internal
  */
-async function toggleDebuggerView(tabId: number): Promise<void> {
+export async function toggleDebuggerView(tabId: number): Promise<void> {
 	const tabState = await getTabState(tabId);
 	const visible: boolean = tabState.isDebuggerVisible;
 
@@ -80,20 +79,13 @@ async function toggleDebuggerView(tabId: number): Promise<void> {
 }
 
 /**
- * When the extension icon is clicked, launch the debug view.
- */
-chrome.action.onClicked.addListener((tab) => {
-	toggleDebuggerView(tab.id ?? -1).catch((error) => {
-		console.error(error);
-	});
-});
-
-/**
  * Invoked when local storage state has changed.
  *
  * @remarks Used to update the extension icon, etc. based on current tab state.
+ *
+ * @internal
  */
-async function onStorageChange(changes: {
+export async function onStorageChange(changes: {
 	[key: string]: chrome.storage.StorageChange;
 }): Promise<void> {
 	// Update icon background to reflect whether or not the debugger is visible.
@@ -120,14 +112,3 @@ async function onStorageChange(changes: {
 		}
 	}
 }
-
-/**
- * When local storage is updated, update any properties derived from local tab state used by the extension.
- */
-chrome.storage.onChanged.addListener((changes, areaName) => {
-	if (areaName === "local") {
-		onStorageChange(changes).catch((error) => {
-			console.error(error);
-		});
-	}
-});
