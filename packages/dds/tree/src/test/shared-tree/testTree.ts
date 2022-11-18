@@ -115,6 +115,7 @@ export class TestTree {
         return new TestTree({
             sessionId,
             schemaPolicy: this.schemaPolicy,
+            // TODO: Use the forest's clone mechanism
             state: this.jsonRoots().map<ITreeCursorSynchronous>((r) => singleJsonCursor<any>(r)),
         });
     }

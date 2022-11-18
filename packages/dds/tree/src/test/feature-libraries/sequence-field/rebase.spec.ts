@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -15,13 +14,14 @@ import {
     checkDeltaEquality,
     createDeleteChangeset,
     createInsertChangeset,
+    createModifyChangeset,
+    createReviveChangeset,
     rebaseTagged,
     TestChangeset,
 } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
-const detachedBy: RevisionTag = brand(41);
-const detachedBy2: RevisionTag = brand(42);
+const tag1: RevisionTag = brand(41);
+const tag2: RevisionTag = brand(42);
 
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
@@ -49,12 +49,9 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("modify ↷ modify", () => {
-        const childChangeA = TestChange.mint([0], 1);
-        const childChangeB = TestChange.mint([0], 2);
-        const childChangeC = TestChange.mint([0, 1], 2);
-        const change1: TestChangeset = [{ type: "Modify", changes: childChangeA }];
-        const change2: TestChangeset = [{ type: "Modify", changes: childChangeB }];
-        const expected: TestChangeset = [{ type: "Modify", changes: childChangeC }];
+        const change1 = createModifyChangeset(0, TestChange.mint([0], 1));
+        const change2 = createModifyChangeset(0, TestChange.mint([0], 2));
+        const expected = createModifyChangeset(0, TestChange.mint([0, 1], 2));
         const actual = rebase(change2, change1);
         assert.deepEqual(actual, expected);
     });
@@ -75,325 +72,320 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("revive ↷ modify", () => {
-        const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 2 },
-            4,
-            { type: "Revive", id: 3, count: 2, detachedBy, detachIndex: 4 },
-        ];
-        const mods: TestChangeset = [
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            2,
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-            4,
-            { type: "Modify", changes: TestChange.mint([0], 3) },
-        ];
+        const revive = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 2, 0, tag1),
+                createReviveChangeset(4, 2, 2, tag1),
+                createReviveChangeset(10, 2, 4, tag1),
+            ],
+            TestChange.compose,
+        );
+        const mods = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                createModifyChangeset(3, TestChange.mint([0], 2)),
+                createModifyChangeset(8, TestChange.mint([0], 3)),
+            ],
+            TestChange.compose,
+        );
         const actual = rebase(revive, mods);
         assert.deepEqual(actual, revive);
     });
 
     it("modify ↷ delete", () => {
-        const mods: TestChangeset = [
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            2,
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-            4,
-            { type: "Modify", changes: TestChange.mint([0], 3) },
-        ];
-        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
+        const mods = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                createModifyChangeset(3, TestChange.mint([0], 2)),
+                createModifyChangeset(8, TestChange.mint([0], 3)),
+            ],
+            TestChange.compose,
+        );
+        const deletion = createDeleteChangeset(1, 3);
         const actual = rebase(mods, deletion);
-        const expected: TestChangeset = [
-            // Set at an earlier index is unaffected by a delete at a later index
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            // Set as the same index as a delete is muted by the delete
-            4,
-            // Set at a later index moves to an earlier index due to a delete at an earlier index
-            { type: "Modify", changes: TestChange.mint([0], 3) },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Modify at an earlier index is unaffected by a delete at a later index
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                // Modify as the same index as a delete is muted by the delete
+                // Modify at a later index moves to an earlier index due to a delete at an earlier index
+                createModifyChangeset(5, TestChange.mint([0], 3)),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ delete", () => {
-        const insert: TestChangeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            2,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-            4,
-            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-        ];
-        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
+        const insert = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createInsertChangeset(0, 1, 1),
+                createInsertChangeset(3, 1, 2),
+                createInsertChangeset(8, 1, 3),
+            ],
+            TestChange.compose,
+        );
+        const deletion = createDeleteChangeset(1, 3);
         const actual = rebase(insert, deletion);
-        const expected: TestChangeset = [
-            // Earlier insert is unaffected
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            1, // Overlapping insert has its index reduced
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-            2, // Later insert has its index reduced
-            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Earlier insert is unaffected
+                createInsertChangeset(0, 1, 1),
+                // Overlapping insert has its index reduced
+                createInsertChangeset(2, 1, 2),
+                // Later insert has its index reduced
+                createInsertChangeset(5, 1, 3),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ delete", () => {
-        const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 1 },
-            4,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 2 },
-        ];
-        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
+        const revive = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(3, 1, 1, tag1),
+                createReviveChangeset(8, 1, 2, tag1),
+            ],
+            TestChange.compose,
+        );
+        const deletion = createDeleteChangeset(1, 3);
         const actual = rebase(revive, deletion);
-        const expected: TestChangeset = [
-            // Earlier revive is unaffected
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            1, // Overlapping revive has its index reduced
-            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 1 },
-            2, // Later revive has its index reduced
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 2 },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Earlier revive is unaffected
+                createReviveChangeset(0, 1, 0, tag1),
+                // Overlapping revive has its index reduced
+                createReviveChangeset(2, 1, 1, tag1),
+                // Later revive has its index reduced
+                createReviveChangeset(5, 1, 2, tag1),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ overlapping delete", () => {
         // Deletes ---DEFGH--
-        const deleteA: TestChangeset = [3, { type: "Delete", id: 2, count: 5 }];
+        const deleteA = createDeleteChangeset(3, 5);
         // Deletes --CD-F-HI
-        const deleteB: TestChangeset = [
-            2,
-            { type: "Delete", id: 1, count: 2 },
-            1,
-            { type: "Delete", id: 2, count: 1 },
-            1,
-            { type: "Delete", id: 2, count: 2 },
-        ];
+        const deleteB = SF.sequenceFieldChangeRebaser.compose(
+            [createDeleteChangeset(2, 2), createDeleteChangeset(3, 1), createDeleteChangeset(4, 2)],
+            TestChange.compose,
+        );
         const actual = rebase(deleteA, deleteB);
         // Deletes --E-G
-        const expected: TestChangeset = [2, { type: "Delete", id: 2, count: 2 }];
+        const expected = createDeleteChangeset(2, 2);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ earlier delete", () => {
         // Deletes ---DE
-        const deleteA: TestChangeset = [3, { type: "Delete", id: 2, count: 2 }];
+        const deleteA = createDeleteChangeset(3, 2);
         // Deletes AB--
-        const deleteB: TestChangeset = [{ type: "Delete", id: 1, count: 2 }];
+        const deleteB = createDeleteChangeset(0, 2);
         const actual = rebase(deleteA, deleteB);
         // Deletes -DE
-        const expected: TestChangeset = [1, { type: "Delete", id: 2, count: 2 }];
+        const expected = createDeleteChangeset(1, 2);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ later delete", () => {
         // Deletes AB--
-        const deleteA: TestChangeset = [{ type: "Delete", id: 1, count: 2 }];
+        const deleteA = createDeleteChangeset(0, 2);
         // Deletes ---DE
-        const deleteB: TestChangeset = [2, { type: "Delete", id: 2, count: 2 }];
+        const deleteB = createDeleteChangeset(2, 2);
         const actual = rebase(deleteA, deleteB);
         assert.deepEqual(actual, deleteA);
     });
 
     it("modify ↷ insert", () => {
-        const mods: TestChangeset = [
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            2,
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-        ];
-        const insert: TestChangeset = [2, { type: "Insert", id: 1, content: [{ type, value: 2 }] }];
-        const expected: TestChangeset = [
-            // Modify at earlier index is unaffected
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            3,
-            // Modify at later index has its index increased
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-        ];
+        const mods = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                createModifyChangeset(3, TestChange.mint([0], 2)),
+            ],
+            TestChange.compose,
+        );
+        const insert = createInsertChangeset(2, 1, 2);
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Modify at earlier index is unaffected
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                // Modify at later index has its index increased
+                createModifyChangeset(4, TestChange.mint([0], 2)),
+            ],
+            TestChange.compose,
+        );
         const actual = rebase(mods, insert);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ insert", () => {
         // Deletes A-CD-E
-        const deletion: TestChangeset = [
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            { type: "Delete", id: 1, count: 2 },
-            1,
-            { type: "Delete", id: 1, count: 1 },
-        ];
+        const deletion = SF.sequenceFieldChangeRebaser.compose(
+            [createDeleteChangeset(0, 1), createDeleteChangeset(1, 2), createDeleteChangeset(2, 1)],
+            TestChange.compose,
+        );
         // Inserts between C and D
-        const insert: TestChangeset = [3, { type: "Insert", id: 1, content: [{ type, value: 2 }] }];
-        const expected: TestChangeset = [
-            // Delete with earlier index is unaffected
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            { type: "Delete", id: 1, count: 1 },
-            1, // Delete at overlapping index is split
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            // Delete at later index has its index increased
-            { type: "Delete", id: 1, count: 1 },
-        ];
+        const insert = createInsertChangeset(3, 1, 2);
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Delete with earlier index is unaffected
+                createDeleteChangeset(0, 1),
+                // Delete at overlapping index is split
+                createDeleteChangeset(1, 1),
+                createDeleteChangeset(2, 1),
+                // Delete at later index has its index increased
+                createDeleteChangeset(3, 1),
+            ],
+            TestChange.compose,
+        );
         const actual = rebase(deletion, insert);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ insert", () => {
-        const insertA: TestChangeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            2,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-        ];
-        const insertB: TestChangeset = [
-            1,
-            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-        ];
+        const insertA = SF.sequenceFieldChangeRebaser.compose(
+            [createInsertChangeset(0, 1, 1), createInsertChangeset(3, 1, 2)],
+            TestChange.compose,
+        );
+        const insertB = createInsertChangeset(1, 1, 3);
         const actual = rebase(insertA, insertB);
-        const expected: TestChangeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            3,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [createInsertChangeset(0, 1, 1), createInsertChangeset(4, 1, 2)],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ insert", () => {
-        const revive: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
-            2,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
-        const insert: TestChangeset = [
-            2,
-            // TODO: test both tiebreak policies
-            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-        ];
+        const revive = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(3, 2, 1, tag1),
+                createReviveChangeset(7, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
+        // TODO: test both tiebreak policies
+        const insert = createInsertChangeset(2, 1);
         const actual = rebase(revive, insert);
-        const expected: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
-            3,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(3, 2, 1, tag1),
+                createReviveChangeset(8, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("modify ↷ revive", () => {
-        const mods: TestChangeset = [
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            2,
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-        ];
-        const revive: TestChangeset = [
-            2,
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-        ];
-        const expected: TestChangeset = [
-            // Modify at earlier index is unaffected
-            { type: "Modify", changes: TestChange.mint([0], 1) },
-            3,
-            // Modify at later index has its index increased
-            { type: "Modify", changes: TestChange.mint([0], 2) },
-        ];
+        const mods = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                createModifyChangeset(3, TestChange.mint([0], 2)),
+            ],
+            TestChange.compose,
+        );
+        const revive = createReviveChangeset(2, 1, 0, tag1);
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Modify at earlier index is unaffected
+                createModifyChangeset(0, TestChange.mint([0], 1)),
+                // Modify at later index has its index increased
+                createModifyChangeset(4, TestChange.mint([0], 2)),
+            ],
+            TestChange.compose,
+        );
         const actual = rebase(mods, revive);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ revive", () => {
         // Deletes A-CD-E
-        const deletion: TestChangeset = [
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            { type: "Delete", id: 1, count: 2 },
-            1,
-            { type: "Delete", id: 1, count: 1 },
-        ];
+        const deletion = SF.sequenceFieldChangeRebaser.compose(
+            [createDeleteChangeset(0, 1), createDeleteChangeset(1, 2), createDeleteChangeset(2, 1)],
+            TestChange.compose,
+        );
         // Revives content between C and D
-        const revive: TestChangeset = [
-            3,
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-        ];
-        const expected: TestChangeset = [
-            // Delete with earlier index is unaffected
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            { type: "Delete", id: 1, count: 1 },
-            1, // Delete at overlapping index is split
-            { type: "Delete", id: 1, count: 1 },
-            1,
-            // Delete at later index has its index increased
-            { type: "Delete", id: 1, count: 1 },
-        ];
+        const revive = createReviveChangeset(3, 1, 0, tag1);
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                // Delete with earlier index is unaffected
+                createDeleteChangeset(0, 1),
+                // Delete at overlapping index is split
+                createDeleteChangeset(1, 1),
+                createDeleteChangeset(2, 1),
+                // Delete at later index has its index increased
+                createDeleteChangeset(3, 1),
+            ],
+            TestChange.compose,
+        );
         const actual = rebase(deletion, revive);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ revive", () => {
-        const insert: TestChangeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            2,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-        ];
-        const revive: TestChangeset = [
-            1,
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-        ];
+        const insert = SF.sequenceFieldChangeRebaser.compose(
+            [createInsertChangeset(0, 1, 1), createInsertChangeset(3, 1, 2)],
+            TestChange.compose,
+        );
+        const revive = createReviveChangeset(1, 1, 0, tag1);
         const actual = rebase(insert, revive);
-        const expected: TestChangeset = [
-            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-            3,
-            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [createInsertChangeset(0, 1, 1), createInsertChangeset(4, 1, 2)],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ different revive", () => {
-        const reviveA: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
-            2,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
-        const reviveB: TestChangeset = [
-            2,
-            { type: "Revive", id: 1, count: 1, detachedBy: detachedBy2, detachIndex: 0 },
-        ];
+        const reviveA = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(3, 2, 1, tag1),
+                createReviveChangeset(7, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
+        const reviveB = createReviveChangeset(2, 1, 0, tag2);
         const actual = rebase(reviveA, reviveB);
-        const expected: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
-            3,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
+        // TODO: test cases for both ordering of revived data
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(3, 2, 1, tag1),
+                createReviveChangeset(8, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 
     // TODO: update rebase to detect overlap of revives
     it.skip("revive ↷ same revive", () => {
-        const reviveA: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 2, detachedBy, detachIndex: 1 },
-            2,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
-        const reviveB: TestChangeset = [
-            2,
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 1 },
-        ];
+        const reviveA = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(2, 2, 1, tag1),
+                createReviveChangeset(4, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
+        const reviveB = createReviveChangeset(2, 1, 1, tag1);
         const actual = rebase(reviveA, reviveB);
-        const expected: TestChangeset = [
-            { type: "Revive", id: 1, count: 1, detachedBy, detachIndex: 0 },
-            2,
-            { type: "Revive", id: 2, count: 1, detachedBy, detachIndex: 2 },
-            3,
-            { type: "Revive", id: 3, count: 1, detachedBy, detachIndex: 3 },
-        ];
+        const expected = SF.sequenceFieldChangeRebaser.compose(
+            [
+                createReviveChangeset(0, 1, 0, tag1),
+                createReviveChangeset(2, 1, 2, tag1),
+                createReviveChangeset(5, 1, 3, tag1),
+            ],
+            TestChange.compose,
+        );
         assert.deepEqual(actual, expected);
     });
 

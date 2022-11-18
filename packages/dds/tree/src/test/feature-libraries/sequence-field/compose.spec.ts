@@ -10,7 +10,13 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { cases, TestChangeset } from "./utils";
+import {
+    cases,
+    createDeleteChangeset,
+    createInsertChangeset,
+    createModifyChangeset,
+    TestChangeset,
+} from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -57,39 +63,25 @@ describe("SequenceField - Compose", () => {
     });
 
     it("Does not leave empty mark lists and fields", () => {
-        const insertion: SF.Changeset = [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }];
-        const deletion: SF.Changeset = [{ type: "Delete", id: 2, count: 1 }];
+        const insertion = createInsertChangeset(0, 1);
+        const deletion = createDeleteChangeset(0, 1);
         const actual = shallowCompose([insertion, deletion]);
         assert.deepEqual(actual, cases.no_change);
     });
 
     it("insert ○ modify", () => {
-        const insert: SF.Changeset = [
-            {
-                type: "Insert",
-                id: 1,
-                content: [
-                    { type, value: 1 },
-                    { type, value: 2 },
-                ],
-            },
-        ];
-        const modify: SF.Changeset = [
-            {
-                type: "Modify",
-                changes: { valueChange: { value: 42 } },
-            },
-        ];
-        const expected: SF.Changeset = [
+        const insert = createInsertChangeset(0, 2);
+        const modify = createModifyChangeset(0, TestChange.mint([], 42));
+        const expected: TestChangeset = [
             {
                 type: "MInsert",
-                id: 1,
-                content: { type, value: 1 },
-                changes: { valueChange: { value: 42 } },
+                id: 0,
+                content: { type, value: 0 },
+                changes: TestChange.mint([], 42),
             },
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
+            { type: "Insert", id: 0, content: [{ type, value: 1 }] },
         ];
-        const actual = shallowCompose([insert, modify]);
+        const actual = compose([insert, modify]);
         assert.deepEqual(actual, expected);
     });
 
@@ -414,7 +406,6 @@ describe("SequenceField - Compose", () => {
             { type: "Revive", id: 1, count: 2, detachedBy: tag1, detachIndex: 0 },
         ];
         // TODO: test with merge-right policy as well
-        // TODO: test revive of deleted content
         const expected: SF.Changeset = [
             { type: "Revive", id: 1, count: 2, detachedBy: tag1, detachIndex: 0 },
             { type: "Delete", id: 1, count: 3 },

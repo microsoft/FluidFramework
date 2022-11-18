@@ -12,7 +12,7 @@ import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
     describe("Sequence Field", () => {
-        it("can rebase two inserts", async () => {
+        it("can rebase dependent inserts", async () => {
             const sequencer = new Sequencer();
             const tree1 = new TestTree({ state: singleJsonCursor("y") });
             const tree2 = tree1.fork();
