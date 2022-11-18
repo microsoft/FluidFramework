@@ -42,7 +42,6 @@ import {
     generateClientId,
     getRandomInt,
 } from "../utils";
-import { timeout } from "async";
 
 const summarizerClientType = "summarizer";
 
