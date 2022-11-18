@@ -99,8 +99,10 @@ export class RunningSummarizer implements IDisposable {
         heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
         // Start heuristics
-        summarizer.heuristicRunner?.start();
-        summarizer.heuristicRunner?.run();
+        if (heuristicData.numRuntimeOps > 0 || this.nonRuntimeOpCanTriggerSummary(configuration, heuristicData)) {
+            summarizer.heuristicRunner?.start();
+            summarizer.heuristicRunner?.run();
+        }
 
         return summarizer;
     }
@@ -274,8 +276,20 @@ export class RunningSummarizer implements IDisposable {
             case MessageType.SummaryNack:
                 return false;
             default:
-                return true;
+                return isRuntimeMessage(op)
+                    || RunningSummarizer.nonRuntimeOpCanTriggerSummary(this.configuration, this.heuristicData);
         }
+    }
+
+    private static nonRuntimeOpCanTriggerSummary(
+        config: ISummaryConfiguration,
+        heuristicData: ISummarizeHeuristicData,
+    ): boolean {
+        // eslint-disable-next-line max-len
+        const opsSinceLastAck = heuristicData.lastOpSequenceNumber - heuristicData.lastSuccessfulSummary.refSequenceNumber;
+        return config.state === "enabled"
+            && (config.nonRuntimeSummarizeThreshold === undefined
+                || config.nonRuntimeSummarizeThreshold <= opsSinceLastAck);
     }
 
     public async waitStop(allowLastSummary: boolean): Promise<void> {

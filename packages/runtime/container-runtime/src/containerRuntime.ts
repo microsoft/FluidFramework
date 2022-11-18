@@ -277,6 +277,17 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
      */
     nonRuntimeOpWeight: number;
+
+    /**
+     * Number of ops since last summary needed before a non-runtime op can trigger a summary.
+     *
+     * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
+     * This threshold ONLY applies to non-runtime ops triggering summaries.
+     *
+     * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any summaries. Sending the
+     * 20th non-runtime op will trigger the heuristic checks for summarizing.
+     */
+    nonRuntimeSummarizeThreshold?: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -316,6 +327,8 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     nonRuntimeOpWeight: 0.1,
 
     runtimeOpWeight: 1.0,
+
+    nonRuntimeSummarizeThreshold: 20,
 };
 
 export interface IGCRuntimeOptions {
