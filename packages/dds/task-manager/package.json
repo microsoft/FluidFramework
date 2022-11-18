@@ -98,6 +98,11 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {}
+    "baselineVersion": ">=2.0.0-internal.2.0.0",
+    "broken": {
+      "ClassDeclaration_TaskManager": {
+        "backCompat": false
+      }
+    }
   }
 }
