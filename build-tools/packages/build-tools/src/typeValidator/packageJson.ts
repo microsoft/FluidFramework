@@ -382,10 +382,6 @@ export async function getAndUpdatePackageDetails(
         }
     }
 
-    // if(previousVersionStyle !== undefined && style !== undefined && previousVersionStyle !== style) {
-    //     log.info(`Using previous version style '${style}' because you asked me to, but the branch config says: '${previousVersionStyle}'.`);
-    // }
-
     previousVersionStyle =
         // If the style was explicitly passed in, use it
         style ??
