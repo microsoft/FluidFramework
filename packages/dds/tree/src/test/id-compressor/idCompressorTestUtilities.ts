@@ -623,8 +623,7 @@ export function expectSerializes(
             const [sessionIndex, capacity, maybeSize] = cluster;
             const chainIndex = chainProcessed[sessionIndex];
             if (chainIndex < chainCount[sessionIndex] - 1) {
-                // TODO: Fix this assert, ADO#2586
-                // expect(maybeSize === undefined);
+                assert.strictEqual(typeof maybeSize !== "number", true);
             } else {
                 assert.strictEqual(
                     maybeSize === undefined ||
