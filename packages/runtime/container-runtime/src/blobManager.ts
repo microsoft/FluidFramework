@@ -547,7 +547,7 @@ export class BlobManager {
      * When running GC in test mode, this is called to delete blobs that are unused.
      * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false): void {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
         // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {
