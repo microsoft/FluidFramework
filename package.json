@@ -188,5 +188,12 @@
       "release/**": "patch",
       "next": "major"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/node": "^14.18.0",
+      "@types/react": "^17.0.1",
+      "@types/react-dom": "^17.0.1"
+    }
   }
 }
