@@ -51,13 +51,17 @@ An undefined `revision` field can occur in three cases:
 
     A) When a revision is specified on an ancestor of the current structure, in which case the changes the current structure (and all nested structures) are associated with that revision.
     B) When the changes in the current structure (or its nested structures) are associated with multiple revisions.
-    C) When the changes are associated with an anonymous (i.e., tag-less) change.
+    C) When the changes are associated with an anonymous (i.e., tag-less) edit.
 
 C) Is a special case that will likely be excluded in future implementations.
 For now it is treated as a special case of A).
 
 Note that #1 is special in that A) never applies to is (since it is the root).
 Similarly #4 is special in that B) never applies to it (since it only ever represents the change in value prescribed by a single revision).
+
+The above rules mean that, unless a change was contributed by an anonymous edit, at least one populated `revision` field should be encountered when walking down from the root to any given portion of a changeset.
+The above rules do not prescribe that exactly one populated `revision` field will be encountered,
+so any logic based on the above must give precedence to lower (i.e., higher tree depth) revision information.
 
 ### Revision Info During Operations
 
