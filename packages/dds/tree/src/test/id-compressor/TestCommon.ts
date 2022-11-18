@@ -3,20 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { strict as assert } from "assert";
 
 /**
  * Check if the given value is defined using mocha's `expect`. Return the defined value;
  */
 export function expectDefined<T>(value: T | undefined): T {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    expect(value).to.be.not.undefined;
+    assert.notStrictEqual(value, undefined);
     return value as T;
-}
-
-/**
- * Expects `condition` and applies a type assertion.
- */
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-    expect(condition, message);
 }
