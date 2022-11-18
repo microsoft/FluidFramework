@@ -31,8 +31,9 @@ describe("Debugger Browser Extension tests", () => {
 			dynamicObjectTypes: [SharedCounter],
 		});
 
-		document.body.innerHTML = `<div id="test">test</div>`;
 		initializeFluidClientDebugger(containerInfo);
+
+		document.body.innerHTML = `<div id="test">test</div>`;
 	});
 
 	afterEach(() => {
