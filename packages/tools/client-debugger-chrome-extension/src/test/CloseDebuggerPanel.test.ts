@@ -2,24 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { closeDebuggerPanel } from "../CloseDebuggerPanel";
+import { openDebuggerPanel } from "../OpenDebuggerPanel";
 import { isDebuggerPanelOpen } from "../Utilities";
 
 describe("CloseDebuggerPanelScript tests", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		document.body.innerHTML = `<div id="test">test</div>`;
 
 		// Launch debugger panel
-		// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports
-		require("../OpenDebuggerPanelScript");
+		await openDebuggerPanel();
 	});
 
-	it("Verify that debugger panel is removed by script", () => {
+	it("Verify that debugger panel is removed by script", async () => {
 		// Verify that the panel is live
 		expect(isDebuggerPanelOpen()).toBe(true);
 
 		// Execute script
-		// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports
-		require("../CloseDebuggerPanelScript");
+		await closeDebuggerPanel();
 
 		// Verify that the panel has been removed
 		expect(isDebuggerPanelOpen()).toBe(false);
