@@ -440,7 +440,8 @@ export class DataStores implements IDisposable {
                 pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
             }, error);
-            // Throw for all clients except summarizer clients
+            // The summarizer should always succeed in summarization as we always want a way to recover from a bad
+            // state.
             if (this.runtime.clientDetails.type !== summarizerClientType) {
                 throw error;
             }

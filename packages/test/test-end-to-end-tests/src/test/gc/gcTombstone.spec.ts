@@ -164,6 +164,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         };
 
         let opCount = 0;
+        // Sends a unique op that's guaranteed to change the DDS for this specific container.
+        // This can also be used to transition a client to write mode.
         const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
             const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
             defaultDataObject._root.set("send a", `op ${opCount++}`);

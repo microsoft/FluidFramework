@@ -775,7 +775,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
-            // Throw for all clients except summarizer clients
+            // The summarizer should always succeed in summarization as we always want a way to recover from a bad
+            // state.
             if (this.clientDetails.type !== summarizerClientType) {
                 throw error;
             }
