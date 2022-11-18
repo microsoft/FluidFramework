@@ -10,7 +10,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
@@ -1184,7 +1183,7 @@ export class SimpleDependee implements Dependee {
 }
 
 // @public
-export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous;
+export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
 // @public (undocumented)
 type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;

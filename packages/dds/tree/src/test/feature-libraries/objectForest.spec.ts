@@ -315,7 +315,7 @@ function testForest(
             return cursor;
         },
         jsonableTreeFromCursor,
-        false,
+        true,
     );
 
     // TODO: implement and test fine grained invalidation.
