@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorType, IErrorBase } from "@fluidframework/container-definitions";
 import {
     ContainerMessageType,
 } from "@fluidframework/container-runtime";
@@ -367,7 +367,10 @@ describe("TinyliciousClient", () => {
      */
      it.only("disconnects with a reason", async () => {
         const { container } = await tinyliciousClient.createContainer(schema);
-        container.on("disconnected", (reason: string) => console.log(`disconnected from TinyliciousClientTest: ${reason}`));
+        container.on("disconnected", (reason: string) =>
+            console.log(`disconnected from TinyliciousClientTest: ${reason}`));
+        container.on("disposed", (reason?: IErrorBase) =>
+            console.log(`disposed from TinyliciousClientTest: ${reason}`));
         await container.attach();
         console.log("container attached");
         await timeoutPromise((resolve) => container.once("connected", resolve));
@@ -378,6 +381,9 @@ describe("TinyliciousClient", () => {
             errorMsg: "container connect() timeout",
         });
         container.disconnect();
+        console.log("disconnect");
+        container.dispose();
+        console.log("dispose");
         console.log("timeout");
     });
 });
