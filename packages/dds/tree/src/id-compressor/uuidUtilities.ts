@@ -31,7 +31,7 @@ export const nilUuid = assertIsUuidString(NIL);
  * Asserts that the given string is a UUID
  */
 export function assertIsUuidString(uuidString: string): UuidString {
-    assert(isUuidString(uuidString), `${uuidString} is not an UuidString`);
+    assert(isUuidString(uuidString), `Expected an UuidString`);
     return uuidString;
 }
 
