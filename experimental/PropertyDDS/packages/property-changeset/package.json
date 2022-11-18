@@ -69,7 +69,6 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluid-experimental/property-changeset-previous": "npm:@fluid-experimental/property-changeset@2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@rushstack/eslint-config": "^2.5.1",
@@ -89,7 +88,8 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
     "broken": {}
   }
 }
