@@ -5,7 +5,8 @@
 
 import {
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+    IPatchRefParamsExternal
+} from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";

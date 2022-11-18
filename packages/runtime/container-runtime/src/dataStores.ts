@@ -34,6 +34,7 @@ import {
     create404Response,
     createResponseError,
     responseToException,
+    packagePathToTelemetryProperty,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -429,14 +430,16 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
+            const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.logger.sendErrorEvent({
-                eventName: "TombstonedDataStoreRequested",
+                eventName: "GC_Tombstone_DataStore_Requested",
                 url: request.url,
+                pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
-            });
+            }, error);
             // The requested data store is removed by gc. Throw a 404 gc response exception.
-            throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+            throw error;
         }
 
         return context;
@@ -612,7 +615,7 @@ export class DataStores implements IDisposable {
 
             // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
             const dataStore = this.contexts.get(id);
-            assert(dataStore !== undefined, "No data store retrieved with specified id");
+            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
             dataStore.setTombstone(false /* tombstone */);
         }
 
@@ -623,12 +626,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
-     * scenarios with accessing deleted content.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - set the objects corresponding to routes as tombstones.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data

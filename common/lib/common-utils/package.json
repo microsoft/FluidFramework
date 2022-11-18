@@ -53,8 +53,8 @@
     "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:report": "nyc npm run test:mocha:report && npm run test:jest:report",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
   },
   "nyc": {
     "all": true,
@@ -87,7 +87,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.5.0",
+    "@fluidframework/build-tools": "^0.6.0-109663",
     "@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -118,12 +118,19 @@
     "ts-node": "^7.0.1",
     "typescript": "~4.5.5"
   },
+  "fluidBuild": {
+    "branchReleaseTypes": {
+      "main": "minor",
+      "release/**": "patch"
+    }
+  },
   "jest-junit": {
     "outputDirectory": "nyc",
     "outputName": "jest-junit-report.xml"
   },
   "typeValidation": {
     "version": "1.1.0",
+    "baselineRange": "1.0.0",
     "broken": {}
   }
 }

@@ -20,20 +20,13 @@ export type ObjectMark<TNodeChange = NodeChangeType> =
 export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
-    | Tomb
     | Modify<TNodeChange>
     | Detach
     | ModifyDetach<TNodeChange>;
 
-export interface Tomb {
-    type: "Tomb";
-    change: ChangesetTag;
-    count: number;
-}
-
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     changes: TNodeChange;
 }
 
@@ -117,25 +110,38 @@ export type Attach<TNodeChange = NodeChangeType> =
 export type NodeMark = Detach;
 
 export interface Detach extends HasOpId {
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     type: "Delete" | "MoveOut";
     count: NodeCount;
 }
 
 export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
     type: "MDelete" | "MMoveOut";
-    tomb?: ChangesetTag;
+    tomb?: RevisionTag;
     changes: TNodeChange;
 }
 
-export interface Reattach extends HasOpId, HasPlaceFields {
+export interface HasReattachFields extends HasOpId, HasPlaceFields {
+    /**
+     * The tag of the change that detached the data being reattached.
+     *
+     * Undefined when the reattach is the product of a tag-less change being inverted.
+     * It is invalid to try convert such a reattach mark to a delta.
+     */
+    detachedBy: RevisionTag | undefined;
+    /**
+     * The original field index of the detached node(s).
+     * "Original" here means before the change that detached them was applied.
+     */
+    detachIndex: number;
+}
+
+export interface Reattach extends HasReattachFields {
     type: "Revive" | "Return";
-    tomb: ChangesetTag;
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields {
     type: "MRevive" | "MReturn";
-    tomb: ChangesetTag;
     changes: TNodeChange;
 }
 
@@ -150,11 +156,11 @@ export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, H
  */
 export interface Tombstones {
     count: NodeCount;
-    change: ChangesetTag;
+    change: RevisionTag;
 }
 
 export interface PriorOp {
-    change: ChangesetTag;
+    change: RevisionTag;
     id: OpId;
 }
 
@@ -200,7 +206,6 @@ export type ProtoNode = JsonableTree;
 export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
-export type ChangesetTag = number | string;
 export type ClientId = number;
 export enum Tiebreak {
     Left,
