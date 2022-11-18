@@ -43,6 +43,8 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         const ds1 = await requestFluidObject<ITestDataObject>(aliasableDataStore1, "");
 
         (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+        // yield a turn to ensure we get flush the attach op
+        await new Promise<void>((resolve) => setTimeout(resolve));
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
