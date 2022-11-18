@@ -237,9 +237,6 @@ function AppView(props: AppViewProps): React.ReactElement {
 
 	return (
 		<Stack horizontal className={rootStackStyles}>
-			<StackItem className={debuggerViewPaneStackStyles}>
-				<FluidClientDebugger containerId={containerId} />
-			</StackItem>
 			<StackItem className={appViewPaneStackStyles}>
 				<Stack>
 					<StackItem>
@@ -249,6 +246,9 @@ function AppView(props: AppViewProps): React.ReactElement {
 						<TextView sharedTextHandle={sharedTextHandle} />
 					</StackItem>
 				</Stack>
+			</StackItem>
+			<StackItem className={debuggerViewPaneStackStyles}>
+				<FluidClientDebugger containerId={containerId} />
 			</StackItem>
 		</Stack>
 	);
