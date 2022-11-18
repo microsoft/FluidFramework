@@ -42,8 +42,8 @@ import {
     makeOpGenerator,
     attributionIds,
     generateCompressedIds,
-} from "./IdCompressorTestUtilities";
-import { expectDefined } from "./TestCommon";
+} from "./idCompressorTestUtilities";
+import { expectDefined } from "./testCommon";
 
 describe("IdCompressor", () => {
     it("detects invalid cluster sizes", () => {

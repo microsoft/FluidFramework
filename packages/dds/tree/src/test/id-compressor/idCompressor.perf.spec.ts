@@ -32,7 +32,7 @@ import {
     performFuzzActions,
     sessionIds,
     TestIdData,
-} from "./IdCompressorTestUtilities";
+} from "./idCompressorTestUtilities";
 
 describe("IdCompressor Perf", () => {
     const type = BenchmarkType.Measurement;

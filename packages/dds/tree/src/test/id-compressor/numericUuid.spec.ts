@@ -20,7 +20,7 @@ import {
     isStableId,
 } from "../../id-compressor";
 import { compareStrings } from "../../util";
-import { integerToStableId } from "./IdCompressorTestUtilities";
+import { integerToStableId } from "./idCompressorTestUtilities";
 
 describe("NumericUuid", () => {
     it("can detect non-v4 variant 2 UUIDs", () => {

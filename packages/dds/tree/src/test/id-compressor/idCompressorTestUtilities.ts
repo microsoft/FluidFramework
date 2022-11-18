@@ -41,7 +41,7 @@ import type {
     SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
 import { fail, getOrCreate } from "../../util";
-import { expectDefined } from "./TestCommon";
+import { expectDefined } from "./testCommon";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key
