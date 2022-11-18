@@ -55,7 +55,6 @@
     "@fluid-experimental/property-binder": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-dds": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/property-inspector-table-previous": "npm:@fluid-experimental/property-inspector-table@2.0.0-internal.2.0.0",
     "@fluid-experimental/property-properties": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-proxy": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
@@ -118,7 +117,8 @@
     "outputName": "jest-junit-report.xml"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
     "broken": {}
   }
 }
