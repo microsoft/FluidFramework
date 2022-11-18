@@ -20,7 +20,7 @@
 		"build:genver": "gen-version",
 		"build:tsc": "npm run tsc",
 		"build:webpack": "npm run webpack",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -33,7 +33,8 @@
 		"prettier:fix": "prettier --write .",
 		"start:tinylicious": "tinylicious",
 		"test": "start-server-and-test start:tinylicious 7070 test:jest",
-		"test:jest": "jest --verbose",
+    "test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:jest": "jest",
 		"tsc": "tsc --pretty",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
