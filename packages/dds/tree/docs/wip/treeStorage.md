@@ -1,28 +1,28 @@
 # Fluid DDS Storage: Virtualization and Incrementality
 
-> Note: Items in a `code block` are elaborated upon in the Glossary at the end of this document. Items in a blockquote (such as the text you are reading right now) provide helpful context but are not strictly necessary to understand a topic.
+> Note: Many terms link to the  [Glossary](#glossary) at the end of this document the first time that they are introduced. Items in a blockquote (such as the text you are reading right now) provide helpful context but are not strictly necessary to understand a topic.
 
 ## Overview
 
-This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). The SharedTree DDS (currently in development) is an example of a DDS that has this requirement. This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS.
+This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). The SharedTree DDS (currently in development) is an example of a DDS that has this requirement. This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS. Ideally, these would be introduced at the container level and provided as a service that any DDS can use rather than being exclusive to a single DDS (like SharedTree).
 
 ## Virtualization and Incrementality
 
-Existing Fluid DDSs generally assume that their documents will fit entirely in a client's memory. This document does not make this assumption and introduces additional techniques for reading and writing data to storage, namely, the ability to page in `virtualized` portions of the document and upload portions of the document `incrementally`. In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading to storage only the part of the document that it has in memory.
+Existing Fluid DDSs generally assume that their documents will fit entirely in a client's memory. This document does not make this assumption and introduces additional techniques for reading and writing data to storage, namely, the ability to page in [virtualized](#glossary) portions of the document and upload portions of the document [incrementally](#glossary). In this way, only some subset of the document that the client wishes to inspect and which fits in its memory need be available at any point in time. This subset might change as the client inspects different parts of the tree; old data which it no longer cares about is paged out necessarily as it pages in new data. Likewise, a client can update the document one piece at a time by uploading to storage only the part of the document that it has in memory.
 
 > As presented above, the amount of the document that a client can view at once is limited by a client machine's memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
 
 Allowing for partial downloads of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only part of the tree, it needs that data locally available.
 
-> The downloaded region of the tree is always strictly within a client's `partial checkout`. A partial checkout is a client's "working space" restricted to some particular region of the tree. It is sanctioned by the server; the server knows that the client is restricted to activity in that area. The server can therefore enforce that the client downloads content in that area exclusively, and the server can filter the ops that it delivers to that client to be only the ones relevant to that area. This can provide the server a way to enforce permission boundaries for different parts of the tree as well as provide improved efficiency for clients since they will receive fewer ops. The implementation of partial checkouts itself is outside the scope of this document, but this document will provide the fundamental building blocks for such an implementation.
+> The downloaded region of the tree is always strictly within a client's [partial checkout](#glossary). A partial checkout is a client's "working space" restricted to some particular region of the tree. It is sanctioned by the server; the server knows that the client is restricted to activity in that area. The server can therefore enforce that the client downloads content in that area exclusively, and the server can filter the ops that it delivers to that client to be only the ones relevant to that area. This can provide the server a way to enforce permission boundaries for different parts of the tree as well as provide improved efficiency for clients since they will receive fewer ops. The implementation of partial checkouts itself is outside the scope of this document, but this document will provide the fundamental building blocks for such an implementation.
 
 ## Blobs and Chunks
 
-In order to allow virtualization and incremental writes, the DDS splits the tree into contiguous regions of nodes called `chunks`. Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded lazily and on demand.
+In order to allow virtualization and incremental writes, the DDS splits the tree into contiguous regions of nodes called [chunks](#glossary). Chunks are the smallest units of tree that can be individually read from storage or written to storage. At the storage layer, chunks are stored in [blobs](#glossary) which are uploaded to the storage service. The Fluid runtime provides two kinds of blobs: summary blobs and attachment blobs. This document doesn't prefer one or the other, so long as a blob can be downloaded lazily and on demand.
 
 > The size of each chunk is not _necessarily_ related to the size of a blob; multiple chunks could go into a blob, for example. But in practice, having the chunk size mimic the blob size and storing each chunk in its own blob simplifies the architecture.
 
-The responsibility of dividing the tree into chunks is given to a `chunking algorithm`. A chunking algorithm might split a tree into something like the following:
+The responsibility of dividing the tree into chunks is given to a [chunking algorithm](#glossary). A chunking algorithm might split a tree into something like the following:
 
 ```mermaid
 graph TD;
@@ -93,13 +93,13 @@ The folowing sections will examine some of the general properties of this "chunk
 
 ### Immutability
 
-Except where stated otherwise, this document assumes that blobs are immmutable and `content-addressable`. This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
+Except where stated otherwise, this document assumes that blobs are immmutable and [content-addressable](#glossary). This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
 
-Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire `spine` of the tree above any edited node must be replaced for each edit.
+Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire [spine](#glossary) of the tree above any edited node must be replaced for each edit.
 
 ### Copy-On-Write History
 
-This necessity of this spine replacement has a useful side effect: it makes it very simple to keep track of `revisions` of the tree over time, i.e. the tree's `history`. Consider a tree made up of five chunks:
+The need for "spine replacement" has a useful side effect: it makes it very simple to keep track of [revisions](#glossary) of the tree over time, i.e. [history](#glossary)s [history](#glossary). Consider a tree made up of five chunks:
 
 ```mermaid
 graph TD;
@@ -135,7 +135,7 @@ graph TD;
     end
 ```
 
-Next, the client `edits` Chunk D, resulting in the replacement of A', C, and D to form revision 2:
+Next, the client [edits](#glossary) Chunk D, resulting in the replacement of A', C, and D to form revision 2:
 
 ```mermaid
 graph TD;
@@ -165,7 +165,7 @@ Revision | Root Chunk Key
 2        | A''
 ...      | ...
 
-This forms a `copy-on-write` data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for creating a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing `snapshot isolation` because the tree reader does not have to worry about edits from other clients or its own concurrent edits affecting its view.
+This forms a [copy-on-write](#glossary) data structure. Each revision of the tree shares unchanged blobs with the previous revision and incurs no cost for creating a new revision except for that of reproducing the blobs that have changed (the spine). Walking down the tree of chunks from a given root always yields a stable view of the state of the tree at that revision, i.e. a chunk tree will never change as a client walks around it. This is a useful property for providing [snapshot isolation](#glossary) because the tree reader does not have to worry about edits from other clients or its own concurrent edits affecting its view.
 
 ### Server-side Blob Retention
 
@@ -183,9 +183,9 @@ The drawback to replacing the spine for every edit is the intense [write amplifi
 
 > The uploads could happen in parallel if a client were able to predict the keys for each new blob ahead of time by running the same hashing algorithm as the server does on the contents of the blob. If the client then sent the key to the server as well as the contents, the key could be used a checksum to verify the integrity of the upload as well as ensure that the correct hashing algorithm was used.
 
-Paying this cost for every edit is a burden for a client desiring high write throughput. The next section will explore how to spread this cost out over multiple edits.
+Paying this cost for every edit is a burden for a client desiring high write throughput. The next section, "[Amortizing Writes](#amortizing-writes)" will explore how to spread this cost out over multiple edits.
 
-> Later, we'll look at how the length of the spine can be minimized, bounding the cumulative size of the uploads. Some different approaches are explored in the "Chunk Data Structure Implementations" section of this document.
+> Later, we'll look at how the length of the spine can be minimized, bounding the cumulative size of the uploads. Some different approaches are explored in [Appendix A](#appendix-a-chunk-data-structure-implementations).
 
 ## Amortizing Writes
 
@@ -193,9 +193,9 @@ Writes to the chunk data structure are expensive. Even in the best case (a small
 
 ### Write-Ahead Log and Intermittent Flushing
 
-Write frequency can be reduced by only uploading modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "`flush`" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
+Write frequency can be reduced by only uploading modified chunks every so often, rather than after every edit. This amortizes the cost of uploading chunks across many writes. Each "[flush](#glossary)" of the chunks to storage uploads the union of all the spines that have changed since the last flush:
 
-```mermaid
+[`](#glossary)mermaid
 graph TD;
     subgraph Union of Changed Spines from Revisions 0-2:
         AU(Chunk A'')
@@ -271,24 +271,24 @@ There are many different options for how the log might be stored. Here are two:
 
 After a flush completes, all clients are notified of the flush and the new chunk root resulting from that flush. They can then update their in-memory copies of the tree, update caches, etc. The flushing itself can be performed by an elected client (e.g. the oldest client, or the result of some other heuristic decided via the Fluid quorum APIs, etc.) which performs a flush periodically, notifying all clients when each flush completes via a special "flush op" that contains the new chunk root. Because flushes happen in the background and take time to complete, care must be taken to ensure that flushes are synchronized correctly in the case where the elected client changes during an ongoing flush. It's possible for two flushes to start concurrently, in which case the second one to finish will be conflicted; if it were to complete, it would incorrectly overwrite data in the first flush. By tagging each flush op with some metadata about when the flush began, clients can know whether it is correct to adopt the state in the flush op (which is the case when _no other flush ops were sequenced in the interim_).
 
-> More precisely, a flush op is valid if and only if there are no other flush ops sequenced between the latest `sequence number` delivered to the client at the start of the flush, and the `sequence number` of the flush op itself. (Conceptually this is the `reference sequence number` of the flush, but it is not to be confused with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
+> More precisely, a flush op is valid if and only if there are no other flush ops sequenced between the latest [sequence number](#glossary) delivered to the client at the start of the flush, and the sequence number of the flush op itself. (Conceptually this is the [reference sequence number](#glossary) of the flush, but it is not to be confused with the reference sequence number of the flush _op_ because the flush begins some time before the flush op is sent). For example, a conflicted scenario might resolve like this:
 > 1. Client A, the elected flushing client, begins a flush. At that time, the latest sequence number delivered to Client A is 10.
 > 2. Client B is elected to be the new flushing client
 > 3. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
-> 4. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both **15**.
-> 5. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number **10** (_not_ **15**).
-> 6. The server sequences Client A's flush op with sequence number **16**.
-> 7. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number **10**.
-> 8. The server sequences Client B's flush op with sequence number **17**.
-> 9. Client A receives the op with sequence number **16** which is its flush op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
-> 10. Client B receives the op with sequence number **16** which is Client A's flush op. Like Client A, it acknowledges the new chunk state. However, Client B also now knows that the flush it attempted earlier is conflicted, because the flush op from Client A was sequenced before it. It decides to begin a new flush based off of the new state.
-> 11. Both Client A and Client B receive the op with sequence number **17**, which is Client B's flush op. They both recognize that the flush is conflicted, because the reference sequence number it included is **10**, but there has been another flush op (Client A's, at **16**) sequenced between **10** and the current sequence number **17**. This makes it evident that Client B's flush started before it knew about the most recent flush op from Client A, so both Client A and Client B ignore the op.
+> 4. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both `15`.
+> 5. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number `10` (_not_ `15`).
+> 6. The server sequences Client A's flush op with sequence number `16`.
+> 7. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number `10`.
+> 8. The server sequences Client B's flush op with sequence number `17`.
+> 9. Client A receives the op with sequence number `16` which is its flush op. It acknowledges the new chunk state, updating its caches and evicting edits from its log that are now unnecessary.
+> 10. Client B receives the op with sequence number `16` which is Client A's flush op. Like Client A, it acknowledges the new chunk state. However, Client B also now knows that the flush it attempted earlier is conflicted, because the flush op from Client A was sequenced before it. It decides to begin a new flush based off of the new state.
+> 11. Both Client A and Client B receive the op with sequence number `17`, which is Client B's flush op. They both recognize that the flush is conflicted, because the reference sequence number it included is `10`, but there has been another flush op (Client A's, at `16`) sequenced between `10` and the current sequence number `17`. This makes it evident that Client B's flush started before it knew about the most recent flush op from Client A, so both Client A and Client B ignore the op.
 
 ## Random Reads
 
 The performance of cold reads is analogous to that of flushes. Given only the root chunk of a tree, reading a leaf of that tree requires walking down to the leaf and downloading all chunks along the way (once again, the spine).
 
-However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the `path` from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a `random read`: a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout can be a random read if it doesn't care about its ancestry. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations introduced in the sections below which reduce the cost of a random read, especially in deep trees.
+However, a client wanting to read a particular node might not have any interest in reading the nodes above it. It knows the [path](#glossary) from the root node to a target node in the tree and wants to read only the node at the end of that path. This is called a [random read](#glossary): a read that has no necessary relationship to any read before it. For a practical example of a random read, consider an application that allows saving "bookmarks" or "links" to content somewhere in the tree which can be easily dereferenced later to access that content. Or, note that the first read of a partial checkout can be a random read if it doesn't care about its ancestry. Random reads also give applications more architectural freedom as unrelated components can use paths to query different parts of the tree without having to pass around the root of the tree or the root of a subtree to all components. However, such a read still requires downloading the whole spine of chunks above the target node in order to find it. These downloads cannot be done in parallel; each chunk must finish downloading in order to find the keys of the chunks below it. A client could easily implement a "random" read function itself that simply walks down the tree. However, providing a random read API as a built-in function will allow it to take advantage of the optimizations detailed in [Appendix A](#appendix-a-chunk-data-structure-implementations) which reduce the cost of a random read, especially in deep trees.
 
 ## Tree Shapes
 
@@ -372,21 +372,37 @@ graph TD;
     end
 ```
 
-Although the layout of these chunks is theoretically valid, there are now 10,000 chunks underneath Chunk P. It may be the case that Chunk P doesn't have enough space to hold all the keys of those 10,000 children. A chunking algorithm isn't able to satisfy the requirements for the chunk size without doing something special for this case. There are many different ways to solve this. One is to arrange the child chunks underneath the parent chunk in a data structure (which is also divided into chunks) that provides efficient access to a child chunk given the index of a child node. The next section, "Optimizing Tree Shapes" will explore such a structure, the "Sequence Tree".
+Although the layout of these chunks is theoretically valid, there are now 10,000 chunks underneath Chunk P. It may be the case that Chunk P doesn't have enough space to hold all the keys of those 10,000 children. A chunking algorithm isn't able to satisfy the requirements for the chunk size without doing something special for this case. There are many different ways to solve this. One is to arrange the child chunks underneath the parent chunk in a data structure (which is also divided into chunks) that provides efficient access to a child chunk given the index of a child node. [Appendix A](#appendix-a-chunk-data-structure-implementations) details such a structure, the ["Sequence Tree"](#sequence-tree).
 
-Clearly, the tree's shape alone can have a significant effect on both read and write performance. The maximum length of the spine of chunks for a node is the depth of the node divided by the smallest height of a chunk (which is a constant). In the worst case (leaf nodes), this means a spine of length **D** where **D** is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, **N**, it's also **N**, because nothing can be assumed about the shape of the tree (in the worst case it is the "`deepest tree`" where the depth equals the number of nodes). So flushing even just a single spine requires **O(N)** uploads for **N** nodes in the tree.
+Clearly, the tree's shape alone can have a significant effect on both read and write performance. The maximum length of the spine of chunks for a node is the depth of the node divided by the smallest height of a chunk (which is a constant). In the worst case (leaf nodes), this means a spine of length `D` where `D` is the depth of the tree (all chunks might have a depth of just one node). In terms of the number of nodes in the tree, `N`, it's also `N`, because nothing can be assumed about the shape of the tree (in the worst case it is the "[deepest tree](#glossary)" where the depth equals the number of nodes). So flushing even just a single spine requires `O(N)` uploads for `N` nodes in the tree.
 
 ### Optimizing Tree Shapes
 
-So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is **O(N)**. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. The next section will explore some ways of organizing the chunks such that both reads and writes can be bounded to **O(log(D))**/**O(log(N))** for any shape of tree.
+So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(D))`/`O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
 
-## Chunk Data Structure Implementations
+## Generalization
 
-Below are detailed a couple of examples of "chunk data structures": data structures which contain the chunks of a `logical tree`.
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
+
+* A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store as the client modifies the tree.
+* A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described [Appendix A](#appendix-a-chunk-data-structure-implementations)) in order to give the necessary flexibility for custom chunking.
+* A canonical (but optional) way to store and query the history of a DDS as a series of revisions. This would be virtualized for efficient access.
+
+This could be implemented by sharing a single storage tree among all DDSs where each DDS owns a specific subtree. If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
+
+* All DDSs would scale with large data sets, and therefore the entire container would scale with large data sets
+* The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSs in the container.
+* This would be a big step towards offering container-level history
+
+Such a service would reshape the summarization API as well. Rather than producing a summary tree every so often, a DDS would be asked to flush any sequenced data that has not yet been committed to storage every so often. Or, perhaps the DDS could use the storage writing APIs at any point in time; each mutation would contribute to a buffer of storage instructions that would be flushed intermittently behind the scenes.
+
+## Appendix A: Chunk Data Structure Implementations
+
+Below are detailed some examples of chunk data structures. These structures hold the chunks of the [logical tree](#glossary) (the tree of data). This appendix will go some different high-level designs for chunk data structures and note the tradeoffs between them.
 
 ### Simple Chunk Tree
 
-The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. This is the data structure we've been implicitly analyzing so far. It has the poor **O(N)** performance for both reads and writes, but it is simple. To demonstrate, consider the logical tree below. It has been annotated with the edges from parent to child nodes so that the path to each node is visible:
+The simplest chunk data structure is just a tree whose nodes are the chunks of the logical tree. This is the data structure we've been implicitly analyzing so far. It has the poor `O(N)` performance for both reads and writes, but it is simple. To demonstrate, consider the logical tree below. It has been annotated with the edges from parent to child nodes so that the path to each node is visible:
 
 ```mermaid
 graph TD;
@@ -451,7 +467,7 @@ Drawbacks:
 
 ### Sequence Tree
 
-The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most **log(C)** chunks away from the parent chunk, where **C** is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accomodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
+The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most `log(C)` chunks away from the parent chunk, where `C` is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accomodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
 
 A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
 
@@ -469,7 +485,7 @@ graph TD;
     e--2-->h;
 ```
 
-Note that its paths are sortable. For example, they can be sorted lexically to order the nodes as **a**, **b**, **c**, **d**, **e**, **f**, **h**, **h**, **i** which produces an in-order traversal of the tree.
+Note that its paths are sortable. For example, they can be sorted lexically to order the nodes as `a`, `b`, `c`, `d`, `e`, `f`, `h`, `h`, `i` which produces an in-order traversal of the tree.
 
  Node | Path
 ------|-----
@@ -531,7 +547,7 @@ B          | [a, b, c]
 C          | [d, e, f]
 D          | [g, h, i]
 
-With this approach, the unbalanced logical tree has been organized into a tree of chunks that guarantee at most **O(log(N))** uploads/downloads per write/read, because B-trees by definition remain balanced. Even in this small example, the advantage over the "Simple Chunk Tree" in the previous section is clear; the spine to a leaf chunk in the Path-Based B-Tree is only two chunks long, whereas in the Simple Chunk Tree it is three. These differences become more dramatic as the tree gets deeper.
+With this approach, the unbalanced logical tree has been organized into a tree of chunks that guarantee at most `O(log(N))` uploads/downloads per write/read, because B-trees by definition remain balanced. Even in this small example, the advantage over the [Simple Chunk Tree](#simple-chunk-tree) is clear; the spine to a leaf chunk in the Path-Based B-Tree is only two chunks long, whereas in the Simple Chunk Tree it is three. These differences become more dramatic as the tree gets deeper.
 
 > The path-based B-tree in this example has more total chunks than the simple chunk tree (four vs. three) and therefore requires more storage. However, that overhead also scales logarithmically and becomes fairly negligible for trees with large branching factors.
 
@@ -539,14 +555,14 @@ With this approach, the unbalanced logical tree has been organized into a tree o
 
 Advantages:
 
-* The lookup of any node by path requires at most **O(log(n))** chunk downloads.
-* Editing a node requires at most **log(n)** chunk uploads.
+* The lookup of any node by path requires at most `O(log(n))` chunk downloads.
+* Editing a node requires at most `log(n)` chunk uploads.
 * The scheme is conceptually simple and it's straightforward to break the tree into chunks. There is no structural/shape analysis of the tree required to figure out the chunk boundaries, i.e. it doesn't need a special chunking algorithm at all; the "chunking algorithm" is just the B-tree algorithm.
 * A suboptimal implementation could use an off-the-shelf B-tree library for quick prototyping. However, a production implementation would very likely want optimizations which necessitate a custom B-Tree implementation (see Potential Optimizations below).
 
 Drawbacks:
 
-* The chunking process is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the `logical tree`. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
+* The chunking process is inflexible. Traversing trees of certain shapes will require jumping around to different parts of the B-tree even when traversing nodes that are adjacent in the logical tree. There is no sort order or chunk size that can guarantee good locality for all regions of a tree of arbitrary shape. Accessing any node in the tree is an asynchronous operation because any part of the logical tree might belong to a chunk that has not yet been downloaded.
 * The implementation is significantly more complicated than the Simple Chunk Tree.
 
 Potential Optimizations:
@@ -556,7 +572,7 @@ Potential Optimizations:
 
 ### SPICE Tree
 
-The Spatially Partitioned, Ideally Chunked Entity tree allows the logical tree to be chunked arbitrarily by a chunking algorithm. It then organizes those chunks within multiple trees of varying detail that give the same asymptotics for reads and writes as the path-based B-tree (**O(log(N))**). More specifically, the SPICE tree takes a large tree of nodes and breaks it into chunks; then, it takes the resulting tree of chunks and breaks _it_ into chunks, and repeats this process until there is only one chunk. Consider a tree of nodes:
+The Spatially Partitioned, Ideally Chunked Entity tree allows the logical tree to be chunked arbitrarily by a chunking algorithm. It then organizes those chunks within multiple trees of varying detail that give the same asymptotics for reads and writes as the path-based B-tree (`O(log(N))`). More specifically, the SPICE tree takes a large tree of nodes and breaks it into chunks; then, it takes the resulting tree of chunks and breaks _it_ into chunks, and repeats this process until there is only one chunk. Consider a tree of nodes:
 
 ```mermaid
 graph TD;
@@ -746,36 +762,20 @@ S     | ""
 
 In this way, the SPICE tree creates a ["level of detail"](https://en.wikipedia.org/wiki/Level_of_detail_(computer_graphics)) structure, which can be "zoomed into" selectively to find certain items, analogous to the way one finds data in something like a [quad tree](https://en.wikipedia.org/wiki/Quadtree). After this process, the only piece of state required for the tree to be fully queryable is the root chunk _S_ since all other chunks and nodes are contained "within" it.
 
-The path labels on each chunk are important, because they represent a common prefix shared by the paths of all nodes contained in that chunk (or all nodes contained in chunks with that chunk, etc.). A lookup operation that starts at the root knows into which chunk to descend by examining the labels and traversing those which match the target path. For example, suppose a query is made for node _p_ via its path `1/0/0/0`. The query downloads _S_, as it is the only chunk, and discovers in its contents the root chunk of the next layer, _N_. _N_ has four children with labels `0/0`, `0/1`, `1/0` and `1/1`. The path to _p_, `1/0/0/0` begins with **1/0**, so the query follows that edge to get _Q_, which it then downloads. _Q_ contains as its root _H_, which has two children with labels `0/0` and `1/0`. The query follows the next part of the path, `0/0` (the first half of the path, `1/0`, was consumed when going from _N_ to _Q_) to arrive at _I_. It then downloads _I_ and inside finds _p_ as the root node. Since there is no more path to consume, the query has arrived at its target node.
+The path labels on each chunk are important, because they represent a common prefix shared by the paths of all nodes contained in that chunk (or all nodes contained in chunks with that chunk, etc.). A lookup operation that starts at the root knows into which chunk to descend by examining the labels and traversing those which match the target path. For example, suppose a query is made for node _p_ via its path `1/0/0/0`. The query downloads _S_, as it is the only chunk, and discovers in its contents the root chunk of the next layer, _N_. _N_ has four children with labels `0/0`, `0/1`, `1/0` and `1/1`. The path to _p_, `1/0/0/0` begins with `1/0`, so the query follows that edge to get _Q_, which it then downloads. _Q_ contains as its root _H_, which has two children with labels `0/0` and `1/0`. The query follows the next part of the path, `0/0` (the first half of the path, `1/0`, was consumed when going from _N_ to _Q_) to arrive at _I_. It then downloads _I_ and inside finds _p_ as the root node. Since there is no more path to consume, the query has arrived at its target node.
 
-A lookup of any node requires traversing through the "layers of chunks" in this way and will cause as many downloads as there are layers. Each layer differs in size from the previous layer by some (roughly) constant factor, and therefore the number of layers (and downloads) is logarithmic with respect to the size of the tree. So a SPICE tree's spines contain **O(log(N))** chunks, just like the path-based B-tree, and the implications for uploads and downloads is the same.
+A lookup of any node requires traversing through the "layers of chunks" in this way and will cause as many downloads as there are layers. Each layer differs in size from the previous layer by some (roughly) constant factor, and therefore the number of layers (and downloads) is logarithmic with respect to the size of the tree. So a SPICE tree's spines contain `O(log(N))` chunks, just like the path-based B-tree, and the implications for uploads and downloads is the same.
 
 ----
 
 Advantages:
 
-* Has the performance of the path based B-tree (**O(log(N))** uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking alogrithm and hinted at by schema).
+* Has the performance of the path based B-tree (`O(log(N))` uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking alogrithm and hinted at by schema).
 * Automatically handles the "many-children-under-one-node" scenario. There is no need for a Sequence Tree explicitly, because long sequences of nodes will be progressively chunked into a B-Tree like structure by the same algorithm that SPICE tree uses for the rest of the tree.
 
 Drawbacks:
 
-* The implementation is significantly more complicated than the Simple Chunk Tree.
-
-## Generalization
-
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
-
-* A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store as the client modifies the tree.
-* A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described in the "Chunk Data Structure Implementations" section) in order to give the necessary flexibility for custom chunking.
-* A canonical (but optional) way to store and query the history of a DDS as a series of revisions. This would be virtualized for efficient access.
-
-This could be implemented by sharing a single storage tree among all DDSs where each DDS owns a specific subtree. If all Fluid DDSs were to adopt this service as their primary means of storing data, then this would provide some powerful benefits at the container level:
-
-* All DDSs would scale with large data sets, and therefore the entire container would scale with large data sets
-* The service could track the revisions of the container itself, rather than just the revisions of each DDS individually. This could provide snapshot isolation at the container level, meaning that any transaction could view a consistent tree of state for its lifetime regardless of the activity of the other DDSs in the container.
-* This would be a big step towards offering container-level history
-
-Such a service would reshape the summarization API as well. Rather than producing a summary tree every so often, a DDS would be asked to flush any sequenced data that has not yet been committed to storage every so often. Or, perhaps the DDS could use the storage writing APIs at any point in time; each mutation would contribute to a buffer of storage instructions that would be flushed intermittently behind the scenes.
+* The implementation is more complicated than the Simple Chunk Tree.
 
 ## Glossary
 
