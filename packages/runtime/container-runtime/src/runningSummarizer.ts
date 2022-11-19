@@ -99,10 +99,8 @@ export class RunningSummarizer implements IDisposable {
         heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
         // Start heuristics
-        if (heuristicData.numRuntimeOps > 0 || this.nonRuntimeOpCanTriggerSummary(configuration, heuristicData)) {
-            summarizer.heuristicRunner?.start();
-            summarizer.heuristicRunner?.run();
-        }
+        summarizer.heuristicRunner?.start();
+        summarizer.heuristicRunner?.run();
 
         return summarizer;
     }
@@ -276,20 +274,16 @@ export class RunningSummarizer implements IDisposable {
             case MessageType.SummaryNack:
                 return false;
             default:
-                return isRuntimeMessage(op)
-                    || RunningSummarizer.nonRuntimeOpCanTriggerSummary(this.configuration, this.heuristicData);
+                return isRuntimeMessage(op) || this.nonRuntimeOpCanTriggerSummary();
         }
     }
 
-    private static nonRuntimeOpCanTriggerSummary(
-        config: ISummaryConfiguration,
-        heuristicData: ISummarizeHeuristicData,
-    ): boolean {
+    private nonRuntimeOpCanTriggerSummary(): boolean {
         // eslint-disable-next-line max-len
-        const opsSinceLastAck = heuristicData.lastOpSequenceNumber - heuristicData.lastSuccessfulSummary.refSequenceNumber;
-        return config.state === "enabled"
-            && (config.nonRuntimeHeuristicThreshold === undefined
-                || config.nonRuntimeHeuristicThreshold <= opsSinceLastAck);
+        const opsSinceLastAck = this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
+        return this.configuration.state === "enabled"
+            && (this.configuration.nonRuntimeHeuristicThreshold === undefined
+                || this.configuration.nonRuntimeHeuristicThreshold <= opsSinceLastAck);
     }
 
     public async waitStop(allowLastSummary: boolean): Promise<void> {

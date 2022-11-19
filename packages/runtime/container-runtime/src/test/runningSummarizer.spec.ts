@@ -471,22 +471,26 @@ describe("Runtime", () => {
                 });
 
                 it("Should not summarize on non-runtime op before threshold is reached", async () => {
-                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
-                    assert.strictEqual(heuristicData.numNonRuntimeOps, 0);
+                    // Creating RunningSummarizer starts heuristics automatically
+                    await emitNoOp(1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+                    assertRunCounts(1, 0, 0, "should perform summary");
+                    await emitAck();
+
                     assert(summaryConfig.nonRuntimeHeuristicThreshold !== undefined,
                         "Expect nonRuntimeHeuristicThreshold to be provided");
 
-                    await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 1);
+                    await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 2); // SummaryAck is included
                     await tickAndFlushPromises(summaryConfig.minIdleTime);
 
-                    assertRunCounts(0, 0, 0, "should not perform summary");
+                    assertRunCounts(1, 0, 0, "should not perform summary");
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
                     assert.strictEqual(heuristicData.numNonRuntimeOps, summaryConfig.nonRuntimeHeuristicThreshold - 1);
 
                     await emitNoOp(1);
                     await tickAndFlushPromises(summaryConfig.minIdleTime);
 
-                    assertRunCounts(1, 0, 0, "should perform summary");
+                    assertRunCounts(2, 0, 0, "should perform summary");
                 });
             });
 
