@@ -285,6 +285,8 @@ export class FluidClientDebugger
 		this.audience.off("addMember", this.audienceMemberAddedHandler);
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 
+		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
+
 		this._disposed = true;
 	}
 
@@ -292,7 +294,6 @@ export class FluidClientDebugger
 	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
-		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 		return this._disposed;
 	}
 }
