@@ -72,17 +72,24 @@ describe("deepFreeze", () => {
         });
     });
     it("freezes maps", () => {
-        const inner: any = { c: 2 };
-        const frozen = new Map<number, any>([
+        const innerKey: any = { k: 2 };
+        const innerValue: any = { v: 2 };
+        const frozen = new Map<any, any>([
             [0, 1],
-            [1, inner],
+            [innerKey, innerValue],
         ]);
         deepFreeze(frozen);
         assert.throws(() => {
-            inner.d = 42;
+            innerKey.x = 42;
         });
         assert.throws(() => {
-            inner.c = 42;
+            innerKey.v = 42;
+        });
+        assert.throws(() => {
+            innerValue.x = 42;
+        });
+        assert.throws(() => {
+            innerValue.v = 42;
         });
         assert.throws(() => {
             frozen.set(0, 42);

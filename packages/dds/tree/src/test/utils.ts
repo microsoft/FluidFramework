@@ -43,17 +43,22 @@ const frozenMethod = () => {
 };
 
 export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
-    if (object instanceof Map || object instanceof Set) {
-        for (const value of object.values()) {
+    if (object instanceof Map) {
+        for (const [key, value] of object.entries()) {
+            deepFreeze(key, freezeMethods);
             deepFreeze(value, freezeMethods);
         }
         if (freezeMethods && !Object.isFrozen(object)) {
-            if (object instanceof Map) {
-                object.set = frozenMethod;
-            }
-            if (object instanceof Set) {
-                object.add = frozenMethod;
-            }
+            object.set = frozenMethod;
+            object.delete = frozenMethod;
+            object.clear = frozenMethod;
+        }
+    } else if (object instanceof Set) {
+        for (const key of object.keys()) {
+            deepFreeze(key, freezeMethods);
+        }
+        if (freezeMethods && !Object.isFrozen(object)) {
+            object.add = frozenMethod;
             object.delete = frozenMethod;
             object.clear = frozenMethod;
         }
