@@ -39,13 +39,10 @@ export interface FluidClientDebuggerProps {
     containerId: string;
 }
 
-// @public
+// @internal
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
 
 // @internal
-export function getFluidClientDebuggers(): IFluidClientDebugger[];
-
-// @public
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     closeContainer(): void;
     readonly containerData: Record<string, IFluidLoadable>;
@@ -64,7 +61,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     tryConnectContainer(): void;
 }
 
-// @public
+// @internal
 export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerAttached", listener: () => void): void;
     (event: "containerConnected", listener: (clientId: string) => void): void;

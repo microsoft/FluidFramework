@@ -46,7 +46,7 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 	const existingDebugger = debuggerRegistry.get(containerId);
 	if (existingDebugger !== undefined) {
 		console.warn(
-			`Active debugger registry already contains an entry for container ID "${containerId}". Overriding use existing entry.`,
+			`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
 		);
 		existingDebugger.dispose();
 	}
@@ -54,26 +54,6 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 		containerId,
 		new FluidClientDebugger(containerId, container, containerData),
 	);
-}
-
-/**
- * Adds an externally-created debugger instance to the registry, keyed off of its {@link IFluidClientDebugger.containerId}.
- *
- * @internal
- */
-export function setFluidClientDebugger(clientDebugger: IFluidClientDebugger): void {
-	const debuggerRegistry = getDebuggerRegistry();
-
-	const containerId = clientDebugger.containerId;
-
-	const existingDebugger = debuggerRegistry.get(containerId);
-	if (existingDebugger !== undefined) {
-		console.warn(
-			`Active debugger registry already contains an entry for container ID "${containerId}". Overriding use existing entry.`,
-		);
-		existingDebugger.dispose();
-	}
-	debuggerRegistry.set(containerId, clientDebugger);
 }
 
 /**
@@ -96,7 +76,10 @@ export function closeFluidClientDebugger(containerId: string): void {
 
 /**
  * Gets the registered client debugger associated with the provided Container ID if one is registered.
- * Will return `undefined` if no such debugger is registered.
+ *
+ * @remarks Will return `undefined` if no such debugger is registered.
+ *
+ * @internal
  */
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined {
 	const debuggerRegistry = getDebuggerRegistry();
