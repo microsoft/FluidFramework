@@ -42,6 +42,11 @@ const frozenMethod = () => {
     assert.fail("Object is frozen");
 };
 
+/**
+ * Recursively freezes the given object.
+ * @param object - The object to freeze.
+ * @param freezeMethods - Whether to freeze mutation methods on `Set` and `Map` instances.
+ */
 export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
     if (object instanceof Map) {
         for (const [key, value] of object.entries()) {
