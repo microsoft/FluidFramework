@@ -36,10 +36,10 @@ export interface FluidClientDebuggerProps {
     containerId: string;
 }
 
-// @public
+// @internal
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
 
-// @public
+// @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     closeContainer(): void;
     readonly containerData: Record<string, IFluidLoadable>;
@@ -58,7 +58,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     tryConnectContainer(): void;
 }
 
-// @public
+// @internal
 export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "containerAttached", listener: () => void): void;
     (event: "containerConnected", listener: (clientId: string) => void): void;
@@ -71,7 +71,7 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 // @public
-export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger;
+export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @public
 export interface LogEntry {

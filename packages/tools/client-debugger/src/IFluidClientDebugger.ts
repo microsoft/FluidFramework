@@ -16,6 +16,8 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.
+ *
+ * @internal
  */
 export interface IFluidClientDebuggerEvents extends IEvent {
 	// #region Container-related events
@@ -139,6 +141,8 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  * Fluid debug session associated with a Fluid Client via its
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
+ *
+ * @internal
  */
 export interface IFluidClientDebugger
 	extends IEventProvider<IFluidClientDebuggerEvents>,
