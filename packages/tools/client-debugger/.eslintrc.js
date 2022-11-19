@@ -12,4 +12,16 @@ module.exports = {
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
 	},
+	overrides: [
+		{
+			// Overrides for test files
+			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+			plugins: ["chai-expect"],
+			extends: ["plugin:chai-expect/recommended"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };
