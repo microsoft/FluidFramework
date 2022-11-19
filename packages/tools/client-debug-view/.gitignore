@@ -5,9 +5,6 @@ dist
 # npm dependencies
 node_modules
 
-# Code coverage reports
-.nyc_output
-
 # Temporary api-extractor build artifacts
 _api-extractor-temp
 
