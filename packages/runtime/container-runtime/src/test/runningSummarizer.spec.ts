@@ -65,7 +65,7 @@ describe("Runtime", () => {
                 maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
                 nonRuntimeOpWeight: 0.1,
                 runtimeOpWeight: 1.0,
-                nonRuntimeSummarizeThreshold: 20,
+                nonRuntimeHeuristicThreshold: 20,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -473,15 +473,15 @@ describe("Runtime", () => {
                 it("Should not summarize on non-runtime op before threshold is reached", async () => {
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
                     assert.strictEqual(heuristicData.numNonRuntimeOps, 0);
-                    assert(summaryConfig.nonRuntimeSummarizeThreshold !== undefined,
-                        "Expect nonRuntimeSummarizeThreshold to be provided");
+                    assert(summaryConfig.nonRuntimeHeuristicThreshold !== undefined,
+                        "Expect nonRuntimeHeuristicThreshold to be provided");
 
-                    await emitNoOp(summaryConfig.nonRuntimeSummarizeThreshold - 1);
+                    await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 1);
                     await tickAndFlushPromises(summaryConfig.minIdleTime);
 
                     assertRunCounts(0, 0, 0, "should not perform summary");
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
-                    assert.strictEqual(heuristicData.numNonRuntimeOps, summaryConfig.nonRuntimeSummarizeThreshold - 1);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, summaryConfig.nonRuntimeHeuristicThreshold - 1);
 
                     await emitNoOp(1);
                     await tickAndFlushPromises(summaryConfig.minIdleTime);

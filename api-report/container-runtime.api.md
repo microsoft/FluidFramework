@@ -590,8 +590,8 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxTime: number;
     minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeHeuristicThreshold?: number;
     nonRuntimeOpWeight: number;
-    nonRuntimeSummarizeThreshold?: number;
     runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
