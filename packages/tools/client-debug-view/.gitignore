@@ -10,3 +10,7 @@ node_modules
 
 # Temporary api-extractor build artifacts
 _api-extractor-temp
+
+# Test output
+coverage
+nyc
