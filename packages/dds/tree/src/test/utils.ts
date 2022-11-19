@@ -46,6 +46,7 @@ const frozenMethod = () => {
  * Recursively freezes the given object.
  * @param object - The object to freeze.
  * @param freezeMethods - Whether to freeze mutation methods on `Set` and `Map` instances.
+ * Passing `true` mutates the `Set` and `Map` instances encountered in the recursion.
  */
 export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
     if (object instanceof Map) {
