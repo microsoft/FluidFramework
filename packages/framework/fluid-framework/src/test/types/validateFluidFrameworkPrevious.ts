@@ -1000,6 +1000,18 @@ use_old_EnumDeclaration_IntervalType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IRootDataObject": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IRootDataObject": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequenceDeltaRange():
@@ -1572,6 +1584,18 @@ declare function use_old_TypeAliasDeclaration_MemberChangedListener(
     use: TypeOnly<old.MemberChangedListener<any>>);
 use_old_TypeAliasDeclaration_MemberChangedListener(
     get_current_TypeAliasDeclaration_MemberChangedListener());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_Myself": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_Myself": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
