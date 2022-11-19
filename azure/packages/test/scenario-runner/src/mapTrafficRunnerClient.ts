@@ -157,17 +157,17 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
         console.log("error or write", e)
     }
 
-    await PerformanceEvent.timedExecAsync(
-        logger,
-        { eventName: "Catchup", clientId: config.childId },
-        async (_event) => {
-            await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
-                durationMs: 20000,
-                errorMsg: "datastoreSaveAfterAttach timeout",
-            });
-        },
-        { start: true, end: true, cancel: "generic" },
-    );
+    // await PerformanceEvent.timedExecAsync(
+    //     logger,
+    //     { eventName: "Catchup", clientId: config.childId },
+    //     async (_event) => {
+    //         await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
+    //             durationMs: 20000,
+    //             errorMsg: "datastoreSaveAfterAttach timeout",
+    //         });
+    //     },
+    //     { start: true, end: true, cancel: "generic" },
+    // );
 }
 
 main().catch((error) => {

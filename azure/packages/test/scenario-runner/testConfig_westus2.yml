@@ -1,4 +1,4 @@
- title: 10 new empty docs 20 loads eeach
+ title: 1 doc, bunch of map writes, then load.
  description: In this scenario we create 10 docs with no data, then just try to load them 20 times each
  env:
     schema:
@@ -40,9 +40,22 @@
       clientStartDelayMs: 10
       writeRatePerMin: 60
       sharedMapKey: key1
-      totalWriteCount: 120
-  - stage-3:
-    id: 3
+      totalWriteCount: 60
+  - stage-4:
+    id: 4
+    name: Run map traffic again
+    package: shared-map-traffic
+    params:
+      connectionConfig: ${connectionConfig}
+      numClients: 100
+      schema: ${schema}
+      docIds: ${docIds}
+      clientStartDelayMs: 10
+      writeRatePerMin: 60
+      sharedMapKey: key1
+      totalWriteCount: 60
+  - stage-5:
+    id: 5
     name: Load documents
     package: doc-loader
     params:
