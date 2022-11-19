@@ -38,14 +38,34 @@ import { brand, makeArray } from "../util";
 
 // Testing utilities
 
-export function deepFreeze<T>(object: T): void {
-    // Retrieve the property names defined on object
-    const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-    // Freeze properties before freezing self
-    for (const name of propNames) {
-        const value = object[name];
-        if (typeof value === "object") {
-            deepFreeze(value);
+const frozenMethod = () => {
+    assert.fail("Object is frozen");
+};
+
+export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
+    if (object instanceof Map || object instanceof Set) {
+        for (const value of object.values()) {
+            deepFreeze(value, freezeMethods);
+        }
+        if (freezeMethods && !Object.isFrozen(object)) {
+            if (object instanceof Map) {
+                object.set = frozenMethod;
+            }
+            if (object instanceof Set) {
+                object.add = frozenMethod;
+            }
+            object.delete = frozenMethod;
+            object.clear = frozenMethod;
+        }
+    } else {
+        // Retrieve the property names defined on object
+        const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
+        // Freeze properties before freezing self
+        for (const name of propNames) {
+            const value = object[name];
+            if (typeof value === "object") {
+                deepFreeze(value, freezeMethods);
+            }
         }
     }
     Object.freeze(object);
