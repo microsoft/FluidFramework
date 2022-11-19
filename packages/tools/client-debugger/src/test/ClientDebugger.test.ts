@@ -11,11 +11,13 @@ import {
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
-import { FluidClientDebuggerProps } from "../IFluidClientDebugger";
+import { IFluidClientDebugger } from "../IFluidClientDebugger";
 import {
+	FluidClientDebuggerProps,
 	clearDebuggerRegistry,
 	closeFluidClientDebugger,
 	getDebuggerRegistry,
+	getFluidClientDebugger,
 	initializeFluidClientDebugger,
 } from "../Registry";
 
@@ -86,11 +88,16 @@ describe("ClientDebugger unit tests", () => {
 		return _debuggerProps;
 	}
 
+	function initializeDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger {
+		initializeFluidClientDebugger(props);
+		return getFluidClientDebugger(props.containerId)!;
+	}
+
 	it("Initializing debugger populates global (window) registry", () => {
 		let debuggerRegistry = getDebuggerRegistry();
 		expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
 
-		initializeFluidClientDebugger(getDebuggerProps());
+		initializeDebugger(getDebuggerProps());
 
 		debuggerRegistry = getDebuggerRegistry();
 		expect(debuggerRegistry.size).to.equal(1);
@@ -100,7 +107,7 @@ describe("ClientDebugger unit tests", () => {
 		const debuggerProps = getDebuggerProps();
 		const { containerId } = debuggerProps;
 
-		const clientDebugger = initializeFluidClientDebugger(debuggerProps);
+		const clientDebugger = initializeDebugger(debuggerProps);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(clientDebugger.disposed).to.be.false;

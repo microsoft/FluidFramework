@@ -2,8 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+
 import { FluidClientDebugger } from "./FluidClientDebugger";
-import { FluidClientDebuggerProps, IFluidClientDebugger } from "./IFluidClientDebugger";
+import { IFluidClientDebugger } from "./IFluidClientDebugger";
+
+/**
+ * Properties for configuring a {@link IFluidClientDebugger}.
+ */
+export interface FluidClientDebuggerProps {
+	/**
+	 * The ID of the Container with which the debugger will be associated.
+	 */
+	containerId: string;
+
+	/**
+	 * The Container with which the debugger will be associated.
+	 */
+	container: IContainer;
+
+	/**
+	 * Data belonging to the Container.
+	 *
+	 * @remarks The debugger will not mutate this data.
+	 */
+	containerData: Record<string, IFluidLoadable>;
+}
 
 /**
  * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context.
