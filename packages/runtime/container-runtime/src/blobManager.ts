@@ -257,7 +257,7 @@ export class BlobManager {
         if (this.tombstonedBlobs.has(blobId) ) {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.mc.logger.sendErrorEvent({
-                eventName: "TombstonedBlobRequested",
+                eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
                 viaHandle: true,
             });

@@ -83,35 +83,22 @@ class RemoteFluidObjectHandle implements IFluidHandle {
     }
 }
 
-
-describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProvider) => {
+describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
     const waitLessThanSweepTimeoutMs = 100;
     const sweepTimeoutMs = 200;
     assert(waitLessThanSweepTimeoutMs < sweepTimeoutMs, "waitLessThanSweepTimeoutMs should be < sweepTimeoutMs");
-    const settings = {
-        "Fluid.GarbageCollection.Test.Tombstone": "true",
-        "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
-    };
+    const settings = {};
     const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: {
                 summaryConfigOverrides: {
-                    state: "disableHeuristics",
-                    maxAckWaitTime: 10000,
-                    maxOpsSinceLastSummary: 7000,
-                    initialSummarizerDelayMs: 0,
-                    summarizerClientElection: false,
+                    state: "disabled",
                 },
             },
-            gcOptions: {
-                gcAllowed: true,
-                inactiveTimeoutMs: 0,
-            },
+            gcOptions,
         },
-        loaderProps: {
-            configProvider: mockConfigProvider(settings),
-        },
+        loaderProps: { configProvider: mockConfigProvider(settings) },
     };
 
     let provider: ITestObjectProvider;
@@ -149,6 +136,8 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
         if (provider.driver.type !== "local") {
             this.skip();
         }
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
+        settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
     });
 
     // This function creates an unreferenced blob and returns the blob's id and the summary version that
@@ -204,11 +193,11 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
     };
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-    itExpects("Handle request for tombstoned blobs fails in summarizing container loaded before sweep timeout",
+    itExpects("Handle request for tombstoned blobs fails in summarizing container loaded after sweep timeout",
     [
         {
-            error: "TombstonedBlobRequested",
-            eventName: "fluid:telemetry:BlobManager:TombstonedBlobRequested",
+            error: "GC_Tombstone_Blob_Requested",
+            eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
             viaHandle: true,
         },
     ],
@@ -226,16 +215,46 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
 
         const container = await loadContainer(summaryVersion);
         const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
-        const blobHandle = new RemoteFluidObjectHandle(
-            absolutePath,
-            defaultDataObject._context.containerRuntime.IFluidHandleContext,
-        );
+        const fluidHandleContext = defaultDataObject._context.containerRuntime.IFluidHandleContext;
 
         // Handle requests for blob handle should fail!
-        await assert.rejects(
-            async () => blobHandle.get(),
-            (error) => error?.message !== undefined && error.message.startsWith("Blob removed by gc:") === true,
-            "Blob should be tombstoned!",
-        );
+        const response = await fluidHandleContext.resolveHandle({ url: absolutePath });
+        assert(response?.status === 404, `Expecting a 404 response!`);
+        assert(response.value.startsWith("Blob removed by gc:"));
+    });
+
+    // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+    itExpects("Handle request for tombstoned blobs only logs in summarizing container loaded after sweep timeout",
+    [
+        {
+            error: "GC_Tombstone_Blob_Requested",
+            eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            viaHandle: true,
+        },
+        {
+            error: "SweepReadyObject_Loaded",
+            eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+        },
+    ],
+    async () => {
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
+        const {
+            absolutePath,
+            summarizingContainer,
+            summarizer,
+        } = await summarizationWithUnreferencedBlobAfterTime(sweepTimeoutMs);
+
+        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+        // The blob should be tombstoned now
+        const { summaryVersion } = await summarize(summarizer);
+
+        const container = await loadContainer(summaryVersion);
+        const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+        const fluidHandleContext = defaultDataObject._context.containerRuntime.IFluidHandleContext;
+
+        // Requesting the tombstoned blob should succeed since ThrowOnTombstoneUsage is not enabled.
+        const response = await fluidHandleContext.resolveHandle({ url: absolutePath });
+        assert(response?.status === 200, `Expecting a 200 response!`);
     });
 });
