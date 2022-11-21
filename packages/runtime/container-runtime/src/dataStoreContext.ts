@@ -65,7 +65,9 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    loggerToMonitoringContext,
     LoggingError,
+    MonitoringContext,
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -85,6 +87,7 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
+import { throwOnTombstoneUsageKey } from "./garbageCollection";
 import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
@@ -205,6 +208,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     private _tombstoned = false;
     public get tombstoned() { return this._tombstoned; }
+    /** If true, throw an error when a tombstone data store is used. */
+    private readonly throwOnTombstoneUsage: boolean;
 
     public get attachState(): AttachState {
         return this._attachState;
@@ -248,7 +253,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly subLogger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
@@ -302,8 +307,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getBaseGCDetails(),
         );
 
-        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "FluidDataStoreContext"));
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
+
+        // Read the feature flag that tells whether to throw when a tombstone data store is used.
+        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
     }
 
     public dispose(): void {
@@ -770,14 +778,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 ...safeTelemetryProps,
             });
 
-            this.subLogger.sendErrorEvent({
+            // Always log an error when tombstoned data store is used. However, throw an error only if
+            // throwOnTombstoneUsage is set.
+            this.mc.logger.sendErrorEvent({
                 eventName: "GC_Tombstone_DataStore_Changed",
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
-            // The summarizer should always succeed in summarization as we always want a way to recover from a bad
-            // state.
-            if (this.clientDetails.type !== summarizerClientType) {
+            if (this.throwOnTombstoneUsage && this.clientDetails.type !== summarizerClientType) {
                 throw error;
             }
         }
