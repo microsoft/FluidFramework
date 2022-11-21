@@ -55,7 +55,7 @@ export function start(
     const odspPersistantCache = new OdspSampleCache();
     fetchButton1.onclick = async () => {
         const resolvedUrl = await urlResolver.resolve({ url: text1.value });
-        assert(resolvedUrl !== undefined, 0x31a /* resolvedUrl is undefined */);
+        assert(resolvedUrl !== undefined, "resolvedUrl should be defined");
         const mockLogger = new MockLogger();
         for (let i = 0; i < 5; ++i) {
             await prefetchLatestSnapshot(

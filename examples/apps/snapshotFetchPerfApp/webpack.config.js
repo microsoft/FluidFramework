@@ -33,15 +33,7 @@ module.exports = {
     resolve: {
       extensions: ['.tsx', '.ts', '.js'],
       fallback:{
-          "url": require.resolve("url"),
-          "buffer": require.resolve("buffer/"), // note: the trailing slash is important!
-          "os": require.resolve("os-browserify/browser"),
-          "path": require.resolve("path-browserify"),
-          "http": require.resolve("stream-http"),
-          "zlib": require.resolve("browserify-zlib"),
-          "crypto": require.resolve("crypto-browserify"),
-          "stream": require.resolve("stream-browserify"),
-          "constants": require.resolve("constants-browserify"),
+          "url": require.resolve("url")
       }
     },
     // Some of Fluid's dependencies depend on things like global and process.env.NODE_ENV being defined. This won't be set in Webpack 5 by default, so we are setting it with the define plugin.
