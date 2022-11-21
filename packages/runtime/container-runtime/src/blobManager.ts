@@ -13,11 +13,10 @@ import {
     responseToException,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
@@ -26,6 +25,7 @@ import {
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { ContainerRuntime } from "./containerRuntime";
 import { summarizerClientType } from "./summarizerClientElection";
+import { throwOnTombstoneUsageKey } from "./garbageCollection";
 
 /**
  * This class represents blob (long string)
@@ -114,7 +114,7 @@ export interface IPendingBlobs { [id: string]: { blob: string; }; }
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Map of local (offline/detached) IDs to storage IDs. Contains identity entries
@@ -131,6 +131,9 @@ export class BlobManager {
      */
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
+    /** If true, throw an error when a tombstone data store is retrieved. */
+    private readonly throwOnTombstoneUsage: boolean;
+    /** Tombstone is a temporary feature that imitates a blob getting swept by garbage collection. */
     private readonly tombstonedBlobs: Set<string> = new Set();
 
     /**
@@ -167,7 +170,9 @@ export class BlobManager {
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
-        this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
+        // Read the feature flag that tells whether to throw when a tombstone blob is requested.
+        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
 
@@ -198,7 +203,7 @@ export class BlobManager {
     public async onConnected() {
         this.retryThrottler.cancel();
         const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
-        await PerformanceEvent.timedExecAsync(this.logger, {
+        await PerformanceEvent.timedExecAsync(this.mc.logger, {
                 eventName: "BlobUploadOnConnected",
                 count: pendingUploads.length,
             }, async () => Promise.all(pendingUploads),
@@ -251,12 +256,12 @@ export class BlobManager {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
-            this.logger.sendErrorEvent({
+            this.mc.logger.sendErrorEvent({
                 eventName: "TombstonedBlobRequested",
                 url: request.url,
                 viaHandle: true,
             });
-            if (this.runtime.clientDetails.type !== summarizerClientType) {
+            if (this.throwOnTombstoneUsage && this.runtime.clientDetails.type !== summarizerClientType) {
                 throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
             }
         }
@@ -281,7 +286,7 @@ export class BlobManager {
         this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
         return PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.mc.logger,
             { eventName: "AttachmentReadBlob", id: storageId },
             async () => {
                 return this.getStorage().readBlob(storageId);
@@ -314,7 +319,7 @@ export class BlobManager {
         }
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
-            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
         assert(this.runtime.attachState === AttachState.Attached,
@@ -336,7 +341,7 @@ export class BlobManager {
 
     private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.mc.logger,
             { eventName: "createBlob" },
             async () => this.getStorage().createBlob(blob),
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
@@ -373,7 +378,7 @@ export class BlobManager {
             }
         } else {
             // connected to storage but not ordering service?
-            this.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
@@ -499,7 +504,7 @@ export class BlobManager {
      * Load a set of previously attached blob IDs and redirect table from a previous snapshot.
      */
     private load(snapshot: IBlobManagerLoadInfo): Map<string, string | undefined> {
-        this.logger.sendTelemetryEvent({
+        this.mc.logger.sendTelemetryEvent({
             eventName: "AttachmentBlobsLoaded",
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
