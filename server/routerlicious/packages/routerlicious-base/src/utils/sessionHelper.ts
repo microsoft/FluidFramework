@@ -4,7 +4,7 @@
  */
 
 import { ISession, NetworkError } from "@fluidframework/server-services-client";
-import { IDocument, ICollection } from "@fluidframework/server-services-core";
+import { IDocument, ICollection, runWithRetry } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -162,7 +162,15 @@ async function updateExistingSession(
         // from different clusters. Thus, let it get the truth from the cosmosdb with isSessionAlive as true.
         if (!result.existing) {
             Lumberjack.info(`The document with isSessionAlive as false does not exist`, lumberjackProperties);
-            const doc: IDocument = await documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,});
+            const doc: IDocument = await runWithRetry(
+                async () => documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,}),
+                "getDocumentWithAlive",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                getLumberBaseProperties(documentId, tenantId),
+                undefined, /* shouldIgnoreError */
+                (error) => true, /* shouldRetry */
+            );
             if (!doc && !doc.session) {
                 Lumberjack.error(
                     `Error running getSession from document: ${JSON.stringify(doc)}`,
