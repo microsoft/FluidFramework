@@ -6,8 +6,8 @@
 
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { default as React_2 } from 'react';
-import { SharedObjectCore } from '@fluidframework/shared-object-base';
 
 // @public
 export interface AudienceMember {
@@ -62,7 +62,8 @@ export interface RenderOptions {
 }
 
 // @public
-export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
+export type RenderSharedObject = (
+sharedObject: ISharedObject,
 renderChild: RenderChild) => React_2.ReactElement;
 
 // @public

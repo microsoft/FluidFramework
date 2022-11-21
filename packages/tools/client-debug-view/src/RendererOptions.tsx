@@ -7,7 +7,7 @@ import React from "react";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import {
 	AudienceMemberView,
@@ -35,7 +35,16 @@ export type RenderChild = (childObject: unknown) => React.ReactElement;
  * Signature for data object view renderer callbacks.
  */
 export type RenderSharedObject = (
-	sharedObject: SharedObjectCore, // TODO: is this the right type?
+	/**
+	 * The Shared Object to render.
+	 *
+	 * @privateRemarks TODO: is this the right type?
+	 */
+	sharedObject: ISharedObject,
+
+	/**
+	 * Callback to dynamically render child contents.
+	 */
 	renderChild: RenderChild,
 ) => React.ReactElement;
 
@@ -55,7 +64,7 @@ export type SharedObjectType = string;
  *
  * - key: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
  *
- * - value: A renderer that takes a {@link @fluidframework/shared-object-base#SharedObjectCore} of the
+ * - value: A renderer that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
  * specified type and renders a `ReactElement` visualizing the data as desired.
  */
 export interface SharedObjectRenderOptions {
