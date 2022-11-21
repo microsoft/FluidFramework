@@ -785,6 +785,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
+            // Always log an error when tombstoned data store is used. However, throw an error only if
+            // throwOnTombstoneUsage is set and the client is not a summarizer.
             if (this.throwOnTombstoneUsage && this.clientDetails.type !== summarizerClientType) {
                 throw error;
             }
