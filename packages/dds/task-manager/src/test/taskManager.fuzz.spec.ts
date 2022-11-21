@@ -333,7 +333,7 @@ const describeFuzz = createFuzzDescribe({ defaultTestCount: defaultOptions.testC
 describeFuzz("TaskManager fuzz testing", ({ testCount }) => {
     before(() => {
         if (!existsSync(directory)) {
-            mkdirSync(directory);
+            mkdirSync(directory, { recursive: true });
         }
     });
 
