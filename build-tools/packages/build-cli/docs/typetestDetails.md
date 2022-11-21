@@ -57,7 +57,7 @@ but this can be suppressed with the `--no-generateInName` flag.
 Type tests can be configured to use different baseline versions on a given branch depending on the type of release that
 the branch is designated for. For example, for the client release group, the _next_ branch is the _major version series
 branch_ and _main_ is the _minor version series branch_. This can be declared in the root package.json for the release
-group, in the `fluidBuild.repoPackages` section. For example, the following configuration designates the _main_ and
+group, in the `fluidBuild.branchReleaseTypes` section. For example, the following configuration designates the _main_ and
 _lts_ branches as minor version series branches, while the _next_ branch is designated for major releases.
 
 ```json
@@ -79,7 +79,7 @@ on a particular branch. Baseline versions are set as follows based on the branch
 | Branch release designation | Baseline version | Example: version 2.3.4 |
 | -------------------------- | ---------------- | ---------------------- |
 | `patch`                    | `previousPatch`  | **2.3.3**              |
-| `minor`                    | `^previousMinor` | **^2.2.0**             |
+| `minor`                    | `~previousMinor` | **~2.2.0**             |
 | `major`                    | `^previousMajor` | **^1.0.0**             |
 
 ### Configuring a branch for a specific baseline
@@ -103,7 +103,7 @@ the baseMajor version is `${v.major}.0.0` and the baseMinor version is `${v.majo
 
 The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version _v_,
 the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor version is
-`${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}.0`.
+`${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}`.
 
 The "previous" versions never roll back below 1 for the major version and 0 for minor and patch. That is, the
 previousMajor, previousMinor, and previousPatch versions for `1.0.0` are all `1.0.0`.
