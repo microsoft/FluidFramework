@@ -14,3 +14,6 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/odspsnapshotfetch-perftestapp`
 1. Run `npm run start` from this directory (examples/data-objects/smde) and open <http://localhost:8080> in a web browser to see the app running.
+
+After that you can paste the url of the doc and click fetch snapshot and you will see the fields of "TreesLatest_end"
+event getting populated in the table. The result will be of 5 runs.
