@@ -18,7 +18,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
 function compose(changes: SequenceChangeset[]): SequenceChangeset {
-    changes.forEach(deepFreeze);
+    changes.forEach((c) => deepFreeze(c));
     return sequenceChangeRebaser.compose(changes);
 }
 
