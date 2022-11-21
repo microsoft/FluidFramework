@@ -26,7 +26,7 @@ export {
 	clearDebuggerRegistry,
 	closeFluidClientDebugger,
 	FluidClientDebuggerProps,
-	getFluidClientDebuggers,
 	getFluidClientDebugger,
+	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";

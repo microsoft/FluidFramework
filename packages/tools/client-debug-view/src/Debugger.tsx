@@ -129,7 +129,7 @@ function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
 		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 			<StackItem>
 				<div>
-					The debugger associated with container ID ${containerId}" has been disposed.
+					The debugger associated with container ID "{containerId}" has been disposed.
 				</div>
 			</StackItem>
 			<StackItem>

@@ -73,7 +73,8 @@ export interface RenderOptions {
 }
 
 // @public
-export type RenderSharedObject = (sharedObject: ISharedObject, // TODO: is this the right type?
+export type RenderSharedObject = (
+sharedObject: ISharedObject,
 renderChild: RenderChild) => React_2.ReactElement;
 
 // @public

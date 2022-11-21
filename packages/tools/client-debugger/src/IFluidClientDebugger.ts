@@ -157,10 +157,14 @@ export interface IFluidClientDebugger
 	/**
 	 * Data contents of the Container.
 	 *
-	 * @remarks This map is assumed to be immutable. The debugger will not make any modifications to
-	 * its contents.
+	 * @remarks
 	 *
-	 * @privateRemarks TODO: what is the right type here? We need to be able to generate serializable summaries of the data / hooks for making updates across service workers.
+	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
+	 *
+	 * @privateRemarks
+	 *
+	 * TODO: what is the right type here?
+	 * We need to be able to generate serializable summaries of the data / hooks for making updates across service workers.
 	 */
 	readonly containerData: Record<string, IFluidLoadable>;
 
