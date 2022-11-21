@@ -21,31 +21,12 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
-/**
- * Potential GC Recovery handle
- */
-class RecoveryHandle implements IFluidHandle {
-    public readonly isAttached = true;
-    public get IFluidHandle(): IFluidHandle { return this; }
-    constructor(public readonly absolutePath: string) {
-
-    }
-    public attachGraph(): void {
-        return;
-    }
-    async get(): Promise<any> {
-        throw new Error("Method not implemented.");
-    }
-    bind(handle: IFluidHandle): void {
-        throw new Error("Method not implemented.");
-    }
-}
 /**
  * These tests validate that SweepReady objects are correctly marked as tombstones. Tombstones should be added to the
  * summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
@@ -563,8 +544,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Can untombstone datastores by storing a handle",
         [
+            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
-            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
             { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
@@ -578,6 +559,9 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
                 summarizingContainer,
                 summarizer,
             } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs - remainingTimeUntilSweepMs);
+            // Loading an inactive object!
+            const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+
             // Wait enough time so that the datastore is sweep ready
             await delay(remainingTimeUntilSweepMs);
 
@@ -586,9 +570,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             // The datastore should be tombstoned now
             const { summaryVersion } = await summarize(summarizer);
             const tombstoneContainer = await loadContainer(summaryVersion);
-            await sendOpToUpdateSummaryTimestampToNow(tombstoneContainer);
 
-            // Datastore should be tombstoned
+            // Datastore should be tombstoned, requesting should error
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(tombstoneContainer, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
@@ -598,9 +581,10 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore.`,
             );
 
-            const mainDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");
-            const handle = new RecoveryHandle(`/${unreferencedId}`);
-            mainDataObject._root.set("store", handle);
+            // Normally on non-summarizer clients we would see a SweepReady_Revived error, but because this is the
+            // summarizer client, we do not as we do not decode the handle on the summarizer. We only encode it.
+            const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
+            mainDataObject._root.set("store", dataObject.handle);
 
             // This container closes as we submit ops and signals in the untombstoned container
             setupContainerCloseErrorValidation(tombstoneContainer, "processSignal");
@@ -620,6 +604,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             sendDataObject._runtime.submitSignal("can receive", "a signal");
             await provider.ensureSynchronized();
             assert(tombstoneContainer.closed === true, `Container receiving messages to a tombstoned datastore should close.`);
+            assert(revivalContainer.closed !== true, `Revived datastore should not close a container when requested, sending/receiving signals/ops.`);
+            assert(sendingContainer.closed !== true, `Revived datastore should not close a container when sending signals and ops.`);
         });
     });
 
