@@ -68,8 +68,8 @@
     "tsc:fast": "fluid-build  --root . -s tsc",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "typetests:gen": "fluid-type-validator -m packages -v",
-    "typetests:prepare": "npm run typetests:gen -- -p",
+    "typetests:gen": "flub generate typetests --generate --releaseGroup client --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --releaseGroup client --pin",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -148,6 +148,37 @@
           "azure-local-service"
         ]
       }
+    },
+    "policy": {
+      "dependencies": {
+        "requireTilde": [
+          "@typescript-eslint/eslint-plugin",
+          "@typescript-eslint/parser",
+          "eslint-config-prettier",
+          "eslint-plugin-eslint-comments",
+          "eslint-plugin-import",
+          "eslint-plugin-unicorn",
+          "eslint-plugin-unused-imports",
+          "eslint",
+          "prettier",
+          "typescript",
+          "webpack-dev-server"
+        ]
+      },
+      "additionalLockfilePaths": [
+        "common/build/build-common",
+        "common/build/eslint-config-fluid",
+        "docs",
+        "server/gitrest",
+        "server/historian",
+        "tools/telemetry-generator"
+      ]
+    },
+    "branchReleaseTypes": {
+      "main": "minor",
+      "lts": "minor",
+      "release/**": "patch",
+      "next": "major"
     }
   }
 }
