@@ -25,6 +25,7 @@ import {
     jsonRoot,
     singleJsonCursor,
     jsonBoolean,
+    jsonString,
 } from "../domains";
 import { recordDependency } from "../dependency-tracking";
 import {
@@ -51,6 +52,29 @@ export function testForest(
     factory: (schema: StoredSchemaRepository) => IEditableForest,
 ): void {
     describe.only(suiteName, () => {
+        const nestedContent: JsonableTree[] = [
+            {
+                type: jsonObject.name,
+                fields: {
+                    x: [
+                        {
+                            type: jsonNumber.name,
+                            value: 0,
+                        },
+                    ],
+                    y: [
+                        {
+                            type: jsonNumber.name,
+                            value: 1,
+                        },
+                    ],
+                },
+            },
+        ];
+
+        const xField = brand<FieldKey>("x");
+        const yField = brand<FieldKey>("y");
+
         // Use Json Cursor to insert and extract some Json data
         describe("insert and extract json", () => {
             // eslint-disable-next-line @typescript-eslint/ban-types
@@ -250,39 +274,75 @@ export function testForest(
             );
         });
 
-        it("clone", () => {
-            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree[] = [
-                { type: jsonNumber.name, value: 1 },
-                { type: jsonNumber.name, value: 2 },
-            ];
-            initializeForest(forest, content.map(singleTextCursor));
+        describe.only("can clone", () => {
+            it("an empty forest", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                const clone = forest.clone(forest.schema, forest.anchors);
+                const reader = clone.allocateCursor();
+                moveToDetachedField(clone, reader);
+                // Expect no nodes under the detached field
+                assert.equal(reader.firstNode(), false);
+            });
+
+            it("primitive nodes", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [
+                    { type: jsonNumber.name, value: 1 },
+                    { type: jsonBoolean.name, value: true },
+                    { type: jsonString.name, value: "test" },
+                ];
+                initializeForest(forest, content.map(singleTextCursor));
+
+                const clone = forest.clone(forest.schema, forest.anchors);
+                const reader = clone.allocateCursor();
+                moveToDetachedField(clone, reader);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 1);
+                assert(reader.nextNode());
+                assert.equal(reader.value, true);
+                assert(reader.nextNode());
+                assert.equal(reader.value, "test");
+                assert.equal(reader.nextNode(), false);
+            });
+
+            it("multiple fields", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const clone = forest.clone(forest.schema, forest.anchors);
+                const reader = clone.allocateCursor();
+                moveToDetachedField(clone, reader);
+                assert(reader.firstNode());
+                reader.enterField(xField);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 0);
+                assert.equal(reader.nextNode(), false);
+                reader.exitField();
+                reader.enterField(yField);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 1);
+                assert.equal(reader.nextNode(), false);
+            });
+
+            it("with anchors", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const forestReader = forest.allocateCursor();
+                moveToDetachedField(forest, forestReader);
+                assert(forestReader.firstNode());
+                forestReader.enterField(xField);
+                assert(forestReader.firstNode());
+                const anchor = forestReader.buildAnchor();
+
+                const clone = forest.clone(forest.schema, forest.anchors);
+                const reader = clone.allocateCursor();
+                clone.tryMoveCursorToNode(anchor, reader);
+                assert.equal(reader.value, 0);
+            });
         });
 
         describe("can apply deltas with", () => {
-            const nestedContent: JsonableTree[] = [
-                {
-                    type: jsonObject.name,
-                    fields: {
-                        x: [
-                            {
-                                type: jsonNumber.name,
-                                value: 0,
-                            },
-                        ],
-                        y: [
-                            {
-                                type: jsonNumber.name,
-                                value: 1,
-                            },
-                        ],
-                    },
-                },
-            ];
-
-            const xField = brand<FieldKey>("x");
-            const yField = brand<FieldKey>("y");
-
             it("ensures cursors are cleared before applying deltas", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
