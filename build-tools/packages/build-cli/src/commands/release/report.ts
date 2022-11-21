@@ -12,7 +12,7 @@ import path from "path";
 import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context } from "@fluidframework/build-tools";
+import { Context, VersionDetails } from "@fluidframework/build-tools";
 
 import {
     ReleaseVersion,
@@ -28,9 +28,7 @@ import {
     PackageVersionMap,
     ReleaseReport,
     ReportKind,
-    VersionDetails,
     filterVersionsOlderThan,
-    getAllVersions,
     getDisplayDate,
     getDisplayDateRelative,
     getFluidDependencies,
@@ -205,8 +203,7 @@ export abstract class ReleaseReportBaseCommand<
         repoVersion: string,
         latestReleaseChooseMode?: ReleaseSelectionMode,
     ): Promise<RawReleaseData | undefined> {
-        this.verbose(`collectRawReleaseData for ${releaseGroupOrPackage}`);
-        const versions = await getAllVersions(context, releaseGroupOrPackage);
+        const versions = await context.getAllVersions(releaseGroupOrPackage);
 
         if (versions === undefined) {
             return undefined;
@@ -311,7 +308,7 @@ export abstract class ReleaseReportBaseCommand<
         const vIndex = sortedByVersion.findIndex(
             (v) =>
                 v.version === latestReleasedVersion?.version &&
-                v.date === latestReleasedVersion.date,
+                v.date === latestReleasedVersion?.date,
         );
         const previousReleasedVersion =
             vIndex + 1 <= versionCount

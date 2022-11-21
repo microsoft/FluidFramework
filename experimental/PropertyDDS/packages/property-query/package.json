@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@fluid-experimental/property-properties": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/property-query-previous": "npm:@fluid-experimental/property-query@2.0.0-internal.2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.2",
@@ -46,7 +45,8 @@
     "sinon": "^7.4.2"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
     "broken": {}
   }
 }

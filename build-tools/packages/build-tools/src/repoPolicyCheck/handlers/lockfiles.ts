@@ -5,8 +5,8 @@
 import { unlinkSync } from "fs";
 import path from "path";
 
-import { IFluidRepoPackageEntry, IPackageManifest } from "../../common/fluidRepo";
-import { getPackageManifest } from "../../common/fluidUtils";
+import { IFluidBuildConfig, IFluidRepoPackageEntry } from "../../common/fluidRepo";
+import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile } from "../common";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
@@ -15,7 +15,7 @@ const versionPattern = /"lockfileVersion"\s*:\s*\b1\b/g;
 
 let _knownPaths: string[] | undefined;
 
-const getKnownPaths = (manifest: IPackageManifest) => {
+const getKnownPaths = (manifest: IFluidBuildConfig) => {
     if (_knownPaths === undefined) {
         // Add the root path (.) because a lockfile is expected there
         _knownPaths = ["."];
@@ -84,7 +84,7 @@ export const handlers: Handler[] = [
         name: "extraneous-lockfiles",
         match: lockFilePattern,
         handler: (file, root) => {
-            const manifest = getPackageManifest(root);
+            const manifest = getFluidBuildConfig(root);
             const knownPaths: string[] = getKnownPaths(manifest);
 
             if (path.basename(file) === "package-lock.json") {
@@ -96,7 +96,7 @@ export const handlers: Handler[] = [
             return undefined;
         },
         resolver: (file, root): { resolved: boolean; message?: string } => {
-            const manifest = getPackageManifest(root);
+            const manifest = getFluidBuildConfig(root);
             const knownPaths: string[] = getKnownPaths(manifest);
 
             if (path.basename(file) === "package-lock.json") {
