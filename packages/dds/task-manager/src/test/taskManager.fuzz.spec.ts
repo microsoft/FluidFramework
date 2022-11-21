@@ -409,7 +409,6 @@ describeFuzz("TaskManager fuzz testing", ({ testCount }) => {
 
     // Change this seed and unskip the block to replay the actions from JSON on disk.
     // This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
-    // TODO: fix this
     describe.skip("replay specific seed", () => {
         const seedToReplay = 0;
         replayTestFromFailureFile(
