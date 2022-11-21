@@ -211,6 +211,11 @@ export interface IFluidClientDebugger
 	 */
 	getContainerResolvedUrl(): IResolvedUrl | undefined;
 
+    /**
+     * return contianer page all content here.
+     */
+    getContainerContent(): Promise<string>;
+
 	/**
 	 * Whether or not the Container is currently {@link @fluidframework/container-definitions#IContainer.isDirty | dirty}.
 	 *

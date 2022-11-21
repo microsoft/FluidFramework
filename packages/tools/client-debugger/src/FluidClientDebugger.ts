@@ -221,6 +221,13 @@ export class FluidClientDebugger
 		return this.container.closed;
 	}
 
+    /**
+     * return contianer page all content here.
+     */
+    public async getContainerContent(): Promise<string> {
+        return this.getRuntimeObjectFromContainer();
+    }
+
 	// #endregion
 
 	// #region Audience data
@@ -295,4 +302,14 @@ export class FluidClientDebugger
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 		return this._disposed;
 	}
+
+    public async getRuntimeObjectFromContainer(): Promise<string> {
+        const response = await this.container.request({ url: "/", headers: { containerRef: this.container }});
+        console.log('response.value?.runtime?.entryPoint?.absolutePath');
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        console.log(response.value?.runtime?.entryPoint?.absolutePath);
+        // return response.value?.runtime?.entrypoint;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        return response.value?.runtime?.entryPoint?.absolutePath;
+    }
 }

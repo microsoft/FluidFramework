@@ -43,6 +43,22 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 	const [isContainerConnected, setIsContainerConnected] = React.useState<boolean>(
 		clientDebugger.isContainerConnected(),
 	);
+    const [containerContent, setContainerContent] = React.useState<string>(
+        // await clientDebugger.getContainerContent(),
+	);
+
+    React.useEffect( () => {
+        async function fetchData() {
+            try {
+                const res = await clientDebugger.getContainerContent();
+                setContainerContent(res);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+        fetchData();
+    }, []);
+
 	const [containerResolvedUrl, setContainerResolvedUrl] = React.useState<
 		IResolvedUrl | undefined
 	>(clientDebugger.getContainerResolvedUrl());
@@ -87,6 +103,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 		};
 	}, [
 		clientDebugger,
+        setContainerContent,
 		setIsContainerDirty,
 		setIsContainerClosed,
 		setIsContainerAttached,
@@ -126,6 +143,10 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 					<b>Local edit state: </b>
 					{isContainerDirty ? "Dirty" : "Saved"}
 				</StackItem>
+                <StackItem>
+                    <b>Entrypoint: </b>
+                    {containerContent}
+                </StackItem>
 				<StackItem align="end">
 					<ActionsBar
 						isContainerConnected={isContainerConnected}
