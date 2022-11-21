@@ -23,12 +23,12 @@ import {
 } from "../../core";
 import { cursorToJsonObject, singleJsonCursor } from "../../domains";
 import {
+    buildForest,
     DefaultChangeFamily,
     defaultChangeFamily,
     DefaultChangeset,
     DefaultEditBuilder,
     defaultSchemaPolicy,
-    ObjectForest,
     runSynchronousTransaction,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
@@ -81,7 +81,7 @@ export class TestTree {
         this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
         this.sessionId = options.sessionId ?? uuid();
         const schema = new InMemoryStoredSchemaRepository(this.schemaPolicy);
-        this.forest = new ObjectForest(schema);
+        this.forest = buildForest(schema);
         if (state !== undefined) {
             initializeForest(this.forest, Array.isArray(state) ? state : [state]);
         }
