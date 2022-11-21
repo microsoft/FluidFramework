@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-    ...require("@fluidframework/build-common/prettier.config.cjs"),
-};
+export { IDebugViewProps, DebugView } from "./debugView";
+export { IAppViewProps, AppView } from "./appView";
