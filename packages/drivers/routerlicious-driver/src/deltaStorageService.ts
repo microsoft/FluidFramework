@@ -64,7 +64,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         if (opsFromLogTail.length > 0) {
             try {
                 const messages = opsFromLogTail.filter((op, i) => {
-                    // throw if the sequence number is in logtail are not contiguous
+                    // throw if the sequence numbers in logtail are not contiguous
                     if (i > 0 && op.sequenceNumber !== opsFromLogTail[i - 1].sequenceNumber + 1) {
                         throw new Error("Log tail ops are not contiguous");
                     }
