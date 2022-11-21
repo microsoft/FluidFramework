@@ -23,7 +23,9 @@ export {
 } from "./Logs";
 
 export {
+	clearDebuggerRegistry,
 	closeFluidClientDebugger,
+	getFluidClientDebuggers,
 	FluidClientDebuggerProps,
 	getFluidClientDebugger,
 	initializeFluidClientDebugger,
