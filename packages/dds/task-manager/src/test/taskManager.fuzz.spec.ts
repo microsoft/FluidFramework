@@ -119,7 +119,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     function volunteer(state: ClientOpState): Volunteer {
         return {
             type: "volunteer",
-            taskId: state.random.pick(state.taskIdPool),
+            taskId: state.taskId,
             clientId: state.clientId,
             taskManagerName: state.taskManager.id,
         };
