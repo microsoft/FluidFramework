@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
+import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,
@@ -29,11 +29,6 @@ export interface GenericChange {
      * Change to the node.
      */
     nodeChange: NodeChangeset;
-
-    /**
-     * The revision this change is part of. Undefined when it is implied from context.
-     */
-    revision?: RevisionTag;
 }
 
 /**
@@ -87,7 +82,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                         composed.splice(listIndex, 1, {
                             index,
                             nodeChange: composeChildren([
-                                tagChange(match.nodeChange, match.revision),
+                                makeAnonChange(match.nodeChange),
                                 taggedChange,
                             ]),
                         });

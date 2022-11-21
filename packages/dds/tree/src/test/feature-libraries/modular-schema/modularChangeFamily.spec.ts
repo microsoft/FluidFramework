@@ -383,9 +383,6 @@ describe("ModularChangeFamily", () => {
                 change: brand(nodeChange1),
             };
 
-            // 2582: deepFreeze does not recursively apply through Map, so we apply it to the map values.
-            deepFreeze(change1A);
-            deepFreeze(change1B);
             const change1: TaggedChange<FieldChangeMap> = tagChange(
                 new Map([
                     [fieldA, change1A],

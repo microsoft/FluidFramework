@@ -192,7 +192,8 @@ export class ModularChangeFamily
         const inverse: NodeChangeset = {};
 
         if (change.change.valueChange !== undefined) {
-            inverse.valueChange = { revert: change.revision };
+            const revision = change.change.valueChange.revision ?? change.revision;
+            inverse.valueChange = { revert: revision };
         }
 
         if (change.change.fieldChanges !== undefined) {
