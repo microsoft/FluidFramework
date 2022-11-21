@@ -130,6 +130,28 @@ describe("deepFreeze", () => {
             frozen.clear();
         });
     });
+    it("detects partially frozen maps and sets", () => {
+        const map: any = new Map<number, any>([[0, 1]]);
+        const set: any = new Set<number>([0, 1]);
+        Object.freeze(map);
+        Object.freeze(set);
+        assert.throws(() => {
+            deepFreeze(map);
+        });
+        assert.throws(() => {
+            deepFreeze(set);
+        });
+    });
+    it("frozen maps and sets are deep comparable", () => {
+        const map1: any = new Map<number, any>([[0, 1]]);
+        const map2: any = new Map<number, any>([[0, 1]]);
+        const set1: any = new Set<number>([0, 1]);
+        const set2: any = new Set<number>([0, 1]);
+        deepFreeze(map1);
+        deepFreeze(set1);
+        assert.deepEqual(map1, map2);
+        assert.deepEqual(set1, set2);
+    });
     it("optionally does not freeze map and set methods", () => {
         const map: any = new Map<number, any>([[0, 1]]);
         const set: any = new Set<number>([0, 1]);

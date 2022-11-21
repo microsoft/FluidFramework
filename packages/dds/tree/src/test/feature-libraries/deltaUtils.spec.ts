@@ -24,7 +24,7 @@ const fooField = brand<FieldKey>("foo");
 const moveId = brandOpaque<Delta.MoveId>(42);
 
 function applyModifyToTree(node: MapTree, modify: Delta.Modify): Map<FieldKey, Delta.MarkList> {
-    deepFreeze(modify, false);
+    deepFreeze(modify);
     return applyModifyToTreeImpl(node, modify);
 }
 
@@ -97,7 +97,7 @@ describe("DeltaUtils", () => {
                     ],
                 ],
             ]);
-            deepFreeze(input, false);
+            deepFreeze(input);
             const actual = mapFieldMarks(input, mapTreeFromCursor);
             const nestedMapTreeInsert = new Map([
                 [
@@ -165,6 +165,7 @@ describe("DeltaUtils", () => {
                     ],
                 ],
             ]);
+            deepFreeze(expected);
             assert.deepEqual(actual, expected);
         });
     });
@@ -201,7 +202,7 @@ describe("DeltaUtils", () => {
                                 type,
                                 value: "Y",
                                 fields: new Map([
-                                    [fooField, [{ type, value: "Z", fields: emptyMap }]],
+                                    [fooField, [{ type, value: "Z", fields: new Map() }]],
                                 ]),
                             },
                         ],

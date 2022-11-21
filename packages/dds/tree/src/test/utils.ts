@@ -42,11 +42,34 @@ const frozenMethod = () => {
     assert.fail("Object is frozen");
 };
 
+function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
+    if (Object.isFrozen(object)) {
+        for (const method of methods) {
+            assert.equal(object[method], frozenMethod);
+        }
+    } else {
+        for (const method of methods) {
+            Object.defineProperty(object, method, {
+                enumerable: false,
+                configurable: false,
+                writable: false,
+                value: frozenMethod,
+            });
+        }
+    }
+}
+
 /**
  * Recursively freezes the given object.
+ *
+ * Note: Calling `Object.freeze` on a Set or Map does not prevent it from being mutated.
+ * If `freezeMethods` is true, we freeze the mutating methods from the Set or Map to ensure that its state cannot be changed.
+ * Regardless of the value of `freezeMethods`, `deepFreeze` will freeze the keys and values of a Map or Set.
+ *
  * @param object - The object to freeze.
- * @param freezeMethods - Whether to freeze mutation methods on `Set` and `Map` instances.
- * Passing `true` mutates the `Set` and `Map` instances encountered in the recursion.
+ * @param freezeMethods - Whether to freeze mutation methods on Set and Map instances.
+ * Passing `true` provides greater protection against mutation but does so at the cost of mutating the Set and
+ * Map instances which may not be desirable.
  */
 export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
     if (object instanceof Map) {
@@ -54,19 +77,15 @@ export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
             deepFreeze(key, freezeMethods);
             deepFreeze(value, freezeMethods);
         }
-        if (freezeMethods && !Object.isFrozen(object)) {
-            object.set = frozenMethod;
-            object.delete = frozenMethod;
-            object.clear = frozenMethod;
+        if (freezeMethods) {
+            freezeObjectMethods(object, ["set", "delete", "clear"]);
         }
     } else if (object instanceof Set) {
         for (const key of object.keys()) {
             deepFreeze(key, freezeMethods);
         }
-        if (freezeMethods && !Object.isFrozen(object)) {
-            object.add = frozenMethod;
-            object.delete = frozenMethod;
-            object.clear = frozenMethod;
+        if (freezeMethods) {
+            freezeObjectMethods(object, ["add", "delete", "clear"]);
         }
     } else {
         // Retrieve the property names defined on object
