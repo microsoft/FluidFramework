@@ -2,8 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+
 import { FluidClientDebugger } from "./FluidClientDebugger";
-import { FluidClientDebuggerProps, IFluidClientDebugger } from "./IFluidClientDebugger";
+import { IFluidClientDebugger } from "./IFluidClientDebugger";
+
+/**
+ * Properties for configuring a {@link IFluidClientDebugger}.
+ */
+export interface FluidClientDebuggerProps {
+	/**
+	 * The ID of the Container with which the debugger will be associated.
+	 */
+	containerId: string;
+
+	/**
+	 * The Container with which the debugger will be associated.
+	 */
+	container: IContainer;
+
+	/**
+	 * Data belonging to the Container.
+	 *
+	 * @remarks The debugger will not mutate this data.
+	 */
+	containerData: Record<string, IFluidLoadable>;
+}
 
 /**
  * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context.
@@ -11,27 +36,24 @@ import { FluidClientDebuggerProps, IFluidClientDebugger } from "./IFluidClientDe
  * @remarks
  *
  * If there is an existing debugger session associated with the provided {@link FluidClientDebuggerProps.containerId},
- * the existing debugger session object will be returned, rather than creating a new one.
+ * the existing debugger session will be closed, and a new one will be generated from the provided props.
  */
-export function initializeFluidClientDebugger(
-	props: FluidClientDebuggerProps,
-): IFluidClientDebugger {
+export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
 	const { containerId, container, containerData } = props;
 
 	const debuggerRegistry = getDebuggerRegistry();
 
-	let clientDebugger = debuggerRegistry.get(containerId);
-	if (clientDebugger !== undefined) {
+	const existingDebugger = debuggerRegistry.get(containerId);
+	if (existingDebugger !== undefined) {
 		console.warn(
-			`Active debugger registry already contains an entry for container ID "${containerId}". Returning existing entry.`,
+			`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return debuggerRegistry.get(containerId)!;
-	} else {
-		clientDebugger = new FluidClientDebugger(containerId, container, containerData);
-		debuggerRegistry.set(containerId, clientDebugger);
-		return clientDebugger;
+		existingDebugger.dispose();
 	}
+	debuggerRegistry.set(
+		containerId,
+		new FluidClientDebugger(containerId, container, containerData),
+	);
 }
 
 /**
@@ -54,7 +76,10 @@ export function closeFluidClientDebugger(containerId: string): void {
 
 /**
  * Gets the registered client debugger associated with the provided Container ID if one is registered.
- * Will return `undefined` if no such debugger is registered.
+ *
+ * @remarks Will return `undefined` if no such debugger is registered.
+ *
+ * @internal
  */
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined {
 	const debuggerRegistry = getDebuggerRegistry();
@@ -63,6 +88,8 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 /**
  * Gets all registered client debuggers from the registry.
+ *
+ * @internal
  */
 export function getFluidClientDebuggers(): IFluidClientDebugger[] {
 	const debuggerRegistry = getDebuggerRegistry();

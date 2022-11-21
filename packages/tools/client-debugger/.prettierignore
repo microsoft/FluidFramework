@@ -11,5 +11,5 @@ node_modules/*
 _api-extractor-temp/*
 api-report/*
 
-# Generated documentation
-generated-api-docs/*
+# Test output
+nyc

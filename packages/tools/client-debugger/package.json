@@ -32,12 +32,14 @@
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
+		"mocha:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"prettier": "prettier --check .",
 		"prettier:fix": "prettier --write .",
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "start-server-and-test start:tinylicious 7070 mocha",
+		"test:mocha:coverage": "start-server-and-test start:tinylicious 7070 mocha:coverage",
 		"tsc": "tsc --pretty"
 	},
 	"nyc": {
@@ -87,6 +89,7 @@
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",
+		"eslint-plugin-chai-expect": "~3.0.0",
 		"mocha": "^10.0.0",
 		"nyc": "^15.0.0",
 		"prettier": "~2.3.1",

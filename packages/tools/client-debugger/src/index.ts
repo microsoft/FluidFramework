@@ -13,11 +13,7 @@
 
 export { MemberChangeKind } from "./Audience";
 
-export {
-	IFluidClientDebugger,
-	IFluidClientDebuggerEvents,
-	FluidClientDebuggerProps,
-} from "./IFluidClientDebugger";
+export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 
 export {
 	AudienceChangeLogEntry,
@@ -28,6 +24,7 @@ export {
 
 export {
 	closeFluidClientDebugger,
+	FluidClientDebuggerProps,
 	getFluidClientDebugger,
 	initializeFluidClientDebugger,
 } from "./Registry";

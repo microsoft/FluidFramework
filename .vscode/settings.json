@@ -35,12 +35,14 @@
 
     // Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
     "cSpell.words": [
+        "endregion",
         "injective",
         "losslessly",
         "mitigations",
         "multinomial",
         "nonfinite",
         "pseudorandomly",
+        "Tinylicious",
         "tombstoned",
         "unaugmented"
     ],
