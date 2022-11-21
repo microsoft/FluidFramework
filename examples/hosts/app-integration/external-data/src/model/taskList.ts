@@ -135,6 +135,10 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
+    public async handleExternalDataSignal() {
+            // cankeep registry in here of how to handle different signals
+    }
+
     // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
     // put the data object in while import is occurring (e.g. to disable input, etc.).
     // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
