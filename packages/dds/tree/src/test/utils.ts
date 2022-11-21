@@ -62,31 +62,24 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
 /**
  * Recursively freezes the given object.
  *
- * Note: Calling `Object.freeze` on a Set or Map does not prevent it from being mutated.
- * If `freezeMethods` is true, we freeze the mutating methods from the Set or Map to ensure that its state cannot be changed.
- * Regardless of the value of `freezeMethods`, `deepFreeze` will freeze the keys and values of a Map or Set.
+ * WARNING: this function mutates Map and Set instances to override their mutating methods in order to ensure that the
+ * state of those instances cannot be changed. This is necessary because calling `Object.freeze` on a Set or Map does
+ * not prevent it from being mutated.
  *
  * @param object - The object to freeze.
- * @param freezeMethods - Whether to freeze mutation methods on Set and Map instances.
- * Passing `true` provides greater protection against mutation but does so at the cost of mutating the Set and
- * Map instances which may not be desirable.
  */
-export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
+export function deepFreeze<T>(object: T): void {
     if (object instanceof Map) {
         for (const [key, value] of object.entries()) {
-            deepFreeze(key, freezeMethods);
-            deepFreeze(value, freezeMethods);
+            deepFreeze(key);
+            deepFreeze(value);
         }
-        if (freezeMethods) {
-            freezeObjectMethods(object, ["set", "delete", "clear"]);
-        }
+        freezeObjectMethods(object, ["set", "delete", "clear"]);
     } else if (object instanceof Set) {
         for (const key of object.keys()) {
-            deepFreeze(key, freezeMethods);
+            deepFreeze(key);
         }
-        if (freezeMethods) {
-            freezeObjectMethods(object, ["add", "delete", "clear"]);
-        }
+        freezeObjectMethods(object, ["add", "delete", "clear"]);
     } else {
         // Retrieve the property names defined on object
         const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
@@ -94,7 +87,7 @@ export function deepFreeze<T>(object: T, freezeMethods: boolean = true): void {
         for (const name of propNames) {
             const value = object[name];
             if (typeof value === "object") {
-                deepFreeze(value, freezeMethods);
+                deepFreeze(value);
             }
         }
     }

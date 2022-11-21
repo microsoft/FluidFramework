@@ -152,32 +152,6 @@ describe("deepFreeze", () => {
         assert.deepEqual(map1, map2);
         assert.deepEqual(set1, set2);
     });
-    it("optionally does not freeze map and set methods", () => {
-        const map: any = new Map<number, any>([[0, 1]]);
-        const set: any = new Set<number>([0, 1]);
-        const frozen = new Map<number, any>([
-            [0, map],
-            [1, set],
-        ]);
-        deepFreeze(frozen, false);
-        assert.throws(() => {
-            map.c = 42;
-        });
-        assert.throws(() => {
-            set.c = 42;
-        });
-        assert.doesNotThrow(() => {
-            map.set(0, 42);
-            set.add(5);
-            set.delete(5);
-            set.clear(5);
-            frozen.set(0, 42);
-            frozen.set(1, 42);
-            frozen.set(42, 42);
-            frozen.delete(0);
-            frozen.clear();
-        });
-    });
     it("freezes objects that are reachable through multiple fields", () => {
         const inner: any = {
             c: new Map<number, any>([[0, 1]]),
