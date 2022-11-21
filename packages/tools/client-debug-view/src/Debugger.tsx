@@ -100,7 +100,7 @@ function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement 
 	return (
 		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 			<StackItem>
-				<div>No debugger has been initialized for container ID "${containerId}".</div>
+				<div>No debugger has been initialized for container ID "{containerId}".</div>
 			</StackItem>
 			<StackItem>
 				<TooltipHost content="Look again" id={retryButtonTooltipId}>
@@ -129,7 +129,7 @@ function DebuggerDisposed(props: DebuggerDisposedProps): React.ReactElement {
 		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
 			<StackItem>
 				<div>
-					The debugger associated with container ID "${containerId}" has been disposed.
+					The debugger associated with container ID "{containerId}" has been disposed.
 				</div>
 			</StackItem>
 			<StackItem>
