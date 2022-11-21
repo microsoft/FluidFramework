@@ -208,7 +208,7 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
     [
         {
             error: "TombstonedBlobRequested",
-            eventName: "fluid:telemetry:ContainerRuntime:TombstonedBlobRequested",
+            eventName: "fluid:telemetry:BlobManager:TombstonedBlobRequested",
             viaHandle: true,
         },
     ],
@@ -217,31 +217,25 @@ describeNoCompat("GC Blob Tombstoned When It Is Sweep Ready", (getTestObjectProv
             absolutePath,
             summarizingContainer,
             summarizer,
-            summaryVersion,
         } = await summarizationWithUnreferencedBlobAfterTime(sweepTimeoutMs);
 
-        const container = await loadContainer(summaryVersion);
-        const testDefaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
-        const testHandle = new RemoteFluidObjectHandle(
-            absolutePath,
-            testDefaultDataObject._context.containerRuntime.IFluidHandleContext,
-        );
-        const test = await testHandle.get();
-        assert(test !== undefined);
+        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
-        const defaultDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
+        // The blob should be tombstoned now
+        const { summaryVersion } = await summarize(summarizer);
+
+        const container = await loadContainer(summaryVersion);
+        const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
         const blobHandle = new RemoteFluidObjectHandle(
             absolutePath,
             defaultDataObject._context.containerRuntime.IFluidHandleContext,
         );
 
-        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
-
-        // The blob should be tombstoned now
-        await summarize(summarizer);
-
         // Handle requests for blob handle should fail!
-        const response = await blobHandle.get();
-        assert(response !== undefined);
+        await assert.rejects(
+            async () => blobHandle.get(),
+            (error) => error?.message !== undefined && error.message.startsWith("Blob removed by gc:") === true,
+            "Blob should be tombstoned!",
+        );
     });
 });

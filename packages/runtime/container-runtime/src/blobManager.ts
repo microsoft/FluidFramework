@@ -563,11 +563,10 @@ export class BlobManager {
             // GC tombstones these blobs
             if (tombstone) {
                 this.tombstonedBlobs.add(blobId);
-            }
-
-            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
-            // corresponding storageId may still be used either directly or via other localIds.
-            if (this.redirectTable?.has(blobId)) {
+                continue;
+            } else if (this.redirectTable?.has(blobId)) {
+                // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+                // corresponding storageId may still be used either directly or via other localIds.
                 this.redirectTable.delete(blobId);
                 continue;
             }
