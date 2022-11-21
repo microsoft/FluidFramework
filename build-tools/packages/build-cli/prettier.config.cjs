@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // prettier.config.js or .prettierrc.js
 module.exports = {
     printWidth: 100,
